@@ -3,13 +3,11 @@ package evm
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
@@ -112,38 +110,6 @@ func ValidateFunTokenBankMetadata(
 		return
 	}
 	return out, nil
-}
-
-// HandleOutOfGasPanic captures an sdk.ErrorOutOfGas panic and folds it into
-// *errp, an error pointer.
-// - If *errp is nil: sets *errp = vm.ErrOutOfGas
-// - If *errp is non-nil: preserves it (do not overwrite)
-// - Always applies `format` wrapping if *errp is non-nil after recovery
-// - Re-panics for any non-OutOfGas panic
-func HandleOutOfGasPanic(errp *error, format string) func() {
-	return func() {
-		if perr := recover(); perr != nil {
-			_, isOutOfGasPanic := perr.(sdk.ErrorOutOfGas)
-			switch {
-			case isOutOfGasPanic:
-				if errp != nil && *errp == nil {
-					*errp = vm.ErrOutOfGas
-				}
-				// else: preserve existing detailed error
-			case strings.Contains(fmt.Sprint(perr), vm.ErrOutOfGas.Error()):
-				if errp == nil {
-					errp = new(error)
-				}
-				*errp = fmt.Errorf("%s: %w", perr, vm.ErrOutOfGas)
-			default:
-				// Non-OOG panics are not handled here
-				panic(perr)
-			}
-		}
-		if errp != nil && *errp != nil && format != "" {
-			*errp = fmt.Errorf("%s: %w", format, *errp)
-		}
-	}
 }
 
 // Gracefully handles "out of gas"

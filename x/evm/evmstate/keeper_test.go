@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -57,14 +58,14 @@ func (s *Suite) TestIsSimulation() {
 		{
 			name: "Context with simulation=true",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evmstate.SimulationContextKey, true)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: true,
 		},
 		{
 			name: "Context with simulation=false",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evmstate.SimulationContextKey, false)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, false)
 			},
 			expected: false,
 		},
@@ -72,14 +73,14 @@ func (s *Suite) TestIsSimulation() {
 			name: "Context with wrong type for simulation key",
 			setup: func(ctx sdk.Context) sdk.Context {
 				// Set a string instead of bool
-				return ctx.WithValue(evmstate.SimulationContextKey, "true")
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, "true")
 			},
 			expected: false,
 		},
 		{
 			name: "Context with nil value",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evmstate.SimulationContextKey, nil)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, nil)
 			},
 			expected: false,
 		},
@@ -135,14 +136,14 @@ func (s *Suite) TestIsDeliverTx() {
 		{
 			name: "Simulation context",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithValue(evmstate.SimulationContextKey, true)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: false,
 		},
 		{
 			name: "CheckTx with simulation flag",
 			setup: func(ctx sdk.Context) sdk.Context {
-				return ctx.WithIsCheckTx(true).WithValue(evmstate.SimulationContextKey, true)
+				return ctx.WithIsCheckTx(true).WithValue(evm.CtxKeyEvmSimulation, true)
 			},
 			expected: false,
 		},
@@ -150,7 +151,7 @@ func (s *Suite) TestIsDeliverTx() {
 			name: "Simulation context with false value",
 			setup: func(ctx sdk.Context) sdk.Context {
 				// Setting simulation to false should be treated as DeliverTx
-				return ctx.WithValue(evmstate.SimulationContextKey, false)
+				return ctx.WithValue(evm.CtxKeyEvmSimulation, false)
 			},
 			expected: true,
 		},

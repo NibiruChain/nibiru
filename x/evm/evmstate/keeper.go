@@ -24,10 +24,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-type contextKey string
-
-const SimulationContextKey contextKey = "evm_simulation"
-
 type Keeper struct {
 	cdc codec.BinaryCodec
 	// storeKey: For persistent storage of EVM state.
@@ -132,7 +128,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // IsSimulation checks if the context is a simulation context.
 func IsSimulation(ctx sdk.Context) bool {
-	if val := ctx.Value(SimulationContextKey); val != nil {
+	if val := ctx.Value(evm.CtxKeyEvmSimulation); val != nil {
 		if simulation, ok := val.(bool); ok && simulation {
 			return true
 		}
