@@ -118,7 +118,7 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	priceAtBlock, err := p.oracleKeeper.ExchangeRates.Get(ctx, assetPair)
+	priceAtBlock, err := p.oracleKeeper.ExchangeRateMap.Get(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (p precompileOracle) chainLinkLatestRoundData(
 		return nil, err
 	}
 
-	priceAtBlock, err := p.oracleKeeper.ExchangeRates.Get(ctx, assetPair)
+	priceAtBlock, err := p.oracleKeeper.ExchangeRateMap.Get(ctx, assetPair)
 	if err != nil {
 		return nil, err
 	}

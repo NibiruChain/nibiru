@@ -22,11 +22,11 @@ func TestQueryParams(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
 
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 	res, err := querier.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 
 	require.Equal(t, params, res.Params)
@@ -35,10 +35,10 @@ func TestQueryParams(t *testing.T) {
 func TestQueryExchangeRate(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(
+	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
 		asset.NewPair(denoms.ETH, denoms.NUSD),
 		types.ExchangeRateAtBlock{
@@ -63,7 +63,7 @@ func TestQueryExchangeRate(t *testing.T) {
 func TestQueryMissCounter(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	missCounter := uint64(1)
 	input.OracleKeeper.MissCounters.Insert(input.Ctx, ValAddrs[0], missCounter)
@@ -83,10 +83,10 @@ func TestQueryMissCounter(t *testing.T) {
 func TestQueryExchangeRates(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
-	input.OracleKeeper.ExchangeRates.Insert(
+	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
 		asset.NewPair(denoms.BTC, denoms.NUSD),
 		types.ExchangeRateAtBlock{
@@ -95,7 +95,7 @@ func TestQueryExchangeRates(t *testing.T) {
 			BlockTimestampMs: input.Ctx.BlockTime().UnixMilli(),
 		},
 	)
-	input.OracleKeeper.ExchangeRates.Insert(
+	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
 		asset.NewPair(denoms.ETH, denoms.NUSD),
 		types.ExchangeRateAtBlock{
@@ -116,7 +116,7 @@ func TestQueryExchangeRates(t *testing.T) {
 
 func TestQueryExchangeRateTwap(t *testing.T) {
 	input := CreateTestFixture(t)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
 	input.OracleKeeper.SetPrice(input.Ctx, asset.NewPair(denoms.BTC, denoms.NUSD), rate)
@@ -145,7 +145,7 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 
 func TestQueryDatedExchangeRate(t *testing.T) {
 	input := CreateTestFixture(t)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	initialTime := input.Ctx.BlockTime()
 	initialHeight := input.Ctx.BlockHeight()
@@ -318,7 +318,7 @@ func TestCalcTwap(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			input := CreateTestFixture(t)
-			querier := NewQuerier(input.OracleKeeper)
+			querier := input.OracleKeeper
 			ctx := input.Ctx
 
 			newParams := types.Params{
@@ -334,7 +334,7 @@ func TestCalcTwap(t *testing.T) {
 				ValidatorFeeRatio:  types.DefaultValidatorFeeRatio,
 			}
 
-			input.OracleKeeper.Params.Set(ctx, newParams)
+			input.OracleKeeper.ModuleParams.Set(ctx, newParams)
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 			for _, reserve := range tc.priceSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))
@@ -355,14 +355,14 @@ func TestCalcTwap(t *testing.T) {
 func TestQueryActives(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	queryClient := NewQuerier(input.OracleKeeper)
+	queryClient := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
 	targetPairs := set.New[asset.Pair]()
 	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, denoms.NIBI} {
 		pair := asset.NewPair(bankDenom, denoms.NUSD)
 		targetPairs.Add(pair)
-		input.OracleKeeper.ExchangeRates.Insert(
+		input.OracleKeeper.ExchangeRateMap.Insert(
 			input.Ctx,
 			pair,
 			types.ExchangeRateAtBlock{
@@ -383,7 +383,7 @@ func TestQueryActives(t *testing.T) {
 func TestQueryFeederDelegation(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, ValAddrs[0], Addrs[1])
 
@@ -402,7 +402,7 @@ func TestQueryFeederDelegation(t *testing.T) {
 func TestQueryAggregatePrevote(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
@@ -431,7 +431,7 @@ func TestQueryAggregatePrevote(t *testing.T) {
 func TestQueryAggregatePrevotes(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	prevote1 := types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{}, ValAddrs[0], 0)
 	input.OracleKeeper.Prevotes.Insert(input.Ctx, ValAddrs[0], prevote1)
@@ -453,7 +453,7 @@ func TestQueryAggregatePrevotes(t *testing.T) {
 func TestQueryAggregateVote(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdkmath.LegacyOneDec()}}, ValAddrs[0])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
@@ -482,7 +482,7 @@ func TestQueryAggregateVote(t *testing.T) {
 func TestQueryAggregateVotes(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	vote1 := types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "", ExchangeRate: sdkmath.LegacyOneDec()}}, ValAddrs[0])
 	input.OracleKeeper.Votes.Insert(input.Ctx, ValAddrs[0], vote1)
@@ -504,7 +504,7 @@ func TestQueryAggregateVotes(t *testing.T) {
 func TestQueryVoteTargets(t *testing.T) {
 	input := CreateTestFixture(t)
 	ctx := sdk.WrapSDKContext(input.Ctx)
-	querier := NewQuerier(input.OracleKeeper)
+	querier := input.OracleKeeper
 
 	// clear pairs
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {

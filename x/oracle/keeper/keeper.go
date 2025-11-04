@@ -34,8 +34,8 @@ type Keeper struct {
 	distrModuleName string
 
 	// Module parameters
-	Params            collections.Item[types.Params]
-	ExchangeRates     collections.Map[asset.Pair, types.ExchangeRateAtBlock]
+	ModuleParams      collections.Item[types.Params]
+	ExchangeRateMap   collections.Map[asset.Pair, types.ExchangeRateAtBlock]
 	FeederDelegations collections.Map[sdk.ValAddress, sdk.AccAddress]
 	MissCounters      collections.Map[sdk.ValAddress, uint64]
 	Prevotes          collections.Map[sdk.ValAddress, types.AggregateExchangeRatePrevote]
@@ -79,8 +79,8 @@ func NewKeeper(
 		slashingKeeper:    slashingKeeper,
 		sudoKeeper:        sudoKeeper,
 		distrModuleName:   distrName,
-		Params:            collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
-		ExchangeRates:     collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.ExchangeRateAtBlock](cdc)),
+		ModuleParams:      collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
+		ExchangeRateMap:   collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.ExchangeRateAtBlock](cdc)),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
 		FeederDelegations: collections.NewMap(storeKey, 2, collections.ValAddressKeyEncoder, collections.AccAddressValueEncoder),
 		MissCounters:      collections.NewMap(storeKey, 3, collections.ValAddressKeyEncoder, collections.Uint64ValueEncoder),
@@ -128,7 +128,7 @@ func (k Keeper) ValidateFeeder(
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdkmath.LegacyDec, err error) {
-	params, err := k.Params.Get(ctx)
+	params, err := k.ModuleParams.Get(ctx)
 	if err != nil {
 		return sdkmath.LegacyOneDec().Neg(), err
 	}
@@ -185,7 +185,7 @@ func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdk
 // SetPrice sets the price for a pair as well as the price snapshot.
 func (k Keeper) SetPrice(ctx sdk.Context, pair asset.Pair, price sdkmath.LegacyDec) {
 	blockTimestampMs := ctx.BlockTime().UnixMilli()
-	k.ExchangeRates.Insert(ctx, pair,
+	k.ExchangeRateMap.Insert(ctx, pair,
 		types.ExchangeRateAtBlock{
 			ExchangeRate:     price,
 			CreatedBlock:     uint64(ctx.BlockHeight()),

@@ -51,4 +51,4 @@ x/devgas/*
 x/epochs/*
 x/genmsg/*
 x/inflation/*
-x/oracle/*
+# x/oracle/*

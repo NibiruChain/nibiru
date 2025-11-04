@@ -15,9 +15,9 @@ import (
 func TestExportInitGenesis(t *testing.T) {
 	input := keeper.CreateTestFixture(t)
 
-	input.OracleKeeper.Params.Set(input.Ctx, types.DefaultParams())
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, types.DefaultParams())
 	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
-	input.OracleKeeper.ExchangeRates.Insert(input.Ctx, "pair1:pair2",
+	input.OracleKeeper.ExchangeRateMap.Insert(input.Ctx, "pair1:pair2",
 		types.ExchangeRateAtBlock{
 			ExchangeRate:     sdkmath.LegacyNewDec(123),
 			CreatedBlock:     0,

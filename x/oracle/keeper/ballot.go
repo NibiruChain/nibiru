@@ -123,8 +123,8 @@ func (k Keeper) removeInvalidVotes(
 			delete(pairVotes, pair)
 		}
 
-		// If the votes is not passed, remove it from the whitelistedPairs set
-		// to prevent slashing validators who did valid vote.
+		// If the votes did not pass the threshold, remove the pair from consideration
+		// to prevent slashing validators who submitted valid votes.
 		if !isPassingVoteThreshold(
 			pairVotes[pair],
 			k.VoteThreshold(ctx).MulInt64(totalBondedPower).RoundInt(),

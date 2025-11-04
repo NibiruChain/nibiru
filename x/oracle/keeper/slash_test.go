@@ -90,10 +90,10 @@ func TestSlashAndResetMissCounters(t *testing.T) {
 
 func TestInvalidVotesSlashing(t *testing.T) {
 	input, h := Setup(t)
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
-	input.OracleKeeper.Params.Set(input.Ctx, params)
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, params)
 	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, asset.PAIR_ATOM)
 
 	votePeriodsPerWindow := sdkmath.LegacyNewDec(int64(input.OracleKeeper.SlashWindow(input.Ctx))).QuoInt64(int64(input.OracleKeeper.VotePeriod(input.Ctx))).TruncateInt64()
@@ -205,10 +205,10 @@ func TestWhitelistSlashing(t *testing.T) {
 
 func TestNotPassedBallotSlashing(t *testing.T) {
 	input, h := Setup(t)
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
-	input.OracleKeeper.Params.Set(input.Ctx, params)
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, params)
 
 	// clear tobin tax to reset vote targets
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
@@ -233,10 +233,10 @@ func TestAbstainSlashing(t *testing.T) {
 	input, h := Setup(t)
 
 	// reset whitelisted pairs
-	params, err := input.OracleKeeper.Params.Get(input.Ctx)
+	params, err := input.OracleKeeper.ModuleParams.Get(input.Ctx)
 	require.NoError(t, err)
 	params.Whitelist = []asset.Pair{asset.PAIR_ATOM}
-	input.OracleKeeper.Params.Set(input.Ctx, params)
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, params)
 	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
