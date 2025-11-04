@@ -13,25 +13,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
-// querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over q
-type querier struct {
-	Keeper
-}
-
-// NewQuerier returns an implementation of the oracle QueryServer interface
-// for the provided Keeper.
-func NewQuerier(keeper Keeper) types.QueryServer {
-	return &querier{Keeper: keeper}
-}
-
-var _ types.QueryServer = querier{}
+var _ types.QueryServer = (*Keeper)(nil)
 
 // Params queries params of distribution module
-func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (k Keeper) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	var params types.Params
 
-	params, err := q.Keeper.Params.Get(ctx)
+	params, err := k.ModuleParams.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +29,7 @@ func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.
 }
 
 // ExchangeRate queries exchange rate of a pair
-func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateRequest) (*types.QueryExchangeRateResponse, error) {
+func (k Keeper) ExchangeRate(c context.Context, req *types.QueryExchangeRateRequest) (*types.QueryExchangeRateResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -50,13 +39,13 @@ func (q querier) ExchangeRate(c context.Context, req *types.QueryExchangeRateReq
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	out, err := q.Keeper.ExchangeRates.Get(ctx, req.Pair)
+	out, err := k.ExchangeRateMap.Get(ctx, req.Pair)
 	if err != nil {
 		return nil, err
 	}
 
 	var isVintage bool // if the exchange rate has passed its expiration block
-	oracleParams, err := q.Keeper.Params.Get(ctx)
+	oracleParams, err := k.ModuleParams.Get(ctx)
 	if err != nil {
 		isVintage = false
 	} else {
@@ -80,13 +69,13 @@ If there's only one snapshot, then this function returns the price from that sin
 
 Returns -1 if there's no price.
 */
-func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryExchangeRateResponse, err error) {
-	if _, err = q.ExchangeRate(c, req); err != nil {
+func (k Keeper) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRateRequest) (response *types.QueryExchangeRateResponse, err error) {
+	if _, err = k.ExchangeRate(c, req); err != nil {
 		return
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	twap, err := q.GetExchangeRateTwap(ctx, req.Pair)
+	twap, err := k.GetExchangeRateTwap(ctx, req.Pair)
 	if err != nil {
 		return &types.QueryExchangeRateResponse{}, err
 	}
@@ -94,11 +83,11 @@ func (q querier) ExchangeRateTwap(c context.Context, req *types.QueryExchangeRat
 }
 
 // ExchangeRates queries exchange rates of all pairs
-func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
+func (k Keeper) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesRequest) (*types.QueryExchangeRatesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var exchangeRates types.ExchangeRateTuples
-	for _, er := range q.Keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
+	for _, er := range k.ExchangeRateMap.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{
 			Pair:         er.Key,
 			ExchangeRate: er.Value.ExchangeRate,
@@ -109,18 +98,18 @@ func (q querier) ExchangeRates(c context.Context, _ *types.QueryExchangeRatesReq
 }
 
 // Actives queries all pairs for which exchange rates exist
-func (q querier) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
-	return &types.QueryActivesResponse{Actives: q.Keeper.ExchangeRates.Iterate(sdk.UnwrapSDKContext(c), collections.Range[asset.Pair]{}).Keys()}, nil
+func (k Keeper) Actives(c context.Context, _ *types.QueryActivesRequest) (*types.QueryActivesResponse, error) {
+	return &types.QueryActivesResponse{Actives: k.ExchangeRateMap.Iterate(sdk.UnwrapSDKContext(c), collections.Range[asset.Pair]{}).Keys()}, nil
 }
 
 // VoteTargets queries the voting target list on current vote period
-func (q querier) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
+func (k Keeper) VoteTargets(c context.Context, _ *types.QueryVoteTargetsRequest) (*types.QueryVoteTargetsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	return &types.QueryVoteTargetsResponse{VoteTargets: q.GetWhitelistedPairs(ctx)}, nil
+	return &types.QueryVoteTargetsResponse{VoteTargets: k.GetWhitelistedPairs(ctx)}, nil
 }
 
 // FeederDelegation queries the account address that the validator operator delegated oracle vote rights to
-func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDelegationRequest) (*types.QueryFeederDelegationResponse, error) {
+func (k Keeper) FeederDelegation(c context.Context, req *types.QueryFeederDelegationRequest) (*types.QueryFeederDelegationResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -132,12 +121,15 @@ func (q querier) FeederDelegation(c context.Context, req *types.QueryFeederDeleg
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryFeederDelegationResponse{
-		FeederAddr: q.Keeper.FeederDelegations.GetOr(ctx, valAddr, sdk.AccAddress(valAddr)).String(),
+		FeederAddr: k.FeederDelegations.GetOr(ctx, valAddr, sdk.AccAddress(valAddr)).String(),
 	}, nil
 }
 
 // MissCounter queries oracle miss counter of a validator
-func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterRequest) (*types.QueryMissCounterResponse, error) {
+func (k Keeper) MissCounter(
+	c context.Context,
+	req *types.QueryMissCounterRequest,
+) (*types.QueryMissCounterResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -149,12 +141,15 @@ func (q querier) MissCounter(c context.Context, req *types.QueryMissCounterReque
 
 	ctx := sdk.UnwrapSDKContext(c)
 	return &types.QueryMissCounterResponse{
-		MissCounter: q.MissCounters.GetOr(ctx, valAddr, 0),
+		MissCounter: k.MissCounters.GetOr(ctx, valAddr, 0),
 	}, nil
 }
 
 // AggregatePrevote queries an aggregate prevote of a validator
-func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePrevoteRequest) (*types.QueryAggregatePrevoteResponse, error) {
+func (k Keeper) AggregatePrevote(
+	c context.Context,
+	req *types.QueryAggregatePrevoteRequest,
+) (*types.QueryAggregatePrevoteResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -165,7 +160,7 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	prevote, err := q.Prevotes.Get(ctx, valAddr)
+	prevote, err := k.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -176,12 +171,18 @@ func (q querier) AggregatePrevote(c context.Context, req *types.QueryAggregatePr
 }
 
 // AggregatePrevotes queries aggregate prevotes of all validators
-func (q querier) AggregatePrevotes(c context.Context, _ *types.QueryAggregatePrevotesRequest) (*types.QueryAggregatePrevotesResponse, error) {
-	return &types.QueryAggregatePrevotesResponse{AggregatePrevotes: q.Prevotes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
+func (k Keeper) AggregatePrevotes(
+	c context.Context,
+	_ *types.QueryAggregatePrevotesRequest,
+) (*types.QueryAggregatePrevotesResponse, error) {
+	return &types.QueryAggregatePrevotesResponse{AggregatePrevotes: k.Prevotes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
 }
 
 // AggregateVote queries an aggregate vote of a validator
-func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteRequest) (*types.QueryAggregateVoteResponse, error) {
+func (k Keeper) AggregateVote(
+	c context.Context,
+	req *types.QueryAggregateVoteRequest,
+) (*types.QueryAggregateVoteResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -192,7 +193,7 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	vote, err := q.Votes.Get(ctx, valAddr)
+	vote, err := k.Votes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +204,14 @@ func (q querier) AggregateVote(c context.Context, req *types.QueryAggregateVoteR
 }
 
 // AggregateVotes queries aggregate votes of all validators
-func (q querier) AggregateVotes(c context.Context, _ *types.QueryAggregateVotesRequest) (*types.QueryAggregateVotesResponse, error) {
-	return &types.QueryAggregateVotesResponse{AggregateVotes: q.Keeper.Votes.Iterate(sdk.UnwrapSDKContext(c), collections.Range[sdk.ValAddress]{}).Values()}, nil
+func (k Keeper) AggregateVotes(
+	c context.Context,
+	_ *types.QueryAggregateVotesRequest,
+) (*types.QueryAggregateVotesResponse, error) {
+	return &types.QueryAggregateVotesResponse{
+		AggregateVotes: k.Votes.Iterate(
+			sdk.UnwrapSDKContext(c),
+			collections.Range[sdk.ValAddress]{},
+		).Values(),
+	}, nil
 }

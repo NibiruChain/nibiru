@@ -93,17 +93,17 @@ func (h *AggregateVoteHash) Unmarshal(data []byte) error {
 	return nil
 }
 
-// MarshalJSON marshals to JSON using Bech32.
+// MarshalJSON marshals to JSON using hex encoding.
 func (h AggregateVoteHash) MarshalJSON() ([]byte, error) {
 	return json.Marshal(h.String())
 }
 
-// MarshalYAML marshals to YAML using Bech32.
+// MarshalYAML marshals to YAML using hex encoding.
 func (h AggregateVoteHash) MarshalYAML() (any, error) {
 	return h.String(), nil
 }
 
-// UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
+// UnmarshalJSON unmarshals from JSON assuming hex encoding.
 func (h *AggregateVoteHash) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)

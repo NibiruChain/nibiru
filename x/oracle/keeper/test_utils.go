@@ -270,7 +270,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		keeper.WhitelistedPairs.Insert(ctx, pair)
 	}
 
-	keeper.Params.Set(ctx, defaults)
+	keeper.ModuleParams.Set(ctx, defaults)
 
 	return TestFixture{
 		ctx, legacyAmino, accountKeeper, bankKeeper,
@@ -318,15 +318,15 @@ var (
 func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	fixture := CreateTestFixture(t)
 
-	params, _ := fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params, _ := fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 
 	params.VotePeriod = 1
 	params.SlashWindow = 100
-	fixture.OracleKeeper.Params.Set(fixture.Ctx, params)
+	fixture.OracleKeeper.ModuleParams.Set(fixture.Ctx, params)
 
-	params, _ = fixture.OracleKeeper.Params.Get(fixture.Ctx)
+	params, _ = fixture.OracleKeeper.ModuleParams.Get(fixture.Ctx)
 
-	h := NewMsgServerImpl(fixture.OracleKeeper, fixture.SudoKeeper)
+	h := fixture.OracleKeeper
 	sh := stakingkeeper.NewMsgServerImpl(&fixture.StakingKeeper)
 
 	// Validator created

@@ -1,78 +1,103 @@
 package keeper_test
 
 import (
-	"context"
 	"testing"
+	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/oracle"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
-var (
-	_ suite.TearDownAllSuite = (*TestSuite)(nil)
-	_ suite.SetupTestSuite   = (*TestSuite)(nil)
-	_ suite.SetupAllSuite    = (*TestSuite)(nil)
-)
-
-type TestSuite struct {
-	suite.Suite
-
-	cfg     testnetwork.Config
-	network *testnetwork.Network
+type Suite struct {
+	testutil.LogRoutingSuite
 }
 
-func TestOracleHeavy(t *testing.T) {
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(TestSuite))
-	}, 2)
+func TestOracleKeeper(t *testing.T) {
+	suite.Run(t, new(Suite))
 }
 
-func (s *TestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
+func setupKeeperTest(s *Suite) (
+	nibiruApp *app.NibiruApp,
+	ctx sdk.Context,
+	msgServer types.MsgServer,
+	validators []struct {
+		valAddr sdk.ValAddress
+		accAddr sdk.AccAddress
+	},
+) {
+	// Initialize app and context
+	nibiruApp, ctx = testapp.NewNibiruTestAppAndContext()
+
+	// Create msg servers
+	msgServer = nibiruApp.OracleKeeper
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(nibiruApp.StakingKeeper)
+
+	// Generate validators with pubkeys using nutil helpers
+	// Fund accounts and create validators in staking keeper
+	testStakingAmt := sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
+	stakingCoins := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, testStakingAmt))
+
+	for i := 0; i < 4; i++ {
+		privKey, accAddr := testutil.PrivKey()
+		pubKey := privKey.PubKey()
+		valAddr := sdk.ValAddress(accAddr)
+
+		// Fund account with staking tokens
+		err := testapp.FundAccount(nibiruApp.BankKeeper, ctx, accAddr, stakingCoins)
+		s.Require().NoError(err)
+
+		// Create validator using the same helper as other tests
+		createValMsg := oraclekeeper.NewTestMsgCreateValidator(valAddr, pubKey, testStakingAmt)
+
+		_, err = stakingMsgServer.CreateValidator(ctx, createValMsg)
+		s.Require().NoError(err)
+
+		validators = append(validators, struct {
+			valAddr sdk.ValAddress
+			accAddr sdk.AccAddress
+		}{valAddr: valAddr, accAddr: accAddr})
+	}
+
+	// Finalize validators by calling staking EndBlocker
+	staking.EndBlocker(ctx, nibiruApp.StakingKeeper)
+
+	// Set oracle params with whitelist pairs
+	// Set VotePeriod to 1 like in Setup() for faster test execution
+	params, err := nibiruApp.OracleKeeper.ModuleParams.Get(ctx)
+	s.Require().NoError(err)
+	whitelistPairs := []asset.Pair{"nibi:usdc", "btc:usdc"}
+	params.Whitelist = whitelistPairs
+	params.VotePeriod = 1 // Fast vote periods for testing
+	nibiruApp.OracleKeeper.UpdateParams(ctx, params)
+
+	// Manually sync whitelist pairs to the WhitelistedPairs collection
+	// (this is needed because IsWhitelistedPair checks the collection, not params)
+	for _, pair := range whitelistPairs {
+		nibiruApp.OracleKeeper.WhitelistedPairs.Insert(ctx, pair)
+	}
+
+	return nibiruApp, ctx, msgServer, validators
 }
 
-func (s *TestSuite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
-}
+func (s *Suite) TestOracleVoting() {
+	// Setup
+	nibiruApp, ctx, msgServer, validators := setupKeeperTest(s)
 
-func (s *TestSuite) SetupTest() {
-	genesisState := genesis.NewTestGenesisState(app.MakeEncodingConfig().Codec)
-	s.cfg = testnetwork.BuildNetworkConfig(genesisState)
-	s.cfg.NumValidators = 4
-	s.cfg.GenesisState[types.ModuleName] = s.cfg.Codec.MustMarshalJSON(func() codec.ProtoMarshaler {
-		gs := types.DefaultGenesisState()
-		gs.Params.Whitelist = []asset.Pair{
-			"nibi:usdc",
-			"btc:usdc",
-		}
-
-		return gs
-	}())
-
-	s.network = testnetwork.New(&s.Suite, s.cfg)
-	s.network.WaitForNextBlock()
-}
-
-func (s *TestSuite) TestSuccessfulVoting() {
-	// assuming validators have equal power
-	// we use the weighted median.
-	// what happens is that prices are ordered
-	// based on exchange rate, from lowest to highest.
-	// then the median is picked, based on consensus power
-	// so obviously, in this case, since validators have the same power
-	// once weight (based on power) >= total power (sum of weights)
-	// then the number picked is the one in the middle always.
+	// Price data - same as TestSuccessfulVoting
 	prices := []map[asset.Pair]sdkmath.LegacyDec{
 		{
 			"nibi:usdc": sdkmath.LegacyOneDec(),
@@ -91,90 +116,70 @@ func (s *TestSuite) TestSuccessfulVoting() {
 			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100300.9"),
 		},
 	}
-	votes := s.sendPrevotes(prices)
 
-	s.waitVoteRevealBlock()
-
-	s.sendVotes(votes)
-
-	s.waitPriceUpdateBlock()
-
-	gotPrices := s.currentPrices()
-	require.Equal(s.T(),
-		map[asset.Pair]sdkmath.LegacyDec{
-			"nibi:usdc": sdkmath.LegacyOneDec(),
-			"btc:usdc":  sdkmath.LegacyMustNewDecFromStr("100200.9"),
-		},
-		gotPrices,
-	)
-}
-
-func (s *TestSuite) sendPrevotes(prices []map[asset.Pair]sdkmath.LegacyDec) []string {
+	// Send prevotes - all in the same block/period for VotePeriod=1
 	strVotes := make([]string, len(prices))
-	for i, val := range s.network.Validators {
-		raw := prices[i]
-		votes := make(types.ExchangeRateTuples, 0, len(raw))
-		for pair, price := range raw {
+	for i, priceMap := range prices {
+		// Reuse validators if we need more votes than validators
+		val := validators[i%len(validators)]
+
+		// Build exchange rate tuples
+		votes := make(types.ExchangeRateTuples, 0, len(priceMap))
+		for pair, price := range priceMap {
 			votes = append(votes, types.NewExchangeRateTuple(pair, price))
 		}
 
 		pricesStr, err := votes.ToString()
 		s.Require().NoError(err)
-		_, err = s.network.BroadcastMsgs(val.Address, nil, &types.MsgAggregateExchangeRatePrevote{
-			Hash:      types.GetAggregateVoteHash("1", pricesStr, val.ValAddress).String(),
-			Feeder:    val.Address.String(),
-			Validator: val.ValAddress.String(),
-		})
+
+		// Create and send prevote message
+		hash := types.GetAggregateVoteHash("1", pricesStr, val.valAddr).String()
+		msg := &types.MsgAggregateExchangeRatePrevote{
+			Hash:      hash,
+			Feeder:    val.accAddr.String(),
+			Validator: val.valAddr.String(),
+		}
+
+		_, err = msgServer.AggregateExchangeRatePrevote(ctx, msg)
 		s.Require().NoError(err)
-		s.network.WaitForNextBlock()
 
 		strVotes[i] = pricesStr
 	}
 
-	return strVotes
-}
+	// Advance to next vote period (where votes can be revealed)
+	// With VotePeriod=1, we just need to advance one block
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
 
-func (s *TestSuite) sendVotes(rates []string) {
-	for i, val := range s.network.Validators {
-		_, err := s.network.BroadcastMsgs(val.Address, nil, &types.MsgAggregateExchangeRateVote{
+	// Send votes - must happen in the reveal period
+	for i, rate := range strVotes {
+		val := validators[i%len(validators)]
+		msg := &types.MsgAggregateExchangeRateVote{
 			Salt:          "1",
-			ExchangeRates: rates[i],
-			Feeder:        val.Address.String(),
-			Validator:     val.ValAddress.String(),
-		})
+			ExchangeRates: rate,
+			Feeder:        val.accAddr.String(),
+			Validator:     val.valAddr.String(),
+		}
+		_, err := msgServer.AggregateExchangeRateVote(ctx, msg)
 		s.Require().NoError(err)
 	}
-}
 
-func (s *TestSuite) waitVoteRevealBlock() {
-	params, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).Params(context.Background(), &types.QueryParamsRequest{})
-	require.NoError(s.T(), err)
+	// Advance to price update block (another vote period)
+	// With VotePeriod=1, advance one more block
+	ctx = ctx.WithBlockHeight(ctx.BlockHeight() + 1)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second))
 
-	votePeriod := params.Params.VotePeriod
+	// Call EndBlocker to trigger UpdateExchangeRates
+	oracle.EndBlocker(ctx, nibiruApp.OracleKeeper)
 
-	height, err := s.network.LatestHeight()
-	require.NoError(s.T(), err)
+	// Query exchange rates directly from keeper - only check the pairs we voted on
+	// (NewNibiruTestAppAndContext sets default prices that we ignore)
+	nibiPrice, err := nibiruApp.OracleKeeper.ExchangeRateMap.Get(ctx, "nibi:usdc")
+	s.Require().NoError(err)
+	btcPrice, err := nibiruApp.OracleKeeper.ExchangeRateMap.Get(ctx, "btc:usdc")
+	s.Require().NoError(err)
 
-	waitBlock := (uint64(height)/votePeriod)*votePeriod + votePeriod
-
-	_, err = s.network.WaitForHeight(int64(waitBlock + 1))
-	require.NoError(s.T(), err)
-}
-
-// it's an alias, but it exists to give better understanding of what we're doing in test cases scenarios
-func (s *TestSuite) waitPriceUpdateBlock() {
-	s.waitVoteRevealBlock()
-}
-
-func (s *TestSuite) currentPrices() map[asset.Pair]sdkmath.LegacyDec {
-	rawRates, err := types.NewQueryClient(s.network.Validators[0].ClientCtx).ExchangeRates(context.Background(), &types.QueryExchangeRatesRequest{})
-	require.NoError(s.T(), err)
-
-	prices := make(map[asset.Pair]sdkmath.LegacyDec)
-
-	for _, p := range rawRates.ExchangeRates {
-		prices[p.Pair] = p.ExchangeRate
-	}
-
-	return prices
+	// Assert expected prices
+	s.Equal(sdkmath.LegacyOneDec(), nibiPrice.ExchangeRate)
+	s.Equal(sdkmath.LegacyMustNewDecFromStr("100200.9"), btcPrice.ExchangeRate)
 }

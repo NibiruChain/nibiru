@@ -78,7 +78,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 	if len(data.Rewards) != 0 {
 		keeper.RewardsID.Set(ctx, data.Rewards[len(data.Rewards)-1].Id)
 	}
-	keeper.Params.Set(ctx, data.Params)
+	keeper.ModuleParams.Set(ctx, data.Params)
 
 	// check if the module account exists
 	moduleAcc := keeper.AccountKeeper.GetModuleAccount(ctx, types.ModuleName)
@@ -91,7 +91,7 @@ func InitGenesis(ctx sdk.Context, keeper keeper.Keeper, data *types.GenesisState
 // to a genesis file, which can be imported again
 // with InitGenesis
 func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
-	params, err := keeper.Params.Get(ctx)
+	params, err := keeper.ModuleParams.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +105,7 @@ func ExportGenesis(ctx sdk.Context, keeper keeper.Keeper) *types.GenesisState {
 	}
 
 	exchangeRates := []types.ExchangeRateTuple{}
-	for _, er := range keeper.ExchangeRates.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
+	for _, er := range keeper.ExchangeRateMap.Iterate(ctx, collections.Range[asset.Pair]{}).KeyValues() {
 		exchangeRates = append(exchangeRates, types.ExchangeRateTuple{Pair: er.Key, ExchangeRate: er.Value.ExchangeRate})
 	}
 

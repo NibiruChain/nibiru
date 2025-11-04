@@ -11,21 +11,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
-	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 )
 
-type msgServer struct {
-	Keeper
-	SudoKeeper sudokeeper.Keeper
-}
+var _ types.MsgServer = (*Keeper)(nil)
 
-// NewMsgServerImpl returns an implementation of the oracle MsgServer interface
-// for the provided Keeper.
-func NewMsgServerImpl(keeper Keeper, sudoKeeper sudokeeper.Keeper) types.MsgServer {
-	return &msgServer{Keeper: keeper, SudoKeeper: sudoKeeper}
-}
-
-func (ms msgServer) AggregateExchangeRatePrevote(
+func (k Keeper) AggregateExchangeRatePrevote(
 	goCtx context.Context,
 	msg *types.MsgAggregateExchangeRatePrevote,
 ) (*types.MsgAggregateExchangeRatePrevoteResponse, error) {
@@ -41,7 +31,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := k.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +41,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 		return nil, sdkioerrors.Wrap(types.ErrInvalidHash, err.Error())
 	}
 
-	ms.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
+	k.Prevotes.Insert(ctx, valAddr, types.NewAggregateExchangeRatePrevote(voteHash, valAddr, uint64(ctx.BlockHeight())))
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventAggregatePrevote{
 		Validator: msg.Validator,
@@ -60,7 +50,7 @@ func (ms msgServer) AggregateExchangeRatePrevote(
 	return &types.MsgAggregateExchangeRatePrevoteResponse{}, err
 }
 
-func (ms msgServer) AggregateExchangeRateVote(
+func (k Keeper) AggregateExchangeRateVote(
 	goCtx context.Context, msg *types.MsgAggregateExchangeRateVote,
 ) (msgResp *types.MsgAggregateExchangeRateVoteResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -75,17 +65,17 @@ func (ms msgServer) AggregateExchangeRateVote(
 		return nil, err
 	}
 
-	if err := ms.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
+	if err := k.ValidateFeeder(ctx, feederAddr, valAddr); err != nil {
 		return nil, err
 	}
 
-	params, err := ms.Params.Get(ctx)
+	params, err := k.ModuleParams.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// An aggergate prevote is required to get an aggregate vote.
-	aggregatePrevote, err := ms.Prevotes.Get(ctx, valAddr)
+	// An aggregate prevote is required to get an aggregate vote.
+	aggregatePrevote, err := k.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
 	}
@@ -107,7 +97,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 
 	// Check all pairs are in the vote target
 	for _, tuple := range exchangeRateTuples {
-		if !ms.IsWhitelistedPair(ctx, tuple.Pair) {
+		if !k.IsWhitelistedPair(ctx, tuple.Pair) {
 			return nil, sdkioerrors.Wrap(types.ErrUnknownPair, tuple.Pair.String())
 		}
 	}
@@ -121,10 +111,10 @@ func (ms msgServer) AggregateExchangeRateVote(
 	}
 
 	// Move aggregate prevote to aggregate vote with given exchange rates
-	ms.Votes.Insert(
+	k.Votes.Insert(
 		ctx, valAddr, types.NewAggregateExchangeRateVote(exchangeRateTuples, valAddr),
 	)
-	_ = ms.Prevotes.Delete(ctx, valAddr)
+	_ = k.Prevotes.Delete(ctx, valAddr)
 
 	priceTuples, err := types.NewExchangeRateTuplesFromString(msg.ExchangeRates)
 	if err != nil {
@@ -139,7 +129,7 @@ func (ms msgServer) AggregateExchangeRateVote(
 	return &types.MsgAggregateExchangeRateVoteResponse{}, err
 }
 
-func (ms msgServer) DelegateFeedConsent(
+func (k Keeper) DelegateFeedConsent(
 	goCtx context.Context, msg *types.MsgDelegateFeedConsent,
 ) (*types.MsgDelegateFeedConsentResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -155,13 +145,13 @@ func (ms msgServer) DelegateFeedConsent(
 	}
 
 	// Check the delegator is a validator
-	val := ms.StakingKeeper.Validator(ctx, operatorAddr)
+	val := k.StakingKeeper.Validator(ctx, operatorAddr)
 	if val == nil {
 		return nil, sdkioerrors.Wrap(stakingtypes.ErrNoValidatorFound, msg.Operator)
 	}
 
 	// Set the delegation
-	ms.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
+	k.FeederDelegations.Insert(ctx, operatorAddr, delegateAddr)
 
 	err = ctx.EventManager().EmitTypedEvent(&types.EventDelegateFeederConsent{
 		Feeder:    msg.Delegate,
@@ -173,27 +163,27 @@ func (ms msgServer) DelegateFeedConsent(
 
 // EditOracleParams: gRPC tx msg for editing the oracle module params.
 // [SUDO] Only callable by sudoers.
-func (ms msgServer) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
+func (k Keeper) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracleParams) (*types.MsgEditOracleParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address")
+		return nil, fmt.Errorf("invalid sender address: %w", err)
 	}
 
-	err = ms.SudoKeeper.CheckPermissions(sender, ctx)
+	err = k.sudoKeeper.CheckPermissions(sender, ctx)
 	if err != nil {
 		return nil, sudo.ErrUnauthorized
 	}
 
-	params, err := ms.Params.Get(ctx)
+	params, err := k.ModuleParams.Get(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
+		return nil, fmt.Errorf("failed to get oracle params: %w", err)
 	}
 
 	mergedParams := mergeOracleParams(msg, params)
 
-	ms.UpdateParams(ctx, mergedParams)
+	k.UpdateParams(ctx, mergedParams)
 
 	return &types.MsgEditOracleParamsResponse{}, nil
 }

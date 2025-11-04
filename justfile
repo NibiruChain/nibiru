@@ -60,11 +60,21 @@ gen-changelog:
 
   LAST_VER="v2.7.0"
   start_branch="$(git branch --show-current)"
-  git checkout main
-  git-cliff "$LAST_VER.." -o CHANGELOG-UNRELEASED.md
-  git checkout "$start_branch"
+
+  tmpdir="$(mktemp -d)"
+  cleanup() { rm -rf "$tmpdir"; }
+  trap cleanup EXIT
+
+  # Create a detached worktree at main so we don’t touch the current branch
+  git fetch -q origin main
+  git worktree add --detach --quiet "$tmpdir" origin/main
+
+  # Run git-cliff in the main worktree but write the file into the original repo
+  ( cd "$tmpdir" && git-cliff "$LAST_VER.." ) > CHANGELOG-UNRELEASED.md
+
   log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
-  git add CHANGELOG-UNRELEASED.md
+  git add CHANGELOG-UNRELEASED.md \
+    && git ci -m "chore: changelog" || true
 
 # Generate the Nibiru Token Registry files
 gen-token-registry:
