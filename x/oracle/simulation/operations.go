@@ -70,7 +70,7 @@ func WeightedOperations(
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
 		func(_ *rand.Rand) {
-			weightMsgDelegateFeedConsent = params.DefaultWeightMsgDelegate // TODO: temp fix
+			weightMsgDelegateFeedConsent = params.DefaultWeightMsgDelegate
 		},
 	)
 

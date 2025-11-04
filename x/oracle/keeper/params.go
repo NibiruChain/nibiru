@@ -25,13 +25,13 @@ func (k Keeper) VoteThreshold(ctx sdk.Context) (res sdkmath.LegacyDec) {
 	return params.VoteThreshold
 }
 
-// MinVoters returns the minimum percentage of votes that must be received for a votes to pass.
+// MinVoters returns the minimum number of voters that must participate for a vote to pass.
 func (k Keeper) MinVoters(ctx sdk.Context) (res uint64) {
 	params, _ := k.ModuleParams.Get(ctx)
 	return params.MinVoters
 }
 
-// RewardBand returns a maxium divergence that a price vote can have from the
+// RewardBand returns a maximum divergence that a price vote can have from the
 // weighted median in the votes. If a vote lies within the valid range
 // defined by:
 //

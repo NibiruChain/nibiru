@@ -74,7 +74,7 @@ func (k Keeper) AggregateExchangeRateVote(
 		return nil, err
 	}
 
-	// An aggergate prevote is required to get an aggregate vote.
+	// An aggregate prevote is required to get an aggregate vote.
 	aggregatePrevote, err := k.Prevotes.Get(ctx, valAddr)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(types.ErrNoAggregatePrevote, msg.Validator)
@@ -168,7 +168,7 @@ func (k Keeper) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracle
 
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address")
+		return nil, fmt.Errorf("invalid sender address: %w", err)
 	}
 
 	err = k.sudoKeeper.CheckPermissions(sender, ctx)
@@ -178,7 +178,7 @@ func (k Keeper) EditOracleParams(goCtx context.Context, msg *types.MsgEditOracle
 
 	params, err := k.ModuleParams.Get(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get oracle params error: %s", err.Error())
+		return nil, fmt.Errorf("failed to get oracle params: %w", err)
 	}
 
 	mergedParams := mergeOracleParams(msg, params)
