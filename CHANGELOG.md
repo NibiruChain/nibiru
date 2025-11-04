@@ -52,6 +52,9 @@ See https://github.com/dangoslen/changelog-enforcer.
 - [#2420](https://github.com/NibiruChain/nibiru/pull/2420) - feat: add recursive check for nested authz exec messages and enforce max depth limit
 - [#2421](https://github.com/NibiruChain/nibiru/pull/2421) - docs(bank): improve documentation and add section on Nibiru changes 
 
+### Dependencies
+- Bump `github.com/consensys/gnark-crypto` from 0.12.1 to 0.18.1 ([#2422](https://github.com/NibiruChain/nibiru/pull/2422))
+
 ## [v2.8.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.8.0) - 2025-10-28
 
 - [#2385](https://github.com/NibiruChain/nibiru/pull/2385) - evm: 63/64 gas clamp for ERC20 calls; improved VM error surfacing; add composite Chainlink-like oracle
