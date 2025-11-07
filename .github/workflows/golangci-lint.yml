@@ -41,37 +41,18 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         with:
           go-version: 1.24
-          cache: false # the golangci-lint action already caches for us (https://github.com/golangci/golangci-lint-action#performance)
-
-      # Use GitHub actions output paramters to get go paths. For more info, see
-      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
-      - name: "Set output variables for go cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        id: go-cache-paths
-        run: |
-          echo "go-build-cache=$(go env GOCACHE)" >> $GITHUB_OUTPUT
-          echo "go-mod-cache=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
-
-      - name: "Go build cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
-          key: go-build-cache-${{ hashFiles('**/go.sum') }}
-
-      - name: "Go mod cache"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
-          key: go-mod-cache-${{ hashFiles('**/go.sum') }}
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true # Note that golangci-lint action already caches for us (https://github.com/golangci/golangci-lint-action#performance)
 
       - name: golangci-lint
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         uses: golangci/golangci-lint-action@v8
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
-          version: v2.5
+          version: v2.6.1
 
           # Optional: working directory, useful for monorepos
           # working-directory: somedir
@@ -83,11 +64,11 @@ jobs:
           # only-new-issues: true
 
           # Optional: if set to true then the all caching functionality will be
-          #   complete disabled. Takes precedence over all other caching options.
+          #   completely disabled. Takes precedence over all other caching options.
           skip-cache: false
 
-          # Optional: if set to true then the action don't cache or restore ~/go/pkg.
+          # Optional: if set to true then the action won't cache or restore ~/go/pkg.
           # skip-pkg-cache: true
 
-          # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
+          # Optional: if set to true then the action won't cache or restore ~/.cache/go-build.
           # skip-build-cache: true
