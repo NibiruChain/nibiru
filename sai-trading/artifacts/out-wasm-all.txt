@@ -1,0 +1,176 @@
+bash scripts/wasm-out.sh
+# ----- Build Info ------ #"
+
+uname -m: "x86_64"
+arch: "x86_64"
+dpkg --print-architecture: "amd64"
+
+IMAGE_VERSION: "0.17.0"
+IMAGE: "cosmwasm/optimizer"
+# ----- Build Info ------ #"
+
+uname -m: "x86_64"
+arch: "x86_64"
+dpkg --print-architecture: "amd64"
+
+IMAGE_VERSION: "0.17.0"
+IMAGE: "cosmwasm/optimizer"
+Running Wasm bytecode optimizer for all contracts
+IMAGE: cosmwasm/optimizer
+IMAGE_VERSION: 0.17.0
+1.86.0-x86_64-unknown-linux-musl (active, default)
+cargo 1.86.0 (adf9b6ad1 2025-02-28)
+Building project /code ...
+Found workspace member entries: ["scripts", "contracts/*", "packages/*"]
+Package directories: ["contracts/oracle", "contracts/perp", "contracts/vault", "contracts/vault-token-minter", "packages/bash-rs", "packages/test-app", "packages/utils", "scripts"]
+Contracts to be built: ["contracts/oracle", "contracts/perp", "contracts/vault", "contracts/vault-token-minter"]
+Building "oracle" ...
+Building oracle with features {}
+warning: `/code/contracts/oracle/.cargo/config` is deprecated in favor of `config.toml`
+note: if you need to support cargo 1.38 or earlier, you can symlink `config` to `config.toml`
+   Compiling proc-macro2 v1.0.89
+   Compiling unicode-ident v1.0.13
+   Compiling serde v1.0.219
+   Compiling typenum v1.17.0
+   Compiling version_check v0.9.5
+   Compiling syn v1.0.109
+   Compiling serde_json v1.0.143
+   Compiling memchr v2.7.4
+   Compiling thiserror v1.0.69
+   Compiling schemars v0.8.21
+   Compiling itoa v1.0.11
+   Compiling ryu v1.0.18
+   Compiling dyn-clone v1.0.17
+   Compiling cfg-if v1.0.0
+   Compiling anyhow v1.0.99
+   Compiling static_assertions v1.1.0
+   Compiling hex v0.4.3
+   Compiling forward_ref v1.0.0
+   Compiling base64 v0.21.7
+   Compiling bnum v0.10.0
+   Compiling semver v1.0.23
+   Compiling bitcoin-internals v0.2.0
+   Compiling either v1.13.0
+   Compiling tinyvec_macros v0.1.1
+   Compiling bytes v1.8.0
+   Compiling tinyvec v1.8.0
+   Compiling thiserror v2.0.16
+   Compiling hex-conservative v0.1.2
+   Compiling generic-array v0.14.7
+   Compiling bech32 v0.9.1
+   Compiling itertools v0.12.1
+   Compiling bitcoin_hashes v0.13.0
+   Compiling quote v1.0.37
+   Compiling syn v2.0.87
+   Compiling unicode-normalization v0.1.22
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.6
+   Compiling digest v0.10.7
+   Compiling sha2 v0.10.8
+   Compiling serde_derive_internals v0.29.1
+   Compiling serde_derive v1.0.219
+   Compiling thiserror-impl v1.0.69
+   Compiling prost-derive v0.12.6
+   Compiling thiserror-impl v2.0.16
+   Compiling schemars_derive v0.8.21
+   Compiling prost v0.12.6
+   Compiling prost-types v0.12.6
+   Compiling derivative v2.2.0
+   Compiling cosmwasm-derive v1.5.11
+   Compiling cosmwasm-schema-derive v1.5.11
+   Compiling nibiru-ownable-derive v0.6.0
+   Compiling serde-json-wasm v0.5.2
+   Compiling bip39 v2.1.0
+   Compiling cosmwasm-std v1.5.11
+   Compiling cosmwasm-schema v1.5.11
+   Compiling cw-storage-plus v1.2.0
+   Compiling nibiru-std v0.6.0
+   Compiling cw2 v1.1.2
+   Compiling cw-utils v1.0.3
+   Compiling nibiru-ownable v0.6.0
+   Compiling utils v0.2.0 (/code/packages/utils)
+   Compiling oracle v0.2.0 (/code/contracts/oracle)
+    Finished `release` profile [optimized] target(s) in 32.54s
+Building perp with features {}
+Building "perp" ...
+   Compiling convert_case v0.4.0
+   Compiling oracle v0.2.0 (/code/contracts/oracle)
+   Compiling derive_more v0.99.20
+   Compiling vault-token-minter v0.2.0 (/code/contracts/vault-token-minter)
+warning: unused import: `Addr`
+ --> contracts/vault-token-minter/src/msgs.rs:2:20
+  |
+2 | use cosmwasm_std::{Addr, Uint128};
+  |                    ^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `vault-token-minter` (lib) generated 1 warning (run `cargo fix --lib -p vault-token-minter` to apply 1 suggestion)
+   Compiling vault v0.2.0 (/code/contracts/vault)
+   Compiling perp v0.2.0 (/code/contracts/perp)
+warning: unused import: `Int128`
+ --> contracts/perp/src/query.rs:3:55
+  |
+3 |     to_json_binary, Addr, Binary, Decimal, Deps, Env, Int128, Order, StdError,
+  |                                                       ^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `BorrowingData`, `BorrowingPairGroup`, `FeeTier`, `Fee`, `Group`, `MarketInfo`, `OiWindowsSettings`, `OpenInterest`, `PairDepth`, `PairOi`, and `TradingActivated`
+  --> contracts/perp/src/query.rs:20:9
+   |
+20 |         BorrowingData, BorrowingPairGroup, OpenInterest, GROUP_OIS, PAIR_OIS,
+   |         ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^
+21 |     },
+22 |     fees::state::{FeeTier, FEE_TIERS, PENDING_GOV_FEES},
+   |                   ^^^^^^^
+...
+28 |         Fee, Group, MarketInfo, FEES, GROUPS, ORACLE_ADDRESS,
+   |         ^^^  ^^^^^  ^^^^^^^^^^
+...
+31 |     price_impact::state::{OiWindowsSettings, PairDepth, PairOi},
+   |                           ^^^^^^^^^^^^^^^^^  ^^^^^^^^^  ^^^^^^
+32 |     trading::state::{Trade, TradeInfo, TradingActivated},
+   |                                        ^^^^^^^^^^^^^^^^
+
+warning: `perp` (lib) generated 2 warnings (run `cargo fix --lib -p perp` to apply 2 suggestions)
+    Finished `release` profile [optimized] target(s) in 30.33s
+Building vault with features {}
+Building "vault" ...
+warning: unused import: `Addr`
+ --> contracts/vault-token-minter/src/msgs.rs:2:20
+  |
+2 | use cosmwasm_std::{Addr, Uint128};
+  |                    ^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `vault-token-minter` (lib) generated 1 warning (run `cargo fix --lib -p vault-token-minter` to apply 1 suggestion)
+   Compiling vault v0.2.0 (/code/contracts/vault)
+    Finished `release` profile [optimized] target(s) in 8.42s
+Building vault_token_minter with features {}
+Building "vault_token_minter" ...
+   Compiling vault-token-minter v0.2.0 (/code/contracts/vault-token-minter)
+warning: unused import: `Addr`
+ --> contracts/vault-token-minter/src/msgs.rs:2:20
+  |
+2 | use cosmwasm_std::{Addr, Uint128};
+  |                    ^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `vault-token-minter` (lib) generated 1 warning (run `cargo fix --lib -p vault-token-minter` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 3.65s
+Optimizing artifacts ...
+Optimizing oracle.wasm ...
+Optimizing perp.wasm ...
+Optimizing vault.wasm ...
+Optimizing vault_token_minter.wasm ...
+Post-processing artifacts...
+6d53e5a896d6db4e99e31160de63e822f739ff845008fd814a1c98f376f2c250  oracle.wasm
+d28dcb560e264ac0e3883b1f64efcec336d6873fd3e0e276fd2fdd2c532fce72  perp.wasm
+c1227c3dbc0cdd47dc50d89dce8e7615c82f0b2b42cc52257e0bdd92db4687ce  vault.wasm
+6e1b6a6fa5895d456360804e97aa27f7db5e4ae723a631c0c2181292bf40d9c7  vault_token_minter.wasm
+Done.
+🔥 Compiled all smart contracts successfully. 
+Saving build information to artifacts/build-info.txt
