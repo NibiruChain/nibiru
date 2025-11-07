@@ -1,0 +1,8 @@
+# ----- Build Info ------ #"
+
+uname -m: "x86_64"
+arch: "x86_64"
+dpkg --print-architecture: "amd64"
+
+IMAGE_VERSION: "0.17.0"
+IMAGE: "cosmwasm/optimizer"
