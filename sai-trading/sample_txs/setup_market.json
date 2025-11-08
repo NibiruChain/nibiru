@@ -1,0 +1,276 @@
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_collaterals": {
+                "collaterals": {
+                  "TokenIndex(1)": {
+                    "name": "stnibi",
+                    "is_active": true,
+                    "denom": "tf/nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl/stnibi"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "set_groups": {
+                "groups": {
+                  "GroupIndex(0)": {
+                    "group": {
+                      "name": "default",
+                      "min_leverage": "1",
+                      "max_leverage": "100"
+                    },
+                    "fee_per_block": "0.0000001",
+                    "fee_exponent": "1",
+                    "max_oi": "1000000"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "set_markets": {
+                "markets": {
+                  "MarketIndex(0)": {
+                    "market_info": {
+                      "base": "TokenIndex(2)",
+                      "quote": "TokenIndex(0)",
+                      "spread_p": "0",
+                      "group_index": "GroupIndex(0)",
+                      "fee_index": "FeeIndex(0)"
+                    },
+                    "fee_per_block": "0.0000001",
+                    "fee_exponent": "1",
+                    "max_oi": "1000000"
+                  },
+                  "MarketIndex(1)": {
+                    "market_info": {
+                      "base": "TokenIndex(3)",
+                      "quote": "TokenIndex(0)",
+                      "spread_p": "0",
+                      "group_index": "GroupIndex(0)",
+                      "fee_index": "FeeIndex(0)"
+                    },
+                    "fee_per_block": "0.0000001",
+                    "fee_exponent": "1",
+                    "max_oi": "1000000"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_pair_depths": {
+                "pair_depths": {
+                  "MarketIndex(0)": {
+                    "one_percent_depth_above_usd": "0",
+                    "one_percent_depth_below_usd": "0",
+                    "exponent": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "set_fees": {
+                "fees": {
+                  "FeeIndex(0)": {
+                    "open_fee_p": "0.0005",
+                    "close_fee_p": "0.0005",
+                    "trigger_order_fee_p": "0.005",
+                    "min_position_size_usd": "1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_fee_tiers": {
+                "fee_tiers": [
+                  {
+                    "fee_multiplier": "0.975",
+                    "points_treshold": "6000000"
+                  },
+                  {
+                    "fee_multiplier": "0.95",
+                    "points_treshold": "20000000"
+                  },
+                  {
+                    "fee_multiplier": "0.925",
+                    "points_treshold": "50000000"
+                  },
+                  {
+                    "fee_multiplier": "0.9",
+                    "points_treshold": "100000000"
+                  },
+                  {
+                    "fee_multiplier": "0.85",
+                    "points_treshold": "250000000"
+                  },
+                  {
+                    "fee_multiplier": "0.8",
+                    "points_treshold": "400000000"
+                  },
+                  {
+                    "fee_multiplier": "0.7",
+                    "points_treshold": "1000000000"
+                  },
+                  {
+                    "fee_multiplier": "0.6",
+                    "points_treshold": "2000000000"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_trading_activated": {
+                "trading_activated": "activated"
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_oi_windows_count": {
+                "new_count": 3
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_oi_windows_duration": {
+                "new_window_duration": "WindowDuration(7200)"
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_vault_closing_fee": {
+                "closing_fee": "0.0069"
+              }
+            }
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "msg": {
+          "admin": {
+            "msg": {
+              "update_vault_address": {
+                "group_index": "GroupIndex(0)",
+                "collateral_index": "TokenIndex(1)",
+                "vault_address": "nibi1dryqnra6z25rq0t4e35ndzzcadd95n2ujd7t9s2lks8kl53u78rqks4vud"
+              }
+            }
+          }
+        },
+        "funds": []
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [],
+      "gas_limit": "10000000",
+      "payer": "",
+      "granter": ""
+    },
+    "tip": null
+  },
+  "signatures": []
+}

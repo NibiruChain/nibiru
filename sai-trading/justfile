@@ -1,0 +1,11 @@
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+i:
+  bun install
+
+e2e-deploy:
+  #!/usr/bin/env bash
+  bun run e2e_deploy.ts
