@@ -605,7 +605,7 @@ const requireFile = async (path: string) => {
 const requireCmd = async (name: string): Promise<boolean> => {
   let haveCmd: boolean = true
   try {
-    await execCommand(`command -v ${name}`);
+    await execCommand(`which ${name}`);
   } catch {
     haveCmd = false
   }
