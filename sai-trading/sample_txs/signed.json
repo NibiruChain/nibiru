@@ -4,7 +4,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -25,7 +25,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -51,7 +51,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -91,7 +91,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -112,7 +112,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -134,7 +134,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -182,7 +182,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -197,7 +197,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -212,7 +212,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -227,7 +227,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
@@ -242,14 +242,14 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi16xmuxltnrf4sfan0eynylzc2s40lje42vgg6hw3z9ld2awcr2ceswhgy5d",
+        "contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
         "msg": {
           "admin": {
             "msg": {
               "update_vault_address": {
                 "group_index": "GroupIndex(0)",
                 "collateral_index": "TokenIndex(1)",
-                "vault_address": "nibi1dryqnra6z25rq0t4e35ndzzcadd95n2ujd7t9s2lks8kl53u78rqks4vud"
+                "vault_address": "nibi1999u8suptza3rtxwk7lspve02m406xe7l622erg3np3aq05gawxszaewnp"
               }
             }
           }
@@ -274,7 +274,7 @@
             "mode": "SIGN_MODE_DIRECT"
           }
         },
-        "sequence": "192"
+        "sequence": "40"
       }
     ],
     "fee": {
@@ -286,6 +286,6 @@
     "tip": null
   },
   "signatures": [
-    "9m5A0qRxbnl+siH4JxDIGh9EHNUd/WhPjF2/q4C2hnwTUw8F/eAxIvb5/Ql4/T0Nmeu95JS/X55677Ri4LtFeA=="
+    "tM0MzieZrBDxKfoP9ilWgDprGuHPsfOhdHUGGJoJc6pHk7zDdczjBACkCypCJZxEVb/qyQ1WoTKKwZxXxf1Fpg=="
   ]
 }

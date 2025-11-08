@@ -13,7 +13,7 @@ func main() {
 	fmt.Println("This is trivial print statement to show that the build imports are working:")
 	fmt.Printf("appconst.DefaultDBBackend: %v\n", appconst.DefaultDBBackend)
 
-	err := tutil.EnsureBlockchain()
+	err := tutil.EnsureLocalBlockchain()
 	if err != nil {
 		log.Fatal(err)
 	}
