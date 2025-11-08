@@ -4,7 +4,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "create_token": {
             "base": "btc",
@@ -16,7 +16,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "create_token": {
             "base": "eth",
@@ -28,7 +28,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "create_token": {
             "base": "nibi",
@@ -40,7 +40,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "set_price": {
             "token_id": 1,
@@ -52,7 +52,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "set_price": {
             "token_id": 2,
@@ -64,7 +64,7 @@
       {
         "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
         "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-        "contract": "nibi1wjraj7nqnq8s6qchxds4sl0vdhlymf8mn4hqrg4ez9glwpj0lf2s8v5h99",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
         "msg": {
           "set_price": {
             "token_id": 3,

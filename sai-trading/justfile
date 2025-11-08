@@ -6,6 +6,11 @@ setup:
 i:
   bun install
 
+test:
+  #!/usr/bin/env bash
+  just e2e-deploy
+  go test ./...
+
 e2e-deploy:
   #!/usr/bin/env bash
   bun run e2e_deploy.ts

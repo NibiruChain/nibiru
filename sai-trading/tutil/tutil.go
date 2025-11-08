@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 )
 
-func EnsureBlockchain() error {
+func EnsureLocalBlockchain() error {
 	cmd := exec.Command("pgrep", "-x", "nibid")
 	out, err := cmd.CombinedOutput()
 	if err != nil || len(out) == 0 {
