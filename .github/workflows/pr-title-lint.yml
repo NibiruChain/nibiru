@@ -11,7 +11,7 @@ jobs:
       - uses: seferov/pr-lint-action@v1.2.0
         with:
           # V2: Includes Nibiru-specific qualifiers and allows for
-          title-regex: '^(evm|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.\/]+\))?(!)?: ([\w ])+([\s\S]*)'
+          title-regex: '^(evm|sai-trading|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.\/]+\))?(!)?: ([\w ])+([\s\S]*)'
           # V1: Old regex taken from Gist: https://gist.github.com/marcojahn/482410b728c31b221b70ea6d2c433f0c
           # title-regex: '^(evm|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.]+\))?(!)?: ([\w ])+([\s\S]*)'
           # title-regex-flags (Optional)
