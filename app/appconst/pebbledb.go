@@ -1,4 +1,5 @@
 //go:build pebbledb
+// +build pebbledb
 
 package appconst
 
