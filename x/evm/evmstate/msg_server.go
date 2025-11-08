@@ -530,7 +530,10 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
-	var funtoken *evm.FunToken
+	var (
+		funtoken *evm.FunToken
+		evmLogs  = []evm.Log{}
+	)
 	emptyErc20 := msg.FromErc20 == nil || msg.FromErc20.Size() == 0
 	switch {
 	case !emptyErc20 && msg.FromBankDenom == "":
@@ -540,11 +543,15 @@ func (k *Keeper) CreateFunToken(
 			msg.AllowZeroDecimals,
 		)
 	case emptyErc20 && msg.FromBankDenom != "":
-		funtoken, err = k.createFunTokenFromCoin(
+		var evmResp *evm.MsgEthereumTxResponse // for the EVM logs
+		funtoken, evmResp, err = k.createFunTokenFromCoin(
 			ctx,
 			msg.FromBankDenom,
 			msg.AllowZeroDecimals,
 		)
+		if evmResp != nil {
+			evmLogs = evmResp.Logs
+		}
 	default:
 		// Impossible to reach this case due to ValidateBasic
 		err = fmt.Errorf(
@@ -559,6 +566,7 @@ func (k *Keeper) CreateFunToken(
 		BankDenom:            funtoken.BankDenom,
 		Erc20ContractAddress: funtoken.Erc20Addr.String(),
 		IsMadeFromCoin:       emptyErc20,
+		EvmLogs:              evm.LogsToLogLite(evmLogs),
 	})
 
 	return &evm.MsgCreateFunTokenResponse{
