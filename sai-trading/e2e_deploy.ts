@@ -626,7 +626,7 @@ const preflightChecks = async () => {
   for (const bashCmd of ["bash", "nibid", "jq"]) {
     const haveCmd = await requireCmd(bashCmd)
     if (!haveCmd) {
-      missingCmds.concat(bashCmd)
+      missingCmds.push(bashCmd)
     }
   }
   if (missingCmds.length != 0) {

@@ -45,6 +45,7 @@ message EventFunTokenCreated {
   string erc20_contract_address = 2;
   string creator = 3;
   bool is_made_from_coin = 4;
+  repeated eth.evm.v1.LogLite evm_logs = 5 [(gogoproto.nullable) = false];
 }
 
 // EventConvertCoinToEvm is an event emitted when converting Bank Coins into
