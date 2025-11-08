@@ -91,7 +91,7 @@ gen-proto-openapi:
 lint: 
   #!/usr/bin/env bash
   echo "Running golangci-lint with docker!"
-  image_version="v2.5.0"
+  image_version="v2.6.1"
   docker run --rm \
     -v "$(pwd)":/app \
     -v ~/.cache/golangci-lint/$image_version:/root/.cache \
