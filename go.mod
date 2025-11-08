@@ -258,6 +258,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
+// Replace block for Nibiru
+// TODO: Remove rocksdb dep: https://github.com/NibiruChain/nibiru/issues/2432
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
