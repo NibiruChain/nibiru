@@ -3,13 +3,17 @@ package evmante
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
+	"fmt"
 	"log"
+	"math/big"
 	"path"
 	"reflect"
 	"runtime"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -56,17 +60,69 @@ func NewAnteHandlerEvm(
 // CanTransfer function to see if the address can execute the transaction.
 func (handlerGroup AnteHandlerEvm) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
-) (sdk.Context, error) {
-	msgEthTx, err := evm.RequireStandardEVMTxMsg(tx)
+) (rCtx sdk.Context, rerr error) {
+	var (
+		sdb      *evmstate.SDB
+		msgEthTx *evm.MsgEthereumTx
+	)
+	defer func() {
+		var (
+			perr error // panic error
+
+			// Panic-safe guard for fixed gas taken by true ante failures in DeliverTx
+			deterministicGasCost = params.TxGas
+		)
+		if panicInfo := recover(); panicInfo != nil {
+			perr = fmt.Errorf("%v", panicInfo)
+		}
+
+		if sdb != nil && msgEthTx != nil {
+			ethTx := msgEthTx.AsTransaction()
+			contractCreation := ethTx.To() == nil
+			rules := sdb.Keeper().GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
+				big.NewInt(sdb.Ctx().BlockHeight()),
+				false,
+				evm.ParseBlockTimeUnixU64(sdb.Ctx()),
+			)
+			intrinsicGasCost, err := core.IntrinsicGas(
+				ethTx.Data(), ethTx.AccessList(),
+				contractCreation,
+				rules.IsHomestead,
+				rules.IsIstanbul,
+				rules.IsShanghai,
+			)
+			if err != nil {
+				deterministicGasCost = intrinsicGasCost
+			}
+		}
+
+		if rerr != nil || perr != nil {
+			rCtx = rCtx.WithGasMeter(
+				func() sdk.GasMeter {
+					gm := sdk.NewGasMeter(deterministicGasCost)
+					gm.ConsumeGas(deterministicGasCost, "EVM ante failure fixed gas")
+					return gm
+				}(),
+			)
+		}
+
+		if perr != nil {
+			rerr = perr
+		}
+	}()
+
+	var err error
+	msgEthTx, err = evm.RequireStandardEVMTxMsg(tx)
 	if err != nil {
 		return ctx, err
 	}
 
-	sdb := evmstate.NewSDB(
+	sdb = evmstate.NewSDB(
 		ctx,
 		handlerGroup.EVMKeeper,
 		handlerGroup.TxConfig(ctx, msgEthTx.AsTransaction().Hash()),
 	)
+
 	log.Printf(
 		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ IsCheckTx %v, IsDeliverTx %v  ReCheckTx%v }",
 		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.IsDeliverTx(), sdb.Ctx().IsReCheckTx())
