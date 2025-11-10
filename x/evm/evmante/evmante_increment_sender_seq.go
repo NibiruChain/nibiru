@@ -70,11 +70,10 @@ func AnteStepIncrementNonce(
 				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
 			)
 		}
+		newNonce := stateNonce + 1
+		sdb.SetNonce(msgEthTx.FromAddr(), newNonce)
 	default:
 	}
-
-	newNonce := stateNonce + 1
-	sdb.SetNonce(msgEthTx.FromAddr(), newNonce)
 
 	return nil
 }
