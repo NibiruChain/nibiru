@@ -30,6 +30,8 @@ linters:
           alias: cmttypes
       no-unaliased: true
       no-extra-aliases: false
+    govet: # https://golangci-lint.run/docs/linters/configuration/#govet
+      disable: ["buildtag"]
     misspell:
       locale: US
     staticcheck:
