@@ -76,27 +76,27 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 			perr = fmt.Errorf("%v", panicInfo)
 		}
 
-		if sdb != nil && msgEthTx != nil {
-			ethTx := msgEthTx.AsTransaction()
-			contractCreation := ethTx.To() == nil
-			rules := sdb.Keeper().GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
-				big.NewInt(sdb.Ctx().BlockHeight()),
-				false,
-				evm.ParseBlockTimeUnixU64(sdb.Ctx()),
-			)
-			intrinsicGasCost, err := core.IntrinsicGas(
-				ethTx.Data(), ethTx.AccessList(),
-				contractCreation,
-				rules.IsHomestead,
-				rules.IsIstanbul,
-				rules.IsShanghai,
-			)
-			if err != nil {
-				deterministicGasCost = intrinsicGasCost
-			}
-		}
-
 		if rerr != nil || perr != nil {
+			if sdb != nil && msgEthTx != nil {
+				ethTx := msgEthTx.AsTransaction()
+				contractCreation := ethTx.To() == nil
+				rules := sdb.Keeper().GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
+					big.NewInt(sdb.Ctx().BlockHeight()),
+					false,
+					evm.ParseBlockTimeUnixU64(sdb.Ctx()),
+				)
+				intrinsicGasCost, err := core.IntrinsicGas(
+					ethTx.Data(), ethTx.AccessList(),
+					contractCreation,
+					rules.IsHomestead,
+					rules.IsIstanbul,
+					rules.IsShanghai,
+				)
+				if err == nil {
+					deterministicGasCost = intrinsicGasCost
+				}
+			}
+
 			rCtx = rCtx.WithGasMeter(
 				func() sdk.GasMeter {
 					gm := sdk.NewGasMeter(deterministicGasCost)
