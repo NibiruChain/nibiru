@@ -41,6 +41,8 @@ dist/
 # x/sudo/
 # x/tokenfactory/
 
+# DON'T ignore out.txt
+!out.txt
 
 # Boilerplate
 # *.pb.go

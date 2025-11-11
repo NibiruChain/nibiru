@@ -1,0 +1,54 @@
+e2e_deploy.ts:[342]: Starting WASM contract deployment...
+e2e_deploy.ts:[347]: Creating stNibi collateral
+e2e_deploy.ts:[141]: Waiting for transaction 47BD0FE8474522F720CED440E3B3FDF47B0C0156496ADC19954CE5B824B9B661 to be mined...
+e2e_deploy.ts:[238]: Event parsing failed, falling back to querying token factory...
+e2e_deploy.ts:[88]: === RUN ===: nibid tx tokenfactory set-denom-metadata /home/realu/ki/sai-perps/scripts/e2e_test/metadata.json --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction BBC1B150D671FFF4A927F1849041205A365EF42AF9EABD3CDDCDA9F0DDD6C429 to be mined...
+e2e_deploy.ts:[141]: Waiting for transaction 7E289EE760B91030D5A92E282B55AB2C14EDED2D202F94590F999C4101C88677 to be mined...
+e2e_deploy.ts:[414]: Validator balance: {
+  amount: "200000000000",
+  token: "tf/nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl/stnibi",
+}
+e2e_deploy.ts:[420]: Storing WASM contracts...
+e2e_deploy.ts:[88]: === RUN ===: nibid tx wasm store /home/realu/ki/sai-perps/artifacts/perp.wasm --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction 90E4587EB508205E37D5A691D25DD293221B48ADE0CF77ACA7637A329B3F3EAA to be mined...
+e2e_deploy.ts:[430]: Stored perp contract with code ID: 5
+e2e_deploy.ts:[88]: === RUN ===: nibid tx wasm store /home/realu/ki/sai-perps/artifacts/vault.wasm --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction C8534CFBDB7086094B4F11D0490F45CA70446EFE3C0AA502FC1D9C9A1F55C2F8 to be mined...
+e2e_deploy.ts:[441]: Stored vault contract with code ID: 6
+e2e_deploy.ts:[88]: === RUN ===: nibid tx wasm store /home/realu/ki/sai-perps/artifacts/vault_token_minter.wasm --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction 44246EEE719A5906266C46C025909E7A39F0D5831159DDB9312F11E99C8B8CA6 to be mined...
+e2e_deploy.ts:[455]: Stored vault token minter with code ID: 7
+e2e_deploy.ts:[88]: === RUN ===: nibid tx wasm store /home/realu/ki/sai-perps/artifacts/oracle.wasm --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction E2FD344516B2CDF4FDF0499B9DEB9E54A34FEB7F3F6D0A63C06A525503D9DE19 to be mined...
+e2e_deploy.ts:[471]: Stored oracle contract with code ID: 8
+e2e_deploy.ts:[475]: 
+Instantiating contracts...
+e2e_deploy.ts:[88]: === RUN ===: nibid tx wasm instantiate 8 "$(cat /home/realu/ki/sai-perps/sample_txs/init_oracle.json)" --amount 1000unibi --label "oracle" --admin nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl --from validator --fees 750000unibi --gas 30000000 --yes --keyring-backend test --chain-id nibiru-localnet-0 --node http://localhost:26657
+e2e_deploy.ts:[141]: Waiting for transaction 925C620EC1028BE5075AEB63E9E139E3E312DD9422C4F10CCC6A1C1056202535 to be mined...
+e2e_deploy.ts:[485]: Instantiated oracle at: nibi1qeyjez6a9dwlghf9d6cy44fxmsajztw257586akk6xn6k88x0gussganvf
+e2e_deploy.ts:[141]: Waiting for transaction 40769A1750DCD67220B3CFBEDE68389727666860021F1C6EBB57E1E3C32EC0D2 to be mined...
+e2e_deploy.ts:[504]: Instantiated perp contract at: nibi1yvgh8xeju5dyr0zxlkvq09htvhjj20fncp5g58np4u25g8rkpgjswdkz05
+e2e_deploy.ts:[141]: Waiting for transaction 1AA0F6904D8D22F5B82048C1063E356BAAA90AF131474FA580A0F223EFB6012C to be mined...
+e2e_deploy.ts:[516]: Instantiated vault token minter at: nibi1f6jlx7d9y408tlzue7r2qcf79plp549n30yzqjajjud8vm7m4vds9d2qgq
+e2e_deploy.ts:[141]: Waiting for transaction 66E18A5AD239AF36482F2014466DFA46CA1EFCF489731CDE69DC3393C52E6216 to be mined...
+e2e_deploy.ts:[531]: Instantiated vault at: nibi1466nf3zuxpya8q9emxukd7vftaf6h4psr0a07srl5zw74zh84yjqxpf0en
+e2e_deploy.ts:[535]: 
+Posting prices...
+e2e_deploy.ts:[768]: Deployment failed: 532 |     storeContractAddress("VAULT_ADDRESS", VAULT_ADDR);
+533 | 
+534 |     // Post prices
+535 |     clog("\nPosting prices...");
+536 |     const setupPricesJson = JSON.parse(
+537 |         readFileSync(`${config.sampleTxsDir}/setup_prices.json`, "utf8"),
+              ^
+ENOENT: no such file or directory, open '/home/realu/ki/sai-perps/sample_txs/setup_prices.json'
+    path: "/home/realu/ki/sai-perps/sample_txs/setup_prices.json",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at deployWasmContracts (/home/realu/ki/sai-perps/scripts/e2e_test/e2e_deploy.ts:537:9)
+      at async main (/home/realu/ki/sai-perps/scripts/e2e_test/e2e_deploy.ts:646:15)
+
+error: Recipe `e2e-deploy` failed with exit code 1

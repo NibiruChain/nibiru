@@ -1,0 +1,8 @@
+[[artifacts]]
+# sai_trading_version: Version number for this tool (Nibiru/sai-trading)
+sai_trading_version = "0.0.1" # vX.Y.Z
+
+# sai_perps_version: This is the version number for the Wasm bytecode files and
+# the sai-perps/evm-interface Solidity contract(s).
+sai_perps_version = "" # vX.Y.Z
+sai_perps_commit = "https://github.com/NibiruChain/sai-perps/tree/4a801ec7572e83597a88c11a9be9a48e26dfaf5e"

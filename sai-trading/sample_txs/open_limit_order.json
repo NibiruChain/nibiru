@@ -1,0 +1,13 @@
+{
+    "open_trade": {
+        "market_index": "MarketIndex(0)",
+        "leverage": "10",
+        "long": true,
+        "collateral_index": "TokenIndex(1)",
+        "trade_type": "stop",
+        "open_price": "69000",
+        "tp": "90000",
+        "sl": "66000",
+        "slippage_p": "1"
+    }
+}

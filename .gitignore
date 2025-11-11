@@ -347,6 +347,7 @@ sketch
 
 public/js/
 .npmrc
+out.txt
 
 playwright/test-results/
 playwright/playwright-report/

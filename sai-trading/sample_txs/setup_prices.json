@@ -1,0 +1,93 @@
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "create_token": {
+            "base": "btc",
+            "permission_group": 1
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "create_token": {
+            "base": "eth",
+            "permission_group": 1
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "create_token": {
+            "base": "nibi",
+            "permission_group": 1
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "set_price": {
+            "token_id": 1,
+            "price_usd": "69000"
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "set_price": {
+            "token_id": 2,
+            "price_usd": "4500"
+          }
+        },
+        "funds": []
+      },
+      {
+        "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+        "sender": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+        "contract": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+        "msg": {
+          "set_price": {
+            "token_id": 3,
+            "price_usd": "1000"
+          }
+        },
+        "funds": []
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [],
+      "gas_limit": "10000000",
+      "payer": "",
+      "granter": ""
+    },
+    "tip": null
+  },
+  "signatures": []
+}

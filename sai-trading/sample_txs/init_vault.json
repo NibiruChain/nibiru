@@ -1,0 +1,23 @@
+{
+  "name": "Vault",
+  "symbol": "VAULT",
+  "collateral_denom": "tf/nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl/stnibi",
+  "owner": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+  "manager": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+  "admin": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+  "open_trades_pnl_feed": "nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
+  "vault_token_minter_contract": "nibi19h0d6k4mtxw5qjr0aretjy9kwyem0hxclf88ka2uwjn47e90mqrqcdpv28",
+  "perp_contract": "nibi1plr28ztj64a47a32lw7tdae8vluzm2lm7nqk364r4ws50rgwyzgsut7l7t",
+  "oracle": "nibi1780emnrt7v9uqx5txhpxc0z8zfawq0czjmtd4q2maz83cckwjlfsyvaunq",
+  "min_lock_duration": 1,
+  "max_acc_open_pnl_delta": "0.05",
+  "max_daily_acc_pnl_delta": "0.10",
+  "withdraw_lock_thresholds_percentage": [
+    "0.05",
+    "0.10"
+  ],
+  "max_supply_increase_daily_percentage": "0.05",
+  "losses_burn_percentage": "0.01",
+  "max_discount_percentage": "0.02",
+  "max_discount_threshold_percentage": "1.10"
+}
