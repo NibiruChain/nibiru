@@ -98,7 +98,7 @@ func (m MsgChangeRoot) GetSignBytes() []byte {
 // ----------------- "nibiru.sudo.v1.MsgEditZeroGasActors" -----------------
 
 // ValidateBasic performs a stateless validation check. Stateless here means no
-// usage of information from the the "world state" [sdk.Context].
+// usage of information from the "world state" [sdk.Context].
 func (m MsgEditZeroGasActors) ValidateBasic() error {
 	err := m.Actors.Validate()
 	if err != nil {
