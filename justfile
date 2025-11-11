@@ -99,7 +99,7 @@ lint:
     golangci/golangci-lint:$image_version \
     golangci-lint run -v --fix 2>&1
 
-# Runs a Nibiru local network. Ex: "just localnet", "just localnet --features featureA"
+# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --features featureA"
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
 

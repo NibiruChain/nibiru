@@ -88,3 +88,65 @@ jobs:
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
           MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+
+  sai-trading:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Check for EVM-related changes"
+        id: check_changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            check_changes:
+              - "sai-trading/**/*.ts"
+              - "sai-trading/artifacts/*"
+              - "sai-trading/**/*.go"
+
+      - name: Set up Go
+        if: steps.check_changes.outputs.check_changes == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: steps.check_changes.outputs.check_changes == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Build the nibid binary"
+        if: steps.check_changes.outputs.check_changes == 'true'
+        run: |
+          just install
+
+      - if: steps.check_changes.outputs.check_changes == 'true'
+        # For running things and for package management "
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 1.2.22 # Values: latest, <sha>, 1.2.3, canary
+        # Outputs:
+        # - cache-hit    : Whether the executable was read from cache. Ex. "true"
+        # - bun-version  : The output from running `bun-version`. Ex. "1.0.0"
+        # - bun-revision : The output from running `bun-revision`.
+
+      - if: steps.check_changes.outputs.check_changes == 'true'
+        working-directory: "sai-trading"
+        run: |
+          bun install
+
+      - if: steps.check_changes.outputs.check_changes == 'true'
+        run: |
+          just localnet --no-build &
+          sleep 10
+
+      - if: steps.check_changes.outputs.check_changes == 'true'
+        working-directory: "sai-trading"
+        run: |
+          just test
