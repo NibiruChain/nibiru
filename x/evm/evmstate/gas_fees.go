@@ -137,7 +137,7 @@ func (k *Keeper) DeductTxCostsFromUserBalance(
 }
 
 // VerifyFee is used to return the fee, or token payment, for the given
-// transaction data in [sdk.Coin]s. It checks that the the gas limit and uses the
+// transaction data in [sdk.Coin]s. It checks that the gas limit and uses the
 // "effective fee" from the [evm.TxData].
 //
 //   - For [evm.DynamicFeeTx], the effective gas price is the minimum of
