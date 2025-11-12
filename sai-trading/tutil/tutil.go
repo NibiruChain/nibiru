@@ -54,3 +54,13 @@ func EnsureLocalBlockchain() error {
 
 	return nil
 }
+
+// ExecCommand executes a shell command and returns the output
+func ExecCommand(cmd string) (string, error) {
+	execCmd := exec.Command("bash", "-c", cmd)
+	output, err := execCmd.CombinedOutput()
+	if err != nil {
+		return string(output), fmt.Errorf("command failed: %w, output: %s", err, string(output))
+	}
+	return string(output), nil
+}
