@@ -17,10 +17,15 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 		"long":             params.Long,
 		"collateral_index": fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
 		"trade_type":       params.TradeType,
-		"open_price":       strconv.FormatFloat(params.OpenPrice, 'f', -1, 64),
 		"slippage_p":       params.SlippageP,
 		"is_evm_origin":    true, // Required when calling from EVM
 	}
+
+	// open_price is required by the contract
+	if params.OpenPrice == nil {
+		return nil, fmt.Errorf("open_price is required")
+	}
+	openTradeMsgData["open_price"] = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
 
 	// Only set TP/SL if provided
 	if params.TP != nil {
@@ -154,11 +159,10 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 		params.TradeType = "trade" // Default
 	}
 
-	// Parse open_price
-	// NOTE: For market trades, open_price is used for liquidation calculation.
-	// It should be close to the expected execution price. If it's too far off,
-	// the liquidation validation may fail even if the trade would be valid.
-	if op, ok := data["open_price"].(string); ok {
+	// Parse open_price (optional for market orders, required for limit/stop orders)
+	// NOTE: For market trades, open_price is optional - the contract uses the execution price.
+	// For limit/stop orders, open_price is required.
+	if op, ok := data["open_price"].(string); ok && op != "" {
 		price, err := strconv.ParseFloat(op, 64)
 		if err != nil {
 			return nil, fmt.Errorf("parse open_price: %w", err)
@@ -167,10 +171,12 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 		if price <= 0 {
 			return nil, fmt.Errorf("open_price must be positive, got: %f", price)
 		}
-		params.OpenPrice = price
-	} else {
-		return nil, fmt.Errorf("open_price is required")
+		params.OpenPrice = &price
+	} else if params.TradeType != "trade" {
+		// open_price is required for limit/stop orders
+		return nil, fmt.Errorf("open_price is required for %s orders", params.TradeType)
 	}
+	// For market orders, open_price can be nil (optional)
 
 	if params.TradeType != "trade" {
 		// Only parse TP/SL for limit/stop orders
@@ -198,4 +204,17 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 	}
 
 	return params, nil
+}
+
+// buildCloseTradeMessage builds the close_trade_market message from trade index
+func (t *EVMTrader) buildCloseTradeMessage(tradeIndex uint64) ([]byte, error) {
+	closeTradeMsgData := map[string]interface{}{
+		"trade_index": fmt.Sprintf("UserTradeIndex(%d)", tradeIndex),
+	}
+
+	closeTradeMsg := map[string]interface{}{
+		"close_trade_market": closeTradeMsgData,
+	}
+
+	return json.Marshal(closeTradeMsg)
 }

@@ -19,12 +19,16 @@ type Config struct {
 	PrivateKeyHex string
 
 	// Strategy
+	TradeSize        uint64 // Exact trade size (if set, overrides min/max)
 	TradeSizeMin     uint64
 	TradeSizeMax     uint64
+	Leverage         uint64 // Exact leverage (if set, overrides min/max)
 	LeverageMin      uint64
 	LeverageMax      uint64
+	Long             *bool // Trade direction: true for long, false for short, nil for random
 	MarketIndex      uint64
 	CollateralIndex  uint64
+	TradeType        string
 	EnableLimitOrder bool
 
 	// Static JSON file for trades
@@ -100,4 +104,3 @@ func setConfigDefaults(cfg *Config) {
 		}
 	}
 }
-
