@@ -34,5 +34,8 @@
     "ts-jest": "^29.2.4",
     "typechain": "^8.3.2",
     "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "bundler": "bash scripts/start-bundler.sh"
   }
 }

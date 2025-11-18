@@ -356,3 +356,6 @@ playwright/chrome-extensions/keplr/
 playwright/yarn.lock
 
 debug_container.dot
+
+.gocache
+AGENTS.md
