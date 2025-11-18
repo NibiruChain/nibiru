@@ -125,19 +125,44 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 }
 
 // sendOpenTradeTransaction sends the open_trade transaction
-func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int) (*sdk.TxResponse, error) {
+func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64) (*sdk.TxResponse, error) {
 	// Build WASM execute call
 	wasmABI := getWasmPrecompileABI()
 	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
 
-	// Use anonymous struct matching the ABI requirement: struct { Denom string; Amount *big.Int }
-	// This matches the Solidity BankCoin struct: { string denom; uint256 amount }
+	// Query the correct denomination for the collateral index
+	collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
+	if err != nil {
+		return nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
+	}
+
 	funds := []struct {
 		Denom  string
 		Amount *big.Int
 	}{
-		{Denom: t.addrs.StNIBIDenom, Amount: collateralAmt},
+		{Denom: collateralDenom, Amount: collateralAmt},
 	}
+
+	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
+	if err != nil {
+		return nil, fmt.Errorf("pack wasm execute: %w", err)
+	}
+
+	// Sign and send EVM tx to WASM precompile
+	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+}
+
+// sendCloseTradeTransaction sends the close_trade_market transaction
+func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte) (*sdk.TxResponse, error) {
+	// Build WASM execute call
+	wasmABI := getWasmPrecompileABI()
+	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+
+	// No funds needed for close_trade_market
+	funds := []struct {
+		Denom  string
+		Amount *big.Int
+	}{}
 
 	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 )
 
 // parseTradeID extracts the trade ID from transaction response events
-func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse, isLimitOrder bool) (int, error) {
+func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 	type tradeStruct struct {
 		UserTradeIndex string `json:"user_trade_index"`
 	}
@@ -19,10 +19,6 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse, isLimitOrder bool) (int
 		User           string `json:"user"`
 		UserTradeIndex string `json:"user_trade_index"`
 	}
-
-	// Search for trade events - check all possible event types and attributes
-	// For market trades: both register_trade and store_trade events are emitted
-	// For limit/stop orders: only store_trade is emitted
 
 	for _, event := range txResp.Events {
 		eventType := event.Type
@@ -114,4 +110,3 @@ func (t *EVMTrader) parseWrappedIndex(s string) (int, error) {
 	numStr := s[start+1 : end]
 	return strconv.Atoi(numStr)
 }
-
