@@ -52,18 +52,25 @@ export async function registerPasskey(opts: {
   }
 }
 
+const RP_ID_HASH_LEN = 32
+const FLAGS_LEN = 1
+const COUNTER_LEN = 4
+const AUTH_DATA_MIN_LEN = RP_ID_HASH_LEN + FLAGS_LEN + COUNTER_LEN
+const AAGUID_LEN = 16
+const CRED_ID_LEN_BYTES = 2
+
 function parseAuthData(buf: Uint8Array) {
   // Minimal authData parser: rpIdHash (32) | flags (1) | counter (4) | attestedCredData...
-  if (buf.length < 37) return null
-  const flags = buf[32]
+  if (buf.length < AUTH_DATA_MIN_LEN) return null
+  const flags = buf[RP_ID_HASH_LEN]
   const hasAttestedCredData = (flags & 0x40) !== 0
   if (!hasAttestedCredData) return null
 
-  let offset = 37 // skip rpIdHash + flags + counter
-  const aaguid = buf.slice(offset, offset + 16)
-  offset += 16
+  let offset = AUTH_DATA_MIN_LEN // skip rpIdHash + flags + counter
+  const aaguid = buf.slice(offset, offset + AAGUID_LEN)
+  offset += AAGUID_LEN
   const credIdLen = (buf[offset] << 8) + buf[offset + 1]
-  offset += 2
+  offset += CRED_ID_LEN_BYTES
   const credId = buf.slice(offset, offset + credIdLen)
   offset += credIdLen
   const credentialPublicKey = decodeFirst(buf.slice(offset)) as Map<number, any>

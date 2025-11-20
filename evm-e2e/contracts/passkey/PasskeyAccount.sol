@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {UserOperation, SIG_VALIDATION_FAILED} from "./UserOperation.sol";
 import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
 
@@ -65,7 +66,7 @@ contract PasskeyAccount {
     }
 }
 
-/// @notice Simple factory deploying PasskeyAccount instances (no clones for simplicity).
+/// @notice Factory deploying cheap PasskeyAccount minimal-proxy clones.
 contract PasskeyAccountFactory {
     address public immutable IMPLEMENTATION;
     address public immutable ENTRY_POINT;
@@ -78,7 +79,7 @@ contract PasskeyAccountFactory {
     }
 
     function createAccount(bytes32 _qx, bytes32 _qy) external returns (address account) {
-        account = address(new PasskeyAccount());
+        account = Clones.clone(IMPLEMENTATION);
         PasskeyAccount(payable(account)).initialize(ENTRY_POINT, _qx, _qy);
         emit AccountCreated(account, _qx, _qy);
     }

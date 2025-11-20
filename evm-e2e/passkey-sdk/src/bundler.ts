@@ -2,12 +2,22 @@ import { JsonRpcProvider } from "ethers"
 import type { UserOperation } from "./userop"
 import { toRpcUserOperation } from "./userop"
 
+// Cache providers by URL to avoid reconnect overhead on repeated calls.
+const providerCache: Record<string, JsonRpcProvider> = {}
+
+function getProvider(url: string): JsonRpcProvider {
+  if (!providerCache[url]) {
+    providerCache[url] = new JsonRpcProvider(url)
+  }
+  return providerCache[url]
+}
+
 export async function sendUserOp(opts: {
   bundlerUrl: string
   userOp: UserOperation
   entryPoint: string
 }) {
-  const provider = new JsonRpcProvider(opts.bundlerUrl)
+  const provider = getProvider(opts.bundlerUrl)
   const rpcUserOp = toRpcUserOperation(opts.userOp)
   return provider.send("eth_sendUserOperation", [rpcUserOp, opts.entryPoint])
 }
@@ -19,7 +29,7 @@ export async function waitForUserOpReceipt(opts: {
   timeoutMs?: number
 }) {
   const { bundlerUrl, userOpHash, pollIntervalMs = 2000, timeoutMs = 60_000 } = opts
-  const provider = new JsonRpcProvider(bundlerUrl)
+  const provider = getProvider(bundlerUrl)
   const started = Date.now()
 
   while (Date.now() - started < timeoutMs) {
