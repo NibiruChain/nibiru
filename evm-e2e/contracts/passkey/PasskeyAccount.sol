@@ -7,7 +7,7 @@ import {IEntryPoint} from "./interfaces/IEntryPoint.sol";
 /// @notice Minimal ERC-4337-style account secured by a P-256 pubkey (raw r,s signatures).
 /// @dev Uses Nibiru RIP-7212 precompile at 0x...0100. Signature format: abi.encode(r,s).
 contract PasskeyAccount {
-    address public entryPoint;
+    IEntryPoint public entryPoint;
     bytes32 public qx;
     bytes32 public qy;
     uint256 public nonce;
@@ -16,7 +16,7 @@ contract PasskeyAccount {
     event Executed(address indexed target, uint256 value, bytes data);
 
     modifier onlyEntryPoint() {
-        require(msg.sender == entryPoint, "not entrypoint");
+        require(msg.sender == address(entryPoint), "not entrypoint");
         _;
     }
 
@@ -24,7 +24,7 @@ contract PasskeyAccount {
         require(!initialized, "initialized");
         require(_entryPoint != address(0), "entrypoint=0");
         initialized = true;
-        entryPoint = _entryPoint;
+        entryPoint = IEntryPoint(_entryPoint);
         qx = _qx;
         qy = _qy;
     }
@@ -37,11 +37,11 @@ contract PasskeyAccount {
         uint256 missingAccountFunds
     ) external onlyEntryPoint returns (uint256 validationData) {
         if (userOp.nonce != nonce) return SIG_VALIDATION_FAILED;
-        if (!_verify(userOpHash, userOp.signature)) return SIG_VALIDATION_FAILED;
+        uint256 verified = _verify(userOpHash, userOp.signature);
+        if (verified != 1) return SIG_VALIDATION_FAILED;
         nonce++;
         if (missingAccountFunds > 0) {
-            (bool paid, ) = entryPoint.call{value: missingAccountFunds}("");
-            require(paid, "pay failed");
+            entryPoint.depositTo{value: missingAccountFunds}(address(this));
         }
         return 0;
     }
@@ -52,12 +52,16 @@ contract PasskeyAccount {
         emit Executed(to, value, data);
     }
 
-    function _verify(bytes32 hash, bytes calldata signature) internal view returns (bool) {
-        if (signature.length != 64) return false;
+    function _verify(bytes32 hash, bytes calldata signature) internal view returns (uint256) {
+        if (signature.length != 64) return 0;
         (bytes32 r, bytes32 s) = abi.decode(signature, (bytes32, bytes32));
-        bytes memory input = abi.encodePacked(hash, r, s, qx, qy);
+        bytes32 digest = sha256(abi.encodePacked(hash));
+        bytes memory input = abi.encodePacked(digest, r, s, qx, qy);
         (bool ok, bytes memory out) = address(0x100).staticcall(input);
-        return ok && out.length == 32 && out[31] == 0x01;
+        if (!ok || out.length != 32) {
+            return 0;
+        }
+        return uint256(bytes32(out));
     }
 }
 

@@ -8,9 +8,11 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src --ext .ts",
-    "test": "echo \"(no tests yet)\""
+    "test": "npm run build && node dist/passkey-e2e.js",
+    "bundler:local": "npm run build && node dist/local-bundler.js"
   },
   "dependencies": {
+    "@noble/curves": "^1.9.7",
     "cbor-web": "^10.0.11",
     "ethers": "^6.12.1"
   },

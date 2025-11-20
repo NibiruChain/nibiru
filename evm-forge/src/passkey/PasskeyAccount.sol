@@ -59,7 +59,7 @@ contract PasskeyAccount {
         nonce++;
 
         if (missingAccountFunds > 0) {
-            _payTo(address(entryPoint), missingAccountFunds);
+            entryPoint.depositTo{ value: missingAccountFunds }(address(this));
         }
         return 0;
     }
@@ -72,13 +72,10 @@ contract PasskeyAccount {
     function _verifySignature(bytes32 userOpHash, bytes calldata signature) internal view returns (bool) {
         if (signature.length != 64) return false;
         (bytes32 r, bytes32 s) = abi.decode(signature, (bytes32, bytes32));
-        return P256Precompile.verify(userOpHash, r, s, qx, qy);
+        bytes32 digest = sha256(abi.encodePacked(userOpHash));
+        return P256Precompile.verify(digest, r, s, qx, qy);
     }
 
-    function _payTo(address to, uint256 amount) internal {
-        (bool ok,) = to.call{ value: amount }("");
-        require(ok, "PasskeyAccount: payment failed");
-    }
 }
 
 /// @notice Simple clone factory for PasskeyAccount instances.

@@ -14,7 +14,7 @@
     "@nibiruchain/evm-core": "^0.0.7",
     "@nibiruchain/solidity": "^0.0.4",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "@openzeppelin/contracts": "^5.1.0",
+    "@openzeppelin/contracts": "^4.9.6",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/bun": "^1.2.5",
@@ -37,5 +37,8 @@
   },
   "scripts": {
     "bundler": "bash scripts/start-bundler.sh"
+  },
+  "dependencies": {
+    "@account-abstraction/contracts": "^0.6.0"
   }
 }
