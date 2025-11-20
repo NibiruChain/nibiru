@@ -5,6 +5,9 @@
 - [Forge](https://github.com/foundry-rs/foundry/tree/master/crates/forge): compile, test, fuzz, format, and deploy smart
   contracts
 - [Forge Std](https://github.com/foundry-rs/forge-std): collection of helpful contracts and utilities for testing
+- Passkey / P-256 testbed: `src/passkey/*` and `test/PasskeyAccount.t.sol` wire a P-256 precompile at
+  `0x0000000000000000000000000000000000000100` (RIP-7212 semantics) into a minimal ERC-4337-style smart account and
+  factory.
 - [Prettier](https://github.com/prettier/prettier): code formatter for non-Solidity files
 - [Solhint](https://github.com/protofire/solhint): linter for Solidity code
 
@@ -21,6 +24,19 @@ bun install
 forge install # Update ./lib
 forge test    # sanity check
 ```
+
+### Passkey / P-256 quickstart (Nibiru EVM)
+
+- Precompile address: `0x0000000000000000000000000000000000000100` (RIP-7212 style). Input is 160 bytes:
+  `hash|r|s|qx|qy` (32 bytes each, big-endian). Output is 32 bytes; the last byte is `0x01` for valid, `0x00` for
+  invalid.
+- Contracts: `PasskeyAccount` + `PasskeyAccountFactory` live in `src/passkey/`; tests in
+  `test/PasskeyAccount.t.sol` (mocks precompile for fast unit testing).
+- Deploy helper: `forge script script/DeployPasskeyFactory.s.sol --rpc-url <nibiru_rpc> --private-key <pk> --broadcast`
+  with env:
+  - `ENTRY_POINT` (required) → deployed ERC-4337 EntryPoint on Nibiru,
+  - `QX`, `QY` (optional) → P-256 pubkey coords to auto-create first account,
+  - `SALT` (optional, default 0) → deterministic clone salt.
 
 Option 2: Build from source with `cargo`
 
