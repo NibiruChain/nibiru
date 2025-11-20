@@ -25,7 +25,7 @@ func TestP256Precompile_SuccessAndFailure(t *testing.T) {
 	r, s, err := ecdsa.Sign(rand.Reader, priv, msgHash[:])
 	require.NoError(t, err)
 
-	validInput := encodeP256Input(msgHash[:], r, s, priv.PublicKey.X, priv.PublicKey.Y)
+	validInput := encodeP256Input(msgHash[:], r, s, priv.X, priv.Y)
 
 	evmObj, _ := deps.NewEVM()
 	resp, err := deps.EvmKeeper.CallContract(
@@ -45,7 +45,7 @@ func TestP256Precompile_SuccessAndFailure(t *testing.T) {
 	// Flip a byte in the hash to force verification failure.
 	badHash := msgHash
 	badHash[0] ^= 0x01
-	invalidInput := encodeP256Input(badHash[:], r, s, priv.PublicKey.X, priv.PublicKey.Y)
+	invalidInput := encodeP256Input(badHash[:], r, s, priv.X, priv.Y)
 
 	evmObj, _ = deps.NewEVM()
 	resp, err = deps.EvmKeeper.CallContract(
@@ -109,8 +109,8 @@ func leftPad(bz []byte, size int) []byte {
 // staticP256Key builds a deterministic private key for repeatable test vectors.
 func staticP256Key() *ecdsa.PrivateKey {
 	priv := new(ecdsa.PrivateKey)
-	priv.PublicKey.Curve = elliptic.P256()
+	priv.Curve = elliptic.P256()
 	priv.D = big.NewInt(1) // simple, deterministic scalar
-	priv.PublicKey.X, priv.PublicKey.Y = priv.PublicKey.Curve.ScalarBaseMult(priv.D.Bytes())
+	priv.X, priv.Y = priv.ScalarBaseMult(priv.D.Bytes())
 	return priv
 }
