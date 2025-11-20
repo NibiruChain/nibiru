@@ -105,7 +105,7 @@ async function waitForTx(txhash: string): Promise<TxResRaw> {
   clog(`Waiting for transaction ${txhash} to be mined...`);
 
   // Wait for 6 seconds
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 6000));
 
   try {
     const txResult = execCommand(
