@@ -21,6 +21,7 @@ Localnet has JSON RPC enabled by default.
 
 ```bash
 npm install
+(cd passkey-sdk && npm install)
 ```
 
 ### Configure environment in `.env` file
@@ -85,3 +86,13 @@ ENTRY_POINT=0x... \
 CHAIN_ID=12345 \
 npm run bundler
 ```
+
+### Passkey ERC-4337 test coverage
+
+The `bun test` suite now exercises the passkey ERC-4337 flow end-to-end. During the run it:
+
+- Builds the `passkey-sdk`, deploys a fresh `EntryPointV06` + `PasskeyAccountFactory`, and funds the dev bundler key.
+- Starts the local bundler from `passkey-sdk/dist/local-bundler.js` on port `14437`.
+- Executes the CLI passkey script against that bundler to prove a full user operation.
+
+Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in both `evm-e2e/` and `evm-e2e/passkey-sdk/`) and that port `14437` is free before running `bun test` or `just test-e2e`.
