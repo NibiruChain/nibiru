@@ -25,7 +25,8 @@ type Config struct {
 	Leverage         uint64 // Exact leverage (if set, overrides min/max)
 	LeverageMin      uint64
 	LeverageMax      uint64
-	Long             *bool // Trade direction: true for long, false for short, nil for random
+	Long             *bool    // Trade direction: true for long, false for short, nil for random
+	OpenPrice        *float64 // Open price (optional for market orders, required for limit/stop)
 	MarketIndex      uint64
 	CollateralIndex  uint64
 	TradeType        string
