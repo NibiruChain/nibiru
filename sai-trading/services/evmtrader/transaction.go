@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -96,7 +99,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 	}
 
 	if grpcRes.TxResponse.Code != 0 {
-		return nil, fmt.Errorf("tx failed: code=%d, log=%s", grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
+		return nil, parseContractError(grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
 	}
 
 	// Wait for transaction to be committed
@@ -171,4 +174,53 @@ func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.
 
 	// Sign and send EVM tx to WASM precompile
 	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+}
+
+// parseContractError parses common contract errors and provides user-friendly error messages.
+func parseContractError(code uint32, rawLog string) error {
+	// Parse exposure limit error
+	if strings.Contains(rawLog, "exposure limit reached") {
+		// Extract OI values: "pair oi collateral: 1210358/1000000"
+		re := regexp.MustCompile(`pair oi collateral: (\d+)/(\d+)`)
+		matches := re.FindStringSubmatch(rawLog)
+		if len(matches) == 3 {
+			currentOI, _ := strconv.ParseUint(matches[1], 10, 64)
+			maxOI, _ := strconv.ParseUint(matches[2], 10, 64)
+			pctUsed := float64(currentOI) / float64(maxOI) * 100
+
+			return fmt.Errorf(`❌ MARKET EXPOSURE LIMIT REACHED
+
+Current Open Interest: %d
+Maximum Allowed:       %d
+Capacity Used:         %.1f%%
+
+This market cannot accept new positions (long OR short) until some positions are closed.
+
+Solutions:
+  1. Try a different market:    trader list
+  2. Wait for positions to close
+  3. Check market status regularly
+
+Error code: %d`, currentOI, maxOI, pctUsed, code)
+		}
+		return fmt.Errorf("market exposure limit reached - cannot open new positions (long or short)\n\nTry: trader list (to see other markets)\n\nError code: %d, log: %s", code, rawLog)
+	}
+
+	// Parse insufficient balance error
+	if strings.Contains(rawLog, "insufficient funds") || strings.Contains(rawLog, "insufficient balance") {
+		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough collateral tokens for this trade.\n\nCheck balance: trader positions\n\nError code: %d", code)
+	}
+
+	// Parse invalid market error
+	if strings.Contains(rawLog, "market not found") || strings.Contains(rawLog, "invalid market") {
+		return fmt.Errorf("❌ INVALID MARKET\n\nThe specified market doesn't exist.\n\nSee available markets: trader list\n\nError code: %d", code)
+	}
+
+	// Parse leverage error
+	if strings.Contains(rawLog, "leverage") && (strings.Contains(rawLog, "too high") || strings.Contains(rawLog, "exceeds maximum")) {
+		return fmt.Errorf("❌ LEVERAGE TOO HIGH\n\nThe requested leverage exceeds the market's maximum.\n\nError code: %d, log: %s", code, rawLog)
+	}
+
+	// Default error (show raw log)
+	return fmt.Errorf("transaction failed (code=%d)\n\nContract error:\n%s\n\nTip: Run 'trader list' to check market status", code, rawLog)
 }

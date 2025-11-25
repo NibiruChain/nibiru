@@ -68,7 +68,6 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	// Connect to gRPC for transaction broadcasting
 	grpcConn, err := grpc.DialContext(ctx, cfg.GrpcUrl,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
@@ -106,44 +105,6 @@ func (t *EVMTrader) Close() {
 			t.log("Failed to close gRPC connection", "error", err.Error())
 		}
 	}
-}
-
-func (t *EVMTrader) Run(ctx context.Context) error {
-	t.log("EVM trader started", "account", t.accountAddr.Hex(), "perp", t.addrs.PerpAddress)
-
-	chainID, err := t.client.ChainID(ctx)
-	if err != nil {
-		return fmt.Errorf("chain id: %w", err)
-	}
-	t.log("Connected to chain", "chain_id", chainID.String())
-
-	// Query ERC20 balance
-	erc20ABI := getERC20ABI()
-	erc20Addr := common.HexToAddress(t.addrs.TokenStNIBIERC20)
-	bal, err := t.queryERC20Balance(ctx, erc20ABI, erc20Addr, t.accountAddr)
-	if err != nil {
-		t.log("Failed to query ERC20 balance", "error", err.Error())
-		return err
-	}
-	t.log("ERC20 balance", "balance", bal.String())
-
-	// Use static JSON file if provided, otherwise use dynamic config
-	if t.cfg.TradeJSONFile != "" {
-		t.log("Opening trade from JSON file", "file", t.cfg.TradeJSONFile)
-		return t.OpenTradeFromJSON(ctx, t.cfg.TradeJSONFile)
-	}
-
-	// Open trade using dynamic config
-	params, err := t.prepareTradeFromConfig(ctx, bal)
-	if err != nil {
-		return err
-	}
-	if params == nil {
-		return nil // Insufficient balance or other skip condition
-	}
-
-	// Execute the trade
-	return t.OpenTrade(ctx, chainID, params)
 }
 
 // OpenTradeFromConfig opens a trade using the trader's configuration

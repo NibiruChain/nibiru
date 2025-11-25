@@ -14,6 +14,56 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// queryWasmContract is a helper method that encapsulates the common pattern
+// for querying WASM contracts via the EVM precompile.
+func (t *EVMTrader) queryWasmContract(ctx context.Context, contractAddr string, queryMsg map[string]interface{}) ([]byte, error) {
+	// Marshal query message to JSON
+	queryBytes, err := json.Marshal(queryMsg)
+	if err != nil {
+		return nil, fmt.Errorf("marshal query: %w", err)
+	}
+
+	// Get WASM precompile ABI and address
+	wasmABI := getWasmPrecompileABI()
+	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+
+	// Pack the query call with contract address and query bytes
+	data, err := wasmABI.Pack("query", contractAddr, queryBytes)
+	if err != nil {
+		return nil, fmt.Errorf("pack query: %w", err)
+	}
+
+	// Create call message for read-only contract call
+	msg := ethereum.CallMsg{
+		From: t.accountAddr,
+		To:   &wasmPrecompileAddr,
+		Data: data,
+	}
+
+	// Execute the contract call
+	result, err := t.client.CallContract(ctx, msg, nil)
+	if err != nil {
+		return nil, fmt.Errorf("call contract: %w", err)
+	}
+
+	// Unpack the result using the WASM ABI
+	unpacked, err := wasmABI.Unpack("query", result)
+	if err != nil {
+		return nil, fmt.Errorf("unpack query result: %w", err)
+	}
+	if len(unpacked) == 0 {
+		return nil, fmt.Errorf("empty query result")
+	}
+
+	// Extract the bytes containing the JSON response
+	responseBytes, ok := unpacked[0].([]byte)
+	if !ok {
+		return nil, fmt.Errorf("invalid query result type")
+	}
+
+	return responseBytes, nil
+}
+
 // QueryAndDisplayPositions queries all trades and displays open positions
 func (t *EVMTrader) QueryAndDisplayPositions(ctx context.Context) error {
 	// Query trades/positions
@@ -63,43 +113,11 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 	queryMsg := map[string]interface{}{
 		"list_markets": map[string]interface{}{},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return nil, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.PerpAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
 	if err != nil {
-		return nil, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return nil, fmt.Errorf("call contract: %w", err)
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return nil, fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return nil, fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return nil, fmt.Errorf("invalid query result type")
+		return nil, err
 	}
 
 	// Parse JSON response - list_markets returns an array of market index strings
@@ -152,43 +170,11 @@ func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 			"trader": nibiruAddr.String(),
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return nil, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.PerpAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
 	if err != nil {
-		return nil, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return nil, fmt.Errorf("call contract: %w", err)
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return nil, fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return nil, fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return nil, fmt.Errorf("invalid query result type")
+		return nil, err
 	}
 
 	// Parse JSON response - returns an array of trades with wrapped index types
@@ -248,43 +234,11 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 			"index": fmt.Sprintf("MarketIndex(%d)", marketIndex),
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return nil, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.PerpAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
 	if err != nil {
-		return nil, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return nil, fmt.Errorf("call contract: %w", err)
-	}
-
-	// Unpack result
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return nil, fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return nil, fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return nil, fmt.Errorf("invalid query result type")
+		return nil, err
 	}
 
 	// Parse JSON response
@@ -349,43 +303,11 @@ func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (fl
 			"index": tokenIndex,
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return 0, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.OracleAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.OracleAddress, queryMsg)
 	if err != nil {
-		return 0, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return 0, fmt.Errorf("call contract: %w", err)
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return 0, fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return 0, fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return 0, fmt.Errorf("invalid query result type")
+		return 0, err
 	}
 
 	// Parse JSON response
@@ -421,43 +343,11 @@ func (t *EVMTrader) queryExchangeRate(ctx context.Context, baseIndex, quoteIndex
 			"quote": quoteIndex,
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return 0, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.OracleAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.OracleAddress, queryMsg)
 	if err != nil {
-		return 0, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return 0, fmt.Errorf("call contract: %w", err)
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return 0, fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return 0, fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return 0, fmt.Errorf("invalid query result type")
+		return 0, err
 	}
 
 	// Parse JSON response
@@ -506,43 +396,11 @@ func (t *EVMTrader) queryCollateralDenom(ctx context.Context, collateralIndex ui
 			"index": collateralIndex,
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return "", fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.PerpAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
 	if err != nil {
-		return "", fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		return "", fmt.Errorf("call contract: %w", err)
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		return "", fmt.Errorf("unpack query result: %w", err)
-	}
-	if len(unpacked) == 0 {
-		return "", fmt.Errorf("empty query result")
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
-		return "", fmt.Errorf("invalid query result type")
+		return "", err
 	}
 
 	// Parse JSON response - get_collateral returns { denom: string, ... }
@@ -568,44 +426,11 @@ func (t *EVMTrader) queryPairDepth(ctx context.Context, marketIndex uint64) (boo
 			"index": marketIndex,
 		},
 	}
-	queryBytes, err := json.Marshal(queryMsg)
-	if err != nil {
-		return false, fmt.Errorf("marshal query: %w", err)
-	}
 
-	// Pack query call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
-	data, err := wasmABI.Pack("query", t.addrs.PerpAddress, queryBytes)
+	// Execute the query using the helper method
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
 	if err != nil {
-		return false, fmt.Errorf("pack query: %w", err)
-	}
-
-	// Call contract (read-only, no transaction needed)
-	msg := ethereum.CallMsg{
-		From: t.accountAddr,
-		To:   &wasmPrecompileAddr,
-		Data: data,
-	}
-	result, err := t.client.CallContract(ctx, msg, nil)
-	if err != nil {
-		// If the contract call fails, it likely means pair_depth doesn't exist
-		return false, nil
-	}
-
-	// The precompile returns bytes, need to unpack first
-	unpacked, err := wasmABI.Unpack("query", result)
-	if err != nil {
-		// If unpacking fails, pair_depth might not exist
-		return false, nil
-	}
-	if len(unpacked) == 0 {
-		return false, nil
-	}
-
-	// The result is bytes containing JSON
-	responseBytes, ok := unpacked[0].([]byte)
-	if !ok {
+		// If the query fails, it likely means pair_depth doesn't exist
 		return false, nil
 	}
 

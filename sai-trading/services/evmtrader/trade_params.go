@@ -2,24 +2,107 @@ package evmtrader
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"math/big"
-	"math/rand"
 )
 
-// prepareTradeFromConfig prepares trade parameters from the trader's config
+const (
+	// Price adjustment percentages for limit orders
+	limitOrderPriceAdjustmentUp   = 1.1 // 10% above for long positions
+	limitOrderPriceAdjustmentDown = 0.9 // 10% below for short positions
+
+	// Default slippage percentage
+	defaultSlippagePercent = "1"
+)
+
+// prepareTradeFromConfig prepares trade parameters from the trader's config.
+// This is the main orchestration function that coordinates the trade preparation process.
 func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int) (*OpenTradeParams, error) {
-	// Calculate trade amount - use exact value if provided, otherwise random within range
+	// Step 1: Determine trade amount (validates balance internally)
+	tradeAmt, err := t.determineTradeAmount(balance)
+	if err != nil {
+		return nil, err
+	}
+	if tradeAmt == nil {
+		// Insufficient balance - not an error, just skip this trade
+		return nil, nil
+	}
+
+	// Step 2: Determine trade parameters (pure logic, no I/O)
+	leverage := t.determineLeverage()
+	isLong := t.determineDirection()
+	tradeType := t.determineTradeType()
+
+	// Step 3: Determine open_price
+	// - If set in config (from CLI --open-price flag), use that
+	// - Otherwise, fetch from oracle
+	var openPrice float64
+	if t.cfg.OpenPrice != nil {
+		openPrice = *t.cfg.OpenPrice
+		t.log("Using open_price from config", "price", openPrice)
+	} else {
+		// Fetch market price from oracle (I/O operation)
+		price, err := t.fetchMarketPrice(ctx, tradeType)
+		if err != nil {
+			return nil, err
+		}
+		if price == 0 {
+			t.log("Oracle price is zero, skipping trade")
+			return nil, nil
+		}
+		openPrice = price
+		t.log("Fetched open_price from oracle", "price", openPrice)
+	}
+
+	// Step 4: Adjust price for limit orders
+	isLimitOrder := (tradeType == "limit" || tradeType == "stop")
+	adjustedPrice := t.adjustPriceForLimitOrder(openPrice, isLong, isLimitOrder)
+
+	// Validate adjusted price is non-zero for limit/stop orders (required by specification)
+	if isLimitOrder && adjustedPrice == 0 {
+		return nil, fmt.Errorf("adjusted open_price cannot be zero for %s orders (trigger price required)", tradeType)
+	}
+
+	// Step 5: Calculate TP/SL for limit orders
+	var tp, sl *float64
+	if isLimitOrder {
+		tpVal, slVal := t.calculateTPSL(adjustedPrice, isLong)
+		tp = &tpVal
+		sl = &slVal
+	}
+
+	// Step 6: Log and return
+	t.logTradePreparation(tradeType, isLong, leverage, tradeAmt, adjustedPrice, openPrice, tp, sl)
+
+	return &OpenTradeParams{
+		MarketIndex:     t.cfg.MarketIndex,
+		Leverage:        leverage,
+		Long:            isLong,
+		CollateralIndex: t.cfg.CollateralIndex,
+		TradeType:       tradeType,
+		OpenPrice:       &adjustedPrice,
+		TP:              tp,
+		SL:              sl,
+		SlippageP:       defaultSlippagePercent,
+		CollateralAmt:   tradeAmt,
+	}, nil
+}
+
+// determineTradeAmount calculates the trade amount based on config and available balance.
+// Returns nil if balance is insufficient (not an error condition).
+func (t *EVMTrader) determineTradeAmount(balance *big.Int) (*big.Int, error) {
 	var tradeAmt *big.Int
+
 	if t.cfg.TradeSize > 0 {
-		// Use exact trade size
+		// Use exact trade size from config
 		tradeAmt = new(big.Int).SetUint64(t.cfg.TradeSize)
 		if balance.Cmp(tradeAmt) < 0 {
 			t.log("Insufficient ERC20 balance for trade", "balance", balance.String(), "required", tradeAmt.String())
 			return nil, nil
 		}
 	} else {
-		// Use random within range
+		// Use random amount within configured range
 		tradeAmt = t.calculateRandomTradeAmount(balance)
 		if tradeAmt == nil {
 			t.log("Insufficient ERC20 balance for trade", "balance", balance.String())
@@ -27,105 +110,124 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 		}
 	}
 
-	// Calculate leverage - use exact value if provided, otherwise random within range
-	var leverage uint64
+	return tradeAmt, nil
+}
+
+// determineLeverage returns the leverage to use for the trade.
+// Uses config value if set, otherwise random within configured range.
+// Ensures leverage > 0 as required by specification.
+func (t *EVMTrader) determineLeverage() uint64 {
 	if t.cfg.Leverage > 0 {
-		leverage = t.cfg.Leverage
-	} else {
-		leverage = t.calculateRandomLeverage()
+		return t.cfg.Leverage
 	}
+	leverage := t.calculateRandomLeverage()
+	// Ensure leverage is at least 1 (required by specification)
+	if leverage == 0 {
+		return 1
+	}
+	return leverage
+}
 
-	// Determine trade direction - use config if provided, otherwise random
-	var isLong bool
+// determineDirection returns the trade direction (long or short).
+// Uses config value if set, otherwise random using cryptographically secure randomness.
+func (t *EVMTrader) determineDirection() bool {
 	if t.cfg.Long != nil {
-		isLong = *t.cfg.Long
-	} else {
-		isLong = rand.Intn(2) == 1
+		return *t.cfg.Long
 	}
+	// Use crypto/rand for unpredictable trade direction
+	return secureRandomBool()
+}
 
-	// Determine trade type - use config if set, otherwise auto-determine
-	var tradeType string
-	var isLimitOrder bool
+// determineTradeType returns the trade type (trade, limit, or stop).
+// Uses config value if set, otherwise determines based on EnableLimitOrder flag.
+func (t *EVMTrader) determineTradeType() string {
 	if t.cfg.TradeType != "" {
-		// Use explicitly set trade type
-		tradeType = t.cfg.TradeType
-		isLimitOrder = (tradeType == "limit" || tradeType == "stop")
-	} else {
-		// Auto-determine based on enableLimitOrder flag
-		isLimitOrder = t.cfg.EnableLimitOrder && rand.Intn(2) == 1
-		if isLimitOrder {
-			if rand.Intn(2) == 1 {
-				tradeType = "stop"
-			} else {
-				tradeType = "limit"
-			}
-		} else {
-			tradeType = "trade"
-		}
+		// Use explicitly configured trade type
+		return t.cfg.TradeType
 	}
 
-	// Fetch current price from oracle
-	// For market orders, we need the market's base token price, not the collateral price
-	var openPrice float64
-	var err error
+	// Auto-determine based on enableLimitOrder flag
+	if t.cfg.EnableLimitOrder && secureRandomBool() {
+		// Randomly choose between limit and stop
+		if secureRandomBool() {
+			return "stop"
+		}
+		return "limit"
+	}
+
+	return "trade" // Market order
+}
+
+// fetchMarketPrice queries the oracle for the appropriate price based on trade type.
+// For market orders, it fetches the exchange rate between base and quote tokens.
+// For limit/stop orders, it fetches the collateral token price.
+func (t *EVMTrader) fetchMarketPrice(ctx context.Context, tradeType string) (float64, error) {
 	if tradeType == "trade" {
-		// For market orders, query the market to get base and quote tokens, then get the exchange rate
-		// This matches what the contract does - it queries GetExchangeRate to get base_per_quote
-		market, err := t.queryMarket(ctx, t.cfg.MarketIndex)
-		if err != nil {
-			return nil, fmt.Errorf("query market %d: %w", t.cfg.MarketIndex, err)
-		}
-
-		if market.BaseToken == nil {
-			return nil, fmt.Errorf("market %d has no base token", t.cfg.MarketIndex)
-		}
-		if market.QuoteToken == nil {
-			return nil, fmt.Errorf("market %d has no quote token", t.cfg.MarketIndex)
-		}
-
-		// Query the exchange rate between base and quote tokens (this is what the contract uses)
-		openPrice, err = t.queryExchangeRate(ctx, *market.BaseToken, *market.QuoteToken)
-		if err != nil {
-			return nil, fmt.Errorf("query exchange rate for market %d (base=%d, quote=%d): %w", t.cfg.MarketIndex, *market.BaseToken, *market.QuoteToken, err)
-		}
-	} else {
-		// For limit/stop orders, use collateral price
-		openPrice, err = t.queryOraclePrice(ctx, t.cfg.CollateralIndex)
-		if err != nil {
-			return nil, fmt.Errorf("query collateral price (index=%d): %w", t.cfg.CollateralIndex, err)
-		}
-	}
-	if openPrice == 0 {
-		t.log("Oracle price is zero, skipping trade")
-		return nil, nil
+		// For market orders, get the exchange rate (base per quote)
+		return t.fetchExchangeRateForMarket(ctx)
 	}
 
-	// Adjust price for limit orders
-	if isLimitOrder {
-		if isLong {
-			openPrice = openPrice * 1.1 // Buy limit above current price
-		} else {
-			openPrice = openPrice * 0.9 // Sell limit below current price
-		}
+	// For limit/stop orders, use collateral price
+	price, err := t.queryOraclePrice(ctx, t.cfg.CollateralIndex)
+	if err != nil {
+		return 0, fmt.Errorf("query collateral price (index=%d): %w", t.cfg.CollateralIndex, err)
+	}
+	return price, nil
+}
+
+// fetchExchangeRateForMarket queries the market and returns the exchange rate between base and quote tokens.
+// This matches what the perp contract does internally. Uses the market index from config.
+func (t *EVMTrader) fetchExchangeRateForMarket(ctx context.Context) (float64, error) {
+	return t.fetchMarketPriceForIndex(ctx, t.cfg.MarketIndex)
+}
+
+// fetchMarketPriceForIndex queries the oracle for the exchange rate of a specific market.
+// This fetches the base/quote exchange rate for the given market index.
+func (t *EVMTrader) fetchMarketPriceForIndex(ctx context.Context, marketIndex uint64) (float64, error) {
+	// Query market to get base and quote token indices
+	market, err := t.queryMarket(ctx, marketIndex)
+	if err != nil {
+		return 0, fmt.Errorf("query market %d: %w", marketIndex, err)
 	}
 
-	// For market trades, the contract uses the actual execution price from the market
-	// However, open_price is still required by the contract for liquidation price calculation.
-	// We use the oracle price as an estimate - the contract will validate against the actual
-	// execution price during trade validation.
-	// For limit/stop orders, open_price is the limit/stop price.
-	marketOpenPrice := openPrice
-
-	// Calculate TP/SL
-	var tp, sl *float64
-	if isLimitOrder {
-		tpVal, slVal := t.calculateTPSL(openPrice, isLong)
-		tp = &tpVal
-		sl = &slVal
+	if market.BaseToken == nil {
+		return 0, fmt.Errorf("market %d has no base token", marketIndex)
 	}
+	if market.QuoteToken == nil {
+		return 0, fmt.Errorf("market %d has no quote token", marketIndex)
+	}
+
+	// Query the exchange rate
+	rate, err := t.queryExchangeRate(ctx, *market.BaseToken, *market.QuoteToken)
+	if err != nil {
+		return 0, fmt.Errorf("query exchange rate for market %d (base=%d, quote=%d): %w",
+			marketIndex, *market.BaseToken, *market.QuoteToken, err)
+	}
+
+	return rate, nil
+}
+
+// adjustPriceForLimitOrder adjusts the price for limit orders.
+// For long positions, increases price by 10% (buy limit above current price).
+// For short positions, decreases price by 10% (sell limit below current price).
+// For market orders, returns the price unchanged.
+func (t *EVMTrader) adjustPriceForLimitOrder(price float64, isLong, isLimitOrder bool) float64 {
+	if !isLimitOrder {
+		return price
+	}
+
+	if isLong {
+		return price * limitOrderPriceAdjustmentUp
+	}
+	return price * limitOrderPriceAdjustmentDown
+}
+
+// logTradePreparation logs the prepared trade parameters.
+func (t *EVMTrader) logTradePreparation(tradeType string, isLong bool, leverage uint64,
+	tradeAmt *big.Int, adjustedPrice, oraclePrice float64, tp, sl *float64) {
 
 	whatTraderOpens := "position"
-	if isLimitOrder {
+	if tradeType == "limit" || tradeType == "stop" {
 		whatTraderOpens = "limit order"
 	}
 
@@ -134,27 +236,26 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 		"long", isLong,
 		"leverage", leverage,
 		"collateral", tradeAmt.String(),
-		"open_price", marketOpenPrice,
-		"oracle_price", openPrice,
+		"open_price", adjustedPrice,
+		"oracle_price", oraclePrice,
 		"tp", tp,
 		"sl", sl,
 	)
-
-	return &OpenTradeParams{
-		MarketIndex:     t.cfg.MarketIndex,
-		Leverage:        leverage,
-		Long:            isLong,
-		CollateralIndex: t.cfg.CollateralIndex,
-		TradeType:       tradeType,
-		OpenPrice:       &marketOpenPrice,
-		TP:              tp,
-		SL:              sl,
-		SlippageP:       "1", // TODO: Make this configurable
-		CollateralAmt:   tradeAmt,
-	}, nil
 }
 
-// calculateRandomTradeAmount calculates a random trade amount within configured range
+// secureRandomBool returns a cryptographically secure random boolean.
+// Uses crypto/rand instead of math/rand for unpredictable randomness.
+func secureRandomBool() bool {
+	var b [1]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		// Fallback to false on error (should never happen)
+		return false
+	}
+	return b[0]&1 == 1
+}
+
+// calculateRandomTradeAmount calculates a random trade amount within configured range.
+// Uses cryptographically secure randomness for unpredictable trade amounts.
 func (t *EVMTrader) calculateRandomTradeAmount(balance *big.Int) *big.Int {
 	if t.cfg.TradeSizeMax <= t.cfg.TradeSizeMin {
 		// Use min if max not set
@@ -165,9 +266,9 @@ func (t *EVMTrader) calculateRandomTradeAmount(balance *big.Int) *big.Int {
 		return amt
 	}
 
-	// Random amount between min and max
+	// Random amount between min and max using crypto/rand
 	rangeSize := t.cfg.TradeSizeMax - t.cfg.TradeSizeMin
-	randomOffset := rand.Uint64() % (rangeSize + 1)
+	randomOffset := secureRandomUint64(rangeSize + 1)
 	tradeAmt := t.cfg.TradeSizeMin + randomOffset
 
 	amt := new(big.Int).SetUint64(tradeAmt)
@@ -181,14 +282,31 @@ func (t *EVMTrader) calculateRandomTradeAmount(balance *big.Int) *big.Int {
 	return amt
 }
 
-// calculateRandomLeverage calculates a random leverage within configured range
+// calculateRandomLeverage calculates a random leverage within configured range.
+// Uses cryptographically secure randomness for unpredictable leverage selection.
 func (t *EVMTrader) calculateRandomLeverage() uint64 {
 	if t.cfg.LeverageMax <= t.cfg.LeverageMin {
 		return t.cfg.LeverageMin
 	}
 	rangeSize := t.cfg.LeverageMax - t.cfg.LeverageMin
-	randomOffset := rand.Uint64() % (rangeSize + 1)
+	randomOffset := secureRandomUint64(rangeSize + 1)
 	return t.cfg.LeverageMin + randomOffset
+}
+
+// secureRandomUint64 returns a cryptographically secure random uint64 in the range [0, max).
+func secureRandomUint64(max uint64) uint64 {
+	if max == 0 {
+		return 0
+	}
+
+	// Generate random big.Int
+	maxBig := new(big.Int).SetUint64(max)
+	n, err := rand.Int(rand.Reader, maxBig)
+	if err != nil {
+		// Fallback to 0 on error (should never happen)
+		return 0
+	}
+	return n.Uint64()
 }
 
 // calculateTPSL calculates take profit and stop loss based on open price and direction
