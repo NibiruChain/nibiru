@@ -70,6 +70,7 @@ func newOpenCmd() *cobra.Command {
 		marketIndex     uint64
 		collateralIndex uint64
 		tradeType       string
+		openPrice       float64
 		tradeJSONFile   string
 	)
 
@@ -78,13 +79,30 @@ func newOpenCmd() *cobra.Command {
 		Short: "Open a trade in Sai Perps",
 		Long: `Open a trade (market order, limit order, or stop order) in Sai Perps.
 
-This command opens a new trading position using the EVM precompile interface.`,
+This command opens a new trading position using the EVM precompile interface.
+
+Examples:
+  # Market order (auto-fetch price)
+  trader open --market-index 0 --leverage 5 --long true
+
+  # Limit order (must specify trigger price)
+  trader open --trade-type limit --market-index 0 --open-price 70000 --long
+
+  # Short position
+  trader open --market-index 0 --long=false
+
+  # Using JSON file
+  trader open --trade-json sample_txs/open_trade.json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var longPtr *bool
 			if cmd.Flags().Changed("long") {
 				longPtr = &long
 			}
-			return runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax, longPtr, marketIndex, collateralIndex, tradeType, tradeJSONFile)
+			var openPricePtr *float64
+			if cmd.Flags().Changed("open-price") {
+				openPricePtr = &openPrice
+			}
+			return runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax, longPtr, marketIndex, collateralIndex, tradeType, openPricePtr, tradeJSONFile)
 		},
 	}
 
@@ -92,6 +110,7 @@ This command opens a new trading position using the EVM precompile interface.`,
 	cmd.Flags().Uint64Var(&tradeSize, "trade-size", 0, "Exact trade size in smallest units (overrides min/max)")
 	cmd.Flags().Uint64Var(&leverage, "leverage", 0, "Exact leverage (e.g., 10 for 10x, overrides min/max)")
 	cmd.Flags().BoolVar(&long, "long", false, "Trade direction: true for long, false for short (default: random)")
+	cmd.Flags().Float64Var(&openPrice, "open-price", 0, "Open price (required for limit/stop orders, optional for market orders)")
 
 	// Strategy flags - ranges (used if exact values not set)
 	cmd.Flags().Uint64Var(&tradeSizeMin, "trade-size-min", 10_000, "Minimum trade size in smallest units")
@@ -159,7 +178,7 @@ This command queries the perp contract to display all trades/positions with thei
 	return cmd
 }
 
-func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax uint64, long *bool, marketIndex, collateralIndex uint64, tradeType string, tradeJSONFile string) error {
+func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax uint64, long *bool, marketIndex, collateralIndex uint64, tradeType string, openPrice *float64, tradeJSONFile string) error {
 	cfg, err := setupConfig(true)
 	if err != nil {
 		return err
@@ -175,6 +194,7 @@ func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, lever
 	cfg.Long = long
 	cfg.MarketIndex = marketIndex
 	cfg.CollateralIndex = collateralIndex
+	cfg.OpenPrice = openPrice
 	// Validate trade-type if provided
 	if tradeType != "" {
 		if tradeType != "trade" && tradeType != "limit" && tradeType != "stop" {
@@ -182,6 +202,10 @@ func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, lever
 		}
 		cfg.TradeType = tradeType
 		cfg.EnableLimitOrder = (tradeType == "limit" || tradeType == "stop")
+		// Validate open-price is provided for limit/stop orders
+		if (tradeType == "limit" || tradeType == "stop") && openPrice == nil {
+			return fmt.Errorf("--open-price is required for %s orders (trigger price)", tradeType)
+		}
 	} else {
 		// Default to market order if not specified
 		cfg.TradeType = "trade"
