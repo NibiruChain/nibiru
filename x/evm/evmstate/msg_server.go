@@ -122,17 +122,20 @@ func (k *Keeper) EthereumTx(
 
 	stage = "post_execution_gas_refund"
 
+	// TX execution completed, gas should not be measured anymore
+	rootCtxGasless := sdb.RootCtx().WithGasMeter(sdk.NewInfiniteGasMeter())
+	sdb.SetCtx(sdb.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+
 	// Update transient block bloom filter and block log size.
 	{
 		// Note that we MUST use the root ctx here to persist changes. The
 		// sdb.Ctx() is already committed, meaning we propagated changes from
 		// the sdb.Ctx() to mutate sdb.RootCtx(), the official tx state
-		ctx := sdb.RootCtx()
 		logIndex := uint64(sdb.TxCfg().LogIndex)
 		if len(evmResp.Logs) > 0 {
 			gethLogs := evm.LogsToEthereum(evmResp.Logs)
-			k.EvmState.BlockBloom.Set(ctx, k.EvmState.CalcBloomFromLogs(ctx, gethLogs).Bytes())
-			k.EvmState.BlockLogSize.Set(ctx, logIndex+uint64(len(gethLogs)))
+			k.EvmState.BlockBloom.Set(rootCtxGasless, k.EvmState.CalcBloomFromLogs(rootCtxGasless, gethLogs).Bytes())
+			k.EvmState.BlockLogSize.Set(rootCtxGasless, logIndex+uint64(len(gethLogs)))
 		}
 	}
 
@@ -148,15 +151,13 @@ func (k *Keeper) EthereumTx(
 	}
 
 	stage = "post_execution_events_and_tx_index"
-	txEvents := k.GetEvmTxEvents(
-		sdb.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()), // evm events emission must not be gas metered
-		coreTx.To(), coreTx.Type(), *evmMsg, evmResp,
-	)
-	err = txEvents.EmitEvents(sdb.RootCtx())
+	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
+
+	err = txEvents.EmitEvents(rootCtxGasless)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "error emitting ethereum tx events")
 	}
-	err = sdb.RootCtx().EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
+	err = rootCtxGasless.EventManager().EmitTypedEvent(&evm.EventTxLog{Logs: evmResp.Logs})
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "error emitting tx log event")
 	}
@@ -164,10 +165,7 @@ func (k *Keeper) EthereumTx(
 	// Increment to the next tx index. This MUST occur after
 	// "txEvents.EmitEvents" because it's meant to emit abci.Events for the
 	// current tx.
-	k.EvmState.BlockTxIndex.Set(
-		sdb.RootCtx().WithGasMeter(sdk.NewInfiniteGasMeter()), // setting tx index must not be gas metered
-		uint64(sdb.TxCfg().TxIndex)+1,
-	)
+	k.EvmState.BlockTxIndex.Set(rootCtxGasless, uint64(sdb.TxCfg().TxIndex)+1)
 
 	if evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil {
 		evmResp.VmError = fmt.Sprintf(
