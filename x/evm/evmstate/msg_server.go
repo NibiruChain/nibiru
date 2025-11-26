@@ -114,7 +114,9 @@ func (k *Keeper) EthereumTx(
 		stage = "safe_consume_gas"
 		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
 		if gasErr != nil {
-			return nil, gasErr
+			if !evmResp.Failed() { // only set VmError if not already failed
+				evmResp.VmError = gasErr.Error()
+			}
 		}
 	}
 
@@ -146,7 +148,10 @@ func (k *Keeper) EthereumTx(
 	}
 
 	stage = "post_execution_events_and_tx_index"
-	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
+	txEvents := k.GetEvmTxEvents(
+		sdb.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()), // evm events emission must not be gas metered
+		coreTx.To(), coreTx.Type(), *evmMsg, evmResp,
+	)
 	err = txEvents.EmitEvents(sdb.RootCtx())
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "error emitting ethereum tx events")
@@ -159,7 +164,10 @@ func (k *Keeper) EthereumTx(
 	// Increment to the next tx index. This MUST occur after
 	// "txEvents.EmitEvents" because it's meant to emit abci.Events for the
 	// current tx.
-	k.EvmState.BlockTxIndex.Set(sdb.RootCtx(), uint64(sdb.TxCfg().TxIndex)+1)
+	k.EvmState.BlockTxIndex.Set(
+		sdb.RootCtx().WithGasMeter(sdk.NewInfiniteGasMeter()), // setting tx index must not be gas metered
+		uint64(sdb.TxCfg().TxIndex)+1,
+	)
 
 	if evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil {
 		evmResp.VmError = fmt.Sprintf(
@@ -714,7 +722,7 @@ type TxEvents struct {
 	EventTransfer         *evm.EventTransfer
 }
 
-// EmitEthereumTxEvents emits all EVM events applicable to a particular execution case
+// EmitEvents emits all EVM events applicable to a particular execution case
 func (txevents TxEvents) EmitEvents(
 	ctx sdk.Context,
 ) error {
