@@ -47,20 +47,28 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	cmdFlagsSet := cmd.Flags()
 
 	txFs := TxFlagSet()
+	txFlagNames := []string{}
 	txFs.VisitAll(func(f *pflag.Flag) {
 		f.Hidden = true
+		txFlagNames = append(txFlagNames, f.Name)
 	})
 
+	// Show the hidden flags when --help-verbose or -v is given.
 	flagNameHelpVerbose := "help-verbose"
-	cmd.PersistentFlags().BoolP(flagNameHelpVerbose, "v", false, "Show all flags common to each command")
+	cmd.PersistentFlags().BoolP(
+		flagNameHelpVerbose, "v", false,
+		"Show all flags common to each command",
+	)
 	origHelpFn := cmd.HelpFunc()
 	cmd.SetHelpFunc(func(c *cobra.Command, args []string) {
-		if show, _ := cmd.Flags().GetBool(flagNameHelpVerbose); show {
-			cmd.Flags().VisitAll(func(f *pflag.Flag) {
-				f.Hidden = false
-			})
+		if show, _ := c.Flags().GetBool(flagNameHelpVerbose); show {
+			for _, flagName := range txFlagNames {
+				if f := c.Flags().Lookup(flagName); f != nil {
+					f.Hidden = false
+				}
+			}
 		}
-		origHelpFn(cmd, args)
+		origHelpFn(c, args)
 	})
 
 	cmdFlagsSet.AddFlagSet(txFs)
@@ -80,8 +88,9 @@ func AddQueryFlagsToCmd(cmd *cobra.Command) {
 	cmd.Flags().Int64(FlagHeight, 0, "Use a specific height to query state at (this can error if the node is pruning state)")
 	cmd.Flags().StringP(FlagOutput, "o", "text", "Output format (text|json)")
 
-	// some base commands does not require chainID e.g `simd testnet` while subcommands do
-	// hence the flag should not be required for those commands
+	// This helper marks it required for whatever command you pass in. Not all
+	// commands should have "chain-id" marked required.
+	// Some commands such as `nibid testnet` do not need the "chain-id".
 	_ = cmd.MarkFlagRequired(FlagChainID)
 }
 
