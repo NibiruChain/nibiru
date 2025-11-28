@@ -9,6 +9,8 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,7 @@ func TestBase64Decode(t *testing.T) {
 
 			appCodec := app.MakeEncodingConfig().Codec
 			err = genutiltest.ExecInitCmd(
-				testModuleBasicManager, home, appCodec)
+				module.NewBasicManager(genutil.AppModuleBasic{}), home, appCodec)
 			require.NoError(t, err)
 
 			serverCtx := server.NewContext(viper.New(), cfg, logger)

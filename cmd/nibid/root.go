@@ -119,7 +119,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 	rootCmd.AddCommand(
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		AddGenesisAccountCmd(app.DefaultNodeHome),
 		GetBuildWasmMsg(),
 		DecodeBase64Cmd(app.DefaultNodeHome),
 		cmtcli.NewCompletionCmd(rootCmd, true),
