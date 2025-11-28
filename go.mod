@@ -265,10 +265,10 @@ replace (
 
 	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
 
-	// Production replace for Cosmos-SDK. Uncomment to use.
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
-	// Local replace for Cosmos-SDK. Uncomment to use.
-	// github.com/cosmos/cosmos-sdk => ../nibi-cosm-sdk
+	// Replace for Cosmos-SDK using local repo. Uncomment to use.
+	github.com/cosmos/cosmos-sdk => ./internal/cosmos-sdk
+	// Replace for Cosmos-SDK using GitHub tag. Uncomment to use.
+	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 
