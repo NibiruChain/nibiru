@@ -1,6 +1,20 @@
+# Nibiru/Dockerfile
+# 
+# ## Build Targets
+# 
+# Example: docker build --target release .  
+# 
+# - build-base    : Build nibid from source using Go
+# - build-external: Pull precompiled binary from dist/. Used by release workflow
+#   (release.yml) with build-args: src=external to create official binaries for
+#   different hardware (dist/arm64, dist/amd64).
+# - build-source  : Unified binary source (selects base or external)
+# - chaosnet      : Chaosnet development/test IMAGE.
+# - release       : Minimal production runtime IMAGE.
+
 ARG src=base
 
-# ---------- Build Stage ----------
+# ----- Stage "build-base" ----------
 FROM golang:1.24 AS build-base
 
 WORKDIR /nibiru
@@ -8,7 +22,9 @@ WORKDIR /nibiru
 RUN apt-get update && apt-get install -y --no-install-recommends \
     liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
 
-COPY go.mod go.sum ./
+# COPY go.mod go.sum ./
+COPY ["go.mod", "go.sum", "./"]
+COPY ["internal/", "./internal/"]
 RUN go mod download
 
 COPY . .
@@ -18,7 +34,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/nibiru/temp \
     make build && cp build/nibid /root/
 
-# ---------- Binary Copy (External Build) ----------
+# ----- Stage "build-external" 
+# Binary Copy (External Build)
 FROM busybox AS build-external
 
 WORKDIR /root
@@ -31,10 +48,10 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
       cp amd64/nibid /root/nibid; \
     fi
 
-# ---------- Binary Build Source ----------
+# ----- Stage "build-source"
 FROM build-${src} AS build-source
 
-# ---------- Chaosnet Image ----------
+# ----- Stage "chaosnet": Creates IMAGE
 FROM alpine:latest AS chaosnet
 
 WORKDIR /root
@@ -66,7 +83,7 @@ RUN chmod +x ./chaosnet.sh && \
 ENTRYPOINT ["nibid"]
 CMD ["start"]
 
-# ---------- Release Image ----------
+# ----- Stage "release": Creates IMAGE
 FROM alpine:latest AS release
 
 WORKDIR /root
