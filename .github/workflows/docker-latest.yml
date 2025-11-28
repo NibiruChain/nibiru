@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -70,6 +71,15 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: latest-${{ env.ARCH }}
+
+      - name: Debug disk usage
+        run: |
+          echo "== df -h =="
+          df -h
+          echo "== workspace usage =="
+          du -h -d1 .
+          echo "== docker system df =="
+          docker system df || true
 
       - name: Build and push by digest
         id: build
