@@ -153,3 +153,48 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
           bash proto/buf.gen.rs.sh
+
+  cosmos-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Check for Go-related changes"
+        id: check_changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            check_changes:
+              - "internal/cosmos-sdk/**/*.go"
+              - "internal/cosmos-sdk/go.mod"
+              - "internal/cosmos-sdk/go.sum"
+              - "internal/cosmos-sdk/**/*.proto"
+              - "internal/cosmos-sdk/justfile"
+
+      - name: skip-tests
+        if: steps.check_changes.outputs.check_changes == 'false'
+        run: |
+          echo "job \"cosmos-sdk\" was skipped since relevant files were not changed."
+
+      - name: "Set up Go"
+        if: steps.check_changes.outputs.check_changes == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: steps.check_changes.outputs.check_changes == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: Run tests for internal/cosmos-sdk
+        if: steps.check_changes.outputs.check_changes == 'true'
+        working-directory: "internal/cosmos-sdk"
+        run: |
+          just test

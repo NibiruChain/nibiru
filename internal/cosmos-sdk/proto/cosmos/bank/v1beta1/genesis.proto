@@ -1,0 +1,100 @@
+syntax = "proto3";
+package cosmos.bank.v1beta1;
+
+import "amino/amino.proto";
+import "cosmos/bank/v1beta1/bank.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/cosmos/cosmos-sdk/x/bank/types";
+
+// GenesisState defines the bank module's genesis state.
+//
+// Notes:
+// - wei_balances encodes per-account NIBI remainders below 1 unibi (10^12 wei).
+// - Entries MUST be unique by address. Export MUST be sorted by address.
+// - Zero remainders SHOULD be omitted.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // balances is an array containing the balances of all the accounts.
+  repeated Balance balances = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // supply represents the total supply. If it is left empty, then supply will be calculated based on the provided
+  // balances. Otherwise, it will be used to validate that the sum of the balances equals this amount.
+  repeated cosmos.base.v1beta1.Coin supply = 3 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // denom_metadata defines the metadata of the different coins.
+  repeated Metadata denom_metadata = 4 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // send_enabled defines the denoms where send is enabled or disabled.
+  //
+  // Since: cosmos-sdk 0.47
+  repeated SendEnabled send_enabled = 5 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // wei_balances: An array of all wei store balances.
+  // A wei store balance is a per-account NIBI remainder stored in wei (atto‑NIBI),
+  // each in the range [0, 10^12). Values >= 10^12 are normalized to unibi and
+  // recorded on the [GensisState] "balances" field.
+  repeated WeiBalance wei_balances = 11 [
+    // use high index of 11 to avoid futurecollision.
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// Balance defines an account address and balance pair used in the bank module's
+// genesis state.
+message Balance {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // address is the address of the balance holder.
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // coins defines the different coins this balance holds.
+  repeated cosmos.base.v1beta1.Coin coins = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// WeiBalance defined a wei store balance for some account in the bank module's
+// genesis state. Wei store balance encodes values of NIBI smaller than the
+// microNIBI threshold of 10^{-6} NIBI. We defined attoNIBI (10^{-18} NIBI) as 1
+// wei because NIBI acts as "ether" on the Nibiru EVM.
+message WeiBalance {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // addr_bech_32 is the address of the balance holder.
+  string addr_bech32 = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // wei_store_bal is an attoNIBI value in the range [0, 10^{12} - 1).
+  // - Note that zero values are not recorded in state and should not be in this
+  // array.
+  // - Similarly, balances greater than or equal to 10^{12} MUST be rejected.
+  // The total wei balance is represented by the sum of the "unibi" (microNIBI)
+  // and wei parts. If an account holds more than 10^{12} wei (1 microNIBI),
+  // it'll hold that balance as "unibi".
+  uint64 wei_store_bal = 2;
+}

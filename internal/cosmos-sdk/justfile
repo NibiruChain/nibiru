@@ -1,0 +1,22 @@
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Generate protobuf-based types in Golang
+gen-proto-go:
+  #!/usr/bin/env bash
+  echo "Generating protobuf-based types in Go"
+  if ! bash contrib/scripts/gen-proto-go.sh; then
+    echo "❌ failed to generate Go types from protobuf"
+    exit 1
+  fi
+  echo "✅ SUCCESS: just gen-proto-go"
+
+test:
+  #!/usr/bin/env bash
+  go test ./x/...
+  go test ./baseapp/...
+  # FIXME: Fails due to ledger error. This was not fixed in t# cosmos-sdk.
+  # We'll need to do it here in order to run the tests for the entire repo.
+  # go test ./types/... 
