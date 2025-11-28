@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 permissions:
   contents: write
@@ -51,7 +52,6 @@ jobs:
           path: |
             go-build
             go-pkg
-            nibiru-temp
           key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
 
       - name: Inject cache
@@ -60,8 +60,7 @@ jobs:
           cache-map: |
             {
               "go-build": "/root/.cache/go-build",
-              "go-pkg": "/go/pkg",
-              "nibiru-temp": "/nibiru/temp"
+              "go-pkg": "/go/pkg"
             }
           skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
