@@ -14,7 +14,6 @@ import (
 	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
 	groupmodulev1 "cosmossdk.io/api/cosmos/group/module/v1"
 	mintmodulev1 "cosmossdk.io/api/cosmos/mint/module/v1"
-	nftmodulev1 "cosmossdk.io/api/cosmos/nft/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	slashingmodulev1 "cosmossdk.io/api/cosmos/slashing/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
@@ -50,7 +49,6 @@ func defaultConfig() *Config {
 			"genutil",
 			"authz",
 			"feegrant",
-			"nft",
 			"group",
 			"params",
 			"consensus",
@@ -69,7 +67,6 @@ func defaultConfig() *Config {
 			"evidence",
 			"authz",
 			"feegrant",
-			"nft",
 			"group",
 			"params",
 			"consensus",
@@ -89,7 +86,6 @@ func defaultConfig() *Config {
 			"evidence",
 			"authz",
 			"feegrant",
-			"nft",
 			"group",
 			"params",
 			"consensus",
@@ -142,7 +138,6 @@ func AuthModule() ModuleOption {
 					{Account: "bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
 					{Account: "not_bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
 					{Account: "gov", Permissions: []string{"burner"}},
-					{Account: "nft"},
 				},
 			}),
 		}
@@ -277,15 +272,6 @@ func GroupModule() ModuleOption {
 		config.ModuleConfigs["group"] = &appv1alpha1.ModuleConfig{
 			Name:   "group",
 			Config: appconfig.WrapAny(&groupmodulev1.Module{}),
-		}
-	}
-}
-
-func NFTModule() ModuleOption {
-	return func(config *Config) {
-		config.ModuleConfigs["nft"] = &appv1alpha1.ModuleConfig{
-			Name:   "nft",
-			Config: appconfig.WrapAny(&nftmodulev1.Module{}),
 		}
 	}
 }
