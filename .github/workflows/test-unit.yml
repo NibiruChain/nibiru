@@ -145,7 +145,7 @@ jobs:
 
       - name: "Setup Node & npm (for npx)"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "lts/jod" # Node v20
 
