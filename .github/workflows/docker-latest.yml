@@ -88,7 +88,7 @@ jobs:
           context: .
           target: release
           push: true
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
 
