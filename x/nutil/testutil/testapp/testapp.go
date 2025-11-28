@@ -5,8 +5,6 @@ import (
 	"maps"
 	"time"
 
-	wasmapp "github.com/CosmWasm/wasmd/app"
-
 	sdkmath "cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -26,6 +24,7 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/NibiruChain/nibiru/v2/app"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
@@ -77,8 +76,8 @@ func FirstBlockProposer(
 
 // SetDefaultSudoGenesis: Sets the sudo module genesis state to a valid
 // default. See "DefaultSudoers".
-func SetDefaultSudoGenesis(gen wasmapp.GenesisState) {
-	encoding := wasmapp.MakeEncodingConfig()
+func SetDefaultSudoGenesis(gen app.GenesisState) {
+	encoding := app.MakeEncodingConfig()
 
 	var sudoGen sudo.GenesisState
 	encoding.Codec.MustUnmarshalJSON(gen[sudo.ModuleName], &sudoGen)

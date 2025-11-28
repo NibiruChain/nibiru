@@ -7,17 +7,13 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/CosmWasm/wasmd/app/params"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
-
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
-
-	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
@@ -51,6 +47,7 @@ func WeightedOperations(
 	bk types.BankKeeper,
 	k keeper.Keeper,
 ) simulation.WeightedOperations {
+	const defaultWeight int = 100
 	var (
 		weightMsgAggregateExchangeRatePrevote int
 		weightMsgAggregateExchangeRateVote    int
@@ -58,19 +55,19 @@ func WeightedOperations(
 	)
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRatePrevote, &weightMsgAggregateExchangeRatePrevote, nil,
 		func(_ *rand.Rand) {
-			weightMsgAggregateExchangeRatePrevote = params.DefaultWeightMsgSend * 2
+			weightMsgAggregateExchangeRatePrevote = defaultWeight * 2
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgAggregateExchangeRateVote, &weightMsgAggregateExchangeRateVote, nil,
 		func(_ *rand.Rand) {
-			weightMsgAggregateExchangeRateVote = params.DefaultWeightMsgSend * 2
+			weightMsgAggregateExchangeRateVote = defaultWeight * 2
 		},
 	)
 
 	appParams.GetOrGenerate(cdc, OpWeightMsgDelegateFeedConsent, &weightMsgDelegateFeedConsent, nil,
 		func(_ *rand.Rand) {
-			weightMsgDelegateFeedConsent = params.DefaultWeightMsgDelegate
+			weightMsgDelegateFeedConsent = defaultWeight
 		},
 	)
 

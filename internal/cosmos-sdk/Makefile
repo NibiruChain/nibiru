@@ -124,11 +124,7 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
-cosmovisor:
-	$(MAKE) -C tools/cosmovisor cosmovisor
-
-.PHONY: build build-linux-amd64 build-linux-arm64 cosmovisor
-
+.PHONY: build build-linux-amd64 build-linux-arm64
 
 mocks: $(MOCKS_DIR)
 	@go install github.com/golang/mock/mockgen@v1.6.0
@@ -333,11 +329,6 @@ test-sim-profile:
 
 .PHONY: test-sim-profile test-sim-benchmark
 
-test-rosetta:
-	docker build -t rosetta-ci:latest -f contrib/rosetta/rosetta-ci/Dockerfile .
-	docker-compose -f contrib/rosetta/docker-compose.yaml up --abort-on-container-exit --exit-code-from test_rosetta --build
-.PHONY: test-rosetta
-
 benchmark:
 	@go test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
 .PHONY: benchmark
@@ -465,37 +456,5 @@ proto-update-deps:
 ###                                Localnet                                 ###
 ###############################################################################
 
-localnet-build-env:
-	$(MAKE) -C contrib/images simd-env
-localnet-build-dlv:
-	$(MAKE) -C contrib/images simd-dlv
-
-localnet-build-nodes:
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data cosmossdk/simd \
-			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
-	docker-compose up -d
-
-localnet-stop:
-	docker-compose down
-
-# localnet-start will run a 4-node testnet locally. The nodes are
-# based off the docker images in: ./contrib/images/simd-env
-localnet-start: localnet-stop localnet-build-env localnet-build-nodes
-
-# localnet-debug will run a 4-node testnet locally in debug mode
-# you can read more about the debug mode here: ./contrib/images/simd-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
-
-.PHONY: localnet-start localnet-stop localnet-debug localnet-build-env localnet-build-dlv localnet-build-nodes
-
-###############################################################################
-###                                rosetta                                  ###
-###############################################################################
-# builds rosetta test data dir
-rosetta-data:
-	-docker container rm data_dir_build
-	docker build -t rosetta-ci:latest -f contrib/rosetta/rosetta-ci/Dockerfile .
-	docker run --name data_dir_build -t rosetta-ci:latest sh /rosetta/data.sh
-	docker cp data_dir_build:/tmp/data.tar.gz "$(CURDIR)/contrib/rosetta/rosetta-ci/data.tar.gz"
-	docker container rm data_dir_build
-.PHONY: rosetta-data
+# NOTE: Localnet targets removed - Nibiru uses its own localnet setup
+# (see contrib/scripts/localnet.sh and contrib/make/localnet.mk)
