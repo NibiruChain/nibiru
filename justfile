@@ -38,7 +38,7 @@ gen-embeds:
   which_ok yarn
   log_info "Using system node version: $(yarn exec -- node -v)"
 
-  cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit)
+  cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit 1)
   yarn --check-files
   yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
   log_success "Compiled Solidity in $embeds_dir"
@@ -72,6 +72,11 @@ gen-changelog:
 
   # Run git-cliff in the main worktree but write the file into the original repo
   ( cd "$tmpdir" && git-cliff "$LAST_VER.." --config="$origdir/cliff.toml" ) > CHANGELOG-UNRELEASED.md
+  last_exit_code="$?"
+  if [ "$last_exit_code" -ne 0 ]; then
+    log_error "changelog generation failed"
+    exit 1
+  fi
 
   log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
 
