@@ -1,4 +1,12 @@
 ## Changelog Chunk
+* ci(dependabot.yml): ignore updates to Cosmos-SDK, CometBFT, and Wasmd, as they are often breaking changes
+* fix(Dockerfile): copy over files before "go mod download"
+* refactor: move cosmos-sdk to internal/cosmos-sdk for smoother edits to baseapp and the SDK types in [#2451](https://github.com/NibiruChain/nibiru/pull/2451) - ([2abb6c9](https://github.com/NibiruChain/nibiru/commit/2abb6c9610e3a0785eefc7dac23c7b3a82dc42ac))  by @Unique-Divine
+* refactor(cmd): remove duplicate nibid add-genesis-account command, since it's one of the nibid genesis subcommands in [#2448](https://github.com/NibiruChain/nibiru/pull/2448) - ([7dbfe7d](https://github.com/NibiruChain/nibiru/commit/7dbfe7d05db6a10ab93673e10907cc5c37726146))  by @Unique-Divine
+* docs: remove duplicate word in comment in [#2430](https://github.com/NibiruChain/nibiru/pull/2430) - ([798b6d2](https://github.com/NibiruChain/nibiru/commit/798b6d208010199cb970d4b776807cafb5993963))  by @vetclippy
+* sai-trading: project scaffolding with script to deploy all Sai contracts in [#2433](https://github.com/NibiruChain/nibiru/pull/2433) - ([f77f32f](https://github.com/NibiruChain/nibiru/commit/f77f32ff5239732454ccefc07a76a62e2f4df628))  by @Unique-Divine
+* fix(evmante): use deterministic ResponseDeliverTx gas wanted and gas consumed on failed EVM tx; nonce increment on the ctx should only happen in DeliverTx and ReCheckTx, not CheckTx in [#2434](https://github.com/NibiruChain/nibiru/pull/2434) - ([68bb5ba](https://github.com/NibiruChain/nibiru/commit/68bb5ba3d1b4655ed3aa0c71cd7904688147c0c7))  by @Unique-Divine
+* ci(golangci-lint): update linter version to latest (v2.6.1); improve CI caching in [#2431](https://github.com/NibiruChain/nibiru/pull/2431) - ([ba418d7](https://github.com/NibiruChain/nibiru/commit/ba418d746441753bf6872a29a3d9258a0581b00f))  by @Unique-Divine
 * test(oracle): refactor oracle tests to not require running full blockchain networks, keeping them fast, deterministic, and stable in [#2425](https://github.com/NibiruChain/nibiru/pull/2425) - ([5ff2e08](https://github.com/NibiruChain/nibiru/commit/5ff2e0851dc241912aa9e5e636d3656720c41384))  by @Unique-Divine
 * changelog
 * evm: rewrite eth_estimateGas for panic safety and performance in [#2424](https://github.com/NibiruChain/nibiru/pull/2424) - ([37dba0a](https://github.com/NibiruChain/nibiru/commit/37dba0aeef545ee7a943556e1132f1aab6f6be68))  by @Unique-Divine
