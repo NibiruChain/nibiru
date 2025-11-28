@@ -10,8 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 )
 
 // GetQueryCmd returns the cli query commands for this module

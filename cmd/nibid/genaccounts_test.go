@@ -1,4 +1,4 @@
-package cmd_test
+package main_test
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
-	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid/cmd"
+	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid"
 )
 
 var testModuleBasicManager = module.NewBasicManager(genutil.AppModuleBasic{})
