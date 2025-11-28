@@ -1,0 +1,102 @@
+# .cursorignore
+#
+# ## .cursorignore Syntax Exmaple
+# It's generally close to .gitignore syntax with. Examples:
+# config.json     # Specific file
+# dist/           # Directory
+# *.log           # File extension
+# **/logs         # Nested directories
+# !app/           # Exclude from ignore (negate)
+#
+# -----------------------------------------------------------------
+
+# Include (!, exclude from ignore) all patterns from .gitignore
+!.gitignore
+
+# Additional patterns specific to Cursor
+.env*
+**/credentials/*
+**/secrets/*
+private/
+confidential/
+
+# Large binary files and datasets
+*.bin
+*.dat
+*.db
+*.sqlite
+*.sqlite3
+
+# Exclude large generated files
+node_modules/
+dist/
+.cache/ 
+
+# -----------------------------------------------------------------
+# Custom nibiru-cosmos
+# -----------------------------------------------------------------
+
+# Remove the fuzz
+*fuzz*
+fuzzing
+fuzzers
+
+# Repo root direcotries to KEEP -> comment out
+
+# baseapp/
+# codec/
+# core/
+# crypto/
+# docs/
+# errors/
+# math/
+# proto/
+# runtime/
+# server/
+# store/
+# types/
+
+# Repo root direcotries to REMOVE
+
+api/
+client/
+contrib/
+depinject/
+fuzz/
+internal/
+orm/
+scripts/
+simapp/
+snapshots/
+std/
+telemetry/
+tests/
+testutil/
+tools/
+tx/
+version/
+
+# Modules to KEEP -> comment out
+
+# x/auth/
+# x/authz/
+# x/bank/
+# x/staking/
+# x/crisis/
+
+# Modules to REMOVE
+
+x/capability/
+x/consensus/
+x/distribution/
+x/evidence/
+x/feegrant/
+x/genutil/
+x/gov/
+x/group/
+x/mint/
+x/nft/
+x/params/
+x/simulation/
+x/slashing/
+x/upgrade/
