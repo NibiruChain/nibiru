@@ -24,10 +24,9 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/app"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 
-	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -39,8 +38,8 @@ import (
 
 // NewNibiruTestAppAndContext creates an 'app.NibiruApp' instance with an
 // in-memory 'tmdb.MemDB' and fresh 'sdk.Context'.
-func NewNibiruTestAppAndContext() (*nibiruapp.NibiruApp, sdk.Context) {
-	app, _ := NewNibiruTestApp(nibiruapp.GenesisState{})
+func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
+	app, _ := NewNibiruTestApp(app.GenesisState{})
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
@@ -51,7 +50,7 @@ func NewNibiruTestAppAndContext() (*nibiruapp.NibiruApp, sdk.Context) {
 }
 
 // NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
-func NewContext(nibiru *nibiruapp.NibiruApp) sdk.Context {
+func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	blockHeader := tmproto.Header{
 		Height: 1,
 		Time:   time.Now().UTC(),
@@ -66,7 +65,7 @@ func NewContext(nibiru *nibiruapp.NibiruApp) sdk.Context {
 }
 
 func FirstBlockProposer(
-	chain *nibiruapp.NibiruApp, ctx sdk.Context,
+	chain *app.NibiruApp, ctx sdk.Context,
 ) (proposerAddr sdk.ConsAddress) {
 	maxQueryCount := uint32(10)
 	valopers := chain.StakingKeeper.GetValidators(ctx, maxQueryCount)
@@ -93,10 +92,10 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 // NewNibiruTestApp initializes a chain with the given genesis state to
 // creates an application instance ('app.NibiruApp'). This app uses an
 // in-memory database ('tmdb.MemDB') and has logging disabled.
-func NewNibiruTestApp(customGenesisOverride nibiruapp.GenesisState) (
-	nibiruApp *nibiruapp.NibiruApp, gen nibiruapp.GenesisState,
+func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
 ) {
-	app := nibiruapp.NewNibiruApp(
+	app := app.NewNibiruApp(
 		log.NewNopLogger(),
 		tmdb.NewMemDB(),
 		/*traceStore=*/ nil,
@@ -193,7 +192,7 @@ func FundFeeCollector(
 
 // GenesisStateWithSingleValidator initializes GenesisState with a single validator and genesis accounts
 // that also act as delegators.
-func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.GenesisState) (nibiruapp.GenesisState, error) {
+func GenesisStateWithSingleValidator(codec codec.Codec, genesisState app.GenesisState) (app.GenesisState, error) {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	if err != nil {
@@ -228,10 +227,10 @@ func GenesisStateWithSingleValidator(codec codec.Codec, genesisState nibiruapp.G
 
 func genesisStateWithValSet(
 	cdc codec.Codec,
-	genesisState nibiruapp.GenesisState,
+	genesisState app.GenesisState,
 	valSet *cmttypes.ValidatorSet, genAccs []auth.GenesisAccount,
 	balances ...banktypes.Balance,
-) (nibiruapp.GenesisState, error) {
+) (app.GenesisState, error) {
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 

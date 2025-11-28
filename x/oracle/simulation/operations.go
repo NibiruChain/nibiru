@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	helpers "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -16,6 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
