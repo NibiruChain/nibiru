@@ -1,4 +1,4 @@
-package cmd_test
+package main_test
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid/cmd"
+	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid"
 )
 
 func TestBase64Decode(t *testing.T) {
