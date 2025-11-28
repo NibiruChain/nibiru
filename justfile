@@ -73,8 +73,6 @@ gen-changelog:
   ( cd "$tmpdir" && git-cliff "$LAST_VER.." ) > CHANGELOG-UNRELEASED.md
 
   log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
-  git add CHANGELOG-UNRELEASED.md \
-    && git ci -m "chore: changelog" || true
 
 # Generate the Nibiru Token Registry files
 gen-token-registry:
