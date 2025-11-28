@@ -58,7 +58,7 @@ gen-changelog:
   
   which_ok git-cliff
 
-  LAST_VER="v2.7.0"
+  LAST_VER="v2.9.0"
   start_branch="$(git branch --show-current)"
 
   tmpdir="$(mktemp -d)"
