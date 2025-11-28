@@ -46,24 +46,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache for Docker Build
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            go-build
-            go-pkg
-          key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
-
-      - name: Inject cache
-        uses: reproducible-containers/buildkit-cache-dance@v3.3.0
-        with:
-          cache-map: |
-            {
-              "go-build": "/root/.cache/go-build",
-              "go-pkg": "/go/pkg"
-            }
-          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+      # - name: Cache for Docker Build
+      #   id: cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       go-build
+      #       go-pkg
+      #     key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
+      #
+      # - name: Inject cache
+      #   uses: reproducible-containers/buildkit-cache-dance@v3.3.0
+      #   with:
+      #     cache-map: |
+      #       {
+      #         "go-build": "/root/.cache/go-build",
+      #         "go-pkg": "/go/pkg"
+      #       }
+      #     skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
       - name: Docker meta
         id: meta
@@ -91,6 +91,8 @@ jobs:
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:build-cache-${{ env.ARCH }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:build-cache-${{ env.ARCH }},mode=max
 
   merge:
     name: Create multi-arch image
