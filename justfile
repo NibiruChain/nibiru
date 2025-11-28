@@ -61,6 +61,7 @@ gen-changelog:
   LAST_VER="v2.9.0"
   start_branch="$(git branch --show-current)"
 
+  origdir="$(pwd)"
   tmpdir="$(mktemp -d)"
   cleanup() { rm -rf "$tmpdir"; }
   trap cleanup EXIT
@@ -70,7 +71,7 @@ gen-changelog:
   git worktree add --detach --quiet "$tmpdir" origin/main
 
   # Run git-cliff in the main worktree but write the file into the original repo
-  ( cd "$tmpdir" && git-cliff "$LAST_VER.." ) > CHANGELOG-UNRELEASED.md
+  ( cd "$tmpdir" && git-cliff "$LAST_VER.." --config="$origdir/cliff.toml" ) > CHANGELOG-UNRELEASED.md
 
   log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
 
