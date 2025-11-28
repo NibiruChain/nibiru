@@ -55,7 +55,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-nibid-docker-${{ hashFiles('go.sum') }}
 
       - name: Inject cache
-        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        uses: reproducible-containers/buildkit-cache-dance@v3.3.0
         with:
           cache-map: |
             {
@@ -67,7 +67,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/chaosnet
           tags: latest-${{ env.ARCH }}
@@ -101,7 +101,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/chaosnet
           tags: latest
