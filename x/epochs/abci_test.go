@@ -97,7 +97,6 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			app, ctx = testapp.NewNibiruTestAppAndContext()
 
