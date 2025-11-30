@@ -74,7 +74,6 @@ func (s *GenesisSuite) TestValidateGenesisAccount() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		err := tc.genAcc.Validate()
 		if tc.expPass {
 			s.Require().NoError(err, tc.name)

@@ -74,7 +74,6 @@ func TestValidateLog(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		err := tc.log.Validate()
 		if tc.expPass {
 			require.NoError(t, err, tc.name)

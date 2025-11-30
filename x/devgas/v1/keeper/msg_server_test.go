@@ -101,7 +101,6 @@ func (s *KeeperTestSuite) TestGetContractAdminOrCreatorAddress() {
 			shouldErr:       true,
 		},
 	} {
-		tc := tc
 		s.Run(tc.desc, func() {
 			if !tc.shouldErr {
 				_, err := s.app.DevGasKeeper.GetContractAdminOrCreatorAddress(
@@ -230,7 +229,6 @@ func (s *KeeperTestSuite) TestRegisterFeeShare() {
 			shouldErr: false,
 		},
 	} {
-		tc := tc
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
@@ -328,7 +326,6 @@ func (s *KeeperTestSuite) TestUpdateFeeShare() {
 			shouldErr: false,
 		},
 	} {
-		tc := tc
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
@@ -394,7 +391,6 @@ func (s *KeeperTestSuite) TestCancelFeeShare() {
 			shouldErr: false,
 		},
 	} {
-		tc := tc
 		s.Run(tc.desc, func() {
 			goCtx := sdk.WrapSDKContext(s.ctx)
 			if !tc.shouldErr {
@@ -451,7 +447,6 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			shouldErr: true,
 		},
 	} {
-		tc := tc
 		s.Run(tc.desc, func() {
 			if !tc.shouldErr {
 				_, err := s.devgasMsgServer.UpdateParams(goCtx, tc.msg)

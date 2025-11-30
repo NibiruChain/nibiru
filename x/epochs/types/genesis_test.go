@@ -86,7 +86,6 @@ func TestGenesisState_Validate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.genState.Validate()
 			require.ErrorContains(t, err, tc.errString)
@@ -127,7 +126,6 @@ func TestGenesisState_HappyPath(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.genState.Validate()
 			require.NoError(t, err)

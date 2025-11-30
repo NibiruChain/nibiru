@@ -101,7 +101,6 @@ func TestEpochInfo_Validate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.epochInfo.Validate()
 			require.Error(t, err)
@@ -130,7 +129,6 @@ func TestEpochInfo_HappyPath(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.epochInfo.Validate()
 			require.NoError(t, err)
