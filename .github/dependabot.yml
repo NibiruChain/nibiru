@@ -12,6 +12,10 @@ updates:
     labels:
       - "dependencies"
       - "dependabot"
+    ignore:
+      - dependency-name: "github.com/cosmos/cosmos-sdk*"
+      - dependency-name: "github.com/cometbft/cometbft*"
+      - dependency-name: "github.com/CosmWasm/wasmd*"
   # checks for updates to the GHA dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
