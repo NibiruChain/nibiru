@@ -1,3 +1,4 @@
+require("dotenv/config")
 const { ethers } = require("hardhat")
 
 const P256_PRECOMPILE = "0x0000000000000000000000000000000000000100"
@@ -11,7 +12,11 @@ async function main() {
   console.log("Using EntryPoint:", entryPoint)
   console.log("Assuming P-256 precompile at:", P256_PRECOMPILE)
 
-  const Factory = await ethers.getContractFactory("PasskeyAccountFactory")
+  const deployer = getDeployer()
+  console.log("Deployer:", deployer.address)
+  console.log("Balance:", (await deployer.provider.getBalance(deployer.address)).toString())
+
+  const Factory = await ethers.getContractFactory("PasskeyAccountFactory", deployer)
   const factory = await Factory.deploy(entryPoint)
   await factory.waitForDeployment()
   console.log("PasskeyAccountFactory deployed to:", await factory.getAddress())
@@ -29,8 +34,20 @@ async function main() {
         : undefined
     console.log("PasskeyAccount created at:", acct ?? "<unknown>")
   } else {
-    console.log("QX/QY not provided; skipped initial account creation")
+  console.log("QX/QY not provided; skipped initial account creation")
   }
+}
+
+function getDeployer() {
+  const pk = process.env.PRIVATE_KEY
+  const mnemonic = process.env.MNEMONIC
+  if (!pk && !mnemonic) {
+    throw new Error("Set PRIVATE_KEY or MNEMONIC in .env to sign deploy txs (eth_sendTransaction unsupported)")
+  }
+
+  return pk
+    ? new ethers.Wallet(pk, ethers.provider)
+    : ethers.Wallet.fromPhrase(mnemonic, ethers.provider)
 }
 
 main().catch((error) => {

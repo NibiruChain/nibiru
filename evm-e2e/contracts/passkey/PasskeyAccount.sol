@@ -53,10 +53,13 @@ contract PasskeyAccount {
         emit Executed(to, value, data);
     }
 
-    function _verify(bytes32 hash, bytes calldata signature) internal view returns (uint256) {
-        if (signature.length != 64) return 0;
-        (bytes32 r, bytes32 s) = abi.decode(signature, (bytes32, bytes32));
-        bytes32 digest = sha256(abi.encodePacked(hash));
+    function _verify(bytes32 /*userOpHash*/, bytes calldata signature) internal view returns (uint256) {
+        // WebAuthn signatures are over sha256(authenticatorData || sha256(clientDataJSON)).
+        // Signature payload layout: abi.encode(authenticatorData, clientDataJSON, r, s)
+        (bytes memory authData, bytes memory clientDataJSON, bytes32 r, bytes32 s) =
+            abi.decode(signature, (bytes, bytes, bytes32, bytes32));
+
+        bytes32 digest = sha256(abi.encodePacked(authData, sha256(clientDataJSON)));
         bytes memory input = abi.encodePacked(digest, r, s, qx, qy);
         (bool ok, bytes memory out) = address(0x100).staticcall(input);
         if (!ok || out.length != 32) {

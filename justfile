@@ -165,6 +165,10 @@ proto-gen:
 stop: 
   kill $(pgrep -x nibid) || true
 
+passkey-demo:
+  #!/usr/bin/env bash
+  scripts/passkey-demo.sh
+
 # Runs golang formatter (gofumpt)
 fmt:
   gofumpt -w x app gosdk eth

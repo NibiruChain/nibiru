@@ -359,3 +359,5 @@ debug_container.dot
 
 .gocache
 AGENTS.md
+precompile.test
+tx_log.json
