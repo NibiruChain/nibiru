@@ -12,7 +12,7 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
@@ -59,7 +59,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
@@ -108,7 +108,7 @@ jobs:
   proto-gen-rs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
@@ -157,7 +157,7 @@ jobs:
   cosmos-sdk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for Go-related changes"
         id: check_changes
