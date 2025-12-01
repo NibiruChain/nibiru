@@ -93,7 +93,6 @@ func (s *Suite) TestMsgEditZeroGasActors_ValidateBasic() {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		s.Run(tc.name, func() {
 			err := tc.build().ValidateBasic()
 			if tc.wantErr == "" {

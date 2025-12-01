@@ -98,8 +98,6 @@ func (s *CLITestSuite) TestGetBalancesCmd() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -182,8 +180,6 @@ func (s *CLITestSuite) TestGetSpendableBalancesCmd() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -265,8 +261,6 @@ func (s *CLITestSuite) TestGetCmdDenomsMetadata() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -351,8 +345,6 @@ func (s *CLITestSuite) TestGetCmdQueryTotalSupply() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -425,8 +417,6 @@ func (s *CLITestSuite) TestGetCmdQuerySendEnabled() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 

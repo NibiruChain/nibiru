@@ -212,7 +212,6 @@ func (s *Suite) TestOraclePostPriceTransactionsHaveFixedPrice() {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // setup
 			txCfg := s.clientCtx.TxConfig
