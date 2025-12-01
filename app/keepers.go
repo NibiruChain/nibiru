@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	wasmdapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -208,10 +207,22 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	// assigned.
 	// For example, if there are bindings for the x/inflation module, then the app
 	// passed to GetWasmOpts must already have a non-nil InflationKeeper.
-	supportedFeatures := strings.Join(wasmdapp.AllCapabilities(), ",")
+	supportedWasmVMFeatures := strings.Join(
+		// All compile-time "features" available with the current wasmvm
+		// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
+		// This functionality is going to be moved upstream: https://github.com/CosmWasm/wasmvm/issues/425
+		[]string{
+			"iterator",
+			"staking",
+			"stargate",
+			"cosmwasm_1_1",
+			"cosmwasm_1_2",
+			"cosmwasm_1_3",
+			"cosmwasm_1_4",
+		}, ",")
 
 	// Create wasm VM outside keeper so it can be re-used in client keeper
-	wasmVM, err := wasmvm.NewVM(filepath.Join(wasmDir, "wasm"), supportedFeatures, wasmVmContractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
+	wasmVM, err := wasmvm.NewVM(filepath.Join(wasmDir, "wasm"), supportedWasmVMFeatures, wasmVmContractMemoryLimit, wasmConfig.ContractDebugMode, wasmConfig.MemoryCacheSize)
 	if err != nil {
 		panic(err)
 	}
@@ -242,7 +253,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		supportedFeatures,
+		supportedWasmVMFeatures,
 		govModuleAddr,
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)

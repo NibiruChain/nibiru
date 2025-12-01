@@ -38,7 +38,7 @@ gen-embeds:
   which_ok yarn
   log_info "Using system node version: $(yarn exec -- node -v)"
 
-  cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit)
+  cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit 1)
   yarn --check-files
   yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
   log_success "Compiled Solidity in $embeds_dir"
@@ -58,9 +58,10 @@ gen-changelog:
   
   which_ok git-cliff
 
-  LAST_VER="v2.7.0"
+  LAST_VER="v2.9.0"
   start_branch="$(git branch --show-current)"
 
+  origdir="$(pwd)"
   tmpdir="$(mktemp -d)"
   cleanup() { rm -rf "$tmpdir"; }
   trap cleanup EXIT
@@ -70,11 +71,14 @@ gen-changelog:
   git worktree add --detach --quiet "$tmpdir" origin/main
 
   # Run git-cliff in the main worktree but write the file into the original repo
-  ( cd "$tmpdir" && git-cliff "$LAST_VER.." ) > CHANGELOG-UNRELEASED.md
+  ( cd "$tmpdir" && git-cliff "$LAST_VER.." --config="$origdir/cliff.toml" ) > CHANGELOG-UNRELEASED.md
+  last_exit_code="$?"
+  if [ "$last_exit_code" -ne 0 ]; then
+    log_error "changelog generation failed"
+    exit 1
+  fi
 
   log_success "Created CHANGELOG-UNRELEASED.md with changes since $LAST_VER"
-  git add CHANGELOG-UNRELEASED.md \
-    && git ci -m "chore: changelog" || true
 
 # Generate the Nibiru Token Registry files
 gen-token-registry:

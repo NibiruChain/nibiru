@@ -263,12 +263,14 @@ require (
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
-	github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
+	// Replace for Cosmos-SDK using local repo. Uncomment to use.
+	github.com/CosmWasm/wasmd => ./internal/wasmd
+	github.com/cosmos/cosmos-sdk => ./internal/cosmos-sdk
 
-	// Production replace for Cosmos-SDK. Uncomment to use.
-	github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
-	// Local replace for Cosmos-SDK. Uncomment to use.
-	// github.com/cosmos/cosmos-sdk => ../nibi-cosm-sdk
+	// Replace statements using GitHub tags prior to use of internal. Left
+	// here intentionally for book keeping:
+	// github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
+	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 

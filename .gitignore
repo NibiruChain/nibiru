@@ -22,6 +22,7 @@ vote.json
 **__pycache**
 scratch-paper.md
 logs
+CHANGELOG-UNRELEASED.md
 
 ### TypeScript and Friends
 
