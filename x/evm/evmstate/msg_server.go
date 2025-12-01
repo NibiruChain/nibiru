@@ -121,10 +121,16 @@ func (k *Keeper) EthereumTx(
 	}
 
 	stage = "post_execution_gas_refund"
-
-	// TX execution completed, gas should not be measured anymore
-	rootCtxGasless := sdb.RootCtx().WithGasMeter(sdk.NewInfiniteGasMeter())
-	sdb.SetCtx(sdb.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+	// rootCtxGasless: Mutable sdb.RootCtx() with ignored gas metering. After
+	// the "apply_evm_msg" stage, gas metering has no chance of infinite
+	// consumption, and metering should be ignored. The "evmResp" determines
+	// how much gas the tx costs. Cosmos-SDK gas meter panics can are no
+	// longer meaningful.
+	rootCtxGasless := sdb.RootCtx().
+		WithGasMeter(sdk.NewInfiniteGasMeter())
+	sdb.SetCtx(sdb.Ctx().
+		WithGasMeter(sdk.NewInfiniteGasMeter()),
+	)
 
 	// Update transient block bloom filter and block log size.
 	{
