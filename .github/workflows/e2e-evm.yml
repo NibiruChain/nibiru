@@ -13,7 +13,7 @@ jobs:
   e2e-evm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for EVM-related changes"
         id: check_evm_changes
@@ -92,7 +92,7 @@ jobs:
   sai-trading:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for EVM-related changes"
         id: check_changes
