@@ -58,7 +58,6 @@ func TestTryNewPair(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := asset.TryNewPair(tc.tokenStr)
 			if tc.err != nil {

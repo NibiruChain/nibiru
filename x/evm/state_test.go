@@ -52,7 +52,6 @@ func (s *SuiteStorage) TestStorageValidate() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		err := tc.storage.Validate()
 		if tc.wantPass {
 			s.NoError(err, tc.name)
@@ -86,7 +85,6 @@ func (s *SuiteStorage) TestStorageCopy() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		s.Require().Equal(tc.storage, tc.storage.Copy(), tc.name)
 	}
 }

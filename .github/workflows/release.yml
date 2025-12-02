@@ -43,10 +43,10 @@ jobs:
     runs-on: ${{ matrix.build.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
@@ -65,7 +65,7 @@ jobs:
           tar czf ${{ env.FINAL_NAME }}.tar.gz -C build nibid
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.FINAL_NAME }}
           path: ${{ env.FINAL_NAME }}.tar.gz
@@ -113,7 +113,7 @@ jobs:
         run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz -C ${{ env.DARWIN_NAME_ALL }} nibid
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.DARWIN_NAME_ALL }}
           path: ${{ env.DARWIN_NAME_ALL }}.tar.gz
@@ -128,7 +128,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare env vars
         run: |
@@ -190,7 +190,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare env vars
         run: |
@@ -253,7 +253,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

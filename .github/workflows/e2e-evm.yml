@@ -13,7 +13,7 @@ jobs:
   e2e-evm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for EVM-related changes"
         id: check_evm_changes
@@ -41,7 +41,7 @@ jobs:
 
       - name: Set up Go
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.24
           # cache: "The action has a built-in functionality for caching and
@@ -92,7 +92,7 @@ jobs:
   sai-trading:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for EVM-related changes"
         id: check_changes
@@ -106,7 +106,7 @@ jobs:
 
       - name: Set up Go
         if: steps.check_changes.outputs.check_changes == 'true'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.24
           # cache: "The action has a built-in functionality for caching and
@@ -128,7 +128,7 @@ jobs:
 
       - if: steps.check_changes.outputs.check_changes == 'true'
         # For running things and for package management "
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.2.22 # Values: latest, <sha>, 1.2.3, canary
         # Outputs:
