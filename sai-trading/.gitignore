@@ -1,2 +1,4 @@
 artifacts/solidity/build-info
 *.dbg.json
+
+.env
