@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
@@ -57,7 +58,6 @@ func TestAddGenesisPricefeederDelegation(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := testutil.SetupClientCtx(t)
 			cmd := cli.AddGenesisPricefeederDelegationCmd(t.TempDir())
