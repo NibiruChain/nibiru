@@ -45,6 +45,7 @@ func InitPrecompiles(
 		PrecompileFunToken,
 		PrecompileWasm,
 		PrecompileOracle,
+		PrecompileP256,
 	} {
 		pc := precompileSetupFn(k)
 		for _, precompileMap := range []map[gethcommon.Address]vm.PrecompiledContract{
