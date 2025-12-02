@@ -10,12 +10,13 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
 	"github.com/NibiruChain/nibiru/v2/x/bank/client/cli"
 )
@@ -97,8 +98,6 @@ func (s *CLITestSuite) TestGetBalancesCmd() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -181,8 +180,6 @@ func (s *CLITestSuite) TestGetSpendableBalancesCmd() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -264,8 +261,6 @@ func (s *CLITestSuite) TestGetCmdDenomsMetadata() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -350,8 +345,6 @@ func (s *CLITestSuite) TestGetCmdQueryTotalSupply() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
@@ -424,8 +417,6 @@ func (s *CLITestSuite) TestGetCmdQuerySendEnabled() {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-
 		s.Run(tc.name, func() {
 			var outBuf bytes.Buffer
 
