@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@uniquedivine/bash": "0.0.2",
-    "@uniquedivine/jiyuu": "^0.0.2"
+    "@uniquedivine/jiyuu": "^0.0.2",
+    "just-install": "^2.0.2"
   }
 }
