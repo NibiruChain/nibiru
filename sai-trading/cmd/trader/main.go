@@ -19,6 +19,7 @@ var (
 	// Network config (shared across subcommands)
 	evmRPCUrl        string
 	contractsEnvFile string
+	networksTomlFile string
 	networkMode      string
 
 	// Account (shared across subcommands)
@@ -37,7 +38,8 @@ to interact with Sai Perps contracts.`,
 	// Shared flags for all subcommands
 	rootCmd.PersistentFlags().StringVar(&networkMode, "network", "localnet", "Network mode: localnet, testnet, or mainnet")
 	rootCmd.PersistentFlags().StringVar(&evmRPCUrl, "evm-rpc", "", "EVM RPC URL (overrides network mode default)")
-	rootCmd.PersistentFlags().StringVar(&contractsEnvFile, "contracts-env", "", "Path to contracts env file (auto-detected if not set)")
+	rootCmd.PersistentFlags().StringVar(&networksTomlFile, "networks-toml", "networks.toml", "Path to networks TOML configuration file")
+	rootCmd.PersistentFlags().StringVar(&contractsEnvFile, "contracts-env", "", "Path to contracts env file (legacy, overrides networks.toml)")
 	rootCmd.PersistentFlags().StringVar(&privateKeyHex, "private-key", "", "Private key in hex format (or set EVM_PRIVATE_KEY env var)")
 	rootCmd.PersistentFlags().StringVar(&mnemonic, "mnemonic", "", "BIP39 mnemonic phrase (or set EVM_MNEMONIC env var)")
 
@@ -61,11 +63,7 @@ func newOpenCmd() *cobra.Command {
 	var (
 		// Strategy config
 		tradeSize       uint64
-		tradeSizeMin    uint64
-		tradeSizeMax    uint64
 		leverage        uint64
-		leverageMin     uint64
-		leverageMax     uint64
 		long            bool
 		marketIndex     uint64
 		collateralIndex uint64
@@ -85,8 +83,11 @@ Examples:
   # Market order (auto-fetch price)
   trader open --market-index 0 --leverage 5 --long true
 
-  # Limit order (must specify trigger price)
+  # Limit order with explicit trigger price
   trader open --trade-type limit --market-index 0 --open-price 70000 --long
+
+  # Limit order with auto-fetch price (uses oracle price as-is)
+  trader open --trade-type limit --market-index 0 --leverage 5 --long
 
   # Short position
   trader open --market-index 0 --long=false
@@ -102,23 +103,17 @@ Examples:
 			if cmd.Flags().Changed("open-price") {
 				openPricePtr = &openPrice
 			}
-			return runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax, longPtr, marketIndex, collateralIndex, tradeType, openPricePtr, tradeJSONFile)
+			return runOpen(tradeSize, leverage, longPtr, marketIndex, collateralIndex, tradeType, openPricePtr, tradeJSONFile)
 		},
 	}
 
 	// Strategy flags - exact values (override ranges if set)
 	cmd.Flags().Uint64Var(&tradeSize, "trade-size", 0, "Exact trade size in smallest units (overrides min/max)")
-	cmd.Flags().Uint64Var(&leverage, "leverage", 0, "Exact leverage (e.g., 10 for 10x, overrides min/max)")
-	cmd.Flags().BoolVar(&long, "long", false, "Trade direction: true for long, false for short (default: random)")
-	cmd.Flags().Float64Var(&openPrice, "open-price", 0, "Open price (required for limit/stop orders, optional for market orders)")
-
-	// Strategy flags - ranges (used if exact values not set)
-	cmd.Flags().Uint64Var(&tradeSizeMin, "trade-size-min", 10_000, "Minimum trade size in smallest units")
-	cmd.Flags().Uint64Var(&tradeSizeMax, "trade-size-max", 50_000, "Maximum trade size in smallest units")
-	cmd.Flags().Uint64Var(&leverageMin, "leverage-min", 5, "Minimum leverage (e.g., 5 for 5x)")
-	cmd.Flags().Uint64Var(&leverageMax, "leverage-max", 20, "Maximum leverage (e.g., 20 for 20x)")
+	cmd.Flags().Uint64Var(&leverage, "leverage", 0, "Exact leverage (e.g., 10 for 10x, default: 1)")
+	cmd.Flags().BoolVar(&long, "long", false, "Trade direction: true for long, false for short (default: true)")
+	cmd.Flags().Float64Var(&openPrice, "open-price", 0, "Open price (optional: if not set, fetched from oracle and used as-is)")
 	cmd.Flags().Uint64Var(&marketIndex, "market-index", 0, "Market index to trade")
-	cmd.Flags().Uint64Var(&collateralIndex, "collateral-index", 1, "Collateral token index")
+	cmd.Flags().Uint64Var(&collateralIndex, "collateral-index", 0, "Collateral token index")
 	cmd.Flags().StringVar(&tradeType, "trade-type", "", "Trade type: 'trade' (market), 'limit', or 'stop' (default: 'trade')")
 	cmd.Flags().StringVar(&tradeJSONFile, "trade-json", "", "Path to JSON file with open_trade parameters (overrides dynamic trading)")
 
@@ -155,7 +150,7 @@ func newListCmd() *cobra.Command {
 
 This command queries the perp contract to display all configured markets with their details.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runList(cmd)
+			return runList()
 		},
 	}
 
@@ -178,7 +173,7 @@ This command queries the perp contract to display all trades/positions with thei
 	return cmd
 }
 
-func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, leverageMax uint64, long *bool, marketIndex, collateralIndex uint64, tradeType string, openPrice *float64, tradeJSONFile string) error {
+func runOpen(tradeSize, leverage uint64, long *bool, marketIndex, collateralIndex uint64, tradeType string, openPrice *float64, tradeJSONFile string) error {
 	cfg, err := setupConfig(true)
 	if err != nil {
 		return err
@@ -186,40 +181,27 @@ func runOpen(tradeSize, tradeSizeMin, tradeSizeMax, leverage, leverageMin, lever
 
 	// Strategy config
 	cfg.TradeSize = tradeSize
-	cfg.TradeSizeMin = tradeSizeMin
-	cfg.TradeSizeMax = tradeSizeMax
 	cfg.Leverage = leverage
-	cfg.LeverageMin = leverageMin
-	cfg.LeverageMax = leverageMax
 	cfg.Long = long
 	cfg.MarketIndex = marketIndex
 	cfg.CollateralIndex = collateralIndex
 	cfg.OpenPrice = openPrice
 	// Validate trade-type if provided
 	if tradeType != "" {
-		if tradeType != "trade" && tradeType != "limit" && tradeType != "stop" {
-			return fmt.Errorf("invalid trade-type: %s (must be 'trade', 'limit', or 'stop')", tradeType)
+		if !evmtrader.IsValidTradeType(tradeType) {
+			return fmt.Errorf("invalid trade-type: %s (must be '%s', '%s', or '%s')",
+				tradeType, evmtrader.TradeTypeMarket, evmtrader.TradeTypeLimit, evmtrader.TradeTypeStop)
 		}
 		cfg.TradeType = tradeType
-		cfg.EnableLimitOrder = (tradeType == "limit" || tradeType == "stop")
-		// Validate open-price is provided for limit/stop orders
-		if (tradeType == "limit" || tradeType == "stop") && openPrice == nil {
-			return fmt.Errorf("--open-price is required for %s orders (trigger price)", tradeType)
-		}
+		cfg.EnableLimitOrder = evmtrader.IsLimitOrStopOrder(tradeType)
+		// Note: --open-price is optional for limit/stop orders
+		// If not provided, the price will be fetched from oracle and used as-is
 	} else {
 		// Default to market order if not specified
-		cfg.TradeType = "trade"
+		cfg.TradeType = evmtrader.TradeTypeMarket
 		cfg.EnableLimitOrder = false
 	}
 	cfg.TradeJSONFile = tradeJSONFile
-
-	// Validate config
-	if cfg.TradeSizeMax > 0 && cfg.TradeSizeMin >= cfg.TradeSizeMax {
-		return fmt.Errorf("trade-size-min must be less than trade-size-max")
-	}
-	if cfg.LeverageMax > 0 && cfg.LeverageMin >= cfg.LeverageMax {
-		return fmt.Errorf("leverage-min must be less than leverage-max")
-	}
 
 	// Create trader
 	ctx := context.Background()
@@ -266,7 +248,7 @@ func runClose(tradeIndex uint64) error {
 	return nil
 }
 
-func runList(cmd *cobra.Command) error {
+func runList() error {
 	cfg, err := setupConfig(false)
 	if err != nil {
 		return err
@@ -289,26 +271,40 @@ func runList(cmd *cobra.Command) error {
 	// Display markets
 	if len(markets) == 0 {
 		fmt.Println("No markets found")
-		return nil
+	} else {
+		fmt.Println("Available Markets:")
+		fmt.Println("==================")
+		for _, market := range markets {
+			fmt.Printf("Market Index: %d\n", market.Index)
+			if market.BaseToken != nil {
+				fmt.Printf("  Base Token: %d\n", *market.BaseToken)
+			}
+			if market.QuoteToken != nil {
+				fmt.Printf("  Quote Token: %d\n", *market.QuoteToken)
+			}
+			if market.MaxOI != nil {
+				fmt.Printf("  Max OI: %s\n", *market.MaxOI)
+			}
+			if market.FeePerBlock != nil {
+				fmt.Printf("  Fee Per Block: %s\n", *market.FeePerBlock)
+			}
+			fmt.Println()
+		}
 	}
 
-	fmt.Println("Available Markets:")
-	fmt.Println("==================")
-	for _, market := range markets {
-		fmt.Printf("Market Index: %d\n", market.Index)
-		if market.BaseToken != nil {
-			fmt.Printf("  Base Token: %d\n", *market.BaseToken)
+	// Query collaterals
+	collaterals, err := trader.QueryCollaterals(ctx)
+	if err != nil {
+		// Don't fail if collaterals query fails, just log
+		fmt.Fprintf(os.Stderr, "Warning: Failed to query collaterals: %v\n", err)
+	} else if len(collaterals) > 0 {
+		fmt.Println("Available Collaterals:")
+		fmt.Println("======================")
+		for _, collateral := range collaterals {
+			fmt.Printf("Collateral Index: %d\n", collateral.Index)
+			fmt.Printf("  Denom: %s\n", collateral.Denom)
+			fmt.Println()
 		}
-		if market.QuoteToken != nil {
-			fmt.Printf("  Quote Token: %d\n", *market.QuoteToken)
-		}
-		if market.MaxOI != nil {
-			fmt.Printf("  Max OI: %s\n", *market.MaxOI)
-		}
-		if market.FeePerBlock != nil {
-			fmt.Printf("  Fee Per Block: %s\n", *market.FeePerBlock)
-		}
-		fmt.Println()
 	}
 
 	return nil
@@ -344,39 +340,77 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 
 	cfg := evmtrader.Config{}
 
-	// Set network defaults if not overridden
+	// Try to load from TOML file first (unless --contracts-env is explicitly set for legacy mode)
 	var grpcUrl, chainID string
-	if evmRPCUrl == "" {
-		switch networkMode {
-		case "localnet":
-			evmRPCUrl = "http://localhost:8545"
-			grpcUrl = "localhost:9090"
-			chainID = "nibiru-localnet-0"
-		// case "testnet":
-		// 	evmRPCUrl = "https://evm-rpc.testnet-2.nibiru.fi"
-		// 	grpcUrl = "grpc.testnet-2.nibiru.fi:443"
-		// 	chainID = "nibiru-testnet-2"
-		// case "mainnet":
-		// 	evmRPCUrl = "https://evm-rpc.nibiru.fi"
-		// 	grpcUrl = "grpc.nibiru.fi:443"
-		// 	chainID = "nibiru-mainnet-1"
-		default:
-			return cfg, fmt.Errorf("unknown network mode: %s (use: localnet, testnet, mainnet)", networkMode)
-		}
-	} else {
-		// If EVM RPC is set but gRPC/ChainID aren't, use localnet defaults
-		if grpcUrl == "" {
-			grpcUrl = "localhost:9090"
-		}
-		if chainID == "" {
-			chainID = "nibiru-localnet-0"
+	useTOML := contractsEnvFile == "" && networksTomlFile != ""
+
+	if useTOML {
+		// Check if TOML file exists
+		if _, err := os.Stat(networksTomlFile); err == nil {
+			// Load network config from TOML
+			networkConfig, err := evmtrader.LoadNetworkConfig(networksTomlFile)
+			if err != nil {
+				// Fall back to hardcoded defaults if TOML fails to load
+				fmt.Fprintf(os.Stderr, "Warning: Failed to load TOML config: %v, using hardcoded defaults\n", err)
+				useTOML = false
+			} else {
+				netInfo, err := evmtrader.GetNetworkInfo(networkConfig, networkMode)
+				if err != nil {
+					return cfg, err
+				}
+
+				// Use TOML config unless overridden by flags
+				if evmRPCUrl == "" {
+					evmRPCUrl = netInfo.EVMRPCUrl
+				}
+				grpcUrl = netInfo.GrpcUrl
+				chainID = netInfo.ChainID
+
+				// Load contract addresses from TOML
+				contractAddrs := evmtrader.ContractAddressesFromNetworkInfo(netInfo)
+				cfg.ContractAddresses = &contractAddrs
+			}
+		} else {
+			// TOML file doesn't exist, fall back to hardcoded defaults
+			useTOML = false
 		}
 	}
+
+	// Fall back to hardcoded defaults if not using TOML or if TOML failed
+	if !useTOML {
+		if evmRPCUrl == "" {
+			switch networkMode {
+			case "localnet":
+				evmRPCUrl = "http://localhost:8545"
+				grpcUrl = "localhost:9090"
+				chainID = "nibiru-localnet-0"
+			case "testnet":
+				evmRPCUrl = "https://evm-rpc.testnet-2.nibiru.fi"
+				grpcUrl = "grpc.testnet-2.nibiru.fi:443"
+				chainID = "nibiru-testnet-2"
+			case "mainnet":
+				evmRPCUrl = "https://evm-rpc.nibiru.fi"
+				grpcUrl = "grpc.nibiru.fi:443"
+				chainID = "nibiru-mainnet-1"
+			default:
+				return cfg, fmt.Errorf("unknown network mode: %s (use: localnet, testnet, mainnet)", networkMode)
+			}
+		} else {
+			// If EVM RPC is set but gRPC/ChainID aren't, use localnet defaults
+			if grpcUrl == "" {
+				grpcUrl = "localhost:9090"
+			}
+			if chainID == "" {
+				chainID = "nibiru-localnet-0"
+			}
+		}
+	}
+
 	cfg.EVMRPCUrl = evmRPCUrl
 	cfg.GrpcUrl = grpcUrl
 	cfg.ChainID = chainID
 
-	// Auto-detect contracts env file if not provided
+	// Auto-detect contracts env file if not provided (legacy mode)
 	if contractsEnvFile == "" {
 		contractsEnvFile = detectContractsEnvFile(networkMode)
 	}

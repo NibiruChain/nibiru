@@ -3,6 +3,7 @@ package evmtrader
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -18,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -66,8 +68,15 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	}
 
 	// Connect to gRPC for transaction broadcasting
+	// Use TLS for remote servers (testnet/mainnet), insecure for localhost
+	var grpcCreds credentials.TransportCredentials
+	if strings.Contains(cfg.GrpcUrl, ":443") || (!strings.Contains(cfg.GrpcUrl, "localhost") && !strings.Contains(cfg.GrpcUrl, "127.0.0.1")) {
+		grpcCreds = credentials.NewTLS(&tls.Config{})
+	} else {
+		grpcCreds = insecure.NewCredentials()
+	}
 	grpcConn, err := grpc.DialContext(ctx, cfg.GrpcUrl,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(grpcCreds),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
@@ -77,9 +86,16 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	encCfg := getEncConfig()
 	txClient := txtypes.NewServiceClient(grpcConn)
 
-	addrs, err := loadContractAddresses(cfg.ContractsEnvFile)
-	if err != nil {
-		return nil, fmt.Errorf("load contracts: %w", err)
+	// Load contract addresses: use from Config if provided, otherwise load from file
+	var addrs ContractAddresses
+	if cfg.ContractAddresses != nil {
+		addrs = *cfg.ContractAddresses
+	} else {
+		var err error
+		addrs, err = loadContractAddresses(cfg.ContractsEnvFile)
+		if err != nil {
+			return nil, fmt.Errorf("load contracts: %w", err)
+		}
 	}
 	return &EVMTrader{
 		cfg:         cfg,
@@ -159,7 +175,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	}
 
 	// Parse trade ID from response
-	isLimitOrder := params.TradeType == "limit" || params.TradeType == "stop"
+	isLimitOrder := isLimitOrStopOrder(params.TradeType)
 	tradeID, err := t.parseTradeID(txResp)
 	if err != nil {
 		t.log("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
