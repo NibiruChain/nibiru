@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 // Config holds runtime configuration for the EVM trader service.
@@ -14,6 +16,8 @@ type Config struct {
 	GrpcUrl          string
 	ChainID          string
 	ContractsEnvFile string
+	// ContractAddresses can be set directly (from TOML) or loaded from ContractsEnvFile
+	ContractAddresses *ContractAddresses
 
 	// Account
 	PrivateKeyHex string
@@ -43,6 +47,38 @@ type ContractAddresses struct {
 	VaultAddress     string
 	TokenStNIBIERC20 string
 	StNIBIDenom      string
+}
+
+// NetworkConfig represents the TOML configuration for all networks
+type NetworkConfig struct {
+	Localnet NetworkInfo `toml:"localnet"`
+	Testnet  NetworkInfo `toml:"testnet"`
+	Mainnet  NetworkInfo `toml:"mainnet"`
+}
+
+// NetworkInfo contains configuration for a specific network
+type NetworkInfo struct {
+	Name       string            `toml:"name"`
+	EVMRPCUrl  string            `toml:"evm_rpc_url"`
+	GrpcUrl    string            `toml:"grpc_url"`
+	ChainID    string            `toml:"chain_id"`
+	Contracts  ContractConfig    `toml:"contracts"`
+	Tokens     TokenConfig       `toml:"tokens"`
+}
+
+// ContractConfig contains contract addresses
+type ContractConfig struct {
+	OracleAddress string `toml:"oracle_address"`
+	PerpAddress   string `toml:"perp_address"`
+	VaultAddress  string `toml:"vault_address"`
+	EVMInterface  string `toml:"evm_interface"`
+}
+
+// TokenConfig contains token addresses
+type TokenConfig struct {
+	USDCEvm     string `toml:"usdc_evm"`
+	StNIBIEvm   string `toml:"stnibi_evm"`
+	StNIBIDenom string `toml:"stnibi_denom"`
 }
 
 // loadContractAddresses reads a simple KEY=VALUE env file.
@@ -78,6 +114,46 @@ func loadContractAddresses(envFile string) (ContractAddresses, error) {
 		}
 	}
 	return addrs, nil
+}
+
+// LoadNetworkConfig loads network configuration from TOML file
+func LoadNetworkConfig(tomlFile string) (NetworkConfig, error) {
+	data, err := os.ReadFile(tomlFile)
+	if err != nil {
+		return NetworkConfig{}, fmt.Errorf("read TOML file: %w", err)
+	}
+
+	var config NetworkConfig
+	if err := toml.Unmarshal(data, &config); err != nil {
+		return NetworkConfig{}, fmt.Errorf("parse TOML: %w", err)
+	}
+
+	return config, nil
+}
+
+// GetNetworkInfo returns the NetworkInfo for a given network mode
+func GetNetworkInfo(config NetworkConfig, networkMode string) (*NetworkInfo, error) {
+	switch networkMode {
+	case "localnet":
+		return &config.Localnet, nil
+	case "testnet":
+		return &config.Testnet, nil
+	case "mainnet":
+		return &config.Mainnet, nil
+	default:
+		return nil, fmt.Errorf("unknown network mode: %s", networkMode)
+	}
+}
+
+// ContractAddressesFromNetworkInfo converts NetworkInfo to ContractAddresses
+func ContractAddressesFromNetworkInfo(netInfo *NetworkInfo) ContractAddresses {
+	return ContractAddresses{
+		OracleAddress:    netInfo.Contracts.OracleAddress,
+		PerpAddress:      netInfo.Contracts.PerpAddress,
+		VaultAddress:      netInfo.Contracts.VaultAddress,
+		TokenStNIBIERC20: netInfo.Tokens.StNIBIEvm,
+		StNIBIDenom:      netInfo.Tokens.StNIBIDenom,
+	}
 }
 
 // normalizeConfigPaths normalizes file paths in config to be resilient to different CWDs.

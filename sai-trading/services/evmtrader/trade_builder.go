@@ -31,12 +31,13 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 		return nil, fmt.Errorf("open_price is required")
 	}
 	// For limit/stop orders, open_price must be non-zero (trigger price)
-	if (params.TradeType == "limit" || params.TradeType == "stop") && *params.OpenPrice == 0 {
+	if isLimitOrStopOrder(params.TradeType) && *params.OpenPrice == 0 {
 		return nil, fmt.Errorf("open_price must be non-zero for %s orders", params.TradeType)
 	}
 	openTradeMsgData["open_price"] = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
 
-	// Only set TP/SL if provided
+	// Only set TP/SL if explicitly provided by user
+	// Note: The contract may set its own default TP/SL values for limit/stop orders
 	if params.TP != nil {
 		openTradeMsgData["tp"] = strconv.FormatFloat(*params.TP, 'f', -1, 64)
 	}
@@ -81,7 +82,7 @@ func (t *EVMTrader) OpenTradeFromJSON(ctx context.Context, jsonPath string) erro
 	}
 
 	// If open_price not provided for market orders, fetch from oracle
-	if params.OpenPrice == nil && params.TradeType == "trade" {
+	if params.OpenPrice == nil && params.TradeType == TradeTypeMarket {
 		price, err := t.fetchMarketPriceForIndex(ctx, params.MarketIndex)
 		if err != nil {
 			return fmt.Errorf("fetch market price for market %d: %w", params.MarketIndex, err)
@@ -105,9 +106,9 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 	// Initialize params with defaults
 	params := &OpenTradeParams{
 		SlippageP: defaultSlippagePercent,
-		Long:      true,    // Default to long position
-		Leverage:  1,       // Default leverage is 1x
-		TradeType: "trade", // Default to market trade
+		Long:      true,             // Default to long position
+		Leverage:  1,                // Default leverage is 1x
+		TradeType: TradeTypeMarket, // Default to market trade
 	}
 
 	// Parse collateral_amount (required)
@@ -125,15 +126,10 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 	params.MarketIndex = idx
 
 	// Parse leverage (optional, defaults to 1)
-	if levStr, ok := data["leverage"].(string); ok && levStr != "" {
-		leverage, err := strconv.ParseUint(levStr, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("parse leverage: %w", err)
-		}
-		if leverage == 0 {
-			return nil, fmt.Errorf("leverage must be greater than 0, got: %d", leverage)
-		}
-		params.Leverage = leverage
+	if leverage, err := parseOptionalPositiveUint64(data, "leverage"); err != nil {
+		return nil, err
+	} else if leverage != nil {
+		params.Leverage = *leverage
 	}
 	// else: use default leverage of 1
 
@@ -170,7 +166,7 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 	}
 
 	// Parse TP/SL (only for limit/stop orders)
-	if params.TradeType != "trade" {
+	if params.TradeType != TradeTypeMarket {
 		if err := t.parseTakeProfitStopLoss(data, params); err != nil {
 			return nil, err
 		}
@@ -235,7 +231,7 @@ func validateTradeParams(params *OpenTradeParams) error {
 	}
 
 	// For limit/stop orders, open_price must be non-zero (trigger price)
-	if (params.TradeType == "limit" || params.TradeType == "stop") && *params.OpenPrice == 0 {
+	if isLimitOrStopOrder(params.TradeType) && *params.OpenPrice == 0 {
 		return fmt.Errorf("open_price must be non-zero for %s orders (trigger price)", params.TradeType)
 	}
 
@@ -293,7 +289,7 @@ func (t *EVMTrader) parseOpenPrice(data map[string]interface{}, params *OpenTrad
 	priceStr, ok := data["open_price"].(string)
 	if !ok || priceStr == "" {
 		// For limit/stop orders, open_price is REQUIRED (trigger price)
-		if params.TradeType == "limit" || params.TradeType == "stop" {
+		if isLimitOrStopOrder(params.TradeType) {
 			return fmt.Errorf("open_price is required for %s orders (trigger price)", params.TradeType)
 		}
 		// For market orders, open_price is OPTIONAL - will be fetched from oracle
@@ -307,7 +303,7 @@ func (t *EVMTrader) parseOpenPrice(data map[string]interface{}, params *OpenTrad
 	}
 
 	// For limit/stop orders, open_price must be non-zero (trigger price)
-	if (params.TradeType == "limit" || params.TradeType == "stop") && price == 0 {
+	if isLimitOrStopOrder(params.TradeType) && price == 0 {
 		return fmt.Errorf("open_price must be non-zero for %s orders (trigger price)", params.TradeType)
 	}
 
@@ -355,6 +351,36 @@ func parsePositiveFloat(value, fieldName string) (float64, error) {
 	}
 
 	return parsed, nil
+}
+
+// parsePositiveUint64 parses a uint64 value from a string and validates it's greater than zero.
+func parsePositiveUint64(value, fieldName string) (uint64, error) {
+	parsed, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse %s: %w", fieldName, err)
+	}
+
+	if parsed == 0 {
+		return 0, fmt.Errorf("%s must be greater than 0, got: %d", fieldName, parsed)
+	}
+
+	return parsed, nil
+}
+
+// parseOptionalPositiveUint64 parses an optional uint64 field from JSON data.
+// Returns nil if the field doesn't exist or is empty, allowing caller to use default value.
+func parseOptionalPositiveUint64(data map[string]interface{}, fieldName string) (*uint64, error) {
+	valStr, ok := data[fieldName].(string)
+	if !ok || valStr == "" {
+		return nil, nil // Field not present or empty, use default
+	}
+
+	val, err := parsePositiveUint64(valStr, fieldName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &val, nil
 }
 
 // buildCloseTradeMessage builds the close_trade_market message from trade index

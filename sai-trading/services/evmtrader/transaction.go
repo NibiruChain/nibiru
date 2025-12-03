@@ -136,6 +136,7 @@ func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.I
 	// Query the correct denomination for the collateral index
 	collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
 	if err != nil {
+		// Provide helpful error message suggesting common alternatives
 		return nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
 	}
 
