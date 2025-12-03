@@ -64,7 +64,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/rs/cors v1.8.3
 	github.com/rs/zerolog v1.32.0
-	github.com/status-im/keycard-go v0.2.0
+	github.com/status-im/keycard-go v0.3.3
 	golang.org/x/crypto v0.45.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/net v0.47.0
