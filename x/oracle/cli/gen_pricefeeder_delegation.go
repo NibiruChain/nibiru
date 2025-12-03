@@ -7,12 +7,13 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )

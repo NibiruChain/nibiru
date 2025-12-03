@@ -9,9 +9,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
 	"github.com/spf13/cobra"
 )
