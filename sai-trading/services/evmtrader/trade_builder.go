@@ -106,8 +106,8 @@ func (t *EVMTrader) parseTradeParamsFromJSON(data map[string]interface{}) (*Open
 	// Initialize params with defaults
 	params := &OpenTradeParams{
 		SlippageP: defaultSlippagePercent,
-		Long:      true,             // Default to long position
-		Leverage:  1,                // Default leverage is 1x
+		Long:      true,            // Default to long position
+		Leverage:  1,               // Default leverage is 1x
 		TradeType: TradeTypeMarket, // Default to market trade
 	}
 
@@ -383,14 +383,14 @@ func parseOptionalPositiveUint64(data map[string]interface{}, fieldName string) 
 	return &val, nil
 }
 
-// buildCloseTradeMessage builds the close_trade_market message from trade index
+// buildCloseTradeMessage builds the close_trade message from trade index
 func (t *EVMTrader) buildCloseTradeMessage(tradeIndex uint64) ([]byte, error) {
 	closeTradeMsgData := map[string]interface{}{
 		"trade_index": fmt.Sprintf("UserTradeIndex(%d)", tradeIndex),
 	}
 
 	closeTradeMsg := map[string]interface{}{
-		"close_trade_market": closeTradeMsgData,
+		"close_trade": closeTradeMsgData,
 	}
 
 	return json.Marshal(closeTradeMsg)

@@ -48,6 +48,7 @@ to interact with Sai Perps contracts.`,
 	rootCmd.AddCommand(newCloseCmd())
 	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newPositionsCmd())
+	rootCmd.AddCommand(newAutoCmd())
 
 	// Default to open command for backward compatibility
 	rootCmd.RunE = newOpenCmd().RunE
@@ -129,7 +130,7 @@ func newCloseCmd() *cobra.Command {
 		Short: "Close a market trade order in Sai Perps",
 		Long: `Close a market trade order (position) in Sai Perps.
 
-This command sends a close_trade_market message to the perp contract to close a specific trade position.`,
+This command sends a close_trade message to the perp contract to close a specific trade position.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runClose(tradeIndex)
 		},
@@ -169,6 +170,61 @@ This command queries the perp contract to display all trades/positions with thei
 			return runPositions()
 		},
 	}
+
+	return cmd
+}
+
+// newAutoCmd creates the auto subcommand
+func newAutoCmd() *cobra.Command {
+	var (
+		configFile        string
+		marketIndex       uint64
+		collateralIndex   uint64
+		minTradeSize      uint64
+		maxTradeSize      uint64
+		minLeverage       uint64
+		maxLeverage       uint64
+		blocksBeforeClose uint64
+		maxOpenPositions  int
+		loopDelaySeconds  int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "auto",
+		Short: "Run automated random trading",
+		Long: `Run an automated trading bot that randomly opens and closes positions.
+
+This command continuously:
+- Opens random trades with random parameters (size, leverage, direction)
+- Tracks open positions and their opening block numbers
+- Closes positions after a specified number of blocks
+- Checks balance before opening trades to avoid insufficient funds
+
+Examples:
+  # Run with config file
+  trader auto --config auto-trader.json
+
+  # Run with defaults (market 0, random size/leverage, close after 20 blocks)
+  trader auto
+
+  # Custom parameters via flags (overrides config file)
+  trader auto --config auto-trader.json --min-leverage 5 --max-leverage 20`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runAuto(configFile, marketIndex, collateralIndex, minTradeSize, maxTradeSize,
+				minLeverage, maxLeverage, blocksBeforeClose, maxOpenPositions, loopDelaySeconds, cmd)
+		},
+	}
+
+	cmd.Flags().StringVar(&configFile, "config", "", "Path to JSON config file (optional)")
+	cmd.Flags().Uint64Var(&marketIndex, "market-index", 0, "Market index to trade")
+	cmd.Flags().Uint64Var(&collateralIndex, "collateral-index", 0, "Collateral token index (default: use market's quote token)")
+	cmd.Flags().Uint64Var(&minTradeSize, "min-trade-size", 1000000, "Minimum trade size in smallest units")
+	cmd.Flags().Uint64Var(&maxTradeSize, "max-trade-size", 5000000, "Maximum trade size in smallest units")
+	cmd.Flags().Uint64Var(&minLeverage, "min-leverage", 1, "Minimum leverage (e.g., 1 for 1x)")
+	cmd.Flags().Uint64Var(&maxLeverage, "max-leverage", 10, "Maximum leverage (e.g., 10 for 10x)")
+	cmd.Flags().Uint64Var(&blocksBeforeClose, "blocks-before-close", 20, "Number of blocks to wait before closing a position")
+	cmd.Flags().IntVar(&maxOpenPositions, "max-open-positions", 5, "Maximum number of positions to keep open at once")
+	cmd.Flags().IntVar(&loopDelaySeconds, "loop-delay", 5, "Delay in seconds between each loop iteration")
 
 	return cmd
 }
@@ -327,6 +383,100 @@ func runPositions() error {
 	// Query and display positions
 	if err := trader.QueryAndDisplayPositions(ctx); err != nil {
 		return fmt.Errorf("trader error: %w", err)
+	}
+
+	return nil
+}
+
+func runAuto(configFile string, marketIndex, collateralIndex, minTradeSize, maxTradeSize, minLeverage, maxLeverage,
+	blocksBeforeClose uint64, maxOpenPositions, loopDelaySeconds int, cmd *cobra.Command) error {
+
+	var autoCfg evmtrader.AutoTradingConfig
+
+	// Load from config file if provided
+	if configFile != "" {
+		jsonCfg, err := evmtrader.LoadAutoTradingConfig(configFile)
+		if err != nil {
+			return fmt.Errorf("load config file: %w", err)
+		}
+
+		// Convert JSON config to AutoTradingConfig
+		autoCfg = jsonCfg.ToAutoTradingConfig()
+
+		// Apply network settings from config if present
+		if jsonCfg.Network != nil {
+			if jsonCfg.Network.Mode != "" && !cmd.Flags().Changed("network") {
+				networkMode = jsonCfg.Network.Mode
+			}
+			if jsonCfg.Network.EVMRPCUrl != "" && !cmd.Flags().Changed("evm-rpc") {
+				evmRPCUrl = jsonCfg.Network.EVMRPCUrl
+			}
+			if jsonCfg.Network.NetworksToml != "" && !cmd.Flags().Changed("networks-toml") {
+				networksTomlFile = jsonCfg.Network.NetworksToml
+			}
+		}
+
+		fmt.Printf("Loaded config from: %s\n", configFile)
+	} else {
+		// Use command-line flags as defaults
+		autoCfg = evmtrader.AutoTradingConfig{
+			MarketIndex:       marketIndex,
+			CollateralIndex:   collateralIndex,
+			MinTradeSize:      minTradeSize,
+			MaxTradeSize:      maxTradeSize,
+			MinLeverage:       minLeverage,
+			MaxLeverage:       maxLeverage,
+			BlocksBeforeClose: blocksBeforeClose,
+			MaxOpenPositions:  maxOpenPositions,
+			LoopDelaySeconds:  loopDelaySeconds,
+		}
+	}
+
+	// Override config file with command-line flags if they were explicitly set
+	if cmd.Flags().Changed("market-index") {
+		autoCfg.MarketIndex = marketIndex
+	}
+	if cmd.Flags().Changed("collateral-index") {
+		autoCfg.CollateralIndex = collateralIndex
+	}
+	if cmd.Flags().Changed("min-trade-size") {
+		autoCfg.MinTradeSize = minTradeSize
+	}
+	if cmd.Flags().Changed("max-trade-size") {
+		autoCfg.MaxTradeSize = maxTradeSize
+	}
+	if cmd.Flags().Changed("min-leverage") {
+		autoCfg.MinLeverage = minLeverage
+	}
+	if cmd.Flags().Changed("max-leverage") {
+		autoCfg.MaxLeverage = maxLeverage
+	}
+	if cmd.Flags().Changed("blocks-before-close") {
+		autoCfg.BlocksBeforeClose = blocksBeforeClose
+	}
+	if cmd.Flags().Changed("max-open-positions") {
+		autoCfg.MaxOpenPositions = maxOpenPositions
+	}
+	if cmd.Flags().Changed("loop-delay") {
+		autoCfg.LoopDelaySeconds = loopDelaySeconds
+	}
+
+	cfg, err := setupConfig(true)
+	if err != nil {
+		return err
+	}
+
+	// Create trader
+	ctx := context.Background()
+	trader, err := createTrader(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	defer trader.Close()
+
+	// Run the auto-trading loop
+	if err := trader.RunAutoTrading(ctx, autoCfg); err != nil {
+		return fmt.Errorf("auto trading: %w", err)
 	}
 
 	return nil
