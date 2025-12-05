@@ -16,4 +16,13 @@ e2e-deploy:
   bun run e2e_deploy.ts
 
 run-trader *args:
-  go run ./cmd/trader {{args}} 
+  go run ./cmd/trader {{args}}
+
+run-auto-trader *args:
+  go run ./cmd/trader auto {{args}}
+
+run-auto-localnet:
+  go run ./cmd/trader auto --config auto-trader.localnet.json
+
+run-auto-testnet:
+  go run ./cmd/trader auto --config auto-trader.testnet.json 
