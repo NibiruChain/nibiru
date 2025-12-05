@@ -164,8 +164,6 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 	// Convert Ethereum address to Nibiru Bech32 address
 	nibiruAddr := eth.EthAddrToNibiruAddr(t.accountAddr)
-	fmt.Println("nibiruAddr", nibiruAddr.String())
-	fmt.Println("t.accountAddr", t.accountAddr)
 
 	queryMsg := map[string]interface{}{
 		"get_trades": map[string]interface{}{
@@ -391,6 +389,12 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 	return new(big.Int).SetBytes(out), nil
 }
 
+// queryERC20BalanceFromString queries the ERC20 balance of an account using string addresses
+func (t *EVMTrader) queryERC20BalanceFromString(ctx context.Context, erc20ABI abi.ABI, tokenAddr string, account common.Address) (*big.Int, error) {
+	token := common.HexToAddress(tokenAddr)
+	return t.queryERC20Balance(ctx, erc20ABI, token, account)
+}
+
 // QueryCollaterals queries the perp contract for all available collaterals
 // Tries to list collaterals, and if that's not supported, tries common indices (0-10)
 func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
@@ -468,8 +472,6 @@ func (t *EVMTrader) queryCollateralDenom(ctx context.Context, collateralIndex ui
 			"index": collateralIndex,
 		},
 	}
-
-	fmt.Println("queryMsg", queryMsg)
 
 	// Execute the query using the helper method
 	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)

@@ -1,0 +1,20 @@
+{
+  "network": {
+    "mode": "localnet",
+    "evm_rpc_url": "http://localhost:8545",
+    "networks_toml": "networks.toml"
+  },
+  "trading": {
+    "market_index": 0,
+    "collateral_index": 1,
+    "min_trade_size": 10000,
+    "max_trade_size": 50000,
+    "min_leverage": 2,
+    "max_leverage": 8
+  },
+  "bot": {
+    "blocks_before_close": 20,
+    "max_open_positions": 3,
+    "loop_delay_seconds": 5
+  }
+}
