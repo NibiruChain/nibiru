@@ -188,10 +188,10 @@ fi
 val_address=$($BINARY keys show $val_key_name -a)
 val_address=${val_address:-"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"}
 
-$BINARY add-genesis-account $val_address $GENESIS_COINS
+$BINARY genesis add-genesis-account $val_address $GENESIS_COINS
 # EVM encoded nibi address for the same account
-$BINARY add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
-$BINARY add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS
+$BINARY genesis add-genesis-account nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3 $GENESIS_COINS
+$BINARY genesis add-genesis-account nibi1ltez0kkshywzm675rkh8rj2eaf8et78cqjqrhc $GENESIS_COINS
 echo_success "Successfully added genesis account: $val_key_name"
 
 # ------------------------------------------------------------------------
