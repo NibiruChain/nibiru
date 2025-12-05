@@ -298,7 +298,8 @@ func (s *websocketsServer) readLoop(wsConn *wsConn) {
 	}
 }
 
-// tcpGetAndSendResponse sends error response to client if params is invalid
+// getParamsAndCheckValid extracts and validates the params from the given message, sending an
+// error response on failure.
 func (s *websocketsServer) getParamsAndCheckValid(msg map[string]any, wsConn *wsConn) ([]any, bool) {
 	params, ok := msg["params"].([]any)
 	if !ok {
