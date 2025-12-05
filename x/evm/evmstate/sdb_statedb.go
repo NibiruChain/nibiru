@@ -399,12 +399,13 @@ func (s *SDB) SubBalance(
 // SetNonce sets the nonce of account.
 // The nonce is a counter of the number of transactions sent from an account.
 func (s *SDB) SetNonce(addr gethcommon.Address, nonce uint64) {
-	acc := s.keeper.GetAccount(s.evmTxCtx, addr)
+	ctx := s.evmTxCtx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	acc := s.keeper.GetAccount(ctx, addr)
 	if acc == nil {
 		return
 	}
 	acc.Nonce = nonce
-	err := s.keeper.SetAccount(s.evmTxCtx, addr, *acc)
+	err := s.keeper.SetAccount(ctx, addr, *acc)
 	if err != nil {
 		panic(sdbErrorf("%w", err))
 	}

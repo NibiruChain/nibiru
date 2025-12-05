@@ -29,7 +29,6 @@ func TestParseNibiBalance_Table(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			u, w := nutil.ParseNibiBalance(tc.inputWei)
 
@@ -69,7 +68,6 @@ func TestParseNibiBalanceFromParts_Normalizes(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			u, w := nutil.ParseNibiBalanceFromParts(c.unibi, c.wei)
 

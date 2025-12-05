@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
@@ -39,7 +39,7 @@ jobs:
 
       - name: "Set up Go"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.24
           # cache: "The action has a built-in functionality for caching and

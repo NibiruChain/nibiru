@@ -89,7 +89,6 @@ func (s *EIP55AddrSuite) TestNewEIP55Addr() {
 			wantErr: true,
 		},
 	} {
-		tc := tc
 		s.Run(tc.name, func() {
 			got, err := eth.NewEIP55AddrFromStr(tc.input)
 			if tc.wantErr {

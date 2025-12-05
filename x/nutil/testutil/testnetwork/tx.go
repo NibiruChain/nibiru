@@ -6,12 +6,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/abci/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
