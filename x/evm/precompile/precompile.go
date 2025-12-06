@@ -123,6 +123,21 @@ func requiredGas(input []byte, abi *gethabi.ABI) uint64 {
 		// order of a precompile in the "runPrecompiledContract" function.
 		return gethparams.TxGas // return reasonable default
 	}
+
+	// -------------------------------------------------------------------------
+	// FIX: Wasm Precompile is not estimated correctly by ABI length.
+	// We return a high fixed cost to ensure EVM allocates sufficient gas,
+	// preventing "Gas Limit Exceeded" before Wasm logic can run.
+	// -------------------------------------------------------------------------
+	// Check if this is the Wasm precompile by checking for a unique Wasm method.
+	_, isWasmExecute := abi.Methods[string(WasmMethod_execute)]
+	if isWasmExecute {
+		// Fixed high gas cost for Wasm calls, allowing Wasm's internal gas meter
+		// to handle the actual consumption up to the overall transaction gas limit.
+		return 500_000 // Fixed high gas cost for Wasm calls
+	}
+	// -------------------------------------------------------------------------
+
 	gasCfg := store.KVGasConfig()
 
 	// Map access could panic. We know that it won't panic because all methods
@@ -136,8 +151,7 @@ func requiredGas(input []byte, abi *gethabi.ABI) uint64 {
 
 	// Calculate the total gas required based on the input size and flat cost
 	return (costPerByte * uint64(len(input[4:]))) + costFlat
-}
-
+} // <-- Важно! Эта скобка должна быть последней в функции.
 type PrecompileMethod string
 
 type OnRunStartResult struct {
