@@ -9,7 +9,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
