@@ -3,9 +3,10 @@ package eth_test
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/suite"
 
@@ -56,8 +56,8 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	// we test our assumptions around int are correct.
 	outOfBounds := new(big.Int).Lsh(big.NewInt(1), 256)       // 2^256
 	maxBigInt := new(big.Int).Sub(outOfBounds, big.NewInt(1)) // 2^256 - 1
-	s.Equal(maxBigInt.BitLen(), math.MaxBitLen)
-	s.Greater(outOfBounds.BitLen(), math.MaxBitLen)
+	s.Equal(maxBigInt.BitLen(), sdkmath.MaxBitLen)
+	s.Greater(outOfBounds.BitLen(), sdkmath.MaxBitLen)
 
 	s.NotPanics(func() {
 		sdk.NewIntFromBigInt(maxBigInt)
@@ -86,7 +86,7 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	})
 	// require panics on invalid int
 	s.Panics(func() {
-		IntKeyEncoder.Encode(math.Int{})
+		IntKeyEncoder.Encode(sdkmath.Int{})
 	})
 
 	// test value encoder
@@ -97,6 +97,6 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 
 	// panics on invalid math.Int
 	s.Panics(func() {
-		IntValueEncoder.Encode(math.Int{})
+		IntValueEncoder.Encode(sdkmath.Int{})
 	})
 }

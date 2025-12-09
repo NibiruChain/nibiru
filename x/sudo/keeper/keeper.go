@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"

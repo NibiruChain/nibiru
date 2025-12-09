@@ -1,11 +1,12 @@
 package examples
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storagetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 )
 
 // let's showcase some more complex keys, like delegations which are composite.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
@@ -13,7 +13,7 @@ import (
 var (
 	AccAddressValueEncoder ValueEncoder[sdk.AccAddress] = accAddressValueEncoder{}
 	DecValueEncoder        ValueEncoder[sdk.Dec]        = decValueEncoder{}
-	IntValueEncoder        ValueEncoder[math.Int]       = intValueEncoder{}
+	IntValueEncoder        ValueEncoder[sdkmath.Int]    = intValueEncoder{}
 	Uint64ValueEncoder     ValueEncoder[uint64]         = uint64Value{}
 )
 
@@ -87,16 +87,16 @@ func (a accAddressValueEncoder) Name() string                          { return 
 
 type intValueEncoder struct{}
 
-func (intValueEncoder) Encode(value math.Int) []byte {
+func (intValueEncoder) Encode(value sdkmath.Int) []byte {
 	return IntKeyEncoder.Encode(value)
 }
 
-func (intValueEncoder) Decode(b []byte) math.Int {
+func (intValueEncoder) Decode(b []byte) sdkmath.Int {
 	_, got := IntKeyEncoder.Decode(b)
 	return got
 }
 
-func (intValueEncoder) Stringify(value math.Int) string {
+func (intValueEncoder) Stringify(value sdkmath.Int) string {
 	return IntKeyEncoder.Stringify(value)
 }
 
@@ -106,13 +106,13 @@ func (intValueEncoder) Name() string {
 
 // IntKeyEncoder
 
-var IntKeyEncoder KeyEncoder[math.Int] = intKeyEncoder{}
+var IntKeyEncoder KeyEncoder[sdkmath.Int] = intKeyEncoder{}
 
 type intKeyEncoder struct{}
 
-const maxIntKeyLen = math.MaxBitLen / 8
+const maxIntKeyLen = sdkmath.MaxBitLen / 8
 
-func (intKeyEncoder) Encode(key math.Int) []byte {
+func (intKeyEncoder) Encode(key sdkmath.Int) []byte {
 	if key.IsNil() {
 		panic("cannot encode invalid math.Int")
 	}
@@ -127,12 +127,12 @@ func (intKeyEncoder) Encode(key math.Int) []byte {
 	return padded
 }
 
-func (intKeyEncoder) Decode(b []byte) (int, math.Int) {
+func (intKeyEncoder) Decode(b []byte) (int, sdkmath.Int) {
 	if len(b) != maxIntKeyLen {
 		panic("invalid key length")
 	}
 	i := new(big.Int).SetBytes(b)
-	return maxIntKeyLen, math.NewIntFromBigInt(i)
+	return maxIntKeyLen, sdkmath.NewIntFromBigInt(i)
 }
 
-func (intKeyEncoder) Stringify(key math.Int) string { return key.String() }
+func (intKeyEncoder) Stringify(key sdkmath.Int) string { return key.String() }

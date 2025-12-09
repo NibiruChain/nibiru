@@ -4,8 +4,9 @@ import (
 	fmt "fmt"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 )
 
 // BytesToHex converts a byte array to a hexadecimal string

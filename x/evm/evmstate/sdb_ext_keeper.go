@@ -2,8 +2,9 @@
 package evmstate
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"

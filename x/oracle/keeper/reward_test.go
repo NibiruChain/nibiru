@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

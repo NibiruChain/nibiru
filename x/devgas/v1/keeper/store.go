@@ -1,9 +1,10 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/collections"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )
