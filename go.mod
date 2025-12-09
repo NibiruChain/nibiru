@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
-	github.com/CosmWasm/wasmvm v1.5.8
+	github.com/CosmWasm/wasmvm v1.5.9
 	github.com/NibiruChain/collections v0.5.0
 
 	// Consenus Engine
@@ -42,7 +42,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.17.0
@@ -63,8 +63,8 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/gorilla/websocket v1.5.0
 	github.com/rs/cors v1.8.3
-	github.com/rs/zerolog v1.32.0
-	github.com/status-im/keycard-go v0.2.0
+	github.com/rs/zerolog v1.34.0
+	github.com/status-im/keycard-go v0.3.3
 	golang.org/x/crypto v0.45.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 	golang.org/x/net v0.47.0
