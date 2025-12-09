@@ -22,6 +22,10 @@ type Config struct {
 	// Account
 	PrivateKeyHex string
 
+	// Notifications
+	SlackWebhook        string
+	SlackErrorKeywords  []string // Only send to Slack if error contains these keywords (empty = send all)
+
 	// Strategy
 	TradeSize        uint64 // Exact trade size (if set, overrides min/max)
 	TradeSizeMin     uint64
@@ -58,12 +62,12 @@ type NetworkConfig struct {
 
 // NetworkInfo contains configuration for a specific network
 type NetworkInfo struct {
-	Name       string            `toml:"name"`
-	EVMRPCUrl  string            `toml:"evm_rpc_url"`
-	GrpcUrl    string            `toml:"grpc_url"`
-	ChainID    string            `toml:"chain_id"`
-	Contracts  ContractConfig    `toml:"contracts"`
-	Tokens     TokenConfig       `toml:"tokens"`
+	Name      string         `toml:"name"`
+	EVMRPCUrl string         `toml:"evm_rpc_url"`
+	GrpcUrl   string         `toml:"grpc_url"`
+	ChainID   string         `toml:"chain_id"`
+	Contracts ContractConfig `toml:"contracts"`
+	Tokens    TokenConfig    `toml:"tokens"`
 }
 
 // ContractConfig contains contract addresses
@@ -150,7 +154,7 @@ func ContractAddressesFromNetworkInfo(netInfo *NetworkInfo) ContractAddresses {
 	return ContractAddresses{
 		OracleAddress:    netInfo.Contracts.OracleAddress,
 		PerpAddress:      netInfo.Contracts.PerpAddress,
-		VaultAddress:      netInfo.Contracts.VaultAddress,
+		VaultAddress:     netInfo.Contracts.VaultAddress,
 		TokenStNIBIERC20: netInfo.Tokens.StNIBIEvm,
 		StNIBIDenom:      netInfo.Tokens.StNIBIDenom,
 	}

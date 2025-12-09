@@ -99,7 +99,7 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 			return nil, fmt.Errorf("load contracts: %w", err)
 		}
 	}
-	return &EVMTrader{
+	trader := &EVMTrader{
 		cfg:         cfg,
 		client:      client,
 		txClient:    txClient,
@@ -109,7 +109,9 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		ethPrivKey:  ethPrivKey,
 		accountAddr: accountAddr,
 		addrs:       addrs,
-	}, nil
+	}
+
+	return trader, nil
 }
 
 // Close releases underlying resources.
@@ -244,8 +246,7 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 	t.log(msg, kv...)
 
 	// Check if Slack webhook is configured
-	slackWebhook := os.Getenv("SLACK_WEBHOOK")
-	if slackWebhook == "" {
+	if t.cfg.SlackWebhook == "" {
 		return
 	}
 
@@ -254,6 +255,40 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 	for i := 0; i+1 < len(kv); i += 2 {
 		k, _ := kv[i].(string)
 		errorFields[k] = kv[i+1]
+	}
+
+	// Check if error matches keyword filter
+	if len(t.cfg.SlackErrorKeywords) > 0 {
+		matched := false
+
+		// Check if message contains any keyword
+		for _, keyword := range t.cfg.SlackErrorKeywords {
+			if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
+				matched = true
+				break
+			}
+		}
+
+		// If message didn't match, check error fields
+		if !matched {
+			for _, v := range errorFields {
+				vStr := fmt.Sprintf("%v", v)
+				for _, keyword := range t.cfg.SlackErrorKeywords {
+					if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
+						matched = true
+						break
+					}
+				}
+				if matched {
+					break
+				}
+			}
+		}
+
+		// If no keywords matched, don't send to Slack
+		if !matched {
+			return
+		}
 	}
 
 	// Format Slack message
@@ -275,7 +310,7 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 	}
 
 	// Send to Slack (non-blocking)
-	go sendSlackNotification(slackWebhook, slackMsg)
+	go sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
 }
 
 // buildSlackFields converts error fields to Slack field format
