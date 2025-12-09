@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	github.com/CosmWasm/wasmd v0.44.0
 	github.com/CosmWasm/wasmvm v1.5.9
-	github.com/NibiruChain/collections v0.5.0
 
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.37.5

@@ -4,7 +4,7 @@ import (
 	fmt "fmt"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 

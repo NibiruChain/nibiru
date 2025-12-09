@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	github.com/CosmWasm/wasmd v0.44.0 // indirect
 	github.com/CosmWasm/wasmvm v1.5.8 // indirect
-	github.com/NibiruChain/collections v0.5.0 // indirect
 	github.com/NibiruChain/nibiru/v2 v2.8.0
 
 	// Consenus Engine
@@ -48,6 +47,7 @@ require (
 	github.com/DataDog/zstd v1.5.5 // indirect
 	github.com/MakeNowJust/heredoc/v2 v2.0.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/NibiruChain/collections v0.5.0 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
