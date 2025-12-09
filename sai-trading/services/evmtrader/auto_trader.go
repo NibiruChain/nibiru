@@ -47,7 +47,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		// Get current block number
 		currentBlock, err := t.client.BlockNumber(ctx)
 		if err != nil {
-			t.log("Failed to get block number", "error", err.Error())
+			t.logError("Failed to get block number", "error", err.Error())
 			time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 			continue
 		}
@@ -57,7 +57,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		// Query current open positions
 		trades, err := t.QueryTrades(ctx)
 		if err != nil {
-			t.log("Failed to query trades", "error", err.Error())
+			t.logError("Failed to query trades", "error", err.Error())
 			time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 			continue
 		}
@@ -137,14 +137,14 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			} else {
 				balance, err := t.queryERC20BalanceFromString(ctx, erc20ABI, erc20Addr, t.accountAddr)
 				if err != nil {
-					t.log("Failed to query balance", "error", err.Error())
+					t.logError("Failed to query balance", "error", err.Error())
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
 
 				requiredBalance := new(big.Int).SetUint64(tradeSize)
 				if balance.Cmp(requiredBalance) < 0 {
-					t.log("Insufficient balance for trade",
+					t.logError("Insufficient balance for trade",
 						"balance", balance.String(),
 						"required", requiredBalance.String(),
 					)
@@ -158,12 +158,12 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			if collateralIndex == 0 {
 				market, err := t.queryMarket(ctx, cfg.MarketIndex)
 				if err != nil {
-					t.log("Failed to query market for collateral index", "error", err.Error())
+					t.logError("Failed to query market for collateral index", "error", err.Error())
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
 				if market.QuoteToken == nil {
-					t.log("Market has no quote token", "market_index", cfg.MarketIndex)
+					t.logError("Market has no quote token", "market_index", cfg.MarketIndex)
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
@@ -173,7 +173,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			// Open the trade
 			chainID, err := t.client.ChainID(ctx)
 			if err != nil {
-				t.log("Failed to get chain ID", "error", err.Error())
+				t.logError("Failed to get chain ID", "error", err.Error())
 				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 				continue
 			}
@@ -181,7 +181,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			// Fetch current market price from oracle (needed for all trade types)
 			marketPrice, err := t.fetchMarketPriceForIndex(ctx, cfg.MarketIndex)
 			if err != nil {
-				t.log("Failed to fetch market price from oracle", "error", err.Error())
+				t.logError("Failed to fetch market price from oracle", "error", err.Error())
 				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 				continue
 			}
@@ -261,7 +261,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				// Query trades again to find the new position and add it to tracking
 				newTrades, err := t.QueryTrades(ctx)
 				if err != nil {
-					t.log("Failed to query trades after opening", "error", err.Error())
+					t.logError("Failed to query trades after opening", "error", err.Error())
 				} else {
 					// Find the newest open position that we're not tracking yet
 					for _, trade := range newTrades {
