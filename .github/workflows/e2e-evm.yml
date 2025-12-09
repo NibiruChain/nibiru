@@ -94,7 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: "Check for EVM-related changes"
+      - name: "Check for changes"
         id: check_changes
         uses: dorny/paths-filter@v3
         with:
@@ -103,6 +103,8 @@ jobs:
               - "sai-trading/**/*.ts"
               - "sai-trading/artifacts/*"
               - "sai-trading/**/*.go"
+              - "sai-trading/go.mod"
+              - "sai-trading/go.sum"
 
       - name: Set up Go
         if: steps.check_changes.outputs.check_changes == 'true'

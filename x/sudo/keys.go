@@ -1,6 +1,6 @@
 package sudo
 
-import "github.com/NibiruChain/collections"
+import "github.com/NibiruChain/nibiru/v2/x/collections"
 
 const (
 	ModuleName = "sudo"
