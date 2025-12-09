@@ -3,7 +3,7 @@ package devgas
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
