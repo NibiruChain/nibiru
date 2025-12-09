@@ -1,11 +1,14 @@
 package evmtrader
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -18,6 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
@@ -66,8 +70,15 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	}
 
 	// Connect to gRPC for transaction broadcasting
+	// Use TLS for remote servers (testnet/mainnet), insecure for localhost
+	var grpcCreds credentials.TransportCredentials
+	if strings.Contains(cfg.GrpcUrl, ":443") || (!strings.Contains(cfg.GrpcUrl, "localhost") && !strings.Contains(cfg.GrpcUrl, "127.0.0.1")) {
+		grpcCreds = credentials.NewTLS(&tls.Config{})
+	} else {
+		grpcCreds = insecure.NewCredentials()
+	}
 	grpcConn, err := grpc.DialContext(ctx, cfg.GrpcUrl,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(grpcCreds),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
@@ -77,11 +88,18 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	encCfg := getEncConfig()
 	txClient := txtypes.NewServiceClient(grpcConn)
 
-	addrs, err := loadContractAddresses(cfg.ContractsEnvFile)
-	if err != nil {
-		return nil, fmt.Errorf("load contracts: %w", err)
+	// Load contract addresses: use from Config if provided, otherwise load from file
+	var addrs ContractAddresses
+	if cfg.ContractAddresses != nil {
+		addrs = *cfg.ContractAddresses
+	} else {
+		var err error
+		addrs, err = loadContractAddresses(cfg.ContractsEnvFile)
+		if err != nil {
+			return nil, fmt.Errorf("load contracts: %w", err)
+		}
 	}
-	return &EVMTrader{
+	trader := &EVMTrader{
 		cfg:         cfg,
 		client:      client,
 		txClient:    txClient,
@@ -91,7 +109,9 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		ethPrivKey:  ethPrivKey,
 		accountAddr: accountAddr,
 		addrs:       addrs,
-	}, nil
+	}
+
+	return trader, nil
 }
 
 // Close releases underlying resources.
@@ -159,7 +179,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	}
 
 	// Parse trade ID from response
-	isLimitOrder := params.TradeType == "limit" || params.TradeType == "stop"
+	isLimitOrder := isLimitOrStopOrder(params.TradeType)
 	tradeID, err := t.parseTradeID(txResp)
 	if err != nil {
 		t.log("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
@@ -188,7 +208,7 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Build close_trade_market message
+	// Build close_trade message
 	msgBytes, err := t.buildCloseTradeMessage(tradeIndex)
 	if err != nil {
 		return fmt.Errorf("build message: %w", err)
@@ -219,6 +239,115 @@ func (t *EVMTrader) log(msg string, kv ...any) {
 	fields["msg"] = msg
 	fields["ts"] = time.Now().UTC().Format(time.RFC3339)
 	_ = json.NewEncoder(os.Stdout).Encode(fields)
+}
+
+// logError logs an error and optionally sends it to Slack webhook
+func (t *EVMTrader) logError(msg string, kv ...any) {
+	t.log(msg, kv...)
+
+	// Check if Slack webhook is configured
+	if t.cfg.SlackWebhook == "" {
+		return
+	}
+
+	// Build error message for Slack
+	errorFields := map[string]any{}
+	for i := 0; i+1 < len(kv); i += 2 {
+		k, _ := kv[i].(string)
+		errorFields[k] = kv[i+1]
+	}
+
+	// Check if error matches keyword filter
+	if len(t.cfg.SlackErrorKeywords) > 0 {
+		matched := false
+
+		// Check if message contains any keyword
+		for _, keyword := range t.cfg.SlackErrorKeywords {
+			if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
+				matched = true
+				break
+			}
+		}
+
+		// If message didn't match, check error fields
+		if !matched {
+			for _, v := range errorFields {
+				vStr := fmt.Sprintf("%v", v)
+				for _, keyword := range t.cfg.SlackErrorKeywords {
+					if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
+						matched = true
+						break
+					}
+				}
+				if matched {
+					break
+				}
+			}
+		}
+
+		// If no keywords matched, don't send to Slack
+		if !matched {
+			return
+		}
+	}
+
+	// Format Slack message
+	slackMsg := map[string]interface{}{
+		"text": fmt.Sprintf("🚨 Auto-Trader Error: %s", msg),
+		"blocks": []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": fmt.Sprintf("*%s*\n\n*Details:*", msg),
+				},
+			},
+			{
+				"type":   "section",
+				"fields": buildSlackFields(errorFields),
+			},
+		},
+	}
+
+	// Send to Slack (non-blocking)
+	go sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
+}
+
+// buildSlackFields converts error fields to Slack field format
+func buildSlackFields(fields map[string]any) []map[string]interface{} {
+	slackFields := []map[string]interface{}{}
+	for k, v := range fields {
+		slackFields = append(slackFields, map[string]interface{}{
+			"type": "mrkdwn",
+			"text": fmt.Sprintf("*%s:*\n%s", k, fmt.Sprintf("%v", v)),
+		})
+		if len(slackFields) >= 10 { // Slack has a limit on fields
+			break
+		}
+	}
+	return slackFields
+}
+
+// sendSlackNotification sends a notification to Slack webhook
+func sendSlackNotification(webhookURL string, payload map[string]interface{}) {
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return // Silently fail if we can't marshal
+	}
+
+	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return // Silently fail if we can't create request
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return // Silently fail if request fails
+	}
+	defer resp.Body.Close()
 }
 
 // getEncConfig returns the encoding configuration for the Nibiru chain.
