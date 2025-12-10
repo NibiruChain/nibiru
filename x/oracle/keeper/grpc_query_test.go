@@ -6,9 +6,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	testutilevents "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -315,7 +316,6 @@ func TestCalcTwap(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			input := CreateTestFixture(t)
 			querier := input.OracleKeeper
