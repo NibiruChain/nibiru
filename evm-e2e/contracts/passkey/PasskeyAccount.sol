@@ -53,13 +53,25 @@ contract PasskeyAccount {
         emit Executed(to, value, data);
     }
 
-    function _verify(bytes32 /*userOpHash*/, bytes calldata signature) internal view returns (uint256) {
-        // WebAuthn signatures are over sha256(authenticatorData || sha256(clientDataJSON)).
-        // Signature payload layout: abi.encode(authenticatorData, clientDataJSON, r, s)
-        (bytes memory authData, bytes memory clientDataJSON, bytes32 r, bytes32 s) =
-            abi.decode(signature, (bytes, bytes, bytes32, bytes32));
+    function _verify(bytes32 userOpHash, bytes calldata signature) internal view returns (uint256) {
+        bytes32 digest;
+        bytes32 r;
+        bytes32 s;
 
-        bytes32 digest = sha256(abi.encodePacked(authData, sha256(clientDataJSON)));
+        // For Node/EVM tests we accept compact r,s signatures over userOpHash.
+        if (signature.length == 64) {
+            (r, s) = abi.decode(signature, (bytes32, bytes32));
+            digest = sha256(abi.encodePacked(userOpHash));
+        } else {
+            // WebAuthn signatures are over sha256(authenticatorData || sha256(clientDataJSON)).
+            // Signature payload layout: abi.encode(authenticatorData, clientDataJSON, r, s)
+            (bytes memory authData, bytes memory clientDataJSON, bytes32 rFull, bytes32 sFull) =
+                abi.decode(signature, (bytes, bytes, bytes32, bytes32));
+            r = rFull;
+            s = sFull;
+            digest = sha256(abi.encodePacked(authData, sha256(clientDataJSON)));
+        }
+
         bytes memory input = abi.encodePacked(digest, r, s, qx, qy);
         (bool ok, bytes memory out) = address(0x100).staticcall(input);
         if (!ok || out.length != 32) {
@@ -74,7 +86,7 @@ contract PasskeyAccountFactory {
     address public immutable IMPLEMENTATION;
     address public immutable ENTRY_POINT;
 
-    event AccountCreated(address indexed account, bytes32 qx, bytes32 qy);
+    event AccountCreated(address indexed account, bytes32 qx, bytes32 qy, bytes32 salt);
 
     constructor(address _entryPoint) {
         ENTRY_POINT = _entryPoint;
@@ -82,8 +94,18 @@ contract PasskeyAccountFactory {
     }
 
     function createAccount(bytes32 _qx, bytes32 _qy) external returns (address account) {
-        account = Clones.clone(IMPLEMENTATION);
+        bytes32 salt = _salt(_qx, _qy);
+        account = Clones.cloneDeterministic(IMPLEMENTATION, salt);
         PasskeyAccount(payable(account)).initialize(ENTRY_POINT, _qx, _qy);
-        emit AccountCreated(account, _qx, _qy);
+        emit AccountCreated(account, _qx, _qy, salt);
+    }
+
+    function accountAddress(bytes32 _qx, bytes32 _qy) external view returns (address predicted) {
+        bytes32 salt = _salt(_qx, _qy);
+        predicted = Clones.predictDeterministicAddress(IMPLEMENTATION, salt, address(this));
+    }
+
+    function _salt(bytes32 _qx, bytes32 _qy) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_qx, _qy));
     }
 }

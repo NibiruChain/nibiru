@@ -51,7 +51,8 @@ const ENTRY_POINT_ABI = [
 ]
 const FACTORY_ABI = [
   "function createAccount(bytes32 _qx, bytes32 _qy) returns (address account)",
-  "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy)",
+  "function accountAddress(bytes32 _qx, bytes32 _qy) view returns (address predicted)",
+  "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy, bytes32 salt)",
 ]
 const entryPoint = new Contract(ENTRY_POINT, new Interface(ENTRY_POINT_ABI), wallet)
 const factoryInterface = new Interface(FACTORY_ABI)
@@ -78,6 +79,7 @@ interface BundlerReceipt {
 }
 
 const receiptStore = new Map<string, BundlerReceipt>()
+const RECEIPT_LIMIT = 500
 
 async function main() {
   const network = await provider.getNetwork()
@@ -126,6 +128,13 @@ async function main() {
   server.listen(PORT, () => {
     console.log(`Bundler JSON-RPC listening at http://127.0.0.1:${PORT}`)
   })
+
+  const shutdown = () => {
+    console.log("Shutting down bundler...")
+    server.close(() => process.exit(0))
+  }
+  process.on("SIGINT", shutdown)
+  process.on("SIGTERM", shutdown)
 }
 
 async function handleRpcRequest(
@@ -174,16 +183,20 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
     nonce: rpcUserOp.nonce,
   })
 
+  let bundlerNonce = await provider.getTransactionCount(wallet.address, "pending")
+
   // Simple pre-fund: deposit the required amount into EntryPoint for this sender.
   const requiredPrefund =
     (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
   if (requiredPrefund > 0n) {
     console.log(`Prefunding sender ${rpcUserOp.sender} with ${requiredPrefund} wei in EntryPoint`)
-    await entryPoint.depositTo(rpcUserOp.sender, { value: requiredPrefund })
+    const prefundTx = await entryPoint.depositTo(rpcUserOp.sender, { value: requiredPrefund, nonce: bundlerNonce++ })
+    await prefundTx.wait()
   }
 
   const tx = await entryPoint.handleOps([userOp], wallet.address, {
     gasLimit: userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas + 200000n,
+    nonce: bundlerNonce,
   })
   console.log(`handleOps tx broadcast: ${tx.hash}`)
 
@@ -192,7 +205,7 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
     .then((receipt: ContractTransactionReceipt) => {
       const actualGasUsed = toBeHex(receipt.gasUsed ?? 0n)
       const actualGasCost = receipt.gasPrice ? toBeHex((receipt.gasUsed ?? 0n) * receipt.gasPrice) : actualGasUsed
-      receiptStore.set(userOpHash, {
+      storeReceipt(userOpHash, {
         userOpHash,
         entryPoint: ENTRY_POINT,
         sender: rpcUserOp.sender,
@@ -206,7 +219,7 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
     })
     .catch((err: unknown) => {
       console.error("handleOps failed", err)
-      receiptStore.set(userOpHash, {
+      storeReceipt(userOpHash, {
         userOpHash,
         entryPoint: ENTRY_POINT,
         sender: rpcUserOp.sender,
@@ -243,31 +256,11 @@ async function handleCreatePasskeyAccount(params: any[]): Promise<{ account: str
   }
 
   const factory = new Contract(factoryAddr, FACTORY_ABI, wallet)
+  const predicted = await factory.accountAddress(qx, qy)
   const tx = await factory.createAccount(qx, qy)
   const receipt = await tx.wait()
 
-  let account: string | undefined
-  for (const log of receipt.logs ?? []) {
-    try {
-      const parsed = factoryInterface.parseLog(log)
-      if (parsed?.name === "AccountCreated" && parsed.args?.account) {
-        account = parsed.args.account as string
-        break
-      }
-    } catch {
-      // ignore non-matching logs
-    }
-  }
-
-  if (!account) {
-    // fall back to static call for predicted address if the event was not found
-    try {
-      account = await factory.createAccount.staticCall(qx, qy)
-    } catch {
-      // ignore
-    }
-  }
-
+  const account = parseAccountCreated(receipt.logs) ?? predicted
   if (!account) {
     throw new Error("AccountCreated event not found; account address unavailable")
   }
@@ -304,6 +297,29 @@ function createResult(id: JsonRpcId, result: any) {
 
 function createError(id: JsonRpcId, code: number, message: string) {
   return { jsonrpc: "2.0", id, error: { code, message } }
+}
+
+function storeReceipt(hash: string, receipt: BundlerReceipt) {
+  receiptStore.set(hash, receipt)
+  while (receiptStore.size > RECEIPT_LIMIT) {
+    const oldest = receiptStore.keys().next().value
+    if (!oldest) break
+    receiptStore.delete(oldest)
+  }
+}
+
+function parseAccountCreated(logs?: any[]) {
+  for (const log of logs ?? []) {
+    try {
+      const parsed = factoryInterface.parseLog(log)
+      if (parsed?.name === "AccountCreated" && parsed.args?.account) {
+        return parsed.args.account as string
+      }
+    } catch {
+      // ignore non-matching logs
+    }
+  }
+  return undefined
 }
 
 function requireEnv(name: string): string {

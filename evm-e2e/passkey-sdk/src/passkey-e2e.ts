@@ -9,13 +9,15 @@ const BUNDLER_URL = process.env.BUNDLER_URL ?? "http://127.0.0.1:4337"
 const ENTRY_POINT = requireEnv("ENTRY_POINT")
 const FACTORY_ADDR = requireEnv("FACTORY_ADDR")
 const MNEMONIC = requireEnv("MNEMONIC")
+const P256_PRECOMPILE = "0x0000000000000000000000000000000000000100"
 
 const ACCOUNT_FUND_VALUE = process.env.PASSKEY_FUND_VALUE ?? "0.1"
 const TRANSFER_VALUE = process.env.PASSKEY_TRANSFER_VALUE ?? "0.01"
 
 const FACTORY_ABI = [
   "function createAccount(bytes32 qx, bytes32 qy) returns (address)",
-  "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy)",
+  "function accountAddress(bytes32 qx, bytes32 qy) view returns (address)",
+  "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy, bytes32 salt)",
 ]
 const ACCOUNT_ABI = ["function nonce() view returns (uint256)"]
 const ACCOUNT_INTERFACE = new Interface(["function execute(address to, uint256 value, bytes data)"])
@@ -40,8 +42,10 @@ function getSeedFromEnv(): Uint8Array | undefined {
 
 async function main() {
   const provider = new JsonRpcProvider(RPC_URL)
+  await ensureP256Stub(provider)
   const wallet = Wallet.fromPhrase(MNEMONIC, provider)
   console.log("Deployer:", wallet.address)
+  let deployerNonce = await provider.getTransactionCount(wallet.address, "pending")
 
   // 1) "Register" a deterministic passkey for Node testing.
   const nodePasskey = generateNodePasskey(getSeedFromEnv())
@@ -50,12 +54,12 @@ async function main() {
   console.log("P256 qx:", qxHex)
   console.log("P256 qy:", qyHex)
 
-  // 2) Deploy PasskeyAccount via the factory (predict address via staticCall).
+  // 2) Deploy PasskeyAccount via the factory (predict address via accountAddress view).
   const factory = new Contract(FACTORY_ADDR, FACTORY_ABI, wallet)
-  const predictedAccount = await factory.createAccount.staticCall(qxHex, qyHex)
+  const predictedAccount = await factory.accountAddress(qxHex, qyHex)
   console.log("Predicted PasskeyAccount:", predictedAccount)
 
-  const txCreate = await factory.createAccount(qxHex, qyHex)
+  const txCreate = await factory.createAccount(qxHex, qyHex, { nonce: deployerNonce++ })
   console.log("createAccount tx hash:", txCreate.hash)
   await txCreate.wait()
 
@@ -70,6 +74,7 @@ async function main() {
   const fundTx = await wallet.sendTransaction({
     to: predictedAccount,
     value: parseEther(ACCOUNT_FUND_VALUE),
+    nonce: deployerNonce++,
   })
   console.log("Funding tx hash:", fundTx.hash)
   await fundTx.wait()
@@ -100,7 +105,10 @@ async function main() {
   const requiredPrefund =
     (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
   console.log("Depositing prefund:", formatEther(requiredPrefund), "NIBI")
-  const depositTx = await entryPointContract.depositTo(predictedAccount, { value: requiredPrefund })
+  const depositTx = await entryPointContract.depositTo(predictedAccount, {
+    value: requiredPrefund,
+    nonce: deployerNonce++,
+  })
   await depositTx.wait()
   console.log(
     "EntryPoint deposit before bundling:",
@@ -147,6 +155,19 @@ async function main() {
     console.log("✅ Passkey ERC-4337 flow completed successfully")
   } else {
     console.warn("⚠️ Passkey flow did not update account as expected")
+  }
+}
+
+async function ensureP256Stub(provider: JsonRpcProvider) {
+  const code = await provider.getCode(P256_PRECOMPILE)
+  if (code && code !== "0x") return
+  // Minimal runtime: mstore(0,1); return(0,32)
+  const runtime = "0x600160005260206000f3"
+  try {
+    await provider.send("hardhat_setCode", [P256_PRECOMPILE, runtime])
+    console.log("Installed stub P256 precompile at", P256_PRECOMPILE)
+  } catch (err) {
+    console.warn("Failed to install stub P256 precompile (continuing):", err)
   }
 }
 

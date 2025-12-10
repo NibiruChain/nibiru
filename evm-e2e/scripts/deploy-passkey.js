@@ -24,6 +24,10 @@ async function main() {
   const qx = process.env.QX
   const qy = process.env.QY
   if (qx && qy) {
+    const predicted = await factory.accountAddress(qx, qy).catch(() => null)
+    if (predicted) {
+      console.log("Predicted PasskeyAccount:", predicted)
+    }
     console.log("Creating PasskeyAccount with provided pubkey coords")
     const tx = await factory.createAccount(qx, qy)
     const receipt = await tx.wait()
