@@ -8,14 +8,19 @@ import { account, provider } from "./setup"
 import { EntryPointV06__factory, PasskeyAccountFactory__factory } from "../types"
 
 const PASSKEY_SDK_DIR = path.resolve(__dirname, "..", "passkey-sdk")
+const PASSKEY_BUNDLER_DIR = path.resolve(__dirname, "..", "..", "passkey-bundler")
 const NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm"
 const NODE_BIN = "node"
 const JSON_RPC_ENDPOINT = process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
 const MNEMONIC = process.env.MNEMONIC
 const BUNDLER_DEV_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+const BUNDLER_DEV_PRIVATE_KEY =
+  process.env.BUNDLER_DEV_PRIVATE_KEY ??
+  "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
 const BUNDLER_PORT = 14437
 const PASSKEY_SEED = "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
 const PASSKEY_TEST_TIMEOUT = Number(process.env.PASSKEY_TEST_TIMEOUT ?? 240000)
+const PASSKEY_BUNDLER_MODE = process.env.PASSKEY_BUNDLER_MODE ?? "local"
 
 if (!MNEMONIC) {
   throw new Error("MNEMONIC must be set for passkey e2e test")
@@ -25,14 +30,15 @@ describe(
   "passkey ERC-4337 flow",
   () => {
     it(
-      "executes a passkey user operation via local bundler",
+      "executes a passkey user operation via bundler",
       async () => {
         await buildPasskeySdk()
+        await buildPasskeyBundlerIfNeeded()
         const { entryPointAddr, factoryAddr } = await deployPasskeyContracts()
         const chainId = BigInt((await provider.getNetwork()).chainId)
         await fundBundlerSigner()
 
-        const bundler = startBundler(entryPointAddr, chainId)
+        const bundler = await startBundler(entryPointAddr, chainId)
         try {
           await waitForBundlerReady(bundler)
           await runPasskeyScript({ entryPointAddr, factoryAddr })
@@ -48,6 +54,18 @@ describe(
 async function buildPasskeySdk() {
   await runCommand(NPM_BIN, ["run", "build"], {
     cwd: PASSKEY_SDK_DIR,
+    env: process.env,
+  })
+}
+
+async function buildPasskeyBundlerIfNeeded() {
+  if (PASSKEY_BUNDLER_MODE !== "official") return
+  await runCommand(NPM_BIN, ["install"], {
+    cwd: PASSKEY_BUNDLER_DIR,
+    env: process.env,
+  })
+  await runCommand(NPM_BIN, ["run", "build"], {
+    cwd: PASSKEY_BUNDLER_DIR,
     env: process.env,
   })
 }
@@ -72,7 +90,14 @@ async function fundBundlerSigner() {
   await tx.wait()
 }
 
-function startBundler(entryPointAddr: string, chainId: bigint) {
+async function startBundler(entryPointAddr: string, chainId: bigint) {
+  if (PASSKEY_BUNDLER_MODE === "official") {
+    return startOfficialBundler(entryPointAddr, chainId)
+  }
+  return startLocalBundler(entryPointAddr, chainId)
+}
+
+function startLocalBundler(entryPointAddr: string, chainId: bigint) {
   const env = {
     ...process.env,
     ENTRY_POINT: entryPointAddr,
@@ -89,8 +114,26 @@ function startBundler(entryPointAddr: string, chainId: bigint) {
   return proc
 }
 
+function startOfficialBundler(entryPointAddr: string, chainId: bigint) {
+  const env = {
+    ...process.env,
+    ENTRY_POINT: entryPointAddr,
+    JSON_RPC_ENDPOINT,
+    CHAIN_ID: chainId.toString(),
+    BUNDLER_PORT: BUNDLER_PORT.toString(),
+    BUNDLER_PRIVATE_KEY: BUNDLER_DEV_PRIVATE_KEY,
+  }
+  const proc = spawn(NODE_BIN, ["dist/index.js"], {
+    cwd: PASSKEY_BUNDLER_DIR,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  })
+  pipeOutput(proc, "bundler")
+  return proc
+}
+
 async function waitForBundlerReady(proc: ChildProcessWithoutNullStreams) {
-  await waitForOutput(proc, "Bundler JSON-RPC listening")
+  await waitForOutput(proc, ["Bundler JSON-RPC listening", "Bundler listening"])
 }
 
 async function runPasskeyScript(opts: { entryPointAddr: string; factoryAddr: string }) {
@@ -141,21 +184,23 @@ function pipeOutput(proc: ChildProcessWithoutNullStreams, label: string) {
   proc.stderr.on("data", (data) => process.stderr.write(`[${label}] ${data}`))
 }
 
-function waitForOutput(proc: ChildProcessWithoutNullStreams, marker: string, timeoutMs = 20000) {
+function waitForOutput(proc: ChildProcessWithoutNullStreams, markers: string | string[], timeoutMs = 20000) {
+  const markerList = Array.isArray(markers) ? markers : [markers]
   return new Promise<void>((resolve, reject) => {
     const onData = (data: Buffer) => {
-      if (data.toString().includes(marker)) {
+      const str = data.toString()
+      if (markerList.some((m) => str.includes(m))) {
         cleanup()
         resolve()
       }
     }
     const onExit = (code: number | null) => {
       cleanup()
-      reject(new Error(`process exited before emitting "${marker}" (code=${code})`))
+      reject(new Error(`process exited before emitting "${markerList.join(",")}" (code=${code})`))
     }
     const timer = setTimeout(() => {
       cleanup()
-      reject(new Error(`timed out waiting for "${marker}"`))
+      reject(new Error(`timed out waiting for "${markerList.join(",")}"`))
     }, timeoutMs)
 
     const cleanup = () => {

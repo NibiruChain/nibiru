@@ -92,7 +92,11 @@ npm run bundler
 The `bun test` suite now exercises the passkey ERC-4337 flow end-to-end. During the run it:
 
 - Builds the `passkey-sdk`, deploys a fresh `EntryPointV06` + `PasskeyAccountFactory`, and funds the dev bundler key.
-- Starts the local bundler from `passkey-sdk/dist/local-bundler.js` on port `14437`.
+- Starts a bundler on port `14437`: by default the lightweight `passkey-sdk/dist/local-bundler.js`; set
+  `PASSKEY_BUNDLER_MODE=official` to instead build and start `passkey-bundler/dist/index.js` (ensure `npm install` in
+  `passkey-bundler/` first).
 - Executes the CLI passkey script against that bundler to prove a full user operation.
 
-Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in both `evm-e2e/` and `evm-e2e/passkey-sdk/`) and that port `14437` is free before running `bun test` or `just test-e2e`.
+Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in `evm-e2e/`, `evm-e2e/passkey-sdk/`, and
+`passkey-bundler/` if using `PASSKEY_BUNDLER_MODE=official`) and that port `14437` is free before running `bun test` or
+`just test-e2e`.
