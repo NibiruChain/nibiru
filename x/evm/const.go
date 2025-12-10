@@ -69,6 +69,8 @@ set.New[gethcommon.Address](
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// Oracle 0x...801
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
+		// P-256 verification precompile 0x...100
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
 ).ToSlice()
 
