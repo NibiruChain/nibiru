@@ -11,6 +11,7 @@ setup:
 install:
   #!/usr/bin/env bash
   npm install
+  (cd passkey-sdk && npm install)
   npx hardhat typechain
 
 # Runs the E2E tests
