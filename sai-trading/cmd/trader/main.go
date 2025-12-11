@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -520,6 +519,9 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 				// Load contract addresses from TOML
 				contractAddrs := evmtrader.ContractAddressesFromNetworkInfo(netInfo)
 				cfg.ContractAddresses = &contractAddrs
+
+				// Load notification filters from TOML
+				cfg.SlackErrorFilters = &networkConfig.Notifications.Filters
 			}
 		} else {
 			// TOML file doesn't exist, fall back to hardcoded defaults
@@ -599,18 +601,8 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 
 	cfg.PrivateKeyHex = privKey
 
-	// Load Slack webhook from environment
+	// Load Slack webhook from environment variable
 	cfg.SlackWebhook = os.Getenv("SLACK_WEBHOOK")
-
-	// Load Slack error keywords filter from environment (comma-separated)
-	keywordsEnv := os.Getenv("SLACK_ERROR_KEYWORDS")
-	if keywordsEnv != "" {
-		keywords := strings.Split(keywordsEnv, ",")
-		for i := range keywords {
-			keywords[i] = strings.TrimSpace(keywords[i])
-		}
-		cfg.SlackErrorKeywords = keywords
-	}
 
 	return cfg, nil
 }

@@ -56,10 +56,35 @@ EVM_PRIVATE_KEY=0x1234567890abcdef...
 # OR
 EVM_MNEMONIC="word1 word2 word3 ..."
 
-# Optional: Slack notifications
 SLACK_WEBHOOK=""
-SLACK_ERROR_KEYWORDS=""
 ```
+
+#### Slack Notification Configuration (Optional)
+
+Slack notifications are optional. If not configured, errors will still be logged to stdout.
+
+**Step 1: Set Slack Webhook**
+
+Set your Slack webhook URL in `.env` file:
+
+```bash
+SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+```
+
+**Step 2: Configure Error Filters**
+
+Configure which errors to send to Slack in `networks.toml`:
+
+```toml
+[notifications.filters]
+include = ["insufficient funds", "gas error", "execution failed"]
+exclude = ["expected error", "test"]
+```
+
+**Filter Logic:**
+- **Exclude list**: If any keyword matches, skip the notification (highest priority)
+- **Include list**: If not empty, only send if at least one keyword matches
+- **Empty filters**: Send all errors to Slack
 
 ### Running the trader
 
@@ -108,15 +133,3 @@ just run-trader --trade-json sample_txs/open_trade.json
 - `--blocks-before-close`: Number of blocks to wait before closing a position (default: 20)
 - `--max-open-positions`: Maximum number of positions to keep open at once (default: 5)
 - `--loop-delay`: Delay in seconds between each loop iteration (default: 5)
-
-### Example `.env` file
-
-```bash
-# Account
-EVM_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-SLACK_WEBHOOK=""
-SLACK_ERROR_KEYWORDS=""
-```
-
-**Note**: The `.env` file is automatically loaded if present. You can also pass values via command-line flags, which take precedence over environment variables.
-

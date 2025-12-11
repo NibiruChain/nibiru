@@ -23,8 +23,8 @@ type Config struct {
 	PrivateKeyHex string
 
 	// Notifications
-	SlackWebhook        string
-	SlackErrorKeywords  []string // Only send to Slack if error contains these keywords (empty = send all)
+	SlackWebhook       string
+	SlackErrorFilters  *ErrorFilters // Error filtering configuration (nil = send all)
 
 	// Strategy
 	TradeSize        uint64 // Exact trade size (if set, overrides min/max)
@@ -53,11 +53,23 @@ type ContractAddresses struct {
 	StNIBIDenom      string
 }
 
+// ErrorFilters defines include/exclude keyword filters for Slack notifications
+type ErrorFilters struct {
+	Include []string `toml:"include"` // Only send errors containing these keywords (empty = send all)
+	Exclude []string `toml:"exclude"` // Never send errors containing these keywords
+}
+
 // NetworkConfig represents the TOML configuration for all networks
 type NetworkConfig struct {
-	Localnet NetworkInfo `toml:"localnet"`
-	Testnet  NetworkInfo `toml:"testnet"`
-	Mainnet  NetworkInfo `toml:"mainnet"`
+	Localnet      NetworkInfo          `toml:"localnet"`
+	Testnet       NetworkInfo          `toml:"testnet"`
+	Mainnet       NetworkInfo          `toml:"mainnet"`
+	Notifications NotificationConfig   `toml:"notifications"`
+}
+
+// NotificationConfig contains notification filter settings
+type NotificationConfig struct {
+	Filters ErrorFilters `toml:"filters"`
 }
 
 // NetworkInfo contains configuration for a specific network
