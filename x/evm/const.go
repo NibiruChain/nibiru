@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -13,6 +12,8 @@ import (
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
@@ -68,6 +69,8 @@ set.New[gethcommon.Address](
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// Oracle 0x...801
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
+		// P-256 verification precompile 0x...100
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
 ).ToSlice()
 
