@@ -1,6 +1,11 @@
 # Network Configuration for Sai Trading
 # This file contains contract addresses and RPC endpoints for different networks
 
+# Slack notification error filtering
+[notifications.filters]
+include = []
+exclude = []
+
 [localnet]
 name = "Local Testnet"
 evm_rpc_url = "http://localhost:8545"

@@ -257,37 +257,57 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 		errorFields[k] = kv[i+1]
 	}
 
-	// Check if error matches keyword filter
-	if len(t.cfg.SlackErrorKeywords) > 0 {
-		matched := false
-
-		// Check if message contains any keyword
-		for _, keyword := range t.cfg.SlackErrorKeywords {
-			if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
-				matched = true
-				break
+	// Apply error filters if configured
+	if t.cfg.SlackErrorFilters != nil {
+		// Check exclude list first - if any exclude keyword matches, skip notification
+		if len(t.cfg.SlackErrorFilters.Exclude) > 0 {
+			for _, keyword := range t.cfg.SlackErrorFilters.Exclude {
+				// Check message
+				if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
+					return
+				}
+				// Check error fields
+				for _, v := range errorFields {
+					vStr := fmt.Sprintf("%v", v)
+					if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
+						return
+					}
+				}
 			}
 		}
 
-		// If message didn't match, check error fields
-		if !matched {
-			for _, v := range errorFields {
-				vStr := fmt.Sprintf("%v", v)
-				for _, keyword := range t.cfg.SlackErrorKeywords {
-					if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
-						matched = true
-						break
-					}
-				}
-				if matched {
+		// Check include list - if not empty, only send if at least one keyword matches
+		if len(t.cfg.SlackErrorFilters.Include) > 0 {
+			matched := false
+
+			// Check if message contains any include keyword
+			for _, keyword := range t.cfg.SlackErrorFilters.Include {
+				if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
+					matched = true
 					break
 				}
 			}
-		}
 
-		// If no keywords matched, don't send to Slack
-		if !matched {
-			return
+			// If message didn't match, check error fields
+			if !matched {
+				for _, v := range errorFields {
+					vStr := fmt.Sprintf("%v", v)
+					for _, keyword := range t.cfg.SlackErrorFilters.Include {
+						if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
+							matched = true
+							break
+						}
+					}
+					if matched {
+						break
+					}
+				}
+			}
+
+			// If no include keywords matched, don't send to Slack
+			if !matched {
+				return
+			}
 		}
 	}
 
