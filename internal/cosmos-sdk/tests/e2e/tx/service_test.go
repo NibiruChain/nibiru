@@ -593,7 +593,7 @@ func (s E2ETestSuite) TestBroadcastTx_GRPCGateway() {
 				var result tx.BroadcastTxResponse
 				err = val.ClientCtx.Codec.UnmarshalJSON(res, &result)
 				s.Require().NoError(err)
-				s.Require().Equal(uint32(0), result.TxResponse.Code, "rawlog", result.TxResponse.RawLog)
+				s.Require().Equal(uint32(0), result.TxResponse.RawLog)
 			}
 		})
 	}
