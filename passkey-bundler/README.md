@@ -37,18 +37,26 @@ node dist/index.js
 
 ## Configuration (env)
 
+- `BUNDLER_MODE`: `dev` (default) or `testnet` (enforces safer defaults + requires `DB_URL`).
 - `RPC_URL` / `JSON_RPC_ENDPOINT`: upstream RPC endpoint.
 - `ENTRY_POINT`: EntryPoint address (required).
 - `CHAIN_ID`: chain ID (falls back to RPC if unset).
 - `BUNDLER_PRIVATE_KEY`: bundler signer (required). Optional `BENEFICIARY` overrides the handleOps beneficiary.
 - `BUNDLER_PORT`: JSON-RPC/health/metrics port (default `4337`).
 - `METRICS_PORT`: optional separate port for metrics.
+- `DB_URL`: SQLite database location (e.g. `sqlite:./data/bundler.sqlite` or `./data/bundler.sqlite`).
+- `MAX_BODY_BYTES`: request body size limit (default `1000000`).
+- `BUNDLER_REQUIRE_AUTH`: require API key auth even if `BUNDLER_API_KEYS` is empty (defaults to `true` in testnet mode).
 - `MAX_QUEUE` (default `1000`), `QUEUE_CONCURRENCY` (default `4`).
 - `RATE_LIMIT`: requests/minute per IP or API key (default `120`); `BUNDLER_API_KEYS` as comma-separated list enables
   auth.
 - `GAS_BUMP` (percent, default `15`), `GAS_BUMP_WEI` (absolute bump), `SUBMISSION_TIMEOUT_MS` (default `45000`),
   `FINALITY_BLOCKS` (default `2`).
-- `PREFUND_ENABLED` (default `true`), `MAX_PREFUND_WEI` (default `5e18`), `RECEIPT_LIMIT` (default `1000`).
+- `VALIDATION_ENABLED`: run `simulateValidation` before enqueue (defaults to `true` in testnet mode).
+- `ENABLE_PASSKEY_HELPERS`: enable `passkey_*` helper RPC methods (defaults to `false` in testnet mode).
+- `PREFUND_ENABLED` (default `true` in dev, `false` in testnet), `MAX_PREFUND_WEI` (default `5e18`),
+  `PREFUND_ALLOWLIST` (comma-separated sender addresses; required if `PREFUND_ENABLED=true` in testnet mode).
+- `RECEIPT_LIMIT` (default `1000`), `RECEIPT_POLL_INTERVAL_MS` (default `5000`).
 
 Health: `GET /healthz` (process + RPC reachability), `GET /readyz` (RPC synced, signer nonce). Metrics: `GET /metrics`
 Prometheus text.

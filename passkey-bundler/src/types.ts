@@ -27,6 +27,7 @@ export interface UserOperation {
 }
 
 export interface BundlerConfig {
+  mode: "dev" | "testnet"
   rpcUrl: string
   entryPoint: string
   chainId: bigint
@@ -34,18 +35,25 @@ export interface BundlerConfig {
   beneficiary?: string
   port: number
   metricsPort?: number
+  maxBodyBytes: number
+  authRequired: boolean
   rateLimitPerMinute: number
   apiKeys: string[]
   maxQueue: number
   queueConcurrency: number
   logLevel: LogLevel
+  enablePasskeyHelpers: boolean
+  dbUrl?: string
+  validationEnabled: boolean
   gasBumpPercent: number
   gasBumpWei?: bigint
   prefundEnabled: boolean
   maxPrefundWei: bigint
+  prefundAllowlist: string[]
   submissionTimeoutMs: number
   finalityBlocks: number
   receiptLimit: number
+  receiptPollIntervalMs: number
 }
 
 export interface BundlerReceipt {
@@ -79,6 +87,26 @@ export interface SubmissionJob {
   userOpHash: string
   receivedAt: number
   requestId: string | number | null
+  remoteAddress?: string
+}
+
+export type UserOpStatus = "queued" | "processing" | "submitted" | "included" | "rejected" | "failed"
+
+export interface UserOpRecord {
+  userOpHash: string
+  entryPoint: string
+  sender: string
+  nonce: string
+  rpcUserOp?: RpcUserOperation
+  receivedAt: number
+  lastUpdated: number
+  status: UserOpStatus
+  txHash?: string
+  actualGasCost?: string
+  actualGasUsed?: string
+  success?: boolean
+  revertReason?: string
+  requestId?: string | number | null
   remoteAddress?: string
 }
 

@@ -1,5 +1,6 @@
 import cors from "@fastify/cors"
 import Fastify, { FastifyReply, FastifyRequest } from "fastify"
+import path from "node:path"
 import { Contract, Interface, JsonRpcProvider, Wallet, toBeHex } from "ethers"
 
 import { loadConfig } from "./config"
@@ -9,8 +10,9 @@ import { RateLimiter } from "./rateLimiter"
 import { UserOpQueue } from "./queue"
 import { SubmissionEngine } from "./submission"
 import { BundlerConfig, BundlerReceipt, SubmissionJob } from "./types"
-import { BundlerStore, InMemoryStore } from "./store"
+import { BundlerStore, InMemoryStore, SqliteStore } from "./store"
 import { getUserOpHash, parseRpcUserOp } from "./userop"
+import { estimateUserOperationGas, simulateValidationOrThrow } from "./validation"
 
 const FACTORY_ABI = [
   "function createAccount(bytes32 _qx, bytes32 _qy) returns (address account)",
@@ -20,8 +22,12 @@ const FACTORY_ABI = [
 
 async function main() {
   let config = loadConfig()
-  const store = new InMemoryStore(config.receiptLimit)
-  const logger = new BundlerLogger(config.logLevel, (entry) => store.appendLog(entry))
+  const store = createStore(config)
+  const logger = new BundlerLogger(config.logLevel, (entry) => {
+    void store.appendLog(entry).catch(() => {
+      // ignore store logging errors
+    })
+  })
   const metrics = new Metrics()
   const rateLimiter = new RateLimiter(config.rateLimitPerMinute)
 
@@ -48,7 +54,9 @@ async function main() {
     processor: (job) => submission.process(job),
   })
 
-  const app = Fastify({ logger: false })
+  await restoreQueuedUserOps({ config, store, queue, logger })
+
+  const app = Fastify({ logger: false, bodyLimit: config.maxBodyBytes })
   await app.register(cors, { origin: true })
 
   app.addHook("onRequest", (_req, reply, done) => {
@@ -66,11 +74,13 @@ async function main() {
 
     if (Array.isArray(body)) {
       const responses = await Promise.all(
-        body.map((p) => handleRpcRequest(p, { request, reply, config, queue, store, logger, metrics, rateLimiter, wallet })),
+        body.map((p) =>
+          handleRpcRequest(p, { request, reply, config, provider, queue, store, logger, metrics, rateLimiter, wallet }),
+        ),
       )
       return responses.filter((r) => r !== null)
     }
-    return handleRpcRequest(body, { request, reply, config, queue, store, logger, metrics, rateLimiter, wallet })
+    return handleRpcRequest(body, { request, reply, config, provider, queue, store, logger, metrics, rateLimiter, wallet })
   })
 
   app.get("/healthz", async (_req, reply) => {
@@ -120,10 +130,75 @@ async function main() {
   }
 }
 
+function createStore(config: BundlerConfig): BundlerStore {
+  if (!config.dbUrl) return new InMemoryStore(config.receiptLimit)
+  if (config.dbUrl.startsWith("sqlite:")) {
+    const raw = config.dbUrl.replace(/^sqlite:(\/\/)?/, "")
+    const dbPath = raw.startsWith("/") ? raw : path.resolve(raw)
+    return new SqliteStore({ dbPath, receiptLimit: config.receiptLimit })
+  }
+  return new SqliteStore({ dbPath: config.dbUrl, receiptLimit: config.receiptLimit })
+}
+
+async function restoreQueuedUserOps(opts: {
+  config: BundlerConfig
+  store: BundlerStore
+  queue: UserOpQueue
+  logger: BundlerLogger
+}) {
+  const { config, store, queue, logger } = opts
+  const pending = await store.listUserOpsByStatus(["queued", "processing"], config.maxQueue)
+  if (!pending.length) return
+
+  let restored = 0
+  for (const record of pending) {
+    if (!record.rpcUserOp) {
+      await store.upsertUserOp({ ...record, status: "failed", lastUpdated: Date.now(), revertReason: "Missing rpcUserOp" })
+      continue
+    }
+
+    try {
+      const { rpcUserOp, userOp } = parseRpcUserOp(record.rpcUserOp)
+      const computedHash = getUserOpHash(userOp, config.entryPoint, config.chainId)
+      if (computedHash.toLowerCase() !== record.userOpHash.toLowerCase()) {
+        await store.upsertUserOp({
+          ...record,
+          status: "failed",
+          lastUpdated: Date.now(),
+          revertReason: "Stored userOpHash mismatch",
+        })
+        continue
+      }
+
+      queue.enqueue({
+        rpcUserOp,
+        userOp,
+        userOpHash: record.userOpHash,
+        receivedAt: record.receivedAt,
+        requestId: record.requestId ?? null,
+        remoteAddress: record.remoteAddress,
+      })
+      restored += 1
+    } catch (err) {
+      await store.upsertUserOp({
+        ...record,
+        status: "failed",
+        lastUpdated: Date.now(),
+        revertReason: (err as Error).message ?? "Failed to restore queued UserOperation",
+      })
+    }
+  }
+
+  if (restored > 0) {
+    logger.info("Restored queued UserOperations from DB", { count: restored })
+  }
+}
+
 interface RpcRequestContext {
   request: FastifyRequest
   reply: FastifyReply
   config: BundlerConfig
+  provider: JsonRpcProvider
   queue: UserOpQueue
   store: BundlerStore
   logger: BundlerLogger
@@ -161,15 +236,20 @@ async function handleRpcRequest(payload: any, ctx: RpcRequestContext): Promise<o
         return createResult(payload.id, toBeHex(config.chainId))
       case "eth_supportedEntryPoints":
         return createResult(payload.id, [config.entryPoint])
+      case "eth_estimateUserOperationGas":
+        return createResult(payload.id, await handleEstimateUserOperationGas(payload.params ?? [], payload.id ?? null, ctx))
       case "eth_sendUserOperation":
         return createResult(payload.id, await handleSendUserOperation(payload.params ?? [], payload.id ?? null, ctx))
       case "eth_getUserOperationReceipt":
         return createResult(payload.id, await handleGetUserOpReceipt(payload.params ?? [], store))
       case "passkey_createAccount":
+        if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
         return createResult(payload.id, await handleCreatePasskeyAccount(payload.params ?? [], wallet))
       case "passkey_fundAccount":
+        if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
         return createResult(payload.id, await handleFundAccount(payload.params ?? [], wallet))
       case "passkey_getLogs":
+        if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
         return createResult(payload.id, await handleGetLogs(payload.params ?? [], store))
       default:
         return createError(payload.id, -32601, `Method ${method} not found`)
@@ -182,7 +262,7 @@ async function handleRpcRequest(payload: any, ctx: RpcRequestContext): Promise<o
 }
 
 async function handleSendUserOperation(params: any[], requestId: string | number | null, ctx: RpcRequestContext): Promise<string> {
-  const { config, queue, logger, request } = ctx
+  const { config, provider, queue, logger, request, store } = ctx
   if (params.length < 2) throw new Error("eth_sendUserOperation requires (userOp, entryPoint)")
 
   const entryPoint = (params[1] as string) ?? ""
@@ -193,18 +273,103 @@ async function handleSendUserOperation(params: any[], requestId: string | number
   const { rpcUserOp, userOp } = parseRpcUserOp(params[0])
   const userOpHash = getUserOpHash(userOp, config.entryPoint, config.chainId)
 
+  const existing = await store.getUserOp(userOpHash)
+  if (existing) {
+    if (existing.status === "rejected") {
+      throw new Error(existing.revertReason ?? "UserOperation rejected")
+    }
+    if (existing.status !== "failed") {
+      logger.info("Deduped UserOperation", { userOpHash, sender: existing.sender, status: existing.status })
+      return userOpHash
+    }
+    logger.warn("Retrying failed UserOperation", { userOpHash, sender: existing.sender })
+  }
+
+  const receivedAt = Date.now()
+
+  if (config.validationEnabled) {
+    try {
+      await simulateValidationOrThrow({ provider, entryPoint: config.entryPoint, userOp })
+    } catch (err) {
+      const message = (err as Error).message ?? "UserOperation validation failed"
+      await store.upsertUserOp({
+        userOpHash,
+        entryPoint: config.entryPoint,
+        sender: userOp.sender,
+        nonce: toBeHex(userOp.nonce),
+        rpcUserOp,
+        receivedAt,
+        lastUpdated: Date.now(),
+        status: "rejected",
+        revertReason: message,
+        requestId,
+        remoteAddress: request.ip,
+      })
+      throw err
+    }
+  }
+
   const job: SubmissionJob = {
     rpcUserOp,
     userOp,
     userOpHash,
-    receivedAt: Date.now(),
+    receivedAt,
     requestId,
     remoteAddress: request.ip,
   }
 
+  await store.upsertUserOp({
+    userOpHash,
+    entryPoint: config.entryPoint,
+    sender: userOp.sender,
+    nonce: toBeHex(userOp.nonce),
+    rpcUserOp,
+    receivedAt: job.receivedAt,
+    lastUpdated: Date.now(),
+    status: "queued",
+    requestId,
+    remoteAddress: request.ip,
+  })
+
   logger.info("Enqueuing UserOperation", { userOpHash, sender: userOp.sender })
-  queue.enqueue(job)
+  try {
+    queue.enqueue(job)
+  } catch (err) {
+    const message = (err as Error).message ?? "Failed to enqueue UserOperation"
+    await store.upsertUserOp({
+      userOpHash,
+      entryPoint: config.entryPoint,
+      sender: userOp.sender,
+      nonce: toBeHex(userOp.nonce),
+      rpcUserOp,
+      receivedAt: job.receivedAt,
+      lastUpdated: Date.now(),
+      status: "failed",
+      revertReason: message,
+      requestId,
+      remoteAddress: request.ip,
+    })
+    throw err
+  }
   return userOpHash
+}
+
+async function handleEstimateUserOperationGas(params: any[], _requestId: string | number | null, _ctx: RpcRequestContext) {
+  if (params.length < 2) throw new Error("eth_estimateUserOperationGas requires (userOp, entryPoint)")
+  const { config, provider, wallet } = _ctx
+  const entryPoint = (params[1] as string) ?? ""
+  if (entryPoint.toLowerCase() !== config.entryPoint.toLowerCase()) {
+    throw new Error(`Bundler configured for entryPoint ${config.entryPoint} but got ${entryPoint}`)
+  }
+
+  const { userOp } = parseRpcUserOp(params[0])
+  const beneficiary = config.beneficiary ?? wallet.address
+  const estimated = await estimateUserOperationGas({ provider, entryPoint: config.entryPoint, beneficiary, userOp })
+  return {
+    callGasLimit: toBeHex(estimated.callGasLimit),
+    verificationGasLimit: toBeHex(estimated.verificationGasLimit),
+    preVerificationGas: toBeHex(estimated.preVerificationGas),
+  }
 }
 
 async function handleGetUserOpReceipt(params: any[], store: BundlerStore): Promise<BundlerReceipt | null> {
@@ -254,7 +419,8 @@ function createError(id: any, code: number, message: string) {
 }
 
 function authorize(apiKey: string | undefined, config: BundlerConfig): boolean {
-  if (!config.apiKeys.length) return true
+  if (config.authRequired && !config.apiKeys.length) return false
+  if (!config.apiKeys.length) return !config.authRequired
   if (!apiKey) return false
   return config.apiKeys.includes(apiKey)
 }

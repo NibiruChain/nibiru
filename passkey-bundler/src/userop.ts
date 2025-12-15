@@ -111,6 +111,9 @@ function hexToBigInt(value: string): bigint {
   if (!value.startsWith("0x")) {
     throw new Error(`expected hex string, got ${value}`)
   }
+  if (value === "0x") {
+    return 0n
+  }
   return BigInt(value)
 }
 
