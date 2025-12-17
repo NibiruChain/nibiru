@@ -2,7 +2,6 @@ package evmtrader
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"math/big"
 )
@@ -145,9 +144,9 @@ func (t *EVMTrader) determineTradeType() string {
 	}
 
 	// Auto-determine based on enableLimitOrder flag
-	if t.cfg.EnableLimitOrder && secureRandomBool() {
+	if t.cfg.EnableLimitOrder && randomBool() {
 		// Randomly choose between limit and stop
-		if secureRandomBool() {
+		if randomBool() {
 			return "stop"
 		}
 		return "limit"
@@ -230,17 +229,6 @@ func (t *EVMTrader) logTradePreparation(tradeType string, isLong bool, leverage 
 		"tp", tp,
 		"sl", sl,
 	)
-}
-
-// secureRandomBool returns a cryptographically secure random boolean.
-// Uses crypto/rand instead of math/rand for unpredictable randomness.
-func secureRandomBool() bool {
-	var b [1]byte
-	if _, err := rand.Read(b[:]); err != nil {
-		// Fallback to false on error (should never happen)
-		return false
-	}
-	return b[0]&1 == 1
 }
 
 // calculateDeterministicTradeAmount calculates a deterministic trade amount based on user-provided config only.
