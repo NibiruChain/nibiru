@@ -17,13 +17,14 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
@@ -45,6 +46,7 @@ func InitPrecompiles(
 		PrecompileFunToken,
 		PrecompileWasm,
 		PrecompileOracle,
+		PrecompileP256,
 	} {
 		pc := precompileSetupFn(k)
 		for _, precompileMap := range []map[gethcommon.Address]vm.PrecompiledContract{
