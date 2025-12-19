@@ -4,11 +4,77 @@ import os from "node:os"
 import path from "node:path"
 import { test } from "node:test"
 
+import { loadConfig } from "../src/config"
 import { RateLimiter } from "../src/rateLimiter"
 import { SqliteStore } from "../src/store"
 import { requiredPrefund } from "../src/userop"
 import { NonceManager } from "../src/submission"
 import { calldataGasCost, estimatePreVerificationGas } from "../src/validation"
+
+function withEnv<T>(updates: Record<string, string | undefined>, fn: () => T): T {
+  const previous: Record<string, string | undefined> = {}
+  for (const [key, value] of Object.entries(updates)) {
+    previous[key] = process.env[key]
+    if (value === undefined) {
+      delete process.env[key]
+    } else {
+      process.env[key] = value
+    }
+  }
+
+  try {
+    return fn()
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = value
+      }
+    }
+  }
+}
+
+const bundlerEnvKeys = [
+  "BUNDLER_CONFIG",
+  "BUNDLER_MODE",
+  "RPC_URL",
+  "JSON_RPC_ENDPOINT",
+  "ENTRY_POINT",
+  "CHAIN_ID",
+  "BUNDLER_PRIVATE_KEY",
+  "BENEFICIARY",
+  "BUNDLER_PORT",
+  "METRICS_PORT",
+  "MAX_BODY_BYTES",
+  "BUNDLER_REQUIRE_AUTH",
+  "RATE_LIMIT",
+  "BUNDLER_API_KEYS",
+  "MAX_QUEUE",
+  "QUEUE_CONCURRENCY",
+  "LOG_LEVEL",
+  "ENABLE_PASSKEY_HELPERS",
+  "DB_URL",
+  "VALIDATION_ENABLED",
+  "GAS_BUMP",
+  "GAS_BUMP_WEI",
+  "PREFUND_ENABLED",
+  "MAX_PREFUND_WEI",
+  "PREFUND_ALLOWLIST",
+  "SUBMISSION_TIMEOUT_MS",
+  "FINALITY_BLOCKS",
+  "RECEIPT_LIMIT",
+  "RECEIPT_POLL_INTERVAL_MS",
+] as const
+
+function withBundlerEnv<T>(
+  updates: Partial<Record<(typeof bundlerEnvKeys)[number], string | undefined>>,
+  fn: () => T,
+): T {
+  const reset: Record<string, string | undefined> = {}
+  for (const key of bundlerEnvKeys) reset[key] = undefined
+  return withEnv({ ...reset, ...updates }, fn)
+}
 
 test("rate limiter enforces window", () => {
   const limiter = new RateLimiter(2, 1000)
@@ -147,4 +213,42 @@ test("sqlite store persists userOp records and receipts", async () => {
   assert.equal(included.length, 1)
 
   fs.rmSync(dir, { recursive: true, force: true })
+})
+
+test("testnet mode defaults authRequired=true and requires API keys", () => {
+  const entryPoint = "0x" + "11".repeat(20)
+  const privateKey = "0x" + "22".repeat(32)
+
+  withBundlerEnv(
+    {
+      BUNDLER_MODE: "testnet",
+      ENTRY_POINT: entryPoint,
+      BUNDLER_PRIVATE_KEY: privateKey,
+      DB_URL: "sqlite:./data/bundler.sqlite",
+    },
+    () => {
+      assert.throws(
+        () => loadConfig(),
+        /Testnet mode requires API keys \(set BUNDLER_API_KEYS\) or disable authRequired/,
+      )
+    },
+  )
+})
+
+test("testnet mode respects BUNDLER_REQUIRE_AUTH=false", () => {
+  const entryPoint = "0x" + "11".repeat(20)
+  const privateKey = "0x" + "22".repeat(32)
+
+  const config = withBundlerEnv(
+    {
+      BUNDLER_MODE: "testnet",
+      ENTRY_POINT: entryPoint,
+      BUNDLER_PRIVATE_KEY: privateKey,
+      DB_URL: "sqlite:./data/bundler.sqlite",
+      BUNDLER_REQUIRE_AUTH: "false",
+    },
+    () => loadConfig(),
+  )
+
+  assert.equal(config.authRequired, false)
 })

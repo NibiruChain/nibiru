@@ -1,0 +1,161 @@
+name: Passkey Bundler Docker
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "passkey-bundler/v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: passkey-bundler-docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      bundler: ${{ steps.determine.outputs.bundler }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine whether to build
+        id: determine
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${GITHUB_REF}" == refs/tags/passkey-bundler/v* ]]; then
+            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          before="${{ github.event.before }}"
+          if [[ -z "${before}" || "${before}" == "0000000000000000000000000000000000000000" ]]; then
+            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --name-only "${before}" "${GITHUB_SHA}" -- "passkey-bundler" ".github/workflows/passkey-bundler-docker.yml" | grep -q .; then
+            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "bundler=false" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.build.platform }})
+    needs: [changes]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.ref, 'refs/tags/passkey-bundler/v') ||
+      needs.changes.outputs.bundler == 'true'
+    strategy:
+      fail-fast: true
+      matrix:
+        build:
+          - platform: linux/amd64
+            runner: ubuntu-22.04
+          - platform: linux/arm64
+            runner: ubuntu-22.04-arm
+    runs-on: ${{ matrix.build.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare env vars
+        run: |
+          ARCH="$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)"
+          echo "ARCH=$ARCH" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          OWNER="${{ github.repository_owner }}"
+          OWNER="${OWNER,,}"
+          echo "IMAGE=ghcr.io/${OWNER}/passkey-bundler" >> "$GITHUB_ENV"
+          if [[ "${GITHUB_REF}" == refs/tags/passkey-bundler/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/passkey-bundler/v}"
+            echo "TAG_PREFIX=$VERSION" >> "$GITHUB_ENV"
+          else
+            echo "TAG_PREFIX=main" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: passkey-bundler
+          push: true
+          platforms: ${{ matrix.build.platform }}
+          tags: ${{ env.IMAGE }}:${{ env.TAG_PREFIX }}-${{ env.ARCH }}
+
+  merge:
+    name: Create multi-arch image
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare env vars
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          OWNER="${{ github.repository_owner }}"
+          OWNER="${OWNER,,}"
+          echo "IMAGE=ghcr.io/${OWNER}/passkey-bundler" >> "$GITHUB_ENV"
+          if [[ "${GITHUB_REF}" == refs/tags/passkey-bundler/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/passkey-bundler/v}"
+            echo "TAG_PREFIX=$VERSION" >> "$GITHUB_ENV"
+            echo "IS_RELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "TAG_PREFIX=main" >> "$GITHUB_ENV"
+            echo "IS_RELEASE=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push manifest list
+        run: |
+          set -euo pipefail
+          if [[ "${IS_RELEASE}" == "true" ]]; then
+            docker buildx imagetools create \
+              --tag "${IMAGE}:${TAG_PREFIX}" \
+              --tag "${IMAGE}:latest" \
+              "${IMAGE}:${TAG_PREFIX}-amd64" \
+              "${IMAGE}:${TAG_PREFIX}-arm64"
+          else
+            docker buildx imagetools create \
+              --tag "${IMAGE}:main" \
+              --tag "${IMAGE}:sha-${SHORT_SHA}" \
+              "${IMAGE}:main-amd64" \
+              "${IMAGE}:main-arm64"
+          fi
