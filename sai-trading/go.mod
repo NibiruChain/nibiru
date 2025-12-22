@@ -8,7 +8,7 @@ require (
 	github.com/NibiruChain/nibiru/v2 v2.8.0
 
 	// Consenus Engine
-	github.com/cometbft/cometbft v0.37.5 // indirect
+	github.com/cometbft/cometbft v0.37.5
 	github.com/cometbft/cometbft-db v0.11.0 // indirect
 
 	// Cosmos-SDK and IBC

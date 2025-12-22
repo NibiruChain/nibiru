@@ -20,9 +20,9 @@ type AutoTradingJSONConfig struct {
 
 // NetworkSettings contains network-related configuration
 type NetworkSettings struct {
-	Mode         string `json:"mode"`           // "localnet", "testnet", "mainnet"
-	EVMRPCUrl    string `json:"evm_rpc_url"`    // Optional override
-	NetworksToml string `json:"networks_toml"`  // Path to networks.toml
+	Mode         string `json:"mode"`          // "localnet", "testnet", "mainnet"
+	EVMRPCUrl    string `json:"evm_rpc_url"`   // Optional override
+	NetworksToml string `json:"networks_toml"` // Path to networks.toml
 }
 
 // TradingSettings contains trading strategy parameters

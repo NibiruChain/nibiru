@@ -142,6 +142,18 @@ test-e2e:
   cd evm-e2e
   just test
 
+# Runs the SAI Trading E2E tests
+test-e2e-sai-trading:
+  #!/usr/bin/env bash
+  source contrib/bashlib.sh
+  log_info "Make sure the localnet is running! (just localnet)"
+  log_info "Deploying SAI contracts..."
+
+  cd sai-trading
+  just e2e-deploy
+  log_info "Running SAI Trading E2E tests..."
+  just e2e-test
+
 
 # Test: "localnet.sh" script
 test-localnet:
