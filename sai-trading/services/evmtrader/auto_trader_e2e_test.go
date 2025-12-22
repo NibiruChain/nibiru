@@ -6,7 +6,6 @@ package evmtrader_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -50,10 +49,7 @@ func (s *AutoTradingE2ETestSuite) SetupSuite() {
 		CollateralIndex: 1,
 	}
 
-	contractsEnv := "sai-trading/.cache/localnet_contracts.env"
-	if _, err := os.Stat(contractsEnv); os.IsNotExist(err) {
-		contractsEnv = ".cache/localnet_contracts.env"
-	}
+	contractsEnv := "../../.cache/localnet_contracts.env"
 	cfg.ContractsEnvFile = contractsEnv
 
 	mnemonic := "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
