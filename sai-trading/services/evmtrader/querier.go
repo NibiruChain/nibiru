@@ -389,6 +389,82 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 	return new(big.Int).SetBytes(out), nil
 }
 
+// queryERC20BalanceFromString queries the ERC20 balance of an account using string addresses
+func (t *EVMTrader) queryERC20BalanceFromString(ctx context.Context, erc20ABI abi.ABI, tokenAddr string, account common.Address) (*big.Int, error) {
+	token := common.HexToAddress(tokenAddr)
+	return t.queryERC20Balance(ctx, erc20ABI, token, account)
+}
+
+// QueryCollaterals queries the perp contract for all available collaterals
+// Tries to list collaterals, and if that's not supported, tries common indices (0-10)
+func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
+	// Try list_collaterals query (similar to list_markets)
+	queryMsg := map[string]interface{}{
+		"list_collaterals": map[string]interface{}{},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+	if err == nil {
+		// Parse JSON response - list_collaterals might return an array of collateral indices
+		var collateralIndices []string
+		if err := json.Unmarshal(responseBytes, &collateralIndices); err != nil {
+			// Try with data wrapper
+			var wrapped struct {
+				Data []string `json:"data"`
+			}
+			if err2 := json.Unmarshal(responseBytes, &wrapped); err2 == nil {
+				collateralIndices = wrapped.Data
+			}
+		}
+
+		if len(collateralIndices) > 0 {
+			// Query each collateral individually to get full details
+			var collaterals []CollateralInfo
+			for _, collateralIndexStr := range collateralIndices {
+				// Extract collateral index from string (e.g., "TokenIndex(0)" or just "0")
+				var collateralIndex uint64
+				if _, err := fmt.Sscanf(collateralIndexStr, "TokenIndex(%d)", &collateralIndex); err != nil {
+					// Try parsing as just a number
+					if _, err := fmt.Sscanf(collateralIndexStr, "%d", &collateralIndex); err != nil {
+						continue // Skip invalid indices
+					}
+				}
+
+				// Query individual collateral details
+				denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+				if err != nil {
+					continue
+				}
+				collaterals = append(collaterals, CollateralInfo{
+					Index: collateralIndex,
+					Denom: denom,
+				})
+			}
+			return collaterals, nil
+		}
+	}
+
+	// Fallback: try common indices (0-10) to find available collaterals
+	var collaterals []CollateralInfo
+	for i := uint64(0); i <= 10; i++ {
+		denom, err := t.queryCollateralDenom(ctx, i)
+		if err == nil && denom != "" {
+			collaterals = append(collaterals, CollateralInfo{
+				Index: i,
+				Denom: denom,
+			})
+		}
+	}
+
+	return collaterals, nil
+}
+
+// CollateralInfo contains information about a collateral token
+type CollateralInfo struct {
+	Index uint64
+	Denom string
+}
+
 // queryCollateralDenom queries the perp contract for the denomination of a collateral token by index
 func (t *EVMTrader) queryCollateralDenom(ctx context.Context, collateralIndex uint64) (string, error) {
 	queryMsg := map[string]interface{}{
