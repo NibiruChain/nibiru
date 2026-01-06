@@ -1,17 +1,12 @@
 package evmtrader
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"math/big"
-	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
@@ -148,7 +143,7 @@ func (t *EVMTrader) Close() {
 
 	if t.grpcConn != nil {
 		if err := t.grpcConn.Close(); err != nil {
-			t.log("Failed to close gRPC connection", "error", err.Error())
+			t.logWarn("Failed to close gRPC connection", "error", err.Error())
 		}
 	}
 }
@@ -210,7 +205,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	isLimitOrder := isLimitOrStopOrder(params.TradeType)
 	tradeID, err := t.parseTradeID(txResp)
 	if err != nil {
-		t.log("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
+		t.logError("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
 		return err
 	}
 
@@ -219,7 +214,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		whatTraderOpens = "limit order"
 	}
 
-	t.log("Successfully opened trade",
+	t.logInfo("Successfully opened trade",
 		"type", whatTraderOpens,
 		"trade_id", tradeID,
 		"tx_hash", txResp.TxHash,
@@ -248,154 +243,13 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
-	t.log("Successfully closed trade",
+	t.logInfo("Successfully closed trade",
 		"trade_index", tradeIndex,
 		"tx_hash", txResp.TxHash,
 		"height", txResp.Height,
 	)
 
 	return nil
-}
-
-// log is a minimal structured logger.
-func (t *EVMTrader) log(msg string, kv ...any) {
-	fields := map[string]any{}
-	for i := 0; i+1 < len(kv); i += 2 {
-		k, _ := kv[i].(string)
-		fields[k] = kv[i+1]
-	}
-	fields["msg"] = msg
-	fields["ts"] = time.Now().UTC().Format(time.RFC3339)
-	_ = json.NewEncoder(os.Stdout).Encode(fields)
-}
-
-// logError logs an error and optionally sends it to Slack webhook
-func (t *EVMTrader) logError(msg string, kv ...any) {
-	t.log(msg, kv...)
-
-	// Check if Slack webhook is configured
-	if t.cfg.SlackWebhook == "" {
-		return
-	}
-
-	// Build error message for Slack
-	errorFields := map[string]any{}
-	for i := 0; i+1 < len(kv); i += 2 {
-		k, _ := kv[i].(string)
-		errorFields[k] = kv[i+1]
-	}
-
-	// Apply error filters if configured
-	if t.cfg.SlackErrorFilters != nil {
-		// Check exclude list first - if any exclude keyword matches, skip notification
-		if len(t.cfg.SlackErrorFilters.Exclude) > 0 {
-			for _, keyword := range t.cfg.SlackErrorFilters.Exclude {
-				// Check message
-				if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
-					return
-				}
-				// Check error fields
-				for _, v := range errorFields {
-					vStr := fmt.Sprintf("%v", v)
-					if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
-						return
-					}
-				}
-			}
-		}
-
-		// Check include list - if not empty, only send if at least one keyword matches
-		if len(t.cfg.SlackErrorFilters.Include) > 0 {
-			matched := false
-
-			// Check if message contains any include keyword
-			for _, keyword := range t.cfg.SlackErrorFilters.Include {
-				if strings.Contains(strings.ToLower(msg), strings.ToLower(keyword)) {
-					matched = true
-					break
-				}
-			}
-
-			// If message didn't match, check error fields
-			if !matched {
-				for _, v := range errorFields {
-					vStr := fmt.Sprintf("%v", v)
-					for _, keyword := range t.cfg.SlackErrorFilters.Include {
-						if strings.Contains(strings.ToLower(vStr), strings.ToLower(keyword)) {
-							matched = true
-							break
-						}
-					}
-					if matched {
-						break
-					}
-				}
-			}
-
-			// If no include keywords matched, don't send to Slack
-			if !matched {
-				return
-			}
-		}
-	}
-
-	// Format Slack message
-	slackMsg := map[string]interface{}{
-		"text": fmt.Sprintf("🚨 Auto-Trader Error: %s", msg),
-		"blocks": []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": fmt.Sprintf("*%s*\n\n*Details:*", msg),
-				},
-			},
-			{
-				"type":   "section",
-				"fields": buildSlackFields(errorFields),
-			},
-		},
-	}
-
-	// Send to Slack (non-blocking)
-	go sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
-}
-
-// buildSlackFields converts error fields to Slack field format
-func buildSlackFields(fields map[string]any) []map[string]interface{} {
-	slackFields := []map[string]interface{}{}
-	for k, v := range fields {
-		slackFields = append(slackFields, map[string]interface{}{
-			"type": "mrkdwn",
-			"text": fmt.Sprintf("*%s:*\n%s", k, fmt.Sprintf("%v", v)),
-		})
-		if len(slackFields) >= 10 { // Slack has a limit on fields
-			break
-		}
-	}
-	return slackFields
-}
-
-// sendSlackNotification sends a notification to Slack webhook
-func sendSlackNotification(webhookURL string, payload map[string]interface{}) {
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return // Silently fail if we can't marshal
-	}
-
-	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return // Silently fail if we can't create request
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return // Silently fail if request fails
-	}
-	defer resp.Body.Close()
 }
 
 // getEncConfig returns the encoding configuration for the Nibiru chain.

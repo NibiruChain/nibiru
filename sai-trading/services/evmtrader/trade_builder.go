@@ -87,7 +87,7 @@ func (t *EVMTrader) OpenTradeFromJSON(ctx context.Context, jsonPath string) erro
 		if err != nil {
 			return fmt.Errorf("fetch market price for market %d: %w", params.MarketIndex, err)
 		}
-		t.log("Automatically fetched market price from oracle", "market_index", params.MarketIndex, "price", price)
+		t.logDebug("Automatically fetched market price from oracle", "market_index", params.MarketIndex, "price", price)
 		params.OpenPrice = &price
 	}
 

@@ -151,7 +151,7 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 		market, err := t.queryMarket(ctx, marketIndex)
 		if err != nil {
 			// Log error but continue with other markets
-			t.log("Failed to query market", "market_index", marketIndex, "error", err.Error())
+			t.logWarn("Failed to query market", "market_index", marketIndex, "error", err.Error())
 			// Still add the market with just the index
 			markets = append(markets, MarketInfo{Index: marketIndex})
 			continue
@@ -298,7 +298,7 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 
 // queryOraclePrice queries the oracle contract for the current price of a token
 func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (float64, error) {
-	t.log("Querying oracle price", "token_index", tokenIndex)
+	t.logDebug("Querying oracle price", "token_index", tokenIndex)
 	// Build query message - oracle expects "index" not "token_id"
 	queryMsg := map[string]interface{}{
 		"get_price": map[string]interface{}{
@@ -337,7 +337,7 @@ func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (fl
 // queryExchangeRate queries the oracle contract for the exchange rate between base and quote tokens
 // This matches what the perp contract does - it queries GetExchangeRate to get base_per_quote
 func (t *EVMTrader) queryExchangeRate(ctx context.Context, baseIndex, quoteIndex uint64) (float64, error) {
-	t.log("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
+	t.logDebug("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
 	// Build query message - oracle expects GetExchangeRate with base and quote
 	queryMsg := map[string]interface{}{
 		"get_exchange_rate": map[string]interface{}{
