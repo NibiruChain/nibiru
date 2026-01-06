@@ -12,6 +12,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // queryWasmContract is a helper method that encapsulates the common pattern
@@ -522,4 +524,19 @@ func (t *EVMTrader) queryPairDepth(ctx context.Context, marketIndex uint64) (boo
 	}
 
 	return true, nil
+}
+
+// queryCosmosBalance queries the Cosmos bank balance for a bech32 address
+func (t *EVMTrader) queryCosmosBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
+	bankClient := banktypes.NewQueryClient(t.grpcConn)
+
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: address,
+		Denom:   denom,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query bank balance: %w", err)
+	}
+
+	return resp.Balance.Amount.BigInt(), nil
 }

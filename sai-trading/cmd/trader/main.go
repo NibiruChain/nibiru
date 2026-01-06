@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -54,7 +55,14 @@ to interact with Sai Perps contracts.`,
 	rootCmd.RunE = newOpenCmd().RunE
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		errMsg := err.Error()
+		skipPrint := false
+		if strings.Contains(errMsg, "balance is zero") || strings.Contains(errMsg, "insufficient balance") {
+			skipPrint = true
+		}
+		if !skipPrint {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		}
 		os.Exit(1)
 	}
 }
@@ -213,6 +221,7 @@ Examples:
 			return runAuto(configFile, marketIndex, collateralIndex, minTradeSize, maxTradeSize,
 				minLeverage, maxLeverage, blocksBeforeClose, maxOpenPositions, loopDelaySeconds, cmd)
 		},
+		SilenceUsage: true,
 	}
 
 	cmd.Flags().StringVar(&configFile, "config", "", "Path to JSON config file (optional)")
@@ -580,13 +589,16 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 		mnem = os.Getenv("EVM_MNEMONIC")
 	}
 
-	// If we have a mnemonic, convert it to private key using Nibiru's built-in EVM HD derivation
+	// If we have a mnemonic, derive all 4 addresses (2 paths × 2 formats)
+	// NOTE: Same mnemonic produces DIFFERENT addresses in MetaMask vs Keplr!
 	if mnem != "" {
-		privKeyHex, err := mnemonicToPrivateKeyHex(mnem)
+		accounts, err := evmtrader.DeriveAccountsFromMnemonic(mnem, "nibi")
 		if err != nil {
-			return cfg, fmt.Errorf("failed to convert mnemonic to private key: %w", err)
+			return cfg, fmt.Errorf("failed to derive accounts from mnemonic: %w", err)
 		}
-		privKey = privKeyHex
+		privKey = accounts.EthPrivateKeyHex           // Ethereum path private key for trading
+		cfg.CosmosAddress = accounts.CosmosAddrBech32 // Cosmos path bech32 address
+		cfg.Mnemonic = mnem
 	}
 
 	// For queries that don't require signing, use a dummy key if none is provided

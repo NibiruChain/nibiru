@@ -3,6 +3,7 @@ package evmtrader
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -129,27 +130,35 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			isLong := randomBool()
 			tradeType := randomTradeType()
 
-			// Check balance before opening
-			erc20ABI := getERC20ABI()
-			erc20Addr := t.addrs.TokenStNIBIERC20
-			if erc20Addr == "" {
-				t.log("ERC20 address not configured, skipping balance check")
+			stNIBIDenom := t.addrs.StNIBIDenom
+			if stNIBIDenom == "" {
+				t.log("stNIBI denom not configured, skipping balance check")
 			} else {
-				balance, err := t.queryERC20BalanceFromString(ctx, erc20ABI, erc20Addr, t.accountAddr)
+				balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
 				if err != nil {
-					t.logError("Failed to query balance", "error", err.Error())
+					t.logError("Failed to query balance",
+						"error", err.Error(),
+					)
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
 
+				if balance.Cmp(big.NewInt(0)) == 0 {
+					t.logError("Balance is zero, stopping automated trading",
+						"balance", balance.String(),
+						"fund_this_address", t.ethAddrBech32,
+					)
+					return fmt.Errorf("balance is zero, cannot continue trading")
+				}
+
 				requiredBalance := new(big.Int).SetUint64(tradeSize)
 				if balance.Cmp(requiredBalance) < 0 {
-					t.logError("Insufficient balance for trade",
+					t.logError("Insufficient balance, stopping automated trading",
 						"balance", balance.String(),
 						"required", requiredBalance.String(),
+						"fund_this_address", t.ethAddrBech32,
 					)
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
+					return fmt.Errorf("insufficient balance: have %s, need %s", balance.String(), requiredBalance.String())
 				}
 			}
 
