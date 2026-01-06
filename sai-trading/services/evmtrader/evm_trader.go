@@ -27,15 +27,21 @@ import (
 
 // EVMTrader encapsulates the EVM client and trading routine.
 type EVMTrader struct {
-	cfg         Config
-	client      *ethclient.Client
-	txClient    txtypes.ServiceClient
-	encCfg      client.TxConfig
-	grpcConn    *grpc.ClientConn // Store gRPC connection for cleanup
-	privKey     *ecdsa.PrivateKey
-	ethPrivKey  *ethsecp256k1.PrivKey
-	accountAddr common.Address
-	addrs       ContractAddresses
+	cfg        Config
+	client     *ethclient.Client
+	txClient   txtypes.ServiceClient
+	encCfg     client.TxConfig
+	grpcConn   *grpc.ClientConn // Store gRPC connection for cleanup
+	privKey    *ecdsa.PrivateKey
+	ethPrivKey *ethsecp256k1.PrivKey
+
+	accountAddr   common.Address
+	ethAddrBech32 string
+
+	cosmosAddr    string
+	cosmosAddrHex common.Address
+
+	addrs ContractAddresses
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -69,6 +75,21 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		Key: crypto.FromECDSA(priv),
 	}
 
+	cosmosAddr := cfg.CosmosAddress
+	var cosmosAddrHex common.Address
+	var ethAddrBech32 string
+
+	if cfg.Mnemonic != "" {
+		accounts, err := DeriveAccountsFromMnemonic(cfg.Mnemonic, "nibi")
+		if err != nil {
+			return nil, fmt.Errorf("derive all addresses: %w", err)
+		}
+
+		cosmosAddr = accounts.CosmosAddrBech32
+		cosmosAddrHex = accounts.CosmosAddrHex
+		ethAddrBech32 = accounts.EthAddrBech32
+	}
+
 	// Connect to gRPC for transaction broadcasting
 	// Use TLS for remote servers (testnet/mainnet), insecure for localhost
 	var grpcCreds credentials.TransportCredentials
@@ -100,15 +121,20 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		}
 	}
 	trader := &EVMTrader{
-		cfg:         cfg,
-		client:      client,
-		txClient:    txClient,
-		encCfg:      encCfg.TxConfig,
-		grpcConn:    grpcConn,
-		privKey:     priv,
-		ethPrivKey:  ethPrivKey,
-		accountAddr: accountAddr,
-		addrs:       addrs,
+		cfg:        cfg,
+		client:     client,
+		txClient:   txClient,
+		encCfg:     encCfg.TxConfig,
+		grpcConn:   grpcConn,
+		privKey:    priv,
+		ethPrivKey: ethPrivKey,
+		// Ethereum path (m/44'/60'/0'/0/0) - MetaMask - USED FOR TRADING
+		accountAddr:   accountAddr,   // 0x1234... (hex, shown in MetaMask)
+		ethAddrBech32: ethAddrBech32, // nibi1xyz... (bech32)
+		// Cosmos path (m/44'/118'/0'/0/0) - Keplr
+		cosmosAddr:    cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
+		cosmosAddrHex: cosmosAddrHex, // 0xABC... (hex)
+		addrs:         addrs,
 	}
 
 	return trader, nil
@@ -134,12 +160,14 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Query ERC20 balance
-	erc20ABI := getERC20ABI()
-	erc20Addr := common.HexToAddress(t.addrs.TokenStNIBIERC20)
-	bal, err := t.queryERC20Balance(ctx, erc20ABI, erc20Addr, t.accountAddr)
+	// Query Cosmos bank balance
+	stNIBIDenom := t.addrs.StNIBIDenom
+	if stNIBIDenom == "" {
+		return fmt.Errorf("stNIBI denom not configured")
+	}
+	bal, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
 	if err != nil {
-		return fmt.Errorf("query ERC20 balance: %w", err)
+		return fmt.Errorf("query Cosmos balance: %w", err)
 	}
 
 	// Prepare trade from config

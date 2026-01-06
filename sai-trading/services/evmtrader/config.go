@@ -21,10 +21,12 @@ type Config struct {
 
 	// Account
 	PrivateKeyHex string
+	Mnemonic      string
+	CosmosAddress string
 
 	// Notifications
-	SlackWebhook       string
-	SlackErrorFilters  *ErrorFilters // Error filtering configuration (nil = send all)
+	SlackWebhook      string
+	SlackErrorFilters *ErrorFilters // Error filtering configuration (nil = send all)
 
 	// Strategy
 	TradeSize        uint64 // Exact trade size (if set, overrides min/max)
@@ -61,10 +63,10 @@ type ErrorFilters struct {
 
 // NetworkConfig represents the TOML configuration for all networks
 type NetworkConfig struct {
-	Localnet      NetworkInfo          `toml:"localnet"`
-	Testnet       NetworkInfo          `toml:"testnet"`
-	Mainnet       NetworkInfo          `toml:"mainnet"`
-	Notifications NotificationConfig   `toml:"notifications"`
+	Localnet      NetworkInfo        `toml:"localnet"`
+	Testnet       NetworkInfo        `toml:"testnet"`
+	Mainnet       NetworkInfo        `toml:"mainnet"`
+	Notifications NotificationConfig `toml:"notifications"`
 }
 
 // NotificationConfig contains notification filter settings
