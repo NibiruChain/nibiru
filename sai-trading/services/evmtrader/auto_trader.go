@@ -31,7 +31,7 @@ type PositionTracker struct {
 
 // RunAutoTrading runs the automated trading loop
 func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) error {
-	t.log("Starting automated trading",
+	t.logInfo("Starting automated trading",
 		"market_index", cfg.MarketIndex,
 		"min_trade_size", cfg.MinTradeSize,
 		"max_trade_size", cfg.MaxTradeSize,
@@ -53,7 +53,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			continue
 		}
 
-		t.log("Auto-trading loop iteration", "current_block", currentBlock, "tracked_positions", len(trackedPositions))
+		t.logDebug("Auto-trading loop iteration", "current_block", currentBlock, "tracked_positions", len(trackedPositions))
 
 		// Query current open positions
 		trades, err := t.QueryTrades(ctx)
@@ -71,7 +71,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			}
 		}
 
-		t.log("Found open positions", "count", len(openPositions))
+		t.logInfo("Found open positions", "count", len(openPositions))
 
 		// Check if any tracked positions should be closed
 		// Only close one position per block iteration to avoid nonce conflicts
@@ -86,7 +86,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					OpenBlock:   currentBlock,
 					MarketIndex: trade.MarketIndex,
 				}
-				t.log("Added existing position to tracking", "trade_index", trade.UserTradeIndex, "current_block", currentBlock)
+				t.logDebug("Added existing position to tracking", "trade_index", trade.UserTradeIndex, "current_block", currentBlock)
 				continue
 			}
 
@@ -98,7 +98,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					continue
 				}
 
-				t.log("Closing position (reached block threshold)",
+				t.logInfo("Closing position (reached block threshold)",
 					"trade_index", trade.UserTradeIndex,
 					"blocks_since_open", blocksSinceOpen,
 					"threshold", cfg.BlocksBeforeClose,
@@ -122,8 +122,6 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		// Check if we should open a new position
 		// Only open if we didn't close a position in this iteration (to avoid nonce conflicts)
 		if !closedOne && len(openPositions) < cfg.MaxOpenPositions {
-			t.log("Opening new random position", "current_positions", len(openPositions), "max", cfg.MaxOpenPositions)
-
 			// Generate random trade parameters
 			tradeSize := randomUint64(cfg.MinTradeSize, cfg.MaxTradeSize)
 			leverage := randomUint64(cfg.MinLeverage, cfg.MaxLeverage)
@@ -132,7 +130,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 
 			stNIBIDenom := t.addrs.StNIBIDenom
 			if stNIBIDenom == "" {
-				t.log("stNIBI denom not configured, skipping balance check")
+				t.logWarn("stNIBI denom not configured, skipping balance check")
 			} else {
 				balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
 				if err != nil {
@@ -239,7 +237,9 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				CollateralAmt:   new(big.Int).SetUint64(tradeSize),
 			}
 
-			t.log("Opening random trade",
+			t.logInfo("Opening new random position",
+				"current_positions", len(openPositions),
+				"max", cfg.MaxOpenPositions,
 				"trade_size", tradeSize,
 				"leverage", leverage,
 				"long", isLong,
@@ -280,7 +280,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 								OpenBlock:   currentBlock,
 								MarketIndex: trade.MarketIndex,
 							}
-							t.log("Added new position to tracking",
+							t.logDebug("Added new position to tracking",
 								"trade_index", trade.UserTradeIndex,
 								"open_block", currentBlock,
 							)
@@ -292,7 +292,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				time.Sleep(2 * time.Second)
 			}
 		} else {
-			t.log("Maximum open positions reached, waiting to close positions", "current", len(openPositions), "max", cfg.MaxOpenPositions)
+			t.logInfo("Maximum open positions reached, waiting to close positions", "current", len(openPositions), "max", cfg.MaxOpenPositions)
 		}
 
 		// Sleep before next iteration

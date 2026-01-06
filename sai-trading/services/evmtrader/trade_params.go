@@ -26,9 +26,9 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 			return nil, fmt.Errorf("market %d has no quote token to use as default collateral index", t.cfg.MarketIndex)
 		}
 		collateralIndex = *market.QuoteToken
-		t.log("Using quote token index as default collateral index", "market_index", t.cfg.MarketIndex, "collateral_index", collateralIndex)
+		t.logDebug("Using quote token index as default collateral index", "market_index", t.cfg.MarketIndex, "collateral_index", collateralIndex)
 	} else {
-		t.log("Using user-provided collateral index", "market_index", t.cfg.MarketIndex, "collateral_index", collateralIndex)
+		t.logDebug("Using user-provided collateral index", "market_index", t.cfg.MarketIndex, "collateral_index", collateralIndex)
 	}
 
 	// Step 2: Determine trade amount (validates balance internally)
@@ -48,7 +48,7 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 	if t.cfg.OpenPrice != nil {
 		openPrice = *t.cfg.OpenPrice
 		userProvidedPrice = true
-		t.log("Using open_price from config", "price", openPrice)
+		t.logDebug("Using open_price from config", "price", openPrice)
 	} else {
 		// Fetch market price from oracle (I/O operation)
 		price, err := t.fetchMarketPrice(ctx, tradeType)
@@ -56,12 +56,12 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 			return nil, err
 		}
 		if price == 0 {
-			t.log("Oracle price is zero, skipping trade")
+			t.logWarn("Oracle price is zero, skipping trade")
 			return nil, nil
 		}
 		openPrice = price
 		userProvidedPrice = false
-		t.log("Fetched open_price from oracle", "price", openPrice)
+		t.logDebug("Fetched open_price from oracle", "price", openPrice)
 	}
 
 	// Step 5: Adjust price for limit orders
@@ -100,14 +100,14 @@ func (t *EVMTrader) determineTradeAmount(balance *big.Int) (*big.Int, error) {
 		// Use exact trade size from config
 		tradeAmt = new(big.Int).SetUint64(t.cfg.TradeSize)
 		if balance.Cmp(tradeAmt) < 0 {
-			t.log("Insufficient ERC20 balance for trade", "balance", balance.String(), "required", tradeAmt.String())
+			t.logWarn("Insufficient balance for trade", "balance", balance.String(), "required", tradeAmt.String())
 			return nil, nil
 		}
 	} else {
 		// Use user-provided TradeSizeMin or TradeSizeMax only (no fallback to balance)
 		tradeAmt = t.calculateDeterministicTradeAmount(balance)
 		if tradeAmt == nil {
-			t.log("Insufficient ERC20 balance for trade or no trade size configured", "balance", balance.String())
+			t.logWarn("Insufficient balance for trade or no trade size configured", "balance", balance.String())
 			return nil, nil
 		}
 	}
@@ -219,7 +219,7 @@ func (t *EVMTrader) logTradePreparation(tradeType string, isLong bool, leverage 
 		whatTraderOpens = "limit order"
 	}
 
-	t.log("Opening trade",
+	t.logInfo("Opening trade",
 		"type", whatTraderOpens,
 		"long", isLong,
 		"leverage", leverage,
