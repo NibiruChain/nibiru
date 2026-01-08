@@ -144,7 +144,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				if balance.Cmp(big.NewInt(0)) == 0 {
 					t.logError("Balance is zero, stopping automated trading",
 						"balance", balance.String(),
-						"fund_this_address", t.ethAddrBech32,
+						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, stNIBIDenom),
 					)
 					return fmt.Errorf("balance is zero, cannot continue trading")
 				}
@@ -154,7 +154,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					t.logError("Insufficient balance, stopping automated trading",
 						"balance", balance.String(),
 						"required", requiredBalance.String(),
-						"fund_this_address", t.ethAddrBech32,
+						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, stNIBIDenom),
 					)
 					return fmt.Errorf("insufficient balance: have %s, need %s", balance.String(), requiredBalance.String())
 				}
