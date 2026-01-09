@@ -28,7 +28,12 @@ func (k Keeper) UpdateExchangeRates(ctx sdk.Context) types.ValidatorPerformances
 	k.clearVotesAndPrevotes(ctx, params.VotePeriod)
 	k.refreshWhitelist(ctx, params.Whitelist, whitelistedPairs)
 
-	for _, validatorPerformance := range validatorPerformances {
+	// Sort validator addresses for deterministic event emission order.
+	// Go map iteration is non-deterministic, which can cause consensus
+	// failures if events are emitted in different order on different nodes.
+	sortedAddrs := validatorPerformances.SortedAddrs()
+	for _, valAddr := range sortedAddrs {
+		validatorPerformance := validatorPerformances[valAddr]
 		_ = ctx.EventManager().EmitTypedEvent(&types.EventValidatorPerformance{
 			Validator:    validatorPerformance.ValAddress.String(),
 			VotingPower:  validatorPerformance.Power,
@@ -49,7 +54,13 @@ func (k Keeper) incrementMissCounters(
 	whitelistedPairs set.Set[asset.Pair],
 	validatorPerformances types.ValidatorPerformances,
 ) {
-	for _, validatorPerformance := range validatorPerformances {
+	// Sort validator addresses for deterministic iteration order.
+	// Go map iteration is non-deterministic, which can cause consensus
+	// failures if state is written in different order on different nodes.
+	sortedAddrs := validatorPerformances.SortedAddrs()
+
+	for _, valAddr := range sortedAddrs {
+		validatorPerformance := validatorPerformances[valAddr]
 		if int(validatorPerformance.MissCount) > 0 {
 			k.MissCounters.Insert(
 				ctx, validatorPerformance.ValAddress,
