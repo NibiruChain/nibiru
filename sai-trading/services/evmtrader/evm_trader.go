@@ -3,12 +3,10 @@ package evmtrader
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
+	"crypto/tls"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
@@ -18,20 +16,27 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 // EVMTrader encapsulates the EVM client and trading routine.
 type EVMTrader struct {
-	cfg         Config
-	client      *ethclient.Client
-	txClient    txtypes.ServiceClient
-	encCfg      client.TxConfig
-	grpcConn    *grpc.ClientConn // Store gRPC connection for cleanup
-	privKey     *ecdsa.PrivateKey
-	ethPrivKey  *ethsecp256k1.PrivKey
-	accountAddr common.Address
-	addrs       ContractAddresses
+	cfg        Config
+	client     *ethclient.Client
+	txClient   txtypes.ServiceClient
+	encCfg     client.TxConfig
+	grpcConn   *grpc.ClientConn // Store gRPC connection for cleanup
+	privKey    *ecdsa.PrivateKey
+	ethPrivKey *ethsecp256k1.PrivKey
+
+	accountAddr   common.Address
+	ethAddrBech32 string
+
+	cosmosAddr    string
+	cosmosAddrHex common.Address
+
+	addrs ContractAddresses
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -65,9 +70,31 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		Key: crypto.FromECDSA(priv),
 	}
 
+	cosmosAddr := cfg.CosmosAddress
+	var cosmosAddrHex common.Address
+	var ethAddrBech32 string
+
+	if cfg.Mnemonic != "" {
+		accounts, err := DeriveAccountsFromMnemonic(cfg.Mnemonic, "nibi")
+		if err != nil {
+			return nil, fmt.Errorf("derive all addresses: %w", err)
+		}
+
+		cosmosAddr = accounts.CosmosAddrBech32
+		cosmosAddrHex = accounts.CosmosAddrHex
+		ethAddrBech32 = accounts.EthAddrBech32
+	}
+
 	// Connect to gRPC for transaction broadcasting
+	// Use TLS for remote servers (testnet/mainnet), insecure for localhost
+	var grpcCreds credentials.TransportCredentials
+	if strings.Contains(cfg.GrpcUrl, ":443") || (!strings.Contains(cfg.GrpcUrl, "localhost") && !strings.Contains(cfg.GrpcUrl, "127.0.0.1")) {
+		grpcCreds = credentials.NewTLS(&tls.Config{})
+	} else {
+		grpcCreds = insecure.NewCredentials()
+	}
 	grpcConn, err := grpc.DialContext(ctx, cfg.GrpcUrl,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(grpcCreds),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
@@ -77,21 +104,35 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	encCfg := getEncConfig()
 	txClient := txtypes.NewServiceClient(grpcConn)
 
-	addrs, err := loadContractAddresses(cfg.ContractsEnvFile)
-	if err != nil {
-		return nil, fmt.Errorf("load contracts: %w", err)
+	// Load contract addresses: use from Config if provided, otherwise load from file
+	var addrs ContractAddresses
+	if cfg.ContractAddresses != nil {
+		addrs = *cfg.ContractAddresses
+	} else {
+		var err error
+		addrs, err = loadContractAddresses(cfg.ContractsEnvFile)
+		if err != nil {
+			return nil, fmt.Errorf("load contracts: %w", err)
+		}
 	}
-	return &EVMTrader{
-		cfg:         cfg,
-		client:      client,
-		txClient:    txClient,
-		encCfg:      encCfg.TxConfig,
-		grpcConn:    grpcConn,
-		privKey:     priv,
-		ethPrivKey:  ethPrivKey,
-		accountAddr: accountAddr,
-		addrs:       addrs,
-	}, nil
+	trader := &EVMTrader{
+		cfg:        cfg,
+		client:     client,
+		txClient:   txClient,
+		encCfg:     encCfg.TxConfig,
+		grpcConn:   grpcConn,
+		privKey:    priv,
+		ethPrivKey: ethPrivKey,
+		// Ethereum path (m/44'/60'/0'/0/0) - MetaMask - USED FOR TRADING
+		accountAddr:   accountAddr,   // 0x1234... (hex, shown in MetaMask)
+		ethAddrBech32: ethAddrBech32, // nibi1xyz... (bech32)
+		// Cosmos path (m/44'/118'/0'/0/0) - Keplr
+		cosmosAddr:    cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
+		cosmosAddrHex: cosmosAddrHex, // 0xABC... (hex)
+		addrs:         addrs,
+	}
+
+	return trader, nil
 }
 
 // Close releases underlying resources.
@@ -102,7 +143,7 @@ func (t *EVMTrader) Close() {
 
 	if t.grpcConn != nil {
 		if err := t.grpcConn.Close(); err != nil {
-			t.log("Failed to close gRPC connection", "error", err.Error())
+			t.logWarn("Failed to close gRPC connection", "error", err.Error())
 		}
 	}
 }
@@ -114,12 +155,14 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Query ERC20 balance
-	erc20ABI := getERC20ABI()
-	erc20Addr := common.HexToAddress(t.addrs.TokenStNIBIERC20)
-	bal, err := t.queryERC20Balance(ctx, erc20ABI, erc20Addr, t.accountAddr)
+	// Query Cosmos bank balance
+	stNIBIDenom := t.addrs.StNIBIDenom
+	if stNIBIDenom == "" {
+		return fmt.Errorf("stNIBI denom not configured")
+	}
+	bal, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
 	if err != nil {
-		return fmt.Errorf("query ERC20 balance: %w", err)
+		return fmt.Errorf("query Cosmos balance: %w", err)
 	}
 
 	// Prepare trade from config
@@ -159,10 +202,10 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	}
 
 	// Parse trade ID from response
-	isLimitOrder := params.TradeType == "limit" || params.TradeType == "stop"
+	isLimitOrder := isLimitOrStopOrder(params.TradeType)
 	tradeID, err := t.parseTradeID(txResp)
 	if err != nil {
-		t.log("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
+		t.logError("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
 		return err
 	}
 
@@ -171,7 +214,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		whatTraderOpens = "limit order"
 	}
 
-	t.log("Successfully opened trade",
+	t.logInfo("Successfully opened trade",
 		"type", whatTraderOpens,
 		"trade_id", tradeID,
 		"tx_hash", txResp.TxHash,
@@ -188,7 +231,7 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Build close_trade_market message
+	// Build close_trade message
 	msgBytes, err := t.buildCloseTradeMessage(tradeIndex)
 	if err != nil {
 		return fmt.Errorf("build message: %w", err)
@@ -200,25 +243,13 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
-	t.log("Successfully closed trade",
+	t.logInfo("Successfully closed trade",
 		"trade_index", tradeIndex,
 		"tx_hash", txResp.TxHash,
 		"height", txResp.Height,
 	)
 
 	return nil
-}
-
-// log is a minimal structured logger.
-func (t *EVMTrader) log(msg string, kv ...any) {
-	fields := map[string]any{}
-	for i := 0; i+1 < len(kv); i += 2 {
-		k, _ := kv[i].(string)
-		fields[k] = kv[i+1]
-	}
-	fields["msg"] = msg
-	fields["ts"] = time.Now().UTC().Format(time.RFC3339)
-	_ = json.NewEncoder(os.Stdout).Encode(fields)
 }
 
 // getEncConfig returns the encoding configuration for the Nibiru chain.

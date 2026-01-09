@@ -12,6 +12,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // queryWasmContract is a helper method that encapsulates the common pattern
@@ -149,7 +151,7 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 		market, err := t.queryMarket(ctx, marketIndex)
 		if err != nil {
 			// Log error but continue with other markets
-			t.log("Failed to query market", "market_index", marketIndex, "error", err.Error())
+			t.logWarn("Failed to query market", "market_index", marketIndex, "error", err.Error())
 			// Still add the market with just the index
 			markets = append(markets, MarketInfo{Index: marketIndex})
 			continue
@@ -296,7 +298,7 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 
 // queryOraclePrice queries the oracle contract for the current price of a token
 func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (float64, error) {
-	t.log("Querying oracle price", "token_index", tokenIndex)
+	t.logDebug("Querying oracle price", "token_index", tokenIndex)
 	// Build query message - oracle expects "index" not "token_id"
 	queryMsg := map[string]interface{}{
 		"get_price": map[string]interface{}{
@@ -335,7 +337,7 @@ func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (fl
 // queryExchangeRate queries the oracle contract for the exchange rate between base and quote tokens
 // This matches what the perp contract does - it queries GetExchangeRate to get base_per_quote
 func (t *EVMTrader) queryExchangeRate(ctx context.Context, baseIndex, quoteIndex uint64) (float64, error) {
-	t.log("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
+	t.logDebug("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
 	// Build query message - oracle expects GetExchangeRate with base and quote
 	queryMsg := map[string]interface{}{
 		"get_exchange_rate": map[string]interface{}{
@@ -387,6 +389,82 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 		return big.NewInt(0), nil
 	}
 	return new(big.Int).SetBytes(out), nil
+}
+
+// queryERC20BalanceFromString queries the ERC20 balance of an account using string addresses
+func (t *EVMTrader) queryERC20BalanceFromString(ctx context.Context, erc20ABI abi.ABI, tokenAddr string, account common.Address) (*big.Int, error) {
+	token := common.HexToAddress(tokenAddr)
+	return t.queryERC20Balance(ctx, erc20ABI, token, account)
+}
+
+// QueryCollaterals queries the perp contract for all available collaterals
+// Tries to list collaterals, and if that's not supported, tries common indices (0-10)
+func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
+	// Try list_collaterals query (similar to list_markets)
+	queryMsg := map[string]interface{}{
+		"list_collaterals": map[string]interface{}{},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+	if err == nil {
+		// Parse JSON response - list_collaterals might return an array of collateral indices
+		var collateralIndices []string
+		if err := json.Unmarshal(responseBytes, &collateralIndices); err != nil {
+			// Try with data wrapper
+			var wrapped struct {
+				Data []string `json:"data"`
+			}
+			if err2 := json.Unmarshal(responseBytes, &wrapped); err2 == nil {
+				collateralIndices = wrapped.Data
+			}
+		}
+
+		if len(collateralIndices) > 0 {
+			// Query each collateral individually to get full details
+			var collaterals []CollateralInfo
+			for _, collateralIndexStr := range collateralIndices {
+				// Extract collateral index from string (e.g., "TokenIndex(0)" or just "0")
+				var collateralIndex uint64
+				if _, err := fmt.Sscanf(collateralIndexStr, "TokenIndex(%d)", &collateralIndex); err != nil {
+					// Try parsing as just a number
+					if _, err := fmt.Sscanf(collateralIndexStr, "%d", &collateralIndex); err != nil {
+						continue // Skip invalid indices
+					}
+				}
+
+				// Query individual collateral details
+				denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+				if err != nil {
+					continue
+				}
+				collaterals = append(collaterals, CollateralInfo{
+					Index: collateralIndex,
+					Denom: denom,
+				})
+			}
+			return collaterals, nil
+		}
+	}
+
+	// Fallback: try common indices (0-10) to find available collaterals
+	var collaterals []CollateralInfo
+	for i := uint64(0); i <= 10; i++ {
+		denom, err := t.queryCollateralDenom(ctx, i)
+		if err == nil && denom != "" {
+			collaterals = append(collaterals, CollateralInfo{
+				Index: i,
+				Denom: denom,
+			})
+		}
+	}
+
+	return collaterals, nil
+}
+
+// CollateralInfo contains information about a collateral token
+type CollateralInfo struct {
+	Index uint64
+	Denom string
 }
 
 // queryCollateralDenom queries the perp contract for the denomination of a collateral token by index
@@ -446,4 +524,19 @@ func (t *EVMTrader) queryPairDepth(ctx context.Context, marketIndex uint64) (boo
 	}
 
 	return true, nil
+}
+
+// queryCosmosBalance queries the Cosmos bank balance for a bech32 address
+func (t *EVMTrader) queryCosmosBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
+	bankClient := banktypes.NewQueryClient(t.grpcConn)
+
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: address,
+		Denom:   denom,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query bank balance: %w", err)
+	}
+
+	return resp.Balance.Amount.BigInt(), nil
 }
