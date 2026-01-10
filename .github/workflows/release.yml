@@ -65,7 +65,7 @@ jobs:
           tar czf ${{ env.FINAL_NAME }}.tar.gz -C build nibid
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.FINAL_NAME }}
           path: ${{ env.FINAL_NAME }}.tar.gz
@@ -113,7 +113,7 @@ jobs:
         run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz -C ${{ env.DARWIN_NAME_ALL }} nibid
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.DARWIN_NAME_ALL }}
           path: ${{ env.DARWIN_NAME_ALL }}.tar.gz
