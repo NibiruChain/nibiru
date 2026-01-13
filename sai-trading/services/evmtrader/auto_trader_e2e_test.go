@@ -14,10 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
 	"github.com/NibiruChain/nibiru/sai-trading/tutil"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -52,11 +49,7 @@ func (s *AutoTradingE2ETestSuite) SetupSuite() {
 	contractsEnv := "../../.cache/localnet_contracts.env"
 	cfg.ContractsEnvFile = contractsEnv
 
-	mnemonic := "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-
-	privKeyHex, err := mnemonicToPrivateKeyHex(mnemonic)
-	require.NoError(s.T(), err, "failed to derive private key from mnemonic")
-	cfg.PrivateKeyHex = privKeyHex
+	cfg.Mnemonic = "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 
 	s.config = cfg
 
@@ -181,20 +174,6 @@ func (s *AutoTradingE2ETestSuite) TestAutoTrading_Basic() {
 	}
 
 	s.T().Log("✓ Test completed successfully")
-}
-
-func mnemonicToPrivateKeyHex(mnemonic string) (string, error) {
-	privKeyBytes, err := hd.EthSecp256k1.Derive()(mnemonic, keyring.DefaultBIP39Passphrase, eth.BIP44HDPath)
-	if err != nil {
-		return "", err
-	}
-
-	privKey, err := crypto.ToECDSA(privKeyBytes)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%x", crypto.FromECDSA(privKey)), nil
 }
 
 func (s *AutoTradingE2ETestSuite) filterOpenPositions(trades []evmtrader.ParsedTrade) []evmtrader.ParsedTrade {
