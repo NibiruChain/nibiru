@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"google.golang.org/grpc"
 )
 
 func (t *EVMTrader) Client() *ethclient.Client {
@@ -22,6 +23,10 @@ func (t *EVMTrader) AccountAddr() common.Address {
 
 func (t *EVMTrader) Addrs() ContractAddresses {
 	return t.addrs
+}
+
+func (t *EVMTrader) GRPCConn() *grpc.ClientConn {
+	return t.grpcConn
 }
 
 func (t *EVMTrader) QueryERC20Balance(ctx context.Context, erc20ABI abi.ABI, token common.Address, account common.Address) (*big.Int, error) {
