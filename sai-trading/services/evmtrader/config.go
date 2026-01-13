@@ -48,11 +48,9 @@ type Config struct {
 
 // ContractAddresses stores addresses/ids loaded from localnet_contracts.env
 type ContractAddresses struct {
-	OracleAddress    string
-	PerpAddress      string
-	VaultAddress     string
-	TokenStNIBIERC20 string
-	StNIBIDenom      string
+	OracleAddress string
+	PerpAddress   string
+	VaultAddress  string
 }
 
 // ErrorFilters defines include/exclude keyword filters for Slack notifications
@@ -81,7 +79,6 @@ type NetworkInfo struct {
 	GrpcUrl   string         `toml:"grpc_url"`
 	ChainID   string         `toml:"chain_id"`
 	Contracts ContractConfig `toml:"contracts"`
-	Tokens    TokenConfig    `toml:"tokens"`
 }
 
 // ContractConfig contains contract addresses
@@ -90,13 +87,6 @@ type ContractConfig struct {
 	PerpAddress   string `toml:"perp_address"`
 	VaultAddress  string `toml:"vault_address"`
 	EVMInterface  string `toml:"evm_interface"`
-}
-
-// TokenConfig contains token addresses
-type TokenConfig struct {
-	USDCEvm     string `toml:"usdc_evm"`
-	StNIBIEvm   string `toml:"stnibi_evm"`
-	StNIBIDenom string `toml:"stnibi_denom"`
 }
 
 // loadContractAddresses reads a simple KEY=VALUE env file.
@@ -125,10 +115,6 @@ func loadContractAddresses(envFile string) (ContractAddresses, error) {
 			addrs.PerpAddress = val
 		case "VAULT_ADDRESS":
 			addrs.VaultAddress = val
-		case "TOKEN_STNIBI":
-			addrs.TokenStNIBIERC20 = val
-		case "STNIBI":
-			addrs.StNIBIDenom = val
 		}
 	}
 	return addrs, nil
@@ -166,11 +152,9 @@ func GetNetworkInfo(config NetworkConfig, networkMode string) (*NetworkInfo, err
 // ContractAddressesFromNetworkInfo converts NetworkInfo to ContractAddresses
 func ContractAddressesFromNetworkInfo(netInfo *NetworkInfo) ContractAddresses {
 	return ContractAddresses{
-		OracleAddress:    netInfo.Contracts.OracleAddress,
-		PerpAddress:      netInfo.Contracts.PerpAddress,
-		VaultAddress:     netInfo.Contracts.VaultAddress,
-		TokenStNIBIERC20: netInfo.Tokens.StNIBIEvm,
-		StNIBIDenom:      netInfo.Tokens.StNIBIDenom,
+		OracleAddress: netInfo.Contracts.OracleAddress,
+		PerpAddress:   netInfo.Contracts.PerpAddress,
+		VaultAddress:  netInfo.Contracts.VaultAddress,
 	}
 }
 
