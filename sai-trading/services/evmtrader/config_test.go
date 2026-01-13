@@ -96,11 +96,6 @@ func TestContractAddressesFromNetworkInfo(t *testing.T) {
 			VaultAddress:  "0x3333333333333333333333333333333333333333",
 			EVMInterface:  "0x4444444444444444444444444444444444444444",
 		},
-		Tokens: evmtrader.TokenConfig{
-			USDCEvm:     "0x5555555555555555555555555555555555555555",
-			StNIBIEvm:   "0x6666666666666666666666666666666666666666",
-			StNIBIDenom: "factory/nibi1abc/stnibi",
-		},
 	}
 
 	result := evmtrader.ContractAddressesFromNetworkInfo(netInfo)
@@ -108,8 +103,6 @@ func TestContractAddressesFromNetworkInfo(t *testing.T) {
 	require.Equal(t, "0x1111111111111111111111111111111111111111", result.OracleAddress)
 	require.Equal(t, "0x2222222222222222222222222222222222222222", result.PerpAddress)
 	require.Equal(t, "0x3333333333333333333333333333333333333333", result.VaultAddress)
-	require.Equal(t, "0x6666666666666666666666666666666666666666", result.TokenStNIBIERC20)
-	require.Equal(t, "factory/nibi1abc/stnibi", result.StNIBIDenom)
 }
 
 func TestLoadNetworkConfig(t *testing.T) {
@@ -130,11 +123,6 @@ perp_address = "0xPerp"
 vault_address = "0xVault"
 evm_interface = "0xEVM"
 
-[localnet.tokens]
-usdc_evm = "0xUSDC"
-stnibi_evm = "0xStNIBI"
-stnibi_denom = "factory/nibi1abc/stnibi"
-
 [testnet]
 name = "testnet"
 evm_rpc_url = "https://evm-rpc.testnet-1.nibiru.fi"
@@ -147,11 +135,6 @@ perp_address = "0xTestPerp"
 vault_address = "0xTestVault"
 evm_interface = "0xTestEVM"
 
-[testnet.tokens]
-usdc_evm = "0xTestUSDC"
-stnibi_evm = "0xTestStNIBI"
-stnibi_denom = "factory/nibi1test/stnibi"
-
 [mainnet]
 name = "mainnet"
 evm_rpc_url = "https://evm-rpc.nibiru.fi"
@@ -163,11 +146,6 @@ oracle_address = "0xMainOracle"
 perp_address = "0xMainPerp"
 vault_address = "0xMainVault"
 evm_interface = "0xMainEVM"
-
-[mainnet.tokens]
-usdc_evm = "0xMainUSDC"
-stnibi_evm = "0xMainStNIBI"
-stnibi_denom = "unibi"
 
 [notifications.filters]
 include = ["critical", "error"]
@@ -189,9 +167,6 @@ exclude = ["debug"]
 	require.Equal(t, "0xOracle", config.Localnet.Contracts.OracleAddress)
 	require.Equal(t, "0xPerp", config.Localnet.Contracts.PerpAddress)
 	require.Equal(t, "0xVault", config.Localnet.Contracts.VaultAddress)
-	require.Equal(t, "0xUSDC", config.Localnet.Tokens.USDCEvm)
-	require.Equal(t, "0xStNIBI", config.Localnet.Tokens.StNIBIEvm)
-	require.Equal(t, "factory/nibi1abc/stnibi", config.Localnet.Tokens.StNIBIDenom)
 
 	// Verify testnet
 	require.Equal(t, "testnet", config.Testnet.Name)

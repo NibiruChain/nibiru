@@ -128,39 +128,6 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			isLong := randomBool()
 			tradeType := randomTradeType()
 
-			stNIBIDenom := t.addrs.StNIBIDenom
-			if stNIBIDenom == "" {
-				t.logWarn("stNIBI denom not configured, skipping balance check")
-			} else {
-				balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
-				if err != nil {
-					t.logError("Failed to query balance",
-						"error", err.Error(),
-					)
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
-				}
-
-				if balance.Cmp(big.NewInt(0)) == 0 {
-					t.logError("Balance is zero, stopping automated trading",
-						"balance", balance.String(),
-						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, stNIBIDenom),
-					)
-					return fmt.Errorf("balance is zero, cannot continue trading")
-				}
-
-				requiredBalance := new(big.Int).SetUint64(tradeSize)
-				if balance.Cmp(requiredBalance) < 0 {
-					t.logError("Insufficient balance, stopping automated trading",
-						"balance", balance.String(),
-						"required", requiredBalance.String(),
-						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, stNIBIDenom),
-					)
-					return fmt.Errorf("insufficient balance: have %s, need %s", balance.String(), requiredBalance.String())
-				}
-			}
-
-			// Determine collateral index
 			collateralIndex := cfg.CollateralIndex
 			if collateralIndex == 0 {
 				market, err := t.queryMarket(ctx, cfg.MarketIndex)
@@ -175,6 +142,48 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					continue
 				}
 				collateralIndex = *market.QuoteToken
+			}
+
+			collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
+			if err != nil {
+				t.logError("Failed to query collateral denom",
+					"collateral_index", collateralIndex,
+					"error", err.Error(),
+				)
+				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
+				continue
+			}
+
+			balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom)
+			if err != nil {
+				t.logError("Failed to query balance",
+					"denom", collateralDenom,
+					"error", err.Error(),
+				)
+				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
+				continue
+			}
+
+			if balance.Cmp(big.NewInt(0)) == 0 {
+				t.logError("Balance is zero, stopping automated trading",
+					"balance", balance.String(),
+					"collateral_denom", collateralDenom,
+					"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, collateralDenom),
+				)
+				return fmt.Errorf("balance is zero for collateral denom %s, fund this address %s", collateralDenom, t.ethAddrBech32)
+			}
+
+			// Check if balance is sufficient for the trade
+			requiredBalance := new(big.Int).SetUint64(tradeSize)
+			if balance.Cmp(requiredBalance) < 0 {
+				t.logError("Insufficient balance",
+					"balance", balance.String(),
+					"required", requiredBalance.String(),
+					"collateral_denom", collateralDenom,
+					"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, collateralDenom),
+				)
+				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
+				continue
 			}
 
 			// Open the trade

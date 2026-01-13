@@ -15,7 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -104,15 +103,6 @@ func (s *AutoTradingE2ETestSuite) TestAutoTrading_Basic() {
 		BlocksBeforeClose: 5,
 		MaxOpenPositions:  2,
 		LoopDelaySeconds:  3,
-	}
-
-	if s.trader.Addrs().TokenStNIBIERC20 != "" {
-		erc20ABI := evmtrader.GetERC20ABI()
-		erc20Addr := common.HexToAddress(s.trader.Addrs().TokenStNIBIERC20)
-		balance, err := s.trader.QueryERC20Balance(ctx, erc20ABI, erc20Addr, s.trader.AccountAddr())
-		if err == nil {
-			s.T().Logf("Account balance: %s", balance.String())
-		}
 	}
 
 	tradingCtx, tradingCancel := context.WithTimeout(ctx, 90*time.Second)

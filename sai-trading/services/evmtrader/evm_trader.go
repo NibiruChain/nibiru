@@ -169,23 +169,27 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Query Cosmos bank balance
-	stNIBIDenom := t.addrs.StNIBIDenom
-	if stNIBIDenom == "" {
-		return fmt.Errorf("stNIBI denom not configured")
-	}
-	bal, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, stNIBIDenom)
-	if err != nil {
-		return fmt.Errorf("query Cosmos balance: %w", err)
-	}
-
-	// Prepare trade from config
-	params, err := t.prepareTradeFromConfig(ctx, bal)
+	params, err := t.prepareTradeFromConfig(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("prepare trade: %w", err)
 	}
 	if params == nil {
-		return nil // Insufficient balance or other skip condition
+		return nil
+	}
+
+	collateralDenom, err := t.queryCollateralDenom(ctx, params.CollateralIndex)
+	if err != nil {
+		return fmt.Errorf("query collateral denom for index %d: %w", params.CollateralIndex, err)
+	}
+
+	balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom)
+	if err != nil {
+		return fmt.Errorf("query Cosmos balance for %s: %w", collateralDenom, err)
+	}
+
+	if balance.Cmp(params.CollateralAmt) < 0 {
+		return fmt.Errorf("insufficient balance: have %s, need %s (denom: %s)",
+			balance.String(), params.CollateralAmt.String(), collateralDenom)
 	}
 
 	// Execute the trade
