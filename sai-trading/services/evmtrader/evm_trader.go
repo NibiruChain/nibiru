@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/cosmos/cosmos-sdk/client"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -48,8 +49,8 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	if cfg.EVMRPCUrl == "" {
 		return nil, fmt.Errorf("EVMRPCUrl is required")
 	}
-	if cfg.PrivateKeyHex == "" {
-		return nil, fmt.Errorf("PrivateKeyHex is required")
+	if cfg.PrivateKeyHex == "" && cfg.Mnemonic == "" {
+		return nil, fmt.Errorf("either PrivateKeyHex or Mnemonic is required")
 	}
 
 	// Connect to EVM RPC for queries
@@ -58,19 +59,10 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		return nil, fmt.Errorf("dial evm rpc: %w", err)
 	}
 
-	// Parse private key
-	priv, err := crypto.HexToECDSA(strings.TrimPrefix(cfg.PrivateKeyHex, "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("parse private key: %w", err)
-	}
-	accountAddr := crypto.PubkeyToAddress(priv.PublicKey)
-
-	// Convert to ethsecp256k1 for keyring signer
-	ethPrivKey := &ethsecp256k1.PrivKey{
-		Key: crypto.FromECDSA(priv),
-	}
-
-	cosmosAddr := cfg.CosmosAddress
+	var priv *ecdsa.PrivateKey
+	var accountAddr common.Address
+	var ethPrivKey *ethsecp256k1.PrivKey
+	var cosmosAddr string
 	var cosmosAddrHex common.Address
 	var ethAddrBech32 string
 
@@ -80,9 +72,31 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 			return nil, fmt.Errorf("derive all addresses: %w", err)
 		}
 
+		priv, err = crypto.HexToECDSA(strings.TrimPrefix(accounts.EthPrivateKeyHex, "0x"))
+		if err != nil {
+			return nil, fmt.Errorf("parse derived private key: %w", err)
+		}
+		accountAddr = accounts.EthAddrHex
+		ethPrivKey = &ethsecp256k1.PrivKey{
+			Key: crypto.FromECDSA(priv),
+		}
+
 		cosmosAddr = accounts.CosmosAddrBech32
 		cosmosAddrHex = accounts.CosmosAddrHex
 		ethAddrBech32 = accounts.EthAddrBech32
+	} else {
+		priv, err = crypto.HexToECDSA(strings.TrimPrefix(cfg.PrivateKeyHex, "0x"))
+		if err != nil {
+			return nil, fmt.Errorf("parse private key: %w", err)
+		}
+		accountAddr = crypto.PubkeyToAddress(priv.PublicKey)
+
+		ethPrivKey = &ethsecp256k1.PrivKey{
+			Key: crypto.FromECDSA(priv),
+		}
+
+		cosmosAddr = cfg.CosmosAddress
+		ethAddrBech32 = eth.EthAddrToNibiruAddr(accountAddr).String()
 	}
 
 	// Connect to gRPC for transaction broadcasting
