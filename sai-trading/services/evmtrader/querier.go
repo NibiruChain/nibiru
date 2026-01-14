@@ -298,7 +298,8 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 
 // queryOraclePrice queries the oracle contract for the current price of a token
 func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (float64, error) {
-	t.logDebug("Querying oracle price", "token_index", tokenIndex)
+	tokenDenom := t.GetTokenDenom(tokenIndex)
+	t.logDebug("Querying oracle price", "token_index", tokenIndex, "token_denom", tokenDenom)
 	// Build query message - oracle expects "index" not "token_id"
 	queryMsg := map[string]interface{}{
 		"get_price": map[string]interface{}{
@@ -337,7 +338,11 @@ func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (fl
 // queryExchangeRate queries the oracle contract for the exchange rate between base and quote tokens
 // This matches what the perp contract does - it queries GetExchangeRate to get base_per_quote
 func (t *EVMTrader) queryExchangeRate(ctx context.Context, baseIndex, quoteIndex uint64) (float64, error) {
-	t.logDebug("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
+	baseDenom := t.GetTokenDenom(baseIndex)
+	quoteDenom := t.GetTokenDenom(quoteIndex)
+	t.logDebug("Querying oracle exchange rate",
+		"base_index", baseIndex, "base_denom", baseDenom,
+		"quote_index", quoteIndex, "quote_denom", quoteDenom)
 	// Build query message - oracle expects GetExchangeRate with base and quote
 	queryMsg := map[string]interface{}{
 		"get_exchange_rate": map[string]interface{}{
@@ -391,16 +396,9 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 	return new(big.Int).SetBytes(out), nil
 }
 
-// queryERC20BalanceFromString queries the ERC20 balance of an account using string addresses
-func (t *EVMTrader) queryERC20BalanceFromString(ctx context.Context, erc20ABI abi.ABI, tokenAddr string, account common.Address) (*big.Int, error) {
-	token := common.HexToAddress(tokenAddr)
-	return t.queryERC20Balance(ctx, erc20ABI, token, account)
-}
-
 // QueryCollaterals queries the perp contract for all available collaterals
-// Tries to list collaterals, and if that's not supported, tries common indices (0-10)
 func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
-	// Try list_collaterals query (similar to list_markets)
+	// Try list_collaterals query
 	queryMsg := map[string]interface{}{
 		"list_collaterals": map[string]interface{}{},
 	}
@@ -446,19 +444,7 @@ func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, err
 		}
 	}
 
-	// Fallback: try common indices (0-10) to find available collaterals
-	var collaterals []CollateralInfo
-	for i := uint64(0); i <= 10; i++ {
-		denom, err := t.queryCollateralDenom(ctx, i)
-		if err == nil && denom != "" {
-			collaterals = append(collaterals, CollateralInfo{
-				Index: i,
-				Denom: denom,
-			})
-		}
-	}
-
-	return collaterals, nil
+	return []CollateralInfo{}, nil
 }
 
 // CollateralInfo contains information about a collateral token
@@ -539,4 +525,42 @@ func (t *EVMTrader) queryCosmosBalance(ctx context.Context, address string, deno
 	}
 
 	return resp.Balance.Amount.BigInt(), nil
+}
+
+func (t *EVMTrader) queryTokenDenom(ctx context.Context, tokenIndex uint64) (string, error) {
+	return t.queryCollateralDenom(ctx, tokenIndex)
+}
+
+func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
+	if denom, ok := t.tokenDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", tokenIndex)
+}
+
+func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uint64) error {
+	market, err := t.queryMarket(ctx, marketIndex)
+	if err != nil {
+		return fmt.Errorf("query market %d: %w", marketIndex, err)
+	}
+
+	if market.BaseToken != nil {
+		if _, alreadyMapped := t.tokenDenomMap[*market.BaseToken]; !alreadyMapped {
+			denom, err := t.queryTokenDenom(ctx, *market.BaseToken)
+			if err == nil && denom != "" {
+				t.tokenDenomMap[*market.BaseToken] = denom
+			}
+		}
+	}
+
+	if market.QuoteToken != nil {
+		if _, alreadyMapped := t.tokenDenomMap[*market.QuoteToken]; !alreadyMapped {
+			denom, err := t.queryTokenDenom(ctx, *market.QuoteToken)
+			if err == nil && denom != "" {
+				t.tokenDenomMap[*market.QuoteToken] = denom
+			}
+		}
+	}
+
+	return nil
 }

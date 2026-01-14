@@ -31,6 +31,11 @@ type PositionTracker struct {
 
 // RunAutoTrading runs the automated trading loop
 func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) error {
+	// Initialize token denom map at start for better logging
+	if err := t.InitializeTokenDenomMap(ctx, cfg.MarketIndex); err != nil {
+		t.logWarn("Failed to initialize token denom map", "error", err.Error())
+	}
+
 	t.logInfo("Starting automated trading",
 		"market_index", cfg.MarketIndex,
 		"min_trade_size", cfg.MinTradeSize,
