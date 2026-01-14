@@ -38,6 +38,8 @@ type EVMTrader struct {
 	cosmosAddrHex common.Address
 
 	addrs ContractAddresses
+
+	tokenDenomMap map[uint64]string
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -144,6 +146,7 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		cosmosAddr:    cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
 		cosmosAddrHex: cosmosAddrHex, // 0xABC... (hex)
 		addrs:         addrs,
+		tokenDenomMap: make(map[uint64]string),
 	}
 
 	return trader, nil
@@ -217,6 +220,18 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	txResp, err := t.sendOpenTradeTransaction(ctx, chainID, msgBytes, params.CollateralAmt, params.CollateralIndex)
 	if err != nil {
 		return fmt.Errorf("send transaction: %w", err)
+	}
+
+	// Query and log updated collateral balance after the trade
+	if collateralDenom, err := t.queryCollateralDenom(ctx, params.CollateralIndex); err == nil {
+		if balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom); err == nil {
+			t.logInfo("Collateral balance after trade",
+				"market_index", params.MarketIndex,
+				"collateral_index", params.CollateralIndex,
+				"collateral_denom", collateralDenom,
+				"balance", balance.String(),
+			)
+		}
 	}
 
 	// Parse trade ID from response
