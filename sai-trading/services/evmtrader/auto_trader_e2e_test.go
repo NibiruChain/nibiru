@@ -211,8 +211,17 @@ func (s *AutoTradingE2ETestSuite) fundTestAccountWithStNIBI() {
 	nibiruAddr := eth.EthAddrToNibiruAddr(evmAddr)
 	nibiruAddrBech32 := nibiruAddr.String()
 
-	stNIBIDenom := s.trader.Addrs().StNIBIDenom
-	if stNIBIDenom == "" {
+	collateralIndex := s.config.CollateralIndex
+	if collateralIndex == 0 {
+		return
+	}
+
+	collateralDenom, err := s.trader.QueryCollateralDenom(s.ctx, collateralIndex)
+	if err != nil {
+		s.T().Logf("Failed to query collateral denom for index %d: %v", collateralIndex, err)
+		return
+	}
+	if collateralDenom == "" {
 		return
 	}
 
@@ -220,7 +229,7 @@ func (s *AutoTradingE2ETestSuite) fundTestAccountWithStNIBI() {
 	bankClient := banktypes.NewQueryClient(s.trader.GRPCConn())
 	resp, err := bankClient.Balance(s.ctx, &banktypes.QueryBalanceRequest{
 		Address: nibiruAddrBech32,
-		Denom:   stNIBIDenom,
+		Denom:   collateralDenom,
 	})
 	if err == nil && resp.Balance != nil {
 		balance := resp.Balance.Amount.BigInt()
@@ -260,7 +269,7 @@ func (s *AutoTradingE2ETestSuite) fundTestAccountWithStNIBI() {
 	}
 
 	amount := sdk.NewIntFromUint64(100000000)
-	coins := sdk.NewCoins(sdk.NewCoin(stNIBIDenom, amount))
+	coins := sdk.NewCoins(sdk.NewCoin(collateralDenom, amount))
 	msg := banktypes.NewMsgSend(validatorAddr, toAddr, coins)
 
 	// Broadcast transaction
@@ -281,7 +290,7 @@ func (s *AutoTradingE2ETestSuite) fundTestAccountWithStNIBI() {
 	// Verify balance
 	resp, err = bankClient.Balance(s.ctx, &banktypes.QueryBalanceRequest{
 		Address: nibiruAddrBech32,
-		Denom:   stNIBIDenom,
+		Denom:   collateralDenom,
 	})
 	if err != nil {
 		s.T().FailNow()

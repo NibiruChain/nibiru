@@ -33,6 +33,10 @@ func (t *EVMTrader) QueryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 	return t.queryERC20Balance(ctx, erc20ABI, token, account)
 }
 
+func (t *EVMTrader) QueryCollateralDenom(ctx context.Context, collateralIndex uint64) (string, error) {
+	return t.queryCollateralDenom(ctx, collateralIndex)
+}
+
 func GetERC20ABI() abi.ABI {
 	return getERC20ABI()
 }
