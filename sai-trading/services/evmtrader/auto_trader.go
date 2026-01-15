@@ -53,10 +53,13 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		}
 	}
 
+	collateralDenom := t.GetCollateralDenom(cfg.CollateralIndex)
+
 	t.logInfo("Starting automated trading",
 		"market_index", cfg.MarketIndex,
 		"base_denom", baseDenom,
 		"quote_denom", quoteDenom,
+		"collateral_denom", collateralDenom,
 		"min_trade_size", cfg.MinTradeSize,
 		"max_trade_size", cfg.MaxTradeSize,
 		"min_leverage", cfg.MinLeverage,
@@ -147,7 +150,6 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		// Only open if we didn't close a position in this iteration (to avoid nonce conflicts)
 		if !closedOne && len(openPositions) < cfg.MaxOpenPositions {
 			// Generate random trade parameters
-			tradeSize := randomUint64(cfg.MinTradeSize, cfg.MaxTradeSize)
 			leverage := randomUint64(cfg.MinLeverage, cfg.MaxLeverage)
 			isLong := randomBool()
 			tradeType := randomTradeType()
@@ -226,18 +228,21 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				return fmt.Errorf("balance is zero for collateral denom %s, fund this address %s", collateralDenom, t.ethAddrBech32)
 			}
 
-			// Check if balance is sufficient for the trade
-			requiredBalance := new(big.Int).SetUint64(tradeSize)
-			if balance.Cmp(requiredBalance) < 0 {
+			collateralAmount := randomUint64(cfg.MinTradeSize, cfg.MaxTradeSize)
+			collateralAmtBig := new(big.Int).SetUint64(collateralAmount)
+
+			if balance.Cmp(collateralAmtBig) < 0 {
 				t.logError("Insufficient balance",
 					"balance", balance.String(),
-					"required", requiredBalance.String(),
+					"required", collateralAmtBig.String(),
 					"collateral_denom", collateralDenom,
 					"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, collateralDenom),
 				)
 				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 				continue
 			}
+
+			tradeSize := collateralAmount * leverage
 
 			// Open the trade
 			chainID, err := t.client.ChainID(ctx)
@@ -296,14 +301,15 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				TP:              nil,
 				SL:              nil,
 				SlippageP:       "1",
-				CollateralAmt:   new(big.Int).SetUint64(tradeSize),
+				CollateralAmt:   collateralAmtBig,
 			}
 
 			t.logInfo("Opening new random position",
 				"current_positions", len(openPositions),
 				"max", cfg.MaxOpenPositions,
-				"trade_size", tradeSize,
+				"collateral", collateralAmount,
 				"leverage", leverage,
+				"trade_size", tradeSize,
 				"long", isLong,
 				"trade_type", tradeType,
 				"market_index", cfg.MarketIndex,

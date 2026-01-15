@@ -39,7 +39,8 @@ type EVMTrader struct {
 
 	addrs ContractAddresses
 
-	tokenDenomMap map[uint64]string
+	collateralDenomMap  map[uint64]string
+	marketTokenDenomMap map[uint64]string // For base and quote tokens
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -143,10 +144,11 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		accountAddr:   accountAddr,   // 0x1234... (hex, shown in MetaMask)
 		ethAddrBech32: ethAddrBech32, // nibi1xyz... (bech32)
 		// Cosmos path (m/44'/118'/0'/0/0) - Keplr
-		cosmosAddr:    cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
-		cosmosAddrHex: cosmosAddrHex, // 0xABC... (hex)
-		addrs:         addrs,
-		tokenDenomMap: make(map[uint64]string),
+		cosmosAddr:          cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
+		cosmosAddrHex:       cosmosAddrHex, // 0xABC... (hex)
+		addrs:               addrs,
+		collateralDenomMap:  make(map[uint64]string),
+		marketTokenDenomMap: make(map[uint64]string),
 	}
 
 	return trader, nil

@@ -535,8 +535,27 @@ func (t *EVMTrader) queryOracleTokenDenom(ctx context.Context, tokenIndex uint64
 	return tokenResp.Base, nil
 }
 
+func (t *EVMTrader) GetCollateralDenom(collateralIndex uint64) string {
+	if denom, ok := t.collateralDenomMap[collateralIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", collateralIndex)
+}
+
+func (t *EVMTrader) GetMarketTokenDenom(tokenIndex uint64) string {
+	if denom, ok := t.marketTokenDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", tokenIndex)
+}
+
 func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
-	if denom, ok := t.tokenDenomMap[tokenIndex]; ok {
+	// First check market tokens (base/quote)
+	if denom, ok := t.marketTokenDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	// Then check collaterals
+	if denom, ok := t.collateralDenomMap[tokenIndex]; ok {
 		return denom
 	}
 	return fmt.Sprintf("TokenIndex(%d)", tokenIndex)
@@ -546,7 +565,7 @@ func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uin
 	collaterals, err := t.QueryCollaterals(ctx)
 	if err == nil {
 		for _, collateral := range collaterals {
-			t.tokenDenomMap[collateral.Index] = collateral.Denom
+			t.collateralDenomMap[collateral.Index] = collateral.Denom
 		}
 	}
 
@@ -556,19 +575,19 @@ func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uin
 	}
 
 	if market.BaseToken != nil {
-		if _, alreadyMapped := t.tokenDenomMap[*market.BaseToken]; !alreadyMapped {
+		if _, alreadyMapped := t.marketTokenDenomMap[*market.BaseToken]; !alreadyMapped {
 			denom, err := t.queryOracleTokenDenom(ctx, *market.BaseToken)
 			if err == nil && denom != "" {
-				t.tokenDenomMap[*market.BaseToken] = denom
+				t.marketTokenDenomMap[*market.BaseToken] = denom
 			}
 		}
 	}
 
 	if market.QuoteToken != nil {
-		if _, alreadyMapped := t.tokenDenomMap[*market.QuoteToken]; !alreadyMapped {
+		if _, alreadyMapped := t.marketTokenDenomMap[*market.QuoteToken]; !alreadyMapped {
 			denom, err := t.queryOracleTokenDenom(ctx, *market.QuoteToken)
 			if err == nil && denom != "" {
-				t.tokenDenomMap[*market.QuoteToken] = denom
+				t.marketTokenDenomMap[*market.QuoteToken] = denom
 			}
 		}
 	}
