@@ -282,6 +282,27 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		"height", txResp.Height,
 	)
 
+	trades, err := t.QueryTrades(ctx)
+	if err == nil {
+		for _, trade := range trades {
+			if trade.UserTradeIndex != tradeIndex {
+				continue
+			}
+
+			if collateralDenom, err := t.queryCollateralDenom(ctx, trade.CollateralIndex); err == nil {
+				if balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom); err == nil {
+					t.logInfo("Collateral balance after close",
+						"market_index", trade.MarketIndex,
+						"collateral_index", trade.CollateralIndex,
+						"collateral_denom", collateralDenom,
+						"balance", balance.String(),
+					)
+				}
+			}
+			break
+		}
+	}
+
 	return nil
 }
 

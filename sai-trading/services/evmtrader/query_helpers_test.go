@@ -275,3 +275,77 @@ func TestParseIndexWithFallback(t *testing.T) {
 		})
 	}
 }
+
+func TestTryUnmarshalIndices(t *testing.T) {
+	tests := []struct {
+		name     string
+		json     string
+		want     []uint64
+		wantOk   bool
+	}{
+		{
+			name:   "direct uint64 array",
+			json:   `[0, 1, 2, 5]`,
+			want:   []uint64{0, 1, 2, 5},
+			wantOk: true,
+		},
+		{
+			name:   "string array with TokenIndex",
+			json:   `["TokenIndex(0)", "TokenIndex(1)", "TokenIndex(5)"]`,
+			want:   []uint64{0, 1, 5},
+			wantOk: true,
+		},
+		{
+			name:   "string array with plain numbers",
+			json:   `["0", "1", "5"]`,
+			want:   []uint64{0, 1, 5},
+			wantOk: true,
+		},
+		{
+			name:   "wrapped data format",
+			json:   `{"data": [0, 1, 2]}`,
+			want:   []uint64{0, 1, 2},
+			wantOk: true,
+		},
+		{
+			name:   "empty array",
+			json:   `[]`,
+			want:   nil,
+			wantOk: false,
+		},
+		{
+			name:   "invalid json",
+			json:   `{invalid}`,
+			want:   nil,
+			wantOk: false,
+		},
+		{
+			name:   "null",
+			json:   `null`,
+			want:   nil,
+			wantOk: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := tryUnmarshalIndices([]byte(tt.json))
+			if ok != tt.wantOk {
+				t.Errorf("tryUnmarshalIndices() ok = %v, want %v", ok, tt.wantOk)
+				return
+			}
+			if !tt.wantOk {
+				return
+			}
+			if len(got) != len(tt.want) {
+				t.Errorf("tryUnmarshalIndices() length = %v, want %v", len(got), len(tt.want))
+				return
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("tryUnmarshalIndices()[%d] = %v, want %v", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}

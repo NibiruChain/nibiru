@@ -1,6 +1,7 @@
 package evmtrader
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -63,4 +64,33 @@ func parseIndexWithFallback(s string, expectedPrefix string) (uint64, error) {
 	// Both failed, return error with both attempts
 	return 0, fmt.Errorf("parse %s '%s': expected %s(N) or N, wrapped error: %w, number error: %v",
 		expectedPrefix, s, expectedPrefix, err, numErr)
+}
+
+func tryUnmarshalIndices(responseBytes []byte) ([]uint64, bool) {
+	var directIndices []uint64
+	if err := json.Unmarshal(responseBytes, &directIndices); err == nil && len(directIndices) > 0 {
+		return directIndices, true
+	}
+
+	var stringIndices []string
+	if err := json.Unmarshal(responseBytes, &stringIndices); err == nil && len(stringIndices) > 0 {
+		indices := make([]uint64, 0, len(stringIndices))
+		for _, str := range stringIndices {
+			if idx, err := parseIndexWithFallback(str, "TokenIndex"); err == nil {
+				indices = append(indices, idx)
+			}
+		}
+		if len(indices) > 0 {
+			return indices, true
+		}
+	}
+
+	var wrapped struct {
+		Data []uint64 `json:"data"`
+	}
+	if err := json.Unmarshal(responseBytes, &wrapped); err == nil && len(wrapped.Data) > 0 {
+		return wrapped.Data, true
+	}
+
+	return nil, false
 }
