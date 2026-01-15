@@ -207,6 +207,10 @@ Error code: %d`, currentOI, maxOI, pctUsed, code)
 		return fmt.Errorf("market exposure limit reached - cannot open new positions (long or short)\n\nTry: trader list (to see other markets)\n\nError code: %d, log: %s", code, rawLog)
 	}
 
+	if strings.Contains(rawLog, "sender balance < tx cost") {
+		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough gas tokens for this trade.\n\nError code: %d", code)
+	}
+
 	// Parse insufficient balance error
 	if strings.Contains(rawLog, "insufficient funds") || strings.Contains(rawLog, "insufficient balance") {
 		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough collateral tokens for this trade.\n\nCheck balance: trader positions\n\nError code: %d", code)
