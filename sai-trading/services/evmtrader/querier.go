@@ -138,13 +138,10 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 	// Now query each market individually to get full details
 	var markets []MarketInfo
 	for _, marketIndexStr := range marketIndices {
-		// Extract market index from string (e.g., "MarketIndex(0)")
-		var marketIndex uint64
-		if _, err := fmt.Sscanf(marketIndexStr, "MarketIndex(%d)", &marketIndex); err != nil {
-			// Try parsing as just a number
-			if _, err := fmt.Sscanf(marketIndexStr, "%d", &marketIndex); err != nil {
-				continue // Skip invalid indices
-			}
+		// Extract market index from string (e.g., "MarketIndex(0)" or "0")
+		marketIndex, err := parseIndexWithFallback(marketIndexStr, "MarketIndex")
+		if err != nil {
+			continue // Skip invalid indices
 		}
 
 		// Query individual market details
@@ -203,23 +200,23 @@ func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 		}
 
 		// Parse market_index
-		var marketIdx uint64
-		if _, err := fmt.Sscanf(raw.MarketIndex, "MarketIndex(%d)", &marketIdx); err != nil {
-			return nil, fmt.Errorf("parse market_index '%s': expected MarketIndex(N), got: %w", raw.MarketIndex, err)
+		marketIdx, err := parseMarketIndex(raw.MarketIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.MarketIndex = marketIdx
 
 		// Parse user_trade_index
-		var tradeIdx uint64
-		if _, err := fmt.Sscanf(raw.UserTradeIndex, "UserTradeIndex(%d)", &tradeIdx); err != nil {
-			return nil, fmt.Errorf("parse user_trade_index '%s': expected UserTradeIndex(N), got: %w", raw.UserTradeIndex, err)
+		tradeIdx, err := parseUserTradeIndex(raw.UserTradeIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.UserTradeIndex = tradeIdx
 
 		// Parse collateral_index
-		var collateralIdx uint64
-		if _, err := fmt.Sscanf(raw.CollateralIndex, "TokenIndex(%d)", &collateralIdx); err != nil {
-			return nil, fmt.Errorf("parse collateral_index '%s': expected TokenIndex(N), got: %w", raw.CollateralIndex, err)
+		collateralIdx, err := parseTokenIndex(raw.CollateralIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.CollateralIndex = collateralIdx
 
@@ -266,9 +263,9 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 	if !ok {
 		return nil, fmt.Errorf("base token missing or invalid in market %d, raw: %s", marketIndex, string(responseBytes))
 	}
-	var baseIdx uint64
-	if _, err := fmt.Sscanf(base, "TokenIndex(%d)", &baseIdx); err != nil {
-		return nil, fmt.Errorf("parse base token '%s' in market %d: expected TokenIndex(N), got: %w", base, marketIndex, err)
+	baseIdx, err := parseTokenIndex(base)
+	if err != nil {
+		return nil, fmt.Errorf("parse base token in market %d: %w", marketIndex, err)
 	}
 	market.BaseToken = &baseIdx
 
@@ -277,9 +274,9 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 	if !ok {
 		return nil, fmt.Errorf("quote token missing or invalid in market %d, raw: %s", marketIndex, string(responseBytes))
 	}
-	var quoteIdx uint64
-	if _, err := fmt.Sscanf(quote, "TokenIndex(%d)", &quoteIdx); err != nil {
-		return nil, fmt.Errorf("parse quote token '%s' in market %d: expected TokenIndex(N), got: %w", quote, marketIndex, err)
+	quoteIdx, err := parseTokenIndex(quote)
+	if err != nil {
+		return nil, fmt.Errorf("parse quote token in market %d: %w", marketIndex, err)
 	}
 	market.QuoteToken = &quoteIdx
 
@@ -404,44 +401,65 @@ func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, err
 	}
 
 	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
-	if err == nil {
-		// Parse JSON response - list_collaterals might return an array of collateral indices
-		var collateralIndices []string
-		if err := json.Unmarshal(responseBytes, &collateralIndices); err != nil {
-			// Try with data wrapper
-			var wrapped struct {
-				Data []string `json:"data"`
-			}
-			if err2 := json.Unmarshal(responseBytes, &wrapped); err2 == nil {
-				collateralIndices = wrapped.Data
-			}
-		}
+	if err != nil {
+		return nil, err
+	}
 
-		if len(collateralIndices) > 0 {
-			// Query each collateral individually to get full details
-			var collaterals []CollateralInfo
-			for _, collateralIndexStr := range collateralIndices {
-				// Extract collateral index from string (e.g., "TokenIndex(0)" or just "0")
-				var collateralIndex uint64
-				if _, err := fmt.Sscanf(collateralIndexStr, "TokenIndex(%d)", &collateralIndex); err != nil {
-					// Try parsing as just a number
-					if _, err := fmt.Sscanf(collateralIndexStr, "%d", &collateralIndex); err != nil {
-						continue // Skip invalid indices
-					}
-				}
-
-				// Query individual collateral details
-				denom, err := t.queryCollateralDenom(ctx, collateralIndex)
-				if err != nil {
-					continue
-				}
-				collaterals = append(collaterals, CollateralInfo{
-					Index: collateralIndex,
-					Denom: denom,
-				})
+	var collateralIndicesNum []uint64
+	if err := json.Unmarshal(responseBytes, &collateralIndicesNum); err == nil {
+		var collaterals []CollateralInfo
+		for _, collateralIndex := range collateralIndicesNum {
+			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+			if err != nil {
+				continue
 			}
-			return collaterals, nil
+			collaterals = append(collaterals, CollateralInfo{
+				Index: collateralIndex,
+				Denom: denom,
+			})
 		}
+		return collaterals, nil
+	}
+
+	var collateralIndices []string
+	if err := json.Unmarshal(responseBytes, &collateralIndices); err == nil {
+		var collaterals []CollateralInfo
+		for _, collateralIndexStr := range collateralIndices {
+			// Extract collateral index from string (e.g., "TokenIndex(0)" or "0")
+			collateralIndex, err := parseIndexWithFallback(collateralIndexStr, "TokenIndex")
+			if err != nil {
+				continue
+			}
+
+			// Query individual collateral details
+			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+			if err != nil {
+				continue
+			}
+			collaterals = append(collaterals, CollateralInfo{
+				Index: collateralIndex,
+				Denom: denom,
+			})
+		}
+		return collaterals, nil
+	}
+
+	var wrapped struct {
+		Data []uint64 `json:"data"`
+	}
+	if err := json.Unmarshal(responseBytes, &wrapped); err == nil && len(wrapped.Data) > 0 {
+		var collaterals []CollateralInfo
+		for _, collateralIndex := range wrapped.Data {
+			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+			if err != nil {
+				continue
+			}
+			collaterals = append(collaterals, CollateralInfo{
+				Index: collateralIndex,
+				Denom: denom,
+			})
+		}
+		return collaterals, nil
 	}
 
 	return []CollateralInfo{}, nil
@@ -527,8 +545,34 @@ func (t *EVMTrader) queryCosmosBalance(ctx context.Context, address string, deno
 	return resp.Balance.Amount.BigInt(), nil
 }
 
-func (t *EVMTrader) queryTokenDenom(ctx context.Context, tokenIndex uint64) (string, error) {
-	return t.queryCollateralDenom(ctx, tokenIndex)
+// queryOracleTokenDenom queries the oracle contract for the denomination of a token by index
+// Uses GetTokenById which returns a Token struct with a base field (the denomination)
+func (t *EVMTrader) queryOracleTokenDenom(ctx context.Context, tokenIndex uint64) (string, error) {
+	queryMsg := map[string]interface{}{
+		"get_token_by_id": map[string]interface{}{
+			"id": tokenIndex,
+		},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.OracleAddress, queryMsg)
+	if err != nil {
+		return "", err
+	}
+
+	var tokenResp struct {
+		ID              uint64 `json:"id"`
+		Base            string `json:"base"`
+		PermissionGroup uint8  `json:"permission_group"`
+	}
+	if err := json.Unmarshal(responseBytes, &tokenResp); err != nil {
+		return "", fmt.Errorf("unmarshal token response: %w, raw: %s", err, string(responseBytes))
+	}
+
+	if tokenResp.Base == "" {
+		return "", fmt.Errorf("base field is empty in response, raw: %s", string(responseBytes))
+	}
+
+	return tokenResp.Base, nil
 }
 
 func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
@@ -539,6 +583,13 @@ func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
 }
 
 func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uint64) error {
+	collaterals, err := t.QueryCollaterals(ctx)
+	if err == nil {
+		for _, collateral := range collaterals {
+			t.tokenDenomMap[collateral.Index] = collateral.Denom
+		}
+	}
+
 	market, err := t.queryMarket(ctx, marketIndex)
 	if err != nil {
 		return fmt.Errorf("query market %d: %w", marketIndex, err)
@@ -546,7 +597,7 @@ func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uin
 
 	if market.BaseToken != nil {
 		if _, alreadyMapped := t.tokenDenomMap[*market.BaseToken]; !alreadyMapped {
-			denom, err := t.queryTokenDenom(ctx, *market.BaseToken)
+			denom, err := t.queryOracleTokenDenom(ctx, *market.BaseToken)
 			if err == nil && denom != "" {
 				t.tokenDenomMap[*market.BaseToken] = denom
 			}
@@ -555,7 +606,7 @@ func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uin
 
 	if market.QuoteToken != nil {
 		if _, alreadyMapped := t.tokenDenomMap[*market.QuoteToken]; !alreadyMapped {
-			denom, err := t.queryTokenDenom(ctx, *market.QuoteToken)
+			denom, err := t.queryOracleTokenDenom(ctx, *market.QuoteToken)
 			if err == nil && denom != "" {
 				t.tokenDenomMap[*market.QuoteToken] = denom
 			}
