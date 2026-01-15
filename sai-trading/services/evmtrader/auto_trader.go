@@ -36,8 +36,27 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		t.logWarn("Failed to initialize token denom map", "error", err.Error())
 	}
 
+	var (
+		baseIndex, quoteIndex *uint64
+		baseDenom, quoteDenom string
+	)
+	if market, err := t.queryMarket(ctx, cfg.MarketIndex); err != nil {
+		t.logWarn("Failed to query market for pair info", "market_index", cfg.MarketIndex, "error", err.Error())
+	} else {
+		baseIndex = market.BaseToken
+		quoteIndex = market.QuoteToken
+		if baseIndex != nil {
+			baseDenom = t.GetTokenDenom(*baseIndex)
+		}
+		if quoteIndex != nil {
+			quoteDenom = t.GetTokenDenom(*quoteIndex)
+		}
+	}
+
 	t.logInfo("Starting automated trading",
 		"market_index", cfg.MarketIndex,
+		"base_denom", baseDenom,
+		"quote_denom", quoteDenom,
 		"min_trade_size", cfg.MinTradeSize,
 		"max_trade_size", cfg.MaxTradeSize,
 		"min_leverage", cfg.MinLeverage,
