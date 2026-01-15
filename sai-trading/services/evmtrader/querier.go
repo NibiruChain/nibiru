@@ -405,64 +405,24 @@ func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, err
 		return nil, err
 	}
 
-	var collateralIndicesNum []uint64
-	if err := json.Unmarshal(responseBytes, &collateralIndicesNum); err == nil {
-		var collaterals []CollateralInfo
-		for _, collateralIndex := range collateralIndicesNum {
-			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
-			if err != nil {
-				continue
-			}
-			collaterals = append(collaterals, CollateralInfo{
-				Index: collateralIndex,
-				Denom: denom,
-			})
+	indices, ok := tryUnmarshalIndices(responseBytes)
+	if !ok {
+		return []CollateralInfo{}, nil
+	}
+
+	collaterals := make([]CollateralInfo, 0, len(indices))
+	for _, collateralIndex := range indices {
+		denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+		if err != nil {
+			continue
 		}
-		return collaterals, nil
+		collaterals = append(collaterals, CollateralInfo{
+			Index: collateralIndex,
+			Denom: denom,
+		})
 	}
 
-	var collateralIndices []string
-	if err := json.Unmarshal(responseBytes, &collateralIndices); err == nil {
-		var collaterals []CollateralInfo
-		for _, collateralIndexStr := range collateralIndices {
-			// Extract collateral index from string (e.g., "TokenIndex(0)" or "0")
-			collateralIndex, err := parseIndexWithFallback(collateralIndexStr, "TokenIndex")
-			if err != nil {
-				continue
-			}
-
-			// Query individual collateral details
-			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
-			if err != nil {
-				continue
-			}
-			collaterals = append(collaterals, CollateralInfo{
-				Index: collateralIndex,
-				Denom: denom,
-			})
-		}
-		return collaterals, nil
-	}
-
-	var wrapped struct {
-		Data []uint64 `json:"data"`
-	}
-	if err := json.Unmarshal(responseBytes, &wrapped); err == nil && len(wrapped.Data) > 0 {
-		var collaterals []CollateralInfo
-		for _, collateralIndex := range wrapped.Data {
-			denom, err := t.queryCollateralDenom(ctx, collateralIndex)
-			if err != nil {
-				continue
-			}
-			collaterals = append(collaterals, CollateralInfo{
-				Index: collateralIndex,
-				Denom: denom,
-			})
-		}
-		return collaterals, nil
-	}
-
-	return []CollateralInfo{}, nil
+	return collaterals, nil
 }
 
 // CollateralInfo contains information about a collateral token

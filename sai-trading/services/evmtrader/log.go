@@ -43,15 +43,17 @@ func (t *EVMTrader) log(level LogLevel, msg string, kv ...any) {
 		"ts":    time.Now().UTC().Format(time.RFC3339),
 	}
 
+	fieldOrder := make([]string, 0, len(kv)/2)
 	for i := 0; i+1 < len(kv); i += 2 {
 		k, _ := kv[i].(string)
 		fields[k] = kv[i+1]
+		fieldOrder = append(fieldOrder, k)
 	}
 
-	t.logColored(level, msg, fields)
+	t.logColored(level, msg, fields, fieldOrder)
 }
 
-func (t *EVMTrader) logColored(level LogLevel, msg string, fields map[string]any) {
+func (t *EVMTrader) logColored(level LogLevel, msg string, fields map[string]any, fieldOrder []string) {
 	out := colorable.NewColorable(os.Stdout)
 
 	var levelColor, levelLabel, msgColor string
@@ -97,9 +99,8 @@ func (t *EVMTrader) logColored(level LogLevel, msg string, fields map[string]any
 	buf.WriteString(fmt.Sprintf("%s%s%s%s",
 		colorBold, msgColor, msg, colorReset))
 
-	// Add key-value pairs with better formatting
-	for k, v := range fields {
-		if k != "level" && k != "msg" && k != "ts" {
+	for _, k := range fieldOrder {
+		if v, exists := fields[k]; exists {
 			// Use different colors for keys and values
 			keyColor := colorGray
 			valColor := colorWhite
