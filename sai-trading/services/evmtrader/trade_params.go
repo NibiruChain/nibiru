@@ -91,30 +91,6 @@ func (t *EVMTrader) prepareTradeFromConfig(ctx context.Context, balance *big.Int
 	}, nil
 }
 
-// determineTradeAmount calculates the trade amount based on user-provided config only.
-// Returns nil if balance is insufficient or no trade size is configured (not an error condition).
-func (t *EVMTrader) determineTradeAmount(balance *big.Int) (*big.Int, error) {
-	var tradeAmt *big.Int
-
-	if t.cfg.TradeSize > 0 {
-		// Use exact trade size from config
-		tradeAmt = new(big.Int).SetUint64(t.cfg.TradeSize)
-		if balance.Cmp(tradeAmt) < 0 {
-			t.logWarn("Insufficient balance for trade", "balance", balance.String(), "required", tradeAmt.String())
-			return nil, nil
-		}
-	} else {
-		// Use user-provided TradeSizeMin or TradeSizeMax only (no fallback to balance)
-		tradeAmt = t.calculateDeterministicTradeAmount(balance)
-		if tradeAmt == nil {
-			t.logWarn("Insufficient balance for trade or no trade size configured", "balance", balance.String())
-			return nil, nil
-		}
-	}
-
-	return tradeAmt, nil
-}
-
 // determineLeverage returns the leverage to use for the trade.
 // Uses config value if set, otherwise defaults to 1.
 func (t *EVMTrader) determineLeverage() uint64 {
@@ -231,39 +207,5 @@ func (t *EVMTrader) logTradePreparation(tradeType string, isLong bool, leverage 
 	)
 }
 
-// calculateDeterministicTradeAmount calculates a deterministic trade amount based on user-provided config only.
-// Uses TradeSizeMin if set, otherwise TradeSizeMax. Returns nil if balance is insufficient or no size is configured.
-func (t *EVMTrader) calculateDeterministicTradeAmount(balance *big.Int) *big.Int {
-	// Prefer TradeSizeMin if set
-	if t.cfg.TradeSizeMin > 0 {
-		amt := new(big.Int).SetUint64(t.cfg.TradeSizeMin)
-		if balance.Cmp(amt) < 0 {
-			// Insufficient balance - return nil (don't use available balance)
-			return nil
-		}
-		// If TradeSizeMax is set and larger than min, use TradeSizeMax (if balance allows)
-		if t.cfg.TradeSizeMax > t.cfg.TradeSizeMin {
-			maxAmt := new(big.Int).SetUint64(t.cfg.TradeSizeMax)
-			if balance.Cmp(maxAmt) < 0 {
-				// Insufficient balance for max - return nil (don't use available balance)
-				return nil
-			}
-			// Use max if balance is sufficient
-			return maxAmt
-		}
-		return amt
-	}
-
-	// If TradeSizeMin not set, try TradeSizeMax
-	if t.cfg.TradeSizeMax > 0 {
-		amt := new(big.Int).SetUint64(t.cfg.TradeSizeMax)
-		if balance.Cmp(amt) < 0 {
-			// Insufficient balance - return nil (don't use available balance)
-			return nil
-		}
-		return amt
-	}
-
-	// If neither min nor max is set, return nil (no user input)
-	return nil
-}
+// (trade size helpers removed as unused: previous logic for min/max based sizing
+// can be restored from git history if we reintroduce balance-aware sizing.)
