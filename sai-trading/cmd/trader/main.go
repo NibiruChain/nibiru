@@ -8,10 +8,6 @@ import (
 	"strings"
 
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
-	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 )
@@ -596,8 +592,7 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 		if err != nil {
 			return cfg, fmt.Errorf("failed to derive accounts from mnemonic: %w", err)
 		}
-		privKey = accounts.EthPrivateKeyHex           // Ethereum path private key for trading
-		cfg.CosmosAddress = accounts.CosmosAddrBech32 // Cosmos path bech32 address
+		privKey = accounts.EthPrivateKeyHex
 		cfg.Mnemonic = mnem
 	}
 
@@ -654,18 +649,4 @@ func detectContractsEnvFile(networkMode string) string {
 
 	// Return default even if it doesn't exist (will error later with better message)
 	return candidates[0]
-}
-
-func mnemonicToPrivateKeyHex(mnemonic string) (string, error) {
-	privKeyBytes, err := hd.EthSecp256k1.Derive()(mnemonic, keyring.DefaultBIP39Passphrase, eth.BIP44HDPath)
-	if err != nil {
-		return "", fmt.Errorf("derive private key: %w", err)
-	}
-
-	privKey, err := crypto.ToECDSA(privKeyBytes)
-	if err != nil {
-		return "", fmt.Errorf("convert to ECDSA: %w", err)
-	}
-
-	return fmt.Sprintf("%x", crypto.FromECDSA(privKey)), nil
 }

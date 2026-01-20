@@ -34,9 +34,6 @@ type EVMTrader struct {
 	accountAddr   common.Address
 	ethAddrBech32 string
 
-	cosmosAddr    string
-	cosmosAddrHex common.Address
-
 	addrs ContractAddresses
 
 	collateralDenomMap  map[uint64]string
@@ -65,8 +62,6 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	var priv *ecdsa.PrivateKey
 	var accountAddr common.Address
 	var ethPrivKey *ethsecp256k1.PrivKey
-	var cosmosAddr string
-	var cosmosAddrHex common.Address
 	var ethAddrBech32 string
 
 	if cfg.Mnemonic != "" {
@@ -83,9 +78,6 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		ethPrivKey = &ethsecp256k1.PrivKey{
 			Key: crypto.FromECDSA(priv),
 		}
-
-		cosmosAddr = accounts.CosmosAddrBech32
-		cosmosAddrHex = accounts.CosmosAddrHex
 		ethAddrBech32 = accounts.EthAddrBech32
 	} else {
 		priv, err = crypto.HexToECDSA(strings.TrimPrefix(cfg.PrivateKeyHex, "0x"))
@@ -97,8 +89,6 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		ethPrivKey = &ethsecp256k1.PrivKey{
 			Key: crypto.FromECDSA(priv),
 		}
-
-		cosmosAddr = cfg.CosmosAddress
 		ethAddrBech32 = eth.EthAddrToNibiruAddr(accountAddr).String()
 	}
 
@@ -141,11 +131,8 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		privKey:    priv,
 		ethPrivKey: ethPrivKey,
 		// Ethereum path (m/44'/60'/0'/0/0) - MetaMask - USED FOR TRADING
-		accountAddr:   accountAddr,   // 0x1234... (hex, shown in MetaMask)
-		ethAddrBech32: ethAddrBech32, // nibi1xyz... (bech32)
-		// Cosmos path (m/44'/118'/0'/0/0) - Keplr
-		cosmosAddr:          cosmosAddr,    // nibi1abc... (bech32, shown in Keplr)
-		cosmosAddrHex:       cosmosAddrHex, // 0xABC... (hex)
+		accountAddr:         accountAddr,   // 0x1234... (hex, shown in MetaMask)
+		ethAddrBech32:       ethAddrBech32, // nibi1xyz... (bech32)
 		addrs:               addrs,
 		collateralDenomMap:  make(map[uint64]string),
 		marketTokenDenomMap: make(map[uint64]string),
