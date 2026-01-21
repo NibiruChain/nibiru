@@ -13,10 +13,14 @@ gen-proto-go:
   fi
   echo "✅ SUCCESS: just gen-proto-go"
 
+# Run cosmos-sdk tests relevant to Nibiru
 test:
   #!/usr/bin/env bash
+  printf "\n\nRun tests - cosmos-sdk/types:\n"
+  go test ./types/... -tags='ledger test_ledger_mock'
+
+  printf "\n\nRun tests - cosmos-sdk/x:\n"
   go test ./x/...
+
+  printf "\n\nRun tests - cosmos-sdk/baseapp:\n"
   go test ./baseapp/...
-  # FIXME: Fails due to ledger error. This was not fixed in t# cosmos-sdk.
-  # We'll need to do it here in order to run the tests for the entire repo.
-  # go test ./types/... 
