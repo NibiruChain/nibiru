@@ -11,6 +11,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// NOTE: This test requires the build tags for ledger devices.
+// In other words, you'd run something like
+// ```
+// go test ./types/... -tags='ledger test_ledger_mock'
+// ```
 func TestBeach32ifPbKey(t *testing.T) {
 	require := require.New(t)
 	path := *hd.NewFundraiserParams(0, sdk.CoinType, 0)
