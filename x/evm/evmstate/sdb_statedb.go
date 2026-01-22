@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"slices"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -568,20 +567,7 @@ func (s *SDB) Commit() {
 		seenAddrs := set.New[gethcommon.Address]()
 		for i := len(localStates) - 1; i >= 0; i-- {
 			localState := localStates[i]
-			// Sort addresses for deterministic iteration order.
-			// Go map iteration is non-deterministic, which can cause consensus
-			// failures if multiple accounts are processed in different order
-			// on different nodes.
-			sortedAddrs := make([]gethcommon.Address, 0, len(localState.AccountChangeMap))
-			for addr := range localState.AccountChangeMap {
-				sortedAddrs = append(sortedAddrs, addr)
-			}
-			slices.SortFunc(sortedAddrs, func(a, b gethcommon.Address) int {
-				return bytes.Compare(a[:], b[:])
-			})
-
-			for _, addr := range sortedAddrs {
-				accChange := localState.AccountChangeMap[addr]
+			for addr, accChange := range localState.AccountChangeMap {
 				if seenAddrs.Has(addr) {
 					continue
 				}
