@@ -5,8 +5,8 @@
     "networks_toml": "networks.toml"
   },
   "trading": {
-    "market_index": 0,
-    "collateral_index": 1,
+    "market_indices": [0],
+    "collateral_indices": [1],
     "min_trade_size": 10000,
     "max_trade_size": 50000,
     "min_leverage": 2,

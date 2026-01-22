@@ -550,6 +550,9 @@ func (t *EVMTrader) GetMarketTokenDenom(tokenIndex uint64) string {
 }
 
 func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
+	if tokenIndex == 0 {
+		return "usd"
+	}
 	// First check market tokens (base/quote)
 	if denom, ok := t.marketTokenDenomMap[tokenIndex]; ok {
 		return denom

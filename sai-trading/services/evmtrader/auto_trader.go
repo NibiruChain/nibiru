@@ -11,8 +11,8 @@ import (
 
 // AutoTradingConfig holds configuration for automated trading
 type AutoTradingConfig struct {
-	MarketIndex       uint64
-	CollateralIndex   uint64
+	MarketIndices     []uint64
+	CollateralIndices []uint64
 	MinTradeSize      uint64
 	MaxTradeSize      uint64
 	MinLeverage       uint64
@@ -31,35 +31,42 @@ type PositionTracker struct {
 
 // RunAutoTrading runs the automated trading loop
 func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) error {
+	marketIndices := cfg.MarketIndices
+	collateralIndices := cfg.CollateralIndices
+
 	// Initialize token denom map at start for better logging
-	if err := t.InitializeTokenDenomMap(ctx, cfg.MarketIndex); err != nil {
-		t.logWarn("Failed to initialize token denom map", "error", err.Error())
-	}
-
-	var (
-		baseIndex, quoteIndex *uint64
-		baseDenom, quoteDenom string
-	)
-	if market, err := t.queryMarket(ctx, cfg.MarketIndex); err != nil {
-		t.logWarn("Failed to query market for pair info", "market_index", cfg.MarketIndex, "error", err.Error())
-	} else {
-		baseIndex = market.BaseToken
-		quoteIndex = market.QuoteToken
-		if baseIndex != nil {
-			baseDenom = t.GetTokenDenom(*baseIndex)
-		}
-		if quoteIndex != nil {
-			quoteDenom = t.GetTokenDenom(*quoteIndex)
+	for _, marketIdx := range marketIndices {
+		if err := t.InitializeTokenDenomMap(ctx, marketIdx); err != nil {
+			t.logWarn("Failed to initialize token denom map", "market_index", marketIdx, "error", err.Error())
 		}
 	}
 
-	collateralDenom := t.GetCollateralDenom(cfg.CollateralIndex)
+	marketPairs := make([]string, 0, len(marketIndices))
+	for _, marketIdx := range marketIndices {
+		market, err := t.queryMarket(ctx, marketIdx)
+		if err == nil && market.BaseToken != nil && market.QuoteToken != nil {
+			baseDenom := t.GetTokenDenom(*market.BaseToken)
+			quoteDenom := t.GetTokenDenom(*market.QuoteToken)
+			baseSymbol := extractSymbolFromDenom(baseDenom)
+			quoteSymbol := extractSymbolFromDenom(quoteDenom)
+			marketPairs = append(marketPairs, fmt.Sprintf("%s/%s", baseSymbol, quoteSymbol))
+		} else {
+			marketPairs = append(marketPairs, fmt.Sprintf("Market(%d)", marketIdx))
+		}
+	}
+
+	collateralDenoms := make([]string, 0, len(collateralIndices))
+	for _, collateralIdx := range collateralIndices {
+		collateralDenom := t.GetCollateralDenom(collateralIdx)
+		collateralSymbol := extractSymbolFromDenom(collateralDenom)
+		collateralDenoms = append(collateralDenoms, collateralSymbol)
+	}
 
 	t.logInfo("Starting automated trading",
-		"market_index", cfg.MarketIndex,
-		"base_denom", baseDenom,
-		"quote_denom", quoteDenom,
-		"collateral_denom", collateralDenom,
+		"market_indices", marketIndices,
+		"market_pairs", marketPairs,
+		"collateral_indices", collateralIndices,
+		"collateral_denoms", collateralDenoms,
 		"min_trade_size", cfg.MinTradeSize,
 		"max_trade_size", cfg.MaxTradeSize,
 		"min_leverage", cfg.MinLeverage,
@@ -149,21 +156,25 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 		// Check if we should open a new position
 		// Only open if we didn't close a position in this iteration (to avoid nonce conflicts)
 		if !closedOne && len(openPositions) < cfg.MaxOpenPositions {
+			selectedMarketIndex := marketIndices[randomUint64(0, uint64(len(marketIndices)-1))]
+
 			// Generate random trade parameters
 			leverage := randomUint64(cfg.MinLeverage, cfg.MaxLeverage)
 			isLong := randomBool()
 			tradeType := randomTradeType()
 
-			collateralIndex := cfg.CollateralIndex
+			selectedCollateralIndex := collateralIndices[randomUint64(0, uint64(len(collateralIndices)-1))]
+
+			collateralIndex := selectedCollateralIndex
 			if collateralIndex == 0 {
-				market, err := t.queryMarket(ctx, cfg.MarketIndex)
+				market, err := t.queryMarket(ctx, selectedMarketIndex)
 				if err != nil {
 					t.logError("Failed to query market for collateral index", "error", err.Error())
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
 				if market.QuoteToken == nil {
-					t.logError("Market has no quote token", "market_index", cfg.MarketIndex)
+					t.logError("Market has no quote token", "market_index", selectedMarketIndex)
 					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
 					continue
 				}
@@ -253,7 +264,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			}
 
 			// Fetch current market price from oracle (needed for all trade types)
-			marketPrice, err := t.fetchMarketPriceForIndex(ctx, cfg.MarketIndex)
+			marketPrice, err := t.fetchMarketPriceForIndex(ctx, selectedMarketIndex)
 			if err != nil {
 				t.logError("Failed to fetch market price from oracle", "error", err.Error())
 				time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
@@ -292,7 +303,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 			}
 
 			params := &OpenTradeParams{
-				MarketIndex:     cfg.MarketIndex,
+				MarketIndex:     selectedMarketIndex,
 				Leverage:        leverage,
 				Long:            isLong,
 				CollateralIndex: collateralIndex,
@@ -304,17 +315,41 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				CollateralAmt:   collateralAmtBig,
 			}
 
-			t.logInfo("Opening new random position",
-				"current_positions", len(openPositions),
-				"max", cfg.MaxOpenPositions,
-				"collateral", collateralAmount,
-				"leverage", leverage,
-				"trade_size", tradeSize,
-				"long", isLong,
-				"trade_type", tradeType,
-				"market_index", cfg.MarketIndex,
+			// Get market pair info for nice logging
+			market, err := t.queryMarket(ctx, selectedMarketIndex)
+			var marketPair string
+			if err == nil && market.BaseToken != nil && market.QuoteToken != nil {
+				baseDenom := t.GetTokenDenom(*market.BaseToken)
+				quoteDenom := t.GetTokenDenom(*market.QuoteToken)
+				marketPair = fmt.Sprintf("%s/%s", baseDenom, quoteDenom)
+			} else {
+				marketPair = fmt.Sprintf("Market(%d)", selectedMarketIndex)
+			}
+
+			collateralDenomForLog := t.GetCollateralDenom(collateralIndex)
+			collateralSymbol := extractSymbolFromDenom(collateralDenomForLog)
+			collateralAmountFormatted := collateralAmtBig
+
+			direction := "Short"
+			if isLong {
+				direction = "Long"
+			}
+
+			var openingLogMsg string
+			switch tradeType {
+			case TradeTypeMarket:
+				openingLogMsg = fmt.Sprintf("Opening position: %s x%d %s, collateral %s %s",
+					direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol)
+			case TradeTypeLimit:
+				openingLogMsg = fmt.Sprintf("Opening limit order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
+					direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+			default: // stop
+				openingLogMsg = fmt.Sprintf("Opening stop order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
+					direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+			}
+			t.logInfo(openingLogMsg,
+				"market_index", selectedMarketIndex,
 				"collateral_index", collateralIndex,
-				"open_price", *openPrice,
 			)
 
 			if err := t.OpenTrade(ctx, chainID, params); err != nil {
@@ -324,7 +359,7 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					"leverage", leverage,
 					"long", isLong,
 					"trade_size", tradeSize,
-					"market_index", cfg.MarketIndex,
+					"market_index", selectedMarketIndex,
 				)
 				// If it's a nonce error, wait a bit longer before retrying
 				if strings.Contains(err.Error(), "invalid nonce") {
@@ -335,6 +370,28 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 					time.Sleep(3 * time.Second)
 				}
 			} else {
+				var logMsg string
+				switch tradeType {
+				case TradeTypeMarket:
+					logMsg = fmt.Sprintf("Opened position: %s x%d %s, collateral %s %s",
+						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol)
+				case TradeTypeLimit:
+					logMsg = fmt.Sprintf("Opened limit order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
+						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+				case TradeTypeStop: // stop
+					logMsg = fmt.Sprintf("Opened stop order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
+						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+				default:
+					t.logError("Unknown trade type", "trade_type", tradeType)
+				}
+
+				t.logInfo(logMsg,
+					"current_positions", len(openPositions),
+					"max", cfg.MaxOpenPositions,
+					"market_index", selectedMarketIndex,
+					"collateral_index", collateralIndex,
+				)
+
 				// Query trades again to find the new position and add it to tracking
 				newTrades, err := t.QueryTrades(ctx)
 				if err != nil {
@@ -360,7 +417,11 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 				time.Sleep(2 * time.Second)
 			}
 		} else {
-			t.logInfo("Maximum open positions reached, waiting to close positions", "current", len(openPositions), "max", cfg.MaxOpenPositions)
+			if closedOne {
+				t.logInfo("Skipping iteration", "current", len(openPositions), "max", cfg.MaxOpenPositions)
+			} else if len(openPositions) >= cfg.MaxOpenPositions {
+				t.logInfo("Maximum open positions reached, waiting to close positions", "current", len(openPositions), "max", cfg.MaxOpenPositions)
+			}
 		}
 
 		// Sleep before next iteration
@@ -420,4 +481,12 @@ func randomFloat64(min, max float64) float64 {
 	randUint64 := new(big.Int).SetBytes(b[:]).Uint64()
 	randFloat := float64(randUint64) / float64(^uint64(0))
 	return min + randFloat*diff
+}
+
+func extractSymbolFromDenom(denom string) string {
+	if idx := strings.LastIndex(denom, "/"); idx >= 0 {
+		return denom[idx+1:]
+	}
+
+	return denom
 }
