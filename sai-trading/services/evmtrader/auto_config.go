@@ -27,12 +27,12 @@ type NetworkSettings struct {
 
 // TradingSettings contains trading strategy parameters
 type TradingSettings struct {
-	MarketIndex     uint64 `json:"market_index"`
-	CollateralIndex uint64 `json:"collateral_index"`
-	MinTradeSize    uint64 `json:"min_trade_size"`
-	MaxTradeSize    uint64 `json:"max_trade_size"`
-	MinLeverage     uint64 `json:"min_leverage"`
-	MaxLeverage     uint64 `json:"max_leverage"`
+	MarketIndices     []uint64 `json:"market_indices,omitempty"`     // Array of market indices to randomly select from
+	CollateralIndices []uint64 `json:"collateral_indices,omitempty"` // Array of collateral indices to randomly select from
+	MinTradeSize      uint64   `json:"min_trade_size"`
+	MaxTradeSize      uint64   `json:"max_trade_size"`
+	MinLeverage       uint64   `json:"min_leverage"`
+	MaxLeverage       uint64   `json:"max_leverage"`
 }
 
 // BotSettings contains bot behavior parameters
@@ -64,6 +64,14 @@ func LoadAutoTradingConfig(configPath string) (*AutoTradingJSONConfig, error) {
 
 // Validate checks if the configuration is valid
 func (cfg *AutoTradingJSONConfig) Validate() error {
+	if len(cfg.Trading.MarketIndices) == 0 {
+		return fmt.Errorf("at least one market index must be specified (use market_indices array)")
+	}
+
+	if len(cfg.Trading.CollateralIndices) == 0 {
+		return fmt.Errorf("at least one collateral index must be specified (use collateral_indices array)")
+	}
+
 	// Validate trading settings
 	if cfg.Trading.MinTradeSize > cfg.Trading.MaxTradeSize {
 		return fmt.Errorf("min_trade_size (%d) cannot be greater than max_trade_size (%d)",
@@ -97,8 +105,8 @@ func (cfg *AutoTradingJSONConfig) Validate() error {
 // ToAutoTradingConfig converts JSON config to AutoTradingConfig
 func (cfg *AutoTradingJSONConfig) ToAutoTradingConfig() AutoTradingConfig {
 	return AutoTradingConfig{
-		MarketIndex:       cfg.Trading.MarketIndex,
-		CollateralIndex:   cfg.Trading.CollateralIndex,
+		MarketIndices:     cfg.Trading.MarketIndices,
+		CollateralIndices: cfg.Trading.CollateralIndices,
 		MinTradeSize:      cfg.Trading.MinTradeSize,
 		MaxTradeSize:      cfg.Trading.MaxTradeSize,
 		MinLeverage:       cfg.Trading.MinLeverage,

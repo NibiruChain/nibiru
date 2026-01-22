@@ -1,6 +1,7 @@
 package evmtrader_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -275,12 +276,12 @@ func TestValidate(t *testing.T) {
 			name: "valid configuration",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MarketIndex:     0,
-					CollateralIndex: 1,
-					MinTradeSize:    1000000,
-					MaxTradeSize:    5000000,
-					MinLeverage:     1,
-					MaxLeverage:     10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -294,12 +295,12 @@ func TestValidate(t *testing.T) {
 			name: "min equals max is valid",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MarketIndex:     0,
-					CollateralIndex: 1,
-					MinTradeSize:    5000000,
-					MaxTradeSize:    5000000,
-					MinLeverage:     5,
-					MaxLeverage:     5,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      5000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       5,
+					MaxLeverage:       5,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -497,12 +498,12 @@ func TestToAutoTradingConfig(t *testing.T) {
 			NetworksToml: "/path/to/networks.toml",
 		},
 		Trading: evmtrader.TradingSettings{
-			MarketIndex:     2,
-			CollateralIndex: 3,
-			MinTradeSize:    1000000,
-			MaxTradeSize:    5000000,
-			MinLeverage:     2,
-			MaxLeverage:     15,
+			MarketIndices:     []uint64{2},
+			CollateralIndices: []uint64{3},
+			MinTradeSize:      1000000,
+			MaxTradeSize:      5000000,
+			MinLeverage:       2,
+			MaxLeverage:       15,
 		},
 		Bot: evmtrader.BotSettings{
 			BlocksBeforeClose: 20,
@@ -514,8 +515,8 @@ func TestToAutoTradingConfig(t *testing.T) {
 	result := jsonConfig.ToAutoTradingConfig()
 
 	// Verify all fields are correctly mapped
-	require.Equal(t, uint64(2), result.MarketIndex)
-	require.Equal(t, uint64(3), result.CollateralIndex)
+	require.Equal(t, []uint64{2}, result.MarketIndices)
+	require.Equal(t, []uint64{3}, result.CollateralIndices)
 	require.Equal(t, uint64(1000000), result.MinTradeSize)
 	require.Equal(t, uint64(5000000), result.MaxTradeSize)
 	require.Equal(t, uint64(2), result.MinLeverage)
@@ -529,12 +530,12 @@ func TestToAutoTradingConfig_WithoutNetworkSettings(t *testing.T) {
 	jsonConfig := evmtrader.AutoTradingJSONConfig{
 		Network: nil, // No network settings
 		Trading: evmtrader.TradingSettings{
-			MarketIndex:     0,
-			CollateralIndex: 1,
-			MinTradeSize:    500000,
-			MaxTradeSize:    2000000,
-			MinLeverage:     1,
-			MaxLeverage:     5,
+			MarketIndices:     []uint64{0},
+			CollateralIndices: []uint64{1},
+			MinTradeSize:      500000,
+			MaxTradeSize:      2000000,
+			MinLeverage:       1,
+			MaxLeverage:       5,
 		},
 		Bot: evmtrader.BotSettings{
 			BlocksBeforeClose: 5,
@@ -546,8 +547,8 @@ func TestToAutoTradingConfig_WithoutNetworkSettings(t *testing.T) {
 	result := jsonConfig.ToAutoTradingConfig()
 
 	// Verify conversion works even without network settings
-	require.Equal(t, uint64(0), result.MarketIndex)
-	require.Equal(t, uint64(1), result.CollateralIndex)
+	require.Equal(t, []uint64{0}, result.MarketIndices)
+	require.Equal(t, []uint64{1}, result.CollateralIndices)
 	require.Equal(t, uint64(500000), result.MinTradeSize)
 	require.Equal(t, uint64(2000000), result.MaxTradeSize)
 	require.Equal(t, uint64(1), result.MinLeverage)
@@ -555,4 +556,43 @@ func TestToAutoTradingConfig_WithoutNetworkSettings(t *testing.T) {
 	require.Equal(t, uint64(5), result.BlocksBeforeClose)
 	require.Equal(t, 3, result.MaxOpenPositions)
 	require.Equal(t, 15, result.LoopDelaySeconds)
+}
+
+// TestTradingSettings_JSONUnmarshaling tests JSON unmarshaling with the new array format
+func TestTradingSettings_JSONUnmarshaling(t *testing.T) {
+	// Test new format (market_indices as array)
+	jsonNew := `{
+		"market_indices": [1, 2, 3],
+		"collateral_indices": [0, 1],
+		"min_trade_size": 1000000,
+		"max_trade_size": 5000000,
+		"min_leverage": 1,
+		"max_leverage": 10
+	}`
+
+	var tsNew evmtrader.TradingSettings
+	err := json.Unmarshal([]byte(jsonNew), &tsNew)
+	require.NoError(t, err)
+	require.Equal(t, []uint64{1, 2, 3}, tsNew.MarketIndices)
+	require.Equal(t, []uint64{0, 1}, tsNew.CollateralIndices)
+	require.Equal(t, uint64(1000000), tsNew.MinTradeSize)
+	require.Equal(t, uint64(5000000), tsNew.MaxTradeSize)
+	require.Equal(t, uint64(1), tsNew.MinLeverage)
+	require.Equal(t, uint64(10), tsNew.MaxLeverage)
+
+	// Test single value in array
+	jsonSingle := `{
+		"market_indices": [5],
+		"collateral_indices": [2],
+		"min_trade_size": 1000000,
+		"max_trade_size": 5000000,
+		"min_leverage": 1,
+		"max_leverage": 10
+	}`
+
+	var tsSingle evmtrader.TradingSettings
+	err = json.Unmarshal([]byte(jsonSingle), &tsSingle)
+	require.NoError(t, err)
+	require.Equal(t, []uint64{5}, tsSingle.MarketIndices)
+	require.Equal(t, []uint64{2}, tsSingle.CollateralIndices)
 }

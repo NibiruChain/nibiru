@@ -425,8 +425,8 @@ func runAuto(configFile string, marketIndex, collateralIndex, minTradeSize, maxT
 	} else {
 		// Use command-line flags as defaults
 		autoCfg = evmtrader.AutoTradingConfig{
-			MarketIndex:       marketIndex,
-			CollateralIndex:   collateralIndex,
+			MarketIndices:     []uint64{marketIndex},
+			CollateralIndices: []uint64{collateralIndex},
 			MinTradeSize:      minTradeSize,
 			MaxTradeSize:      maxTradeSize,
 			MinLeverage:       minLeverage,
@@ -439,10 +439,10 @@ func runAuto(configFile string, marketIndex, collateralIndex, minTradeSize, maxT
 
 	// Override config file with command-line flags if they were explicitly set
 	if cmd.Flags().Changed("market-index") {
-		autoCfg.MarketIndex = marketIndex
+		autoCfg.MarketIndices = []uint64{marketIndex}
 	}
 	if cmd.Flags().Changed("collateral-index") {
-		autoCfg.CollateralIndex = collateralIndex
+		autoCfg.CollateralIndices = []uint64{collateralIndex}
 	}
 	if cmd.Flags().Changed("min-trade-size") {
 		autoCfg.MinTradeSize = minTradeSize

@@ -22,8 +22,8 @@ func TestPositionTracker(t *testing.T) {
 // TestAutoTradingConfig tests the AutoTradingConfig struct
 func TestAutoTradingConfig(t *testing.T) {
 	cfg := AutoTradingConfig{
-		MarketIndex:       0,
-		CollateralIndex:   1,
+		MarketIndices:     []uint64{0},
+		CollateralIndices: []uint64{1},
 		MinTradeSize:      1000000,
 		MaxTradeSize:      5000000,
 		MinLeverage:       1,
@@ -33,8 +33,8 @@ func TestAutoTradingConfig(t *testing.T) {
 		LoopDelaySeconds:  30,
 	}
 
-	require.Equal(t, uint64(0), cfg.MarketIndex)
-	require.Equal(t, uint64(1), cfg.CollateralIndex)
+	require.Equal(t, []uint64{0}, cfg.MarketIndices)
+	require.Equal(t, []uint64{1}, cfg.CollateralIndices)
 	require.Equal(t, uint64(1000000), cfg.MinTradeSize)
 	require.Equal(t, uint64(5000000), cfg.MaxTradeSize)
 	require.Equal(t, uint64(1), cfg.MinLeverage)
