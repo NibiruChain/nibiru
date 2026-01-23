@@ -72,6 +72,8 @@ jobs:
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          secrets: |
+            gh_pat=${{ secrets.GH_PAT }}
 
   merge:
     name: Create multi-arch image
@@ -164,6 +166,8 @@ jobs:
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          secrets: |
+            gh_pat=${{ secrets.GH_PAT }}
 
   merge-chaosnet:
     name: Create multi-arch image

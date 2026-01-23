@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Configure git for private modules
+        run: |
+          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+          echo "GOPRIVATE=github.com/cometbft/*" >> $GITHUB_ENV
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:

@@ -25,7 +25,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
 COPY ["internal/", "./internal/"]
-RUN go mod download
+
+# Configure git for private Go modules using BuildKit secret
+# The secret is mounted at /run/secrets/gh_pat during build
+RUN --mount=type=secret,id=gh_pat \
+    if [ -f /run/secrets/gh_pat ]; then \
+      git config --global url."https://$(cat /run/secrets/gh_pat)@github.com/".insteadOf "https://github.com/"; \
+    fi && \
+    GOPRIVATE=github.com/cometbft/* go mod download
 
 COPY . .
 
