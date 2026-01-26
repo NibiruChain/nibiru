@@ -74,11 +74,16 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 		collateralDenoms = append(collateralDenoms, collateralSymbol)
 	}
 
+	marketIndicesStr := formatUint64Slice(marketIndices)
+	marketPairsStr := "[" + strings.Join(marketPairs, ", ") + "]"
+	collateralIndicesStr := formatUint64Slice(collateralIndices)
+	collateralDenomsStr := "[" + strings.Join(collateralDenoms, ", ") + "]"
+
 	t.logInfo("Starting automated trading",
-		"market_indices", marketIndices,
-		"market_pairs", marketPairs,
-		"collateral_indices", collateralIndices,
-		"collateral_denoms", collateralDenoms,
+		"market_indices", marketIndicesStr,
+		"market_pairs", marketPairsStr,
+		"collateral_indices", collateralIndicesStr,
+		"collateral_denoms", collateralDenomsStr,
 		"min_trade_size", cfg.MinTradeSize,
 		"max_trade_size", cfg.MaxTradeSize,
 		"min_leverage", cfg.MinLeverage,
@@ -507,4 +512,15 @@ func extractSymbolFromDenom(denom string) string {
 	}
 
 	return denom
+}
+
+func formatUint64Slice(slice []uint64) string {
+	if len(slice) == 0 {
+		return "[]"
+	}
+	strs := make([]string, len(slice))
+	for i, v := range slice {
+		strs[i] = fmt.Sprintf("%d", v)
+	}
+	return "[" + strings.Join(strs, ", ") + "]"
 }
