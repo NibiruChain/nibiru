@@ -31,6 +31,18 @@ type PositionTracker struct {
 
 // RunAutoTrading runs the automated trading loop
 func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) error {
+	return t.RunAutoTradingWithLoader(ctx, nil, cfg)
+}
+
+func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *ConfigLoader, staticCfg AutoTradingConfig) error {
+	var cfg AutoTradingConfig
+	if loader != nil {
+		cfg = loader.GetConfig()
+		loader.StartWatcher(ctx)
+	} else {
+		cfg = staticCfg
+	}
+
 	marketIndices := cfg.MarketIndices
 	collateralIndices := cfg.CollateralIndices
 
@@ -79,6 +91,12 @@ func (t *EVMTrader) RunAutoTrading(ctx context.Context, cfg AutoTradingConfig) e
 	trackedPositions := make(map[uint64]*PositionTracker)
 
 	for {
+		if loader != nil {
+			cfg = loader.GetConfig()
+			marketIndices = cfg.MarketIndices
+			collateralIndices = cfg.CollateralIndices
+		}
+
 		// Get current block number
 		currentBlock, err := t.client.BlockNumber(ctx)
 		if err != nil {
