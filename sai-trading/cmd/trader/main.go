@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
 	"github.com/joho/godotenv"
@@ -479,8 +480,16 @@ func runAuto(configFile string, marketIndex, collateralIndex, minTradeSize, maxT
 	}
 	defer trader.Close()
 
-	// Run the auto-trading loop
-	if err := trader.RunAutoTrading(ctx, autoCfg); err != nil {
+	var configLoader *evmtrader.ConfigLoader
+	if configFile != "" {
+		configLoader, err = evmtrader.NewConfigLoader(configFile, 5*time.Second)
+		if err != nil {
+			return fmt.Errorf("create config loader: %w", err)
+		}
+		fmt.Printf("Config loader enabled - config will auto-reload every 5 seconds\n")
+	}
+
+	if err := trader.RunAutoTradingWithLoader(ctx, configLoader, autoCfg); err != nil {
 		return fmt.Errorf("auto trading: %w", err)
 	}
 
