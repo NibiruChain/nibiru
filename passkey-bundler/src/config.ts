@@ -69,7 +69,14 @@ export function loadConfig(): BundlerConfig {
 }
 
 function envOverrides(): RawConfig {
-  const toBool = (value?: string) => (value ? ["1", "true", "yes"].includes(value.toLowerCase()) : undefined)
+  const toBool = (value?: string) => {
+    if (value === undefined) return undefined
+    const normalized = value.trim().toLowerCase()
+    if (!normalized) return undefined
+    if (["1", "true", "yes", "y", "on"].includes(normalized)) return true
+    if (["0", "false", "no", "n", "off"].includes(normalized)) return false
+    return undefined
+  }
   const toBigInt = (value?: string) => (value ? BigInt(value) : undefined)
   const toInt = (value?: string) => (value ? Number.parseInt(value, 10) : undefined)
 
