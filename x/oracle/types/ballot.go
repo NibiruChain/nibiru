@@ -214,6 +214,18 @@ func (vp ValidatorPerformances) String() string {
 	return string(jsonBz)
 }
 
+// SortedAddrs returns validator addresses in sorted order for deterministic iteration.
+// Go map iteration is non-deterministic, which can cause consensus failures
+// if state is written in different order on different nodes.
+func (vp ValidatorPerformances) SortedAddrs() []string {
+	addrs := make([]string, 0, len(vp))
+	for addr := range vp {
+		addrs = append(addrs, addr)
+	}
+	sort.Strings(addrs)
+	return addrs
+}
+
 func (vp ValidatorPerformance) String() string {
 	jsonBz, _ := json.MarshalIndent(vp, "", "  ")
 	return string(jsonBz)

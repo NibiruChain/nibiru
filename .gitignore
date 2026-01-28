@@ -362,3 +362,4 @@ debug_container.dot
 AGENTS.md
 precompile.test
 tx_log.json
+passkey-bundler/.tmp
