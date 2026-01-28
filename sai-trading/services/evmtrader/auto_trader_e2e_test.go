@@ -94,8 +94,8 @@ func (s *AutoTradingE2ETestSuite) TestAutoTrading_Basic() {
 	defer cancel()
 
 	autoCfg := evmtrader.AutoTradingConfig{
-		MarketIndex:       0,
-		CollateralIndex:   s.config.CollateralIndex,
+		MarketIndices:     []uint64{0},
+		CollateralIndices: []uint64{s.config.CollateralIndex},
 		MinTradeSize:      100_000,
 		MaxTradeSize:      300_000,
 		MinLeverage:       1,
