@@ -136,6 +136,7 @@ func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.I
 	// Query the correct denomination for the collateral index
 	collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
 	if err != nil {
+		// Provide helpful error message suggesting common alternatives
 		return nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
 	}
 
@@ -155,13 +156,13 @@ func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.I
 	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
 }
 
-// sendCloseTradeTransaction sends the close_trade_market transaction
+// sendCloseTradeTransaction sends the close_trade transaction
 func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte) (*sdk.TxResponse, error) {
 	// Build WASM execute call
 	wasmABI := getWasmPrecompileABI()
 	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
 
-	// No funds needed for close_trade_market
+	// No funds needed for close_trade
 	funds := []struct {
 		Denom  string
 		Amount *big.Int
@@ -204,6 +205,10 @@ Solutions:
 Error code: %d`, currentOI, maxOI, pctUsed, code)
 		}
 		return fmt.Errorf("market exposure limit reached - cannot open new positions (long or short)\n\nTry: trader list (to see other markets)\n\nError code: %d, log: %s", code, rawLog)
+	}
+
+	if strings.Contains(rawLog, "sender balance < tx cost") {
+		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough gas tokens for this trade.\n\nError code: %d", code)
 	}
 
 	// Parse insufficient balance error
