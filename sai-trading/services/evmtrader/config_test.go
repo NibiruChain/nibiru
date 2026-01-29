@@ -93,8 +93,6 @@ func TestContractAddressesFromNetworkInfo(t *testing.T) {
 		Contracts: evmtrader.ContractConfig{
 			OracleAddress: "0x1111111111111111111111111111111111111111",
 			PerpAddress:   "0x2222222222222222222222222222222222222222",
-			VaultAddress:  "0x3333333333333333333333333333333333333333",
-			EVMInterface:  "0x4444444444444444444444444444444444444444",
 		},
 	}
 
@@ -120,8 +118,6 @@ chain_id = "nibiru-localnet-0"
 [localnet.contracts]
 oracle_address = "0xOracle"
 perp_address = "0xPerp"
-vault_address = "0xVault"
-evm_interface = "0xEVM"
 
 [testnet]
 name = "testnet"
@@ -132,8 +128,6 @@ chain_id = "nibiru-testnet-1"
 [testnet.contracts]
 oracle_address = "0xTestOracle"
 perp_address = "0xTestPerp"
-vault_address = "0xTestVault"
-evm_interface = "0xTestEVM"
 
 [mainnet]
 name = "mainnet"
@@ -144,8 +138,6 @@ chain_id = "cataclysm-1"
 [mainnet.contracts]
 oracle_address = "0xMainOracle"
 perp_address = "0xMainPerp"
-vault_address = "0xMainVault"
-evm_interface = "0xMainEVM"
 
 [notifications.filters]
 include = ["critical", "error"]
@@ -166,7 +158,6 @@ exclude = ["debug"]
 	require.Equal(t, "nibiru-localnet-0", config.Localnet.ChainID)
 	require.Equal(t, "0xOracle", config.Localnet.Contracts.OracleAddress)
 	require.Equal(t, "0xPerp", config.Localnet.Contracts.PerpAddress)
-	require.Equal(t, "0xVault", config.Localnet.Contracts.VaultAddress)
 
 	// Verify testnet
 	require.Equal(t, "testnet", config.Testnet.Name)

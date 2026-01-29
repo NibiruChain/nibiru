@@ -85,8 +85,6 @@ type NetworkInfo struct {
 type ContractConfig struct {
 	OracleAddress string `toml:"oracle_address"`
 	PerpAddress   string `toml:"perp_address"`
-	VaultAddress  string `toml:"vault_address"`
-	EVMInterface  string `toml:"evm_interface"`
 }
 
 // loadContractAddresses reads a simple KEY=VALUE env file.
@@ -154,7 +152,6 @@ func ContractAddressesFromNetworkInfo(netInfo *NetworkInfo) ContractAddresses {
 	return ContractAddresses{
 		OracleAddress: netInfo.Contracts.OracleAddress,
 		PerpAddress:   netInfo.Contracts.PerpAddress,
-		VaultAddress:  netInfo.Contracts.VaultAddress,
 	}
 }
 

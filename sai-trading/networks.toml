@@ -15,11 +15,6 @@ chain_id = "nibiru-localnet-0"
 [localnet.contracts]
 oracle_address = "nibi18cszlvm6pze0x9sz32qnjq4vtd45xehqs8dq7cwy8yhq35wfnn3qm02xqh"
 perp_address = "nibi1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrs0gfase"
-vault_address = "nibi1aakfpghcanxtc45gpqlx8j3rq0zcpyf49qmhm9mdjrfx036h4z5sxn9f7a"
-
-[localnet.tokens]
-stnibi_evm = "0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"
-stnibi_denom = "tf/nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl/stnibi"
 
 [testnet]
 name = "Nibiru Testnet 2"
@@ -30,11 +25,6 @@ chain_id = "nibiru-testnet-2"
 [testnet.contracts]
 oracle_address = "nibi1mqlrsvfhm5vzsz0wxr6mh8pzxzpz6dd4g7nuyycjf6gy5zc53fvq3lq2fz"
 perp_address = "nibi1qtkcns647w959cj9x2yytateu6dgscfnfkraywwa443pr2erak0s5ux7e5"
-evm_interface = "0x282F097930E24e4fba97EE8687d15Ed1f298ad19"
-
-[testnet.tokens]
-usdc_evm = "0xAb68f1D1d91854383fd4Df9016E3040D03e8191a"
-stnibi_evm = "0xCae3d404AFB50016154a4B18091351065154E9bD"
 
 [mainnet]
 name = "Nibiru Mainnet"
@@ -45,8 +35,3 @@ chain_id = "nibiru-mainnet-1"
 [mainnet.contracts]
 oracle_address = "nibi1xfwyfwtdame6645lgcs4xvf4u0hpsuvxrcelfwtztu0pv7n4l6hqw5a8gj"
 perp_address = "nibi1ntmw2dfvd0qnw5fnwdu9pev2hsnqfdj9ny9n0nzh2a5u8v0scflq930mph"
-evm_interface = "0x9F48A925Dda8528b3A5c2A6717Df0F03c8b167c0"
-
-[mainnet.tokens]
-usdc_evm = "0x0829F361A05D993d5CEb035cA6DF3446b060970b"
-stnibi_evm = "0xcA0a9Fb5FBF692fa12fD13c0A900EC56Bb3f0a7b"
