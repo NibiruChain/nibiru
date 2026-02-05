@@ -184,14 +184,14 @@ type OnRunStartResult struct {
 //	}
 //	```
 func OnRunStart(
-	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
+	evmObj *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
 ) (res OnRunStartResult, err error) {
 	method, args, err := decomposeInput(abi, contractInput)
 	if err != nil {
 		return res, err
 	}
 
-	sdb, ok := evm.StateDB.(*evmstate.SDB)
+	sdb, ok := evmObj.StateDB.(*evmstate.SDB)
 	if !ok {
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
