@@ -5,10 +5,13 @@ package evm
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	sdkioerrors "cosmossdk.io/errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/vm"
 )
 
 const (
@@ -54,6 +57,25 @@ var (
 
 	ErrCanonicalWnibi = "canonical WNIBI address in state is a not a smart contract"
 )
+
+// ParseOOGPanic interprets the result of recover() and returns (oog
+// bool, perr error). If panicInfo is nil, returns (false, nil). OOG panics
+// (sdk.ErrorOutOfGas or message "out of gas") return (true, vm.ErrOutOfGas).
+// Other panics return (false, err) with err from formatUnexpected(panicInfo).
+// Callers should keep the line "panicInfo := recover()" explicit and pass
+// panicInfo here.
+func ParseOOGPanic(panicInfo any, formatUnexpected func(any) string) (oog bool, perr error) {
+	if panicInfo == nil {
+		return false, nil
+	}
+	if _, isOOG := panicInfo.(sdk.ErrorOutOfGas); isOOG {
+		return true, vm.ErrOutOfGas
+	}
+	if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
+		return true, vm.ErrOutOfGas
+	}
+	return false, fmt.Errorf("%s", formatUnexpected(panicInfo))
+}
 
 // NewRevertError unpacks the revert return bytes and returns a wrapped error
 // with the return reason.

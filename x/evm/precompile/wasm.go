@@ -7,6 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 
@@ -14,11 +15,13 @@ import (
 	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
 
-var _ vm.PrecompiledContract = (*precompileWasm)(nil)
+var (
+	_ vm.PrecompiledContract = (*precompileWasm)(nil)
+	_ vm.DynamicPrecompile   = (*precompileWasm)(nil)
+)
 
 // Precompile address for "Wasm.sol",
 var PrecompileAddr_Wasm = gethcommon.HexToAddress("0x0000000000000000000000000000000000000802")
@@ -32,7 +35,6 @@ const (
 	WasmMethod_queryRaw     PrecompileMethod = "queryRaw"
 )
 
-// Run runs the precompiled contract
 func (p precompileWasm) Run(
 	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
@@ -44,13 +46,50 @@ func (p precompileWasm) Run(
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
+	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
+	return bz, err
+}
+
+// Run runs the precompiled contract
+func (p precompileWasm) DynamicRun(
+	evmObj *vm.EVM,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
+	contract *vm.Contract,
+	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
+	isDelegatedCall bool,
+) (bz []byte, gasCost uint64, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
 	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
-		return nil, err
+		return nil, gasCost, err
 	}
+	defer func() {
+		// Recover OOG panics as ErrOutOfGas; other panics become an error.
+		var (
+			oog  bool  // true if panic was out-of-gas
+			perr error // ErrOutOfGas for OOG, or formatted error for unexpected panic
+		)
+		panicInfo := recover()
+		if panicInfo != nil {
+			oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+				return fmt.Sprintf("unexpected panic in precompile: %v", p)
+			})
+		}
+		if oog {
+			gasCost = startResult.Ctx.GasMeter().GasConsumed()
+			err = perr
+			return
+		} else if perr != nil {
+			err = perr
+			return
+		}
+	}()
 
 	abciEventsStartIdx := len(startResult.Ctx.EventManager().Events())
 
@@ -71,18 +110,16 @@ func (p precompileWasm) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", startResult.Method.Name)
 		return
 	}
-	// Gas consumed by a local gas meter
-	// The reason it's unnecessary to check for a success value is because
-	// GasConsumed is guaranteed to be less than the contract.Gas because the gas
-	// meter was initialized....
-	contract.UseGas(
-		startResult.Ctx.GasMeter().GasConsumed(),
-		evmObj.Config.Tracer,
-		tracing.GasChangeCallPrecompiledContract,
-	)
+	// Gas consumed by a local gas meter (the one in `startResult.Ctx`), not from
+	// the SDB context passed in on the `evmObj`. Gas consumed
+	// (`startResult.Ctx.GasMeter().GasConsumed()`) is guaranteed to be less than
+	// the gas limit (`contract.Gas`) because the gas meter was initialized inside
+	// of the setup function, `OnRunStart`. The EVM applies it via the returned
+	// gasCost from DynamicRun.
+	gasCost = startResult.Ctx.GasMeter().GasConsumed()
 
 	if err != nil {
-		return nil, err
+		return nil, gasCost, err
 	}
 
 	// Emit extra events for the EVM if this is a transaction
@@ -96,7 +133,7 @@ func (p precompileWasm) Run(
 		)
 	}
 
-	return bz, err
+	return bz, gasCost, err
 }
 
 type precompileWasm struct {
