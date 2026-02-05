@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -50,6 +51,26 @@ func (p precompileP256) Run(
 ) (bz []byte, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
+	}()
+	defer func() {
+		// Recover OOG panics as ErrOutOfGas; other panics become an error.
+		var (
+			oog  bool  // true if panic was out-of-gas
+			perr error // ErrOutOfGas for OOG, or formatted error for unexpected panic
+		)
+		panicInfo := recover()
+		if panicInfo != nil {
+			oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+				return fmt.Sprintf("unexpected panic in precompile: %v", p)
+			})
+		}
+		if oog {
+			err = perr
+			return
+		} else if perr != nil {
+			err = perr
+			return
+		}
 	}()
 
 	if len(contract.Input) != p256InputLen {

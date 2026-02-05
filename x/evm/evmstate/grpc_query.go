@@ -386,22 +386,15 @@ func (k Keeper) EstimateGas(
 			// increase gas. Any non-OOG panic aborts the search with a
 			// contextual error for diagnostics.
 			var (
-				oog  bool
-				perr error
+				oog  bool  // true if panic was out-of-gas
+				perr error // ErrOutOfGas for OOG, or formatted error for unexpected panic
 			)
-
-			if panicInfo := recover(); panicInfo != nil {
-				if _, isOutOfGasPanic := panicInfo.(sdk.ErrorOutOfGas); isOutOfGasPanic {
-					oog, perr = true, vm.ErrOutOfGas
-				} else if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
-					oog, perr = true, vm.ErrOutOfGas
-				} else {
-					// Non-OOG panics are not handled here
-					oog, perr = false, fmt.Errorf(
-						`unexpected panic in eth_estimateGas { gas: %d }: %v`, gas, panicInfo)
-				}
+			panicInfo := recover()
+			if panicInfo != nil {
+				oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+					return fmt.Sprintf("unexpected panic in eth_estimateGas { gas: %d }: %v", gas, p)
+				})
 			}
-
 			if oog {
 				vmError, rsp, err = true, nil, nil
 				return
