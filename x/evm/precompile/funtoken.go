@@ -96,9 +96,9 @@ func (p precompileFunToken) DynamicRun(
 		)
 		panicInfo := recover()
 		if panicInfo != nil {
-			oog, perr = evm.ParseOOGPanic(panicInfo, func(p interface{}) string {
-				return fmt.Sprintf("unexpected panic in precompile: %v", p)
-			})
+oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+	return fmt.Sprintf("unexpected panic in precompile: %v", p)
+})
 		}
 		if oog {
 			gasCost = startResult.Ctx.GasMeter().GasConsumed()
