@@ -12,6 +12,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -149,7 +150,7 @@ func (s *TestSuite) TestGetZeroGasMeta() {
 	s.Require().Nil(got, "GetZeroGasMeta should return nil when key not set")
 
 	creditedWei := big.NewInt(1000)
-	paidWei := big.NewInt(800)
+	paidWei := uint256.NewInt(800)
 	refundedWei := big.NewInt(200)
 	meta := &evm.ZeroGasMeta{
 		CreditedWei: creditedWei,

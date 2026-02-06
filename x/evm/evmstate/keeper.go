@@ -75,6 +75,7 @@ func NewKeeper(
 	accKeeper evm.AccountKeeper,
 	bankKeeper *NibiruBankKeeper,
 	stakingKeeper evm.StakingKeeper,
+	sudoKeeper evm.SudoKeeper,
 	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
@@ -91,6 +92,7 @@ func NewKeeper(
 		accountKeeper: accKeeper,
 		Bank:          bankKeeper,
 		stakingKeeper: stakingKeeper,
+		SudoKeeper:    sudoKeeper,
 		tracer:        tracer,
 	}
 }

@@ -10,9 +10,10 @@ import (
 	sdkioerrors "cosmossdk.io/errors"
 	"github.com/holiman/uint256"
 
+	"github.com/ethereum/go-ethereum/core/tracing"
+
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
-	"github.com/ethereum/go-ethereum/core/tracing"
 )
 
 var _ AnteStep = AnteStepCreditZeroGas

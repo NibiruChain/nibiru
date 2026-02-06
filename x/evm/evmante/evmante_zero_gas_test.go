@@ -195,3 +195,86 @@ func TestAnteStepCreditZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
 	require.True(t, meta.CreditedWei.Sign() > 0)
 	require.Equal(t, -1, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
+
+func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+
+	// Allowlist a contract for zero-gas.
+	targetAddr := addr1
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+	})
+
+	sdb := deps.NewStateDB()
+
+	to := targetAddr
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:    0,
+		GasLimit: 50_000,
+		GasPrice: big.NewInt(1),
+		To:       &to,
+		Amount:   big.NewInt(0),
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+
+	// First run credit step to populate meta.
+	err := evmante.AnteStepCreditZeroGas(
+		sdb,
+		sdb.Keeper(),
+		tx,
+		false,
+		ANTE_OPTIONS_UNUSED,
+	)
+	require.NoError(t, err)
+
+	// Then run deduct gas.
+	err = evmante.AnteStepDeductGas(
+		sdb,
+		sdb.Keeper(),
+		tx,
+		false,
+		ANTE_OPTIONS_UNUSED,
+	)
+	require.NoError(t, err)
+
+	meta := evm.GetZeroGasMeta(sdb.Ctx())
+	require.NotNil(t, meta)
+	require.Equal(t, evm.ZeroGasPhaseDeducted, meta.Phase)
+	require.NotNil(t, meta.PaidWei)
+	require.True(t, meta.PaidWei.Sign() > 0)
+}
+
+func TestAnteStepDeductGas_DoesNotSetMetaForNormalTx(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+
+	// Ensure ZeroGasActors is empty so no tx is eligible.
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.DefaultZeroGasActors())
+
+	sdb := deps.NewStateDB()
+
+	toAddr := addr2
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:    0,
+		GasLimit: 21_000,
+		GasPrice: big.NewInt(1),
+		To:       &toAddr,
+		Amount:   big.NewInt(0),
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+
+	// Run deduct gas directly with no prior crediting or funding; this will fail
+	// due to insufficient funds, but we still assert that no zero-gas meta is set.
+	err := evmante.AnteStepDeductGas(
+		sdb,
+		sdb.Keeper(),
+		tx,
+		false,
+		ANTE_OPTIONS_UNUSED,
+	)
+	require.Error(t, err)
+
+	meta := evm.GetZeroGasMeta(sdb.Ctx())
+	require.Nil(t, meta)
+}

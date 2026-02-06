@@ -42,7 +42,7 @@ type contextKey string
 const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
-	CtxKeyZeroGasMeta             contextKey = "zero_gas_meta"
+	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 )
 
 // ZeroGasPhase indicates how far the zero-gas pipeline has run (credit → deduct → refund).
@@ -52,17 +52,17 @@ type ZeroGasPhase uint8
 const (
 	ZeroGasPhaseCredited ZeroGasPhase = iota // after ante credit step only
 	ZeroGasPhaseDeducted                     // after DeductGas has run
-	ZeroGasPhaseRefunded                    // after RefundGas has run (in msg_server)
+	ZeroGasPhaseRefunded                     // after RefundGas has run (in msg_server)
 )
 
 // ZeroGasMeta is the context payload for zero-gas EVM transactions. Stored under CtxKeyZeroGasMeta.
 // The three amounts and Phase let ante and msg_server know what has already happened so undo
 // is safe when execution short-circuits.
 type ZeroGasMeta struct {
-	CreditedWei  *big.Int     // amount credited up front in ante
-	PaidWei      *big.Int     // amount deducted by DeductGas (full upfront cost)
-	RefundedWei  *big.Int     // amount refunded by RefundGas
-	Phase        ZeroGasPhase // which of the three phases has been reached
+	CreditedWei *big.Int     // amount credited up front in ante
+	PaidWei     *uint256.Int // amount deducted by DeductGas (full upfront cost), tracked as uint256
+	RefundedWei *big.Int     // amount refunded by RefundGas
+	Phase       ZeroGasPhase // which of the three phases has been reached
 }
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
