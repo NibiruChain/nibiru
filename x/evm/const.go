@@ -42,7 +42,41 @@ type contextKey string
 const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
+	CtxKeyZeroGasMeta             contextKey = "zero_gas_meta"
 )
+
+// ZeroGasPhase indicates how far the zero-gas pipeline has run (credit → deduct → refund).
+// Undo logic branches on Phase so it never assumes a step that did not run.
+type ZeroGasPhase uint8
+
+const (
+	ZeroGasPhaseCredited ZeroGasPhase = iota // after ante credit step only
+	ZeroGasPhaseDeducted                     // after DeductGas has run
+	ZeroGasPhaseRefunded                    // after RefundGas has run (in msg_server)
+)
+
+// ZeroGasMeta is the context payload for zero-gas EVM transactions. Stored under CtxKeyZeroGasMeta.
+// The three amounts and Phase let ante and msg_server know what has already happened so undo
+// is safe when execution short-circuits.
+type ZeroGasMeta struct {
+	CreditedWei  *big.Int     // amount credited up front in ante
+	PaidWei      *big.Int     // amount deducted by DeductGas (full upfront cost)
+	RefundedWei  *big.Int     // amount refunded by RefundGas
+	Phase        ZeroGasPhase // which of the three phases has been reached
+}
+
+// GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
+func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
+	val := ctx.Value(CtxKeyZeroGasMeta)
+	if val == nil {
+		return nil
+	}
+	meta, ok := val.(*ZeroGasMeta)
+	if !ok {
+		return nil
+	}
+	return meta
+}
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.

@@ -114,7 +114,7 @@ func (m MsgEditZeroGasActors) ValidateBasic() error {
 
 func (actors ZeroGasActors) Validate() error {
 	// Check if each contract is an eligible EVM or Wasm contract address
-	for _, contract := range actors.Contracts {
+	for _, contract := range append(actors.Contracts, actors.AlwaysZeroGasContracts...) {
 		req := &evm.QueryEthAccountRequest{Address: contract}
 		_, err := req.Validate()
 		if err != nil {
@@ -133,8 +133,9 @@ func (actors ZeroGasActors) Validate() error {
 
 func DefaultZeroGasActors() ZeroGasActors {
 	return ZeroGasActors{
-		Senders:   []string{},
-		Contracts: []string{},
+		Senders:                []string{},
+		Contracts:              []string{},
+		AlwaysZeroGasContracts: []string{},
 	}
 }
 

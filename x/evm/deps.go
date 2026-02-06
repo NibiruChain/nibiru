@@ -1,10 +1,13 @@
-// Copyright (c) 2023-2024 Nibi, Inc.
 package evm
+
+// Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // AccountKeeper defines the expected account keeper interface
@@ -42,4 +45,9 @@ type SudoKeeper interface {
 	// contracts defined in the x/sudo module. These smart contracts are able to
 	// execute certain permissioned functions.
 	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
+
+	// GetZeroGasEvmContracts returns the subset of zero-gas actors that are
+	// EVM contracts, parsed as canonical EIP55 addresses. This method avoids
+	// exposing x/sudo-specific types in the EVM dependency interface.
+	GetZeroGasEvmContracts(ctx sdk.Context) []eth.EIP55Addr
 }

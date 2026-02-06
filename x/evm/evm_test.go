@@ -141,6 +141,33 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	}
 }
 
+// TestGetZeroGasMeta verifies that packing ZeroGasMeta into context and reading it back with GetZeroGasMeta works (happy path).
+func (s *TestSuite) TestGetZeroGasMeta() {
+	deps := evmtest.NewTestDeps()
+
+	got := evm.GetZeroGasMeta(deps.Ctx())
+	s.Require().Nil(got, "GetZeroGasMeta should return nil when key not set")
+
+	creditedWei := big.NewInt(1000)
+	paidWei := big.NewInt(800)
+	refundedWei := big.NewInt(200)
+	meta := &evm.ZeroGasMeta{
+		CreditedWei: creditedWei,
+		PaidWei:     paidWei,
+		RefundedWei: refundedWei,
+		Phase:       evm.ZeroGasPhaseRefunded,
+	}
+
+	deps.SetCtx(deps.Ctx().
+		WithValue(evm.CtxKeyZeroGasMeta, meta))
+	got = evm.GetZeroGasMeta(deps.Ctx())
+	s.Require().NotNil(got, "GetZeroGasMeta should return non-nil when meta was set")
+	s.Require().Equal(0, got.CreditedWei.Cmp(creditedWei), "CreditedWei should match")
+	s.Require().Equal(0, got.PaidWei.Cmp(paidWei), "PaidWei should match")
+	s.Require().Equal(0, got.RefundedWei.Cmp(refundedWei), "RefundedWei should match")
+	s.Require().Equal(evm.ZeroGasPhaseRefunded, got.Phase, "Phase should match")
+}
+
 func (s *TestSuite) TestParseWeiAsMultipleOfMicronibi() {
 	{
 		unibiAmt := big.NewInt(420)

@@ -21,7 +21,7 @@ func (k *Keeper) UpdateParams(
 	sender := sdk.MustAccAddressFromBech32(req.Authority)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sudoPermsErr := k.sudoKeeper.CheckPermissions(sender, ctx)
+	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
 	havePerms := (sudoPermsErr == nil) || (k.authority.String() == req.Authority)
 	if !havePerms {
 		return resp, fmt.Errorf(

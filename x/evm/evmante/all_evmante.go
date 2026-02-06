@@ -32,6 +32,7 @@ func NewAnteHandlerEvm(
 		AnteStepValidateBasic,
 		AnteStepMempoolGasPrice,
 		AnteStepBlockGasMeter,
+		AnteStepCreditZeroGas,
 		AnteStepVerifyEthAcc,
 		AnteStepCanTransfer,
 		AnteStepGasWanted,
