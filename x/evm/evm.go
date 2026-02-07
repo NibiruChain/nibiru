@@ -3,68 +3,19 @@ package evm
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // ZeroGasMeta is the context payload for zero-gas EVM transactions. Stored under CtxKeyZeroGasMeta.
-// The three amount fields indicate what has happened: credit step sets CreditedWei; DeductGas sets
-// PaidWei; after RefundGas, msg_server sets RefundedWei. Undo logic branches on which amounts are
-// non-nil (e.g. RefundedWei == nil means refund has not run yet).
-type ZeroGasMeta struct {
-	CreditedWei *big.Int     // amount credited up front in ante
-	PaidWei     *uint256.Int // amount deducted by DeductGas (full upfront cost), tracked as uint256
-	RefundedWei *big.Int     // amount refunded by RefundGas
-}
-
-// AmountsToUndoCredit returns the wei amounts to burn during zero-gas undo: feeCollectorBurnWei
-// from the fee collector, txSenderBurnWei from the tx sender. Caller must ensure m != nil.
-func (m *ZeroGasMeta) AmountsToUndoCredit() (feeCollectorBurnWei, txSenderBurnWei *uint256.Int) {
-	zero := uint256.NewInt(0)
-
-	var paid uint256.Int
-	if m.PaidWei != nil {
-		paid = *m.PaidWei
-	} else {
-		paid = *zero
-	}
-
-	var refunded uint256.Int
-	if m.RefundedWei != nil {
-		refunded = *uint256.MustFromBig(m.RefundedWei)
-	} else {
-		refunded = *zero
-	}
-
-	var actualGasCost uint256.Int
-	if paid.Cmp(&refunded) < 0 {
-		actualGasCost = *zero
-	} else {
-		actualGasCost = *new(uint256.Int).Sub(&paid, &refunded)
-	}
-	feeCollectorBurnWei = new(uint256.Int).Set(&actualGasCost)
-
-	var credited uint256.Int
-	if m.CreditedWei != nil {
-		credited = *uint256.MustFromBig(m.CreditedWei)
-	} else {
-		credited = *zero
-	}
-
-	if credited.Cmp(&actualGasCost) < 0 {
-		txSenderBurnWei = new(uint256.Int).Set(zero)
-	} else {
-		txSenderBurnWei = new(uint256.Int).Sub(&credited, &actualGasCost)
-	}
-	return feeCollectorBurnWei, txSenderBurnWei
-}
+// When present, indicates the tx is zero-gas eligible; ante steps skip balance-vs-cost and fee
+// deduction; msg_server skips refund. CanTransfer still runs. Empty struct; only presence (non-nil) matters.
+type ZeroGasMeta struct{}
 
 // FIXME: Explore problems arrising from ERC1155 creating multiple fungible
 // tokens that are valid ERC20s with the same address.

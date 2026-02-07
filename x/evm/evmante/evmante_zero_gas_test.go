@@ -20,7 +20,7 @@ var (
 	addr4 = gethcommon.HexToAddress("0x4444444444444444444444444444444444444444")
 )
 
-func TestAnteStepCreditZeroGas_NonEligible_NoMetaNoCredit(t *testing.T) {
+func TestAnteStepDetectZeroGas_NonEligible_NoMeta(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 
 	// Ensure ZeroGasActors is empty so no tx is eligible.
@@ -44,7 +44,7 @@ func TestAnteStepCreditZeroGas_NonEligible_NoMetaNoCredit(t *testing.T) {
 	from := tx.FromAddr()
 	initialBal := new(big.Int).Set(sdb.GetBalance(from).ToBig())
 
-	err := evmante.AnteStepCreditZeroGas(
+	err := evmante.AnteStepDetectZeroGas(
 		sdb,
 		sdb.Keeper(),
 		tx,
@@ -54,14 +54,13 @@ func TestAnteStepCreditZeroGas_NonEligible_NoMetaNoCredit(t *testing.T) {
 	require.NoError(t, err)
 
 	// No meta should be set.
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.Nil(t, meta)
+	require.False(t, evm.IsZeroGasEthTx(sdb.Ctx()))
 
-	// Balance should be unchanged.
+	// Balance should be unchanged (no credit in bypass approach).
 	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepCreditZeroGas_Eligible_SetsMetaAndCreditsBalance(t *testing.T) {
+func TestAnteStepDetectZeroGas_Eligible_SetsMetaNoCredit(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 
 	// Configure ZeroGasActors with an always_zero_gas_contracts entry.
@@ -87,7 +86,7 @@ func TestAnteStepCreditZeroGas_Eligible_SetsMetaAndCreditsBalance(t *testing.T) 
 	from := tx.FromAddr()
 	initialBal := new(big.Int).Set(sdb.GetBalance(from).ToBig())
 
-	err := evmante.AnteStepCreditZeroGas(
+	err := evmante.AnteStepDetectZeroGas(
 		sdb,
 		sdb.Keeper(),
 		tx,
@@ -96,15 +95,13 @@ func TestAnteStepCreditZeroGas_Eligible_SetsMetaAndCreditsBalance(t *testing.T) 
 	)
 	require.NoError(t, err)
 
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.NotNil(t, meta)
-	require.NotNil(t, meta.CreditedWei)
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()), "ZeroGasMeta should be set for eligible zero-gas tx")
 
-	// Credited balance should be greater than the initial balance.
-	require.Greater(t, sdb.GetBalance(from).ToBig().Cmp(initialBal), 0)
+	// Bypass approach: no balance mutation. Balance should be unchanged.
+	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepCreditZeroGas_Eligible_NonZeroValue_NoCredit(t *testing.T) {
+func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	// Configure ZeroGasActors with an always_zero_gas_contracts entry.
 	targetAddr := addr3
@@ -129,7 +126,7 @@ func TestAnteStepCreditZeroGas_Eligible_NonZeroValue_NoCredit(t *testing.T) {
 	from := tx.FromAddr()
 	initialBal := new(big.Int).Set(sdb.GetBalance(from).ToBig())
 
-	err := evmante.AnteStepCreditZeroGas(
+	err := evmante.AnteStepDetectZeroGas(
 		sdb,
 		sdb.Keeper(),
 		tx,
@@ -139,14 +136,13 @@ func TestAnteStepCreditZeroGas_Eligible_NonZeroValue_NoCredit(t *testing.T) {
 	require.NoError(t, err)
 
 	// No meta should be set for non-zero value.
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.Nil(t, meta)
+	require.False(t, evm.IsZeroGasEthTx(sdb.Ctx()))
 
 	// Balance should be unchanged.
 	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepCreditZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
+func TestAnteStepDetectZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 
 	// Emulate CheckTx context.
@@ -174,7 +170,7 @@ func TestAnteStepCreditZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
 	from := tx.FromAddr()
 	initialBal := new(big.Int).Set(sdb.GetBalance(from).ToBig())
 
-	err := evmante.AnteStepCreditZeroGas(
+	err := evmante.AnteStepDetectZeroGas(
 		sdb,
 		sdb.Keeper(),
 		tx,
@@ -184,17 +180,13 @@ func TestAnteStepCreditZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
 	require.NoError(t, err)
 
 	// Meta should be present even in CheckTx.
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.NotNil(t, meta)
-	require.NotNil(t, meta.CreditedWei)
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
 
-	// For now we also mutate balance in CheckTx (see TODO in implementation).
-	// Just assert that the credited amount is non-zero and balance increased.
-	require.True(t, meta.CreditedWei.Sign() > 0)
-	require.Equal(t, -1, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
+	// Bypass approach: no balance mutation.
+	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
+func TestAnteStepDeductGas_SkipsForZeroGasTx(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 
 	// Allowlist a contract for zero-gas.
@@ -216,8 +208,8 @@ func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
 	})
 	tx.From = deps.Sender.EthAddr.Hex()
 
-	// First run credit step to populate meta.
-	err := evmante.AnteStepCreditZeroGas(
+	// Run detect step to populate meta.
+	err := evmante.AnteStepDetectZeroGas(
 		sdb,
 		sdb.Keeper(),
 		tx,
@@ -226,7 +218,10 @@ func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Then run deduct gas.
+	from := tx.FromAddr()
+	balBefore := new(big.Int).Set(sdb.GetBalance(from).ToBig())
+
+	// DeductGas should skip for zero-gas tx (return nil, no deduction).
 	err = evmante.AnteStepDeductGas(
 		sdb,
 		sdb.Keeper(),
@@ -236,10 +231,8 @@ func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.NotNil(t, meta)
-	require.NotNil(t, meta.PaidWei)
-	require.True(t, meta.PaidWei.Sign() > 0)
+	// Balance should be unchanged (no deduction).
+	require.Equal(t, 0, balBefore.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
 func TestAnteStepDeductGas_DoesNotSetMetaForNormalTx(t *testing.T) {
@@ -272,6 +265,36 @@ func TestAnteStepDeductGas_DoesNotSetMetaForNormalTx(t *testing.T) {
 	)
 	require.Error(t, err)
 
-	meta := evm.GetZeroGasMeta(sdb.Ctx())
-	require.Nil(t, meta)
+	require.False(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+}
+
+func TestVerifyEthAcc_ZeroGas_CreatesAccountWhenMissing(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+
+	targetAddr := addr2
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+	})
+
+	sdb := deps.NewStateDB()
+
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:    0,
+		GasLimit: 50_000,
+		GasPrice: big.NewInt(0),
+		To:       &targetAddr,
+		Amount:   big.NewInt(0),
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+
+	err := evmante.AnteStepDetectZeroGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED)
+	require.NoError(t, err)
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+
+	err = evmante.AnteStepVerifyEthAcc(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED)
+	require.NoError(t, err)
+
+	acc := sdb.Keeper().GetAccount(sdb.Ctx(), tx.FromAddr())
+	require.NotNil(t, acc, "VerifyEthAcc must create sender account when missing for zero-gas tx")
 }

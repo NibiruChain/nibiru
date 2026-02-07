@@ -16,13 +16,14 @@ import (
 
 var _ AnteStep = AnteStepVerifyEthAcc
 
-// AnteStepVerifyEthAcc validates checks that the sender balance is greater than the total
-// transaction cost. The account will be set to store if it doesn't exist, i.e.
-// cannot be found on store.
+// AnteStepVerifyEthAcc validates the sender and ensures the account exists. For
+// non-zero-gas txs it also checks that the sender balance is greater than the
+// total transaction cost. For zero-gas txs we skip only the balance check and
+// fee-related rejection; account creation and from-address validation still run.
 //
 // This AnteHandler decorator will fail if:
 // - from address is empty
-// - account balance is lower than the transaction cost
+// - (non-zero-gas only) account balance is lower than the transaction cost
 func AnteStepVerifyEthAcc(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
@@ -35,7 +36,8 @@ func AnteStepVerifyEthAcc(
 		return sdkioerrors.Wrapf(err, "failed to unpack tx data any for tx %d", 0)
 	}
 
-	// sender address should be in the tx cache fromBech32 the previous AnteHandle call
+	// Always validate from address and ensure account exists (needed for IncrementNonce).
+	// Only the balance-vs-cost check is skipped for zero-gas.
 	fromBech32 := msgEthTx.FromAddrBech32()
 	if fromBech32.Empty() || len(msgEthTx.From) == 0 {
 		return sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "from address cannot be empty")
@@ -43,7 +45,7 @@ func AnteStepVerifyEthAcc(
 
 	fromAddr := msgEthTx.FromAddr()
 
-	// Create account if it doesn't exist but has a balance.
+	// Create account if it doesn't exist.
 	//
 	// This is necessary because EVM state transitions (via AddBalance) can create
 	// balances in the bank store without creating corresponding accounts in the
@@ -52,13 +54,18 @@ func AnteStepVerifyEthAcc(
 	//
 	// [AnteStepIncrementNonce] expects the account to exist, so we must create
 	// it here to maintain logical consistency: if someone has a balance, they
-	// should have an account.
+	// should have an account. For zero-gas txs we still need the account to exist
+	// so the first-ever tx from a new address can succeed.
 	if acc := k.GetAccount(sdb.Ctx(), fromAddr); acc == nil {
-		// Create account if it doesn't exist but has a balance
 		emptyAcc := evmstate.NewEmptyAccount()
 		if err := k.SetAccount(sdb.Ctx(), fromAddr, *emptyAcc); err != nil {
 			return fmt.Errorf("failed to create account: %w", err)
 		}
+	}
+
+	// Skip balance-vs-tx-cost check for zero-gas txs; we are not charging gas.
+	if evm.IsZeroGasEthTx(sdb.Ctx()) {
+		return nil
 	}
 
 	if err := evmstate.CheckSenderBalance(

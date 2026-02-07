@@ -16,7 +16,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/holiman/uint256"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -74,7 +73,6 @@ func (k *Keeper) EthereumTx(
 		txConfig := k.TxConfig(ctx, coreTx.Hash())
 		sdb = k.NewSDB(ctx, txConfig)
 	}
-	log.Printf("sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 
 	// get the signer according to the chain rules from the config and block height
 	evmCfg := k.GetEVMConfig(sdb.Ctx())
@@ -100,8 +98,6 @@ func (k *Keeper) EthereumTx(
 
 	if applyErr != nil {
 		if evmResp == nil {
-			// Consensus error - return immediately, skipping the
-			// "evm.SafeConsumeGas" call we do for
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
 		} else {
@@ -146,49 +142,16 @@ func (k *Keeper) EthereumTx(
 		}
 	}
 
-	// refund gas in order to match the Ethereum gas consumption instead of the
-	// default SDK one.
-	refundGas := uint64(0)
-	if evmMsg.GasLimit > evmResp.GasUsed {
-		refundGas = evmMsg.GasLimit - evmResp.GasUsed
-	}
-	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
-	if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
-		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
-	}
-	if meta := evm.GetZeroGasMeta(rootCtxGasless); meta != nil {
-		// Populate RefundedWei for zero-gas undo.
-		meta.RefundedWei = new(big.Int).Mul(new(big.Int).SetUint64(refundGas), weiPerGas)
-
-		// Undo: burn amounts from fee collector and sender using helper; defensive balance checks.
-		feeCollectorBurnWei, txSenderBurnWei := meta.AmountsToUndoCredit()
-
-		// Fee collector burn: subtract at most balance (zero out if balance < amount).
-		if feeCollectorBurnWei.Sign() > 0 {
-			bal := sdb.GetBalance(evm.FEE_COLLECTOR_ADDR)
-			toSub := new(uint256.Int).Set(feeCollectorBurnWei)
-			if bal.Cmp(toSub) < 0 {
-				toSub = new(uint256.Int).Set(bal)
-			}
-			if toSub.Sign() > 0 {
-				sdb.SubBalance(evm.FEE_COLLECTOR_ADDR, toSub, tracing.BalanceChangeTransfer)
-			}
+	// Refund gas to match Ethereum gas consumption. Skip for zero-gas txs (never paid).
+	if !evm.IsZeroGasEthTx(rootCtxGasless) {
+		refundGas := uint64(0)
+		if evmMsg.GasLimit > evmResp.GasUsed {
+			refundGas = evmMsg.GasLimit - evmResp.GasUsed
 		}
-		// Sender burn: subtract at most balance (zero out if balance < amount).
-		if txSenderBurnWei.Sign() > 0 {
-			bal := sdb.GetBalance(evmMsg.From)
-			toSub := new(uint256.Int).Set(txSenderBurnWei)
-			if bal.Cmp(toSub) < 0 {
-				toSub = new(uint256.Int).Set(bal)
-			}
-			if toSub.Sign() > 0 {
-				sdb.SubBalance(evmMsg.From, toSub, tracing.BalanceChangeTransfer)
-			}
+		weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
+		if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
+			return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
 		}
-		// Commit writes this SDB's cached balance changes (the undo burns) toward
-		// the root context so they are persisted. Same reason RefundGas calls
-		// sdb.Commit() after its balance updates.
-		sdb.Commit()
 	}
 
 	stage = "post_execution_events_and_tx_index"

@@ -6,8 +6,6 @@ package evmante
 // the deductio of fees and validation of tx and block gas limits.
 
 import (
-	"fmt"
-	"log"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -103,6 +101,10 @@ func AnteStepDeductGas(
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
+	if evm.IsZeroGasEthTx(sdb.Ctx()) {
+		return nil
+	}
+
 	from := msgEthTx.FromAddrBech32()
 	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(sdb.Ctx())
 	txData, err := evm.UnpackTxData(msgEthTx.Data)
@@ -118,17 +120,6 @@ func AnteStepDeductGas(
 		return sdkioerrors.Wrapf(err, "failed to verify the fees")
 	}
 
-	// If this is a zero-gas tx (meta present), record the amount paid.
-	if meta := evm.GetZeroGasMeta(sdb.Ctx()); meta != nil && !fees.IsZero() {
-		meta.PaidWei = fees.Clone()
-		sdb.SetCtx(
-			sdb.Ctx().
-				WithValue(evm.CtxKeyZeroGasMeta, meta),
-		)
-	}
-
-	fmt.Printf("EthAnteDeductGas Pre: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
-	log.Printf("EthAnteDeductGas Pre: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 	err = func(sdb *evmstate.SDB, effFeeWei *uint256.Int, feePayer sdk.AccAddress) error {
 		if fees.IsZero() {
 			return nil
@@ -152,9 +143,6 @@ func AnteStepDeductGas(
 		sdk.NewAttribute(sdk.AttributeKeyFeePayer, from.String()),
 		evm.AttributeKeyFeePayerEvm(msgEthTx.FromAddr()),
 	))
-
-	fmt.Printf("EthAnteDeductGas Post: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
-	log.Printf("EthAnteDeductGas Post: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 
 	return nil
 }

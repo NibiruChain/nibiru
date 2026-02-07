@@ -12,7 +12,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -142,79 +141,6 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	}
 }
 
-func (s *TestSuite) TestZeroGasMeta_AmountsToUndoCredit() {
-	for _, tc := range []struct {
-		name                 string
-		creditedWei          *big.Int
-		paidWei              *uint256.Int
-		refundedWei          *big.Int
-		wantFeeCollectorBurn *uint256.Int
-		wantTxSenderBurn     *uint256.Int
-	}{
-		{
-			name:                 "full path: credit 100, paid 80, refund 50",
-			creditedWei:          big.NewInt(100),
-			paidWei:              uint256.NewInt(80),
-			refundedWei:          big.NewInt(50),
-			wantFeeCollectorBurn: uint256.NewInt(30),
-			wantTxSenderBurn:     uint256.NewInt(70),
-		},
-		{
-			name:                 "no refund (consensus error before RefundGas)",
-			creditedWei:          big.NewInt(100),
-			paidWei:              uint256.NewInt(80),
-			refundedWei:          nil,
-			wantFeeCollectorBurn: uint256.NewInt(80),
-			wantTxSenderBurn:     uint256.NewInt(20),
-		},
-		{
-			name:                 "no deduct (PaidWei nil)",
-			creditedWei:          big.NewInt(100),
-			paidWei:              nil,
-			refundedWei:          nil,
-			wantFeeCollectorBurn: uint256.NewInt(0),
-			wantTxSenderBurn:     uint256.NewInt(100),
-		},
-		{
-			name:                 "zero refund",
-			creditedWei:          big.NewInt(100),
-			paidWei:              uint256.NewInt(80),
-			refundedWei:          big.NewInt(0),
-			wantFeeCollectorBurn: uint256.NewInt(80),
-			wantTxSenderBurn:     uint256.NewInt(20),
-		},
-		{
-			name:                 "all gas consumed (refund=0)",
-			creditedWei:          big.NewInt(100),
-			paidWei:              uint256.NewInt(100),
-			refundedWei:          big.NewInt(0),
-			wantFeeCollectorBurn: uint256.NewInt(100),
-			wantTxSenderBurn:     uint256.NewInt(0),
-		},
-		{
-			name:                 "nil CreditedWei (invalid)",
-			creditedWei:          nil,
-			paidWei:              uint256.NewInt(80),
-			refundedWei:          big.NewInt(50),
-			wantFeeCollectorBurn: uint256.NewInt(30),
-			wantTxSenderBurn:     uint256.NewInt(0),
-		},
-	} {
-		s.Run(tc.name, func() {
-			meta := &evm.ZeroGasMeta{
-				CreditedWei: tc.creditedWei,
-				PaidWei:     tc.paidWei,
-				RefundedWei: tc.refundedWei,
-			}
-			feeCollectorBurn, txSenderBurn := meta.AmountsToUndoCredit()
-			s.Require().Equal(0, feeCollectorBurn.Cmp(tc.wantFeeCollectorBurn),
-				"feeCollectorBurnWei: got %s want %s", feeCollectorBurn, tc.wantFeeCollectorBurn)
-			s.Require().Equal(0, txSenderBurn.Cmp(tc.wantTxSenderBurn),
-				"txSenderBurnWei: got %s want %s", txSenderBurn, tc.wantTxSenderBurn)
-		})
-	}
-}
-
 // TestGetZeroGasMeta verifies that packing ZeroGasMeta into context and reading it back with GetZeroGasMeta works (happy path).
 func (s *TestSuite) TestGetZeroGasMeta() {
 	deps := evmtest.NewTestDeps()
@@ -222,22 +148,12 @@ func (s *TestSuite) TestGetZeroGasMeta() {
 	got := evm.GetZeroGasMeta(deps.Ctx())
 	s.Require().Nil(got, "GetZeroGasMeta should return nil when key not set")
 
-	creditedWei := big.NewInt(1000)
-	paidWei := uint256.NewInt(800)
-	refundedWei := big.NewInt(200)
-	meta := &evm.ZeroGasMeta{
-		CreditedWei: creditedWei,
-		PaidWei:     paidWei,
-		RefundedWei: refundedWei,
-	}
+	meta := &evm.ZeroGasMeta{}
 
 	deps.SetCtx(deps.Ctx().
 		WithValue(evm.CtxKeyZeroGasMeta, meta))
 	got = evm.GetZeroGasMeta(deps.Ctx())
 	s.Require().NotNil(got, "GetZeroGasMeta should return non-nil when meta was set")
-	s.Require().Equal(0, got.CreditedWei.Cmp(creditedWei), "CreditedWei should match")
-	s.Require().Equal(0, got.PaidWei.Cmp(paidWei), "PaidWei should match")
-	s.Require().Equal(0, got.RefundedWei.Cmp(refundedWei), "RefundedWei should match")
 }
 
 func (s *TestSuite) TestParseWeiAsMultipleOfMicronibi() {
