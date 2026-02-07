@@ -93,14 +93,14 @@ func (s *Suite) TestCanTransfer() {
 
 func (s *Suite) TestVerifyEthAcc() {
 	testCases := []struct {
-		name               string
-		beforeTxSetup      func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
-		txSetup            func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
-		wantErr            string
-		zeroGasEligible    bool // if true, run DetectZeroGas before VerifyEthAcc and assert account exists after
+		name            string
+		beforeTxSetup   func(deps *evmtest.TestDeps, sdb *evmstate.SDB)
+		txSetup         func(deps *evmtest.TestDeps) *evm.MsgEthereumTx
+		wantErr         string
+		zeroGasEligible bool // if true, run DetectZeroGas before VerifyEthAcc and assert account exists after
 	}{
 		{
-			name:          "happy: sender with funds",
+			name: "happy: sender with funds",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
 				AddBalanceSigned(sdb, deps.Sender.EthAddr, evm.NativeToWei(happyGasLimit()))
 			},
@@ -123,7 +123,7 @@ func (s *Suite) TestVerifyEthAcc() {
 			zeroGasEligible: false,
 		},
 		{
-			name: "sad: empty from addr",
+			name:          "sad: empty from addr",
 			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {},
 			txSetup: func(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
 				tx := evmtest.HappyCreateContractTx(deps)
