@@ -55,6 +55,8 @@ func (k *Keeper) RefundGas(
 		sdb.SubBalance(evm.FEE_COLLECTOR_ADDR, wei, tracing.BalanceIncreaseGasReturn)
 		sdb.AddBalance(msgFrom, wei, tracing.BalanceIncreaseGasReturn)
 
+		// Commit writes this SDB's cached balance changes toward the root context so
+		// the refund is persisted. Without it, the refund would remain only in cache.
 		sdb.Commit()
 
 		// refundedCoins := sdk.Coins{sdk.NewCoin(evm.EVMBankDenom, sdkmath.NewIntFromBigInt(leftoverMicronibi))}

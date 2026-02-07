@@ -102,7 +102,6 @@ func AnteStepCreditZeroGas(
 	if meta.CreditedWei == nil || meta.CreditedWei.Sign() == 0 {
 		meta.CreditedWei = new(big.Int).Set(creditWeiBig)
 	}
-	meta.Phase = evm.ZeroGasPhaseCredited
 
 	sdb.SetCtx(
 		sdb.Ctx().

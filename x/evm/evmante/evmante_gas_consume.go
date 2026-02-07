@@ -118,11 +118,9 @@ func AnteStepDeductGas(
 		return sdkioerrors.Wrapf(err, "failed to verify the fees")
 	}
 
-	// If this is a zero-gas tx (meta present), record the amount paid and phase.
+	// If this is a zero-gas tx (meta present), record the amount paid.
 	if meta := evm.GetZeroGasMeta(sdb.Ctx()); meta != nil && !fees.IsZero() {
-		// Store the effective fee in wei as uint256 and mark that deduction ran.
 		meta.PaidWei = fees.Clone()
-		meta.Phase = evm.ZeroGasPhaseDeducted
 		sdb.SetCtx(
 			sdb.Ctx().
 				WithValue(evm.CtxKeyZeroGasMeta, meta),

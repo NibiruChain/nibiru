@@ -99,7 +99,6 @@ func TestAnteStepCreditZeroGas_Eligible_SetsMetaAndCreditsBalance(t *testing.T) 
 	meta := evm.GetZeroGasMeta(sdb.Ctx())
 	require.NotNil(t, meta)
 	require.NotNil(t, meta.CreditedWei)
-	require.Equal(t, evm.ZeroGasPhaseCredited, meta.Phase)
 
 	// Credited balance should be greater than the initial balance.
 	require.Greater(t, sdb.GetBalance(from).ToBig().Cmp(initialBal), 0)
@@ -187,7 +186,6 @@ func TestAnteStepCreditZeroGas_SetsMetaInContextWhenCheckTx(t *testing.T) {
 	// Meta should be present even in CheckTx.
 	meta := evm.GetZeroGasMeta(sdb.Ctx())
 	require.NotNil(t, meta)
-	require.Equal(t, evm.ZeroGasPhaseCredited, meta.Phase)
 	require.NotNil(t, meta.CreditedWei)
 
 	// For now we also mutate balance in CheckTx (see TODO in implementation).
@@ -240,7 +238,6 @@ func TestAnteStepDeductGas_SetsPaidWeiForZeroGasTx(t *testing.T) {
 
 	meta := evm.GetZeroGasMeta(sdb.Ctx())
 	require.NotNil(t, meta)
-	require.Equal(t, evm.ZeroGasPhaseDeducted, meta.Phase)
 	require.NotNil(t, meta.PaidWei)
 	require.True(t, meta.PaidWei.Sign() > 0)
 }

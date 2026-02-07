@@ -16,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
+	"github.com/holiman/uint256"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -154,6 +155,40 @@ func (k *Keeper) EthereumTx(
 	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
 	if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
 		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
+	}
+	if meta := evm.GetZeroGasMeta(rootCtxGasless); meta != nil {
+		// Populate RefundedWei for zero-gas undo.
+		meta.RefundedWei = new(big.Int).Mul(new(big.Int).SetUint64(refundGas), weiPerGas)
+
+		// Undo: burn amounts from fee collector and sender using helper; defensive balance checks.
+		feeCollectorBurnWei, txSenderBurnWei := meta.AmountsToUndoCredit()
+
+		// Fee collector burn: subtract at most balance (zero out if balance < amount).
+		if feeCollectorBurnWei.Sign() > 0 {
+			bal := sdb.GetBalance(evm.FEE_COLLECTOR_ADDR)
+			toSub := new(uint256.Int).Set(feeCollectorBurnWei)
+			if bal.Cmp(toSub) < 0 {
+				toSub = new(uint256.Int).Set(bal)
+			}
+			if toSub.Sign() > 0 {
+				sdb.SubBalance(evm.FEE_COLLECTOR_ADDR, toSub, tracing.BalanceChangeTransfer)
+			}
+		}
+		// Sender burn: subtract at most balance (zero out if balance < amount).
+		if txSenderBurnWei.Sign() > 0 {
+			bal := sdb.GetBalance(evmMsg.From)
+			toSub := new(uint256.Int).Set(txSenderBurnWei)
+			if bal.Cmp(toSub) < 0 {
+				toSub = new(uint256.Int).Set(bal)
+			}
+			if toSub.Sign() > 0 {
+				sdb.SubBalance(evmMsg.From, toSub, tracing.BalanceChangeTransfer)
+			}
+		}
+		// Commit writes this SDB's cached balance changes (the undo burns) toward
+		// the root context so they are persisted. Same reason RefundGas calls
+		// sdb.Commit() after its balance updates.
+		sdb.Commit()
 	}
 
 	stage = "post_execution_events_and_tx_index"

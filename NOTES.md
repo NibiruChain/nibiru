@@ -81,13 +81,14 @@ return anteHandler(ctx, tx, sim)
 The EVM ante handler is defined in `x/evm/evmante/all_evmante.go`:
 
 ```go
-// x/evm/evmante/all_evmante.go, lines 29-42
+// x/evm/evmante/all_evmante.go (see current order in repo)
 steps := []AnteStep{
     AnteStepSetupCtx,                    // outermost
     EthSigVerification,
     AnteStepValidateBasic,
     AnteStepMempoolGasPrice,             // ← mempool min gas price (CheckTx)
     AnteStepBlockGasMeter,
+    AnteStepCreditZeroGas,               // ← zero-gas credit before balance check
     AnteStepVerifyEthAcc,                // ← balance >= tx cost
     AnteStepCanTransfer,                 // ← gas cap, value transfer
     AnteStepGasWanted,
@@ -99,7 +100,6 @@ steps := []AnteStep{
 ```
 
 - **File:** `x/evm/evmante/all_evmante.go`
-- **Lines:** 29–42
 
 ---
 
@@ -245,7 +245,7 @@ Instead of bypassing checks, we **simulate** zero gas cost by temporarily credit
 |-------|----------|--------------|
 | **Ante: Deduct** | `evmante_gas_consume.go` → `DeductTxCostsFromUserBalance` | Full cost (`gasLimit × effectiveGasPrice`) deducted from sender, added to fee collector |
 | **Execution** | `msg_server.ApplyEvmMsg` | EVM runs; `gasUsed` is determined |
-| **Refund** | `msg_server.go` (around lines 150–156) → `RefundGas` | `leftoverGas = gasLimit - gasUsed` refunded: fee collector → sender |
+| **Refund** | `msg_server.go` (after execution, before post_execution_events) → `RefundGas`; then msg_server sets `ZeroGasMeta.RefundedWei` | `leftoverGas = gasLimit - gasUsed` refunded: fee collector → sender |
 
 Net effect for the sender: `-full_cost + refund = -(gasUsed × effectiveGasPrice) = -actual_gas_cost`.
 
@@ -260,24 +260,19 @@ Credit in ante and undo in msg_server both operate on the same chain state.
 
 ### Credit Source Options
 
-1. **Fee collector loan** — `sdb.SubBalance(FEE_COLLECTOR_ADDR, X)` then `sdb.AddBalance(sender, X)`. Simple, but the fee collector must have sufficient balance early in the chain's life.
-2. **Subsidy module account** — A dedicated module account prefunded for zero-gas txs. Avoids fee-collector liquidity issues and keeps subsidy accounting separate.
+**Chosen model:** Chain-minted temporary credit (ante adds balance; undo burns from fee collector and sender). See Plan 4.4 and Plan 5.
+
+**Alternatives not chosen:** (1) Fee collector loan — debit fee collector, credit sender. (2) Subsidy module account — dedicated prefunded module. Both were superseded by chain-minted credit.
 
 ### Ante → Msg_server Communication
 
-The msg_server must know that a tx was a zero-gas tx and how much was credited. The codebase already uses context keys (e.g. `CtxKeyEvmSimulation` in `x/evm/const.go`). Add a new key (e.g. `CtxKeyZeroGasTx`) and set it in ante when crediting; msg_server reads it before running the undo.
+The msg_server must know that a tx was a zero-gas tx and how much was credited. The ante stores a `*ZeroGasMeta` under `CtxKeyZeroGasMeta` when crediting; msg_server reads it via `evm.GetZeroGasMeta(ctx)` before running the undo.
 
 ---
 
 ## Implementation Plan
 
-| Step | Location | Action |
-|------|----------|--------|
-| 1 | `x/evm/const.go` | Add `CtxKeyZeroGasTx` (or similar). |
-| 2 | `x/evm/evmante/` | New `AnteStepCreditZeroGas` before `AnteStepVerifyEthAcc`: detect zero-gas tx, credit sender with `X = full_cost`, set `ctx.WithValue(CtxKeyZeroGasTx, X)`. |
-| 3 | `x/evm/evmante/all_evmante.go` | Insert the new step into the ante chain. |
-| 4 | `x/evm/evmstate/msg_server.go` | After `RefundGas`, read `CtxKeyZeroGasTx`. If set, compute `actual_gas_cost`, then reclaim: `sender → fee_collector` (or subsidy pool) the amount `(X - actual_gas_cost)` via SDB balance updates. |
-| 5 | Subsidy source | Decide between fee collector loan vs. dedicated subsidy module and implement the chosen credit/debit flow. |
+Implementation is tracked in **PLAN - Implementation Tracker** below. In brief: add `CtxKeyZeroGasMeta` and `ZeroGasMeta` (const.go / evm.go); add `AnteStepCreditZeroGas` in evmante; after `RefundGas` in msg_server, read meta, set `RefundedWei`, then run undo (reclaim) when implemented. See Plan 7 (prereqs), Plan 8 (credit), Plan 9 (undo), and Plan 11 (files).
 
 ---
 
@@ -349,9 +344,10 @@ reclaimed amount is `credited_amount - actual_gas_cost`, ensuring the sender’s
 net balance change is zero.
 
 **Q: How does ante-to-execution communication work?**  A: The ante handler stores
-zero-gas metadata (such as the credited amount) in the SDK context using
-`ctx.WithValue`. This context is preserved into the EthereumTx message handler
-during DeliverTx, allowing the undo logic to execute with full information.
+a `*ZeroGasMeta` (CreditedWei, PaidWei, RefundedWei) under `CtxKeyZeroGasMeta` in
+the SDK context using `ctx.WithValue`. This context is preserved into the
+EthereumTx message handler during DeliverTx, allowing the undo logic to execute
+with full information.
 
 **Q: What is the trust model of this system?**  A: The chain does not attempt to
 sandbox or restrict contract behavior at runtime. Safety relies on
@@ -419,17 +415,17 @@ the **credit** (add X to sender via `sdb.AddBalance`) happen in the same step.
 This runs on both CheckTx and DeliverTx, so the balance check passes in both
 phases.
 
-### Plan 3 - ZeroGasMeta and ZeroGasPhase (context payload)
+### Plan 3 - ZeroGasMeta (context payload)
 
-A single context value under **`CtxKeyZeroGasMeta`** carries the three amounts and current phase so ante and msg_server can tell what has already happened (credit only, credit + deduct, or full path including refund). This makes undo safe when execution short-circuits.
+A single context value under **`CtxKeyZeroGasMeta`** carries the three amounts. Which amounts are set indicates what has already happened (credit only; credit + deduct; or full path including refund), so undo can branch safely when execution short-circuits.
 
-**`ZeroGasMeta` struct** — Fields: `CreditedWei`, `PaidWei`, `RefundedWei` (*big.Int), and `Phase` (ZeroGasPhase). Who sets what:
+**`ZeroGasMeta` struct** — Fields: `CreditedWei`, `PaidWei`, `RefundedWei` only (no Phase). Who sets what:
 
-- **Credit step (ante):** Sets `CreditedWei`, `Phase = ZeroGasPhaseCredited`; `PaidWei`/`RefundedWei` unset (nil).
-- **DeductGas (ante):** If meta exists, set `PaidWei` to the deducted amount, `Phase = ZeroGasPhaseDeducted`.
-- **After RefundGas (msg_server):** Set `RefundedWei`, `Phase = ZeroGasPhaseRefunded`; then run undo using the three numbers.
+- **Credit step (ante):** Sets `CreditedWei`; `PaidWei`/`RefundedWei` remain unset (nil).
+- **DeductGas (ante):** If meta exists, set `PaidWei` to the deducted amount.
+- **After RefundGas (msg_server):** Set `RefundedWei`; then run undo using the three numbers.
 
-**`ZeroGasPhase`** — Enum (Credited, Deducted, Refunded) indicating how far the pipeline has run. Undo logic branches on `Phase` so it never assumes a step that didn't run (e.g. no refund yet).
+**Inference:** Undo logic branches on which amounts are non-nil (e.g. `RefundedWei != nil` means refund ran; `PaidWei == nil` means deduction did not run).
 
 **Access:** Helper **`evm.GetZeroGasMeta(ctx)`** in the evm package returns `*ZeroGasMeta` or `nil`; use it in ante steps and in EthereumTx handler instead of raw `ctx.Value(...)`.
 
@@ -446,13 +442,7 @@ These constraints determine *where* code can safely live.
   - [x] Eligibility check runs in CheckTx
   - [x] Balance mutation can occur in both CheckTx and DeliverTx, but only DeliverTx persists state via `sdb.Commit()`.
 
-- [x] **4.1** Add context key and payload type in
-[`x/evm/const.go`](x/evm/const.go)
-  - Add `CtxKeyZeroGasMeta contextKey = "zero_gas_meta"`
-  - Add `ZeroGasMeta` struct (CreditedWei, PaidWei, RefundedWei *big.Int; Phase
-  ZeroGasPhase) and `ZeroGasPhase` (Credited, Deducted, Refunded)
-  - Use helper `evm.GetZeroGasMeta(ctx)` to read; reference: existing
-  `CtxKeyEvmSimulation` and `IsSimulation`
+- [x] **4.1** Add context key and `GetZeroGasMeta(ctx)` in [`x/evm/const.go`](x/evm/const.go); define `ZeroGasMeta` struct (CreditedWei, PaidWei, RefundedWei) in `x/evm/evm.go`. Use `evm.GetZeroGasMeta(ctx)` to read; reference: existing `CtxKeyEvmSimulation` and `IsSimulation`.
 
 - [x] **4.2** Detection criteria for "zero-gas tx" **(decided)**
   - Use **Option A:** extend `x/sudo` ZeroGasActors with a new field
@@ -497,7 +487,7 @@ These constraints determine *where* code can safely live.
 
 ### Plan 7 - Prerequisites in x/evm and x/sudo
 
-- [x] Add `CtxKeyZeroGasMeta`, `ZeroGasMeta` struct, `ZeroGasPhase`, and `GetZeroGasMeta(ctx)` helper in `x/evm/const.go`
+- [x] Add `CtxKeyZeroGasMeta` and `GetZeroGasMeta(ctx)` in `x/evm/const.go`; add `ZeroGasMeta` struct in `x/evm/evm.go`
 - [x] Add `always_zero_gas_contracts` to ZeroGasActors (proto + default + validation)
 
 ### Plan 8 - Phase 2: Ante Handler — Credit Step
@@ -505,9 +495,7 @@ These constraints determine *where* code can safely live.
 - [x] Create `AnteStepCreditZeroGas`
 - [x] Implement eligibility detection: `tx.To ∈ GetZeroGasActors(ctx).AlwaysZeroGasContracts` (no sender check)
 - [x] Enforce `tx.Value == 0`
-- [ ] Compute credit amount `X = txData.Cost()`
-- [ ] Apply credit **only in DeliverTx**
-- [x] Persist `*ZeroGasMeta` (CreditedWei, Phase = Credited) in context under `CtxKeyZeroGasMeta`
+- [x] Persist `*ZeroGasMeta` (CreditedWei set) in context under `CtxKeyZeroGasMeta`
 - [x] Register step between:
   - `AnteStepBlockGasMeter`
   - `AnteStepVerifyEthAcc`
@@ -531,8 +519,8 @@ These constraints determine *where* code can safely live.
   - Precise long-term credit source (fee collector vs. subsidy module) remains a policy decision tracked under Plan 5; current implementation behaves as a temporary balance boost for the sender.
 
 - [x] **8.5** Set context for msg handler
-  - `meta := &evm.ZeroGasMeta{CreditedWei: X, Phase: evm.ZeroGasPhaseCredited}`; `sdb.SetCtx(sdb.Ctx().WithValue(evm.CtxKeyZeroGasMeta, meta))`
-  - msg_server reads via `evm.GetZeroGasMeta(ctx)` and uses `meta.CreditedWei`, `meta.Phase`, etc.
+  - `meta := &evm.ZeroGasMeta{CreditedWei: X}`; `sdb.SetCtx(sdb.Ctx().WithValue(evm.CtxKeyZeroGasMeta, meta))`
+  - msg_server reads via `evm.GetZeroGasMeta(ctx)` and uses `meta.CreditedWei`, `meta.PaidWei`, `meta.RefundedWei`
 
 - [x] **8.6** Register step in ante chain
   - Edit [`x/evm/evmante/all_evmante.go`](x/evm/evmante/all_evmante.go)
@@ -540,34 +528,32 @@ These constraints determine *where* code can safely live.
 
 ### Plan 9 - Phase 3: EthereumTx Handler — Undo
 
-- [ ] Identify guaranteed post-execution insertion point
-- [ ] Read zero-gas metadata from context
-- [ ] Compute `actualGasCost = gasUsed × effectiveGasPrice`
-- [ ] Reclaim `X - actualGasCost` back to credit source
+- [x] Identify guaranteed post-execution insertion point
+- [x] Read zero-gas metadata from context
+- [x] Compute burn amounts via `meta.AmountsToUndoCredit()` (no manual `actualGasCost` in handler)
+- [x] Reclaim by burning from fee collector and sender (SubBalance only)
 - [ ] Ensure undo:
   - [ ] Runs on success
   - [ ] Runs on revert
   - [ ] Safely no-ops if execution did not occur
 
-- [ ] **9.1** Locate insertion point in [`x/evm/evmstate/msg_server.go`](x/evm/evmstate/msg_server.go)
-  - After `RefundGas` (lines 155–156), before `stage = "post_execution_events_and_tx_index"` (line 158)
+- [x] **9.1** Locate insertion point in [`x/evm/evmstate/msg_server.go`](x/evm/evmstate/msg_server.go)
+  - After `RefundGas`, before `stage = "post_execution_events_and_tx_index"` (see msg_server.go; RefundGas and RefundedWei population are in that block).
   - At this point: `evmResp.GasUsed`, `evmMsg.From`, `evmMsg.GasLimit` are available
 
-- [ ] **9.2** Read zero-gas metadata from context
-  - `meta := evm.GetZeroGasMeta(sdb.Ctx())` (or `sdk.UnwrapSDKContext(goCtx)`)
+- [x] **9.2** Read zero-gas metadata from context
+  - `meta := evm.GetZeroGasMeta(rootCtxGasless)` in the same block where `RefundedWei` is set.
   - If `meta == nil`, skip undo (not a zero-gas tx)
 
-- [ ] **9.3** Compute `actual_gas_cost`
-  - `weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)` (already available)
-  - `actualGasCostWei = evmResp.GasUsed * weiPerGas` (use `big.Int` for safety)
-  - Use `meta.CreditedWei` for X; set `meta.RefundedWei` and `meta.Phase = ZeroGasPhaseRefunded` before undo
+- [x] **9.3** Set `meta.RefundedWei` to refund wei (`refundGas * weiPerGas`) after RefundGas (implemented).
+- [x] **9.3** Obtain burn amounts via `meta.AmountsToUndoCredit()` — returns `feeCollectorBurnWei`, `txSenderBurnWei`; no manual `actual_gas_cost` computation in the handler.
 
-- [ ] **9.4** Implement reclaim logic
-  - After refund, sender has: `original + meta.CreditedWei - full_cost + refund = original + meta.CreditedWei - actual_gas_cost`
-  - Reclaim `excess := meta.CreditedWei - actual_gas_cost` from sender back to credit source
-  - `sdb.SubBalance(sender, excess)` and `sdb.AddBalance(creditSource, excess)`
-  - Use same SDB as RefundGas (`sdb` in EthereumTx)
-  - Call `sdb.Commit()` after balance updates (if required by SDB usage)
+- [x] **9.4** Implement reclaim logic (implemented as burns)
+  - Reclaim is implemented as **burns** (SubBalance only, no AddBalance): burn from fee collector, burn from sender.
+  - **Defensive rule:** Before each `SubBalance`, get `bal := sdb.GetBalance(addr)`. If `bal.Cmp(amount) < 0`, subtract `bal` (zero out); otherwise subtract `amount`.
+  - Use **`tracing.BalanceChangeTransfer`** for both SubBalance calls.
+  - Call `sdb.Commit()` after the balance updates.
+  - Use same SDB as RefundGas (`sdb` in EthereumTx). Formula: same as **Reclaim Logic (Undo Details)** above.
 
 - [ ] **9.5** Handle edge cases
   - **Reverted tx:** RefundGas still runs; run undo so sender is not charged
@@ -610,26 +596,16 @@ These constraints determine *where* code can safely live.
 
 ### Plan 11 - Files to Touch (Single Source of Truth)
 
-| File | Purpose |
-|------|--------|
-| `x/evm/const.go` | Context key, ZeroGasMeta struct, ZeroGasPhase, GetZeroGasMeta(ctx) helper |
-| `proto/nibiru/sudo/v1/state.proto` | Add `always_zero_gas_contracts` to ZeroGasActors |
-| `x/evm/evmante/evmante_zero_gas.go` | Credit ante step |
-| `x/evm/evmante/all_evmante.go` | Ante ordering |
-| `x/evm/evmstate/msg_server.go` | Undo logic |
-| `app/ante/handler_opts.go` | SudoKeeper for reading always_zero_gas_contracts |
-| `app/app.go` | Wiring |
-
-| File | Changes |
-|------|---------|
-| `x/evm/const.go` | Add `CtxKeyZeroGasMeta`, `ZeroGasMeta`, `ZeroGasPhase`, `GetZeroGasMeta(ctx)` |
-| `proto/nibiru/sudo/v1/state.proto` | Add `repeated string always_zero_gas_contracts` to ZeroGasActors; regenerate |
+| File | Role |
+|------|------|
+| `x/evm/const.go` | Context key and `GetZeroGasMeta(ctx)`; `ZeroGasMeta` struct in `x/evm/evm.go` |
+| `proto/nibiru/sudo/v1/state.proto` | Add `always_zero_gas_contracts` to ZeroGasActors; regenerate |
 | `x/sudo/` | DefaultZeroGasActors, Validate (always_zero_gas_contracts), getter; migration if needed |
-| `app/ante/handler_opts.go` | Add `SudoKeeper` |
-| `app/app.go` | Pass `SudoKeeper` into AnteHandlerOptions |
-| `x/evm/evmante/evmante_zero_gas.go` | **New file** — `AnteStepCreditZeroGas` |
+| `x/evm/evmante/evmante_zero_gas.go` | Credit step and ante registration |
 | `x/evm/evmante/all_evmante.go` | Insert step in `steps` slice |
-| `x/evm/evmstate/msg_server.go` | Undo logic after `RefundGas` |
+| `x/evm/evmstate/msg_server.go` | RefundedWei population + undo (reclaim) implemented |
+
+- EVM ante reads zero-gas config via `evmstate.Keeper.SudoKeeper` only; `SudoKeeper` is not added to `AnteHandlerOptions` (see Plan 4.3).
 
 Flow Overview
 
