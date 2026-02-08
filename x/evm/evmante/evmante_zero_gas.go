@@ -43,15 +43,7 @@ func AnteStepDetectZeroGas(
 	if len(evmContracts) == 0 {
 		return nil
 	}
-
-	matchesZeroGasContract := false
-	for _, eip55Addr := range evmContracts {
-		if eip55Addr.Address == *to {
-			matchesZeroGasContract = true
-			break
-		}
-	}
-	if !matchesZeroGasContract {
+	if _, ok := evmContracts[*to]; !ok {
 		return nil
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -28,21 +29,21 @@ func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
 	return k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
 }
 
-// GetZeroGasEvmContracts loads the ZeroGasActors state and returns the subset
-// of entries that can be parsed as canonical EIP55 Ethereum contract
-// addresses. This helper is used by the EVM module via the evm.SudoKeeper
-// interface without depending on x/sudo-specific types.
-func (k Keeper) GetZeroGasEvmContracts(ctx sdk.Context) []eth.EIP55Addr {
+// GetZeroGasEvmContracts loads the ZeroGasActors state and returns a set (map) of
+// EVM contract addresses that can be parsed from the zero-gas list, for O(1)
+// lookup. Used by the EVM module via the evm.SudoKeeper interface without
+// depending on x/sudo-specific types.
+func (k Keeper) GetZeroGasEvmContracts(ctx sdk.Context) map[gethcommon.Address]struct{} {
 	actors := k.GetZeroGasActors(ctx)
 
-	evmAddrs := make([]eth.EIP55Addr, 0, len(actors.AlwaysZeroGasContracts))
+	evmAddrs := make(map[gethcommon.Address]struct{}, len(actors.AlwaysZeroGasContracts))
 	for _, raw := range actors.AlwaysZeroGasContracts {
 		addr, err := eth.NewEIP55AddrFromStr(raw)
 		if err != nil {
 			// Entries should already be validated, but skip defensively.
 			continue
 		}
-		evmAddrs = append(evmAddrs, addr)
+		evmAddrs[addr.Address] = struct{}{}
 	}
 
 	return evmAddrs

@@ -6,8 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/NibiruChain/nibiru/v2/eth"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // AccountKeeper defines the expected account keeper interface
@@ -47,7 +46,7 @@ type SudoKeeper interface {
 	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
 
 	// GetZeroGasEvmContracts returns the subset of zero-gas actors that are
-	// EVM contracts, parsed as canonical EIP55 addresses. This method avoids
+	// EVM contracts as a set (map) for O(1) lookup. This method avoids
 	// exposing x/sudo-specific types in the EVM dependency interface.
-	GetZeroGasEvmContracts(ctx sdk.Context) []eth.EIP55Addr
+	GetZeroGasEvmContracts(ctx sdk.Context) map[gethcommon.Address]struct{}
 }
