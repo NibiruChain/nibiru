@@ -47,14 +47,7 @@ const (
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
 func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
-	val := ctx.Value(CtxKeyZeroGasMeta)
-	if val == nil {
-		return nil
-	}
-	meta, ok := val.(*ZeroGasMeta)
-	if !ok {
-		return nil
-	}
+	meta, _ := ctx.Value(CtxKeyZeroGasMeta).(*ZeroGasMeta)
 	return meta
 }
 
