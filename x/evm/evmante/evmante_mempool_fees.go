@@ -45,6 +45,10 @@ func AnteStepMempoolGasPrice(
 		return nil
 	}
 
+	if evm.IsZeroGasEthTx(sdb.Ctx()) {
+		return nil
+	}
+
 	minGasPrice := sdb.Ctx().MinGasPrices().AmountOf(evm.EVMBankDenom)
 	baseFeeMicronibi := k.BaseFeeMicronibiPerGas(sdb.Ctx())
 	baseFeeMicronibiDec := sdkmath.LegacyNewDecFromBigInt(baseFeeMicronibi)

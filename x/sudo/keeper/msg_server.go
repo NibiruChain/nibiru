@@ -103,6 +103,14 @@ func (k Keeper) EditZeroGasActors(
 		actors.Contracts = append(actors.Contracts, contract)
 		seenContracts.Add(contract)
 	}
+	seenAlwaysZeroGas := set.New[string]()
+	for _, addr := range msg.Actors.AlwaysZeroGasContracts {
+		if seenAlwaysZeroGas.Has(addr) {
+			continue
+		}
+		actors.AlwaysZeroGasContracts = append(actors.AlwaysZeroGasContracts, addr)
+		seenAlwaysZeroGas.Add(addr)
+	}
 
 	k.ZeroGasActors.Set(ctx, actors)
 

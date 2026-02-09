@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 var (
@@ -113,11 +113,15 @@ func (m MsgEditZeroGasActors) ValidateBasic() error {
 }
 
 func (actors ZeroGasActors) Validate() error {
-	// Check if each contract is an eligible EVM or Wasm contract address
+	// Contracts: bech32 or hex (Nibiru account format).
 	for _, contract := range actors.Contracts {
-		req := &evm.QueryEthAccountRequest{Address: contract}
-		_, err := req.Validate()
-		if err != nil {
+		if _, err := eth.NibiruAddrFromStr(contract); err != nil {
+			return fmt.Errorf("ZeroGasActors stateless validation error: %w", err)
+		}
+	}
+	// AlwaysZeroGasContracts: hex (EVM) only; runtime uses EIP55 in GetZeroGasEvmContracts.
+	for _, contract := range actors.AlwaysZeroGasContracts {
+		if _, err := eth.NewEIP55AddrFromStr(contract); err != nil {
 			return fmt.Errorf("ZeroGasActors stateless validation error: %w", err)
 		}
 	}
@@ -133,8 +137,9 @@ func (actors ZeroGasActors) Validate() error {
 
 func DefaultZeroGasActors() ZeroGasActors {
 	return ZeroGasActors{
-		Senders:   []string{},
-		Contracts: []string{},
+		Senders:                []string{},
+		Contracts:              []string{},
+		AlwaysZeroGasContracts: []string{},
 	}
 }
 

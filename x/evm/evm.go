@@ -12,6 +12,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
+// ZeroGasMeta is the context payload for zero-gas EVM transactions. Stored under CtxKeyZeroGasMeta.
+// When present, indicates the tx is zero-gas eligible; ante steps skip balance-vs-cost and fee
+// deduction; msg_server skips refund. CanTransfer still runs. Empty struct; only presence (non-nil) matters.
+type ZeroGasMeta struct{}
+
 // FIXME: Explore problems arrising from ERC1155 creating multiple fungible
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
