@@ -9,7 +9,7 @@
  * The methods tested are from the smart contract,
  * "evm-e2e/contracts/SendReceiveNibi.sol".
  */
-import { describe, expect, it } from "@jest/globals"
+import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt, Wallet } from "ethers"
 
 import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"

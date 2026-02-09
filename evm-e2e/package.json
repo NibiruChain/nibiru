@@ -19,6 +19,7 @@
     "@typechain/hardhat": "^9.1.0",
     "@types/bun": "^1.2.5",
     "@types/jest": "^29.5.14",
+    "@uniquedivine/jiyuu": "^0.0.2",
     "bun": "^1.2.5",
     "dotenv": "^16.4.5",
     "eslint": "^8.0.0",

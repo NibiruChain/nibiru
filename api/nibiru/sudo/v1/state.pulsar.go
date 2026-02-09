@@ -1164,10 +1164,57 @@ func (x *_ZeroGasActors_2_list) IsValid() bool {
 	return x.list != nil
 }
 
+var _ protoreflect.List = (*_ZeroGasActors_3_list)(nil)
+
+type _ZeroGasActors_3_list struct {
+	list *[]string
+}
+
+func (x *_ZeroGasActors_3_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_ZeroGasActors_3_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfString((*x.list)[i])
+}
+
+func (x *_ZeroGasActors_3_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_ZeroGasActors_3_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.String()
+	concreteValue := valueUnwrapped
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_ZeroGasActors_3_list) AppendMutable() protoreflect.Value {
+	panic(fmt.Errorf("AppendMutable can not be called on message ZeroGasActors at list field AlwaysZeroGasContracts as it is not of Message kind"))
+}
+
+func (x *_ZeroGasActors_3_list) Truncate(n int) {
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_ZeroGasActors_3_list) NewElement() protoreflect.Value {
+	v := ""
+	return protoreflect.ValueOfString(v)
+}
+
+func (x *_ZeroGasActors_3_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
-	md_ZeroGasActors           protoreflect.MessageDescriptor
-	fd_ZeroGasActors_senders   protoreflect.FieldDescriptor
-	fd_ZeroGasActors_contracts protoreflect.FieldDescriptor
+	md_ZeroGasActors                           protoreflect.MessageDescriptor
+	fd_ZeroGasActors_senders                   protoreflect.FieldDescriptor
+	fd_ZeroGasActors_contracts                 protoreflect.FieldDescriptor
+	fd_ZeroGasActors_always_zero_gas_contracts protoreflect.FieldDescriptor
 )
 
 func init() {
@@ -1175,6 +1222,7 @@ func init() {
 	md_ZeroGasActors = File_nibiru_sudo_v1_state_proto.Messages().ByName("ZeroGasActors")
 	fd_ZeroGasActors_senders = md_ZeroGasActors.Fields().ByName("senders")
 	fd_ZeroGasActors_contracts = md_ZeroGasActors.Fields().ByName("contracts")
+	fd_ZeroGasActors_always_zero_gas_contracts = md_ZeroGasActors.Fields().ByName("always_zero_gas_contracts")
 }
 
 var _ protoreflect.Message = (*fastReflection_ZeroGasActors)(nil)
@@ -1254,6 +1302,12 @@ func (x *fastReflection_ZeroGasActors) Range(f func(protoreflect.FieldDescriptor
 			return
 		}
 	}
+	if len(x.AlwaysZeroGasContracts) != 0 {
+		value := protoreflect.ValueOfList(&_ZeroGasActors_3_list{list: &x.AlwaysZeroGasContracts})
+		if !f(fd_ZeroGasActors_always_zero_gas_contracts, value) {
+			return
+		}
+	}
 }
 
 // Has reports whether a field is populated.
@@ -1273,6 +1327,8 @@ func (x *fastReflection_ZeroGasActors) Has(fd protoreflect.FieldDescriptor) bool
 		return len(x.Senders) != 0
 	case "nibiru.sudo.v1.ZeroGasActors.contracts":
 		return len(x.Contracts) != 0
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		return len(x.AlwaysZeroGasContracts) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.sudo.v1.ZeroGasActors"))
@@ -1293,6 +1349,8 @@ func (x *fastReflection_ZeroGasActors) Clear(fd protoreflect.FieldDescriptor) {
 		x.Senders = nil
 	case "nibiru.sudo.v1.ZeroGasActors.contracts":
 		x.Contracts = nil
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		x.AlwaysZeroGasContracts = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.sudo.v1.ZeroGasActors"))
@@ -1320,6 +1378,12 @@ func (x *fastReflection_ZeroGasActors) Get(descriptor protoreflect.FieldDescript
 			return protoreflect.ValueOfList(&_ZeroGasActors_2_list{})
 		}
 		listValue := &_ZeroGasActors_2_list{list: &x.Contracts}
+		return protoreflect.ValueOfList(listValue)
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		if len(x.AlwaysZeroGasContracts) == 0 {
+			return protoreflect.ValueOfList(&_ZeroGasActors_3_list{})
+		}
+		listValue := &_ZeroGasActors_3_list{list: &x.AlwaysZeroGasContracts}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -1349,6 +1413,10 @@ func (x *fastReflection_ZeroGasActors) Set(fd protoreflect.FieldDescriptor, valu
 		lv := value.List()
 		clv := lv.(*_ZeroGasActors_2_list)
 		x.Contracts = *clv.list
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		lv := value.List()
+		clv := lv.(*_ZeroGasActors_3_list)
+		x.AlwaysZeroGasContracts = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.sudo.v1.ZeroGasActors"))
@@ -1381,6 +1449,12 @@ func (x *fastReflection_ZeroGasActors) Mutable(fd protoreflect.FieldDescriptor) 
 		}
 		value := &_ZeroGasActors_2_list{list: &x.Contracts}
 		return protoreflect.ValueOfList(value)
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		if x.AlwaysZeroGasContracts == nil {
+			x.AlwaysZeroGasContracts = []string{}
+		}
+		value := &_ZeroGasActors_3_list{list: &x.AlwaysZeroGasContracts}
+		return protoreflect.ValueOfList(value)
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.sudo.v1.ZeroGasActors"))
@@ -1400,6 +1474,9 @@ func (x *fastReflection_ZeroGasActors) NewField(fd protoreflect.FieldDescriptor)
 	case "nibiru.sudo.v1.ZeroGasActors.contracts":
 		list := []string{}
 		return protoreflect.ValueOfList(&_ZeroGasActors_2_list{list: &list})
+	case "nibiru.sudo.v1.ZeroGasActors.always_zero_gas_contracts":
+		list := []string{}
+		return protoreflect.ValueOfList(&_ZeroGasActors_3_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: nibiru.sudo.v1.ZeroGasActors"))
@@ -1481,6 +1558,12 @@ func (x *fastReflection_ZeroGasActors) ProtoMethods() *protoiface.Methods {
 				n += 1 + l + runtime.Sov(uint64(l))
 			}
 		}
+		if len(x.AlwaysZeroGasContracts) > 0 {
+			for _, s := range x.AlwaysZeroGasContracts {
+				l = len(s)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
+		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
 		}
@@ -1509,6 +1592,15 @@ func (x *fastReflection_ZeroGasActors) ProtoMethods() *protoiface.Methods {
 		if x.unknownFields != nil {
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
+		}
+		if len(x.AlwaysZeroGasContracts) > 0 {
+			for iNdEx := len(x.AlwaysZeroGasContracts) - 1; iNdEx >= 0; iNdEx-- {
+				i -= len(x.AlwaysZeroGasContracts[iNdEx])
+				copy(dAtA[i:], x.AlwaysZeroGasContracts[iNdEx])
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.AlwaysZeroGasContracts[iNdEx])))
+				i--
+				dAtA[i] = 0x1a
+			}
 		}
 		if len(x.Contracts) > 0 {
 			for iNdEx := len(x.Contracts) - 1; iNdEx >= 0; iNdEx-- {
@@ -1640,6 +1732,38 @@ func (x *fastReflection_ZeroGasActors) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
 				x.Contracts = append(x.Contracts, string(dAtA[iNdEx:postIndex]))
+				iNdEx = postIndex
+			case 3:
+				if wireType != 2 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field AlwaysZeroGasContracts", wireType)
+				}
+				var stringLen uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					stringLen |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				intStringLen := int(stringLen)
+				if intStringLen < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				postIndex := iNdEx + intStringLen
+				if postIndex < 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrInvalidLength
+				}
+				if postIndex > l {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+				}
+				x.AlwaysZeroGasContracts = append(x.AlwaysZeroGasContracts, string(dAtA[iNdEx:postIndex]))
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -1791,6 +1915,9 @@ type ZeroGasActors struct {
 	// Contracts: contract addresses that can be invoked by "senders" with zero gas
 	// costs.
 	Contracts []string `protobuf:"bytes,2,rep,name=contracts,proto3" json:"contracts,omitempty"`
+	// AlwaysZeroGasContracts: contract addresses that can be invoked with zero gas
+	// costs for any sender.
+	AlwaysZeroGasContracts []string `protobuf:"bytes,3,rep,name=always_zero_gas_contracts,json=alwaysZeroGasContracts,proto3" json:"always_zero_gas_contracts,omitempty"`
 }
 
 func (x *ZeroGasActors) Reset() {
@@ -1827,6 +1954,13 @@ func (x *ZeroGasActors) GetContracts() []string {
 	return nil
 }
 
+func (x *ZeroGasActors) GetAlwaysZeroGasContracts() []string {
+	if x != nil {
+		return x.AlwaysZeroGasContracts
+	}
+	return nil
+}
+
 var File_nibiru_sudo_v1_state_proto protoreflect.FileDescriptor
 
 var file_nibiru_sudo_v1_state_proto_rawDesc = []byte{
@@ -1848,23 +1982,26 @@ var file_nibiru_sudo_v1_state_proto_rawDesc = []byte{
 	0x67, 0x61, 0x73, 0x5f, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x1d, 0x2e, 0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x73, 0x75, 0x64, 0x6f, 0x2e, 0x76,
 	0x31, 0x2e, 0x5a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x41, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x52,
-	0x0d, 0x7a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x41, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x22, 0x47,
-	0x0a, 0x0d, 0x5a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x41, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x12,
-	0x18, 0x0a, 0x07, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
-	0x52, 0x07, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x12, 0x1c, 0x0a, 0x09, 0x63, 0x6f, 0x6e,
-	0x74, 0x72, 0x61, 0x63, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x63, 0x6f,
-	0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x73, 0x42, 0xa2, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e,
-	0x6e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e, 0x73, 0x75, 0x64, 0x6f, 0x2e, 0x76, 0x31, 0x42, 0x0a,
-	0x53, 0x74, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x26, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e,
-	0x69, 0x62, 0x69, 0x72, 0x75, 0x2f, 0x73, 0x75, 0x64, 0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x73, 0x75,
-	0x64, 0x6f, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x4e, 0x53, 0x58, 0xaa, 0x02, 0x0e, 0x4e, 0x69, 0x62,
-	0x69, 0x72, 0x75, 0x2e, 0x53, 0x75, 0x64, 0x6f, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x4e, 0x69,
-	0x62, 0x69, 0x72, 0x75, 0x5c, 0x53, 0x75, 0x64, 0x6f, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x4e,
-	0x69, 0x62, 0x69, 0x72, 0x75, 0x5c, 0x53, 0x75, 0x64, 0x6f, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50,
-	0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69,
-	0x72, 0x75, 0x3a, 0x3a, 0x53, 0x75, 0x64, 0x6f, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x0d, 0x7a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x41, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x22, 0x82,
+	0x01, 0x0a, 0x0d, 0x5a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x41, 0x63, 0x74, 0x6f, 0x72, 0x73,
+	0x12, 0x18, 0x0a, 0x07, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x09, 0x52, 0x07, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x12, 0x1c, 0x0a, 0x09, 0x63, 0x6f,
+	0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x63,
+	0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x73, 0x12, 0x39, 0x0a, 0x19, 0x61, 0x6c, 0x77, 0x61,
+	0x79, 0x73, 0x5f, 0x7a, 0x65, 0x72, 0x6f, 0x5f, 0x67, 0x61, 0x73, 0x5f, 0x63, 0x6f, 0x6e, 0x74,
+	0x72, 0x61, 0x63, 0x74, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x16, 0x61, 0x6c, 0x77,
+	0x61, 0x79, 0x73, 0x5a, 0x65, 0x72, 0x6f, 0x47, 0x61, 0x73, 0x43, 0x6f, 0x6e, 0x74, 0x72, 0x61,
+	0x63, 0x74, 0x73, 0x42, 0xa2, 0x01, 0x0a, 0x12, 0x63, 0x6f, 0x6d, 0x2e, 0x6e, 0x69, 0x62, 0x69,
+	0x72, 0x75, 0x2e, 0x73, 0x75, 0x64, 0x6f, 0x2e, 0x76, 0x31, 0x42, 0x0a, 0x53, 0x74, 0x61, 0x74,
+	0x65, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x26, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x6e, 0x69, 0x62, 0x69, 0x72,
+	0x75, 0x2f, 0x73, 0x75, 0x64, 0x6f, 0x2f, 0x76, 0x31, 0x3b, 0x73, 0x75, 0x64, 0x6f, 0x76, 0x31,
+	0xa2, 0x02, 0x03, 0x4e, 0x53, 0x58, 0xaa, 0x02, 0x0e, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x2e,
+	0x53, 0x75, 0x64, 0x6f, 0x2e, 0x56, 0x31, 0xca, 0x02, 0x0e, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75,
+	0x5c, 0x53, 0x75, 0x64, 0x6f, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x4e, 0x69, 0x62, 0x69, 0x72,
+	0x75, 0x5c, 0x53, 0x75, 0x64, 0x6f, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74,
+	0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x10, 0x4e, 0x69, 0x62, 0x69, 0x72, 0x75, 0x3a, 0x3a,
+	0x53, 0x75, 0x64, 0x6f, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

@@ -277,6 +277,7 @@ type EvmInputs struct {
 	AccountKeeper authkeeper.AccountKeeper
 	BankKeeper    bankkeeper.Keeper
 	StakingKeeper evm.StakingKeeper
+	SudoKeeper    evm.SudoKeeper
 }
 
 type EvmOutputs struct {
@@ -293,7 +294,17 @@ func ProvideModule(in EvmInputs) EvmOutputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
-	k := evmstate.NewKeeper(in.Cdc, in.Key, in.TransientKey, authority, in.AccountKeeper, in.BankKeeper.(*evmstate.NibiruBankKeeper), in.StakingKeeper, cast.ToString(in.AppOpts.Get("evm.tracer")))
+	k := evmstate.NewKeeper(
+		in.Cdc,
+		in.Key,
+		in.TransientKey,
+		authority,
+		in.AccountKeeper,
+		in.BankKeeper.(*evmstate.NibiruBankKeeper),
+		in.StakingKeeper,
+		in.SudoKeeper,
+		cast.ToString(in.AppOpts.Get("evm.tracer")),
+	)
 
 	m := NewAppModule(&k, in.AccountKeeper)
 

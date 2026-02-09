@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from "@jest/globals"
+import { describe, expect, it } from "bun:test"
 import { AbiCoder, ethers, keccak256, parseEther } from "ethers"
 
 import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
@@ -13,12 +13,10 @@ import {
 } from "./utils"
 
 describe("eth queries", () => {
-  jest.setTimeout(TEST_TIMEOUT)
-
   it("eth_accounts", async () => {
     const accounts = await provider.listAccounts()
     expect(accounts).not.toBeNull()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_estimateGas", async () => {
     const tx = {
@@ -29,7 +27,7 @@ describe("eth queries", () => {
     const estimatedGas = await provider.estimateGas(tx)
     expect(estimatedGas).toBeGreaterThan(BigInt(0))
     expect(estimatedGas - INTRINSIC_TX_GAS).toBeLessThan(INTRINSIC_TX_GAS / BigInt(20))
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_feeHistory", async () => {
     const blockCount = 5 // Number of blocks in the requested history
@@ -46,18 +44,18 @@ describe("eth queries", () => {
     expect(feeHistory).toHaveProperty("gasUsedRatio")
     expect(feeHistory).toHaveProperty("oldestBlock")
     expect(feeHistory).toHaveProperty("reward")
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_gasPrice", async () => {
     const gasPrice = await provider.send("eth_gasPrice", [])
     expect(gasPrice).toBeDefined()
     expect(gasPrice).toEqual(hexify(1000000000000)) // 1 micronibi == 10^{12} wei
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getBalance", async () => {
     const balance = await provider.getBalance(account.address)
     expect(balance).toBeGreaterThan(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getBlockByNumber, eth_getBlockByHash", async () => {
     const blockNumber = "latest"
@@ -75,7 +73,7 @@ describe("eth queries", () => {
     expect(blockByHash).toBeDefined()
     expect(blockByHash.hash).toEqual(blockByNumber.hash)
     expect(blockByHash.number).toEqual(blockByNumber.number)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getBlockTransactionCountByHash", async () => {
     const blockNumber = "latest"
@@ -87,7 +85,7 @@ describe("eth queries", () => {
       block.hash,
     ])
     expect(parseInt(txCount)).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getBlockTransactionCountByNumber", async () => {
     const blockNumber = "latest"
@@ -96,14 +94,14 @@ describe("eth queries", () => {
       [blockNumber],
     )
     expect(parseInt(txCount)).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getCode", async () => {
     const contract = await deployContractSendNibi()
     const contractAddr = await contract.getAddress()
     const code = await provider.send("eth_getCode", [contractAddr, "latest"])
     expect(code).toBeDefined()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getFilterChanges", async () => {
     const currentBlock = await provider.getBlockNumber()
@@ -132,7 +130,7 @@ describe("eth queries", () => {
 
     const success = await provider.send("eth_uninstallFilter", [filterId])
     expect(success).toBeTruthy()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getFilterLogs", async () => {
     const currentBlock = await provider.getBlockNumber()
@@ -158,7 +156,7 @@ describe("eth queries", () => {
     expect(changes[0]).toHaveProperty("address")
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getLogs", async () => {
     const currentBlock = await provider.getBlockNumber()
@@ -180,7 +178,7 @@ describe("eth queries", () => {
     expect(changes[0]).toHaveProperty("address")
     expect(changes[0]).toHaveProperty("data")
     expect(changes[0]).toHaveProperty("topics")
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getProof", async () => {
     // Deploy ERC-20 contract
@@ -211,7 +209,7 @@ describe("eth queries", () => {
       expect(proof.storageProof[0]).toHaveProperty("value")
       expect(proof.storageProof[0]).toHaveProperty("proof")
     }
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getStorageAt", async () => {
     const contract = await deployContractTestERC20()
@@ -219,7 +217,7 @@ describe("eth queries", () => {
 
     const value = await provider.getStorage(contractAddr, 1)
     expect(value).toBeDefined()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getTransactionByBlockHashAndIndex, eth_getTransactionByBlockNumberAndIndex", async () => {
     // Execute EVM transfer
@@ -246,26 +244,26 @@ describe("eth queries", () => {
     expect(txByBlockNumber["from"]).toEqual(txByBlockHash["from"])
     expect(txByBlockNumber["to"]).toEqual(txByBlockHash["to"])
     expect(txByBlockNumber["value"]).toEqual(txByBlockHash["value"])
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getTransactionByHash", async () => {
     const txResponse = await sendTestNibi()
     const txByHash = await provider.getTransaction(txResponse.hash)
     expect(txByHash).toBeDefined()
     expect(txByHash.hash).toEqual(txResponse.hash)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getTransactionCount", async () => {
     const txCount = await provider.getTransactionCount(account.address)
     expect(txCount).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getTransactionReceipt", async () => {
     const txResponse = await sendTestNibi()
     const txReceipt = await provider.getTransactionReceipt(txResponse.hash)
     expect(txReceipt).toBeDefined()
     expect(txReceipt.hash).toEqual(txResponse.hash)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getUncleCountByBlockHash", async () => {
     const latestBlock = await provider.getBlockNumber()
@@ -274,7 +272,7 @@ describe("eth queries", () => {
       block.hash,
     ])
     expect(parseInt(uncleCount)).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_getUncleCountByBlockNumber", async () => {
     const latestBlock = await provider.getBlockNumber()
@@ -282,25 +280,25 @@ describe("eth queries", () => {
       latestBlock,
     ])
     expect(parseInt(uncleCount)).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_maxPriorityFeePerGas", async () => {
     const maxPriorityGas = await provider.send("eth_maxPriorityFeePerGas", [])
     expect(parseInt(maxPriorityGas)).toBeGreaterThanOrEqual(0)
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_newBlockFilter", async () => {
     const filterId = await provider.send("eth_newBlockFilter", [])
     expect(filterId).toBeDefined()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_newPendingTransactionFilter", async () => {
     const filterId = await provider.send("eth_newPendingTransactionFilter", [])
     expect(filterId).toBeDefined()
-  })
+  }, TEST_TIMEOUT)
 
   it("eth_syncing", async () => {
     const syncing = await provider.send("eth_syncing", [])
     expect(syncing).toBeFalsy()
-  })
+  }, TEST_TIMEOUT)
 })

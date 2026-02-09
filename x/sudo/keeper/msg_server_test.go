@@ -1,7 +1,10 @@
 package keeper_test
 
 import (
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
@@ -541,6 +544,33 @@ func (s *Suite) TestEditZeroGasActors() {
 						addrs[3].String(),
 					},
 				}, resp.Actors)
+			},
+		},
+
+		{
+			Name: "happy path: AlwaysZeroGasContracts persisted",
+			Test: func() {
+				_, k, ctx := setup()
+				goCtx := sdk.WrapSDKContext(ctx)
+				senderValid, err := k.GetRootAddr(ctx)
+				s.Require().NoError(err)
+
+				evmAddr1 := common.BigToAddress(big.NewInt(5)).Hex()
+				evmAddr2 := common.BigToAddress(big.NewInt(12)).Hex()
+				inputActors := sudo.ZeroGasActors{
+					AlwaysZeroGasContracts: []string{evmAddr1, evmAddr2, evmAddr1},
+				}
+
+				_, err = k.EditZeroGasActors(goCtx, &sudo.MsgEditZeroGasActors{
+					Actors: inputActors,
+					Sender: senderValid.String(),
+				})
+				s.Require().NoError(err)
+
+				resp, err := k.QueryZeroGasActors(goCtx, nil)
+				s.Require().NoError(err)
+				s.Require().Equal([]string{evmAddr1, evmAddr2}, resp.Actors.AlwaysZeroGasContracts,
+					"AlwaysZeroGasContracts should be persisted with duplicates removed")
 			},
 		},
 

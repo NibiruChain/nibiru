@@ -42,7 +42,19 @@ type contextKey string
 const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
+	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 )
+
+// GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
+func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
+	meta, _ := ctx.Value(CtxKeyZeroGasMeta).(*ZeroGasMeta)
+	return meta
+}
+
+// IsZeroGasEthTx returns true if the context has ZeroGasMeta set (i.e., this is a zero-gas EVM tx).
+func IsZeroGasEthTx(ctx sdk.Context) bool {
+	return GetZeroGasMeta(ctx) != nil
+}
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.

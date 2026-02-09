@@ -170,7 +170,8 @@ func CmdEditZeroGasActors() *cobra.Command {
 The [actors_json_string] for "ZeroGasActors" is of the form:
 {
   "senders": ["nibi1...", "nibi1...", ... ],
-  "contracts": ["0x...", "nibi1....", ... ]
+  "contracts": ["0x...", "nibi1....", ... ],
+  "always_zero_gas_contracts": ["0x...", ... ]
 }
 `, version.AppName),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {

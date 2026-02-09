@@ -57,12 +57,35 @@ func (s *Suite) TestMsgEditZeroGasActors_ValidateBasic() {
 			},
 		},
 		{
+			name: "ok: always_zero_gas_contracts with valid EVM addresses",
+			build: func() *sudo.MsgEditZeroGasActors {
+				return &sudo.MsgEditZeroGasActors{
+					Sender: goodSender,
+					Actors: sudo.ZeroGasActors{
+						AlwaysZeroGasContracts: goodContracts,
+					},
+				}
+			},
+		},
+		{
 			name: "err: invalid contract address",
 			build: func() *sudo.MsgEditZeroGasActors {
 				return &sudo.MsgEditZeroGasActors{
 					Sender: goodSender,
 					Actors: sudo.ZeroGasActors{
 						Contracts: []string{"0xBAD"},
+					},
+				}
+			},
+			wantErr: "ZeroGasActors stateless validation error",
+		},
+		{
+			name: "err: invalid address in always_zero_gas_contracts",
+			build: func() *sudo.MsgEditZeroGasActors {
+				return &sudo.MsgEditZeroGasActors{
+					Sender: goodSender,
+					Actors: sudo.ZeroGasActors{
+						AlwaysZeroGasContracts: []string{"0xBAD"},
 					},
 				}
 			},
