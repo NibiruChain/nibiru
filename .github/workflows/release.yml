@@ -3,9 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "*"
-    tags-ignore:
-      - "passkey-bundler/v*"
+      - "v*"
 
 permissions:
   contents: write
