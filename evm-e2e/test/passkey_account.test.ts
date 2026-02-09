@@ -1,4 +1,4 @@
-import { describe, it } from "@jest/globals"
+import { describe, it } from "bun:test"
 import type { ChildProcessWithoutNullStreams, SpawnOptions } from "child_process"
 import { spawn } from "child_process"
 import path from "path"

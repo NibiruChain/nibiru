@@ -33,6 +33,13 @@ JSON_RPC_ENDPOINT="http://127.0.0.1:8545"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 ```
 
+The `MNEMONIC` above is the same BIP-39 phrase used by
+`contrib/scripts/localnet.sh` to create the `validator` key on the
+`nibiru-localnet-0` chain. The `account` used in tests
+(`test/setup.ts`) is the EVM signer for that validator/dev account,
+which is funded in genesis and used to deploy contracts, pay gas, and
+fund other test wallets.
+
 ### Execute
 
 ```bash
