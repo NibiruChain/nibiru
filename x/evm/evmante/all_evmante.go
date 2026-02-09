@@ -31,6 +31,7 @@ func NewAnteHandlerEvm(
 		EthSigVerification,
 		AnteStepValidateBasic,
 		AnteStepDetectZeroGas, // must run before MempoolGasPrice, VerifyEthAcc, CanTransfer, DeductGas
+		AnteStepZeroGasBlockQuota,
 		AnteStepMempoolGasPrice,
 		AnteStepBlockGasMeter,
 		AnteStepVerifyEthAcc,

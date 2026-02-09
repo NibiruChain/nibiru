@@ -126,6 +126,8 @@ const (
 	NamespaceBlockTxIndex collections.Namespace = 2
 	NamespaceBlockLogSize collections.Namespace = 3
 	NamespaceBlockGasUsed collections.Namespace = 4
+	// NamespaceBlockZeroGasTxCount: number of zero-gas EVM txs in the current block.
+	NamespaceBlockZeroGasTxCount collections.Namespace = 5
 )
 
 var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()

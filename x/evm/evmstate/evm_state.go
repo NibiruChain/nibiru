@@ -47,6 +47,8 @@ type EvmState struct {
 	BlockTxIndex collections.ItemTransient[uint64]
 	// BlockBloom: Bloom filters.
 	BlockBloom collections.ItemTransient[[]byte]
+	// BlockZeroGasTxCount: number of zero-gas EVM txs in the current block (transient).
+	BlockZeroGasTxCount collections.ItemTransient[uint64]
 
 	NetWeiBlockDelta collections.Item[sdkmath.Int]
 }
@@ -86,6 +88,11 @@ func NewEvmState(
 		BlockTxIndex: collections.NewItemTransient(
 			storeKeyTransient,
 			evm.NamespaceBlockTxIndex,
+			collections.Uint64ValueEncoder,
+		),
+		BlockZeroGasTxCount: collections.NewItemTransient(
+			storeKeyTransient,
+			evm.NamespaceBlockZeroGasTxCount,
 			collections.Uint64ValueEncoder,
 		),
 		NetWeiBlockDelta: collections.NewItem(
