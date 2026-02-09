@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
@@ -173,4 +175,36 @@ func (s *Suite) TestGetHashFn() {
 	s.Equal(gethcommon.BytesToHash(deps.Ctx().HeaderHash()), fn(uint64(deps.Ctx().BlockHeight())))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())+1))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())-1))
+}
+
+func (s *Suite) TestUpdateParams() {
+	deps := evmtest.NewTestDeps()
+
+	s.Run("happy path: with permission and valid input", func() {
+		authority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+		params := evm.DefaultParams()
+
+		resp, err := deps.EvmKeeper.UpdateParams(deps.GoCtx(), &evm.MsgUpdateParams{
+			Authority: authority,
+			Params:    params,
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		got := deps.EvmKeeper.GetParams(deps.Ctx())
+		s.Require().Equal(params.CreateFuntokenFee, got.CreateFuntokenFee)
+		s.Require().Equal(params.CanonicalWnibi.Hex(), got.CanonicalWnibi.Hex())
+	})
+
+	s.Run("sad path: no permission", func() {
+		authority := deps.Sender.NibiruAddr.String()
+		params := evm.DefaultParams()
+
+		_, err := deps.EvmKeeper.UpdateParams(deps.GoCtx(), &evm.MsgUpdateParams{
+			Authority: authority,
+			Params:    params,
+		})
+		s.Require().Error(err)
+		s.Require().ErrorContains(err, "invalid signing authority")
+	})
 }

@@ -240,8 +240,16 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 	}
 }
 
-// TestMsgEthereumTx_ZeroGas verifies the bypass path: ZeroGasMeta in context causes
-// RefundGas to be skipped. Sender with zero balance can execute a zero-value transfer.
+// The following zero-gas tests exercise only the EthereumTx msg_server. They do not
+// run the ante handler. The context is given the same zero-gas marker (CtxKeyZeroGasMeta)
+// that the ante would set in production. We verify that the msg_server skips RefundGas
+// when that marker is present, as it would after ante ran in a real DeliverTx.
+
+// TestMsgEthereumTx_ZeroGas verifies the msg_server bypass. When the context carries
+// the zero-gas marker (as it would after the ante handler ran), RefundGas is skipped.
+// This test does not run the ante. It injects the marker to simulate that. Sender with
+// zero balance can execute a zero-value transfer. We assert no deduction and no refund
+// (fee collector and sender stay at 0).
 func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -260,6 +268,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	)
 	s.Require().NoError(err)
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)
@@ -280,7 +289,8 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 }
 
 // TestMsgEthereumTx_ZeroGas_WithRefund is like TestMsgEthereumTx_ZeroGas but uses a
-// higher gas limit. With bypass, RefundGas is skipped so no refund occurs; balances stay at 0.
+// higher gas limit. With bypass, RefundGas is skipped so no refund occurs. Balances stay at 0.
+// Same setup: msg_server only, zero-gas marker injected in context (ante not run).
 func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -300,6 +310,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	)
 	s.Require().NoError(err)
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)
@@ -319,8 +330,9 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	s.Require().Equal(0, senderBal.Cmp(uint256.NewInt(0)), "sender balance should be 0")
 }
 
-// TestMsgEthereumTx_ZeroGas_Reverted ensures zero-gas bypass works on reverted execution:
-// no deduction, no refund. Fee collector unchanged from deploy; sender stays at 0.
+// TestMsgEthereumTx_ZeroGas_Reverted ensures zero-gas bypass works on reverted execution.
+// No deduction, no refund. Fee collector unchanged from deploy, sender stays at 0.
+// Context is given the zero-gas marker so we test msg_server behavior without running ante.
 func (s *Suite) TestMsgEthereumTx_ZeroGas_Reverted() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -362,6 +374,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_Reverted() {
 	s.Require().NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)

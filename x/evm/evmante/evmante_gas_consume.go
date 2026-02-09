@@ -125,7 +125,7 @@ func AnteStepDeductGas(
 			return nil
 		}
 
-		if err := k.DeductTxCostsFromUserBalance(
+		if err := DeductTxCostsFromUserBalance(
 			sdb, effFeeWei, gethcommon.BytesToAddress(feePayer),
 		); err != nil {
 			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")

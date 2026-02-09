@@ -714,6 +714,32 @@ func (k *Keeper) ConvertEvmToCoin(
 	return &evm.MsgConvertEvmToCoinResponse{}, err
 }
 
+func (k *Keeper) UpdateParams(
+	goCtx context.Context, req *evm.MsgUpdateParams,
+) (resp *evm.MsgUpdateParamsResponse, err error) {
+	if err := req.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
+	sender := sdk.MustAccAddressFromBech32(req.Authority)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+	havePerms := (sudoPermsErr == nil) || (k.authority.String() == req.Authority)
+	if !havePerms {
+		return resp, fmt.Errorf(
+			"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+			k.authority, req.Authority,
+		)
+	}
+
+	err = k.SetParams(ctx, req.Params)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "failed to set params")
+	}
+	return &evm.MsgUpdateParamsResponse{}, nil
+}
+
 // TxEvents represents ABCI events that are emitted an Ethereum tx. Nil fields
 // repesent intentional omission
 type TxEvents struct {

@@ -68,7 +68,7 @@ func AnteStepVerifyEthAcc(
 		return nil
 	}
 
-	if err := evmstate.CheckSenderBalance(
+	if err := CheckSenderBalance(
 		sdb.GetBalance(fromAddr), txData,
 	); err != nil {
 		return err
