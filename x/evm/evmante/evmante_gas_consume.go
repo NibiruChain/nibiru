@@ -217,10 +217,12 @@ func AnteStepGasWanted(
 	// Gas consumption follows a two-phase approach:
 	// 1. Ante handlers use infinite gas meters to avoid premature failures
 	// 2. EVM execution tracks actual gas consumption separately via gasRemaining
-	// 3. Only the final consumed amount is recorded via SafeConsumeGas
+	// 3. Only the final consumed amount is recorded to the [sdk.GasMeter] via
+	// `SafeConsumeGas`
 	//
-	// This design ensures that Cosmos gas accounting reflects actual EVM gas usage
-	// without double-counting or premature gas failures during validation.
+	// This design ensures that [sdk.GasMeter] accounting reflects actual EVM gas
+	// usage that occurs in `EthereumTx` without gas failures during [AnteStep]
+	// validation.
 	newCtx := sdb.Ctx().
 		WithGasMeter(eth.NewInfiniteGasMeterWithLimit(gasWanted)).
 		WithPriority(minPriority)

@@ -109,10 +109,30 @@ func (k *Keeper) EthereumTx(
 
 	if evmResp != nil {
 		stage = "safe_consume_gas"
-		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
-		if gasErr != nil {
-			if !evmResp.Failed() { // only set VmError if not already failed
-				evmResp.VmError = gasErr.Error()
+		// Reset any gas consumed on the root context's gas meter so that
+		// [sdk.GasMeter] gas accounting for this transaction reflects only the
+		// EVM gas used. This ensures that if evmResp.GasUsed <= evmMsg.GasLimit,
+		// then the tx cannot fail due to [sdk.GasMeter] gas exhaustion, matching
+		// Ethereum semantics.
+		if sdb.RootCtx().GasMeter().GasConsumed() > 0 {
+			sdb.RootCtx().GasMeter().RefundGas(
+				sdb.RootCtx().GasMeter().GasConsumed(),
+				"reset gas before EVM charge",
+			)
+		}
+		if gasErr := evm.SafeConsumeGas(
+			sdb.RootCtx(),
+			evmResp.GasUsed,
+			"execute EthereumTx",
+		); gasErr != nil {
+			if !evmResp.Failed() {
+				// Log but do not fail the tx. ApplyEvmMsg already succeeded,
+				// meaning the EthereumTx is meant to suceed. EVM gas
+				// is ground truth. If we see gasErr != nil for a success tx, it
+				// means we failed to align the [sdk.GasMeter] with
+				// [evmResp.GasUsed]. With the refund-to-zero above, we do not expect
+				// this path, and it MUST not invalidate the EVM tx.
+				log.Printf("[EVM] ERROR: SafeConsumeGas failed to align with sdk.GasMeter (tx continues): %v", gasErr)
 			}
 		}
 	}
