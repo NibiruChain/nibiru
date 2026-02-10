@@ -586,7 +586,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	)
 	s.NoError(err)
 
-deps.Ctx().GasMeter().ConsumeGas(5_000, "simulated ante handler gas usage")
+	deps.Ctx().GasMeter().ConsumeGas(5_000, "simulated ante handler gas usage")
 	evmResp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), msgEthTx)
 	s.Require().NoError(err)
 	s.Require().NotNil(evmResp)
