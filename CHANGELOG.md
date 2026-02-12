@@ -40,15 +40,134 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-* ci(dependabot.yml): ignore updates to Cosmos-SDK, CometBFT, and Wasmd, as they are often breaking changes
+* ... 
+
+## v2.11.0
+
+EVM reliability got tighter, gasless onboarding got broader, and CometBFT got a
+critical security patch. Plus: passkey (ERC-4337) building blocks and better
+consensus determinism. 
+
+- [Release Link: v2.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.11.0).
+- Date: 2026-02-11
+- The prior upgrade on mainnet was [v2.9.0](#v290).
+
+### 1 - Main Highlights
+
+- **Fixed** - Successful EVM transactions were sometimes shown as failed due to Cosmos SDK gas-meter issues. No longer. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
+- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender with no gas balance, as long as value is 0. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
+- **Improved** - Precompiles now report gas cleanly with dynamic handling, and SDK out-of-gas panics are recovered into normal errors instead of crashing the node. ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
+- **Security** - Upgraded CometBFT to patched v0.37.18 for CSA-2026-001 (Tachyon), a critical consensus-level issue affecting block time guarantees. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
+- **Consensus safety** - Removed nondeterministic Go map iteration in consensus-critical paths (oracle + EVM state commit), addressing intermittent apphash mismatches. ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
+- **New** - Passkey-secured smart accounts (ERC-4337 style) with P-256 signatures: contracts, SDK, and bundler tooling for developers. ([#2443](https://github.com/NibiruChain/nibiru/pull/2443), [#2493](https://github.com/NibiruChain/nibiru/pull/2493), [#2500](https://github.com/NibiruChain/nibiru/pull/2500))
+- **New** - Sai trading: EVM trader service. Trades against local network. ([#2440](https://github.com/NibiruChain/nibiru/pull/2440))
+
+### 2 - Added Passkeys + Account Abstraction (ERC-4337)
+
+**What it enables:** A passkey-secured smart account flow (ERC-4337 style) for Nibiru EVM development and end-to-end testing, built around P-256 signatures.
+
+Includes:
+
+- `PasskeyAccount` and `PasskeyAccountFactory` contracts (minimal ERC-4337 account abstraction, P-256–secured) ([#2443](https://github.com/NibiruChain/nibiru/pull/2443))
+- TypeScript `passkey-sdk` for building UserOperations and talking to a bundler ([#2443](https://github.com/NibiruChain/nibiru/pull/2443))
+- Bundler for passkey transactions ([#2493](https://github.com/NibiruChain/nibiru/pull/2493))
+- Published passkey-bundler package ([#2500](https://github.com/NibiruChain/nibiru/pull/2500))
+- Tooling and docs updates for deploying the factory, running a bundler, and E2E testing the flow
+
+**Status:** This is primarily a developer-facing foundation (contracts + SDK + bundler workflow). Available for integrators today; coming to end-user surfaces as apps integrate.
+
+### 3 - Expanded Gasless EVM Calls ("Zero Gas")
+
+**What it enables:** First-time onboarding and "no gas balance" execution for calls into governance-allowlisted contracts.
+
+**How it works:**
+- If a transaction calls a **governance-allowlisted contract** and `value == 0`, the chain marks it as "zero gas" early in the ante handler.
+- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`.
+- A governance-managed list `ZeroGasActors.always_zero_gas_contracts` allows **any sender** to invoke specific EVM contracts with zero gas.
+
+**Governance:** This is controlled by a governance-managed allowlist. Manage via `sudo edit-zero-gas` and the `always_zero_gas_contracts` field.
+
+### 4 - Precompiles: Dynamic Gas + Clean Failure Mode
+
+**Key Takeaway:** More predictable gas reporting around precompiles and fewer confusing failure modes under OOG.
+- FunToken precompile now supports the dynamic-precompile flow so gas accounting and reporting match the EVM's expectations (better tracing and estimation behavior). ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
+- Removed redundant internal gas deductions that could double-report gas changes to tracers.
+- SDK out-of-gas panics inside bounded meters are recovered and returned as normal out-of-gas errors, so execution fails cleanly instead of crashing the process. ([#2447](https://github.com/NibiruChain/nibiru/pull/2447))
+
+
+### 5 - Fixed - EVM "False Failed" Transactions
+
+**Symptom:** Explorers and receipts could show failure even when the EVM execution actually succeeded, triggered by late Cosmos SDK gas-meter errors.
+
+**Fix:** EVM execution is treated as the ground truth. If the SDK gas meter errors after a successful EVM result, the node logs the issue but does **not** flip the transaction to failed. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
+
+**What to expect after upgrading:** Successful EVM transactions should no longer appear as failed solely due to gas-meter misalignment. Any remaining SDK gas-meter issues should surface as logs, not incorrect tx status.
+
+### 6 - Fixed - Consensus Determinism (No More Random Map Order)
+
+**Why it matters:** Go map iteration is nondeterministic and can cause consensus failures when order affects state writes or event emission.
+
+**Fixes included:**
+- Sorted iteration for oracle validator performance processing and event emission
+- Sorted account address processing in the EVM StateDB commit path
+- Addresses intermittent apphash mismatches observed on long-running mainnet nodes ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
+
+### 7 - Security Patch - CometBFT CSA-2026-001 (Tachyon)
+
+This release upgrades CometBFT to **v0.37.18**, which includes the required fix for **CSA-2026-001**. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
+
+**What class of issue is this?** A consensus-level vulnerability in CometBFT's "BFT Time" implementation, stemming from an inconsistency between commit signature verification and block time derivation. The advisory labels it **Critical** and notes it impacts validators and protocols that rely on block timestamps.
+
+**Operator guidance:** Treat this upgrade as high priority if you run validators or timestamp-sensitive applications. Upgrade to `nibid v2.11.0` (or later) to receive the patched CometBFT.
+
+### 8 - Appendix for v2.11.0
+
+#### For Builders
+- **Tx status correctness** — Successful EVM calls should no longer be mislabeled as failed due to SDK gas-meter issues.
+- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it with `value == 0` and no gas balance.
+- **Precompile behavior** — Expect cleaner out-of-gas error surfaces and more accurate gas reporting around dynamic precompiles.
+- **Passkeys / account abstraction** — New contracts and SDK exist for passkey-secured ERC-4337 flows; good time to prototype onboarding without seed phrases.
+- **CLI flags** — Transaction flags are more concise by default so developers can see command-specific flags more clearly. ([#2449](https://github.com/NibiruChain/nibiru/pull/2449))
+
+#### For Operators / Validators
+- **Upgrade type:** Release tag and GitHub release; mainnet upgrade applies the same workflow as other versions.
+- **Steps:** Upgrade binary to `nibid v2.11.0`, restart. Standard upgrade procedure—no extra state migrations or config changes known.
+- **Priority:** High. The CometBFT CSA-2026-001 fix is critical for consensus safety.
+- **Monitoring checklist:**
+    - Watch for any lingering "gas-meter misalignment" logs (should not flip tx status).
+    - Validate precompile-heavy workloads (FunToken, Wasm, oracle precompiles) for expected behavior under load.
+    - Confirm determinism fixes reduce apphash mismatch risk on long-running nodes.
+
+#### For Contributors / Repo Maintainers
+
+- Internal Cosmos-SDK moved under `internal/cosmos-sdk` for smoother core edits. ([#2451](https://github.com/NibiruChain/nibiru/pull/2451))
+- Collections library merged into repo; gnark-crypto and go-kzg-4844 updated for compatibility. ([#2490](https://github.com/NibiruChain/nibiru/pull/2490))
+- CI / Docker workflow cleanup; release tag trigger fixes.
+- Duplicate `nibid add-genesis-account` command removed (use `nibid genesis add-genesis-account`). ([#2448](https://github.com/NibiruChain/nibiru/pull/2448))
+* fix(ci): fix release tag trigger
+* feat: upgrade v2.10 in [#2504](https://github.com/NibiruChain/nibiru/pull/2504) - ([5cfc50e](https://github.com/NibiruChain/nibiru/commit/5cfc50e0c532c2612b9738147245d671c2a81eff))
+* refactor: omit unnecessary reassignment in [#2470](https://github.com/NibiruChain/nibiru/pull/2470) - ([8916455](https://github.com/NibiruChain/nibiru/commit/8916455863e33de9dd8231eff347b3149c66b509))
 * fix(Dockerfile): copy over files before "go mod download"
-* refactor: move cosmos-sdk to internal/cosmos-sdk for smoother edits to baseapp and the SDK types in [#2451](https://github.com/NibiruChain/nibiru/pull/2451) - ([2abb6c9](https://github.com/NibiruChain/nibiru/commit/2abb6c9610e3a0785eefc7dac23c7b3a82dc42ac))
-* refactor(cmd): remove duplicate nibid add-genesis-account command, since it's one of the nibid genesis subcommands in [#2448](https://github.com/NibiruChain/nibiru/pull/2448) - ([7dbfe7d](https://github.com/NibiruChain/nibiru/commit/7dbfe7d05db6a10ab93673e10907cc5c37726146))
+
+
+#### Refactors and Tech Debt Improvements
+* fix(internal/cosmos-sdk): resolve ledger error in tests using build tags in [#2505](https://github.com/NibiruChain/nibiru/pull/2505) - ([9547d17](https://github.com/NibiruChain/nibiru/commit/9547d1719f7a870056cc800351839bd790dbed38))
 * docs: remove duplicate word in comment in [#2430](https://github.com/NibiruChain/nibiru/pull/2430) - ([798b6d2](https://github.com/NibiruChain/nibiru/commit/798b6d208010199cb970d4b776807cafb5993963))
 * sai-trading: project scaffolding with script to deploy all Sai contracts in [#2433](https://github.com/NibiruChain/nibiru/pull/2433) - ([f77f32f](https://github.com/NibiruChain/nibiru/commit/f77f32ff5239732454ccefc07a76a62e2f4df628))
 
-## [v2.9.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.9.0) - 2025-11-10
+#### Dependencies and CI
+* ci(docker): simplify workflows; free more disk space to fix docker builds; combine into docker.yml
+* docs(changelog): update with version 2.9 and 2.8; fix(justfile/gen-changelog): use config from current branch, not main in [#2465](https://github.com/NibiruChain/nibiru/pull/2465) - ([9acdf4e](https://github.com/NibiruChain/nibiru/commit/9acdf4e8eb6e60272f73d477993b88c4549b0051))
+* ci(dependabot.yml): ignore updates to Cosmos-SDK, CometBFT, and Wasmd, as they are often breaking changes
 
+---
+
+## v2.9.0
+
+- [Release Link: v2.9.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.9.0).
+- Date: 2025-11-10
+
+Changes:
 * fix(evmante): use deterministic ResponseDeliverTx gas wanted and gas consumed on failed EVM tx; nonce increment on the ctx should only happen in DeliverTx and ReCheckTx, not CheckTx in [#2434](https://github.com/NibiruChain/nibiru/pull/2434) - ([68bb5ba](https://github.com/NibiruChain/nibiru/commit/68bb5ba3d1b4655ed3aa0c71cd7904688147c0c7))
 * ci(golangci-lint): update linter version to latest (v2.6.1); improve CI caching in [#2431](https://github.com/NibiruChain/nibiru/pull/2431) - ([ba418d7](https://github.com/NibiruChain/nibiru/commit/ba418d746441753bf6872a29a3d9258a0581b00f))
 
