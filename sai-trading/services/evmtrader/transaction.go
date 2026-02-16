@@ -40,15 +40,8 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		gasLimit = 2_000_000
 	}
 
-	// Get gas price from network
-	gasPrice, err := t.client.SuggestGasPrice(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("gas price: %w", err)
-	}
-	// Ensure minimum gas price (defensive: prevent 0 or extremely low values)
-	if gasPrice.Cmp(big.NewInt(1000)) < 0 {
-		gasPrice = big.NewInt(1000) // 1000 wei minimum
-	}
+	// Set gas price for zero-gas EVM contracts
+	gasPrice := big.NewInt(0)
 
 	// Create JsonTxArgs
 	txArgs := evm.JsonTxArgs{
