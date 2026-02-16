@@ -14,6 +14,8 @@
   "bot": {
     "blocks_before_close": 10,
     "max_open_positions": 2,
-    "loop_delay_seconds": 10
+    "loop_delay_seconds": 10,
+    "min_seconds_between_opens": 600,
+    "health_check_interval_seconds": 1800
   }
 }

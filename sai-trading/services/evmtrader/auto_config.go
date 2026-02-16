@@ -37,9 +37,11 @@ type TradingSettings struct {
 
 // BotSettings contains bot behavior parameters
 type BotSettings struct {
-	BlocksBeforeClose uint64 `json:"blocks_before_close"`
-	MaxOpenPositions  int    `json:"max_open_positions"`
-	LoopDelaySeconds  int    `json:"loop_delay_seconds"`
+	BlocksBeforeClose          uint64 `json:"blocks_before_close"`
+	MaxOpenPositions           int    `json:"max_open_positions"`
+	LoopDelaySeconds           int    `json:"loop_delay_seconds"`
+	HealthCheckIntervalSeconds int    `json:"health_check_interval_seconds,omitempty"` // 0 = disabled
+	MinSecondsBetweenOpens     int    `json:"min_seconds_between_opens,omitempty"`     // 0 = no throttle; when > 0, open at most once every N seconds
 }
 
 // LoadAutoTradingConfig loads the auto-trading configuration from a JSON file
@@ -105,14 +107,16 @@ func (cfg *AutoTradingJSONConfig) Validate() error {
 // ToAutoTradingConfig converts JSON config to AutoTradingConfig
 func (cfg *AutoTradingJSONConfig) ToAutoTradingConfig() AutoTradingConfig {
 	return AutoTradingConfig{
-		MarketIndices:     cfg.Trading.MarketIndices,
-		CollateralIndices: cfg.Trading.CollateralIndices,
-		MinTradeSize:      cfg.Trading.MinTradeSize,
-		MaxTradeSize:      cfg.Trading.MaxTradeSize,
-		MinLeverage:       cfg.Trading.MinLeverage,
-		MaxLeverage:       cfg.Trading.MaxLeverage,
-		BlocksBeforeClose: cfg.Bot.BlocksBeforeClose,
-		MaxOpenPositions:  cfg.Bot.MaxOpenPositions,
-		LoopDelaySeconds:  cfg.Bot.LoopDelaySeconds,
+		MarketIndices:              cfg.Trading.MarketIndices,
+		CollateralIndices:          cfg.Trading.CollateralIndices,
+		MinTradeSize:               cfg.Trading.MinTradeSize,
+		MaxTradeSize:               cfg.Trading.MaxTradeSize,
+		MinLeverage:                cfg.Trading.MinLeverage,
+		MaxLeverage:                cfg.Trading.MaxLeverage,
+		BlocksBeforeClose:          cfg.Bot.BlocksBeforeClose,
+		MaxOpenPositions:           cfg.Bot.MaxOpenPositions,
+		LoopDelaySeconds:           cfg.Bot.LoopDelaySeconds,
+		HealthCheckIntervalSeconds: cfg.Bot.HealthCheckIntervalSeconds,
+		MinSecondsBetweenOpens:     cfg.Bot.MinSecondsBetweenOpens,
 	}
 }

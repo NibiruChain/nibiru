@@ -271,3 +271,27 @@ func sendSlackNotification(webhookURL string, payload map[string]interface{}) {
 	}
 	defer resp.Body.Close()
 }
+
+// sendSlackHealthNotification sends a health-check summary to Slack (non-blocking).
+func sendSlackHealthNotification(webhookURL string, fields map[string]any) {
+	if webhookURL == "" {
+		return
+	}
+	slackMsg := map[string]interface{}{
+		"text": "✅ Auto-Trader Health Check",
+		"blocks": []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": "*Auto-Trader Health Check*",
+				},
+			},
+			{
+				"type":   "section",
+				"fields": buildSlackFields(fields),
+			},
+		},
+	}
+	go sendSlackNotification(webhookURL, slackMsg)
+}
