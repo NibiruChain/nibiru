@@ -6,8 +6,6 @@ package evmante
 // the deductio of fees and validation of tx and block gas limits.
 
 import (
-	"fmt"
-	"log"
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -103,6 +101,10 @@ func AnteStepDeductGas(
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
+	if evm.IsZeroGasEthTx(sdb.Ctx()) {
+		return nil
+	}
+
 	from := msgEthTx.FromAddrBech32()
 	baseFeeMicronibiPerGas := k.BaseFeeMicronibiPerGas(sdb.Ctx())
 	txData, err := evm.UnpackTxData(msgEthTx.Data)
@@ -118,14 +120,12 @@ func AnteStepDeductGas(
 		return sdkioerrors.Wrapf(err, "failed to verify the fees")
 	}
 
-	fmt.Printf("EthAnteDeductGas Pre: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
-	log.Printf("EthAnteDeductGas Pre: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 	err = func(sdb *evmstate.SDB, effFeeWei *uint256.Int, feePayer sdk.AccAddress) error {
 		if fees.IsZero() {
 			return nil
 		}
 
-		if err := k.DeductTxCostsFromUserBalance(
+		if err := DeductTxCostsFromUserBalance(
 			sdb, effFeeWei, gethcommon.BytesToAddress(feePayer),
 		); err != nil {
 			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
@@ -143,9 +143,6 @@ func AnteStepDeductGas(
 		sdk.NewAttribute(sdk.AttributeKeyFeePayer, from.String()),
 		evm.AttributeKeyFeePayerEvm(msgEthTx.FromAddr()),
 	))
-
-	fmt.Printf("EthAnteDeductGas Post: sdb.GetBalance(msgEthTx.FromAddr()): %s\n", sdb.GetBalance(msgEthTx.FromAddr()))
-	log.Printf("EthAnteDeductGas Post: sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 
 	return nil
 }
@@ -220,10 +217,12 @@ func AnteStepGasWanted(
 	// Gas consumption follows a two-phase approach:
 	// 1. Ante handlers use infinite gas meters to avoid premature failures
 	// 2. EVM execution tracks actual gas consumption separately via gasRemaining
-	// 3. Only the final consumed amount is recorded via SafeConsumeGas
+	// 3. Only the final consumed amount is recorded to the [sdk.GasMeter] via
+	// `SafeConsumeGas`
 	//
-	// This design ensures that Cosmos gas accounting reflects actual EVM gas usage
-	// without double-counting or premature gas failures during validation.
+	// This design ensures that [sdk.GasMeter] accounting reflects actual EVM gas
+	// usage that occurs in `EthereumTx` without gas failures during [AnteStep]
+	// validation.
 	newCtx := sdb.Ctx().
 		WithGasMeter(eth.NewInfiniteGasMeterWithLimit(gasWanted)).
 		WithPriority(minPriority)

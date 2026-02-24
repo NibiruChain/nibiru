@@ -1,4 +1,4 @@
-import { expect, test } from "@jest/globals"
+import { expect, test } from "bun:test"
 import { toBigInt } from "ethers"
 
 import { TEST_TIMEOUT } from "./setup"

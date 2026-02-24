@@ -12,6 +12,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
+// ZeroGasMeta is the context payload for zero-gas EVM transactions. Stored under CtxKeyZeroGasMeta.
+// When present, indicates the tx is zero-gas eligible; ante steps skip balance-vs-cost and fee
+// deduction; msg_server skips refund. CanTransfer still runs. Empty struct; only presence (non-nil) matters.
+type ZeroGasMeta struct{}
+
 // FIXME: Explore problems arrising from ERC1155 creating multiple fungible
 // tokens that are valid ERC20s with the same address.
 // https://github.com/NibiruChain/nibiru/issues/1933
@@ -112,7 +117,11 @@ func ValidateFunTokenBankMetadata(
 	return out, nil
 }
 
-// Gracefully handles "out of gas"
+// SafeConsumeGas aligns the SDK gas meter with a gas-used value from another
+// source (e.g. the EVM). It consumes the given amount from ctx.GasMeter(), so
+// that Cosmos gas accounting (e.g. ResponseDeliverTx.GasUsed, block gas) can
+// reflect that usage. If the meter would exceed its limit, ConsumeGas panics;
+// SafeConsumeGas catches the panic and returns an error instead.
 func SafeConsumeGas(ctx sdk.Context, amount uint64, descriptor string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {

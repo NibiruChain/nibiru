@@ -586,6 +586,7 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	)
 	s.NoError(err)
 
+	deps.Ctx().GasMeter().ConsumeGas(5_000, "simulated ante handler gas usage")
 	evmResp, err = deps.EvmKeeper.EthereumTx(deps.GoCtx(), msgEthTx)
 	s.Require().NoError(err)
 	s.Require().NotNil(evmResp)
@@ -593,7 +594,8 @@ func (s *SuiteFunToken) TestFunTokenInfiniteRecursionERC20() {
 	errMsg := "running EthereumTx should consume gas even if it fails"
 	s.NotZero(evmResp.GasUsed, errMsg)
 	s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed(), errMsg)
-	s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed, errMsg)
+	// Gas accounting reflects only EVM gas used (refund-to-zero before SafeConsumeGas)
+	s.Require().Equal(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed, errMsg)
 
 	s.Contains(evmResp.VmError, "execution reverted")
 	s.Contains(evmResp.VmError, "less than intrinsic gas cost")
