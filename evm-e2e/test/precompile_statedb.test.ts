@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals"
+import { describe, expect, it } from "bun:test"
 import { Contract, Wallet } from "ethers"
 import * as fs from "fs"
 

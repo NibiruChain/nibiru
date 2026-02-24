@@ -14,12 +14,14 @@ import (
 
 var _ AnteStep = EthSigVerification
 
-// AnteHandle validates checks that the registered chain id is the same as the
+// EthSigVerification validates checks that the registered chain id is the same as the
 // one on the message, and that the signer address matches the one defined on the
-// message. It's not skipped for RecheckTx, because it sets `From` address which
-// is critical from other ante handler to work. Failure in RecheckTx will prevent
-// tx to be included into block, especially when CheckTx succeed, in which case
-// user won't see the error message.
+// message.
+//
+// Note that this [AnteStep] is not skipped for RecheckTx, because it sets `From`
+// address which is critical from other ante steps to work. Failure in RecheckTx
+// will prevent tx from being included in the block, especially when CheckTx
+// succeed, in which case user won't see the error message.
 func EthSigVerification(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,

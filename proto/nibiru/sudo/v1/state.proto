@@ -31,4 +31,8 @@ message ZeroGasActors {
   // Contracts: contract addresses that can be invoked by "senders" with zero gas
   // costs.
   repeated string contracts = 2;
+
+  // AlwaysZeroGasContracts: contract addresses that can be invoked with zero gas
+  // costs for any sender.
+  repeated string always_zero_gas_contracts = 3;
 }

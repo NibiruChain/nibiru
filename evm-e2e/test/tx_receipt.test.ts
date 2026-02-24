@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from "@jest/globals"
+import { describe, expect, it } from "bun:test"
 import { ethers, Log, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
@@ -6,8 +6,6 @@ import { account, TEST_TIMEOUT } from "./setup"
 import { deployContractEventsEmitter } from "./utils"
 
 describe("Transaction Receipt Tests", () => {
-  jest.setTimeout(TEST_TIMEOUT)
-
   let recipient = ethers.Wallet.createRandom().address
 
   it("simple transfer receipt", async () => {
@@ -21,7 +19,7 @@ describe("Transaction Receipt Tests", () => {
     assertBaseReceiptFields(receipt)
     expect(receipt.to).toEqual(recipient)
     expect(receipt.logs).toHaveLength(0) // ETH transfers have no logs
-  })
+  }, TEST_TIMEOUT)
 
   it("contract deployment receipt", async () => {
     const factory = new TestERC20__factory(account)
@@ -35,7 +33,7 @@ describe("Transaction Receipt Tests", () => {
     // Verify the deployed contract address is valid
     const code = await account.provider.getCode(receipt.contractAddress!)
     expect(code).not.toEqual("0x")
-  })
+  }, TEST_TIMEOUT)
 
   it("receipt with logs / events", async () => {
     const contract = await deployContractEventsEmitter()
@@ -61,7 +59,7 @@ describe("Transaction Receipt Tests", () => {
 
     // Verify indexed parameter encoding
     expect(event.topics[1]).toEqual(ethers.zeroPadValue(account.address, 32)) // indexed address param
-  })
+  }, TEST_TIMEOUT)
 })
 
 function assertBaseReceiptFields(receipt: TransactionReceipt) {
