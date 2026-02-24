@@ -2,8 +2,10 @@ name: Sai Trading Docker
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'sai-trading/*'
+      - 'sai-trading/v*'
 
 permissions:
   contents: read
@@ -17,11 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Extract version from tag
+      - name: Get version from tag
         id: version
+        if: startsWith(github.ref, 'refs/tags/sai-trading/v')
         run: |
-          RAW_TAG="${GITHUB_REF_NAME}"
-          VERSION="${RAW_TAG#sai-trading/}"
+          RAW_TAG="${GITHUB_REF_NAME}"          # e.g. "sai-trading/v1.0.0"
+          VERSION="${RAW_TAG#sai-trading/v}"    # -> "1.0.0"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
@@ -34,20 +37,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/sai-trader
-          tags: ${{ steps.version.outputs.version }}
-
-      - name: Build and push image
+      # Build and push versioned image on tags like sai-trading/v1.0.0
+      - name: Build and push versioned image
         uses: docker/build-push-action@v6
+        if: startsWith(github.ref, 'refs/tags/sai-trading/v')
         with:
           context: .
           file: sai-trading/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ghcr.io/${{ github.repository_owner }}/sai-trader:${{ steps.version.outputs.version }}
+
+      # Build and push :latest image on pushes to main
+      - name: Build and push latest image
+        uses: docker/build-push-action@v6
+        if: github.ref == 'refs/heads/main'
+        with:
+          context: .
+          file: sai-trading/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/${{ github.repository_owner }}/sai-trader:latest
 
