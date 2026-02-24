@@ -25,6 +25,7 @@ chain_id = "nibiru-testnet-2"
 [testnet.contracts]
 oracle_address = "nibi1mqlrsvfhm5vzsz0wxr6mh8pzxzpz6dd4g7nuyycjf6gy5zc53fvq3lq2fz"
 perp_address = "nibi1qtkcns647w959cj9x2yytateu6dgscfnfkraywwa443pr2erak0s5ux7e5"
+evm_interface_address = "0xC89Cd9fB1f2A77fAdCa62cCc4df21698cFFFaac9"
 
 [mainnet]
 name = "Nibiru Mainnet"
@@ -35,3 +36,4 @@ chain_id = "nibiru-mainnet-1"
 [mainnet.contracts]
 oracle_address = "nibi1xfwyfwtdame6645lgcs4xvf4u0hpsuvxrcelfwtztu0pv7n4l6hqw5a8gj"
 perp_address = "nibi1ntmw2dfvd0qnw5fnwdu9pev2hsnqfdj9ny9n0nzh2a5u8v0scflq930mph"
+evm_interface_address = "0x9F48A925Dda8528b3A5c2A6717Df0F03c8b167c0"
