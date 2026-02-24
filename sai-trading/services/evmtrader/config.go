@@ -48,9 +48,10 @@ type Config struct {
 
 // ContractAddresses stores addresses/ids loaded from localnet_contracts.env
 type ContractAddresses struct {
-	OracleAddress string
-	PerpAddress   string
-	VaultAddress  string
+	OracleAddress       string
+	PerpAddress         string
+	VaultAddress        string
+	EvmInterfaceAddress string
 }
 
 // ErrorFilters defines include/exclude keyword filters for Slack notifications
@@ -83,8 +84,9 @@ type NetworkInfo struct {
 
 // ContractConfig contains contract addresses
 type ContractConfig struct {
-	OracleAddress string `toml:"oracle_address"`
-	PerpAddress   string `toml:"perp_address"`
+	OracleAddress       string `toml:"oracle_address"`
+	PerpAddress         string `toml:"perp_address"`
+	EvmInterfaceAddress string `toml:"evm_interface_address"`
 }
 
 // loadContractAddresses reads a simple KEY=VALUE env file.
@@ -113,6 +115,8 @@ func loadContractAddresses(envFile string) (ContractAddresses, error) {
 			addrs.PerpAddress = val
 		case "VAULT_ADDRESS":
 			addrs.VaultAddress = val
+		case "EVM_INTERFACE_ADDRESS":
+			addrs.EvmInterfaceAddress = val
 		}
 	}
 	return addrs, nil
@@ -150,8 +154,9 @@ func GetNetworkInfo(config NetworkConfig, networkMode string) (*NetworkInfo, err
 // ContractAddressesFromNetworkInfo converts NetworkInfo to ContractAddresses
 func ContractAddressesFromNetworkInfo(netInfo *NetworkInfo) ContractAddresses {
 	return ContractAddresses{
-		OracleAddress: netInfo.Contracts.OracleAddress,
-		PerpAddress:   netInfo.Contracts.PerpAddress,
+		OracleAddress:       netInfo.Contracts.OracleAddress,
+		PerpAddress:         netInfo.Contracts.PerpAddress,
+		EvmInterfaceAddress: netInfo.Contracts.EvmInterfaceAddress,
 	}
 }
 

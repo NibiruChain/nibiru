@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/CosmWasm/wasmd v0.44.0 // indirect
 	github.com/CosmWasm/wasmvm v1.5.9 // indirect
-	github.com/NibiruChain/nibiru/v2 v2.8.0
+	github.com/NibiruChain/nibiru/v2 v2.11.0
 
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.37.18
@@ -247,7 +247,7 @@ replace (
 	github.com/NibiruChain/nibiru/v2 => ../
 	github.com/cosmos/cosmos-sdk => ../internal/cosmos-sdk
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
-	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.3
+	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/linxGnu/grocksdb => github.com/linxGnu/grocksdb v1.8.12
 

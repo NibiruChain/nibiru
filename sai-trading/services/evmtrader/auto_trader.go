@@ -246,35 +246,6 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 					continue
 				}
 
-				// Estimate gas and check balance for gas fees
-				gasLimit := uint64(2_000_000)
-				gasPrice, err := t.client.SuggestGasPrice(ctx)
-				if err != nil {
-					t.logWarn("Failed to get gas price, using default", "error", err.Error())
-					gasPrice = big.NewInt(1000)
-				}
-
-				estimatedGasCost := new(big.Int).Mul(big.NewInt(int64(gasLimit)), gasPrice)
-
-				evmBalance, err := t.client.BalanceAt(ctx, t.accountAddr, nil)
-				if err != nil {
-					t.logError("Failed to query EVM balance for gas check", "error", err.Error())
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
-				}
-
-				if evmBalance.Cmp(estimatedGasCost) < 0 {
-					balanceNibi := new(big.Float).Quo(new(big.Float).SetInt(evmBalance), big.NewFloat(1e18))
-					t.logError("Insufficient NIBI balance for gas fees",
-						"balance_nibi", balanceNibi.Text('f', 18),
-						"balance_wei", evmBalance.String(),
-						"gas_limit", gasLimit,
-						"gas_price", gasPrice.String(),
-						"fund this address", fmt.Sprintf(" %s with %s", t.ethAddrBech32, "unibi"),
-					)
-					return fmt.Errorf("insufficient balance")
-				}
-
 				if balance.Cmp(big.NewInt(0)) == 0 {
 					t.logError("Balance is zero, stopping automated trading",
 						"balance", balance.String(),
