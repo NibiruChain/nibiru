@@ -47,9 +47,6 @@ export interface BundlerConfig {
   validationEnabled: boolean
   gasBumpPercent: number
   gasBumpWei?: bigint
-  prefundEnabled: boolean
-  maxPrefundWei: bigint
-  prefundAllowlist: string[]
   submissionTimeoutMs: number
   finalityBlocks: number
   receiptLimit: number

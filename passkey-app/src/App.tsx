@@ -7,13 +7,12 @@ import { makePublicClient } from './lib/passkeyClient'
 import { clearPasskey, loadPasskey, savePasskey } from './lib/storage'
 import { derivePasskeyAddress } from './lib/passkeyAddress'
 import { encodeExecute, PASSKEY_ACCOUNT_ABI } from './lib/passkeyAccount'
-import { createPasskeyAccount, fundAccount, fetchBundlerLogs, sendUserOperation } from './lib/bundler'
+import { createPasskeyAccount, fetchBundlerLogs, sendUserOperation } from './lib/bundler'
 import { defaultUserOp, getUserOpHash, toRpcUserOperation } from './lib/userop'
 import { fromBase64Url } from './lib/base64'
 import { getBundlerHealth, getRpcHealth } from './lib/health'
 import { Sidebar } from './components/Sidebar'
 import { Step } from './components/Step'
-import { fundFromDevAccount } from './lib/faucet'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const envRpc = import.meta.env.VITE_RPC_URL as string | undefined
@@ -51,7 +50,6 @@ function App() {
   const [balance, setBalance] = useState<string>('0')
   const [bundlerBalance, setBundlerBalance] = useState<string>('0')
   const [bundlerLogs, setBundlerLogs] = useState<BundlerLogEntry[]>([])
-  const [isFunding, setIsFunding] = useState(false)
   const [isDeployed, setIsDeployed] = useState(false)
   const [serviceHealth, setServiceHealth] = useState<{ rpc: ServiceHealth; bundler: ServiceHealth }>({
     rpc: { status: 'checking' },
@@ -468,54 +466,27 @@ function App() {
 
         <Step
           number={3}
-          title="Fund Account"
+          title="Funding (Optional)"
           description={
             <>
               <p>
-                Smart contract accounts need gas to pay for transactions (unless using a Paymaster).
+                Bundler fee sponsorship is disabled.
               </p>
               <p>
-                We'll use the Bundler's faucet to send some testnet NIBI to your new account.
+                If this account needs native tokens for non-gasless flows, fund it directly from a wallet or CLI.
               </p>
             </>
           }
           isActive={isDeployed}
           isCompleted={BigInt(balance) > 0}
         >
-          <button
-            onClick={async () => {
-              if (!fromAddress || fromAddress === ZERO_ADDRESS) return
-              try {
-                setIsFunding(true)
-                const desiredAmount = 100000000000000000n // 0.1 NIBI
-                const bundlerBal = BigInt(bundlerBalance || '0')
-                if (bundlerBal < desiredAmount + 20000000000000000n) {
-                  updateStatus('Bundler is underfunded. Top up the bundler signer first.')
-                  return
-                }
-
-                updateStatus(`Requesting transfer of ${desiredAmount} wei from bundler dev account...`)
-                const txHash = await fundFromDevAccount(config, fromAddress, desiredAmount)
-                updateStatus(`Funded tx: ${txHash}`)
-              } catch (err: any) {
-                console.error(err)
-                updateStatus(err?.message ?? 'Funding failed')
-              } finally {
-                setIsFunding(false)
-              }
-            }}
-            disabled={isFunding || !isDeployed}
-          >
-            {isFunding ? 'Funding…' : 'Fund from Dev Account'}
-          </button>
-          {BigInt(balance) === 0n && (
-            <div style={{ marginTop: '12px', fontSize: '14px', color: '#64748b' }}>
-              <p>If the faucet fails, send NIBI manually to:</p>
-              <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', wordBreak: 'break-all' }}>
-                {fromAddress}
-              </code>
-            </div>
-          )}
+          <div style={{ marginTop: '12px', fontSize: '14px', color: '#64748b' }}>
+            <p>No bundler funding RPC is available.</p>
+            <p>Fund manually if needed:</p>
+            <code style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', wordBreak: 'break-all' }}>
+              {fromAddress}
+            </code>
+          </div>
         </Step>
 
         <Step
@@ -534,7 +505,7 @@ function App() {
               </ol>
             </>
           }
-          isActive={isDeployed && BigInt(balance) > 0}
+          isActive={isDeployed}
         >
           <div className="grid">
             <div style={{ border: '1px solid #e2e8f0', padding: '16px', borderRadius: '8px' }}>

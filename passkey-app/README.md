@@ -8,7 +8,7 @@ now talks to an ERC-4337 bundler (not a custom RPC method) for passkey-signed us
 
 ```bash
 # From nibiru/ root
-just passkey-demo        # starts localnet (if needed), deploys EntryPoint + PasskeyAccountFactory, writes .env.local, starts bundler on :4337 (logs in logs/passkey-bundler.log), funds bundler from guard-cream dev key
+just passkey-demo        # starts localnet (if needed), deploys EntryPoint + PasskeyAccountFactory, writes .env.local, starts bundler on :4337 (logs in logs/passkey-bundler.log)
 
 # Then launch the UI
 cd passkey-app && npm install && npm run dev
@@ -29,9 +29,9 @@ Open http://localhost:5173. The connection panel is prefilled from `.env.local` 
 bundler URL if needed (defaults to http://127.0.0.1:4337). Flow:
 
 1) Create/load a passkey (WebAuthn).  
-2) Click “Create passkey account” — this asks the bundler to call `createAccount(qx,qy)` on the factory (gas paid by the
-   bundler dev key), then auto-sets `from` from the `AccountCreated` event.  
-3) Fund that address from the localnet validator if needed (e.g. `nibid tx bank send validator <passkey_addr> 1000000000000000000unibi --yes --fees 750000unibi --gas 300000 --chain-id nibiru-localnet-0 --node http://localhost:26657`).  
+2) Click “Create passkey account” — this asks the bundler to call `createAccount(qx,qy)` on the factory, then auto-sets
+   `from` from the `AccountCreated` event.  
+3) Bundler sponsorship is disabled. Fund that address manually if needed (e.g. `nibid tx bank send validator <passkey_addr> 1000000000000000000unibi --yes --fees 750000unibi --gas 300000 --chain-id nibiru-localnet-0 --node http://localhost:26657`).  
 4) Use “Send NIBI (prefilled)” for a quick native transfer, or “Open custom transaction” for calldata trades.  
 5) Deposit flow uses `PerpVaultEvmInterface.deposit`; fill vault address, collateral ERC20, and wasm msg if needed.
 
