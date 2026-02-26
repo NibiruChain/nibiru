@@ -5,7 +5,7 @@ import { BundlerLogger } from "./logger"
 import { Metrics } from "./metrics"
 import { BundlerStore } from "./store"
 import { entryPointInterfaceV06 } from "./entryPoint"
-import { getUserOpHash, requiredPrefund } from "./userop"
+import { getUserOpHash } from "./userop"
 
 const standardErrorInterface = new Interface(["error Error(string)", "error Panic(uint256)"])
 
@@ -147,9 +147,6 @@ export class SubmissionEngine {
       if (hash.toLowerCase() !== job.userOpHash.toLowerCase()) {
         throw new Error("UserOp hash mismatch after validation")
       }
-      if (this.config.prefundEnabled) {
-        await this.ensurePrefund(job)
-      }
 
       const submission = await this.submitWithRetries(job)
       if (submission.kind === "submitted") {
@@ -218,58 +215,6 @@ export class SubmissionEngine {
       })
     } finally {
       this.metrics.submissionDuration.observe(Date.now() - start)
-    }
-  }
-
-  private async ensurePrefund(job: SubmissionJob) {
-    if (
-      this.config.prefundAllowlist.length > 0 &&
-      !this.config.prefundAllowlist.some((a) => a.toLowerCase() === job.userOp.sender.toLowerCase())
-    ) {
-      throw new Error(`Prefund not allowed for sender ${job.userOp.sender}`)
-    }
-
-    // If a paymaster is provided, it should cover gas; do not top up the sender deposit.
-    if (job.userOp.paymasterAndData && job.userOp.paymasterAndData !== "0x") {
-      return
-    }
-
-    const needed = requiredPrefund(job.userOp)
-    if (needed === 0n) return
-    const current = (await this.entryPoint.balanceOf(job.userOp.sender)) as bigint
-    if (current >= needed) return
-    const topUp = needed - current
-    if (topUp > this.config.maxPrefundWei) {
-      throw new Error(
-        `Prefund requirement ${topUp.toString()} wei exceeds configured maxPrefundWei (${this.config.maxPrefundWei.toString()})`,
-      )
-    }
-
-    this.metrics.prefundAttempts.inc()
-    this.logger.info("Prefunding sender in EntryPoint", {
-      sender: job.userOp.sender,
-      needed: topUp.toString(),
-      current: current.toString(),
-    })
-    const nonce = await this.nonceManager.reserve()
-    let tx: any
-    try {
-      tx = await this.entryPoint.depositTo(job.userOp.sender, {
-        value: topUp,
-        nonce,
-      })
-    } catch (err) {
-      this.metrics.prefundFailures.inc()
-      await this.nonceManager.onSendFailure(nonce, err)
-      throw err
-    }
-
-    try {
-      await tx.wait()
-      await this.nonceManager.onMined(nonce)
-    } catch (err) {
-      this.metrics.prefundFailures.inc()
-      throw err
     }
   }
 
