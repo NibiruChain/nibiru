@@ -245,9 +245,6 @@ async function handleRpcRequest(payload: any, ctx: RpcRequestContext): Promise<o
       case "passkey_createAccount":
         if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
         return createResult(payload.id, await handleCreatePasskeyAccount(payload.params ?? [], wallet))
-      case "passkey_fundAccount":
-        if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
-        return createResult(payload.id, await handleFundAccount(payload.params ?? [], wallet))
       case "passkey_getLogs":
         if (!config.enablePasskeyHelpers) return createError(payload.id, -32601, `Method ${method} not found`)
         return createResult(payload.id, await handleGetLogs(payload.params ?? [], store))
@@ -393,15 +390,6 @@ async function handleCreatePasskeyAccount(params: any[], wallet: Wallet): Promis
   const receipt = await tx.wait()
   const account = parseAccountCreated(receipt?.logs, iface) ?? predicted
   return { account, txHash: receipt?.hash ?? tx.hash }
-}
-
-async function handleFundAccount(params: any[], wallet: Wallet): Promise<{ txHash: string }> {
-  const to = params[0] as string | undefined
-  const amount = params[1] ? BigInt(params[1] as string) : 1_000_000_000_000_000_000n
-  if (!to) throw new Error("passkey_fundAccount requires target address")
-  const tx = await wallet.sendTransaction({ to, value: amount })
-  const receipt = await tx.wait()
-  return { txHash: receipt?.hash ?? tx.hash }
 }
 
 async function handleGetLogs(params: any[], store: BundlerStore) {
