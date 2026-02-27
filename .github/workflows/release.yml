@@ -87,13 +87,13 @@ jobs:
           echo "DARWIN_NAME_ALL=${DARWIN_NAME}_all" >> $GITHUB_ENV
 
       - name: Download arm64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.DARWIN_NAME_ARM64 }}
           path: ./arm64
 
       - name: Download amd64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.DARWIN_NAME_AMD64 }}
           path: ./amd64
@@ -137,12 +137,12 @@ jobs:
           echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
 
       - name: Download arm64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.LINUX_NAME_ARM64 }}
 
       - name: Download amd64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.LINUX_NAME_AMD64 }}
 
@@ -199,12 +199,12 @@ jobs:
           echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
 
       - name: Download arm64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.LINUX_NAME_ARM64 }}
 
       - name: Download amd64 artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.LINUX_NAME_AMD64 }}
 
@@ -258,7 +258,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: dist
           pattern: nibid_${{ needs.version.outputs.value }}_*
