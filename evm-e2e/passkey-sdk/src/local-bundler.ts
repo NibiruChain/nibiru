@@ -47,7 +47,6 @@ const provider = new JsonRpcProvider(RPC_URL)
 const wallet = new Wallet(PRIVATE_KEY, provider)
 const ENTRY_POINT_ABI = [
   "function handleOps((address sender,uint256 nonce,bytes initCode,bytes callData,uint256 callGasLimit,uint256 verificationGasLimit,uint256 preVerificationGas,uint256 maxFeePerGas,uint256 maxPriorityFeePerGas,bytes paymasterAndData,bytes signature)[] ops, address payable beneficiary)",
-  "function depositTo(address) payable",
 ]
 const FACTORY_ABI = [
   "function createAccount(bytes32 _qx, bytes32 _qy) returns (address account)",
@@ -157,8 +156,6 @@ async function handleRpcRequest(
       return createResult(payload.id, handleGetUserOpReceipt(payload.params ?? []))
     case "passkey_createAccount":
       return createResult(payload.id, await handleCreatePasskeyAccount(payload.params ?? []))
-    case "passkey_fundAccount":
-      return createResult(payload.id, await handleFundAccount(payload.params ?? []))
     case "passkey_getLogs":
       return createResult(payload.id, handleGetLogs(payload.params ?? []))
     default:
@@ -183,16 +180,7 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
     nonce: rpcUserOp.nonce,
   })
 
-  let bundlerNonce = await provider.getTransactionCount(wallet.address, "pending")
-
-  // Simple pre-fund: deposit the required amount into EntryPoint for this sender.
-  const requiredPrefund =
-    (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
-  if (requiredPrefund > 0n) {
-    console.log(`Prefunding sender ${rpcUserOp.sender} with ${requiredPrefund} wei in EntryPoint`)
-    const prefundTx = await entryPoint.depositTo(rpcUserOp.sender, { value: requiredPrefund, nonce: bundlerNonce++ })
-    await prefundTx.wait()
-  }
+  const bundlerNonce = await provider.getTransactionCount(wallet.address, "pending")
 
   const tx = await entryPoint.handleOps([userOp], wallet.address, {
     gasLimit: userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas + 200000n,
@@ -266,18 +254,6 @@ async function handleCreatePasskeyAccount(params: any[]): Promise<{ account: str
   }
 
   return { account, txHash: tx.hash }
-}
-
-async function handleFundAccount(params: any[]): Promise<{ txHash: string }> {
-  const to = params[0] as string | undefined
-  const amount = params[1] ? BigInt(params[1] as string) : 1_000_000_000_000_000_000n
-  if (!to) {
-    throw new Error("passkey_fundAccount requires target address")
-  }
-  const tx = await wallet.sendTransaction({ to, value: amount })
-  const receipt = await tx.wait()
-  console.log(`Funded ${to} with ${amount} wei from bundler wallet (tx ${receipt?.hash ?? tx.hash})`)
-  return { txHash: receipt?.hash ?? tx.hash }
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
