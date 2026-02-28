@@ -46,51 +46,90 @@ https://github.com/mikefarah/yq?tab=readme-ov-file#github-action
 
 ## Running the EVM Trader
 
-### Configuration via `.env` file
+### Configuration
 
-Create a `.env` file in the root directory to configure the trader:
+Create a `.env` file in the root directory (see `.env.example`):
 
 ```bash
 # Account credentials (use either private key OR mnemonic)
-EVM_PRIVATE_KEY=0x1234567890abcdef...  # Your private key in hex format
+EVM_PRIVATE_KEY=0x1234567890abcdef...
 # OR
-EVM_MNEMONIC="word1 word2 word3 ..."   # Your BIP39 mnemonic phrase
+EVM_MNEMONIC="word1 word2 word3 ..."
+
+SLACK_WEBHOOK=""
+```
+
+#### Slack Notification Configuration (Optional)
+
+Slack notifications are optional. If not configured, errors will still be logged to stdout.
+
+**Step 1: Set Slack Webhook**
+
+Set your Slack webhook URL in `.env` file:
+
+```bash
+SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+```
+
+**Step 2: Configure Error Filters**
+
+Configure which errors to send to Slack in `networks.toml`:
+
+```toml
+[notifications.filters]
+include = ["insufficient funds", "gas error", "execution failed"]
+exclude = ["expected error", "test"]
+```
+
+**Filter Logic:**
+- **Exclude list**: If any keyword matches, skip the notification (highest priority)
+- **Include list**: If not empty, only send if at least one keyword matches
+- **Empty filters**: Send all errors to Slack
 
 ### Running the trader
 
-**Dynamic trading** (uses config parameters):
+**Auto trading** :
 ```bash
-just run-trader
-# or with custom parameters:
-just run-trader --market-index 0 --leverage-min 5 --leverage-max 20
+just run-trader auto --network testnet
 ```
 
-**Static JSON file trading**:
+With custom parameters:
 ```bash
+just run-trader auto --market-index 0 --min-leverage 5 --max-leverage 20 --blocks-before-close 20 --network testnet
+```
+
+Or use a config file:
+```bash
+go run ./cmd/trader auto --config auto-trader.localnet.json
+```
+
+**Manual trading**:
+```bash
+# Open a single position
+just run-trader open --trade-type trade --market-index 0 --long false --trade-size 1 --network testnet
+
+# Using JSON file
 just run-trader --trade-json sample_txs/open_trade.json
 ```
 
 ### Available flags
 
-- `--network`: Network mode (`localnet`, `testnet`, `mainnet`)
+**Root flags (shared across all commands):**
+- `--network`: Network mode (`localnet`, `testnet`, `mainnet`) (default: `localnet`)
+- `--evm-rpc`: EVM RPC URL (overrides network mode default)
+- `--networks-toml`: Path to networks TOML configuration file (default: `networks.toml`)
+- `--contracts-env`: Path to contracts env file (legacy, overrides networks.toml)
 - `--private-key`: Private key in hex format (overrides `EVM_PRIVATE_KEY` env var)
 - `--mnemonic`: BIP39 mnemonic phrase (overrides `EVM_MNEMONIC` env var)
-- `--contracts-env`: Path to contracts env file (defaults to `.cache/localnet_contracts.env`)
-- `--trade-json`: Path to JSON file with trade parameters (overrides dynamic trading)
+
+**Auto command flags:**
+- `--config`: Path to JSON config file (optional)
 - `--market-index`: Market index to trade (default: 0)
-- `--collateral-index`: Collateral token index (default: 1)
-- `--leverage-min`: Minimum leverage (default: 5)
-- `--leverage-max`: Maximum leverage (default: 20)
-- `--trade-size-min`: Minimum trade size in smallest units (default: 10000)
-- `--trade-size-max`: Maximum trade size in smallest units (default: 50000)
-- `--enable-limit-order`: Enable limit order trading (default: false)
-
-### Example `.env` file
-
-```bash
-# Account
-EVM_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
-```
-
-**Note**: The `.env` file is automatically loaded if present. You can also pass values via command-line flags, which take precedence over environment variables.
-
+- `--collateral-index`: Collateral token index (default: 0, uses market's quote token)
+- `--min-trade-size`: Minimum trade size in smallest units (default: 1000000)
+- `--max-trade-size`: Maximum trade size in smallest units (default: 5000000)
+- `--min-leverage`: Minimum leverage (default: 1, e.g., 1 for 1x)
+- `--max-leverage`: Maximum leverage (default: 10, e.g., 10 for 10x)
+- `--blocks-before-close`: Number of blocks to wait before closing a position (default: 20)
+- `--max-open-positions`: Maximum number of positions to keep open at once (default: 5)
+- `--loop-delay`: Delay in seconds between each loop iteration (default: 5)

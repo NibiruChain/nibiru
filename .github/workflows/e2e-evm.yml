@@ -151,4 +151,10 @@ jobs:
       - if: steps.check_changes.outputs.check_changes == 'true'
         working-directory: "sai-trading"
         run: |
-          just test
+          just e2e-deploy
+
+      - if: steps.check_changes.outputs.check_changes == 'true'
+        name: "Run SAI Trading E2E tests"
+        working-directory: "sai-trading"
+        run: |
+          just e2e-test

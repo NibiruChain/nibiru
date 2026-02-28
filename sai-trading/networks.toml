@@ -1,0 +1,39 @@
+# Network Configuration for Sai Trading
+# This file contains contract addresses and RPC endpoints for different networks
+
+# Slack notification error filtering
+[notifications.filters]
+include = []
+exclude = []
+
+[localnet]
+name = "Local Testnet"
+evm_rpc_url = "http://localhost:8545"
+grpc_url = "localhost:9090"
+chain_id = "nibiru-localnet-0"
+
+[localnet.contracts]
+oracle_address = "nibi18cszlvm6pze0x9sz32qnjq4vtd45xehqs8dq7cwy8yhq35wfnn3qm02xqh"
+perp_address = "nibi1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrs0gfase"
+
+[testnet]
+name = "Nibiru Testnet 2"
+evm_rpc_url = "https://evm-rpc.testnet-2.nibiru.fi"
+grpc_url = "grpc.testnet-2.nibiru.fi:443"
+chain_id = "nibiru-testnet-2"
+
+[testnet.contracts]
+oracle_address = "nibi1mqlrsvfhm5vzsz0wxr6mh8pzxzpz6dd4g7nuyycjf6gy5zc53fvq3lq2fz"
+perp_address = "nibi1qtkcns647w959cj9x2yytateu6dgscfnfkraywwa443pr2erak0s5ux7e5"
+evm_interface_address = "0xC89Cd9fB1f2A77fAdCa62cCc4df21698cFFFaac9"
+
+[mainnet]
+name = "Nibiru Mainnet"
+evm_rpc_url = "https://evm-rpc.nibiru.fi"
+grpc_url = "grpc.nibiru.fi:443"
+chain_id = "nibiru-mainnet-1"
+
+[mainnet.contracts]
+oracle_address = "nibi1xfwyfwtdame6645lgcs4xvf4u0hpsuvxrcelfwtztu0pv7n4l6hqw5a8gj"
+perp_address = "nibi1ntmw2dfvd0qnw5fnwdu9pev2hsnqfdj9ny9n0nzh2a5u8v0scflq930mph"
+evm_interface_address = "0x9F48A925Dda8528b3A5c2A6717Df0F03c8b167c0"

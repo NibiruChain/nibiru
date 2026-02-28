@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	ethereum "github.com/ethereum/go-ethereum"
@@ -40,15 +39,8 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		gasLimit = 2_000_000
 	}
 
-	// Get gas price from network
-	gasPrice, err := t.client.SuggestGasPrice(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("gas price: %w", err)
-	}
-	// Ensure minimum gas price (defensive: prevent 0 or extremely low values)
-	if gasPrice.Cmp(big.NewInt(1000)) < 0 {
-		gasPrice = big.NewInt(1000) // 1000 wei minimum
-	}
+	// Set gas price for zero-gas EVM contracts
+	gasPrice := big.NewInt(0)
 
 	// Create JsonTxArgs
 	txArgs := evm.JsonTxArgs{
@@ -127,53 +119,36 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 	return nil, fmt.Errorf("tx not found after %d retries, hash: %s", maxRetries, txHash)
 }
 
-// sendOpenTradeTransaction sends the open_trade transaction
+// sendOpenTradeTransaction sends the open_trade transaction via the PerpVaultEvmInterface contract.
 func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64) (*sdk.TxResponse, error) {
-	// Build WASM execute call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	interfaceAddr := common.HexToAddress(t.addrs.EvmInterfaceAddress)
 
-	// Query the correct denomination for the collateral index
-	collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
+	data, err := interfaceABI.Pack(
+		"openTrade",
+		msgBytes,
+		new(big.Int).SetUint64(collateralIndex),
+		collateralAmt,
+		big.NewInt(0),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
+		return nil, fmt.Errorf("pack openTrade: %w", err)
 	}
 
-	funds := []struct {
-		Denom  string
-		Amount *big.Int
-	}{
-		{Denom: collateralDenom, Amount: collateralAmt},
-	}
-
-	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
-	if err != nil {
-		return nil, fmt.Errorf("pack wasm execute: %w", err)
-	}
-
-	// Sign and send EVM tx to WASM precompile
-	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+	return t.sendEVMTransaction(ctx, interfaceAddr, big.NewInt(0), data, chainID)
 }
 
-// sendCloseTradeTransaction sends the close_trade_market transaction
+// sendCloseTradeTransaction sends the close_trade transaction via the PerpVaultEvmInterface contract.
 func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte) (*sdk.TxResponse, error) {
-	// Build WASM execute call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	interfaceAddr := common.HexToAddress(t.addrs.EvmInterfaceAddress)
 
-	// No funds needed for close_trade_market
-	funds := []struct {
-		Denom  string
-		Amount *big.Int
-	}{}
-
-	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
+	data, err := interfaceABI.Pack("executeSimpleFunctions", msgBytes)
 	if err != nil {
-		return nil, fmt.Errorf("pack wasm execute: %w", err)
+		return nil, fmt.Errorf("pack executeSimpleFunctions: %w", err)
 	}
 
-	// Sign and send EVM tx to WASM precompile
-	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+	return t.sendEVMTransaction(ctx, interfaceAddr, big.NewInt(0), data, chainID)
 }
 
 // parseContractError parses common contract errors and provides user-friendly error messages.
@@ -204,6 +179,10 @@ Solutions:
 Error code: %d`, currentOI, maxOI, pctUsed, code)
 		}
 		return fmt.Errorf("market exposure limit reached - cannot open new positions (long or short)\n\nTry: trader list (to see other markets)\n\nError code: %d, log: %s", code, rawLog)
+	}
+
+	if strings.Contains(rawLog, "sender balance < tx cost") {
+		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough gas tokens for this trade.\n\nError code: %d", code)
 	}
 
 	// Parse insufficient balance error
