@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { newClog } from "@uniquedivine/jiyuu";
-// import { ethers } from "ethers";
+import { ContractFactory, JsonRpcProvider, Wallet } from "ethers";
 // import { wasmPrecompile } from "@nibiruchain/evm-core";
 
 const { clog, cerr, clogCmd } = newClog(
@@ -299,6 +299,26 @@ function saveEnvironmentFile() {
 
   writeFileSync(config.localnetContractsFile, envContent);
   clog(`Contract addresses saved to ${config.localnetContractsFile}`);
+}
+
+async function deployEvmInterface(perpAddress: string): Promise<string> {
+  const artifactPath = join(config.artifactsDir, "PerpVaultEvmInterface.json");
+  if (!existsSync(artifactPath)) {
+    throw new Error(
+      `EVM artifact not found at ${artifactPath}. Run 'bun run build_evm.ts' first.`,
+    );
+  }
+
+  const { abi, bytecode } = JSON.parse(readFileSync(artifactPath, "utf8"));
+
+  const provider = new JsonRpcProvider(config.rpcUrl);
+  const wallet = new Wallet(config.privateKey, provider);
+  const factory = new ContractFactory(abi, bytecode, wallet);
+
+  clog("Deploying PerpVaultEvmInterface...");
+  const contract = await factory.deploy(perpAddress, 0n);
+  await contract.waitForDeployment();
+  return await contract.getAddress();
 }
 
 // Deploy WASM contracts
@@ -665,7 +685,17 @@ async function main() {
     // Step 1: Deploy WASM contracts
     await deployWasmContracts();
 
-    // Step 2: Create funtoken mapping for stnibi
+    // Step 2: Deploy EVM interface contract
+    clog("\nDeploying EVM interface contract...");
+    const perpAddr = contractAddresses["PERP_ADDRESS"];
+    if (!perpAddr) {
+      throw new Error("PERP_ADDRESS not set after WASM deployment");
+    }
+    const evmInterfaceAddr = await deployEvmInterface(perpAddr);
+    clog(`PerpVaultEvmInterface deployed at: ${evmInterfaceAddr}`);
+    storeContractAddress("EVM_INTERFACE_ADDRESS", evmInterfaceAddr);
+
+    // Step 3: Create funtoken mapping for stnibi
     clog("\nCreating funtoken mapping for stnibi...");
     try {
       const createFuntokenCmd = `nibid tx evm create-funtoken --bank-denom tf/nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl/stnibi --from validator ${TX_FLAGS}`;
