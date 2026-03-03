@@ -15,6 +15,7 @@ chain_id = "nibiru-localnet-0"
 [localnet.contracts]
 oracle_address = "nibi18cszlvm6pze0x9sz32qnjq4vtd45xehqs8dq7cwy8yhq35wfnn3qm02xqh"
 perp_address = "nibi1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrs0gfase"
+evm_interface_address = "0xF8Da4a4A57e4aFBdeA4c541DCa626a47Ed874729"
 
 [testnet]
 name = "Nibiru Testnet 2"
