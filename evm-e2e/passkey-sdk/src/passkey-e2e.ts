@@ -64,11 +64,6 @@ async function main() {
   await txCreate.wait()
 
   const account = new Contract(predictedAccount, ACCOUNT_ABI, provider)
-  const entryPointContract = new Contract(
-    ENTRY_POINT,
-    ["function depositTo(address account) payable", "function balanceOf(address account) view returns (uint256)"],
-    wallet,
-  )
 
   // 3) Fund the PasskeyAccount.
   const fundTx = await wallet.sendTransaction({
@@ -102,20 +97,6 @@ async function main() {
     maxPriorityFeePerGas: maxPriority,
   }
 
-  const requiredPrefund =
-    (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
-  console.log("Depositing prefund:", formatEther(requiredPrefund), "NIBI")
-  const depositTx = await entryPointContract.depositTo(predictedAccount, {
-    value: requiredPrefund,
-    nonce: deployerNonce++,
-  })
-  await depositTx.wait()
-  console.log(
-    "EntryPoint deposit before bundling:",
-    formatEther(await entryPointContract.balanceOf(predictedAccount)),
-    "NIBI",
-  )
-
   const chainId = BigInt((await provider.getNetwork()).chainId)
   const userOpHash = getUserOpHash(userOp, ENTRY_POINT, chainId)
   const { r, s } = signUserOpHash(userOpHash, nodePasskey.privKey)
@@ -146,10 +127,8 @@ async function main() {
   // 6) Confirm nonce + balance changes on-chain.
   const nonceAfter = (await account.nonce()) as bigint
   const balanceAfter = await provider.getBalance(predictedAccount)
-  const depositAfter = await entryPointContract.balanceOf(predictedAccount)
   console.log("Nonce after:", nonceAfter.toString())
   console.log("Account balance after:", formatEther(balanceAfter), "NIBI")
-  console.log("EntryPoint deposit after:", formatEther(depositAfter), "NIBI")
 
   if (nonceAfter === onChainNonce + 1n && balanceAfter < balanceBefore) {
     console.log("✅ Passkey ERC-4337 flow completed successfully")

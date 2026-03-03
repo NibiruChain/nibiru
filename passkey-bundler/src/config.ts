@@ -28,9 +28,6 @@ const baseSchema = z.object({
   validationEnabled: z.boolean().default(false),
   gasBumpPercent: z.number().nonnegative().default(15),
   gasBumpWei: z.bigint({ coerce: true }).optional(),
-  prefundEnabled: z.boolean().default(true),
-  maxPrefundWei: z.bigint({ coerce: true }).default(5_000_000_000_000_000_000n), // 5 ETH
-  prefundAllowlist: z.array(hexAddress).default([]),
   submissionTimeoutMs: z.number().int().positive().default(45_000),
   finalityBlocks: z.number().int().positive().default(2),
   receiptLimit: z.number().int().positive().default(1000),
@@ -49,7 +46,6 @@ export function loadConfig(): BundlerConfig {
     config = {
       ...config,
       authRequired: merged.authRequired ?? true,
-      prefundEnabled: merged.prefundEnabled ?? false,
       enablePasskeyHelpers: merged.enablePasskeyHelpers ?? false,
       validationEnabled: merged.validationEnabled ?? true,
     }
@@ -59,9 +55,6 @@ export function loadConfig(): BundlerConfig {
     }
     if (config.authRequired && config.apiKeys.length === 0) {
       throw new Error("Testnet mode requires API keys (set BUNDLER_API_KEYS) or disable authRequired")
-    }
-    if (config.prefundEnabled && config.prefundAllowlist.length === 0) {
-      throw new Error("Testnet mode with prefundEnabled requires PREFUND_ALLOWLIST (comma-separated sender addresses)")
     }
   }
 
@@ -105,11 +98,6 @@ function envOverrides(): RawConfig {
     validationEnabled: toBool(process.env.VALIDATION_ENABLED),
     gasBumpPercent: process.env.GAS_BUMP ? Number(process.env.GAS_BUMP) : undefined,
     gasBumpWei: toBigInt(process.env.GAS_BUMP_WEI),
-    prefundEnabled: toBool(process.env.PREFUND_ENABLED),
-    maxPrefundWei: toBigInt(process.env.MAX_PREFUND_WEI),
-    prefundAllowlist: process.env.PREFUND_ALLOWLIST
-      ? process.env.PREFUND_ALLOWLIST.split(",").map((v) => v.trim()).filter(Boolean)
-      : undefined,
     submissionTimeoutMs: toInt(process.env.SUBMISSION_TIMEOUT_MS),
     finalityBlocks: toInt(process.env.FINALITY_BLOCKS),
     receiptLimit: toInt(process.env.RECEIPT_LIMIT),
