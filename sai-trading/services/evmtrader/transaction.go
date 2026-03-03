@@ -39,19 +39,20 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		gasLimit = 2_000_000
 	}
 
-	// Set gas price for zero-gas EVM contracts
-	gasPrice := big.NewInt(0)
+	zeroInt := big.NewInt(0)
 
 	// Create JsonTxArgs
 	txArgs := evm.JsonTxArgs{
-		From:     &t.accountAddr,
-		To:       &to,
-		Nonce:    (*hexutil.Uint64)(&nonce),
-		Gas:      (*hexutil.Uint64)(&gasLimit),
-		GasPrice: (*hexutil.Big)(gasPrice),
-		Value:    (*hexutil.Big)(value),
-		Data:     (*hexutil.Bytes)(&data),
-		ChainID:  (*hexutil.Big)(chainID),
+		From:                 &t.accountAddr,
+		To:                   &to,
+		Nonce:                (*hexutil.Uint64)(&nonce),
+		Gas:                  (*hexutil.Uint64)(&gasLimit),
+		MaxFeePerGas:         (*hexutil.Big)(zeroInt),
+		MaxPriorityFeePerGas: (*hexutil.Big)(zeroInt),
+		GasPrice:             (*hexutil.Big)(zeroInt),
+		Value:                (*hexutil.Big)(value),
+		Data:                 (*hexutil.Bytes)(&data),
+		ChainID:              (*hexutil.Big)(chainID),
 	}
 
 	// Convert to MsgEthereumTx
