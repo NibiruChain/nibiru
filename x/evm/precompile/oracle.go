@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
@@ -40,7 +40,7 @@ const (
 
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
-	evm *vm.EVM,
+	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
 	// Note that we use "trueCaller" here to differentiate between a delegate
 	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
@@ -53,10 +53,31 @@ func (p precompileOracle) Run(
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
-	startResult, err := OnRunStart(evm, contract.Input, p.ABI(), contract.Gas)
+	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		// Recover OOG panics as ErrOutOfGas; other panics become an error.
+		var (
+			oog  bool  // true if panic was out-of-gas
+			perr error // ErrOutOfGas for OOG, or formatted error for unexpected panic
+		)
+		panicInfo := recover()
+		if panicInfo != nil {
+			oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+				return fmt.Sprintf("unexpected panic in precompile: %v", p)
+			})
+		}
+		if oog {
+			err = perr
+			return
+		} else if perr != nil {
+			err = perr
+			return
+		}
+	}()
+
 	method, args, ctx := startResult.Method, startResult.Args, startResult.Ctx
 
 	switch PrecompileMethod(method.Name) {
@@ -72,11 +93,6 @@ func (p precompileOracle) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
-	contract.UseGas(
-		startResult.Ctx.GasMeter().GasConsumed(),
-		evm.Config.Tracer,
-		tracing.GasChangeCallPrecompiledContract,
-	)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/omap"

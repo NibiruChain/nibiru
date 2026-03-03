@@ -30,6 +30,7 @@ func NewAnteHandlerEvm(
 		AnteStepSetupCtx, // outermost AnteDecorator. AnteStepSetupCtx must be called first
 		EthSigVerification,
 		AnteStepValidateBasic,
+		AnteStepDetectZeroGas, // must run before MempoolGasPrice, VerifyEthAcc, CanTransfer, DeductGas
 		AnteStepMempoolGasPrice,
 		AnteStepBlockGasMeter,
 		AnteStepVerifyEthAcc,
@@ -124,8 +125,8 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 	)
 
 	log.Printf(
-		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ IsCheckTx %v, IsDeliverTx %v  ReCheckTx%v }",
-		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.IsDeliverTx(), sdb.Ctx().IsReCheckTx())
+		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ abci_execution_phase: %s }",
+		msgEthTx.Hash, txABCIPhase(sdb.Ctx()))
 	sdb.SetCtx(
 		sdb.Ctx().
 			WithIsEvmTx(true).
@@ -152,8 +153,8 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 	}
 
 	log.Printf(
-		"EthState AnteHandle END (SUCCESS):\ntxhash: %s\n{ IsCheckTx %v, ReCheckTx %v, IsDeliverTx %v }",
-		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.Ctx().IsReCheckTx(), sdb.IsDeliverTx())
+		"EthState AnteHandle END (SUCCESS):\ntxhash: %s\n{ abci_execution_phase: %s }",
+		msgEthTx.Hash, txABCIPhase(sdb.Ctx()))
 	if evmstate.IsDeliverTx(sdb.Ctx()) {
 		sdb.Commit() // Persist
 	}
@@ -191,6 +192,17 @@ func AnteStepTemplate(
 }
 
 type EVMKeeper = evmstate.Keeper
+
+// txABCIPhase returns the ABCI execution phase as a string for logging.
+func txABCIPhase(ctx sdk.Context) string {
+	if ctx.IsReCheckTx() {
+		return "ReCheckTx"
+	}
+	if ctx.IsCheckTx() {
+		return "CheckTx"
+	}
+	return "DeliverTx"
+}
 
 // shortFuncName parses the function name for the given [AnteStep]. This is
 // used for semantically rich logging in the EVM ante handler.

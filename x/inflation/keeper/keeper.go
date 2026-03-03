@@ -1,11 +1,12 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )

@@ -9,7 +9,6 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
@@ -22,7 +21,10 @@ import (
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
-var _ vm.PrecompiledContract = (*precompileFunToken)(nil)
+var (
+	_ vm.PrecompiledContract = (*precompileFunToken)(nil)
+	_ vm.DynamicPrecompile   = (*precompileFunToken)(nil)
+)
 
 // Precompile address for "IFunToken.sol", the contract that
 // enables transfers of ERC20 tokens to "nibi" addresses as bank coins
@@ -52,7 +54,6 @@ const (
 	FunTokenMethod_getErc20Address PrecompileMethod = "getErc20Address"
 )
 
-// Run runs the precompiled contract
 func (p precompileFunToken) Run(
 	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
@@ -64,13 +65,50 @@ func (p precompileFunToken) Run(
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
+	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
+	return bz, err
+}
+
+// DynamicRun runs the precompiled contract and returns the gas cost.
+func (p precompileFunToken) DynamicRun(
+	evmObj *vm.EVM,
+	trueCaller gethcommon.Address,
+	// Note that we use "trueCaller" here to differentiate between a delegate
+	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
+	// because these two addresses may differ.
+	contract *vm.Contract,
+	readonly bool,
+	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
+	isDelegatedCall bool,
+) (bz []byte, gasCost uint64, err error) {
 	defer func() {
 		err = ErrPrecompileRun(err, p)
 	}()
 	startResult, err := OnRunStart(evmObj, contract.Input, p.ABI(), contract.Gas)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+	defer func() {
+		// Recover OOG panics as ErrOutOfGas; other panics become an error.
+		var (
+			oog  bool  // true if panic was out-of-gas
+			perr error // ErrOutOfGas for OOG, or formatted error for unexpected panic
+		)
+		panicInfo := recover()
+		if panicInfo != nil {
+			oog, perr = evm.ParseOOGPanic(panicInfo, func(p any) string {
+				return fmt.Sprintf("unexpected panic in precompile: %v", p)
+			})
+		}
+		if oog {
+			gasCost = startResult.Ctx.GasMeter().GasConsumed()
+			err = perr
+			return
+		} else if perr != nil {
+			err = perr
+			return
+		}
+	}()
 
 	abciEventsStartIdx := len(startResult.Ctx.EventManager().Events())
 
@@ -96,14 +134,13 @@ func (p precompileFunToken) Run(
 		err = fmt.Errorf("invalid method called with name \"%s\"", method.Name)
 		return
 	}
-	// Gas consumed by a local gas meter
-	contract.UseGas(
-		startResult.Ctx.GasMeter().GasConsumed(),
-		evmObj.Config.Tracer,
-		tracing.GasChangeCallPrecompiledContract,
-	)
+	// Gas consumed by a local gas meter (the one in startResult.Ctx from OnRunStart).
+	// Gas consumed is guaranteed to be less than the gas limit (contract.Gas) because
+	// the gas meter was initialized inside of the setup function, OnRunStart. The EVM
+	// applies it via the returned gasCost from DynamicRun.
+	gasCost = startResult.Ctx.GasMeter().GasConsumed()
 	if err != nil {
-		return nil, err
+		return nil, gasCost, err
 	}
 
 	// Emit extra events for the EVM if this is a transaction
@@ -117,7 +154,7 @@ func (p precompileFunToken) Run(
 		)
 	}
 
-	return bz, err
+	return bz, gasCost, err
 }
 
 func PrecompileFunToken(keepers keepers.PublicKeepers) NibiruCustomPrecompile {

@@ -141,6 +141,21 @@ func (s *TestSuite) TestModuleAddressEVM() {
 	}
 }
 
+// TestGetZeroGasMeta verifies that packing ZeroGasMeta into context and reading it back with GetZeroGasMeta works (happy path).
+func (s *TestSuite) TestGetZeroGasMeta() {
+	deps := evmtest.NewTestDeps()
+
+	got := evm.GetZeroGasMeta(deps.Ctx())
+	s.Require().Nil(got, "GetZeroGasMeta should return nil when key not set")
+
+	meta := &evm.ZeroGasMeta{}
+
+	deps.SetCtx(deps.Ctx().
+		WithValue(evm.CtxKeyZeroGasMeta, meta))
+	got = evm.GetZeroGasMeta(deps.Ctx())
+	s.Require().NotNil(got, "GetZeroGasMeta should return non-nil when meta was set")
+}
+
 func (s *TestSuite) TestParseWeiAsMultipleOfMicronibi() {
 	{
 		unibiAmt := big.NewInt(420)

@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 )
 
 // paired against USD

@@ -26,7 +26,7 @@ require (
 
 require (
 	cosmossdk.io/math v1.4.0
-	github.com/cometbft/cometbft v0.37.2
+	github.com/cometbft/cometbft v0.37.18
 	github.com/tidwall/gjson v1.14.2
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb

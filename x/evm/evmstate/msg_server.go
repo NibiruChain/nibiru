@@ -73,7 +73,6 @@ func (k *Keeper) EthereumTx(
 		txConfig := k.TxConfig(ctx, coreTx.Hash())
 		sdb = k.NewSDB(ctx, txConfig)
 	}
-	log.Printf("sdb.GetBalance(evm.FEE_COLLECTOR_ADDR): %s\n", sdb.GetBalance(evm.FEE_COLLECTOR_ADDR))
 
 	// get the signer according to the chain rules from the config and block height
 	evmCfg := k.GetEVMConfig(sdb.Ctx())
@@ -99,8 +98,6 @@ func (k *Keeper) EthereumTx(
 
 	if applyErr != nil {
 		if evmResp == nil {
-			// Consensus error - return immediately, skipping the
-			// "evm.SafeConsumeGas" call we do for
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
 		} else {
@@ -112,10 +109,30 @@ func (k *Keeper) EthereumTx(
 
 	if evmResp != nil {
 		stage = "safe_consume_gas"
-		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
-		if gasErr != nil {
-			if !evmResp.Failed() { // only set VmError if not already failed
-				evmResp.VmError = gasErr.Error()
+		// Reset any gas consumed on the root context's gas meter so that
+		// [sdk.GasMeter] gas accounting for this transaction reflects only the
+		// EVM gas used. This ensures that if evmResp.GasUsed <= evmMsg.GasLimit,
+		// then the tx cannot fail due to [sdk.GasMeter] gas exhaustion, matching
+		// Ethereum semantics.
+		if sdb.RootCtx().GasMeter().GasConsumed() > 0 {
+			sdb.RootCtx().GasMeter().RefundGas(
+				sdb.RootCtx().GasMeter().GasConsumed(),
+				"reset gas before EVM charge",
+			)
+		}
+		if gasErr := evm.SafeConsumeGas(
+			sdb.RootCtx(),
+			evmResp.GasUsed,
+			"execute EthereumTx",
+		); gasErr != nil {
+			if !evmResp.Failed() {
+				// Log but do not fail the tx. ApplyEvmMsg already succeeded,
+				// meaning the EthereumTx is meant to suceed. EVM gas
+				// is ground truth. If we see gasErr != nil for a success tx, it
+				// means we failed to align the [sdk.GasMeter] with
+				// [evmResp.GasUsed]. With the refund-to-zero above, we do not expect
+				// this path, and it MUST not invalidate the EVM tx.
+				log.Printf("[EVM] ERROR: SafeConsumeGas failed to align with sdk.GasMeter (tx continues): %v", gasErr)
 			}
 		}
 	}
@@ -145,15 +162,16 @@ func (k *Keeper) EthereumTx(
 		}
 	}
 
-	// refund gas in order to match the Ethereum gas consumption instead of the
-	// default SDK one.
-	refundGas := uint64(0)
-	if evmMsg.GasLimit > evmResp.GasUsed {
-		refundGas = evmMsg.GasLimit - evmResp.GasUsed
-	}
-	weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
-	if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
-		return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
+	// Refund gas to match Ethereum gas consumption. Skip for zero-gas txs (never paid).
+	if !evm.IsZeroGasEthTx(rootCtxGasless) {
+		refundGas := uint64(0)
+		if evmMsg.GasLimit > evmResp.GasUsed {
+			refundGas = evmMsg.GasLimit - evmResp.GasUsed
+		}
+		weiPerGas := txMsg.EffectiveGasPriceWeiPerGas(evmCfg.BaseFeeWei)
+		if err = k.RefundGas(sdb, evmMsg.From, refundGas, weiPerGas); err != nil {
+			return nil, sdkioerrors.Wrapf(err, "error refunding leftover gas to sender %s", evmMsg.From)
+		}
 	}
 
 	stage = "post_execution_events_and_tx_index"
@@ -714,6 +732,32 @@ func (k *Keeper) ConvertEvmToCoin(
 	}
 
 	return &evm.MsgConvertEvmToCoinResponse{}, err
+}
+
+func (k *Keeper) UpdateParams(
+	goCtx context.Context, req *evm.MsgUpdateParams,
+) (resp *evm.MsgUpdateParamsResponse, err error) {
+	if err := req.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
+	sender := sdk.MustAccAddressFromBech32(req.Authority)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+	havePerms := (sudoPermsErr == nil) || (k.authority.String() == req.Authority)
+	if !havePerms {
+		return resp, fmt.Errorf(
+			"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+			k.authority, req.Authority,
+		)
+	}
+
+	err = k.SetParams(ctx, req.Params)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "failed to set params")
+	}
+	return &evm.MsgUpdateParamsResponse{}, nil
 }
 
 // TxEvents represents ABCI events that are emitted an Ethereum tx. Nil fields

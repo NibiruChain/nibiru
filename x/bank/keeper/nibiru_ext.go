@@ -8,7 +8,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/holiman/uint256"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"

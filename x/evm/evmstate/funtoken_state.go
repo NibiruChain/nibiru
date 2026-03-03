@@ -2,11 +2,12 @@
 package evmstate
 
 import (
-	"github.com/NibiruChain/collections"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"

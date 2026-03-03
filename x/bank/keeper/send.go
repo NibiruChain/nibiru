@@ -15,7 +15,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

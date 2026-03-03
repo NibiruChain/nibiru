@@ -1,6 +1,7 @@
 package sudo_test
 
 import (
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
@@ -30,7 +31,7 @@ func (s *Suite) TestGenesisState_Validate() {
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders:   []string{addrStrs[3]},
-					Contracts: []string{addrStrs[4]},
+					Contracts: []string{eth.NibiruAddrToEthAddr(addrs[4]).Hex()},
 				},
 			},
 		},
@@ -52,7 +53,7 @@ func (s *Suite) TestGenesisState_Validate() {
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders:   []string{addrStrs[1]},
-					Contracts: []string{addrStrs[2]},
+					Contracts: []string{eth.NibiruAddrToEthAddr(addrs[2]).Hex()},
 				},
 			},
 		},

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 )
 
 // constants

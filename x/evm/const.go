@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/NibiruChain/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -13,6 +12,8 @@ import (
 	gethvm "github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 )
@@ -41,7 +42,19 @@ type contextKey string
 const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
+	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 )
+
+// GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
+func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
+	meta, _ := ctx.Value(CtxKeyZeroGasMeta).(*ZeroGasMeta)
+	return meta
+}
+
+// IsZeroGasEthTx returns true if the context has ZeroGasMeta set (i.e., this is a zero-gas EVM tx).
+func IsZeroGasEthTx(ctx sdk.Context) bool {
+	return GetZeroGasMeta(ctx) != nil
+}
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
 // constant value of 1 unibi (micronibi) == 10^12 wei.
@@ -68,6 +81,8 @@ set.New[gethcommon.Address](
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// Oracle 0x...801
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
+		// P-256 verification precompile 0x...100
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
 ).ToSlice()
 

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "@jest/globals"
+import { beforeAll, describe, expect, it } from "bun:test"
 import { parseEther, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
@@ -28,7 +28,7 @@ describe("debug queries", () => {
     txIndex = txResponse.index
     blockNumber = receipt.blockNumber
     blockHash = receipt.blockHash
-  }, TEST_TIMEOUT)
+  })
 
   it("debug_traceBlockByNumber", async () => {
     const traceResult = await provider.send("debug_traceBlockByNumber", [

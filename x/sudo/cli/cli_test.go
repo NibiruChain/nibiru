@@ -447,6 +447,10 @@ func (s *Suite) TestCliCmdEditZeroGasActors() {
 	validJSON := fmt.Sprintf(`{"senders":["%s","%s"],"contracts":["%s","%s"]}`,
 		validSender1, validSender2, validContract1, validContract2)
 
+	// Happy path: Valid JSON including always_zero_gas_contracts
+	validJSONWithAlwaysZeroGas := fmt.Sprintf(`{"senders":[],"contracts":[],"always_zero_gas_contracts":["%s","%s"]}`,
+		validContract1, validContract2)
+
 	// Sad path: Not JSON string
 	notJSON := "this is not a json string"
 
@@ -462,6 +466,15 @@ func (s *Suite) TestCliCmdEditZeroGasActors() {
 			args: []string{
 				"edit-zero-gas",
 				validJSON,
+			},
+			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
+			wantErr:   "",
+		},
+		{
+			name: "happy: edit zero gas actors with always_zero_gas_contracts",
+			args: []string{
+				"edit-zero-gas",
+				validJSONWithAlwaysZeroGas,
 			},
 			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
 			wantErr:   "",

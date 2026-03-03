@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -41,8 +41,14 @@ func (k Keeper) rewardWinners(
 	rewards := k.GatherRewardsForVotePeriod(ctx)
 	totalRewards = totalRewards.Add(sdk.NewDecCoinsFromCoins(rewards...)...)
 
+	// Sort validator addresses for deterministic iteration order.
+	// Go map iteration is non-deterministic, which can cause consensus
+	// failures if state is written in different order on different nodes.
+	sortedAddrs := validatorPerformances.SortedAddrs()
+
 	var distributedRewards sdk.Coins
-	for _, validatorPerformance := range validatorPerformances {
+	for _, valAddr := range sortedAddrs {
+		validatorPerformance := validatorPerformances[valAddr]
 		validator := k.StakingKeeper.Validator(ctx, validatorPerformance.ValAddress)
 		if validator == nil {
 			continue

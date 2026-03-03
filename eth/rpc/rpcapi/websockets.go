@@ -28,7 +28,7 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/NibiruChain/collections"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"

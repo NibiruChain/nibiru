@@ -45,7 +45,7 @@ type Keeper struct {
 	Bank          *NibiruBankKeeper
 	accountKeeper evm.AccountKeeper
 	stakingKeeper evm.StakingKeeper
-	sudoKeeper    evm.SudoKeeper
+	SudoKeeper    evm.SudoKeeper
 
 	// tracer: Configures the output type for a geth `vm.EVMLogger`. Tracer types
 	// include "access_list", "json", "struct", and "markdown". If any other
@@ -75,6 +75,7 @@ func NewKeeper(
 	accKeeper evm.AccountKeeper,
 	bankKeeper *NibiruBankKeeper,
 	stakingKeeper evm.StakingKeeper,
+	sudoKeeper evm.SudoKeeper,
 	tracer string,
 ) Keeper {
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
@@ -91,6 +92,7 @@ func NewKeeper(
 		accountKeeper: accKeeper,
 		Bank:          bankKeeper,
 		stakingKeeper: stakingKeeper,
+		SudoKeeper:    sudoKeeper,
 		tracer:        tracer,
 	}
 }

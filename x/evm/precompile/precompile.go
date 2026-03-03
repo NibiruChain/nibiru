@@ -17,13 +17,14 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/NibiruChain/collections"
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	gethparams "github.com/ethereum/go-ethereum/params"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
@@ -45,6 +46,7 @@ func InitPrecompiles(
 		PrecompileFunToken,
 		PrecompileWasm,
 		PrecompileOracle,
+		PrecompileP256,
 	} {
 		pc := precompileSetupFn(k)
 		for _, precompileMap := range []map[gethcommon.Address]vm.PrecompiledContract{
@@ -182,14 +184,14 @@ type OnRunStartResult struct {
 //	}
 //	```
 func OnRunStart(
-	evm *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
+	evmObj *vm.EVM, contractInput []byte, abi *gethabi.ABI, gasLimit uint64,
 ) (res OnRunStartResult, err error) {
 	method, args, err := decomposeInput(abi, contractInput)
 	if err != nil {
 		return res, err
 	}
 
-	sdb, ok := evm.StateDB.(*evmstate.SDB)
+	sdb, ok := evmObj.StateDB.(*evmstate.SDB)
 	if !ok {
 		err = fmt.Errorf("failed to load the sdk.Context from the EVM StateDB")
 		return
