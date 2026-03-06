@@ -86,6 +86,38 @@ func (s *eventsTestSuite) TestEventManager() {
 	s.Require().Equal(em.Events(), events.AppendEvent(event))
 }
 
+func (s *eventsTestSuite) TestEventManagerLenAndTruncateEvents() {
+	em := sdk.NewEventManager()
+	e1 := sdk.NewEvent("e1", sdk.NewAttribute("k", "v1"))
+	e2 := sdk.NewEvent("e2", sdk.NewAttribute("k", "v2"))
+	e3 := sdk.NewEvent("e3", sdk.NewAttribute("k", "v3"))
+	em.EmitEvents(sdk.Events{e1, e2, e3})
+
+	s.Require().Equal(3, em.Len())
+
+	newLen := em.TruncateEvents(2)
+	s.Require().Equal(2, newLen)
+	s.Require().Equal(sdk.Events{e1, e2}, em.Events())
+	s.Require().Equal(2, em.Len())
+
+	// Out-of-range marks above Len are no-op.
+	newLen = em.TruncateEvents(100)
+	s.Require().Equal(2, newLen)
+	s.Require().Equal(sdk.Events{e1, e2}, em.Events())
+
+	// Full clear on zero.
+	newLen = em.TruncateEvents(0)
+	s.Require().Equal(0, newLen)
+	s.Require().Equal(0, em.Len())
+	s.Require().Equal(sdk.EmptyEvents(), em.Events())
+
+	// Negative marks are treated as clear-all for safety.
+	em.EmitEvent(e1)
+	newLen = em.TruncateEvents(-1)
+	s.Require().Equal(0, newLen)
+	s.Require().Equal(0, em.Len())
+}
+
 func (s *eventsTestSuite) TestEmitTypedEvent() {
 	s.Run("deterministic key-value order", func() {
 		for i := 0; i < 10; i++ {

@@ -175,6 +175,7 @@ func (k *Keeper) EthereumTx(
 	}
 
 	stage = "post_execution_events_and_tx_index"
+	MaybeTruncateEventsForFailedEvmTx(rootCtxGasless, evmResp)
 	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
 
 	err = txEvents.EmitEvents(rootCtxGasless)
@@ -199,6 +200,31 @@ func (k *Keeper) EthereumTx(
 		)
 	}
 	return evmResp, nil
+}
+
+// MaybeTruncateEventsForFailedEvmTx truncates the current tx event stream to an
+// ante-computed mark when the EVM response indicates VM-level failure.
+//
+// This is part of the mitigation for leaked non-EVM module/precompile events on
+// failed EVM transactions:
+// https://github.com/NibiruChain/nibiru/issues/2542
+func MaybeTruncateEventsForFailedEvmTx(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+) {
+	if evmResp == nil || !evmResp.Failed() {
+		return
+	}
+
+	mark, ok := evm.GetEvmEventTruncationMark(ctx)
+	if !ok {
+		return
+	}
+
+	// Keep only ante-phase events (up to mark) when the EVM execution fails.
+	// Canonical EVM metadata events are emitted immediately after this call in
+	// EthereumTx via txEvents.EmitEvents and EventTxLog.
+	ctx.EventManager().TruncateEvents(mark)
 }
 
 // NewEVM generates a go-ethereum VM.
