@@ -141,7 +141,7 @@ jobs:
       - name: "Install buf CLI"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          go install github.com/bufbuild/buf/cmd/buf@latest
+          go install github.com/bufbuild/buf/cmd/buf@v1.64.0
 
       - name: "Setup Node & npm (for npx)"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
