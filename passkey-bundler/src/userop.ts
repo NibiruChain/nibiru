@@ -61,10 +61,6 @@ export function toRpcUserOp(userOp: UserOperation): RpcUserOperation {
   }
 }
 
-export function requiredPrefund(userOp: UserOperation): bigint {
-  return (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
-}
-
 export function getUserOpHash(userOp: UserOperation, entryPoint: string, chainId: bigint): string {
   const abi = new AbiCoder()
   const userOpPack = abi.encode(
