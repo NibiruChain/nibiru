@@ -6,8 +6,6 @@ export class Metrics {
   readonly rpcFailures: Counter
   readonly userOpSuccess: Counter
   readonly userOpFailed: Counter
-  readonly prefundAttempts: Counter
-  readonly prefundFailures: Counter
   readonly queueDepth: Gauge
   readonly submissionDuration: Histogram
 
@@ -40,18 +38,6 @@ export class Metrics {
       help: "User operations that failed during submission or execution",
       registers: [this.registry],
       labelNames: ["reason"],
-    })
-
-    this.prefundAttempts = new Counter({
-      name: "bundler_prefund_attempts_total",
-      help: "Prefund attempts performed before handleOps",
-      registers: [this.registry],
-    })
-
-    this.prefundFailures = new Counter({
-      name: "bundler_prefund_failures_total",
-      help: "Prefund attempts that failed",
-      registers: [this.registry],
     })
 
     this.queueDepth = new Gauge({

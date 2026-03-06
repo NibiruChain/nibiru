@@ -1,18 +1,16 @@
 # Passkey Bundler
 
 Lightweight ERC-4337 bundler focused on passkey-backed accounts on Nibiru, aligned with `bundler-prd.md`. It exposes
-JSON-RPC on port `4337` by default, performs validation, prefunding, and queue-based submission to the configured
-EntryPoint, and ships with health and metrics endpoints for operations.
+JSON-RPC on port `4337` by default, performs validation and queue-based submission to the configured EntryPoint, and
+ships with health and metrics endpoints for operations.
 
 ## Features
 - JSON-RPC: `eth_chainId`, `eth_supportedEntryPoints`, `eth_sendUserOperation`, `eth_getUserOperationReceipt`.
-- Passkey helpers: `passkey_createAccount(qx,qy,factory?)`, `passkey_fundAccount(address,amountWei)`,
-  `passkey_getLogs(limit)`.
+- Passkey helpers: `passkey_createAccount(qx,qy,factory?)`, `passkey_getLogs(limit)`.
 - Validation: entry point and chain ID enforcement, userOp schema checks, rate limiting, optional API key auth
   (`x-api-key` or `Authorization: Bearer <key>`).
 - Queue + retries: in-memory FIFO queue (tie-breaker `maxPriorityFeePerGas`), configurable concurrency, retries with
   gas bumping and nonce management.
-- Prefunding: optional EntryPoint `depositTo` top-ups with configurable ceiling.
 - Observability: `/healthz`, `/readyz`, `/metrics` (Prometheus), structured logs kept in a rolling buffer.
 - Storage: in-memory receipt/log store with configurable retention (intended to be swapped for SQLite/Postgres later).
 
@@ -54,8 +52,6 @@ node dist/index.js
   `FINALITY_BLOCKS` (default `2`).
 - `VALIDATION_ENABLED`: run `simulateValidation` before enqueue (defaults to `true` in testnet mode).
 - `ENABLE_PASSKEY_HELPERS`: enable `passkey_*` helper RPC methods (defaults to `false` in testnet mode).
-- `PREFUND_ENABLED` (default `true` in dev, `false` in testnet), `MAX_PREFUND_WEI` (default `5e18`),
-  `PREFUND_ALLOWLIST` (comma-separated sender addresses; required if `PREFUND_ENABLED=true` in testnet mode).
 - `RECEIPT_LIMIT` (default `1000`), `RECEIPT_POLL_INTERVAL_MS` (default `5000`).
 
 Health: `GET /healthz` (process + RPC reachability), `GET /readyz` (RPC synced, signer nonce). Metrics: `GET /metrics`
