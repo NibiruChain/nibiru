@@ -37,5 +37,17 @@ func AnteStepEmitPendingEvent(
 		),
 	)
 
+	// Mark where execution-time events begin. On VM-level failure, EthereumTx
+	// uses this mark (see MaybeTruncateEventsForFailedEvmTx) to truncate
+	// module/precompile side-effect events emitted after ante.
+	//
+	// Context for this behavior:
+	// https://github.com/NibiruChain/nibiru/issues/2542
+	sdb.SetCtx(
+		sdb.Ctx().WithValue(
+			evm.CtxKeyEvmEventTruncationMark,
+			sdb.Ctx().EventManager().Len(),
+		))
+
 	return nil
 }

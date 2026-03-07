@@ -21,6 +21,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -237,6 +238,50 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 				Amount:    strconv.FormatInt(fundedAmount, 10),
 			},
 		)
+	}
+}
+
+func (s *Suite) TestMaybeTruncateEventsForFailedEvmTx() {
+	mkDeps := func() evmtest.TestDeps {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().WithEventManager(sdk.NewEventManager()))
+		deps.Ctx().EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent("e1"),
+			sdk.NewEvent("e2"),
+			sdk.NewEvent("e3"),
+		})
+		deps.SetCtx(deps.Ctx().WithValue(evm.CtxKeyEvmEventTruncationMark, 2))
+		return deps
+	}
+
+	testCases := []struct {
+		name      string
+		evmResp   *evm.MsgEthereumTxResponse
+		wantTypes []string
+	}{
+		{
+			name:      "vm error truncates to mark",
+			evmResp:   &evm.MsgEthereumTxResponse{VmError: "execution reverted"},
+			wantTypes: []string{"e1", "e2"},
+		},
+		{
+			name:      "success keeps all events",
+			evmResp:   &evm.MsgEthereumTxResponse{},
+			wantTypes: []string{"e1", "e2", "e3"},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := mkDeps()
+			evmstate.MaybeTruncateEventsForFailedEvmTx(deps.Ctx(), tc.evmResp)
+
+			events := deps.Ctx().EventManager().Events()
+			s.Require().Len(events, len(tc.wantTypes))
+			for i, wantType := range tc.wantTypes {
+				s.Require().Equal(wantType, events[i].Type)
+			}
+		})
 	}
 }
 
