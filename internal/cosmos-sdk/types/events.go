@@ -32,6 +32,28 @@ func NewEventManager() *EventManager {
 
 func (em *EventManager) Events() Events { return em.events }
 
+// Len returns the number of events currently stored in the manager.
+func (em *EventManager) Len() int { return len(em.events) }
+
+// TruncateEvents keeps only the first "mark" events and drops all later events.
+//
+// Bounds behavior:
+//   - mark <= 0: clear all events
+//   - mark >= Len(): no-op
+//
+// The return value is the resulting event length after truncation.
+func (em *EventManager) TruncateEvents(mark int) int {
+	switch {
+	case mark <= 0:
+		em.events = EmptyEvents()
+	case mark >= len(em.events):
+		// no-op
+	default:
+		em.events = em.events[:mark]
+	}
+	return len(em.events)
+}
+
 // EmitEvent stores a single Event object.
 // Deprecated: Use EmitTypedEvent
 func (em *EventManager) EmitEvent(event Event) {
