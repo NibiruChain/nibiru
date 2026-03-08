@@ -12,6 +12,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // queryWasmContract is a helper method that encapsulates the common pattern
@@ -136,20 +138,17 @@ func (t *EVMTrader) QueryMarkets(ctx context.Context) ([]MarketInfo, error) {
 	// Now query each market individually to get full details
 	var markets []MarketInfo
 	for _, marketIndexStr := range marketIndices {
-		// Extract market index from string (e.g., "MarketIndex(0)")
-		var marketIndex uint64
-		if _, err := fmt.Sscanf(marketIndexStr, "MarketIndex(%d)", &marketIndex); err != nil {
-			// Try parsing as just a number
-			if _, err := fmt.Sscanf(marketIndexStr, "%d", &marketIndex); err != nil {
-				continue // Skip invalid indices
-			}
+		// Extract market index from string (e.g., "MarketIndex(0)" or "0")
+		marketIndex, err := parseIndexWithFallback(marketIndexStr, "MarketIndex")
+		if err != nil {
+			continue // Skip invalid indices
 		}
 
 		// Query individual market details
 		market, err := t.queryMarket(ctx, marketIndex)
 		if err != nil {
 			// Log error but continue with other markets
-			t.log("Failed to query market", "market_index", marketIndex, "error", err.Error())
+			t.logWarn("Failed to query market", "market_index", marketIndex, "error", err.Error())
 			// Still add the market with just the index
 			markets = append(markets, MarketInfo{Index: marketIndex})
 			continue
@@ -201,23 +200,23 @@ func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 		}
 
 		// Parse market_index
-		var marketIdx uint64
-		if _, err := fmt.Sscanf(raw.MarketIndex, "MarketIndex(%d)", &marketIdx); err != nil {
-			return nil, fmt.Errorf("parse market_index '%s': expected MarketIndex(N), got: %w", raw.MarketIndex, err)
+		marketIdx, err := parseMarketIndex(raw.MarketIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.MarketIndex = marketIdx
 
 		// Parse user_trade_index
-		var tradeIdx uint64
-		if _, err := fmt.Sscanf(raw.UserTradeIndex, "UserTradeIndex(%d)", &tradeIdx); err != nil {
-			return nil, fmt.Errorf("parse user_trade_index '%s': expected UserTradeIndex(N), got: %w", raw.UserTradeIndex, err)
+		tradeIdx, err := parseUserTradeIndex(raw.UserTradeIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.UserTradeIndex = tradeIdx
 
 		// Parse collateral_index
-		var collateralIdx uint64
-		if _, err := fmt.Sscanf(raw.CollateralIndex, "TokenIndex(%d)", &collateralIdx); err != nil {
-			return nil, fmt.Errorf("parse collateral_index '%s': expected TokenIndex(N), got: %w", raw.CollateralIndex, err)
+		collateralIdx, err := parseTokenIndex(raw.CollateralIndex)
+		if err != nil {
+			return nil, err
 		}
 		parsed.CollateralIndex = collateralIdx
 
@@ -264,9 +263,9 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 	if !ok {
 		return nil, fmt.Errorf("base token missing or invalid in market %d, raw: %s", marketIndex, string(responseBytes))
 	}
-	var baseIdx uint64
-	if _, err := fmt.Sscanf(base, "TokenIndex(%d)", &baseIdx); err != nil {
-		return nil, fmt.Errorf("parse base token '%s' in market %d: expected TokenIndex(N), got: %w", base, marketIndex, err)
+	baseIdx, err := parseTokenIndex(base)
+	if err != nil {
+		return nil, fmt.Errorf("parse base token in market %d: %w", marketIndex, err)
 	}
 	market.BaseToken = &baseIdx
 
@@ -275,9 +274,9 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 	if !ok {
 		return nil, fmt.Errorf("quote token missing or invalid in market %d, raw: %s", marketIndex, string(responseBytes))
 	}
-	var quoteIdx uint64
-	if _, err := fmt.Sscanf(quote, "TokenIndex(%d)", &quoteIdx); err != nil {
-		return nil, fmt.Errorf("parse quote token '%s' in market %d: expected TokenIndex(N), got: %w", quote, marketIndex, err)
+	quoteIdx, err := parseTokenIndex(quote)
+	if err != nil {
+		return nil, fmt.Errorf("parse quote token in market %d: %w", marketIndex, err)
 	}
 	market.QuoteToken = &quoteIdx
 
@@ -296,7 +295,8 @@ func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*Marke
 
 // queryOraclePrice queries the oracle contract for the current price of a token
 func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (float64, error) {
-	t.log("Querying oracle price", "token_index", tokenIndex)
+	tokenDenom := t.GetTokenDenom(tokenIndex)
+	t.logDebug("Querying oracle price", "token_index", tokenIndex, "token_denom", tokenDenom)
 	// Build query message - oracle expects "index" not "token_id"
 	queryMsg := map[string]interface{}{
 		"get_price": map[string]interface{}{
@@ -335,7 +335,11 @@ func (t *EVMTrader) queryOraclePrice(ctx context.Context, tokenIndex uint64) (fl
 // queryExchangeRate queries the oracle contract for the exchange rate between base and quote tokens
 // This matches what the perp contract does - it queries GetExchangeRate to get base_per_quote
 func (t *EVMTrader) queryExchangeRate(ctx context.Context, baseIndex, quoteIndex uint64) (float64, error) {
-	t.log("Querying oracle exchange rate", "base_index", baseIndex, "quote_index", quoteIndex)
+	baseDenom := t.GetTokenDenom(baseIndex)
+	quoteDenom := t.GetTokenDenom(quoteIndex)
+	t.logDebug("Querying oracle exchange rate",
+		"base_index", baseIndex, "base_denom", baseDenom,
+		"quote_index", quoteIndex, "quote_denom", quoteDenom)
 	// Build query message - oracle expects GetExchangeRate with base and quote
 	queryMsg := map[string]interface{}{
 		"get_exchange_rate": map[string]interface{}{
@@ -387,6 +391,44 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 		return big.NewInt(0), nil
 	}
 	return new(big.Int).SetBytes(out), nil
+}
+
+// QueryCollaterals queries the perp contract for all available collaterals
+func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
+	// Try list_collaterals query
+	queryMsg := map[string]interface{}{
+		"list_collaterals": map[string]interface{}{},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	indices, ok := tryUnmarshalIndices(responseBytes)
+	if !ok {
+		return []CollateralInfo{}, nil
+	}
+
+	collaterals := make([]CollateralInfo, 0, len(indices))
+	for _, collateralIndex := range indices {
+		denom, err := t.queryCollateralDenom(ctx, collateralIndex)
+		if err != nil {
+			continue
+		}
+		collaterals = append(collaterals, CollateralInfo{
+			Index: collateralIndex,
+			Denom: denom,
+		})
+	}
+
+	return collaterals, nil
+}
+
+// CollateralInfo contains information about a collateral token
+type CollateralInfo struct {
+	Index uint64
+	Denom string
 }
 
 // queryCollateralDenom queries the perp contract for the denomination of a collateral token by index
@@ -446,4 +488,112 @@ func (t *EVMTrader) queryPairDepth(ctx context.Context, marketIndex uint64) (boo
 	}
 
 	return true, nil
+}
+
+// queryCosmosBalance queries the Cosmos bank balance for a bech32 address
+func (t *EVMTrader) queryCosmosBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
+	bankClient := banktypes.NewQueryClient(t.grpcConn)
+
+	resp, err := bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
+		Address: address,
+		Denom:   denom,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("query bank balance: %w", err)
+	}
+
+	return resp.Balance.Amount.BigInt(), nil
+}
+
+// queryOracleTokenDenom queries the oracle contract for the denomination of a token by index
+// Uses GetTokenById which returns a Token struct with a base field (the denomination)
+func (t *EVMTrader) queryOracleTokenDenom(ctx context.Context, tokenIndex uint64) (string, error) {
+	queryMsg := map[string]interface{}{
+		"get_token_by_id": map[string]interface{}{
+			"id": tokenIndex,
+		},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.OracleAddress, queryMsg)
+	if err != nil {
+		return "", err
+	}
+
+	var tokenResp struct {
+		ID              uint64 `json:"id"`
+		Base            string `json:"base"`
+		PermissionGroup uint8  `json:"permission_group"`
+	}
+	if err := json.Unmarshal(responseBytes, &tokenResp); err != nil {
+		return "", fmt.Errorf("unmarshal token response: %w, raw: %s", err, string(responseBytes))
+	}
+
+	if tokenResp.Base == "" {
+		return "", fmt.Errorf("base field is empty in response, raw: %s", string(responseBytes))
+	}
+
+	return tokenResp.Base, nil
+}
+
+func (t *EVMTrader) GetCollateralDenom(collateralIndex uint64) string {
+	if denom, ok := t.collateralDenomMap[collateralIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", collateralIndex)
+}
+
+func (t *EVMTrader) GetMarketTokenDenom(tokenIndex uint64) string {
+	if denom, ok := t.marketTokenDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", tokenIndex)
+}
+
+func (t *EVMTrader) GetTokenDenom(tokenIndex uint64) string {
+	if tokenIndex == 0 {
+		return "usd"
+	}
+	// First check market tokens (base/quote)
+	if denom, ok := t.marketTokenDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	// Then check collaterals
+	if denom, ok := t.collateralDenomMap[tokenIndex]; ok {
+		return denom
+	}
+	return fmt.Sprintf("TokenIndex(%d)", tokenIndex)
+}
+
+func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uint64) error {
+	collaterals, err := t.QueryCollaterals(ctx)
+	if err == nil {
+		for _, collateral := range collaterals {
+			t.collateralDenomMap[collateral.Index] = collateral.Denom
+		}
+	}
+
+	market, err := t.queryMarket(ctx, marketIndex)
+	if err != nil {
+		return fmt.Errorf("query market %d: %w", marketIndex, err)
+	}
+
+	if market.BaseToken != nil {
+		if _, alreadyMapped := t.marketTokenDenomMap[*market.BaseToken]; !alreadyMapped {
+			denom, err := t.queryOracleTokenDenom(ctx, *market.BaseToken)
+			if err == nil && denom != "" {
+				t.marketTokenDenomMap[*market.BaseToken] = denom
+			}
+		}
+	}
+
+	if market.QuoteToken != nil {
+		if _, alreadyMapped := t.marketTokenDenomMap[*market.QuoteToken]; !alreadyMapped {
+			denom, err := t.queryOracleTokenDenom(ctx, *market.QuoteToken)
+			if err == nil && denom != "" {
+				t.marketTokenDenomMap[*market.QuoteToken] = denom
+			}
+		}
+	}
+
+	return nil
 }
