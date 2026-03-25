@@ -90,9 +90,11 @@ func (t *EVMTrader) OpenTradeFromJSON(ctx context.Context, jsonPath string) erro
 		t.logDebug("Automatically fetched market price from oracle", "market_index", params.MarketIndex, "price", price)
 		params.OpenPrice = &price
 	}
-
-	// Execute the trade
-	return t.OpenTrade(ctx, chainID, params)
+	err = t.OpenTrade(ctx, chainID, params)
+	if err != nil {
+		return fmt.Errorf("open trade: %w", err)
+	}
+	return nil
 }
 
 // parseTradeParamsFromJSON parses trade parameters from JSON data.

@@ -101,6 +101,56 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 	var lastHealthCheck time.Time
 	var lastOpenTime time.Time
 
+	preloadedOpenCount := 0
+	if currentBlock, err := t.client.BlockNumber(ctx); err == nil {
+		if trades, err := t.QueryTrades(ctx); err == nil {
+			now := time.Now().UTC()
+
+			for _, trade := range trades {
+				if !trade.IsOpen {
+					continue
+				}
+
+				trackedPositions[trade.UserTradeIndex] = &PositionTracker{
+					TradeIndex:  trade.UserTradeIndex,
+					OpenBlock:   currentBlock,
+					MarketIndex: trade.MarketIndex,
+				}
+
+				t.tradeLogMu.Lock()
+				t.openTrades[trade.UserTradeIndex] = &tradeLifecycle{
+					OpenTimeUTC:      now,
+					OpenBlock:        int64(currentBlock),
+					OpenPrice:        trade.OpenPrice,
+					MarketIndex:      trade.MarketIndex,
+					Direction:        boolToDirection(trade.Long),
+					TradeType:        trade.TradeType,
+					CollateralIndex:  trade.CollateralIndex,
+					CollateralAmount: trade.CollateralAmount,
+					CollateralDenom:  t.GetCollateralDenom(trade.CollateralIndex),
+					Leverage:         trade.Leverage,
+					TP:               trade.TP,
+					SL: func() string {
+						if trade.SL != nil {
+							return *trade.SL
+						}
+						return ""
+					}(),
+				}
+				t.tradeLogMu.Unlock()
+
+				preloadedOpenCount++
+			}
+		} else {
+			t.logWarn("Failed to preload trades", "error", err.Error())
+		}
+	} else {
+		t.logWarn("Failed to get block number for preload", "error", err.Error())
+	}
+	if preloadedOpenCount > 0 {
+		t.logInfo("Preloaded existing open trades", "count", preloadedOpenCount)
+	}
+
 	for {
 		if loader != nil {
 			cfg = loader.GetConfig()
@@ -368,7 +418,7 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 					"collateral_index", collateralIndex,
 				)
 
-				if err := t.OpenTrade(ctx, chainID, params); err != nil {
+				if err = t.OpenTrade(ctx, chainID, params); err != nil {
 					t.logError("Failed to open trade",
 						"error", err.Error(),
 						"trade_type", tradeType,
@@ -467,6 +517,35 @@ func (t *EVMTrader) runHealthCheck(ctx context.Context, cfg AutoTradingConfig, c
 		}
 		fields["balance_"+denom] = balance.String()
 	}
+
+	// 24h metrics derived from CSV logs.
+	nowUTC := time.Now().UTC()
+	metrics := compute24hMetrics(nowUTC, "logs")
+	fields["positions_opened_24h"] = metrics.positionsOpened24h
+	fields["positions_closed_24h"] = metrics.positionsClosed24h
+	fields["failed_txs_24h"] = metrics.failedTxs24h
+	fields["failed_reason_types"] = metrics.failedReasonsBlock
+	fields["failed_reason"] = metrics.failedReasonsBlock
+	// TODO: Add volume generated and realized PnL
+	fields["volume_generated"] = "N/A"
+	fields["realized_pnl"] = "N/A"
+
+	// Best-effort market pair labels for Slack readability.
+	marketPairs := make([]string, 0, len(marketIndices))
+	for _, marketIdx := range marketIndices {
+		market, err := t.queryMarket(ctx, marketIdx)
+		if err == nil && market.BaseToken != nil && market.QuoteToken != nil {
+			baseDenom := t.GetTokenDenom(*market.BaseToken)
+			quoteDenom := t.GetTokenDenom(*market.QuoteToken)
+			baseSymbol := extractSymbolFromDenom(baseDenom)
+			quoteSymbol := extractSymbolFromDenom(quoteDenom)
+			marketPairs = append(marketPairs, fmt.Sprintf("%s/%s", baseSymbol, quoteSymbol))
+		} else {
+			marketPairs = append(marketPairs, fmt.Sprintf("Market(%d)", marketIdx))
+		}
+	}
+	fields["market_pairs"] = marketPairs
+
 	t.logInfo("Health check", flattenHealthFields(fields)...)
 	if t.cfg.SlackWebhook != "" {
 		sendSlackHealthNotification(t.cfg.SlackWebhook, fields)

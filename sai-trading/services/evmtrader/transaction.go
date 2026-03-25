@@ -92,10 +92,25 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 	}
 
 	if grpcRes.TxResponse.Code != 0 {
-		return nil, parseContractError(grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
+		contractErr := parseContractError(grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
+		// Use the first line as a coarse category so we can group failure kinds
+		reason := strings.TrimSpace(contractErr.Error())
+		if idx := strings.Index(reason, "\n"); idx >= 0 {
+			reason = strings.TrimSpace(reason[:idx])
+		}
+
+		t.logTransactionCSV(
+			grpcRes.TxResponse.TxHash,
+			"failed",
+			reason,
+			to.Hex(),
+			grpcRes.TxResponse.Height,
+			uint64(grpcRes.TxResponse.GasWanted),
+			uint64(grpcRes.TxResponse.GasUsed),
+		)
+		return nil, contractErr
 	}
 
-	// Wait for transaction to be committed
 	txHash := grpcRes.TxResponse.TxHash
 	timeout := time.NewTimer(15 * time.Second)
 	tick := time.NewTicker(500 * time.Millisecond)
@@ -110,13 +125,40 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		case <-tick.C:
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
+				t.logTransactionCSV(
+					resp.TxResponse.TxHash,
+					"success",
+					"",
+					to.Hex(),
+					resp.TxResponse.Height,
+					uint64(resp.TxResponse.GasWanted),
+					uint64(resp.TxResponse.GasUsed),
+				)
 				return resp.TxResponse, nil
 			}
 		case <-timeout.C:
+			t.logTransactionCSV(
+				txHash,
+				"failed",
+				"timeout waiting for tx",
+				to.Hex(),
+				0,
+				uint64(gasLimit),
+				0,
+			)
 			return nil, fmt.Errorf("tx not found after timeout, hash: %s", txHash)
 		}
 	}
 
+	t.logTransactionCSV(
+		txHash,
+		"failed",
+		fmt.Sprintf("tx not found after %d retries", maxRetries),
+		to.Hex(),
+		0,
+		uint64(gasLimit),
+		0,
+	)
 	return nil, fmt.Errorf("tx not found after %d retries, hash: %s", maxRetries, txHash)
 }
 

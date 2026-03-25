@@ -6,7 +6,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -38,6 +41,26 @@ type EVMTrader struct {
 
 	collateralDenomMap  map[uint64]string
 	marketTokenDenomMap map[uint64]string // For base and quote tokens
+
+	tradeLogMu sync.Mutex
+	openTrades map[uint64]*tradeLifecycle
+}
+
+// tradeLifecycle stores metadata about an open trade so that when it closes,
+// we can log a single lifecycle row (open+close) to CSV.
+type tradeLifecycle struct {
+	OpenTimeUTC      time.Time
+	OpenBlock        int64
+	OpenPrice        string
+	MarketIndex      uint64
+	Direction        string
+	TradeType        string
+	CollateralIndex  uint64
+	CollateralAmount string
+	CollateralDenom  string
+	Leverage         string
+	TP               string
+	SL               string
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -136,6 +159,7 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		addrs:               addrs,
 		collateralDenomMap:  make(map[uint64]string),
 		marketTokenDenomMap: make(map[uint64]string),
+		openTrades:          make(map[uint64]*tradeLifecycle),
 	}
 
 	return trader, nil
@@ -185,7 +209,10 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 	}
 
 	// Execute the trade
-	return t.OpenTrade(ctx, chainID, params)
+	if err := t.OpenTrade(ctx, chainID, params); err != nil {
+		return fmt.Errorf("open trade: %w", err)
+	}
+	return nil
 }
 
 // OpenTrade opens a trade with the given parameters
@@ -243,6 +270,40 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		"height", txResp.Height,
 	)
 
+	openPriceStr := ""
+	if params.OpenPrice != nil {
+		openPriceStr = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
+	}
+	tpStr := ""
+	if params.TP != nil {
+		tpStr = strconv.FormatFloat(*params.TP, 'f', -1, 64)
+	}
+	slStr := ""
+	if params.SL != nil {
+		slStr = strconv.FormatFloat(*params.SL, 'f', -1, 64)
+	}
+
+	// Record open lifecycle metadata so we can log a single lifecycle row on close.
+	t.tradeLogMu.Lock()
+	if t.openTrades == nil {
+		t.openTrades = make(map[uint64]*tradeLifecycle)
+	}
+	t.openTrades[uint64(tradeID)] = &tradeLifecycle{
+		OpenTimeUTC:      time.Now().UTC(),
+		OpenBlock:        txResp.Height,
+		OpenPrice:        openPriceStr,
+		MarketIndex:      params.MarketIndex,
+		Direction:        boolToDirection(params.Long),
+		TradeType:        params.TradeType,
+		CollateralIndex:  params.CollateralIndex,
+		CollateralAmount: params.CollateralAmt.String(),
+		CollateralDenom:  t.GetCollateralDenom(params.CollateralIndex),
+		Leverage:         fmt.Sprintf("%d", params.Leverage),
+		TP:               tpStr,
+		SL:               slStr,
+	}
+	t.tradeLogMu.Unlock()
+
 	return nil
 }
 
@@ -288,6 +349,13 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 					)
 				}
 			}
+
+			// Best-effort lifecycle CSV log: one row per trade.
+			t.tradeLogMu.Lock()
+			lc := t.openTrades[tradeIndex]
+			delete(t.openTrades, tradeIndex)
+			t.tradeLogMu.Unlock()
+			t.logTradeLifecycleCSV(tradeIndex, lc, trade, txResp.TxHash, txResp.Height)
 			break
 		}
 	}
@@ -298,4 +366,11 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 // getEncConfig returns the encoding configuration for the Nibiru chain.
 func getEncConfig() app.EncodingConfig {
 	return app.MakeEncodingConfig()
+}
+
+func boolToDirection(long bool) string {
+	if long {
+		return "LONG"
+	}
+	return "SHORT"
 }
