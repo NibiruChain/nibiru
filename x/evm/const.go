@@ -43,6 +43,7 @@ const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
 	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
+	CtxKeyEvmEventTruncationMark   contextKey = "evm_event_truncation_mark"
 )
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
@@ -54,6 +55,12 @@ func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
 // IsZeroGasEthTx returns true if the context has ZeroGasMeta set (i.e., this is a zero-gas EVM tx).
 func IsZeroGasEthTx(ctx sdk.Context) bool {
 	return GetZeroGasMeta(ctx) != nil
+}
+
+// GetEvmEventTruncationMark returns the mark to use for truncating events.
+func GetEvmEventTruncationMark(ctx sdk.Context) (mark int, ok bool) {
+	mark, ok = ctx.Value(CtxKeyEvmEventTruncationMark).(int)
+	return mark, ok
 }
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
