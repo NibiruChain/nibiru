@@ -33,6 +33,11 @@ func (s *Suite) TestEthAnteEmitPendingEvent() {
 				attr, ok = event.GetAttribute(evm.PendingEthereumTxEventAttrIndex)
 				s.Require().True(ok, "tx index attribute not found")
 				s.Require().Equal("0", attr.Value)
+
+				// Ante stores an event truncation mark for EthereumTx failure cleanup.
+				mark, ok := evm.GetEvmEventTruncationMark(sdb.Ctx())
+				s.Require().True(ok, "evm event truncation mark not found")
+				s.Require().Equal(len(events), mark)
 			},
 		},
 	}
