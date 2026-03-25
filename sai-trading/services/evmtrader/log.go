@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -277,21 +278,144 @@ func sendSlackHealthNotification(webhookURL string, fields map[string]any) {
 	if webhookURL == "" {
 		return
 	}
+	getInt := func(key string) int {
+		v, ok := fields[key]
+		if !ok || v == nil {
+			return 0
+		}
+		switch vv := v.(type) {
+		case int:
+			return vv
+		case int64:
+			return int(vv)
+		case uint64:
+			return int(vv)
+		case float64:
+			return int(vv)
+		case string:
+			i, _ := strconv.Atoi(vv)
+			return i
+		default:
+			return 0
+		}
+	}
+	getStr := func(key string) string {
+		v, ok := fields[key]
+		if !ok || v == nil {
+			return ""
+		}
+		return fmt.Sprintf("%v", v)
+	}
+
+	opened := getInt("positions_opened_24h")
+	closed := getInt("positions_closed_24h")
+	failed := getInt("failed_txs_24h")
+	failedReasonsBlock := getStr("failed_reason_types")
+	if failedReasonsBlock == "" {
+		failedReasonsBlock = getStr("failed_reason")
+	}
+	volume := getStr("volume_generated")
+	pnl := getStr("realized_pnl")
+
+	// Markets: prefer precomputed market_pairs; else fall back to market_indices.
+	marketLines := ""
+	if mp, ok := fields["market_pairs"]; ok {
+		switch vv := mp.(type) {
+		case []string:
+			tmp := make([]string, 0, len(vv))
+			for _, p := range vv {
+				tmp = append(tmp, "• "+p)
+			}
+			marketLines = strings.Join(tmp, "\n")
+		case string:
+			marketLines = "• " + vv
+		default:
+			marketLines = "• " + fmt.Sprintf("%v", vv)
+		}
+	} else {
+		marketLines = "• " + getStr("market_indices")
+	}
+
+	// Balances: list any fields named balance_<denom>
+	balanceLines := []string{}
+	for k, v := range fields {
+		if !strings.HasPrefix(k, "balance_") {
+			continue
+		}
+		denom := strings.TrimPrefix(k, "balance_")
+		amount := fmt.Sprintf("%v", v)
+		// Try to keep symbol-like suffix (e.g. .../stnibi -> stnibi).
+		if idx := strings.LastIndex(denom, "/"); idx >= 0 && idx+1 < len(denom) {
+			denom = denom[idx+1:]
+		}
+		balanceLines = append(balanceLines, fmt.Sprintf("%s %s", amount, denom))
+	}
+
+	if len(balanceLines) == 0 {
+		balanceLines = []string{"(no balances)"}
+	}
+
+	reportText := buildStatusReportText(
+		opened+closed,
+		volume,
+		pnl,
+		failed,
+		failedReasonsBlock,
+		marketLines,
+		strings.Join(balanceLines, "\n"),
+	)
+
 	slackMsg := map[string]interface{}{
-		"text": "✅ Auto-Trader Health Check",
+		"text": reportText,
 		"blocks": []map[string]interface{}{
 			{
 				"type": "section",
 				"text": map[string]interface{}{
 					"type": "mrkdwn",
-					"text": "*Auto-Trader Health Check*",
+					"text": reportText,
 				},
-			},
-			{
-				"type":   "section",
-				"fields": buildSlackFields(fields),
 			},
 		},
 	}
+
 	go sendSlackNotification(webhookURL, slackMsg)
+}
+
+func buildStatusReportText(
+	positionsOpenedClosed int,
+	volumeGenerated string,
+	realizedPnl string,
+	failedTxs int,
+	failedReasonsBlock string,
+	marketLines string,
+	balanceBlock string,
+) string {
+	// Build the exact Slack mrkdwn text without a large fmt.Sprintf template.
+	var b strings.Builder
+	b.WriteString(":robot_face: EVM Trading Bot — Status Report\n\n")
+	b.WriteString(":white_check_mark: Status: Up and Running\n\n")
+	b.WriteString(":bar_chart: 24h Activity\n")
+	b.WriteString("• Positions opened/closed: ")
+	b.WriteString(strconv.Itoa(positionsOpenedClosed))
+	b.WriteString("\n")
+	b.WriteString("• Volume generated: ")
+	b.WriteString(volumeGenerated)
+	b.WriteString("\n")
+	b.WriteString("• Realized PnL: ")
+	b.WriteString(realizedPnl)
+	b.WriteString("\n")
+	b.WriteString("• Failed transactions: ")
+	b.WriteString(strconv.Itoa(failedTxs))
+	b.WriteString("\n")
+	b.WriteString("└ Reason Types:\n")
+	b.WriteString(failedReasonsBlock)
+	b.WriteString("\n\n")
+
+	b.WriteString(":chart_with_upwards_trend: Markets\n")
+	b.WriteString(marketLines)
+	b.WriteString("\n\n")
+
+	b.WriteString(":moneybag: Balances\n")
+	b.WriteString(balanceBlock)
+	return b.String()
 }
