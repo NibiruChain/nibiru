@@ -1,6 +1,7 @@
 package evmtrader
 
 import (
+	"context"
 	"encoding/csv"
 	"os"
 	"path/filepath"
@@ -15,9 +16,11 @@ type status24hMetrics struct {
 	positionsClosed24h int
 	failedTxs24h       int
 	failedReasonsBlock string
+	volumeUSD          float64
+	realizedPnL        float64
 }
 
-func compute24hMetrics(now time.Time, logsDir string) status24hMetrics {
+func compute24hMetrics(ctx context.Context, now time.Time, logsDir string, keeper *KeeperClient, traderAddr string) status24hMetrics {
 	cutoff := now.Add(-24 * time.Hour)
 	out := status24hMetrics{}
 
@@ -93,6 +96,13 @@ func compute24hMetrics(now time.Time, logsDir string) status24hMetrics {
 	}
 
 	out.failedReasonsBlock = formatFailedReasonsBlock(reasonCounts)
+
+	if keeper != nil && ctx != nil && ctx.Err() == nil && traderAddr != "" {
+		if stats, err := keeper.ComputeUser24hStats(ctx, traderAddr); err == nil {
+			out.volumeUSD = stats.VolumeUSD
+			out.realizedPnL = stats.RealizedPnL
+		}
+	}
 
 	return out
 }

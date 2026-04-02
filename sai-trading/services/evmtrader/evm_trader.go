@@ -44,6 +44,8 @@ type EVMTrader struct {
 
 	tradeLogMu sync.Mutex
 	openTrades map[uint64]*tradeLifecycle
+
+	keeper *KeeperClient
 }
 
 // tradeLifecycle stores metadata about an open trade so that when it closes,
@@ -162,6 +164,14 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		openTrades:          make(map[uint64]*tradeLifecycle),
 	}
 
+	if cfg.KeeperDBDSN != "" {
+		if kc, err := NewKeeperClient(cfg.KeeperDBDSN); err != nil {
+			fmt.Printf("Warning: failed to init keeper client: %v\n", err)
+		} else {
+			trader.keeper = kc
+		}
+	}
+
 	return trader, nil
 }
 
@@ -174,6 +184,12 @@ func (t *EVMTrader) Close() {
 	if t.grpcConn != nil {
 		if err := t.grpcConn.Close(); err != nil {
 			t.logWarn("Failed to close gRPC connection", "error", err.Error())
+		}
+	}
+
+	if t.keeper != nil {
+		if err := t.keeper.Close(); err != nil {
+			t.logWarn("Failed to close keeper DB", "error", err.Error())
 		}
 	}
 }

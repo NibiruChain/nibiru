@@ -518,17 +518,21 @@ func (t *EVMTrader) runHealthCheck(ctx context.Context, cfg AutoTradingConfig, c
 		fields["balance_"+denom] = balance.String()
 	}
 
-	// 24h metrics derived from CSV logs.
+	// 24h metrics derived from CSV logs and sai-keeper.
 	nowUTC := time.Now().UTC()
-	metrics := compute24hMetrics(nowUTC, "logs")
+	metrics := compute24hMetrics(ctx, nowUTC, "logs", t.keeper, t.ethAddrBech32)
 	fields["positions_opened_24h"] = metrics.positionsOpened24h
 	fields["positions_closed_24h"] = metrics.positionsClosed24h
 	fields["failed_txs_24h"] = metrics.failedTxs24h
 	fields["failed_reason_types"] = metrics.failedReasonsBlock
 	fields["failed_reason"] = metrics.failedReasonsBlock
-	// TODO: Add volume generated and realized PnL
-	fields["volume_generated"] = "N/A"
-	fields["realized_pnl"] = "N/A"
+	if t.keeper != nil {
+		fields["volume_generated"] = fmt.Sprintf("%.2f USD", metrics.volumeUSD)
+		fields["realized_pnl"] = fmt.Sprintf("%.2f USD", metrics.realizedPnL)
+	} else {
+		fields["volume_generated"] = "N/A"
+		fields["realized_pnl"] = "N/A"
+	}
 
 	// Best-effort market pair labels for Slack readability.
 	marketPairs := make([]string, 0, len(marketIndices))
