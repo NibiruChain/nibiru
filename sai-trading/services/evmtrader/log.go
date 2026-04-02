@@ -406,9 +406,11 @@ func buildStatusReportText(
 	b.WriteString("\n")
 	b.WriteString("• Failed transactions: ")
 	b.WriteString(strconv.Itoa(failedTxs))
-	b.WriteString("\n")
-	b.WriteString("└ Reason Types:\n")
-	b.WriteString(failedReasonsBlock)
+	if failedTxs > 0 {
+		b.WriteString("\n")
+		b.WriteString("└ Reason Types:\n")
+		b.WriteString(failedReasonsBlock)
+	}
 	b.WriteString("\n\n")
 
 	b.WriteString(":chart_with_upwards_trend: Markets\n")
