@@ -620,6 +620,9 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 	// Load Slack webhook from environment variable
 	cfg.SlackWebhook = os.Getenv("SLACK_WEBHOOK")
 
+	// Optional
+	cfg.KeeperDBDSN = os.Getenv("KEEPER_DB_DSN")
+
 	return cfg, nil
 }
 

@@ -44,6 +44,8 @@ type Config struct {
 
 	// Static JSON file for trades
 	TradeJSONFile string // Path to JSON file with open_trade parameters
+
+	KeeperDBDSN string
 }
 
 // ContractAddresses stores addresses/ids loaded from localnet_contracts.env
