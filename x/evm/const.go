@@ -44,6 +44,7 @@ const (
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
 	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 	CtxKeyEvmEventTruncationMark   contextKey = "evm_event_truncation_mark"
+	CtxKeyVMSenderGuard            contextKey = "evm_vm_sender_guard"
 )
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
@@ -77,6 +78,14 @@ var (
 
 	CodeHashForNilAccount = gethcommon.Hash{}
 )
+
+func IsVMSenderCtx(ctx sdk.Context) bool {
+	isTrue, ok := ctx.Value(CtxKeyVMSenderGuard).(bool)
+	if ok && isTrue == true {
+		return true
+	}
+	return false
+}
 
 var PRECOMPILE_ADDRS []gethcommon.Address =
 // Using a set cleanly removes potential duplicates
