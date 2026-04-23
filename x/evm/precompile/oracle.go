@@ -94,7 +94,10 @@ func (p precompileOracle) Run(
 		return
 	}
 	if err != nil {
-		return nil, err
+		if len(bz) == 0 {
+			bz = revertBzForErr(err)
+		}
+		return bz, err
 	}
 
 	return bz, err

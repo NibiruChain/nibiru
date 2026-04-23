@@ -95,18 +95,10 @@ func (e erc20Calls) Transfer(
 	erc20Contract, sender, recipient gethcommon.Address, amount *big.Int,
 	ctx sdk.Context, evmObj *vm.EVM,
 ) (balanceIncrease *big.Int, resp *evm.MsgEthereumTxResponse, err error) {
-	var (
-		sdb = evmObj.StateDB.(*SDB)
-	)
-
 	recipientBalanceBefore, err := e.BalanceOf(erc20Contract, recipient, ctx, evmObj)
 	if err != nil {
 		return balanceIncrease, nil, sdkioerrors.Wrap(err, "failed to retrieve recipient balance")
 	}
-
-	sdb.SetCtx(
-		sdb.Ctx().WithValue(evm.CtxKeyVMSenderGuard, true),
-	)
 
 	contractInput, err := e.ABI.Pack("transfer", recipient, amount)
 	if err != nil {
@@ -154,10 +146,6 @@ func (e erc20Calls) Transfer(
 			recipient.Hex(), balanceIncrease.String(), erc20Contract.Hex(),
 		)
 	}
-
-	sdb.SetCtx(
-		sdb.Ctx().WithValue(evm.CtxKeyVMSenderGuard, false),
-	)
 
 	return balanceIncrease, resp, err
 }
@@ -232,7 +220,7 @@ func (e erc20Calls) loadERC20String(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
@@ -275,7 +263,7 @@ func (e erc20Calls) loadERC20Uint8(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
@@ -318,7 +306,7 @@ func (e erc20Calls) LoadERC20BigInt(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),

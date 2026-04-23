@@ -505,7 +505,7 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	evmObj, _ := deps.NewEVM()
 	evmResp, err := deps.EvmKeeper.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		deps.Sender.EthAddr,
 		&precompile.PrecompileAddr_FunToken,
 		input,
 		evmtest.FunTokenGasLimitSendToEvm,
@@ -516,6 +516,105 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 	s.Require().NotZero(evmResp.GasUsed)
 	s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed())
 	s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed)
+
+	evmResp, err = deps.EvmKeeper.CallContract(
+		evmObj,
+		evm.EVM_MODULE_ADDRESS,
+		&precompile.PrecompileAddr_FunToken,
+		input,
+		evmtest.FunTokenGasLimitSendToEvm,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
+	)
+	s.Require().ErrorContains(err, "disabled during EVM-originated contract callback")
+	s.Require().NotZero(evmResp.GasUsed)
+	s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed())
+	s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed)
+}
+
+func (s *SuiteFunToken) TestERC20MaliciousCallGuard() {
+	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
+	))
+
+	s.T().Log("Deploy ERC20MaliciousTransfer")
+	metadata := evm.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20MaliciousTransfer,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+
+	erc20Addr := eth.EIP55Addr{
+		Address: deployResp.ContractAddr,
+	}
+
+	s.T().Log("happy: CreateFunToken for ERC20 with malicious transfer")
+	resp, err := deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx()),
+		&evm.MsgCreateFunToken{
+			FromErc20: &erc20Addr,
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err)
+	bankDenom := resp.FuntokenMapping.BankDenom
+	randomAcc := testutil.AccAddress()
+
+	for _, testCase := range []struct {
+		Method    string
+		InputArgs []any
+	}{
+		{
+			Method:    "sendToBank",
+			InputArgs: []any{deployResp.ContractAddr, big.NewInt(1), randomAcc.String()},
+		},
+		{
+			Method:    "bankMsgSend",
+			InputArgs: []any{randomAcc.String(), bankDenom, big.NewInt(1)},
+		},
+		{
+			Method:    "sendToEvm",
+			InputArgs: []any{bankDenom, big.NewInt(1), randomAcc.String()},
+		},
+	} {
+		input, err := embeds.SmartContract_FunToken.ABI.Pack(
+			testCase.Method,
+			testCase.InputArgs...,
+		)
+		s.Require().NoError(err)
+		deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+		evmObj, _ := deps.NewEVM()
+
+		evmResp, err := deps.EvmKeeper.CallContract(
+			evmObj,
+			evm.EVM_MODULE_ADDRESS,
+			&precompile.PrecompileAddr_FunToken,
+			input,
+			evmtest.FunTokenGasLimitSendToEvm,
+			evm.COMMIT_ETH_TX, /*commit*/
+			nil,
+		)
+		s.Require().ErrorContains(err,
+			"disabled during EVM-originated contract callback", testCase.Method)
+		s.Require().Containsf(
+			evm.NewRevertError(evmResp.Ret).Error(),
+			"disabled during EVM-originated contract callback",
+			"%s revert data should contain guard reason", testCase.Method,
+		)
+		s.Require().NotZero(evmResp.GasUsed, testCase.Method)
+		s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed(), testCase.Method)
+		s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed, testCase.Method)
+	}
+
 }
 
 // TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
