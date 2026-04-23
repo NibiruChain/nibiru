@@ -164,6 +164,12 @@ const (
 var (
 	EVM_MODULE_ADDRESS        gethcommon.Address
 	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	// EVM_READONLY_ADDR is a dedicated low-privilege EVM caller identity for
+	// query-style external contract execution (for example ERC20 metadata and
+	// balance wrappers). It avoids borrowing x/evm module authority
+	// (EVM_MODULE_ADDRESS) for read paths while still allowing deterministic EVM
+	// execution with a stable caller address.
+	EVM_READONLY_ADDR         gethcommon.Address
 	FEE_COLLECTOR_ADDR        gethcommon.Address
 	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
@@ -171,6 +177,9 @@ var (
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	EVM_READONLY_ADDR = gethcommon.BytesToAddress(authtypes.NewModuleAddress(
+		fmt.Sprintf("%v_readonly_caller", ModuleName),
+	))
 	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }

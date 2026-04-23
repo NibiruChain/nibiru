@@ -877,7 +877,9 @@ func (s *FuntokenSuite) TestGetErc20Address() {
 
 		s.Require().Error(err, "CallContractWithInput failed for non-existent mapping")
 		s.Require().NotEmpty(resp.VmError, "VMError should be not be empty")
-		s.Require().Empty(resp.Ret, "Return data should be empty")
+		s.Require().NotEmpty(resp.Ret, "Return data should include revert reason")
+		revertErr := evm.NewRevertError(resp.Ret)
+		s.Require().Contains(revertErr.Error(), "no FunToken mapping found for bank denom")
 	})
 
 	// Test case 3: Sad path - invalid bank denom format

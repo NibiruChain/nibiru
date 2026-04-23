@@ -155,6 +155,73 @@ func (s *SuiteFunToken) TestConvertCoinToEvmAndBack() {
 	s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed())
 }
 
+func (s *SuiteFunToken) TestMsgConvertCoinToEvm_MaliciousERC20_VMSenderGuard() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+
+	// Fund sender for CreateFunToken fee.
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
+	))
+
+	metadata := evm.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20MaliciousCallback,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+	erc20Addr := deployResp.ContractAddr
+
+	// Create an ERC20-originated mapping so ConvertCoinToEvm routes through
+	// convertCoinToEvmBornERC20 (module-originated ERC20 transfer callback path).
+	createResp, err := deps.EvmKeeper.CreateFunToken(
+		sdk.WrapSDKContext(deps.Ctx()),
+		&evm.MsgCreateFunToken{
+			FromErc20: &eth.EIP55Addr{Address: erc20Addr},
+			Sender:    deps.Sender.NibiruAddr.String(),
+		},
+	)
+	s.Require().NoError(err)
+	funToken := createResp.FuntokenMapping
+	bankDenom := funToken.BankDenom
+
+	convertAmt := sdk.NewInt64Coin(bankDenom, 1)
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(convertAmt),
+	))
+
+	recipient := evmtest.NewEthPrivAcc()
+
+	senderBankBefore := deps.App.BankKeeper.GetBalance(deps.Ctx(), deps.Sender.NibiruAddr, bankDenom).Amount
+	moduleBankBefore := deps.App.BankKeeper.GetBalance(deps.Ctx(), evm.EVM_MODULE_ADDRESS_NIBI, bankDenom).Amount
+
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(
+		deps.GoCtx(),
+		&evm.MsgConvertCoinToEvm{
+			Sender:    deps.Sender.NibiruAddr.String(),
+			BankCoin:  convertAmt,
+			ToEthAddr: eth.EIP55Addr{Address: recipient.EthAddr},
+		},
+	)
+	s.Require().ErrorContains(err, "disabled during EVM-originated contract callback")
+
+	// The failed conversion must not move bank/erc20 balances.
+	senderBankAfter := deps.App.BankKeeper.GetBalance(deps.Ctx(), deps.Sender.NibiruAddr, bankDenom).Amount
+	moduleBankAfter := deps.App.BankKeeper.GetBalance(deps.Ctx(), evm.EVM_MODULE_ADDRESS_NIBI, bankDenom).Amount
+	s.Require().Equal(senderBankBefore, senderBankAfter)
+	s.Require().Equal(moduleBankBefore, moduleBankAfter)
+}
+
 // TestNativeSendThenPrecompileSend tests a race condition where the state DB
 // commit may overwrite the state after the precompile execution, potentially
 // causing a loss of funds.
