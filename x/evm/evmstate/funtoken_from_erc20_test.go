@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -212,6 +213,95 @@ func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {
 				s.Require().ErrorContains(err, `either the "from_erc20" or "from_bank_denom" must be set`)
 			},
 		},
+	})
+}
+
+func (s *SuiteFunToken) TestCreateFunTokenPermissions_ERC20() {
+	meta := evm.ERC20Metadata{
+		Name:     "erc20permissioned",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+
+	deployERC20 := func(
+		deps *evmtest.TestDeps,
+	) eth.EIP55Addr {
+		resp, err := evmtest.DeployContract(
+			deps,
+			embeds.SmartContract_ERC20MinterWithMetadataUpdates,
+			meta.Name, meta.Symbol, meta.Decimals,
+		)
+		s.Require().NoError(err)
+		return eth.EIP55Addr{Address: resp.ContractAddr}
+	}
+
+	s.Run("happy: non-mainnet remains permissionless", func() {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().
+			WithChainID("nibiru-testnet-2").
+			WithGasMeter(sdk.NewInfiniteGasMeter()))
+		erc20Addr := deployERC20(&deps)
+
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			deps.Sender.NibiruAddr,
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
+		))
+
+		resp, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx()),
+			&evm.MsgCreateFunToken{
+				FromErc20: &erc20Addr,
+				Sender:    deps.Sender.NibiruAddr.String(),
+			},
+		)
+		s.Require().NoError(err)
+		s.Require().False(resp.FuntokenMapping.IsMadeFromCoin)
+		s.Require().Equal(erc20Addr.String(), resp.FuntokenMapping.Erc20Addr.String())
+	})
+
+	s.Run("happy: mainnet governance authority can create after unauthorized sender is rejected", func() {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().
+			WithChainID("cataclysm-1").
+			WithGasMeter(sdk.NewInfiniteGasMeter()))
+		erc20Addr := deployERC20(&deps)
+		authority := auth.NewModuleAddress(govtypes.ModuleName)
+		unauthorizedSender := deps.Sender.NibiruAddr
+
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			authority,
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
+		))
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			unauthorizedSender,
+			deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx()),
+		))
+
+		_, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx()),
+			&evm.MsgCreateFunToken{
+				FromErc20: &erc20Addr,
+				Sender:    unauthorizedSender.String(),
+			},
+		)
+		s.Require().ErrorContains(err, "invalid signing authority")
+
+		resp, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx()),
+			&evm.MsgCreateFunToken{
+				FromErc20: &erc20Addr,
+				Sender:    authority.String(),
+			},
+		)
+		s.Require().NoError(err)
+		s.Require().False(resp.FuntokenMapping.IsMadeFromCoin)
+		s.Require().Equal(erc20Addr.String(), resp.FuntokenMapping.Erc20Addr.String())
 	})
 }
 
