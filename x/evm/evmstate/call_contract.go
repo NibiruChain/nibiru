@@ -45,9 +45,16 @@ func (k Keeper) CallContract(
 	weiValue *big.Int,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	var (
-		sdb   = evmObj.StateDB.(*SDB)
-		nonce = sdb.GetNonce(fromAcc)
+		sdb               = evmObj.StateDB.(*SDB)
+		nonce             = sdb.GetNonce(fromAcc)
+		origVmSenderGuard = evm.IsVMSenderCtx(sdb.Ctx())
 	)
+
+	if fromAcc == evm.EVM_MODULE_ADDRESS {
+		sdb.SetCtx(
+			sdb.Ctx().WithValue(evm.CtxKeyVMSenderGuard, true),
+		)
+	}
 
 	unusedBigInt := big.NewInt(0)
 	if weiValue == nil {
@@ -74,6 +81,11 @@ func (k Keeper) CallContract(
 	evmResp, applyErr = k.ApplyEvmMsg(
 		evmMsg, evmObj, commit, /*commit*/
 	)
+	if evm.IsVMSenderCtx(sdb.Ctx()) {
+		sdb.SetCtx(
+			sdb.Ctx().WithValue(evm.CtxKeyVMSenderGuard, origVmSenderGuard),
+		)
+	}
 	if applyErr != nil {
 		sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 		return nil, applyErr
