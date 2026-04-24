@@ -2,6 +2,7 @@ package evmstate_test
 
 import (
 	"math"
+	"math/big"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -175,6 +177,58 @@ func (s *Suite) TestGetHashFn() {
 	s.Equal(gethcommon.BytesToHash(deps.Ctx().HeaderHash()), fn(uint64(deps.Ctx().BlockHeight())))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())+1))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())-1))
+}
+
+// TestCallContract_VMSenderGuard is a regression for [evmstate.CallContract]:
+// module-originated external execution sets CtxKeyVMSenderGuard for the duration
+// of ApplyEvmMsg and restores the prior value afterward. TestERC20MaliciousCallback
+// delegatecalls FunToken bankMsgSend from transfer() so the guard must be active
+// during that nested call; after CallContract returns, the guard must be clear.
+//
+// This targets CallContract guard scoping, not Wasm or full FunToken flows. No
+// complex initial conditions are needed because the expected failure happens at
+// the guard boundary before privileged Cosmos-side work should proceed.
+func (s *Suite) TestCallContract_VMSenderGuard() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+
+	evmObj, sdb := deps.NewEVM()
+	s.Require().False(evm.IsVMSenderCtx(sdb.Ctx()),
+		"sanity: VM-sender guard must start inactive")
+
+	metadata := evm.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_TestERC20MaliciousCallback,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+	erc20Addr := deployResp.ContractAddr
+
+	transferInput, err := embeds.SmartContract_TestERC20MaliciousCallback.ABI.Pack(
+		"transfer",
+		deps.Sender.EthAddr,
+		big.NewInt(1),
+	)
+	s.Require().NoError(err)
+
+	evmResp, err := deps.EvmKeeper.CallContract(
+		evmObj,
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Addr,
+		transferInput,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
+	)
+	s.Require().ErrorContains(err, "disabled during EVM-originated contract callback")
+	s.Require().NotNil(evmResp)
+	s.Require().False(evm.IsVMSenderCtx(sdb.Ctx()),
+		"VM-sender guard must be restored after CallContract returns")
 }
 
 func (s *Suite) TestUpdateParams() {

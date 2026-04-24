@@ -220,7 +220,7 @@ func (e erc20Calls) loadERC20String(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
@@ -263,7 +263,7 @@ func (e erc20Calls) loadERC20Uint8(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
@@ -306,7 +306,7 @@ func (e erc20Calls) LoadERC20BigInt(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&contract,
 		input,
 		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),

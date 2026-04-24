@@ -46,6 +46,7 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_9_0,
 	Upgrade2_10_0,
 	Upgrade2_11_0,
+	Upgrade2_12_0,
 }
 
 // DefaultUpgradeHandler runs module manager migrations without running any other
