@@ -55,29 +55,6 @@ This ensures contract interactions are type-checked at compile-time, helping red
 This package exports interfaces, types, and constants for each [Nibiru-specific
 precompiled contract](https://nibiru.fi/docs/evm/precompiles/nibiru.html). To use these precompiles in Solidity, use the exported constant that represents an instance of the precompile. 
 
-For example in "IOracle.sol", we define:
-```solidity
-IOracle constant NIBIRU_ORACLE = IOracle(ORACLE_PRECOMPILE_ADDRESS);
-```
-
-This means another contract can use `NIBIRU_ORACLE` to access each method from
-the Nibiru Oracle precompile.
-```solidity
-import '@nibiruchain/solidity/contracts/IOracle.sol';
-
-contract Example {
-
-  function latestRoundData()
-    public
-    view
-    override
-    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-  {
-    return NIBIRU_ORACLE.chainLinkLatestRoundData(pair);
-  }
-}
-```
-
 Similarly, the fungible token precompile defines:
 ```
 IFunToken constant FUNTOKEN_PRECOMPILE = IFunToken(FUNTOKEN_PRECOMPILE_ADDRESS);

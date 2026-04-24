@@ -12,11 +12,9 @@ import WNIBI_JSON from "../../x/evm/embeds/artifacts/contracts/WNIBI.sol/WNIBI.j
 import {
   EventsEmitter__factory,
   InifiniteLoopGas__factory,
-  NibiruOracleChainLinkLike__factory,
   SendNibi__factory,
   TestERC20__factory,
   TransactionReverter__factory,
-  type NibiruOracleChainLinkLike,
 } from "../types"
 import { account, provider, TX_WAIT_TIMEOUT } from "./setup"
 
@@ -73,19 +71,6 @@ export const sendTestNibi = async () => {
   await txResponse.wait(1, TX_WAIT_TIMEOUT)
   console.log(txResponse)
   return txResponse
-}
-
-export const deployContractNibiruOracleChainLinkLike = async (): Promise<{
-  oraclePair: string
-  contract: NibiruOracleChainLinkLike & {
-    deploymentTransaction(): ContractTransactionResponse
-  }
-}> => {
-  const oraclePair = "ueth:uusd"
-  const factory = new NibiruOracleChainLinkLike__factory(account)
-  const contract = await factory.deploy(oraclePair, toBigInt(8))
-  await contract.waitForDeployment()
-  return { oraclePair, contract }
 }
 
 export type WNIBI = ReturnType<typeof wnibiCaller>

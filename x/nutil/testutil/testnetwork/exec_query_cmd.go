@@ -13,9 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
-	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
-	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudocli "github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
@@ -92,14 +89,6 @@ func ExecQueryCmd(
 	default:
 		return fmt.Errorf("unrecognized encoding option %v", options.outputEncoding)
 	}
-}
-
-func QueryOracleExchangeRate(clientCtx client.Context, pair asset.Pair) (*oracletypes.QueryExchangeRateResponse, error) {
-	var queryResp oracletypes.QueryExchangeRateResponse
-	if err := ExecQueryCmd(clientCtx, oraclecli.GetCmdQueryExchangeRates(), []string{pair.String()}, &queryResp); err != nil {
-		return nil, err
-	}
-	return &queryResp, nil
 }
 
 func QueryTx(ctx client.Context, txHash string) (*sdk.TxResponse, error) {

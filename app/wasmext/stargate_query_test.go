@@ -15,7 +15,6 @@ import (
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -42,7 +41,6 @@ func (s *Suite) TestWasmAcceptedStargateQueries() {
 		epochs.GrpcQueryServiceDesc(),
 		devgas.GrpcQueryServiceDesc(),
 		inflation.GrpcQueryServiceDesc(),
-		oracle.GrpcQueryServiceDesc(),
 		sudo.GrpcQueryServiceDesc(),
 		tokenfactory.GrpcQueryServiceDesc(),
 	}
@@ -68,7 +66,7 @@ func (s *Suite) TestWasmAcceptedStargateQueries() {
 	// to this convention is when our response type isn't stripped of its
 	// "Response" suffix and "Query" prefix is not the same as the method name.
 	// This happens when "QueryAAARequest" does not return a "QueryAAAResponse".
-	exceptionPaths := set.New[string]("/nibiru.oracle.v1.QueryExchangeRateResponse")
+	exceptionPaths := set.New[string]()
 
 	gotQueryPaths := []string{}
 	for queryPath, protobufResponse := range wasmbinding.WasmAcceptedStargateQueries() {

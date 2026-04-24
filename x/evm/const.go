@@ -81,7 +81,7 @@ var (
 
 func IsVMSenderCtx(ctx sdk.Context) bool {
 	isTrue, ok := ctx.Value(CtxKeyVMSenderGuard).(bool)
-	if ok && isTrue == true {
+	if ok && isTrue {
 		return true
 	}
 	return false
@@ -95,8 +95,6 @@ set.New[gethcommon.Address](
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
 		// Wasm 0x...802
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
-		// Oracle 0x...801
-		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
 		// P-256 verification precompile 0x...100
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
@@ -162,8 +160,8 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS        gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	EVM_MODULE_ADDRESS      gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
 	// EVM_READONLY_ADDR is a dedicated low-privilege EVM caller identity for
 	// query-style external contract execution (for example ERC20 metadata and
 	// balance wrappers). It avoids borrowing x/evm module authority

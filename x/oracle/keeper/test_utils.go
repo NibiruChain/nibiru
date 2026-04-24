@@ -39,8 +39,6 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -142,11 +140,8 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	tKeyParams := sdk.NewTransientStoreKey(paramstypes.TStoreKey)
 	keyOracle := sdk.NewKVStoreKey(types.StoreKey)
 	keyStaking := sdk.NewKVStoreKey(stakingtypes.StoreKey)
-	keySlashing := sdk.NewKVStoreKey(slashingtypes.StoreKey)
 	keyDistr := sdk.NewKVStoreKey(distrtypes.StoreKey)
 	keySudo := sdk.NewKVStoreKey(sudo.StoreKey)
-
-	govModuleAddr := authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 	db := dbm.NewMemDB()
 	ms := store.NewCommitMultiStore(db)
@@ -212,8 +207,6 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	stakingParams.BondDenom = denoms.NIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
 
-	slashingKeeper := slashingkeeper.NewKeeper(appCodec, legacyAmino, keySlashing, stakingKeeper, govModuleAddr)
-
 	distrKeeper := distrkeeper.NewKeeper(
 		appCodec,
 		keyDistr,
@@ -256,12 +249,6 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		appCodec,
 		keyOracle,
 		accountKeeper,
-		bankKeeper,
-		distrKeeper,
-		stakingKeeper,
-		slashingKeeper,
-		sudoKeeper,
-		distrtypes.ModuleName,
 	)
 
 	defaults := types.DefaultParams()
@@ -305,11 +292,6 @@ func FundAccount(input TestFixture, addr sdk.AccAddress, amounts sdk.Coins) erro
 	return input.BankKeeper.SendCoinsFromModuleToAccount(input.Ctx, faucetAccountName, addr, amounts)
 }
 
-func AllocateRewards(t *testing.T, input TestFixture, rewards sdk.Coins, votePeriods uint64) {
-	require.NoError(t, input.BankKeeper.MintCoins(input.Ctx, faucetAccountName, rewards))
-	require.NoError(t, input.OracleKeeper.AllocateRewards(input.Ctx, faucetAccountName, rewards, votePeriods))
-}
-
 var (
 	testStakingAmt   = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 	testExchangeRate = sdkmath.LegacyNewDec(1700)
@@ -343,26 +325,4 @@ func Setup(t *testing.T) (TestFixture, types.MsgServer) {
 	staking.EndBlocker(fixture.Ctx, &fixture.StakingKeeper)
 
 	return fixture, h
-}
-
-func MakeAggregatePrevoteAndVote(
-	t *testing.T,
-	input TestFixture,
-	msgServer types.MsgServer,
-	height int64,
-	rates types.ExchangeRateTuples,
-	valIdx int,
-) {
-	salt := "1"
-	ratesStr, err := rates.ToString()
-	require.NoError(t, err)
-	hash := types.GetAggregateVoteHash(salt, ratesStr, ValAddrs[valIdx])
-
-	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height)), prevoteMsg)
-	require.NoError(t, err)
-
-	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, ratesStr, Addrs[valIdx], ValAddrs[valIdx])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(height+1)), voteMsg)
-	require.NoError(t, err)
 }
