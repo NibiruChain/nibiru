@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudo "github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -480,7 +479,7 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
 						Coin:   nusd69420,
-						MintTo: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						MintTo: authtypes.NewModuleAddress(sudo.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},
@@ -488,7 +487,7 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgBurn{
 						Sender:   addrs[0].String(),
 						Coin:     nusd69420,
-						BurnFrom: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						BurnFrom: authtypes.NewModuleAddress(sudo.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},
