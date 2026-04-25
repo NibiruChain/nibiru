@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
@@ -143,7 +142,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		keysCommand(app.DefaultNodeHome),
 
 		// EVM Tx Indexer force catch up command
 		server.NewEVMTxIndexCmd(),
