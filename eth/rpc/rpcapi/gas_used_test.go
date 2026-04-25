@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
+	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
@@ -24,8 +24,8 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	defer testMutex.Unlock()
 
 	// Start with new block
-	s.network.WaitForNextBlock()
-	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
+	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	balanceBefore := s.getUnibiBalance(s.evmSenderEthAddr)
 
 	// Send 2 similar transfers
 	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
@@ -55,7 +55,7 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	s.Require().GreaterOrEqual(block["gasUsed"].(*hexutil.Big).ToInt().Uint64(), receipt1.GasUsed+receipt2.GasUsed)
 
 	// Balance after should be equal to balance before minus gas used and amount sent
-	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
+	balanceAfter := s.getUnibiBalance(s.evmSenderEthAddr)
 	s.Require().Equal(
 		receipt1.GasUsed+receipt2.GasUsed+2,
 		balanceBefore.Uint64()-balanceAfter.Uint64(),
@@ -81,16 +81,14 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	)
 	s.Require().NoError(err)
 
-	nonce := s.getCurrentNonce(s.node.EthAddress)
-	balanceBefore := s.getUnibiBalance(s.fundedAccEthAddr)
+	balanceBefore := s.getUnibiBalance(s.evmSenderEthAddr)
 
-	txResp, err := s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
-		Sender:    s.node.Address.String(),
-		FromErc20: &erc20Addr,
-	})
+	txResp, err := s.localnetCLI.ExecTxCmd(
+		nibidcmd.TxCmd(),
+		[]string{"evm", "create-funtoken", "--erc20=" + erc20Addr.Hex()},
+	)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp)
-	s.network.WaitForNextBlock()
 
 	randomNibiAddress := testutil.AccAddress()
 	packedArgsPass, err := embeds.SmartContract_FunToken.ABI.Pack(
@@ -101,7 +99,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	)
 	s.Require().NoError(err)
 
-	nonce = s.getCurrentNonce(s.fundedAccEthAddr)
+	nonce := s.getCurrentNonce(s.evmSenderEthAddr)
 	txHash1 := SendTransaction(
 		s,
 		&gethcore.LegacyTx{
@@ -181,7 +179,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	)
 
 	// Balance after should be equal to balance before minus gas used
-	balanceAfter := s.getUnibiBalance(s.fundedAccEthAddr)
+	balanceAfter := s.getUnibiBalance(s.evmSenderEthAddr)
 	balanceChange := new(big.Int).Sub(balanceAfter, balanceBefore)
 	s.Require().Negative(balanceChange.Cmp(big.NewInt(0)), "txs should lower the balance, not increase it")
 	s.Require().LessOrEqualf(
@@ -198,8 +196,8 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	testMutex.Lock()
 	defer testMutex.Unlock()
 
-	balBefore := s.getUnibiBalance(s.fundedAccEthAddr)
-	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
+	balBefore := s.getUnibiBalance(s.evmSenderEthAddr)
+	nonce := s.getCurrentNonce(s.evmSenderEthAddr)
 
 	contractCreationGasLimit := uint64(1_500_000)
 	contractCallGasLimit := uint64(100_000)
@@ -233,7 +231,7 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	s.Require().Greater(receiptSecondTransfer.GasUsed, uint64(0))
 	s.Require().LessOrEqual(receiptSecondTransfer.GasUsed, contractCallGasLimit)
 
-	balAfter := s.getUnibiBalance(s.fundedAccEthAddr)
+	balAfter := s.getUnibiBalance(s.evmSenderEthAddr)
 	balAfterU64 := balAfter.Uint64()
 	balBeforeU64 := balBefore.Uint64()
 	s.Require().LessOrEqual(balAfterU64, balBeforeU64, "balance must have decreased")

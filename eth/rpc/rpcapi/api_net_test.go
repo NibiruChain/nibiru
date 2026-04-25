@@ -2,12 +2,13 @@ package rpcapi_test
 
 import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 )
 
 func (s *NodeSuite) TestNetNamespace() {
-	api := s.node.EthRpc_NET
+	api := s.netAPI
 	s.Require().True(api.Listening())
 	s.EqualValues(
-		appconst.GetEthChainID(s.node.ClientCtx.ChainID).String(), api.Version())
+		appconst.GetEthChainID(testnetwork.LocalnetChainID).String(), api.Version())
 	s.Equal(0, api.PeerCount())
 }

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -13,7 +13,9 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
@@ -26,7 +28,7 @@ import (
 // - 1: simple eth transfer
 // - 2: deploying erc20 contract
 // - 3. creating funtoken from erc20
-// - 4: creating funtoken from coin
+// - 4: ensuring or creating funtoken from coin
 // - 5. converting coin to erc20
 // - 6. converting erc20 born token to coin via precompile
 // Each tx should emit some tx logs and emit proper tx index within ethereum tx event.
@@ -36,34 +38,36 @@ func (s *BackendSuite) TestLogs() {
 	defer testMutex.Unlock()
 
 	// Start with fresh block
-	s.network.WaitForNextBlock()
+	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
 
 	debugLogs := make(map[string]string)
 
 	s.T().Log("TX1: Send simple nibi transfer")
 	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
 	txHashFirst := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
-	debugLogs["s.fundedAccEthAddr"] = s.fundedAccEthAddr.Hex()
+	debugLogs["s.evmSenderEthAddr"] = s.evmSenderEthAddr.Hex()
 	debugLogs["addr of recipient from tx 1"] = randomEthAddr.Hex()
 	debugLogs["tx hash of tx 1"] = txHashFirst.Hex()
 
 	s.T().Log("TX2: Deploy ERC20 contract")
-	_, erc20AddrTx2 := s.DeployTestContract(false)
+	txHashDeploy, erc20AddrTx2 := s.DeployTestContract(false)
 	erc20Addr, _ := eth.NewEIP55AddrFromStr(erc20AddrTx2.String())
 	debugLogs["erc20 addr deployed in tx 2"] = erc20Addr.Hex()
 
 	var (
-		txHash3 string // Tx hash hex of TX3
-		txHash4 string // Tx hash hex of TX4
-		txHash5 string // Tx hash hex of TX5
+		txHash3             string // Tx hash hex of TX3
+		txHash4             string // Tx hash hex of TX4, if broadcast
+		txHash5             string // Tx hash hex of TX5
+		txResults           = make(map[string]*sdk.TxResponse)
+		tx4FunTokenCreated  *evm.EventFunTokenCreated
+		nativeFunTokenERC20 gethcommon.Address
 	)
 
 	s.T().Log("TX3: Create FunToken from ERC20")
-	nonce := s.getCurrentNonce(eth.NibiruAddrToEthAddr(s.node.Address))
-	txResp, err := s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
-		Sender:    s.node.Address.String(),
-		FromErc20: &erc20Addr,
-	})
+	txResp, err := s.localnetCLI.ExecTxCmd(
+		nibidcmd.TxCmd(),
+		[]string{"evm", "create-funtoken", "--erc20=" + erc20Addr.Hex()},
+	)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp)
 	s.Require().Equal(
@@ -72,36 +76,52 @@ func (s *BackendSuite) TestLogs() {
 		fmt.Sprintf("Failed to create FunToken from ERC20. RawLog: %s", txResp.RawLog),
 	)
 	txHash3 = txResp.TxHash
+	txResults[txHash3] = txResp
 
-	s.T().Log("TX4: Create FunToken from unibi coin")
-	nonce++
-	erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS)+1)
-	debugLogs["erc20FromCoinAddr (assumed funtoken address)"] = erc20FromCoinAddr.Hex()
-	debugLogs["s.node.EthAddress"] = s.node.EthAddress.Hex()
+	s.T().Log("TX4: Ensure FunToken from bank coin")
+	debugLogs["localnet validator"] = s.localnetCLI.FromAddr.String()
 
-	// Query the EVM params for the WNIBI address
-	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgCreateFunToken{
-		Sender:        s.node.Address.String(),
-		FromBankDenom: evm.EVMBankDenom,
-	})
-	s.Require().NoError(err)
-	s.Require().NotNil(txResp)
-	s.Require().Equal(
-		uint32(0),
-		txResp.Code,
-		fmt.Sprintf("Failed to create FunToken from unibi coin. RawLog: %s", txResp.RawLog),
-	)
-	txHash4 = txResp.TxHash
+	// Localnet genesis injects WNIBI.sol at the expected address. The test
+	// ensures the native bank-denom FunToken mapping once, then reuses it on
+	// persistent localnet reruns.
+	nativeFunTokenMapping, mappingExists := s.queryFunTokenMapping(evm.EVMBankDenom)
+	if mappingExists {
+		nativeFunTokenERC20 = nativeFunTokenMapping.Erc20Addr.Address
+		debugLogs["native funtoken mapping"] = nativeFunTokenERC20.Hex()
+	} else {
+		erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS)+1)
+		debugLogs["erc20FromCoinAddr (assumed funtoken address)"] = erc20FromCoinAddr.Hex()
+
+		txResp, err = s.localnetCLI.ExecTxCmd(
+			nibidcmd.TxCmd(),
+			[]string{"evm", "create-funtoken", "--bank-denom=" + evm.EVMBankDenom},
+		)
+		s.Require().NoError(err)
+		s.Require().NotNil(txResp)
+		s.Require().Equal(
+			uint32(0),
+			txResp.Code,
+			fmt.Sprintf("Failed to create FunToken from bank coin. RawLog: %s", txResp.RawLog),
+		)
+		txHash4 = txResp.TxHash
+		txResults[txHash4] = txResp
+
+		s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX4")
+		tx4FunTokenCreated = s.funTokenCreatedEvent(txResp)
+		nativeFunTokenERC20 = gethcommon.HexToAddress(tx4FunTokenCreated.Erc20ContractAddress)
+		debugLogs["native funtoken mapping created"] = nativeFunTokenERC20.Hex()
+	}
 
 	s.T().Log("TX5: Convert coin to EVM")
-	nonce++
-	txResp, err = s.network.BroadcastMsgs(s.node.Address, &nonce, &evm.MsgConvertCoinToEvm{
-		Sender:   s.node.Address.String(),
-		BankCoin: sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(1)),
-		ToEthAddr: eth.EIP55Addr{
-			Address: s.fundedAccEthAddr,
+	txResp, err = s.localnetCLI.ExecTxCmd(
+		nibidcmd.TxCmd(),
+		[]string{
+			"evm",
+			"convert-coin-to-evm",
+			s.evmSenderEthAddr.Hex(),
+			"1" + evm.EVMBankDenom,
 		},
-	})
+	)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp)
 	s.Require().Equal(
@@ -110,6 +130,7 @@ func (s *BackendSuite) TestLogs() {
 		fmt.Sprintf("Failed converting coin to evm. RawLog: %s", txResp.RawLog),
 	)
 	txHash5 = txResp.TxHash
+	txResults[txHash5] = txResp
 
 	s.T().Log("TX6: Send erc20 token to coin using precompile")
 	randomNibiAddress := testutil.AccAddress()
@@ -123,7 +144,7 @@ func (s *BackendSuite) TestLogs() {
 	txHashLast := SendTransaction(
 		s,
 		&gethcore.LegacyTx{
-			Nonce:    s.getCurrentNonce(s.fundedAccEthAddr),
+			Nonce:    s.getCurrentNonce(s.evmSenderEthAddr),
 			To:       &precompile.PrecompileAddr_FunToken,
 			Data:     packedArgsPass,
 			Gas:      1_500_000,
@@ -140,42 +161,37 @@ func (s *BackendSuite) TestLogs() {
 	s.Require().NotNil(blockNumFirstTx)
 	s.Require().NotNil(blockNumLastTx)
 
-	txResults := make(map[string]abci.ResponseDeliverTx)
-	for idxRaw, txHash := range []string{txHash3, txHash4, txHash5} {
-		idx := idxRaw + 3
-		resTx, err := s.node.Querier.TxByHash(txHash)
-		s.NoError(err, "expect Querier.TxByHash to succeed for tx%d", idx)
-		txResJson, _ := json.MarshalIndent(resTx.TxResult, "", "  ")
-		s.T().Logf("txResp for tx%d: %s", idx, txResJson)
-		txResults[txHash] = resTx.TxResult
+	txHashesToLog := []struct {
+		idx    int
+		txHash string
+	}{
+		{idx: 3, txHash: txHash3},
+	}
+	if txHash4 != "" {
+		txHashesToLog = append(txHashesToLog, struct {
+			idx    int
+			txHash string
+		}{idx: 4, txHash: txHash4})
+	}
+	txHashesToLog = append(txHashesToLog, struct {
+		idx    int
+		txHash string
+	}{idx: 5, txHash: txHash5})
+	for _, txHashInfo := range txHashesToLog {
+		idx := txHashInfo.idx
+		txHash := txHashInfo.txHash
+		txResp := txResults[txHash]
+		s.Require().NotNil(txResp, "expect tx response for tx%d", idx)
+		s.T().Logf("txResp for tx%d: hash=%s height=%d code=%d", idx, txResp.TxHash, txResp.Height, txResp.Code)
 	}
 
 	s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX3")
-	tx3FunTokenCreatedEvent := new(evm.EventFunTokenCreated)
-	{
-		eventName := proto.MessageName(tx3FunTokenCreatedEvent)
-		events := testutil.FindAbciEventsOfType(txResults[txHash3].Events, eventName)
-		s.Require().Lenf(events, 1, "expect %s", eventName)
-
-		event, _ := evm.EventFunTokenCreatedFromABCIEvent(events[0])
-		tx3FunTokenCreatedEvent = event
-	}
+	tx3FunTokenCreatedEvent := s.funTokenCreatedEvent(txResults[txHash3])
 	s.Equal(
 		erc20AddrTx2.Hex(),
 		tx3FunTokenCreatedEvent.Erc20ContractAddress,
 		"The ERC20 from TX2 and TX3 must match",
 	)
-
-	s.T().Log("parse \"eth.evm.v1.EventFunTokenCreated\" from TX4")
-	tx4FunTokenCreatedEvent := new(evm.EventFunTokenCreated)
-	{
-		eventName := proto.MessageName(tx4FunTokenCreatedEvent)
-		events := testutil.FindAbciEventsOfType(txResults[txHash4].Events, eventName)
-		s.Require().Lenf(events, 1, "expect %s", eventName)
-
-		event, _ := evm.EventFunTokenCreatedFromABCIEvent(events[0])
-		tx4FunTokenCreatedEvent = event
-	}
 
 	debugLogs["evm.FEE_COLLECTOR_ADDR"] = evm.FEE_COLLECTOR_ADDR.Hex()
 	debugLogs["evm.EVM_MODULE_ADDRESS"] = evm.EVM_MODULE_ADDRESS.Hex()
@@ -189,6 +205,7 @@ func (s *BackendSuite) TestLogs() {
 			TxInfo:      "TX1 - simple eth transfer, should have empty logs",
 			Logs:        []*gethcore.Log{},
 			ExpectEthTx: true,
+			EthTxHash:   txHashFirst,
 		},
 		{
 			TxInfo: "TX2 - deploying erc20 contract, should have logs",
@@ -199,48 +216,36 @@ func (s *BackendSuite) TestLogs() {
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 						gethcommon.Address{}.Hash(),
-						s.fundedAccEthAddr.Hash(),
+						s.evmSenderEthAddr.Hash(),
 					},
 				},
 			},
 			ExpectEthTx: true,
+			EthTxHash:   txHashDeploy,
 		},
 		{
-			TxInfo:      "TX3 - create FunToken from ERC20, no eth tx, no logs",
-			Logs:        []*gethcore.Log{},
-			ExpectEthTx: false,
-		},
-		{
-			TxInfo: "TX4 - create FunToken from bank coin, no eth tx, logs for contract deployment",
-			Logs: []*gethcore.Log{
-				// contract ownership to evm module
-				{
-					Address: gethcommon.HexToAddress(
-						tx4FunTokenCreatedEvent.Erc20ContractAddress),
-					Topics: []gethcommon.Hash{
-						crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)")),
-						gethcommon.Address{}.Hash(),
-						evm.EVM_MODULE_ADDRESS.Hash(),
-					},
-				},
-			},
-			ExpectEthTx: false,
+			TxInfo:         "TX3 - create FunToken from ERC20, no eth tx, no logs",
+			Logs:           []*gethcore.Log{},
+			ExpectEthTx:    false,
+			CosmosTxHash:   txHash3,
+			CosmosTxHeight: txResults[txHash3].Height,
 		},
 		{
 			TxInfo: "TX5 - Convert coin to EVM, no eth tx, logs for minting tokens to the account",
 			Logs: []*gethcore.Log{
 				// minting to the account
 				{
-					Address: gethcommon.HexToAddress(
-						tx4FunTokenCreatedEvent.Erc20ContractAddress),
+					Address: nativeFunTokenERC20,
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 						gethcommon.Address{}.Hash(),
-						s.fundedAccEthAddr.Hash(),
+						s.evmSenderEthAddr.Hash(),
 					},
 				},
 			},
-			ExpectEthTx: false,
+			ExpectEthTx:    false,
+			CosmosTxHash:   txHash5,
+			CosmosTxHeight: txResults[txHash5].Height,
 		},
 		{
 			TxInfo: "TX6 - Send erc20 token to coin using precompile, eth tx, logs for transferring tokens to evm module",
@@ -250,50 +255,158 @@ func (s *BackendSuite) TestLogs() {
 					Address: erc20AddrTx2,
 					Topics: []gethcommon.Hash{
 						crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
-						s.fundedAccEthAddr.Hash(),
+						s.evmSenderEthAddr.Hash(),
 						evm.EVM_MODULE_ADDRESS.Hash(),
 					},
 				},
 			},
 			ExpectEthTx: true,
+			EthTxHash:   txHashLast,
 		},
 	}
+	if tx4FunTokenCreated != nil {
+		tx4TestCase := TxLogsTestCase{
+			TxInfo: "TX4 - create FunToken from bank coin, no eth tx, logs for contract deployment",
+			Logs: []*gethcore.Log{
+				// contract ownership to evm module
+				{
+					Address: nativeFunTokenERC20,
+					Topics: []gethcommon.Hash{
+						crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)")),
+						gethcommon.Address{}.Hash(),
+						evm.EVM_MODULE_ADDRESS.Hash(),
+					},
+				},
+			},
+			ExpectEthTx:    false,
+			CosmosTxHash:   txHash4,
+			CosmosTxHeight: txResults[txHash4].Height,
+		}
+		testCases = append(testCases[:3], append([]TxLogsTestCase{tx4TestCase}, testCases[3:]...)...)
+	}
 
-	// Getting block results. Note: txs could be included in more than one block
-	blockNumber := blockNumFirstTx.Int64()
-	blockRes, err := s.backend.TendermintBlockResultByNumber(&blockNumber)
-	s.Require().NoError(err)
-	s.Require().NotNil(blockRes)
-	txIndex := 0
-	ethTxIndex := 0
-	for idx, tc := range testCases {
+	for _, tc := range testCases {
 		s.Run(tc.TxInfo, func() {
-			if txIndex+1 > len(blockRes.TxsResults) {
-				blockNumber++
-				if blockNumber > blockNumLastTx.Int64() {
-					s.Fail("TX %d not found in block results", idx)
-				}
-				txIndex = 0
-				ethTxIndex = 0
-				blockRes, err = s.backend.TendermintBlockResultByNumber(&blockNumber)
-				s.Require().NoError(err)
-				s.Require().NotNil(blockRes)
-			}
+			blockRes, txIndex, ethTxIndex := s.findTxLogTestCase(
+				blockNumFirstTx.Int64(), blockNumLastTx.Int64(), tc,
+			)
 			s.assertTxLogsAndTxIndex(
 				blockRes, txIndex, ethTxIndex, tc,
 			)
-			txIndex++
-			if tc.ExpectEthTx {
-				ethTxIndex++
-			}
 		})
 	}
 }
 
+func (s *BackendSuite) queryFunTokenMapping(bankDenom string) (*evm.FunToken, bool) {
+	queryResp := new(evm.QueryFunTokenMappingResponse)
+	err := s.localnetCLI.ExecQueryCmd(
+		nibidcmd.QueryCmd(),
+		[]string{"evm", "funtoken", bankDenom},
+		queryResp,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "token mapping not found") {
+			return nil, false
+		}
+		s.Require().NoError(err)
+	}
+	if queryResp.FunToken == nil {
+		return nil, false
+	}
+	return queryResp.FunToken, true
+}
+
+func (s *BackendSuite) funTokenCreatedEvent(txResp *sdk.TxResponse) *evm.EventFunTokenCreated {
+	eventName := proto.MessageName(new(evm.EventFunTokenCreated))
+	events := testutil.FindAbciEventsOfType(txResp.Events, eventName)
+	s.Require().Lenf(events, 1, "expect %s", eventName)
+
+	event, err := evm.EventFunTokenCreatedFromABCIEvent(events[0])
+	s.Require().NoError(err)
+	return event
+}
+
 type TxLogsTestCase struct {
-	TxInfo      string // Name of the test case
-	Logs        []*gethcore.Log
-	ExpectEthTx bool
+	TxInfo         string // Name of the test case
+	Logs           []*gethcore.Log
+	ExpectEthTx    bool
+	EthTxHash      gethcommon.Hash
+	CosmosTxHash   string
+	CosmosTxHeight int64
+}
+
+func (s *BackendSuite) findTxLogTestCase(
+	firstEthTxBlock int64,
+	lastEthTxBlock int64,
+	tc TxLogsTestCase,
+) (
+	blockRes *tmrpctypes.ResultBlockResults,
+	txIndex int,
+	ethTxIndex int,
+) {
+	if tc.CosmosTxHash != "" {
+		return s.findCosmosTxResult(tc.CosmosTxHeight, tc.CosmosTxHash)
+	}
+	return s.findEthTxResult(firstEthTxBlock, lastEthTxBlock, tc.EthTxHash)
+}
+
+func (s *BackendSuite) findCosmosTxResult(
+	blockHeight int64,
+	txHash string,
+) (
+	blockRes *tmrpctypes.ResultBlockResults,
+	txIndex int,
+	ethTxIndex int,
+) {
+	blockRes, err := s.backend.TendermintBlockResultByNumber(&blockHeight)
+	s.Require().NoError(err)
+	s.Require().NotNil(blockRes)
+
+	block, err := s.backend.TendermintBlockByNumber(rpc.BlockNumber(blockHeight))
+	s.Require().NoError(err)
+	s.Require().NotNil(block)
+	s.Require().Len(block.Block.Txs, len(blockRes.TxsResults))
+
+	for txIndex, tx := range block.Block.Txs {
+		if strings.EqualFold(fmt.Sprintf("%X", tx.Hash()), strings.TrimPrefix(txHash, "0x")) {
+			return blockRes, txIndex, 0
+		}
+	}
+	s.Require().FailNowf("tx not found", "cosmos tx %s not found at height %d", txHash, blockHeight)
+	return nil, 0, 0
+}
+
+func (s *BackendSuite) findEthTxResult(
+	firstBlock int64,
+	lastBlock int64,
+	ethTxHash gethcommon.Hash,
+) (
+	blockRes *tmrpctypes.ResultBlockResults,
+	txIndex int,
+	ethTxIndex int,
+) {
+	for blockHeight := firstBlock; blockHeight <= lastBlock; blockHeight++ {
+		blockRes, err := s.backend.TendermintBlockResultByNumber(&blockHeight)
+		s.Require().NoError(err)
+		s.Require().NotNil(blockRes)
+
+		ethTxIndex = 0
+		for txIndex, txResult := range blockRes.TxsResults {
+			for _, event := range txResult.Events {
+				if event.Type != evm.TypeUrlEventEthereumTx {
+					continue
+				}
+				ethereumTx, err := evm.EventEthereumTxFromABCIEvent(event)
+				s.Require().NoError(err)
+				if strings.EqualFold(ethereumTx.EthHash, ethTxHash.Hex()) {
+					return blockRes, txIndex, ethTxIndex
+				}
+				ethTxIndex++
+			}
+		}
+	}
+	s.Require().FailNowf("tx not found", "eth tx %s not found from height %d to %d", ethTxHash.Hex(), firstBlock, lastBlock)
+	return nil, 0, 0
 }
 
 // assertTxLogsAndTxIndex gets tx results from the block and checks tx logs and tx index.
@@ -317,6 +430,9 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			logs := evm.LogsToEthereum(eventTxLog.Logs)
 			if len(tc.Logs) > 0 {
 				s.Require().GreaterOrEqual(len(logs), len(tc.Logs))
+				if len(logs) < len(tc.Logs) {
+					return
+				}
 				s.assertTxLogsMatch(tc.Logs, logs, tc.TxInfo)
 			} else {
 				s.Require().NotNil(logs)
