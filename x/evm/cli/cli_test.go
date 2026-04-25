@@ -1,13 +1,17 @@
 package cli_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"os/exec"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
 var (
@@ -244,4 +248,34 @@ func (s *Suite) TestCmdQueryFunToken() {
 	for _, tc := range testCases {
 		tc.RunQueryCmd(s)
 	}
+}
+
+func (s *Suite) TestCmdQueryBalance_LocalnetNibi() {
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet-backed evm balance query test: %v", err)
+	}
+
+	cmd := exec.Command(
+		"nibid",
+		"q",
+		"evm",
+		"balance",
+		nutil.LocalnetValAddr.String(),
+		"unibi",
+		"--node=http://localhost:26657",
+		"--output=json",
+	)
+
+	out, err := cmd.CombinedOutput()
+	s.Require().NoErrorf(err, "nibid q evm balance failed: %s", string(out))
+
+	var resp cli.QueryEvmBalanceResp
+	s.Require().NoErrorf(json.Unmarshal(out, &resp), "failed to decode query output: %s", string(out))
+	s.Require().Equal(nutil.LocalnetValAddr.String(), resp.AddrBech32)
+	s.Require().NotNil(resp.BankCoinDenom)
+	s.Require().Equal("unibi", *resp.BankCoinDenom)
+	s.Require().NotNil(resp.BankAmount)
+	s.Require().NotEmpty(*resp.BankAmount)
+	s.Require().NotNil(resp.BankBalance)
+	s.Require().NotEmpty(*resp.BankBalance)
 }
