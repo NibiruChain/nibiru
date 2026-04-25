@@ -13,7 +13,8 @@ func (s *BackendSuite) TestBlockNumber() {
 	s.NoError(err)
 	s.Greater(blockHeightU64, uint64(1))
 
-	latestHeight, _ := s.network.LatestHeight()
+	latestHeight, err := s.localnetCLI.LatestHeight()
+	s.Require().NoError(err)
 	resp, err := s.backend.BlockNumber()
 	s.Require().NoError(err, resp)
 	// Rather than checking exact equality, which might not be true due to
@@ -35,7 +36,7 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 func (s *BackendSuite) TestGetBlockByHash() {
 	fullTx := true
 	var blockMap map[string]any
-	err := s.node.EvmRpcClient.Client().Call(
+	err := s.evmRpcClient.Client().Call(
 		&blockMap, "eth_getBlockByHash",
 		*s.SuccessfulTxTransfer().BlockHash,
 		fullTx,

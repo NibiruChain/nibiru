@@ -19,7 +19,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 	testMutex.Lock()
 	defer testMutex.Unlock()
 
-	nonce := s.getCurrentNonce(s.fundedAccEthAddr)
+	nonce := s.getCurrentNonce(s.evmSenderEthAddr)
 	s.T().Logf("Before txs, nonce = %d", nonce)
 
 	erc20Addr := s.SuccessfulTxDeployContract().Receipt.ContractAddress
@@ -47,13 +47,13 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.NoError(err)
 
 		s.NotEqualValuesf(rsp.Code, 0, "expect tx not to be included yet. sdk.TxResp: %s", jsonBz)
-		s.network.WaitForNextBlock()
+		s.Require().NoError(s.localnetCLI.WaitForNextBlock())
 		s.Require().NotEqualValuesf(rsp.Code, 0, "expect tx to fail. sdk.TxResp: %s", jsonBz)
 		s.Contains(rsp.RawLog, "Ethereum transaction must be exactly one tx msg: got 3")
 	}
 
 	s.T().Log("Nonce should be the same due to failure. Nonce only increase after successful txs.")
-	currentNonce := s.getCurrentNonce(s.fundedAccEthAddr)
+	currentNonce := s.getCurrentNonce(s.evmSenderEthAddr)
 	s.Assert().Equal(nonce, currentNonce, "expect nonce to be the same")
 
 	s.T().Logf("After failed txs, nonce = %d (unchanged)", nonce)
@@ -76,9 +76,9 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.T().Logf("sdk.TxResp %v: %s", txMsg.name, jsonBz)
 	}
 
-	s.network.WaitForNextBlock()
+	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
 
-	currentNonce = s.getCurrentNonce(s.fundedAccEthAddr)
+	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
 	s.Require().Equal(nonce+3, currentNonce)
 
 	s.T().Log("Assert all transactions included in block")

@@ -66,7 +66,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 			AssertTraceCall(s, res)
 
 			var res2 json.RawMessage
-			err = s.node.EvmRpcClient.Client().Call(
+			err = s.evmRpcClient.Client().Call(
 				&res2,
 				"debug_traceTransaction",
 				tc.txHash,
@@ -157,7 +157,7 @@ func (s *BackendSuite) TestTraceBlock() {
 			}
 			{
 				var resJson json.RawMessage
-				err = s.node.EvmRpcClient.Client().Call(
+				err = s.evmRpcClient.Client().Call(
 					&resJson,
 					"debug_traceBlockByNumber",
 					rpc.BlockNumber(tc.tmBlock.Block.Height),
@@ -176,7 +176,7 @@ func (s *BackendSuite) TestTraceBlock() {
 			}
 			{
 				var resJson json.RawMessage
-				err = s.node.EvmRpcClient.Client().Call(
+				err = s.evmRpcClient.Client().Call(
 					&resJson,
 					"debug_traceBlockByHash",
 					gethcommon.BytesToHash(
@@ -213,14 +213,14 @@ func (s *BackendSuite) TestTraceBlock() {
 func (s *BackendSuite) TestTraceCall() {
 	block, err := s.backend.BlockNumber()
 	s.Require().NoError(err)
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.BlockNumber(block))
+	nonce, err := s.backend.GetTransactionCount(s.evmSenderEthAddr, rpc.BlockNumber(block))
 	s.NoError(err)
 	gas := hexutil.Uint64(evm.NativeToWei(big.NewInt(int64(params.TxGas))).Uint64())
 	amountToSendHex := hexutil.Big(*amountToSend)
 
 	txArgs := evm.JsonTxArgs{
 		Nonce: nonce,
-		From:  &s.fundedAccEthAddr,
+		From:  &s.evmSenderEthAddr,
 		To:    &recipient,
 		Value: &amountToSendHex,
 		Gas:   &gas,
@@ -232,7 +232,7 @@ func (s *BackendSuite) TestTraceCall() {
 	blockNumber := rpc.NewBlockNumber(
 		new(big.Int).SetUint64(uint64(block)),
 	)
-	err = s.node.EvmRpcClient.Client().Call(
+	err = s.evmRpcClient.Client().Call(
 		&res,
 		"debug_traceCall",
 		txArgs,
@@ -255,7 +255,7 @@ func AssertTraceCall(
 	s.Require().NoErrorf(err, "error unmarshaling traceResult: traceResult %s", traceResult)
 
 	s.Require().Equal("CALL", trace["type"])
-	s.Require().Equal(strings.ToLower(s.fundedAccEthAddr.Hex()), trace["from"])
+	s.Require().Equal(strings.ToLower(s.evmSenderEthAddr.Hex()), trace["from"])
 	s.Require().Equal(strings.ToLower(recipient.Hex()), trace["to"])
 	s.Require().Equal("0x"+gethcommon.Bytes2Hex(amountToSend.Bytes()), trace["value"])
 }

@@ -34,7 +34,7 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			var resJson json.RawMessage
-			err := s.node.EvmRpcClient.Client().Call(
+			err := s.evmRpcClient.Client().Call(
 				&resJson, "eth_getTransactionByHash", tc.txHash.Hex(),
 			)
 			if !tc.wantTxFound {
@@ -50,7 +50,7 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 
 			s.Require().NotNil(txResponse)
 			s.Require().Equal(tc.txHash, txResponse.Hash)
-			s.Require().Equal(s.fundedAccEthAddr, txResponse.From)
+			s.Require().Equal(s.evmSenderEthAddr, txResponse.From)
 			s.Require().Equal(&recipient, txResponse.To)
 			s.Require().Equal(amountToSend, txResponse.Value.ToInt())
 		})
@@ -78,7 +78,7 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			var resJson json.RawMessage
-			err := s.node.EvmRpcClient.Client().Call(
+			err := s.evmRpcClient.Client().Call(
 				&resJson, "eth_getTransactionReceipt", tc.txHash.Hex(),
 			)
 
@@ -95,7 +95,7 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 			s.Require().NotNil(txReceipt)
 
 			// Check fields
-			s.Equal(s.fundedAccEthAddr, txReceipt.From)
+			s.Equal(s.evmSenderEthAddr, txReceipt.From)
 			s.Equal(&recipient, txReceipt.To)
 			s.Greater(txReceipt.GasUsed, uint64(0))
 			s.Equal(txReceipt.GasUsed, txReceipt.CumulativeGasUsed)
@@ -141,7 +141,7 @@ func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			var resJson json.RawMessage
-			err := s.node.EvmRpcClient.Client().Call(
+			err := s.evmRpcClient.Client().Call(
 				&resJson, "eth_getTransactionByBlockHashAndIndex", tc.blockHash.Hex(), hexutil.Uint(tc.txIndex),
 			)
 
@@ -193,7 +193,7 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			var resJson json.RawMessage
-			err := s.node.EvmRpcClient.Client().Call(
+			err := s.evmRpcClient.Client().Call(
 				&resJson, "eth_getTransactionByBlockNumberAndIndex", tc.blockNumber, hexutil.Uint(tc.txIndex),
 			)
 
@@ -217,7 +217,7 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 }
 
 func AssertTxResults(s *BackendSuite, tx *rpc.EthTxJsonRPC, expectedTxHash gethcommon.Hash) {
-	s.Require().Equal(s.fundedAccEthAddr, tx.From)
+	s.Require().Equal(s.evmSenderEthAddr, tx.From)
 	s.Require().Equal(&recipient, tx.To)
 	s.Require().Greater(tx.Gas, uint64(0))
 	s.Require().Equal(expectedTxHash, tx.Hash)

@@ -28,7 +28,7 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 			Topics: []gethcommon.Hash{
 				gethcrypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 				gethcommon.Address{}.Hash(),
-				s.fundedAccEthAddr.Hash(),
+				s.evmSenderEthAddr.Hash(),
 			},
 		},
 	}, logs[0], "deploy contract tx")

@@ -11,17 +11,21 @@ import (
 
 	"github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/cli"
+	cmtlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/server"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
@@ -29,9 +33,16 @@ const (
 	LocalnetChainID = "nibiru-localnet-0"
 	LocalnetKeyName = "validator"
 	LocalnetNodeURI = "http://localhost:26657"
+	LocalnetEVMURI  = "http://127.0.0.1:8545"
 	LocalnetTxFee   = "1000" + appconst.DENOM_UNIBI
 	LocalnetTxGas   = "5000000"
 )
+
+type LocalnetBackend struct {
+	ClientCtx     client.Context
+	EthRpcBackend *rpcapi.Backend
+	EvmRpcClient  *ethclient.Client
+}
 
 type LocalnetCLI struct {
 	ClientCtx client.Context
@@ -81,6 +92,27 @@ func NewLocalnetCLI() (LocalnetCLI, error) {
 		NodeURI:   LocalnetNodeURI,
 		TxFee:     LocalnetTxFee,
 		TxGas:     LocalnetTxGas,
+	}, nil
+}
+
+func NewLocalnetBackend() (LocalnetBackend, error) {
+	clientCtx, err := NewLocalnetClientCtx()
+	if err != nil {
+		return LocalnetBackend{}, err
+	}
+
+	evmRpcClient, err := ethclient.Dial(LocalnetEVMURI)
+	if err != nil {
+		return LocalnetBackend{}, fmt.Errorf("connect localnet EVM RPC client: %w", err)
+	}
+
+	serverCtx := server.NewDefaultContext()
+	serverCtx.Logger = cmtlog.NewNopLogger()
+
+	return LocalnetBackend{
+		ClientCtx:     clientCtx,
+		EthRpcBackend: rpcapi.NewBackend(serverCtx, serverCtx.Logger, clientCtx, false, nil),
+		EvmRpcClient:  evmRpcClient,
 	}, nil
 }
 
@@ -225,11 +257,28 @@ func (c LocalnetCLI) defaultTxOptions() localnetTxOptions {
 }
 
 func renderNibidCmd(verb string, cmd *cobra.Command, args []string) string {
-	parts := []string{"nibid", verb, cmd.Name()}
+	parts := []string{"nibid"}
+	if verb != "" {
+		parts = append(parts, verb)
+	}
+	if shouldRenderCmdName(verb, cmd) {
+		parts = append(parts, cmd.Name())
+	}
 	for _, arg := range args {
 		parts = append(parts, quoteShellArg(arg))
 	}
 	return strings.Join(parts, " ")
+}
+
+func shouldRenderCmdName(verb string, cmd *cobra.Command) bool {
+	cmdName := cmd.Name()
+	if cmdName == verb {
+		return false
+	}
+	if verb == "q" && cmdName == "query" {
+		return false
+	}
+	return true
 }
 
 func quoteShellArg(arg string) string {
@@ -246,15 +295,19 @@ func quoteShellArg(arg string) string {
 
 func (c LocalnetCLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
 	var lastErr error
-	for attempt := 0; attempt < 20; attempt++ {
+	for attempt := 0; attempt < 3; attempt++ {
 		txResp, err := QueryTx(c.ClientCtx, txHash)
 		if err == nil {
 			return txResp, nil
 		}
 		lastErr = err
-		time.Sleep(500 * time.Millisecond)
+		if attempt < 2 {
+			if waitErr := c.WaitForNextBlock(); waitErr != nil {
+				return nil, fmt.Errorf("failed waiting for tx %s block inclusion: %w", txHash, waitErr)
+			}
+		}
 	}
-	return nil, fmt.Errorf("failed to query tx %s: %w", txHash, lastErr)
+	return nil, fmt.Errorf("failed to query tx %s after waiting two blocks: %w", txHash, lastErr)
 }
 
 func (c LocalnetCLI) LatestHeight() (int64, error) {

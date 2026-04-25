@@ -21,7 +21,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "happy: minimal args set",
 			jsonTxArgs: evm.JsonTxArgs{
-				From:  &s.fundedAccEthAddr,
+				From:  &s.evmSenderEthAddr,
 				To:    &recipient,
 				Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 			},
@@ -30,7 +30,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "happy: gas price set",
 			jsonTxArgs: evm.JsonTxArgs{
-				From:     &s.fundedAccEthAddr,
+				From:     &s.evmSenderEthAddr,
 				To:       &recipient,
 				GasPrice: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 				Value:    (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
@@ -40,7 +40,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "sad: no to (contract creation) and no data",
 			jsonTxArgs: evm.JsonTxArgs{
-				From: &s.fundedAccEthAddr,
+				From: &s.evmSenderEthAddr,
 			},
 			wantErr: "contract creation without any data provided",
 		},
@@ -74,7 +74,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 
 func (s *BackendSuite) TestDoCall() {
 	jsonTxArgs := evm.JsonTxArgs{
-		From:  &s.fundedAccEthAddr,
+		From:  &s.evmSenderEthAddr,
 		To:    &recipient,
 		Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 	}
@@ -89,7 +89,7 @@ func (s *BackendSuite) TestDoCall() {
 	s.T().Log("eth_call via RPC with the same block number should query latest and properly propagate the true error")
 	var res json.RawMessage
 	blockNumber := rpc.EthPendingBlockNumber
-	err = s.node.EvmRpcClient.Client().Call(
+	err = s.evmRpcClient.Client().Call(
 		&res, "eth_call",
 		jsonTxArgs,
 		rpc.BlockNumberOrHash{
