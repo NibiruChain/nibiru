@@ -1,6 +1,8 @@
 package testnetwork
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -38,6 +40,33 @@ type LocalnetCLI struct {
 	NodeURI   string
 	TxFee     string
 	TxGas     string
+}
+
+type LocalnetTxOption func(*localnetTxOptions)
+
+type localnetTxOptions struct {
+	fromName      string
+	txFee         string
+	txGas         string
+	gasAdjustment string
+}
+
+func WithLocalnetTxFees(fees string) LocalnetTxOption {
+	return func(opts *localnetTxOptions) {
+		opts.txFee = fees
+	}
+}
+
+func WithLocalnetTxGas(gas string) LocalnetTxOption {
+	return func(opts *localnetTxOptions) {
+		opts.txGas = gas
+	}
+}
+
+func WithLocalnetTxGasAdjustment(gasAdjustment string) LocalnetTxOption {
+	return func(opts *localnetTxOptions) {
+		opts.gasAdjustment = gasAdjustment
+	}
 }
 
 func NewLocalnetCLI() (LocalnetCLI, error) {
@@ -111,9 +140,10 @@ func (c LocalnetCLI) ExecQueryCmd(
 func (c LocalnetCLI) ExecTxCmd(
 	cmd *cobra.Command,
 	args []string,
+	opts ...LocalnetTxOption,
 ) (*sdk.TxResponse, error) {
-	renderedCmd := c.RenderTxCmd(cmd, args)
-	args = c.txArgs(args)
+	renderedCmd := c.RenderTxCmd(cmd, args, opts...)
+	args = c.txArgs(args, opts...)
 
 	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
 	if err != nil {
@@ -146,8 +176,12 @@ func (c LocalnetCLI) RenderQueryCmd(cmd *cobra.Command, args []string) string {
 	return renderNibidCmd("q", cmd, c.queryArgs(args))
 }
 
-func (c LocalnetCLI) RenderTxCmd(cmd *cobra.Command, args []string) string {
-	return renderNibidCmd("tx", cmd, c.txArgs(args))
+func (c LocalnetCLI) RenderTxCmd(
+	cmd *cobra.Command,
+	args []string,
+	opts ...LocalnetTxOption,
+) string {
+	return renderNibidCmd("tx", cmd, c.txArgs(args, opts...))
 }
 
 func (c LocalnetCLI) queryArgs(args []string) []string {
@@ -158,12 +192,17 @@ func (c LocalnetCLI) queryArgs(args []string) []string {
 	)
 }
 
-func (c LocalnetCLI) txArgs(args []string) []string {
+func (c LocalnetCLI) txArgs(args []string, opts ...LocalnetTxOption) []string {
+	txOpts := c.defaultTxOptions()
+	for _, opt := range opts {
+		opt(&txOpts)
+	}
+
 	argsCopy := append([]string(nil), args...)
-	return append(argsCopy,
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, c.FromName),
-		fmt.Sprintf("--%s=%s", flags.FlagFees, c.TxFee),
-		fmt.Sprintf("--%s=%s", flags.FlagGas, c.TxGas),
+	txArgs := append(argsCopy,
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, txOpts.fromName),
+		fmt.Sprintf("--%s=%s", flags.FlagFees, txOpts.txFee),
+		fmt.Sprintf("--%s=%s", flags.FlagGas, txOpts.txGas),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=%s", flags.FlagChainID, LocalnetChainID),
@@ -171,6 +210,18 @@ func (c LocalnetCLI) txArgs(args []string) []string {
 		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
 		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
 	)
+	if txOpts.gasAdjustment != "" {
+		txArgs = append(txArgs, fmt.Sprintf("--%s=%s", flags.FlagGasAdjustment, txOpts.gasAdjustment))
+	}
+	return txArgs
+}
+
+func (c LocalnetCLI) defaultTxOptions() localnetTxOptions {
+	return localnetTxOptions{
+		fromName: c.FromName,
+		txFee:    c.TxFee,
+		txGas:    c.TxGas,
+	}
 }
 
 func renderNibidCmd(verb string, cmd *cobra.Command, args []string) string {
@@ -204,4 +255,68 @@ func (c LocalnetCLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
 		time.Sleep(500 * time.Millisecond)
 	}
 	return nil, fmt.Errorf("failed to query tx %s: %w", txHash, lastErr)
+}
+
+func (c LocalnetCLI) LatestHeight() (int64, error) {
+	if c.ClientCtx.Client == nil {
+		return 0, errors.New("localnet client context has no RPC client")
+	}
+
+	status, err := c.ClientCtx.Client.Status(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return status.SyncInfo.LatestBlockHeight, nil
+}
+
+func (c LocalnetCLI) WaitForHeight(h int64) (int64, error) {
+	return c.WaitForHeightWithTimeout(h, 5*time.Minute)
+}
+
+func (c LocalnetCLI) WaitForHeightWithTimeout(h int64, timeout time.Duration) (int64, error) {
+	if c.ClientCtx.Client == nil {
+		return 0, errors.New("localnet client context has no RPC client")
+	}
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	var latestHeight int64
+	for {
+		select {
+		case <-timer.C:
+			return latestHeight, errors.New("timeout exceeded waiting for localnet block")
+		case <-ticker.C:
+			status, err := c.ClientCtx.Client.Status(context.Background())
+			if err == nil && status != nil {
+				latestHeight = status.SyncInfo.LatestBlockHeight
+				if latestHeight >= h {
+					return latestHeight, nil
+				}
+			}
+		}
+	}
+}
+
+func (c LocalnetCLI) WaitForNextBlockVerbose() (int64, error) {
+	lastBlock, err := c.LatestHeight()
+	if err != nil {
+		return -1, err
+	}
+
+	newBlock := lastBlock + 1
+	_, err = c.WaitForHeight(newBlock)
+	if err != nil {
+		return lastBlock, err
+	}
+
+	return newBlock, nil
+}
+
+func (c LocalnetCLI) WaitForNextBlock() error {
+	_, err := c.WaitForNextBlockVerbose()
+	return err
 }

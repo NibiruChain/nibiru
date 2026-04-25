@@ -45,9 +45,8 @@ const (
 	localnetAdminChangeSubdenom = "adminchange"
 )
 
-func TestIntegrationTestSuite(t *testing.T) {
+func Test(t *testing.T) {
 	suite.Run(t, new(CmdSuiteLite))
-
 	suite.Run(t, new(TestSuite))
 }
 
