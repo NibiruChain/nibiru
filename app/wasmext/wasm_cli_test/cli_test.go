@@ -7,91 +7,80 @@ import (
 
 	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/genesis"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 )
 
-// commonArgs is args for CLI test commands.
-var commonArgs = []string{
-	fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-	fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-	fmt.Sprintf("--%s=%s", flags.FlagFees,
-		sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(10_000_000))).String()),
-}
+const (
+	wasmStoreCodeGas           = "auto"
+	wasmStoreCodeGasAdjustment = "1.5"
+	wasmStoreCodeFees          = "10000000" + appconst.DENOM_UNIBI
+	wasmCodeListLimit          = "100000"
+)
 
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
 
-	network *testnetwork.Network
+	localnetCLI testnetwork.LocalnetCLI
 }
 
 func (s *TestSuite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet-backed wasm CLI tests: %v", err)
+	}
 
-	encodingConfig := app.MakeEncodingConfig()
-	genesisState := genesis.NewTestGenesisState(encodingConfig.Codec)
-	cfg := testnetwork.BuildNetworkConfig(genesisState)
-	network := testnetwork.New(&s.Suite, cfg)
-
-	s.network = network
-	s.network.WaitForNextBlock()
+	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	s.Require().NoError(err)
+	s.localnetCLI = localnetCLI
 }
 
 func (s *TestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
+	s.T().Log("leaving localnet state in place")
 }
 
 func (s *TestSuite) TestWasmHappyPath() {
-	s.requiredDeployedContractsLen(0)
+	beforeCodeInfos := s.queryDeployedContracts()
 
-	_, err := s.deployWasmContract("testdata/cw_nameservice.wasm")
+	codeID, err := s.deployWasmContract("testdata/cw_nameservice.wasm")
 	s.Require().NoError(err)
+	s.Require().Positive(codeID)
 
-	s.network.WaitForNextBlock()
+	afterCodeInfos := s.queryDeployedContracts()
+	s.Require().GreaterOrEqual(len(afterCodeInfos), len(beforeCodeInfos)+1)
+	s.Require().True(
+		hasCodeID(afterCodeInfos, codeID),
+		"stored code id %d not found in list-code response",
+		codeID,
+	)
+}
 
-	s.requiredDeployedContractsLen(1)
+func (s *TestSuite) wasmStoreCodeTxOptions() []testnetwork.LocalnetTxOption {
+	return []testnetwork.LocalnetTxOption{
+		testnetwork.WithLocalnetTxGas(wasmStoreCodeGas),
+		testnetwork.WithLocalnetTxGasAdjustment(wasmStoreCodeGasAdjustment),
+		testnetwork.WithLocalnetTxFees(wasmStoreCodeFees),
+	}
 }
 
 // deployWasmContract deploys a wasm contract located in path.
 func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
-	val := s.network.Validators[0]
-	codec := val.ClientCtx.Codec
-
 	args := []string{
+		"store",
 		path,
-		"--from", val.Address.String(),
-		"--gas", "11000000",
 	}
-	args = append(args, commonArgs...)
+	txOptions := s.wasmStoreCodeTxOptions()
 
-	cmd := wasmcli.StoreCodeCmd()
-	out, err := cli.ExecTestCLICmd(val.ClientCtx, cmd, args)
-	if err != nil {
-		return 0, err
-	}
-	s.network.WaitForNextBlock()
+	cmd := wasmcli.GetTxCmd()
+	s.T().Log(s.localnetCLI.RenderTxCmd(cmd, args, txOptions...))
 
-	resp := &sdk.TxResponse{}
-	err = codec.UnmarshalJSON(out.Bytes(), resp)
-	if err != nil {
-		return 0, err
-	}
-
-	resp, err = testnetwork.QueryTx(val.ClientCtx, resp.TxHash)
+	resp, err := s.localnetCLI.ExecTxCmd(cmd, args, txOptions...)
 	if err != nil {
 		return 0, err
 	}
@@ -102,6 +91,7 @@ func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 	}
 
 	respData := sdk.TxMsgData{}
+	codec := s.localnetCLI.ClientCtx.Codec
 	err = codec.Unmarshal(decodedResult, &respData)
 	if err != nil {
 		return 0, err
@@ -120,22 +110,34 @@ func (s *TestSuite) deployWasmContract(path string) (uint64, error) {
 	return storeCodeResponse.CodeID, nil
 }
 
-// requiredDeployedContractsLen checks the number of deployed contracts.
-func (s *TestSuite) requiredDeployedContractsLen(total int) {
-	val := s.network.Validators[0]
+// queryDeployedContracts lists the currently uploaded wasm code on localnet.
+func (s *TestSuite) queryDeployedContracts() []types.CodeInfoResponse {
 	var queryCodeResponse types.QueryCodesResponse
-	err := testnetwork.ExecQueryCmd(
-		val.ClientCtx,
-		wasmcli.GetCmdListCode(),
-		[]string{},
+	cmd := wasmcli.GetQueryCmd()
+	args := []string{
+		"list-code",
+		fmt.Sprintf("--limit=%s", wasmCodeListLimit),
+	}
+	s.T().Log(s.localnetCLI.RenderQueryCmd(cmd, args))
+
+	err := s.localnetCLI.ExecQueryCmd(
+		cmd,
+		args,
 		&queryCodeResponse,
 	)
 	s.Require().NoError(err)
-	s.Require().Len(queryCodeResponse.CodeInfos, total)
+	return queryCodeResponse.CodeInfos
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(TestSuite))
-	}, 2)
+func hasCodeID(codeInfos []types.CodeInfoResponse, codeID uint64) bool {
+	for _, codeInfo := range codeInfos {
+		if codeInfo.CodeID == codeID {
+			return true
+		}
+	}
+	return false
+}
+
+func Test(t *testing.T) {
+	suite.Run(t, new(TestSuite))
 }

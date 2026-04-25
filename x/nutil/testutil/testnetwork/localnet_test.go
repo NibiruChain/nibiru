@@ -46,3 +46,28 @@ func TestLocalnetCLIRenderTxCmd(t *testing.T) {
 		got,
 	)
 }
+
+func TestLocalnetCLIRenderTxCmdWithOptions(t *testing.T) {
+	localnetCLI := LocalnetCLI{
+		FromName: LocalnetKeyName,
+		FromAddr: nutil.LocalnetValAddr,
+		NodeURI:  LocalnetNodeURI,
+		TxFee:    LocalnetTxFee,
+		TxGas:    LocalnetTxGas,
+	}
+
+	cmd := &cobra.Command{Use: "wasm"}
+	got := localnetCLI.RenderTxCmd(
+		cmd,
+		[]string{"store", "contract.wasm"},
+		WithLocalnetTxGas("auto"),
+		WithLocalnetTxGasAdjustment("1.5"),
+		WithLocalnetTxFees("10000000unibi"),
+	)
+
+	require.Equal(
+		t,
+		"nibid tx wasm store contract.wasm --from=validator --fees=10000000unibi --gas=auto --yes=true --broadcast-mode=sync --chain-id=nibiru-localnet-0 --keyring-backend=test --node=http://localhost:26657 --output=json --gas-adjustment=1.5",
+		got,
+	)
+}
