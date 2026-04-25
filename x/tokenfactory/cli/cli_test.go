@@ -3,22 +3,17 @@ package cli_test
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strconv"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -41,24 +36,13 @@ var (
 type TestSuite struct {
 	suite.Suite
 
-	creator sdk.AccAddress
+	creator     sdk.AccAddress
+	localnetCLI testnetwork.LocalnetCLI
 }
 
 const (
 	localnetAdminChangeSubdenom = "adminchange"
-	localnetChainID             = "nibiru-localnet-0"
-	localnetKeyName             = "validator"
-	localnetNode                = "http://localhost:26657"
-	localnetTxFee               = "1000" + appconst.DENOM_UNIBI
-	localnetTxGas               = "5000000"
-	tokenfactoryCmd             = "tf"
 )
-
-type localnetTxResponse struct {
-	Code   uint32 `json:"code"`
-	RawLog string `json:"raw_log"`
-	TxHash string `json:"txhash"`
-}
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(CmdSuiteLite))
@@ -78,6 +62,10 @@ func (s *TestSuite) SetupSuite() {
 		s.T().Skipf("skipping localnet-backed tokenfactory CLI tests: %v", err)
 	}
 	s.creator = nutil.LocalnetValAddr
+
+	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	s.Require().NoError(err)
+	s.localnetCLI = localnetCLI
 }
 
 func (s *TestSuite) CreateDenomTest() {
@@ -94,7 +82,7 @@ func (s *TestSuite) CreateDenomTest() {
 	}
 
 	s.T().Log("duplicate create-denom should fail once the denom exists")
-	s.Require().Error(s.execLocalTx(tokenfactoryCmd, "create-denom", "nusd"))
+	s.Require().Error(s.execLocalTx("create-denom", "nusd"))
 }
 
 func (s *TestSuite) MintBurnTest() {
@@ -108,7 +96,7 @@ func (s *TestSuite) MintBurnTest() {
 
 	mint := func(coin string, mintTo string, wantErr bool) {
 		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
-		err := s.execLocalTx(tokenfactoryCmd, "mint", coin, mintToArg)
+		err := s.execLocalTx("mint", coin, mintToArg)
 		if wantErr {
 			s.Require().Error(err)
 			return
@@ -118,7 +106,7 @@ func (s *TestSuite) MintBurnTest() {
 
 	burn := func(coin string, burnFrom string, wantErr bool) {
 		burnFromArg := fmt.Sprintf("--burn-from=%s", burnFrom)
-		err := s.execLocalTx(tokenfactoryCmd, "burn", coin, burnFromArg)
+		err := s.execLocalTx("burn", coin, burnFromArg)
 		if wantErr {
 			s.Require().Error(err)
 			return
@@ -164,7 +152,6 @@ func (s *TestSuite) ChangeAdminTest() {
 	case creator.String():
 		s.T().Log("Change to a fixed localnet admin")
 		s.Require().NoError(s.execLocalTx(
-			tokenfactoryCmd,
 			"change-admin",
 			denom,
 			newAdmin,
@@ -184,19 +171,13 @@ func (s *TestSuite) ChangeAdminTest() {
 }
 
 func (s *TestSuite) TestQueryModuleParams() {
-	out, err := s.execLocalQuery(tokenfactoryCmd, "params")
-	s.Require().NoError(err)
-
-	var paramResp struct {
-		Params struct {
-			DenomCreationGasConsume string `json:"denom_creation_gas_consume"`
-		} `json:"params"`
-	}
-	s.Require().NoErrorf(json.Unmarshal(out, &paramResp), "output: %s", string(out))
-
-	denomCreationGasConsume, err := strconv.ParseUint(paramResp.Params.DenomCreationGasConsume, 10, 64)
-	s.Require().NoError(err)
-	s.Positive(denomCreationGasConsume)
+	resp := new(types.QueryParamsResponse)
+	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
+		cli.NewQueryCmd(),
+		[]string{"params"},
+		resp,
+	))
+	s.Positive(resp.Params.DenomCreationGasConsume)
 }
 
 func (s *TestSuite) TearDownSuite() {
@@ -216,7 +197,7 @@ func (s *TestSuite) ensureDenomExists(subdenom string) string {
 		return denom
 	}
 
-	err := s.execLocalTx(tokenfactoryCmd, "create-denom", subdenom)
+	err := s.execLocalTx("create-denom", subdenom)
 	if err != nil && !s.hasDenom(denom) {
 		s.Require().NoError(err)
 	}
@@ -235,110 +216,28 @@ func (s *TestSuite) hasDenom(denom string) bool {
 }
 
 func (s *TestSuite) queryCreatorDenoms() []string {
-	out, err := s.execLocalQuery(tokenfactoryCmd, "denoms", s.creator.String())
-	s.Require().NoError(err)
-
 	resp := new(types.QueryDenomsResponse)
-	s.Require().NoErrorf(json.Unmarshal(out, resp), "output: %s", string(out))
+	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
+		cli.NewQueryCmd(),
+		[]string{"denoms", s.creator.String()},
+		resp,
+	))
 	return resp.Denoms
 }
 
 func (s *TestSuite) queryDenomInfo(denom string) *types.QueryDenomInfoResponse {
-	out, err := s.execLocalQuery(tokenfactoryCmd, "denom-info", denom)
-	s.Require().NoError(err)
-
 	resp := new(types.QueryDenomInfoResponse)
-	s.Require().NoErrorf(json.Unmarshal(out, resp), "output: %s", string(out))
+	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
+		cli.NewQueryCmd(),
+		[]string{"denom-info", denom},
+		resp,
+	))
 	return resp
 }
 
-func (s *TestSuite) execLocalQuery(args ...string) ([]byte, error) {
-	cmdArgs := append([]string{"q"}, args...)
-	cmdArgs = append(cmdArgs,
-		"--node="+localnetNode,
-		"--output=json",
-	)
-	return s.execNibid(cmdArgs...)
-}
-
 func (s *TestSuite) execLocalTx(args ...string) error {
-	txResp, err := s.broadcastLocalTx(args...)
-	if err != nil {
-		return err
-	}
-	if txResp.Code != 0 {
-		return fmt.Errorf("tx failed with code %d: %s", txResp.Code, txResp.RawLog)
-	}
-	return nil
-}
-
-func (s *TestSuite) broadcastLocalTx(args ...string) (*localnetTxResponse, error) {
-	cmdArgs := append([]string{"tx"}, args...)
-	cmdArgs = append(cmdArgs,
-		"--from="+localnetKeyName,
-		"--fees="+localnetTxFee,
-		"--gas="+localnetTxGas,
-		"--yes=true",
-		"--broadcast-mode=sync",
-		"--chain-id="+localnetChainID,
-		"--keyring-backend=test",
-		"--node="+localnetNode,
-		"--output=json",
-	)
-
-	out, err := s.execNibid(cmdArgs...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast tx: %w: %s", err, string(out))
-	}
-
-	txResp := new(localnetTxResponse)
-	if err := json.Unmarshal(out, txResp); err != nil {
-		return nil, fmt.Errorf("failed to decode tx response: %w: %s", err, string(out))
-	}
-	if txResp.TxHash == "" {
-		return txResp, nil
-	}
-
-	deliveredResp, err := s.waitForTx(txResp.TxHash)
-	if err != nil {
-		return nil, err
-	}
-	return deliveredResp, nil
-}
-
-func (s *TestSuite) waitForTx(txHash string) (*localnetTxResponse, error) {
-	var lastErr error
-	for attempt := 0; attempt < 20; attempt++ {
-		txResp, err := s.queryTx(txHash)
-		if err == nil {
-			return txResp, nil
-		}
-		lastErr = err
-		time.Sleep(500 * time.Millisecond)
-	}
-	return nil, fmt.Errorf("failed to query tx %s: %w", txHash, lastErr)
-}
-
-func (s *TestSuite) queryTx(txHash string) (*localnetTxResponse, error) {
-	out, err := s.execLocalQuery("tx", txHash)
-	if err != nil {
-		return nil, err
-	}
-
-	txResp := new(localnetTxResponse)
-	if err := json.Unmarshal(out, txResp); err != nil {
-		return nil, fmt.Errorf("failed to decode tx query response: %w: %s", err, string(out))
-	}
-	return txResp, nil
-}
-
-func (s *TestSuite) execNibid(args ...string) ([]byte, error) {
-	cmd := exec.Command("nibid", args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return out, fmt.Errorf("nibid %s: %w", strings.Join(args, " "), err)
-	}
-	return out, nil
+	_, err := s.localnetCLI.ExecTxCmd(cli.NewTxCmd(), args)
+	return err
 }
 
 type CmdTestCase struct {
