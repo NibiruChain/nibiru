@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cometbft/cometbft/abci/types"
@@ -97,14 +98,12 @@ func (c LocalnetCLI) ExecQueryCmd(
 	args []string,
 	result codec.ProtoMarshaler,
 ) error {
-	args = append(args,
-		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
-		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
-	)
+	renderedCmd := c.RenderQueryCmd(cmd, args)
+	args = c.queryArgs(args)
 
 	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute query %s: %w: %s", renderedCmd, err, out.String())
 	}
 	return c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), result)
 }
@@ -113,7 +112,55 @@ func (c LocalnetCLI) ExecTxCmd(
 	cmd *cobra.Command,
 	args []string,
 ) (*sdk.TxResponse, error) {
-	args = append(args,
+	renderedCmd := c.RenderTxCmd(cmd, args)
+	args = c.txArgs(args)
+
+	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute tx %s: %w: %s", renderedCmd, err, out.String())
+	}
+
+	txResp := new(sdk.TxResponse)
+	if err := c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp); err != nil {
+		return nil, fmt.Errorf("failed to decode tx response for %s: %w: %s", renderedCmd, err, out.String())
+	}
+	if txResp.Code != types.CodeTypeOK {
+		return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, txResp.Code, txResp.RawLog)
+	}
+	if txResp.TxHash == "" {
+		return txResp, nil
+	}
+
+	deliveredResp, err := c.WaitForTx(txResp.TxHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed waiting for tx %s (%s): %w", txResp.TxHash, renderedCmd, err)
+	}
+	if deliveredResp.Code != types.CodeTypeOK {
+		return nil, fmt.Errorf("delivered tx failed for %s with code %d: %s", renderedCmd, deliveredResp.Code, deliveredResp.RawLog)
+	}
+
+	return deliveredResp, nil
+}
+
+func (c LocalnetCLI) RenderQueryCmd(cmd *cobra.Command, args []string) string {
+	return renderNibidCmd("q", cmd, c.queryArgs(args))
+}
+
+func (c LocalnetCLI) RenderTxCmd(cmd *cobra.Command, args []string) string {
+	return renderNibidCmd("tx", cmd, c.txArgs(args))
+}
+
+func (c LocalnetCLI) queryArgs(args []string) []string {
+	argsCopy := append([]string(nil), args...)
+	return append(argsCopy,
+		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
+		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
+	)
+}
+
+func (c LocalnetCLI) txArgs(args []string) []string {
+	argsCopy := append([]string(nil), args...)
+	return append(argsCopy,
 		fmt.Sprintf("--%s=%s", flags.FlagFrom, c.FromName),
 		fmt.Sprintf("--%s=%s", flags.FlagFees, c.TxFee),
 		fmt.Sprintf("--%s=%s", flags.FlagGas, c.TxGas),
@@ -124,32 +171,26 @@ func (c LocalnetCLI) ExecTxCmd(
 		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
 		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
 	)
+}
 
-	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute tx: %w: %s", err, out.String())
+func renderNibidCmd(verb string, cmd *cobra.Command, args []string) string {
+	parts := []string{"nibid", verb, cmd.Name()}
+	for _, arg := range args {
+		parts = append(parts, quoteShellArg(arg))
 	}
+	return strings.Join(parts, " ")
+}
 
-	txResp := new(sdk.TxResponse)
-	if err := c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp); err != nil {
-		return nil, fmt.Errorf("failed to decode tx response: %w: %s", err, out.String())
-	}
-	if txResp.Code != types.CodeTypeOK {
-		return nil, fmt.Errorf("tx failed with code %d: %s", txResp.Code, txResp.RawLog)
-	}
-	if txResp.TxHash == "" {
-		return txResp, nil
+func quoteShellArg(arg string) string {
+	if arg == "" {
+		return "''"
 	}
 
-	deliveredResp, err := c.WaitForTx(txResp.TxHash)
-	if err != nil {
-		return nil, err
-	}
-	if deliveredResp.Code != types.CodeTypeOK {
-		return nil, fmt.Errorf("tx failed with code %d: %s", deliveredResp.Code, deliveredResp.RawLog)
+	if !strings.ContainsAny(arg, " \t\n'\"\\$`;&|<>()[]{}*?!#~") {
+		return arg
 	}
 
-	return deliveredResp, nil
+	return "'" + strings.ReplaceAll(arg, "'", `'\''`) + "'"
 }
 
 func (c LocalnetCLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {

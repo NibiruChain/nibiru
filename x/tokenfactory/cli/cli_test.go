@@ -21,6 +21,7 @@ import (
 
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
@@ -172,11 +173,7 @@ func (s *TestSuite) ChangeAdminTest() {
 
 func (s *TestSuite) TestQueryModuleParams() {
 	resp := new(types.QueryParamsResponse)
-	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
-		cli.NewQueryCmd(),
-		[]string{"params"},
-		resp,
-	))
+	s.Require().NoError(s.execLocalQuery(resp, "params"))
 	s.Positive(resp.Params.DenomCreationGasConsume)
 }
 
@@ -217,26 +214,29 @@ func (s *TestSuite) hasDenom(denom string) bool {
 
 func (s *TestSuite) queryCreatorDenoms() []string {
 	resp := new(types.QueryDenomsResponse)
-	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
-		cli.NewQueryCmd(),
-		[]string{"denoms", s.creator.String()},
-		resp,
-	))
+	s.Require().NoError(s.execLocalQuery(resp, "denoms", s.creator.String()))
 	return resp.Denoms
 }
 
 func (s *TestSuite) queryDenomInfo(denom string) *types.QueryDenomInfoResponse {
 	resp := new(types.QueryDenomInfoResponse)
-	s.Require().NoError(s.localnetCLI.ExecQueryCmd(
-		cli.NewQueryCmd(),
-		[]string{"denom-info", denom},
-		resp,
-	))
+	s.Require().NoError(s.execLocalQuery(resp, "denom-info", denom))
 	return resp
 }
 
+func (s *TestSuite) execLocalQuery(
+	result codec.ProtoMarshaler,
+	args ...string,
+) error {
+	cmd := cli.NewQueryCmd()
+	s.T().Log(s.localnetCLI.RenderQueryCmd(cmd, args))
+	return s.localnetCLI.ExecQueryCmd(cmd, args, result)
+}
+
 func (s *TestSuite) execLocalTx(args ...string) error {
-	_, err := s.localnetCLI.ExecTxCmd(cli.NewTxCmd(), args)
+	cmd := cli.NewTxCmd()
+	s.T().Log(s.localnetCLI.RenderTxCmd(cmd, args))
+	_, err := s.localnetCLI.ExecTxCmd(cmd, args)
 	return err
 }
 
