@@ -246,7 +246,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
 			contractInput,
-			evmstate.Erc20GasLimitQuery,
+			evm.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
