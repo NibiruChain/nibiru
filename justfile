@@ -200,6 +200,7 @@ test-coverage-unit:
   make test-coverage-unit
 
 # Heavy tests for the EVM and EVM JSON-RPC
+[private]
 test-cover-g1:
   #!/usr/bin/env bash
   echo "------------------------------------------------"
@@ -210,6 +211,7 @@ test-cover-g1:
     -coverprofile=coverage.group1.out
 
 # Heavy tests for app, cmd, gosdk, token-registry
+[private]
 test-cover-g2:
   #!/usr/bin/env bash
   echo "------------------------------------------------"
@@ -224,6 +226,7 @@ test-cover-g2:
     -coverprofile=coverage.group2.out
 
 # Heavy tests for all x/* modules besides EVM
+[private]
 test-cover-g3:
   #!/usr/bin/env bash
   echo "------------------------------------------------"
