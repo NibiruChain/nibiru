@@ -9,13 +9,17 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
-// TxPoolAPI offers and API for the transaction pool. It only operates on data
-// that is non-confidential.
+// TxPoolAPI implements the Ethereum JSON-RPC txpool namespace for client
+// compatibility (wallets and tooling that call txpool_status, txpool_content,
+// etc.). The methods return empty or zeroed values: the chain has no in-process
+// Geth-style transaction pool (pending/queued EVM subpools by sender). Submitted
+// transactions live in the CometBFT mempool, which is not the same model and is
+// not wired up here.
 type TxPoolAPI struct {
 	logger log.Logger
 }
 
-// NewImplTxPoolAPI creates a new tx pool service that gives information about the transaction pool.
+// NewImplTxPoolAPI returns a [TxPoolAPI] for JSON-RPC registration.
 func NewImplTxPoolAPI(logger log.Logger) *TxPoolAPI {
 	return &TxPoolAPI{
 		logger: logger.With("module", "txpool"),

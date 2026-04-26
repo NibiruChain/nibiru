@@ -31,7 +31,7 @@ func (s *BackendSuite) TestGetCode() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			code, err := s.backend.GetCode(
+			code, err := s.cli.EvmRpc.Eth.GetCode(
 				tc.contractAddr,
 				rpc.BlockNumberOrHash{
 					BlockNumber: &tc.blockNumber,
@@ -83,7 +83,7 @@ func (s *BackendSuite) TestGetProof() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			proof, err := s.backend.GetProof(
+			proof, err := s.cli.EvmRpc.Eth.GetProof(
 				tc.contractAddr,
 				[]string{generateStorageKey(tc.address, tc.slot)},
 				rpc.BlockNumberOrHash{
@@ -135,7 +135,7 @@ func (s *BackendSuite) TestGetStorageAt() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			value, err := s.backend.GetStorageAt(
+			value, err := s.cli.EvmRpc.Eth.GetStorageAt(
 				tc.contractAddr,
 				generateStorageKey(tc.address, tc.slot),
 				rpc.BlockNumberOrHash{
@@ -183,7 +183,7 @@ func (s *BackendSuite) TestGetBalance() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			balance, err := s.backend.GetBalance(
+			balance, err := s.cli.EvmRpc.Eth.GetBalance(
 				tc.address,
 				rpc.BlockNumberOrHash{
 					BlockNumber: &tc.blockNumber,

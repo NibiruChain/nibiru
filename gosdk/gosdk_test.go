@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -32,7 +32,7 @@ type Suite struct {
 
 	nibiruSdk    *gosdk.NibiruSDK
 	grpcConn     *grpc.ClientConn
-	localnetCLI  testnetwork.LocalnetCLI
+	localnetCLI  localnet.CLI
 	localnetInfo gosdk.NetworkInfo
 	from         sdk.AccAddress
 }
@@ -59,7 +59,7 @@ func (s *Suite) SetupSuite() {
 	s.localnetInfo = gosdk.NETWORK_INFO_DEFAULT
 	s.from = nutil.LocalnetValAddr
 
-	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 

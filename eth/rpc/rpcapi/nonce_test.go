@@ -47,7 +47,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.NoError(err)
 
 		s.NotEqualValuesf(rsp.Code, 0, "expect tx not to be included yet. sdk.TxResp: %s", jsonBz)
-		s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+		s.Require().NoError(s.cli.WaitForNextBlock())
 		s.Require().NotEqualValuesf(rsp.Code, 0, "expect tx to fail. sdk.TxResp: %s", jsonBz)
 		s.Contains(rsp.RawLog, "Ethereum transaction must be exactly one tx msg: got 3")
 	}
@@ -59,7 +59,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 	s.T().Logf("After failed txs, nonce = %d (unchanged)", nonce)
 
 	for _, txMsg := range txMsgs {
-		receipt, err := s.backend.GetTransactionReceipt(txMsg.coreTx.Hash())
+		receipt, err := s.cli.EvmRpc.Eth.GetTransactionReceipt(txMsg.coreTx.Hash())
 		s.Nilf(receipt, "expect no receipt to be found | %v", txMsg.name)
 		s.NoErrorf(err, "expect no error. Becuase the query succeeded but returns a blank receipt | %v", txMsg.name)
 	}
@@ -76,7 +76,7 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.T().Logf("sdk.TxResp %v: %s", txMsg.name, jsonBz)
 	}
 
-	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	s.Require().NoError(s.cli.WaitForNextBlock())
 
 	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
 	s.Require().Equal(nonce+3, currentNonce)

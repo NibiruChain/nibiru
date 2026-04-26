@@ -1,4 +1,4 @@
-package testnetwork
+package localnet
 
 import (
 	"fmt"

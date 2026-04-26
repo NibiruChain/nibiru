@@ -1,4 +1,4 @@
-package testnetwork
+package localnet
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/cli"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,6 +22,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -30,93 +32,151 @@ import (
 )
 
 const (
-	LocalnetChainID = "nibiru-localnet-0"
-	LocalnetKeyName = "validator"
-	LocalnetNodeURI = "http://localhost:26657"
-	LocalnetEVMURI  = "http://127.0.0.1:8545"
-	LocalnetTxFee   = "1000" + appconst.DENOM_UNIBI
-	LocalnetTxGas   = "5000000"
+	ChainID        = "nibiru-localnet-0"
+	KeyName        = "validator"
+	NodeURI        = "http://localhost:26657"
+	NodeWSURI      = "tcp://localhost:26657"
+	NodeWSEndpoint = "/websocket"
+	LocalnetEVMURI = "http://127.0.0.1:8545"
+	TxFeeDefault   = "1000" + appconst.DENOM_UNIBI
+	TxGasDefault   = "5000000"
 )
 
-type LocalnetBackend struct {
+type CLI struct {
 	ClientCtx     client.Context
+	FromName      string
+	FromAddr      sdk.AccAddress
+	NodeURI       string
+	TxFee         string
+	TxGas         string
 	EthRpcBackend *rpcapi.Backend
-	EvmRpcClient  *ethclient.Client
+
+	EvmRpcClient *ethclient.Client
+	EvmRpc       EvmRpcAPI
 }
 
-type LocalnetCLI struct {
-	ClientCtx client.Context
-	FromName  string
-	FromAddr  sdk.AccAddress
-	NodeURI   string
-	TxFee     string
-	TxGas     string
+type EvmRpcAPI struct {
+	Eth     *rpcapi.EthAPI
+	Net     *rpcapi.NetAPI
+	Debug   *rpcapi.DebugAPI
+	Filters *rpcapi.FiltersAPI
 }
 
-type LocalnetTxOption func(*localnetTxOptions)
+type TxOption func(*txOptions)
 
-type localnetTxOptions struct {
+type txOptions struct {
 	fromName      string
 	txFee         string
 	txGas         string
 	gasAdjustment string
 }
 
-func WithLocalnetTxFees(fees string) LocalnetTxOption {
-	return func(opts *localnetTxOptions) {
+func WithTxFees(fees string) TxOption {
+	return func(opts *txOptions) {
 		opts.txFee = fees
 	}
 }
 
-func WithLocalnetTxGas(gas string) LocalnetTxOption {
-	return func(opts *localnetTxOptions) {
+func WithTxGas(gas string) TxOption {
+	return func(opts *txOptions) {
 		opts.txGas = gas
 	}
 }
 
-func WithLocalnetTxGasAdjustment(gasAdjustment string) LocalnetTxOption {
-	return func(opts *localnetTxOptions) {
+func WithTxGasAdjustment(gasAdjustment string) TxOption {
+	return func(opts *txOptions) {
 		opts.gasAdjustment = gasAdjustment
 	}
 }
 
-func NewLocalnetCLI() (LocalnetCLI, error) {
-	clientCtx, err := NewLocalnetClientCtx()
+func NewCLI() (CLI, error) {
+	clientCtx, err := newClientCtx()
 	if err != nil {
-		return LocalnetCLI{}, err
-	}
-	return LocalnetCLI{
-		ClientCtx: clientCtx,
-		FromName:  LocalnetKeyName,
-		FromAddr:  nutil.LocalnetValAddr,
-		NodeURI:   LocalnetNodeURI,
-		TxFee:     LocalnetTxFee,
-		TxGas:     LocalnetTxGas,
-	}, nil
-}
-
-func NewLocalnetBackend() (LocalnetBackend, error) {
-	clientCtx, err := NewLocalnetClientCtx()
-	if err != nil {
-		return LocalnetBackend{}, err
+		return CLI{}, err
 	}
 
 	evmRpcClient, err := ethclient.Dial(LocalnetEVMURI)
 	if err != nil {
-		return LocalnetBackend{}, fmt.Errorf("connect localnet EVM RPC client: %w", err)
+		return CLI{}, fmt.Errorf("connect localnet EVM RPC client: %w", err)
+	}
+
+	tmWSClient, err := rpcclient.NewWS(NodeWSURI, NodeWSEndpoint)
+	if err != nil {
+		return CLI{}, fmt.Errorf("create localnet Tendermint websocket client: %w", err)
+	}
+	if err := tmWSClient.OnStart(); err != nil {
+		return CLI{}, fmt.Errorf("start localnet Tendermint websocket client: %w", err)
 	}
 
 	serverCtx := server.NewDefaultContext()
 	serverCtx.Logger = cmtlog.NewNopLogger()
 
-	return LocalnetBackend{
+	backend := rpcapi.NewBackend(serverCtx, serverCtx.Logger, clientCtx, false, nil)
+	apis := rpcapi.GetRPCAPIs(
+		serverCtx,
+		clientCtx,
+		tmWSClient,
+		false,
+		nil,
+		[]string{
+			rpcapi.NamespaceEth,
+			rpcapi.NamespaceNet,
+			rpcapi.NamespaceDebug,
+			rpcapi.NamespaceWeb3,
+			rpcapi.NamespaceTxPool,
+		},
+	)
+	evmRpcAPI, err := buildEvmRpcAPI(apis)
+	if err != nil {
+		return CLI{}, err
+	}
+
+	return CLI{
 		ClientCtx:     clientCtx,
-		EthRpcBackend: rpcapi.NewBackend(serverCtx, serverCtx.Logger, clientCtx, false, nil),
+		FromName:      KeyName,
+		FromAddr:      nutil.LocalnetValAddr,
+		NodeURI:       NodeURI,
+		TxFee:         TxFeeDefault,
+		TxGas:         TxGasDefault,
+		EthRpcBackend: backend,
 		EvmRpcClient:  evmRpcClient,
+		EvmRpc:        evmRpcAPI,
 	}, nil
 }
 
-func NewLocalnetClientCtx() (client.Context, error) {
+func buildEvmRpcAPI(apis []gethrpc.API) (EvmRpcAPI, error) {
+	var out EvmRpcAPI
+
+	for _, api := range apis {
+		switch svc := api.Service.(type) {
+		case *rpcapi.EthAPI:
+			out.Eth = svc
+		case *rpcapi.FiltersAPI:
+			out.Filters = svc
+		case *rpcapi.NetAPI:
+			out.Net = svc
+		case *rpcapi.DebugAPI:
+			out.Debug = svc
+		}
+	}
+
+	if out.Eth == nil {
+		return EvmRpcAPI{}, errors.New("localnet RPC APIs missing eth service")
+	}
+	if out.Filters == nil {
+		return EvmRpcAPI{}, errors.New("localnet RPC APIs missing filters service")
+	}
+	if out.Net == nil {
+		return EvmRpcAPI{}, errors.New("localnet RPC APIs missing net service")
+	}
+	if out.Debug == nil {
+		return EvmRpcAPI{}, errors.New("localnet RPC APIs missing debug service")
+	}
+
+	return out, nil
+}
+
+func newClientCtx() (client.Context, error) {
 	encCfg := app.MakeEncodingConfig()
 
 	kb, err := keyring.New(
@@ -130,7 +190,7 @@ func NewLocalnetClientCtx() (client.Context, error) {
 		return client.Context{}, fmt.Errorf("create localnet keyring: %w", err)
 	}
 
-	rpcClient, err := client.NewClientFromNode(LocalnetNodeURI)
+	rpcClient, err := client.NewClientFromNode(NodeURI)
 	if err != nil {
 		return client.Context{}, fmt.Errorf("connect localnet RPC client: %w", err)
 	}
@@ -145,16 +205,16 @@ func NewLocalnetClientCtx() (client.Context, error) {
 		WithHomeDir(app.DefaultNodeHome).
 		WithKeyringDir(app.DefaultNodeHome).
 		WithKeyring(kb).
-		WithFromName(LocalnetKeyName).
+		WithFromName(KeyName).
 		WithFromAddress(nutil.LocalnetValAddr).
-		WithChainID(LocalnetChainID).
-		WithNodeURI(LocalnetNodeURI).
+		WithChainID(ChainID).
+		WithNodeURI(NodeURI).
 		WithClient(rpcClient).
 		WithBroadcastMode(flags.BroadcastSync).
 		WithOutput(io.Discard), nil
 }
 
-func (c LocalnetCLI) ExecQueryCmd(
+func (c CLI) ExecQueryCmd(
 	cmd *cobra.Command,
 	args []string,
 	result codec.ProtoMarshaler,
@@ -169,10 +229,10 @@ func (c LocalnetCLI) ExecQueryCmd(
 	return c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), result)
 }
 
-func (c LocalnetCLI) ExecTxCmd(
+func (c CLI) ExecTxCmd(
 	cmd *cobra.Command,
 	args []string,
-	opts ...LocalnetTxOption,
+	opts ...TxOption,
 ) (*sdk.TxResponse, error) {
 	renderedCmd := c.RenderTxCmd(cmd, args, opts...)
 	args = c.txArgs(args, opts...)
@@ -204,19 +264,19 @@ func (c LocalnetCLI) ExecTxCmd(
 	return deliveredResp, nil
 }
 
-func (c LocalnetCLI) RenderQueryCmd(cmd *cobra.Command, args []string) string {
+func (c CLI) RenderQueryCmd(cmd *cobra.Command, args []string) string {
 	return renderNibidCmd("q", cmd, c.queryArgs(args))
 }
 
-func (c LocalnetCLI) RenderTxCmd(
+func (c CLI) RenderTxCmd(
 	cmd *cobra.Command,
 	args []string,
-	opts ...LocalnetTxOption,
+	opts ...TxOption,
 ) string {
 	return renderNibidCmd("tx", cmd, c.txArgs(args, opts...))
 }
 
-func (c LocalnetCLI) queryArgs(args []string) []string {
+func (c CLI) queryArgs(args []string) []string {
 	argsCopy := append([]string(nil), args...)
 	return append(argsCopy,
 		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
@@ -224,7 +284,7 @@ func (c LocalnetCLI) queryArgs(args []string) []string {
 	)
 }
 
-func (c LocalnetCLI) txArgs(args []string, opts ...LocalnetTxOption) []string {
+func (c CLI) txArgs(args []string, opts ...TxOption) []string {
 	txOpts := c.defaultTxOptions()
 	for _, opt := range opts {
 		opt(&txOpts)
@@ -237,7 +297,7 @@ func (c LocalnetCLI) txArgs(args []string, opts ...LocalnetTxOption) []string {
 		fmt.Sprintf("--%s=%s", flags.FlagGas, txOpts.txGas),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=%s", flags.FlagChainID, LocalnetChainID),
+		fmt.Sprintf("--%s=%s", flags.FlagChainID, ChainID),
 		fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
 		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
 		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
@@ -248,8 +308,8 @@ func (c LocalnetCLI) txArgs(args []string, opts ...LocalnetTxOption) []string {
 	return txArgs
 }
 
-func (c LocalnetCLI) defaultTxOptions() localnetTxOptions {
-	return localnetTxOptions{
+func (c CLI) defaultTxOptions() txOptions {
+	return txOptions{
 		fromName: c.FromName,
 		txFee:    c.TxFee,
 		txGas:    c.TxGas,
@@ -293,7 +353,7 @@ func quoteShellArg(arg string) string {
 	return "'" + strings.ReplaceAll(arg, "'", `'\''`) + "'"
 }
 
-func (c LocalnetCLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
+func (c CLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		txResp, err := QueryTx(c.ClientCtx, txHash)
@@ -310,7 +370,7 @@ func (c LocalnetCLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
 	return nil, fmt.Errorf("failed to query tx %s after waiting two blocks: %w", txHash, lastErr)
 }
 
-func (c LocalnetCLI) LatestHeight() (int64, error) {
+func (c CLI) LatestHeight() (int64, error) {
 	if c.ClientCtx.Client == nil {
 		return 0, errors.New("localnet client context has no RPC client")
 	}
@@ -322,11 +382,11 @@ func (c LocalnetCLI) LatestHeight() (int64, error) {
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
-func (c LocalnetCLI) WaitForHeight(h int64) (int64, error) {
+func (c CLI) WaitForHeight(h int64) (int64, error) {
 	return c.WaitForHeightWithTimeout(h, 5*time.Minute)
 }
 
-func (c LocalnetCLI) WaitForHeightWithTimeout(h int64, timeout time.Duration) (int64, error) {
+func (c CLI) WaitForHeightWithTimeout(h int64, timeout time.Duration) (int64, error) {
 	if c.ClientCtx.Client == nil {
 		return 0, errors.New("localnet client context has no RPC client")
 	}
@@ -354,7 +414,7 @@ func (c LocalnetCLI) WaitForHeightWithTimeout(h int64, timeout time.Duration) (i
 	}
 }
 
-func (c LocalnetCLI) WaitForNextBlockVerbose() (int64, error) {
+func (c CLI) WaitForNextBlockVerbose() (int64, error) {
 	lastBlock, err := c.LatestHeight()
 	if err != nil {
 		return -1, err
@@ -369,7 +429,7 @@ func (c LocalnetCLI) WaitForNextBlockVerbose() (int64, error) {
 	return newBlock, nil
 }
 
-func (c LocalnetCLI) WaitForNextBlock() error {
+func (c CLI) WaitForNextBlock() error {
 	_, err := c.WaitForNextBlockVerbose()
 	return err
 }

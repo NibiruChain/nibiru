@@ -33,21 +33,14 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			var resJson json.RawMessage
-			err := s.evmRpcClient.Client().Call(
-				&resJson, "eth_getTransactionByHash", tc.txHash.Hex(),
-			)
+			txResponse, err := s.cli.EvmRpc.Eth.GetTransactionByHash(tc.txHash)
 			if !tc.wantTxFound {
-				s.Require().Nil(resJson)
+				s.Require().Error(err)
+				s.Require().Nil(txResponse)
 				return
 			}
 
 			s.Require().NoError(err)
-
-			txResponse := new(rpc.EthTxJsonRPC)
-			err = json.Unmarshal(resJson, txResponse)
-			s.Require().NoError(err)
-
 			s.Require().NotNil(txResponse)
 			s.Require().Equal(tc.txHash, txResponse.Hash)
 			s.Require().Equal(s.evmSenderEthAddr, txResponse.From)
@@ -77,21 +70,14 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			var resJson json.RawMessage
-			err := s.evmRpcClient.Client().Call(
-				&resJson, "eth_getTransactionReceipt", tc.txHash.Hex(),
-			)
+			txReceipt, err := s.cli.EvmRpc.Eth.GetTransactionReceipt(tc.txHash)
 
 			if !tc.wantTxFound {
-				s.Require().Equal("null", string(resJson))
+				s.Require().NoError(err)
+				s.Require().Nil(txReceipt)
 				return
 			}
 			s.Require().NoError(err)
-
-			var txReceipt rpcapi.TransactionReceipt
-			err = json.Unmarshal(resJson, &txReceipt)
-			s.Require().NoError(err)
-
 			s.Require().NotNil(txReceipt)
 
 			// Check fields
@@ -100,14 +86,37 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 			s.Greater(txReceipt.GasUsed, uint64(0))
 			s.Equal(txReceipt.GasUsed, txReceipt.CumulativeGasUsed)
 			s.Equal(tc.txHash, txReceipt.TxHash)
-			s.Equal(&gethcommon.Address{}, txReceipt.ContractAddress)
+			s.Nil(txReceipt.ContractAddress)
 			s.Require().Equal(gethcore.ReceiptStatusSuccessful, txReceipt.Status)
 		})
 	}
 }
 
+func (s *BackendSuite) TestGetTransactionLogs() {
+	logs, err := s.cli.EvmRpc.Eth.GetTransactionLogs(
+		s.SuccessfulTxDeployContract().Receipt.TxHash,
+	)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(logs)
+	s.Require().Equal(
+		s.SuccessfulTxDeployContract().Receipt.Logs,
+		logs,
+	)
+	s.Require().Equal(
+		*s.SuccessfulTxDeployContract().Receipt.ContractAddress,
+		logs[0].Address,
+	)
+	s.Require().Equal(transferTopic(), logs[0].Topics[0])
+
+	logs, err = s.cli.EvmRpc.Eth.GetTransactionLogs(
+		gethcommon.BytesToHash([]byte("0x0")),
+	)
+	s.Require().ErrorContains(err, "tx not found")
+	s.Require().Empty(logs)
+}
+
 func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
-	blockWithTx, err := s.backend.GetBlockByNumber(
+	blockWithTx, err := s.cli.EvmRpc.Eth.GetBlockByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc, false)
 	s.Require().NoError(err)
 	blockHash := gethcommon.BytesToHash(blockWithTx["hash"].(hexutil.Bytes))
@@ -140,25 +149,18 @@ func (s *BackendSuite) TestGetTransactionByBlockHashAndIndex() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			var resJson json.RawMessage
-			err := s.evmRpcClient.Client().Call(
-				&resJson, "eth_getTransactionByBlockHashAndIndex", tc.blockHash.Hex(), hexutil.Uint(tc.txIndex),
+			tx, err := s.cli.EvmRpc.Eth.GetTransactionByBlockHashAndIndex(
+				tc.blockHash,
+				hexutil.Uint(tc.txIndex),
 			)
 
 			if !tc.wantTxFound {
-				if resJson == nil || string(resJson) == "null" {
-					return
-				}
-				s.Fail("expected null result for missing transaction, got: %s", string(resJson))
+				s.Require().Nil(tx)
+				return
 			}
 			s.Require().NoError(err)
-
-			var tx rpc.EthTxJsonRPC
-			err = json.Unmarshal(resJson, &tx)
-			s.Require().NoError(err)
-
 			s.Require().NotNil(tx)
-			AssertTxResults(s, &tx, s.SuccessfulTxTransfer().Receipt.TxHash)
+			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }
@@ -192,26 +194,18 @@ func (s *BackendSuite) TestGetTransactionByBlockNumberAndIndex() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			var resJson json.RawMessage
-			err := s.evmRpcClient.Client().Call(
-				&resJson, "eth_getTransactionByBlockNumberAndIndex", tc.blockNumber, hexutil.Uint(tc.txIndex),
+			tx, err := s.cli.EvmRpc.Eth.GetTransactionByBlockNumberAndIndex(
+				tc.blockNumber,
+				hexutil.Uint(tc.txIndex),
 			)
 
 			if !tc.wantTxFound {
-				if resJson == nil || string(resJson) == "null" {
-					return
-				}
-				s.Fail("expected null result for missing transaction, got: %s", string(resJson))
+				s.Require().Nil(tx)
 				return
 			}
 			s.Require().NoError(err)
-
-			var tx rpc.EthTxJsonRPC
-			err = json.Unmarshal(resJson, &tx)
-			s.Require().NoError(err)
-
 			s.Require().NotNil(tx)
-			AssertTxResults(s, &tx, s.SuccessfulTxTransfer().Receipt.TxHash)
+			AssertTxResults(s, tx, s.SuccessfulTxTransfer().Receipt.TxHash)
 		})
 	}
 }

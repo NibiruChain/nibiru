@@ -13,7 +13,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -38,7 +38,7 @@ type TestSuite struct {
 	suite.Suite
 
 	creator     sdk.AccAddress
-	localnetCLI testnetwork.LocalnetCLI
+	localnetCLI localnet.CLI
 }
 
 const (
@@ -63,7 +63,7 @@ func (s *TestSuite) SetupSuite() {
 	}
 	s.creator = nutil.LocalnetValAddr
 
-	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 }

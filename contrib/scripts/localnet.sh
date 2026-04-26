@@ -230,6 +230,16 @@ MAINNET_WNIBI_ADDR="0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"
 MAINNET_WNIBI_BECH32="nibi1pjk0v60cg347e2pxjyarc6uk4n2tq25hhymgg9"
 MAINNET_WNIBI_CODE_HASH="0xffb88e0eb48147949565e65de3ec8a54b746214da7b9dd5b9a8a3ae7df46193b"
 
+# NOTE: This only affects fresh localnet bootstraps because it mutates genesis.
+# If nibid is already running from an older genesis, rerun this script from
+# scratch to make WNIBI live at the canonical address.
+#
+# Localnet normally has the canonical WNIBI param set, but no contract actually
+# deployed at that address. Seed both auth and EVM genesis so code paths that
+# special-case canonical WNIBI behave the same way they do on mainnet.
+#
+# This mirrors the canonical WNIBI contract data embedded in the v2.7.0 upgrade
+# helper, so localnet uses the same address and initial state layout.
 # Make WNIBI live on localnet at the canonical mainnet address so local tooling
 # can rely on the same contract address and storage layout as mainnet.
 add_genesis_param '.app_state.evm.params.canonical_wnibi = "'"$MAINNET_WNIBI_ADDR"'"'
@@ -238,12 +248,20 @@ add_genesis_param '.app_state.auth.accounts += [{
   "base_account": {
     "address": "'"$MAINNET_WNIBI_BECH32"'",
     "pub_key": null,
+    # Pick the next open account number in genesis at patch time.
     "account_number": ((.app_state.auth.accounts | length) | tostring),
     "sequence": "0"
   },
   "code_hash": "'"$MAINNET_WNIBI_CODE_HASH"'"
 }]'
 
+# The auth module also needs a matching EthAccount entry for the contract
+# address. The EVM module stores bytecode/storage separately, but genesis import
+# expects the auth-side contract account to exist with the correct code hash.
+#
+# Keep the WNIBI genesis payload as JSON and slurp it into jq instead of
+# inlining a giant escaped string. This payload mirrors the canonical WNIBI
+# contract data used by the v2.7.0 upgrade helper.
 WNIBI_EVM_GENESIS_JSON="$(mktemp)"
 trap 'rm -f "$WNIBI_EVM_GENESIS_JSON"' EXIT
 cat >"$WNIBI_EVM_GENESIS_JSON" <<'EOF'
