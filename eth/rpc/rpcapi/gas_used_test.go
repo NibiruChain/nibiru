@@ -9,11 +9,34 @@ import (
 	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
+
+func (s *BackendSuite) assertBlockGasCoversReceipts(receipts ...*rpcapi.TransactionReceipt) {
+	gasUsedByBlock := make(map[int64]uint64, len(receipts))
+	for _, receipt := range receipts {
+		s.Require().NotNil(receipt)
+		s.Require().NotNil(receipt.BlockNumber)
+		gasUsedByBlock[receipt.BlockNumber.Int64()] += receipt.GasUsed
+	}
+
+	for height, expectedGasUsed := range gasUsedByBlock {
+		block, err := s.cli.EvmRpc.Eth.GetBlockByNumber(rpc.NewBlockNumber(big.NewInt(height)), false)
+		s.Require().NoError(err)
+		s.Require().NotNil(block)
+		s.Require().NotNil(block["gasUsed"])
+		s.Require().GreaterOrEqual(
+			block["gasUsed"].(*hexutil.Big).ToInt().Uint64(),
+			expectedGasUsed,
+			"block %d gasUsed should cover the receipts included in that block",
+			height,
+		)
+	}
+}
 
 // TestGasUsedTransfers verifies that gas used is correctly calculated for simple transfers.
 // Test creates 2 eth transfer txs that are supposed to be included in the same block.
@@ -24,7 +47,7 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	defer testMutex.Unlock()
 
 	// Start with new block
-	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	s.Require().NoError(s.cli.WaitForNextBlock())
 	balanceBefore := s.getUnibiBalance(s.evmSenderEthAddr)
 
 	// Send 2 similar transfers
@@ -48,7 +71,7 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	s.Require().Equal(receipt1.GasUsed, receipt2.GasUsed)
 
 	// Get block receipt and check gas used
-	block, err := s.backend.GetBlockByNumber(rpc.NewBlockNumber(blockNumber1), false)
+	block, err := s.cli.EvmRpc.Eth.GetBlockByNumber(rpc.NewBlockNumber(blockNumber1), false)
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
 	s.Require().NotNil(block["gasUsed"])
@@ -68,8 +91,8 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 // Test creates 3 txs, 2 successful and one failing.
 //   - Successful txs gas should be refunded and failing tx should consume 100%
 //     of the gas limit.
-//   - It also checks that txs are included in the same block and block gas is
-//     greater or equals to the total gas used by txs.
+//   - It also checks that each block's gas used covers the tx receipts included
+//     in that block, even when the txs land in different blocks.
 func (s *BackendSuite) TestGasUsedFunTokens() {
 	// Test is broadcasting txs. Lock to avoid nonce conflicts.
 	testMutex.Lock()
@@ -83,7 +106,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 
 	balanceBefore := s.getUnibiBalance(s.evmSenderEthAddr)
 
-	txResp, err := s.localnetCLI.ExecTxCmd(
+	txResp, err := s.cli.ExecTxCmd(
 		nibidcmd.TxCmd(),
 		[]string{"evm", "create-funtoken", "--erc20=" + erc20Addr.Hex()},
 	)
@@ -168,15 +191,8 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	// TX 2 should have gas used equal to specified gas limit as it failed
 	s.Require().Equal(uint64(1_500_000), receipt2.GasUsed)
 
-	block, err := s.backend.GetBlockByNumber(rpc.NewBlockNumber(blockNumber1), false)
 	gasUsedInTxs := receipt1.GasUsed + receipt2.GasUsed + receipt3.GasUsed
-	s.Require().NoError(err)
-	s.Require().NotNil(block)
-	s.Require().NotNil(block["gasUsed"])
-	s.Require().GreaterOrEqual(
-		block["gasUsed"].(*hexutil.Big).ToInt().Uint64(),
-		gasUsedInTxs,
-	)
+	s.assertBlockGasCoversReceipts(receipt1, receipt2, receipt3)
 
 	// Balance after should be equal to balance before minus gas used
 	balanceAfter := s.getUnibiBalance(s.evmSenderEthAddr)

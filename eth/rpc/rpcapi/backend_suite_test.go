@@ -31,21 +31,20 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 )
 
-// testMutex is used to synchronize the tests which are broadcasting transactions concurrently
-var testMutex sync.Mutex
-
-var (
-	recipient    = evmtest.NewEthPrivAcc().EthAddr
-	amountToSend = evm.NativeToWei(big.NewInt(1))
-)
+func Test(t *testing.T) {
+	suite.Run(t, new(Suite))
+	suite.Run(t, new(BackendSuite))
+	suite.Run(t, new(NodeSuite))
+}
 
 type BackendSuite struct {
 	testutil.LogRoutingSuite
-	localnetCLI         testnetwork.LocalnetCLI
-	evmRpcClient        *ethclient.Client
+
+	cli localnet.CLI
+
 	evmSenderPrivateKey *ecdsa.PrivateKey
 	evmSenderEthAddr    gethcommon.Address
 	evmSenderNibiAddr   sdk.AccAddress
@@ -55,17 +54,19 @@ type BackendSuite struct {
 	accInfo             accInfoFixture
 }
 
+// testMutex is used to synchronize the tests which are broadcasting transactions concurrently
+var testMutex sync.Mutex
+
+var (
+	recipient    = evmtest.NewEthPrivAcc().EthAddr
+	amountToSend = evm.NativeToWei(big.NewInt(1))
+)
+
 type accInfoFixture struct {
 	Recipient                     gethcommon.Address
 	UnusedAddress                 gethcommon.Address
 	RecipientBalanceBeforeBlock   rpc.BlockNumber
 	ExpectedERC20InitialSupplyWei *big.Int
-}
-
-func TestBackendSuite(t *testing.T) {
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(BackendSuite))
-	}, 2)
 }
 
 func (s *BackendSuite) SetupSuite() {
@@ -75,17 +76,14 @@ func (s *BackendSuite) SetupSuite() {
 		s.T().Skipf("localnet unavailable: %v", err)
 	}
 
-	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
-	s.localnetCLI = localnetCLI
+	s.cli = localnetCLI
 
-	localnetBackend, err := testnetwork.NewLocalnetBackend()
-	s.Require().NoError(err)
-	s.backend = localnetBackend.EthRpcBackend
-	s.evmRpcClient = localnetBackend.EvmRpcClient
-	s.ethChainID = appconst.GetEthChainID(testnetwork.LocalnetChainID)
+	s.backend = localnetCLI.EthRpcBackend
+	s.ethChainID = appconst.GetEthChainID(localnet.ChainID)
 	s.SuccessfulTxs = make(map[string]SuccessfulTx)
-	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	s.Require().NoError(s.cli.WaitForNextBlock())
 
 	testAccPrivateKey, _ := crypto.GenerateKey()
 	s.evmSenderPrivateKey = testAccPrivateKey
@@ -95,19 +93,19 @@ func (s *BackendSuite) SetupSuite() {
 	s.evmSenderNibiAddr = eth.EthAddrToNibiruAddr(s.evmSenderEthAddr)
 	funds := sdk.NewCoins(sdk.NewInt64Coin(eth.EthBaseDenom, 100_000_000))
 
-	txResp, err := s.localnetCLI.ExecTxCmd(
+	txResp, err := s.cli.ExecTxCmd(
 		bankcli.NewTxCmd(),
-		[]string{"send", testnetwork.LocalnetKeyName, s.evmSenderNibiAddr.String(), funds.String()},
+		[]string{"send", localnet.KeyName, s.evmSenderNibiAddr.String(), funds.String()},
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp.TxHash)
-	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	s.Require().NoError(s.cli.WaitForNextBlock())
 	s.T().Logf(
 		"s.evmSenderEthAddr: %s, funds: %s, localnet validator: %s",
-		s.evmSenderEthAddr, funds, s.localnetCLI.FromAddr,
+		s.evmSenderEthAddr, funds, s.cli.FromAddr,
 	)
 
-	recipientBalanceBeforeHeight, err := s.localnetCLI.LatestHeight()
+	recipientBalanceBeforeHeight, err := s.cli.LatestHeight()
 	s.Require().NoError(err)
 	s.accInfo = accInfoFixture{
 		Recipient:                     recipient,
@@ -167,6 +165,8 @@ func (s *BackendSuite) SuccessfulTxTransfer() SuccessfulTx {
 func (s *BackendSuite) SuccessfulTxDeployContract() SuccessfulTx {
 	return s.SuccessfulTxs["deployContract"]
 }
+
+func (s *BackendSuite) evmRpcClient() *ethclient.Client { return s.cli.EvmRpcClient }
 
 func erc20InitialSupplyWei() *big.Int {
 	initialSupply := big.NewInt(1_000_000)
@@ -230,10 +230,10 @@ func SendTransaction(s *BackendSuite, tx *gethcore.LegacyTx, waitForNextBlock bo
 	s.Require().NoError(err)
 	txBz, err := signedTx.MarshalBinary()
 	s.Require().NoError(err)
-	txHash, err := s.backend.SendRawTransaction(txBz)
+	txHash, err := s.cli.EvmRpc.Eth.SendRawTransaction(txBz)
 	s.Require().NoError(err)
 	if waitForNextBlock {
-		s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+		s.Require().NoError(s.cli.WaitForNextBlock())
 	}
 	return txHash
 }
@@ -250,14 +250,14 @@ func WaitForReceipt(
 	err error,
 ) {
 	for attempt := 0; attempt < 3; attempt++ {
-		receipt, err = s.backend.GetTransactionReceipt(txHash)
+		receipt, err = s.cli.EvmRpc.Eth.GetTransactionReceipt(txHash)
 		if err == nil && receipt != nil {
 			blockNumber = receipt.BlockNumber
 			blockHash = &receipt.BlockHash
 			return
 		}
 		if attempt < 2 {
-			s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+			s.Require().NoError(s.cli.WaitForNextBlock())
 		}
 	}
 	if err != nil {
@@ -271,14 +271,17 @@ func WaitForReceipt(
 func (s *BackendSuite) getUnibiBalance(address gethcommon.Address) *big.Int {
 	latestBlock := rpc.EthLatestBlockNumber
 	latestBlockOrHash := rpc.BlockNumberOrHash{BlockNumber: &latestBlock}
-	balance, err := s.backend.GetBalance(address, latestBlockOrHash)
+	balance, err := s.cli.EvmRpc.Eth.GetBalance(address, latestBlockOrHash)
 	s.Require().NoError(err)
 	return evm.WeiToNative(balance.ToInt())
 }
 
 // getCurrentNonce returns the current nonce of the funded account
 func (s *BackendSuite) getCurrentNonce(address gethcommon.Address) uint64 {
-	nonce, err := s.backend.GetTransactionCount(address, rpc.EthPendingBlockNumber)
+	pendingBlock := rpc.EthPendingBlockNumber
+	nonce, err := s.cli.EvmRpc.Eth.GetTransactionCount(address, rpc.BlockNumberOrHash{
+		BlockNumber: &pendingBlock,
+	})
 	s.Require().NoError(err)
 
 	return uint64(*nonce)

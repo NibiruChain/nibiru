@@ -22,7 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -71,7 +71,7 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	localnetCLI testnetwork.LocalnetCLI
+	localnetCLI localnet.CLI
 	root        sdk.AccAddress
 }
 
@@ -88,7 +88,7 @@ func (s *TestSuite) SetupSuite() {
 		s.T().Skipf("skipping localnet-backed sudo CLI tests: %v", err)
 	}
 
-	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 

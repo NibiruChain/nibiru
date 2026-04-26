@@ -9,14 +9,14 @@ import (
 )
 
 func (s *BackendSuite) TestAccounts() {
-	accounts, err := s.backend.Accounts()
+	accounts, err := s.cli.EvmRpc.Eth.Accounts()
 	s.Require().NoError(err)
 	s.Require().Greater(len(accounts), 0)
 	s.Require().Contains(accounts, gethcommon.BytesToAddress(nutil.LocalnetValAddr.Bytes()))
 }
 
 func (s *BackendSuite) TestSyncing() {
-	syncing, err := s.backend.Syncing()
+	syncing, err := s.cli.EvmRpc.Eth.Syncing()
 	s.Require().NoError(err)
 	s.Require().False(syncing.(bool))
 }

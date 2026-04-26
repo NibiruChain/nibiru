@@ -38,7 +38,7 @@ func (s *BackendSuite) TestLogs() {
 	defer testMutex.Unlock()
 
 	// Start with fresh block
-	s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+	s.Require().NoError(s.cli.WaitForNextBlock())
 
 	debugLogs := make(map[string]string)
 
@@ -64,7 +64,7 @@ func (s *BackendSuite) TestLogs() {
 	)
 
 	s.T().Log("TX3: Create FunToken from ERC20")
-	txResp, err := s.localnetCLI.ExecTxCmd(
+	txResp, err := s.cli.ExecTxCmd(
 		nibidcmd.TxCmd(),
 		[]string{"evm", "create-funtoken", "--erc20=" + erc20Addr.Hex()},
 	)
@@ -79,7 +79,7 @@ func (s *BackendSuite) TestLogs() {
 	txResults[txHash3] = txResp
 
 	s.T().Log("TX4: Ensure FunToken from bank coin")
-	debugLogs["localnet validator"] = s.localnetCLI.FromAddr.String()
+	debugLogs["localnet validator"] = s.cli.FromAddr.String()
 
 	// Localnet genesis injects WNIBI.sol at the expected address. The test
 	// ensures the native bank-denom FunToken mapping once, then reuses it on
@@ -92,7 +92,7 @@ func (s *BackendSuite) TestLogs() {
 		erc20FromCoinAddr := crypto.CreateAddress(evm.EVM_MODULE_ADDRESS, s.getCurrentNonce(evm.EVM_MODULE_ADDRESS)+1)
 		debugLogs["erc20FromCoinAddr (assumed funtoken address)"] = erc20FromCoinAddr.Hex()
 
-		txResp, err = s.localnetCLI.ExecTxCmd(
+		txResp, err = s.cli.ExecTxCmd(
 			nibidcmd.TxCmd(),
 			[]string{"evm", "create-funtoken", "--bank-denom=" + evm.EVMBankDenom},
 		)
@@ -113,7 +113,7 @@ func (s *BackendSuite) TestLogs() {
 	}
 
 	s.T().Log("TX5: Convert coin to EVM")
-	txResp, err = s.localnetCLI.ExecTxCmd(
+	txResp, err = s.cli.ExecTxCmd(
 		nibidcmd.TxCmd(),
 		[]string{
 			"evm",
@@ -299,7 +299,7 @@ func (s *BackendSuite) TestLogs() {
 
 func (s *BackendSuite) queryFunTokenMapping(bankDenom string) (*evm.FunToken, bool) {
 	queryResp := new(evm.QueryFunTokenMappingResponse)
-	err := s.localnetCLI.ExecQueryCmd(
+	err := s.cli.ExecQueryCmd(
 		nibidcmd.QueryCmd(),
 		[]string{"evm", "funtoken", bankDenom},
 		queryResp,

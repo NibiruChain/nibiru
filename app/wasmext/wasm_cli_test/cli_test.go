@@ -13,7 +13,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 )
 
 const (
@@ -28,7 +28,7 @@ var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 type TestSuite struct {
 	suite.Suite
 
-	localnetCLI testnetwork.LocalnetCLI
+	localnetCLI localnet.CLI
 }
 
 func (s *TestSuite) SetupSuite() {
@@ -36,7 +36,7 @@ func (s *TestSuite) SetupSuite() {
 		s.T().Skipf("skipping localnet-backed wasm CLI tests: %v", err)
 	}
 
-	localnetCLI, err := testnetwork.NewLocalnetCLI()
+	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 }
@@ -61,11 +61,11 @@ func (s *TestSuite) TestWasmHappyPath() {
 	)
 }
 
-func (s *TestSuite) wasmStoreCodeTxOptions() []testnetwork.LocalnetTxOption {
-	return []testnetwork.LocalnetTxOption{
-		testnetwork.WithLocalnetTxGas(wasmStoreCodeGas),
-		testnetwork.WithLocalnetTxGasAdjustment(wasmStoreCodeGasAdjustment),
-		testnetwork.WithLocalnetTxFees(wasmStoreCodeFees),
+func (s *TestSuite) wasmStoreCodeTxOptions() []localnet.TxOption {
+	return []localnet.TxOption{
+		localnet.WithTxGas(wasmStoreCodeGas),
+		localnet.WithTxGasAdjustment(wasmStoreCodeGasAdjustment),
+		localnet.WithTxFees(wasmStoreCodeFees),
 	}
 }
 
