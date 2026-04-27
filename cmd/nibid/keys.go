@@ -44,8 +44,8 @@ func runKeysListCmd(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if len(records) == 0 && clientCtx.OutputFormat == sdkkeys.OutputFormatJSON {
-		cmd.Println("No records were found in keyring")
+	if len(records) == 0 {
+		cmd.Println("[]")
 		return nil
 	}
 
@@ -90,7 +90,7 @@ func printKeyringRecords(w io.Writer, records []*cryptokeyring.Record, output st
 			return err
 		}
 
-		if _, err := fmt.Fprintf(w, "%s", out); err != nil {
+		if _, err := fmt.Fprintln(w, string(out)); err != nil {
 			return err
 		}
 	}
