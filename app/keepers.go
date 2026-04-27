@@ -134,7 +134,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.InflationKeeper.Hooks(),
-			app.OracleKeeper.Hooks(),
 		),
 	)
 

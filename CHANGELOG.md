@@ -40,7 +40,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-* ... 
+- ...
+
+### Improvements
+
+* evm: remove oracle precompile registration, runtime implementation, and EVM address `0x...0801` from the precompile address set.
+* evm-embeds: drop oracle Solidity interfaces/wrappers and generated oracle ABI/artifact outputs from `@nibiruchain/solidity`.
+* evm-e2e: remove oracle precompile contract/tests and related helper wiring.
+
+### API Breaking
+
+* npm: `@nibiruchain/solidity` no longer ships the oracle precompile interface/ABI surfaces (`IOracle` and `NibiruOracleChainLinkLike*`).
 
 ## v2.11.0
 

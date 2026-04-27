@@ -12,7 +12,6 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@jest/globals": "^29.7.0",
     "@nibiruchain/evm-core": "^0.0.7",
-    "@nibiruchain/solidity": "^0.0.4",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^4.9.6",
     "@typechain/ethers-v6": "^0.5.1",
