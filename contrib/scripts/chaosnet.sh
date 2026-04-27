@@ -40,7 +40,8 @@ which_ok sed
 which_ok nibid
 
 # Set localnet settings
-MNEMONIC=${MNEMONIC:-"guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"}
+DEFAULT_MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
+MNEMONIC=${MNEMONIC:-"$DEFAULT_MNEMONIC"}
 CHAIN_ID=${CHAIN_ID:-"nibiru-localnet-0"}
 CHAIN_DIR=${CHAIN_DIR:-"$HOME/.nibid"}
 LCD_PORT=${LCD_PORT:-"1317"}
@@ -90,13 +91,37 @@ add_genesis_param() {
 }
 
 # recover mnemonic
-val_key_name="validator"
+key_name="validator"
 
-if ! nibid keys show "$val_key_name" --home "$CHAIN_DIR" >/dev/null 2>&1; then
-  echo "$MNEMONIC" | nibid keys add "$val_key_name" --recover --home "$CHAIN_DIR"
+recover_validator_key() {
+  echo "$MNEMONIC" | nibid keys add "$key_name" --recover --home "$CHAIN_DIR"
+}
+
+validate_mnemonic() {
+  local words
+  read -r -a words <<< "$MNEMONIC"
+  if [[ ${#words[@]} -ne 24 ]]; then
+    log_error "MNEMONIC must contain 24 words; got ${#words[@]}"
+    exit 1
+  fi
+}
+
+# Validator key handling:
+# - missing key: recover it from MNEMONIC, whether default or custom
+# - existing key with default MNEMONIC: keep it for idempotent local reruns
+# - existing key with custom MNEMONIC: replace it so genesis uses that mnemonic
+if nibid keys show "$key_name" --home "$CHAIN_DIR" >/dev/null 2>&1; then
+  if [[ "$MNEMONIC" != "$DEFAULT_MNEMONIC" ]]; then
+    validate_mnemonic
+    echo "Replacing existing validator key because MNEMONIC is non-default"
+    nibid keys delete "$key_name" --home "$CHAIN_DIR" -y
+    recover_validator_key
+  fi
+else
+  recover_validator_key
 fi
 
-val_address="$(nibid keys show "$val_key_name" -a --home "$CHAIN_DIR")"
+val_address="$(nibid keys show "$key_name" -a --home "$CHAIN_DIR")"
 nibid genesis add-genesis-account "$val_address" "10000000000000unibi" --home "$CHAIN_DIR"
 
 # x/sudo
@@ -109,5 +134,5 @@ nibid genesis add-genesis-account nibi1wx9360p9rvy9m5cdhsua6qpdf9ktvwhjqw949s "1
 nibid genesis add-genesis-account nibi1g7vzqfthhf4l4vs6skyjj27vqhe97m5gp33hxy "10000000000000unibi" --home "$CHAIN_DIR" # liquidator
 
 # gen_txs
-nibid genesis gentx "$val_key_name" 900000000unibi --chain-id "$CHAIN_ID" --home "$CHAIN_DIR"
+nibid genesis gentx "$key_name" 900000000unibi --chain-id "$CHAIN_ID" --home "$CHAIN_DIR"
 nibid genesis collect-gentxs --home "$CHAIN_DIR"
