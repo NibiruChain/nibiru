@@ -39,7 +39,7 @@ func (s *GenesisTestSuite) SetupTest() {
 }
 
 func (s *GenesisTestSuite) TestGenesis() {
-	randomAddr := testutil.AccAddress().String()
+	randomAddr := testutil.NewAccAddress().String()
 	testCases := []struct {
 		name     string
 		genesis  devgastypes.GenesisState

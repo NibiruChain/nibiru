@@ -48,8 +48,6 @@ func (s *Suite) RPCEndpoint() string {
 // SetupSuite implements the suite.SetupAllSuite interface. This function runs
 // prior to all of the other tests in the suite.
 func (s *Suite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
-
 	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
 	if err := nutil.EnsureLocalBlockchain(); err != nil {
@@ -123,7 +121,7 @@ func (s *Suite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex strin
 
 func (s *Suite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSend sdk.Msg) {
 	from = s.from
-	to = testutil.AccAddress()
+	to = testutil.NewAccAddress()
 	amt = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 420))
 	msgSend = banktypes.NewMsgSend(from, to, amt)
 	return from, to, amt, msgSend

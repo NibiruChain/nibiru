@@ -12,7 +12,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/suite"
 
@@ -165,8 +164,6 @@ func (s *BackendSuite) SuccessfulTxTransfer() SuccessfulTx {
 func (s *BackendSuite) SuccessfulTxDeployContract() SuccessfulTx {
 	return s.SuccessfulTxs["deployContract"]
 }
-
-func (s *BackendSuite) evmRpcClient() *ethclient.Client { return s.cli.EvmRpcClient }
 
 func erc20InitialSupplyWei() *big.Int {
 	initialSupply := big.NewInt(1_000_000)

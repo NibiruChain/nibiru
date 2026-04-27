@@ -387,7 +387,7 @@ func (s *SuiteFunToken) TestSendFromEvmToBank_MadeFromErc20() {
 		s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed)
 	})
 
-	randomAcc := testutil.AccAddress()
+	randomAcc := testutil.NewAccAddress()
 	s.Run("happy: send erc20 tokens to Bank", func() {
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
 		s.Require().NoError(err)
@@ -586,7 +586,7 @@ func (s *SuiteFunToken) TestFunTokenFromERC20MaliciousTransfer() {
 		},
 	)
 	s.Require().NoError(err)
-	randomAcc := testutil.AccAddress()
+	randomAcc := testutil.NewAccAddress()
 
 	s.T().Log("send erc20 tokens to cosmos")
 	input, err := embeds.SmartContract_FunToken.ABI.Pack("sendToBank", deployResp.ContractAddr, big.NewInt(1), randomAcc.String())
@@ -657,7 +657,7 @@ func (s *SuiteFunToken) TestERC20MaliciousCallGuard() {
 	)
 	s.Require().NoError(err)
 	bankDenom := resp.FuntokenMapping.BankDenom
-	randomAcc := testutil.AccAddress()
+	randomAcc := testutil.NewAccAddress()
 
 	for _, testCase := range []struct {
 		Method    string
@@ -856,7 +856,7 @@ func (s *SuiteFunToken) TestSendERC20WithFee() {
 	s.Require().NoError(err, "erc20 %s", deployResp.ContractAddr)
 	bankDemon := resp.FuntokenMapping.BankDenom
 
-	randomAcc := testutil.AccAddress()
+	randomAcc := testutil.NewAccAddress()
 
 	s.T().Log("send erc20 tokens to Bank")
 	contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
