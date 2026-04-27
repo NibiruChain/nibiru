@@ -24,20 +24,6 @@ services:
     volumes:
       - nibid-data-0:/root/.nibid/data:rw
 
-  pricefeeder-0:
-    image: ghcr.io/nibiruchain/pricefeeder:latest
-    restart: always
-    environment:
-      CHAIN_ID: nibiru-localnet-0
-      GRPC_ENDPOINT: nibiru-0:9090
-      WEBSOCKET_ENDPOINT: ws://nibiru-0:26657/websocket
-      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
-      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
-      VALIDATOR_ADDRESS: nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz
-    depends_on:
-      nibiru-0:
-        condition: service_healthy
-
   nibiru-1:
     build:
       context: ../.. # nibiru project folder
@@ -61,21 +47,6 @@ services:
       - 19090:19090
     volumes:
       - nibid-data-1:/root/.nibid/data:rw
-
-  pricefeeder-1:
-    image: ghcr.io/nibiruchain/pricefeeder:latest
-    profiles: [ibc]
-    restart: always
-    environment:
-      CHAIN_ID: nibiru-localnet-1
-      GRPC_ENDPOINT: nibiru-1:19090
-      WEBSOCKET_ENDPOINT: ws://nibiru-1:36657/websocket
-      FEEDER_MNEMONIC: empower dice proud brick treat reward pull jeans right rubber infant hamster pet foster among crush quick report rival bracket easily mouse topple absorb
-      EXCHANGE_SYMBOLS_MAP: '{ "bitfinex": { "ubtc:uusd": "tBTCUSD", "ueth:uusd": "tETHUSD", "uusdt:uusd": "tUSTUSD" }, "binance": { "ubtc:uusd": "BTCUSD", "ueth:uusd": "ETHUSD", "uusdt:uusd": "USDTUSD", "uusdc:uusd": "USDCUSD", "uatom:uusd": "ATOMUSD", "ubnb:uusd": "BNBUSD", "uavax:uusd": "AVAXUSD", "usol:uusd": "SOLUSD", "uada:uusd": "ADAUSD", "ubtc:unusd": "BTCUSD", "ueth:unusd": "ETHUSD", "uusdt:unusd": "USDTUSD", "uusdc:unusd": "USDCUSD", "uatom:unusd": "ATOMUSD", "ubnb:unusd": "BNBUSD", "uavax:unusd": "AVAXUSD", "usol:unusd": "SOLUSD", "uada:unusd": "ADAUSD" } }'
-      VALIDATOR_ADDRESS: nibivaloper18mxturdh0mjw032c3zslgkw63cukkl4qatcdn4
-    depends_on:
-      nibiru-1:
-        condition: service_healthy
 
   hermes-keys-task-0:
     image: informalsystems/hermes:1.6.0
