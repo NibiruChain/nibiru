@@ -579,8 +579,20 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
-	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.EthChainID(ctx).Cmp(big.NewInt(appconst.ETH_CHAIN_ID_MAINNET)) == 0 {
+		sender := sdk.MustAccAddressFromBech32(msg.Sender)
+		sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+		havePerms := (sudoPermsErr == nil) || (k.authority.String() == msg.Sender)
+		if !havePerms {
+			return nil, fmt.Errorf(
+				"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+				k.authority, msg.Sender,
+			)
+		}
+	}
+
+	// Deduct fee upon registration.
 	err = k.deductCreateFunTokenFee(ctx, msg)
 	if err != nil {
 		return nil, err
