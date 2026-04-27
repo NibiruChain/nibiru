@@ -15,13 +15,25 @@ log_error() {
   echo "ERROR: $*" >&2
 }
 
+# which_ok: Check if the given binary is in the $PATH or if it is something
+# callable in a bash program.
+# Returns code 0 on success and code 1 if the command fails.
 which_ok() {
+
+  # Runnable binary on $PATH? Ex: "jq", "bun", etc.
+  # Alias? Ex: "ls" (I have it aliased to exa).
+  # Built-in? Ex: "echo", "cd"
   if which "$1" >/dev/null 2>&1; then
     return 0
-  else
-    log_error "$1 is not present in \$PATH"
-    return 1
   fi
+
+  # Function? An example for this is "nvm", which is a pure bash function.
+  if type -a "$1" >/dev/null; then
+    return 0
+  fi
+
+  log_error "$1 is not present in \$PATH"
+  return 1
 }
 
 # sed_inplace: Edits files in place across GNU and BSD sed variants.
