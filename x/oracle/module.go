@@ -8,8 +8,6 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
 
-	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
-
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
@@ -24,11 +22,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/oracle/cli"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/oracle/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
@@ -87,12 +82,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the root tx command for the oracle module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return nil
 }
 
 // GetQueryCmd returns no root query command for the oracle module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd()
+	return nil
 }
 
 //___________________________
@@ -101,26 +96,17 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	sudoKeeper    sudokeeper.Keeper
+	keeper keeper.Keeper
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	sudoKeeper sudokeeper.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc},
 		keeper:         keeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		sudoKeeper:     sudoKeeper,
 	}
 }
 
@@ -166,8 +152,7 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 func (AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
 
 // EndBlock returns the end blocker for the oracle module.
-func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper)
+func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }
 
@@ -177,7 +162,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 
 // GenerateGenesisState creates a randomized GenState of the oracle module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
-	simulation.RandomizedGenState(simState)
+	_ = simState
 }
 
 // ProposalContents returns all the oracle content functions used to
@@ -188,15 +173,15 @@ func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.Weight
 
 // RegisterStoreDecoder registers a decoder for oracle module's types
 func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
-	sdr[types.StoreKey] = simulation.NewDecodeStore(am.cdc)
+	_ = am
+	_ = sdr
 }
 
 // WeightedOperations returns the all the oracle module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
-	return simulation.WeightedOperations(
-		simState.AppParams, simState.Cdc,
-		am.accountKeeper, am.bankKeeper, am.keeper,
-	)
+	_ = am
+	_ = simState
+	return nil
 }
 
 //
@@ -216,12 +201,7 @@ type OracleInputs struct {
 	Key    *store.KVStoreKey
 	Cdc    codec.Codec
 
-	AccountKeeper  authkeeper.AccountKeeper
-	BankKeeper     types.BankKeeper
-	DistrKeeper    types.DistributionKeeper
-	StakingKeeper  types.StakingKeeper
-	SlashingKeeper types.SlashingKeeper
-	SudoKeeper     sudokeeper.Keeper
+	AccountKeeper authkeeper.AccountKeeper
 }
 
 type OracleOutputs struct {
@@ -233,9 +213,9 @@ type OracleOutputs struct {
 }
 
 func ProvideModule(in OracleInputs) OracleOutputs {
-	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper, in.BankKeeper, in.DistrKeeper, in.StakingKeeper, in.SlashingKeeper, in.SudoKeeper, distrtypes.ModuleName)
+	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper)
 
-	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.SudoKeeper)
+	m := NewAppModule(in.Cdc, k)
 
 	return OracleOutputs{
 		Keeper: k,

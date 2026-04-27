@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func assertNotReadonlyTx(readOnly bool, method *gethabi.Method) error {

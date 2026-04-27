@@ -19,8 +19,6 @@ var (
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/ERC20MinterWithMetadataUpdates.sol/ERC20MinterWithMetadataUpdates.json
 	erc20MinterWithMetadataUpdatesContractJSON []byte
-	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
-	oracleContractJSON []byte
 	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenPrecompileJSON []byte
 	//go:embed artifacts/contracts/Wasm.sol/IWasm.json
@@ -89,10 +87,6 @@ var (
 	SmartContract_Wasm = CompiledEvmContract{
 		Name:      "Wasm.sol",
 		EmbedJSON: wasmPrecompileJSON,
-	}
-	SmartContract_Oracle = CompiledEvmContract{
-		Name:      "Oracle.sol",
-		EmbedJSON: oracleContractJSON,
 	}
 	// SmartContract_Funtoken: Wrapped NIBI contract ERC20.
 	SmartContract_WNIBI = CompiledEvmContract{
@@ -201,7 +195,6 @@ func init() {
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
-	SmartContract_Oracle.MustLoad()
 	SmartContract_WNIBI.MustLoad()
 
 	SmartContract_TestERC20.MustLoad()

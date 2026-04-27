@@ -614,7 +614,6 @@ func (s *SuiteFunToken) TestERC20MaliciousCallGuard() {
 		s.Require().NotZero(deps.Ctx().GasMeter().GasConsumed(), testCase.Method)
 		s.Require().Greater(deps.Ctx().GasMeter().GasConsumed(), evmResp.GasUsed, testCase.Method)
 	}
-
 }
 
 // TestFunTokenInfiniteRecursionERC20 creates a funtoken from a contract
