@@ -29,7 +29,7 @@ func (s *Suite) TestAnteDecoratorStakingCommission() {
 		Details:         "mock-details",
 	}
 
-	valAddr := sdk.ValAddress(testutil.AccAddress()).String()
+	valAddr := sdk.ValAddress(testutil.NewAccAddress()).String()
 	commissionRatePointer := new(sdkmath.LegacyDec)
 	*commissionRatePointer = sdkmath.LegacyNewDecWithPrec(10, 2)
 	happyMsgs := []sdk.Msg{
@@ -41,7 +41,7 @@ func (s *Suite) TestAnteDecoratorStakingCommission() {
 				MaxChangeRate: sdkmath.LegacyNewDec(420),
 			},
 			MinSelfDelegation: sdkmath.NewInt(1),
-			DelegatorAddress:  testutil.AccAddress().String(),
+			DelegatorAddress:  testutil.NewAccAddress().String(),
 			ValidatorAddress:  valAddr,
 			Pubkey:            &codectypes.Any{},
 			Value:             sdk.NewInt64Coin("unibi", 1),

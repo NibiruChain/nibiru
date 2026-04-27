@@ -113,7 +113,7 @@ func (s *BackendSuite) TestGasUsedFunTokens() {
 	s.Require().NoError(err)
 	s.Require().NotNil(txResp)
 
-	randomNibiAddress := testutil.AccAddress()
+	randomNibiAddress := testutil.NewAccAddress()
 	packedArgsPass, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToBank",
 		erc20Addr.Address,

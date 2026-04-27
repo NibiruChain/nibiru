@@ -133,7 +133,7 @@ func (s *BackendSuite) TestLogs() {
 	txResults[txHash5] = txResp
 
 	s.T().Log("TX6: Send erc20 token to coin using precompile")
-	randomNibiAddress := testutil.AccAddress()
+	randomNibiAddress := testutil.NewAccAddress()
 	packedArgsPass, err := embeds.SmartContract_FunToken.ABI.Pack(
 		"sendToBank",
 		erc20Addr.Address,

@@ -29,7 +29,7 @@ func (s *Suite) TestUpgrade() {
 		deps = evmtest.NewTestDeps()
 
 		// Original creator of the Bank Coin version of the token
-		erisAddr = testutil.AccAddress()
+		erisAddr = testutil.NewAccAddress()
 
 		// Metadata used for both faulty token formats of the stNIBI FunToken
 		// mapping of
@@ -43,16 +43,16 @@ func (s *Suite) TestUpgrade() {
 
 		// ten holders for testing
 		holders = []gethcommon.Address{
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
 		}
 	)
 

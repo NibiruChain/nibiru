@@ -50,9 +50,9 @@ func (s *Suite2_7_0) TestTestnet() {
 		// some ERC20 holders of stNIBI to make sure the upgrade doesn't corrupt
 		// any EVM state
 		holders = []gethcommon.Address{
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 20
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 40
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 60
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 20
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 40
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 60
 		}
 	)
 

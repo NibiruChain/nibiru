@@ -221,7 +221,7 @@ func (s *TestSuite) newContracts(
 ) []string {
 	contracts := make([]string, 0, n)
 	for len(contracts) < n {
-		addr := testutil.AccAddress().String()
+		addr := testutil.NewAccAddress().String()
 		if existing.Has(addr) {
 			continue
 		}
@@ -251,15 +251,15 @@ func (s *Suite) TestCliCmdEditSudoers() {
 	// Create temporary JSON files for testing
 	addContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "add_contracts",
-		"contracts": []string{testutil.AccAddress().String(), testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String(), testutil.NewAccAddress().String()},
 	})
 	removeContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "remove_contracts",
-		"contracts": []string{testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String()},
 	})
 	invalidActionJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "invalid_action",
-		"contracts": []string{testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String()},
 	})
 	invalidAddressJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "add_contracts",
@@ -339,7 +339,7 @@ func (s *Suite) TestCliCmdEditSudoers() {
 
 func (s *Suite) TestCliCmdChangeRoot() {
 	testVars := SetupTestVars(s.T())
-	newRootAddr := testutil.AccAddress().String()
+	newRootAddr := testutil.NewAccAddress().String()
 
 	testCases := []TestCase{
 		{
@@ -389,8 +389,8 @@ func (s *Suite) TestCliCmdEditZeroGasActors() {
 	testVars := SetupTestVars(s.T())
 
 	// Generate test addresses
-	validSender1 := testutil.AccAddress().String()
-	validSender2 := testutil.AccAddress().String()
+	validSender1 := testutil.NewAccAddress().String()
+	validSender2 := testutil.NewAccAddress().String()
 	validContract1 := "0x1234567890123456789012345678901234567890"
 	validContract2 := "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
 

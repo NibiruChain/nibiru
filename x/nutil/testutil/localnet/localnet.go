@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -279,7 +279,7 @@ func (c CLI) RenderTxCmd(
 func (c CLI) queryArgs(args []string) []string {
 	argsCopy := append([]string(nil), args...)
 	return append(argsCopy,
-		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
+		fmt.Sprintf("--%s=%s", cmtcli.OutputFlag, "json"),
 		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
 	)
 }
@@ -300,7 +300,7 @@ func (c CLI) txArgs(args []string, opts ...TxOption) []string {
 		fmt.Sprintf("--%s=%s", flags.FlagChainID, ChainID),
 		fmt.Sprintf("--%s=%s", flags.FlagKeyringBackend, keyring.BackendTest),
 		fmt.Sprintf("--%s=%s", flags.FlagNode, c.NodeURI),
-		fmt.Sprintf("--%s=%s", cli.OutputFlag, "json"),
+		fmt.Sprintf("--%s=%s", cmtcli.OutputFlag, "json"),
 	)
 	if txOpts.gasAdjustment != "" {
 		txArgs = append(txArgs, fmt.Sprintf("--%s=%s", flags.FlagGasAdjustment, txOpts.gasAdjustment))
