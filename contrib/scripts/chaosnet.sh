@@ -24,6 +24,17 @@ which_ok() {
   fi
 }
 
+# sed_inplace: Edits files in place across GNU and BSD sed variants.
+# macOS/BSD sed requires an explicit backup suffix after -i; '' means none.
+sed_inplace() {
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' "$@"
+  else
+    sed -i "$@"
+  fi
+}
+
+# Preflight checks for dependencies
 which_ok jq
 which_ok sed
 which_ok nibid
@@ -50,14 +61,14 @@ nibid config chain-id "$CHAIN_ID" --home "$CHAIN_DIR"
 nibid config broadcast-mode sync --home "$CHAIN_DIR"
 nibid config output json --home "$CHAIN_DIR"
 
-sed -i "s/127.0.0.1:26657/0.0.0.0:$RPC_PORT/" "$CHAIN_DIR/config/config.toml"
-sed -i 's/log_format = .*/log_format = "json"/' "$CHAIN_DIR/config/config.toml"
+sed_inplace "s/127.0.0.1:26657/0.0.0.0:$RPC_PORT/" "$CHAIN_DIR/config/config.toml"
+sed_inplace 's/log_format = .*/log_format = "json"/' "$CHAIN_DIR/config/config.toml"
 
-sed -i '/\[api\]/,+3 s/enable = false/enable = true/' "$CHAIN_DIR/config/app.toml"
-sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' "$CHAIN_DIR/config/app.toml"
-sed -i "s/localhost:1317/0.0.0.0:$LCD_PORT/" "$CHAIN_DIR/config/app.toml"
-sed -i '/\[grpc\]/,+3 s/enable = false/enable = true/' "$CHAIN_DIR/config/app.toml"
-sed -i "s/localhost:9090/0.0.0.0:$GRPC_PORT/" "$CHAIN_DIR/config/app.toml"
+sed_inplace '/\[api\]/,+3 s/enable = false/enable = true/' "$CHAIN_DIR/config/app.toml"
+sed_inplace 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' "$CHAIN_DIR/config/app.toml"
+sed_inplace "s/localhost:1317/0.0.0.0:$LCD_PORT/" "$CHAIN_DIR/config/app.toml"
+sed_inplace '/\[grpc\]/,+3 s/enable = false/enable = true/' "$CHAIN_DIR/config/app.toml"
+sed_inplace "s/localhost:9090/0.0.0.0:$GRPC_PORT/" "$CHAIN_DIR/config/app.toml"
 
 # ------------------------------------------------------------------------
 # Configure genesis params
