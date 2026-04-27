@@ -43,6 +43,8 @@ dist/
 
 # DON'T ignore out.txt
 !out.txt
+!logs
+!logs/**
 
 # Boilerplate
 # *.pb.go
