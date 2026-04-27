@@ -2,7 +2,6 @@ package upgrades
 
 import (
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -32,12 +31,13 @@ func runUpgrade2_12_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 		_ = nibiru.OracleKeeper.ExchangeRateMap.Delete(ctx, pair)
 	}
 
-	for _, key := range nibiru.OracleKeeper.PriceSnapshots.Iterate(
-		ctx,
-		collections.PairRange[asset.Pair, time.Time]{},
-	).Keys() {
-		_ = nibiru.OracleKeeper.PriceSnapshots.Delete(ctx, key)
-	}
+	// This upgrade is too heavy for the archive nodes. Disable it.
+	//for _, key := range nibiru.OracleKeeper.PriceSnapshots.Iterate(
+	//	ctx,
+	//	collections.PairRange[asset.Pair, time.Time]{},
+	//).Keys() {
+	//	_ = nibiru.OracleKeeper.PriceSnapshots.Delete(ctx, key)
+	//}
 
 	for _, valAddr := range nibiru.OracleKeeper.Prevotes.Iterate(ctx, collections.Range[sdk.ValAddress]{}).Keys() {
 		_ = nibiru.OracleKeeper.Prevotes.Delete(ctx, valAddr)
