@@ -73,14 +73,13 @@ func printKeyringRecords(w io.Writer, records []*cryptokeyring.Record, output st
 
 	kos := make([]KeyOutput, len(kosRaw))
 	for idx, ko := range kosRaw {
+		kos[idx] = KeyOutput{KeyOutput: ko}
+
 		addrBech32, err := sdk.AccAddressFromBech32(ko.Address)
 		if err != nil || len(addrBech32) != appconst.ADDR_LEN_EOA {
 			continue
 		}
-		kos[idx] = KeyOutput{
-			EvmAddr:   eth.NibiruAddrToEthAddr(addrBech32).Hex(),
-			KeyOutput: ko,
-		}
+		kos[idx].EvmAddr = eth.NibiruAddrToEthAddr(addrBech32).Hex()
 	}
 
 	switch output {
