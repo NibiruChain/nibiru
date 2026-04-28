@@ -19,15 +19,15 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-// AccAddress returns a sample address (sdk.AccAddress) created using secp256k1.
-// Note that AccAddress().String() can be used to get a string representation.
-func AccAddress() sdk.AccAddress {
-	_, accAddr := PrivKey()
+// NewAccAddress returns a sample address (sdk.NewAccAddress) created using secp256k1.
+// Note that NewAccAddress().String() can be used to get a string representation.
+func NewAccAddress() sdk.AccAddress {
+	_, accAddr := NewPrivKey()
 	return accAddr
 }
 
-// PrivKey returns a private key and corresponding on-chain address.
-func PrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
+// NewPrivKey returns a private key and corresponding on-chain address.
+func NewPrivKey() (*secp256k1.PrivKey, sdk.AccAddress) {
 	privKey := secp256k1.GenPrivKey()
 	pubKey := privKey.PubKey()
 	addr := pubKey.Address()

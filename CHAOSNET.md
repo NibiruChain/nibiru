@@ -18,7 +18,6 @@
 Chaosnet is an expanded version of localnet that runs:
 
 - up to two validators (nibiru-0 and nibiru-1)
-- pricefeeders for each validator
 - a hermes relayer between the two validators (if the `ibc` profile is used)
 - a postgres:14 database (if the `heartmonitor` profile is used)
 - a heartmonitor instance (if the `heartmonitor` profile is used)

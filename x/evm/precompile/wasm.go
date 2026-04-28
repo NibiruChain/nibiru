@@ -119,7 +119,10 @@ func (p precompileWasm) DynamicRun(
 	gasCost = startResult.Ctx.GasMeter().GasConsumed()
 
 	if err != nil {
-		return nil, gasCost, err
+		if len(bz) == 0 {
+			bz = revertBzForErr(err)
+		}
+		return bz, gasCost, err
 	}
 
 	// Emit extra events for the EVM if this is a transaction
@@ -202,6 +205,9 @@ func (p precompileWasm) execute(
 		}
 	}()
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+	if err := assertNotVMCaller(start.Ctx, start.Method); err != nil {
 		return nil, err
 	}
 
@@ -288,6 +294,9 @@ func (p precompileWasm) instantiate(
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
+	if err := assertNotVMCaller(start.Ctx, start.Method); err != nil {
+		return nil, err
+	}
 
 	callerBech32 := eth.EthAddrToNibiruAddr(caller)
 	txMsg, err := p.parseArgsWasmInstantiate(args, callerBech32.String())
@@ -337,6 +346,9 @@ func (p precompileWasm) executeMulti(
 		}
 	}()
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+	if err := assertNotVMCaller(start.Ctx, start.Method); err != nil {
 		return nil, err
 	}
 

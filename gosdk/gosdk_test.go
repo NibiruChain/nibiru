@@ -9,10 +9,10 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/gosdk"
-	"github.com/NibiruChain/nibiru/v2/gosdk/gosdktest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -30,11 +30,11 @@ var (
 type Suite struct {
 	suite.Suite
 
-	nibiruSdk *gosdk.NibiruSDK
-	grpcConn  *grpc.ClientConn
-	cfg       *testnetwork.Config
-	network   *testnetwork.Network
-	val       *testnetwork.Validator
+	nibiruSdk    *gosdk.NibiruSDK
+	grpcConn     *grpc.ClientConn
+	localnetCLI  localnet.CLI
+	localnetInfo gosdk.NetworkInfo
+	from         sdk.AccAddress
 }
 
 func TestGosdk(t *testing.T) {
@@ -42,62 +42,75 @@ func TestGosdk(t *testing.T) {
 }
 
 func (s *Suite) RPCEndpoint() string {
-	return s.val.RPCAddress
+	return s.localnetInfo.TmRpcEndpoint
 }
 
 // SetupSuite implements the suite.SetupAllSuite interface. This function runs
 // prior to all of the other tests in the suite.
 func (s *Suite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
-
 	s.Run("DoTestGetGrpcConnection_NoNetwork", s.DoTestGetGrpcConnection_NoNetwork)
 
-	nibiru := gosdktest.CreateBlockchain(&s.Suite)
-	s.network = nibiru.Network
-	s.cfg = nibiru.Cfg
-	s.val = nibiru.Val
-	s.grpcConn = nibiru.GrpcConn
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet-backed Go SDK tests: %v", err)
+	}
 
-	s.NotNil(
-		s.val.Querier,
-		"NewQuerier should be used in network setup",
+	s.localnetInfo = gosdk.NETWORK_INFO_DEFAULT
+	s.from = nutil.LocalnetValAddr
+
+	localnetCLI, err := localnet.NewCLI()
+	s.Require().NoError(err)
+	s.localnetCLI = localnetCLI
+
+	grpcConn, err := gosdk.GetGRPCConnection(
+		s.localnetInfo.GrpcEndpoint,
+		true,
+		5,
 	)
+	s.Require().NoError(err)
+	s.Require().NotNil(grpcConn)
+	s.grpcConn = grpcConn
 }
 
 func (s *Suite) ConnectGrpc() {
-	grpcConn, err := testnetwork.ConnectGrpcToVal(s.val)
+	grpcConn, err := gosdk.GetGRPCConnection(s.localnetInfo.GrpcEndpoint, true, 5)
 	s.NoError(err)
 	s.NotNil(grpcConn)
 	s.grpcConn = grpcConn
 }
 
 func (s *Suite) TestNewNibiruSdk() {
-	rpcEndpt := s.val.RPCAddress
-	nibiruSdk, err := gosdk.NewNibiruSdk(s.cfg.ChainID, s.grpcConn, rpcEndpt)
+	nibiruSdk, err := gosdk.NewNibiruSdk(
+		s.localnetInfo.CmtChainID,
+		s.grpcConn,
+		s.RPCEndpoint(),
+	)
 	s.NoError(err)
 	s.nibiruSdk = &nibiruSdk
-	s.nibiruSdk.Keyring = s.val.ClientCtx.Keyring
+	s.nibiruSdk.Keyring = s.localnetCLI.ClientCtx.Keyring
 
 	s.Run("DoTestBroadcastMsgs", func() {
-		s.DoTestBroadcastMsgs()
+		txHashHex := s.DoTestBroadcastMsgs()
+		s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+		_, err := s.localnetCLI.WaitForTx(txHashHex)
+		s.Require().NoError(err)
 	})
 	s.Run("DoTestBroadcastMsgsGrpc", func() {
-		for t := 0; t < 4; t++ {
-			s.network.WaitForNextBlock()
-		}
-		s.DoTestBroadcastMsgsGrpc()
+		txHashHex := s.DoTestBroadcastMsgsGrpc()
+		s.Require().NoError(s.localnetCLI.WaitForNextBlock())
+		_, err := s.localnetCLI.WaitForTx(txHashHex)
+		s.Require().NoError(err)
 	})
 	s.Run("DoTestNewQueryClient", func() {
-		s.NotNil(s.val.Querier)
+		s.NotNil(s.nibiruSdk.Querier)
+		s.NotNil(s.nibiruSdk.Querier.ClientConn)
 	})
 }
 
 // FIXME: Q: What is the node home for a local validator?
 func (s *Suite) UsefulPrints() {
-	tmCfgRootDir := s.val.Ctx.Config.RootDir
-	fmt.Printf("tmCfgRootDir: %v\n", tmCfgRootDir)
-	fmt.Printf("s.val.Dir: %v\n", s.val.Dir)
-	fmt.Printf("s.val.ClientCtx.KeyringDir: %v\n", s.val.ClientCtx.KeyringDir)
+	fmt.Printf("localnet grpc endpoint: %v\n", s.localnetInfo.GrpcEndpoint)
+	fmt.Printf("localnet rpc endpoint: %v\n", s.localnetInfo.TmRpcEndpoint)
+	fmt.Printf("localnet keyring dir: %v\n", s.localnetCLI.ClientCtx.KeyringDir)
 }
 
 func (s *Suite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex string) {
@@ -107,8 +120,8 @@ func (s *Suite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex strin
 }
 
 func (s *Suite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSend sdk.Msg) {
-	from = s.val.Address
-	to = testutil.AccAddress()
+	from = s.from
+	to = testutil.NewAccAddress()
 	amt = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 420))
 	msgSend = banktypes.NewMsgSend(from, to, amt)
 	return from, to, amt, msgSend
@@ -139,8 +152,11 @@ func (s *Suite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
 }
 
 func (s *Suite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
+	s.Require().NoError(s.localnetCLI.Close())
+	if s.grpcConn != nil {
+		s.Require().NoError(s.grpcConn.Close())
+	}
+	s.T().Log("leaving localnet state in place")
 }
 
 func (s *Suite) DoTestGetGrpcConnection_NoNetwork() {

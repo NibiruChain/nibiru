@@ -12,9 +12,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/genesis"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -22,6 +21,7 @@ import (
 
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	sdkclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
@@ -37,17 +37,17 @@ var (
 type TestSuite struct {
 	suite.Suite
 
-	cfg     testnetwork.Config
-	network *testnetwork.Network
-	val     *testnetwork.Validator
+	creator     sdk.AccAddress
+	localnetCLI localnet.CLI
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, new(CmdSuiteLite))
+const (
+	localnetAdminChangeSubdenom = "adminchange"
+)
 
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(TestSuite))
-	}, 2)
+func Test(t *testing.T) {
+	suite.Run(t, new(CmdSuiteLite))
+	suite.Run(t, new(TestSuite))
 }
 
 // TestTokenFactory: Runs the test suite with a deterministic order.
@@ -58,86 +58,65 @@ func (s *TestSuite) TestTokenFactory() {
 }
 
 func (s *TestSuite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
-	encodingConfig := app.MakeEncodingConfig()
-	genState := genesis.NewTestGenesisState(encodingConfig.Codec)
-	cfg := testnetwork.BuildNetworkConfig(genState)
-	cfg.NumValidators = 1
-	network := testnetwork.New(&s.Suite, cfg)
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet-backed tokenfactory CLI tests: %v", err)
+	}
+	s.creator = nutil.LocalnetValAddr
 
-	s.cfg = cfg
-	s.network = network
-	s.val = network.Validators[0]
-	s.network.WaitForNextBlock()
+	localnetCLI, err := localnet.NewCLI()
+	s.Require().NoError(err)
+	s.localnetCLI = localnetCLI
 }
 
 func (s *TestSuite) CreateDenomTest() {
-	creator := s.val.Address
-	createDenom := func(subdenom string, wantErr bool) {
-		_, err := s.network.ExecTxCmd(
-			cli.NewTxCmd(),
-			creator, []string{"create-denom", subdenom})
-		if wantErr {
-			s.Require().Error(err)
-			return
-		}
-		s.Require().NoError(err)
-		s.network.WaitForNextBlock()
-	}
-
-	createDenom("nusd", false)
-	createDenom("nusd", true) // Can't create the same denom twice.
-	createDenom("stnibi", false)
-	createDenom("stnusd", false)
-
-	denomResp := new(types.QueryDenomsResponse)
-	s.NoError(
-		s.network.ExecQueryCmd(
-			cli.CmdQueryDenoms(), []string{creator.String()}, denomResp,
-		),
-	)
-	denoms := denomResp.Denoms
 	wantDenoms := []string{
-		types.TFDenom{Creator: creator.String(), Subdenom: "nusd"}.Denom().String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnibi"}.Denom().String(),
-		types.TFDenom{Creator: creator.String(), Subdenom: "stnusd"}.Denom().String(),
+		s.ensureDenomExists("nusd"),
+		s.ensureDenomExists("stnibi"),
+		s.ensureDenomExists("stnusd"),
+		s.ensureDenomExists(localnetAdminChangeSubdenom),
 	}
-	s.ElementsMatch(denoms, wantDenoms)
+
+	denoms := s.queryCreatorDenoms()
+	for _, denom := range wantDenoms {
+		s.Require().Contains(denoms, denom)
+	}
+
+	s.T().Log("duplicate create-denom should fail once the denom exists")
+	s.Require().Error(s.execLocalTx("create-denom", "nusd"))
 }
 
 func (s *TestSuite) MintBurnTest() {
-	creator := s.val.Address
+	creator := s.creator
+	denom := s.ensureDenomExists("nusd")
+	infoResp := s.queryDenomInfo(denom)
+	s.Require().Equalf(infoResp.Admin, creator.String(),
+		"skipping mint/burn: %s admin is %s, not %s",
+		denom, infoResp.Admin, creator.String(),
+	)
+
 	mint := func(coin string, mintTo string, wantErr bool) {
 		mintToArg := fmt.Sprintf("--mint-to=%s", mintTo)
-		_, err := s.network.ExecTxCmd(
-			cli.NewTxCmd(), creator, []string{"mint", coin, mintToArg})
+		err := s.execLocalTx("mint", coin, mintToArg)
 		if wantErr {
 			s.Require().Error(err)
 			return
 		}
 		s.Require().NoError(err)
-		s.network.WaitForNextBlock()
 	}
 
 	burn := func(coin string, burnFrom string, wantErr bool) {
 		burnFromArg := fmt.Sprintf("--burn-from=%s", burnFrom)
-		_, err := s.network.ExecTxCmd(
-			cli.NewTxCmd(), creator, []string{"burn", coin, burnFromArg})
+		err := s.execLocalTx("burn", coin, burnFromArg)
 		if wantErr {
 			s.Require().Error(err)
 			return
 		}
 		s.Require().NoError(err)
-		s.network.WaitForNextBlock()
 	}
 
 	t := s.T()
 	t.Log("mint successfully")
-	denom := types.TFDenom{
-		Creator:  creator.String(),
-		Subdenom: "nusd",
-	}
-	coin := sdk.NewInt64Coin(denom.Denom().String(), 420)
+	coin := sdk.NewInt64Coin(denom, 420)
 	wantErr := false
 	mint(coin.String(), creator.String(), wantErr) // happy
 
@@ -152,63 +131,113 @@ func (s *TestSuite) MintBurnTest() {
 	burn("notacoin_231,,", creator.String(), wantErr)
 
 	t.Log(`want error: unable to parse "mint-to" or "burn-from"`)
-	coin.Denom = denom.Denom().String()
+	coin.Denom = denom
 	mint(coin.String(), "invalidAddr", wantErr)
 	burn(coin.String(), "invalidAddr", wantErr)
 
 	t.Log("burn successfully")
-	coin.Denom = denom.Denom().String()
+	coin.Denom = denom
 	wantErr = false
 	burn(coin.String(), creator.String(), wantErr) // happy
 }
 
 func (s *TestSuite) ChangeAdminTest() {
-	creator := s.val.Address
-	admin := creator
-	newAdmin := testutil.AccAddress()
-	denom := types.TFDenom{
-		Creator:  creator.String(),
-		Subdenom: "stnibi",
+	creator := s.creator
+	denom := s.ensureDenomExists(localnetAdminChangeSubdenom)
+	newAdmin := "nibi1cr6tg4cjvux00pj6zjqkh6d0jzg7mksaywxyl3"
+
+	s.T().Log("query current admin")
+	infoResp := s.queryDenomInfo(denom)
+	switch infoResp.Admin {
+	case creator.String():
+		s.T().Log("Change to a fixed localnet admin")
+		s.Require().NoError(s.execLocalTx(
+			"change-admin",
+			denom,
+			newAdmin,
+		))
+	case newAdmin:
+		s.T().Log("admin already changed on a previous localnet test run")
+	default:
+		s.T().Fatalf(
+			"skipping change-admin: %s admin is %s, expected %s or %s",
+			denom, infoResp.Admin, creator.String(), newAdmin,
+		)
 	}
 
-	s.T().Log("Verify current admin is creator")
-	infoResp := new(types.QueryDenomInfoResponse)
-	s.NoError(
-		s.network.ExecQueryCmd(
-			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
-		),
-	)
-	s.Equal(infoResp.Admin, admin.String())
-
-	s.T().Log("Change to a new admin")
-	_, err := s.network.ExecTxCmd(
-		cli.NewTxCmd(),
-		admin, []string{"change-admin", denom.Denom().String(), newAdmin.String()})
-	s.Require().NoError(err)
-
 	s.T().Log("Verify new admin is in state")
-	infoResp = new(types.QueryDenomInfoResponse)
-	s.NoError(
-		s.network.ExecQueryCmd(
-			cli.NewQueryCmd(), []string{"denom-info", denom.Denom().String()}, infoResp,
-		),
-	)
-	s.Equal(infoResp.Admin, newAdmin.String())
+	infoResp = s.queryDenomInfo(denom)
+	s.Equal(newAdmin, infoResp.Admin)
 }
 
 func (s *TestSuite) TestQueryModuleParams() {
-	paramResp := new(types.QueryParamsResponse)
-	s.NoError(
-		s.network.ExecQueryCmd(
-			cli.NewQueryCmd(), []string{"params"}, paramResp,
-		),
-	)
-	s.Equal(paramResp.Params, types.DefaultModuleParams())
+	resp := new(types.QueryParamsResponse)
+	s.Require().NoError(s.execLocalQuery(resp, "params"))
+	s.Positive(resp.Params.DenomCreationGasConsume)
 }
 
 func (s *TestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
+	s.Require().NoError(s.localnetCLI.Close())
+	s.T().Log("leaving localnet state in place")
+}
+
+func (s *TestSuite) tokenfactoryDenom(subdenom string) string {
+	return types.TFDenom{
+		Creator:  s.creator.String(),
+		Subdenom: subdenom,
+	}.Denom().String()
+}
+
+func (s *TestSuite) ensureDenomExists(subdenom string) string {
+	denom := s.tokenfactoryDenom(subdenom)
+	if s.hasDenom(denom) {
+		return denom
+	}
+
+	err := s.execLocalTx("create-denom", subdenom)
+	if err != nil && !s.hasDenom(denom) {
+		s.Require().NoError(err)
+	}
+	s.Require().Contains(s.queryCreatorDenoms(), denom)
+	return denom
+}
+
+func (s *TestSuite) hasDenom(denom string) bool {
+	denoms := s.queryCreatorDenoms()
+	for _, got := range denoms {
+		if got == denom {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *TestSuite) queryCreatorDenoms() []string {
+	resp := new(types.QueryDenomsResponse)
+	s.Require().NoError(s.execLocalQuery(resp, "denoms", s.creator.String()))
+	return resp.Denoms
+}
+
+func (s *TestSuite) queryDenomInfo(denom string) *types.QueryDenomInfoResponse {
+	resp := new(types.QueryDenomInfoResponse)
+	s.Require().NoError(s.execLocalQuery(resp, "denom-info", denom))
+	return resp
+}
+
+func (s *TestSuite) execLocalQuery(
+	result codec.ProtoMarshaler,
+	args ...string,
+) error {
+	cmd := cli.NewQueryCmd()
+	s.T().Log(s.localnetCLI.RenderQueryCmd(cmd, args))
+	return s.localnetCLI.ExecQueryCmd(cmd, args, result)
+}
+
+func (s *TestSuite) execLocalTx(args ...string) error {
+	cmd := cli.NewTxCmd()
+	s.T().Log(s.localnetCLI.RenderTxCmd(cmd, args))
+	_, err := s.localnetCLI.ExecTxCmd(cmd, args)
+	return err
 }
 
 type CmdTestCase struct {

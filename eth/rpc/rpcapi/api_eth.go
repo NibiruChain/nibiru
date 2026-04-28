@@ -18,65 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
-// TODO: Remove this interface over since it's largely unused and the expected
-// API methods are tested in "TestExpectedMethods" in eth_api_test.go.
-type IEthAPI interface {
-	// Account Information
-	//
-	// Returns information regarding an address's stored on-chain data.
-	GetBalance(
-		address common.Address, blockNrOrHash rpc.BlockNumberOrHash,
-	) (*hexutil.Big, error)
-	GetStorageAt(
-		address common.Address, key string, blockNrOrHash rpc.BlockNumberOrHash,
-	) (hexutil.Bytes, error)
-	GetCode(
-		address common.Address, blockNrOrHash rpc.BlockNumberOrHash,
-	) (hexutil.Bytes, error)
-	GetProof(
-		address common.Address, storageKeys []string, blockNrOrHash rpc.BlockNumberOrHash,
-	) (*rpc.AccountResult, error)
-
-	// Chain Information
-	//
-	// Returns information on the Ethereum network and internal settings.
-	ProtocolVersion() hexutil.Uint
-	GasPrice() (*hexutil.Big, error)
-	EstimateGas(
-		args evm.JsonTxArgs, blockNrOptional *rpc.BlockNumber,
-	) (hexutil.Uint64, error)
-	FeeHistory(
-		blockCount gethmath.HexOrDecimal64,
-		lastBlock gethrpc.BlockNumber,
-		rewardPercentiles []float64,
-	) (*rpc.FeeHistoryResult, error)
-	MaxPriorityFeePerGas() (*hexutil.Big, error)
-	ChainId() (*hexutil.Big, error)
-
-	// Getting Uncles
-	//
-	// Returns information on uncle blocks are which are network rejected blocks
-	// and replaced by a canonical block instead.
-	GetUncleByBlockHashAndIndex(
-		hash common.Hash, idx hexutil.Uint,
-	) map[string]any
-	GetUncleByBlockNumberAndIndex(
-		number, idx hexutil.Uint,
-	) map[string]any
-	GetUncleCountByBlockHash(hash common.Hash) hexutil.Uint
-	GetUncleCountByBlockNumber(blockNum rpc.BlockNumber) hexutil.Uint
-
-	// Other
-	Syncing() (any, error)
-	GetTransactionLogs(txHash common.Hash) ([]*gethcore.Log, error)
-	FillTransaction(
-		args evm.JsonTxArgs,
-	) (*rpc.SignTransactionResult, error)
-	GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error)
-}
-
-var _ IEthAPI = (*EthAPI)(nil)
-
 // EthAPI: Allows connection to a full node of the Nibiru blockchain
 // network via Nibiru EVM. Developers can interact with on-chain EVM data and
 // send different types of transactions to the network by utilizing the endpoints

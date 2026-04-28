@@ -62,7 +62,7 @@ func TestModuleParamsValidate(t *testing.T) {
 func TestGenesisState(t *testing.T) {
 	var happyGenDenoms []types.GenesisDenom
 	for i := 0; i < 5; i++ {
-		creator := testutil.AccAddress()
+		creator := testutil.NewAccAddress()
 		lettersIdx := i * 2
 		happyGenDenoms = append(happyGenDenoms, types.GenesisDenom{
 			Denom: types.TFDenom{

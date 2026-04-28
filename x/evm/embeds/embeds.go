@@ -19,8 +19,6 @@ var (
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/ERC20MinterWithMetadataUpdates.sol/ERC20MinterWithMetadataUpdates.json
 	erc20MinterWithMetadataUpdatesContractJSON []byte
-	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
-	oracleContractJSON []byte
 	//go:embed artifacts/contracts/IFunToken.sol/IFunToken.json
 	funtokenPrecompileJSON []byte
 	//go:embed artifacts/contracts/Wasm.sol/IWasm.json
@@ -34,6 +32,8 @@ var (
 	testErc20MaliciousNameJson []byte
 	//go:embed artifacts/contracts/TestERC20MaliciousTransfer.sol/TestERC20MaliciousTransfer.json
 	testErc20MaliciousTransferJson []byte
+	//go:embed artifacts/contracts/TestERC20MaliciousCallback.sol/TestERC20MaliciousCallback.json
+	testErc20MaliciousCallbackJson []byte
 	//go:embed artifacts/contracts/TestFunTokenPrecompileLocalGas.sol/TestFunTokenPrecompileLocalGas.json
 	testFunTokenPrecompileLocalGasJson []byte
 	//go:embed artifacts/contracts/TestERC20TransferThenPrecompileSend.sol/TestERC20TransferThenPrecompileSend.json
@@ -88,10 +88,6 @@ var (
 		Name:      "Wasm.sol",
 		EmbedJSON: wasmPrecompileJSON,
 	}
-	SmartContract_Oracle = CompiledEvmContract{
-		Name:      "Oracle.sol",
-		EmbedJSON: oracleContractJSON,
-	}
 	// SmartContract_Funtoken: Wrapped NIBI contract ERC20.
 	SmartContract_WNIBI = CompiledEvmContract{
 		Name:      "WNIBI.sol",
@@ -115,6 +111,13 @@ var (
 	SmartContract_TestERC20MaliciousTransfer = CompiledEvmContract{
 		Name:      "TestERC20MaliciousTransfer.sol",
 		EmbedJSON: testErc20MaliciousTransferJson,
+	}
+	// SmartContract_TestERC20MaliciousCallback is a test contract that attempts
+	// mutable precompile calls from inside ERC20.transfer, used to validate
+	// VM-sender guard enforcement for module-originated callback windows.
+	SmartContract_TestERC20MaliciousCallback = CompiledEvmContract{
+		Name:      "TestERC20MaliciousCallback.sol",
+		EmbedJSON: testErc20MaliciousCallbackJson,
 	}
 	// SmartContract_TestFunTokenPrecompileLocalGas is a test contract
 	// which allows precompile execution with custom local gas set (calling precompile within contract)
@@ -192,12 +195,12 @@ func init() {
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
-	SmartContract_Oracle.MustLoad()
 	SmartContract_WNIBI.MustLoad()
 
 	SmartContract_TestERC20.MustLoad()
 	SmartContract_TestERC20MaliciousName.MustLoad()
 	SmartContract_TestERC20MaliciousTransfer.MustLoad()
+	SmartContract_TestERC20MaliciousCallback.MustLoad()
 	SmartContract_TestFunTokenPrecompileLocalGas.MustLoad()
 	SmartContract_TestNativeSendThenPrecompileSendJson.MustLoad()
 	SmartContract_TestERC20TransferThenPrecompileSend.MustLoad()

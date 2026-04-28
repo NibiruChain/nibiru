@@ -7,14 +7,15 @@ import (
 )
 
 func (s *BackendSuite) TestBlockNumber() {
-	blockHeight, err := s.backend.BlockNumber()
+	blockHeight, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err)
 	blockHeightU64, err := hexutil.DecodeUint64(blockHeight.String())
 	s.NoError(err)
 	s.Greater(blockHeightU64, uint64(1))
 
-	latestHeight, _ := s.network.LatestHeight()
-	resp, err := s.backend.BlockNumber()
+	latestHeight, err := s.cli.LatestHeight()
+	s.Require().NoError(err)
+	resp, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err, resp)
 	// Rather than checking exact equality, which might not be true due to
 	// latency. Add a cushion of 2 blocks.
@@ -22,7 +23,7 @@ func (s *BackendSuite) TestBlockNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockByNumberr() {
-	block, err := s.backend.GetBlockByNumber(
+	block, err := s.cli.EvmRpc.Eth.GetBlockByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc, true)
 	s.Require().NoError(err)
 	s.Require().NotNil(block)
@@ -34,12 +35,7 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 
 func (s *BackendSuite) TestGetBlockByHash() {
 	fullTx := true
-	var blockMap map[string]any
-	err := s.node.EvmRpcClient.Client().Call(
-		&blockMap, "eth_getBlockByHash",
-		*s.SuccessfulTxTransfer().BlockHash,
-		fullTx,
-	)
+	blockMap, err := s.cli.EvmRpc.Eth.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, fullTx)
 	s.Require().NoError(err)
 	AssertBlockContents(s, blockMap)
 }
@@ -101,13 +97,13 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
-	txCount, err := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
+	txCount, err := s.cli.EvmRpc.Eth.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
 	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
-	txCount, err := s.backend.GetBlockTransactionCountByNumber(
+	txCount, err := s.cli.EvmRpc.Eth.GetBlockTransactionCountByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc)
 	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
@@ -119,7 +115,7 @@ func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
 	s.Require().NotNil(blockMap["size"])
 	s.Require().NotNil(blockMap["nonce"])
 	s.T().Logf("blockMap: %s", blockMap)
-	blockNumber, err := hexutil.DecodeBig(blockMap["number"].(string))
-	s.NoError(err)
-	s.Require().Equal(blockNumber.Int64(), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	blockNumber, ok := blockMap["number"].(hexutil.Uint64)
+	s.Require().Truef(ok, "unexpected block number type: %T", blockMap["number"])
+	s.Require().Equal(int64(blockNumber), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
