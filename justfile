@@ -196,7 +196,7 @@ test:
   #!/usr/bin/env bash
   echo "Running: just test"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | rg -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
   echo "RUN: go test -count=1 \$GO_TEST_PKGS"
   go test -count=1 $GO_TEST_PKGS
 
@@ -204,7 +204,7 @@ test:
 test-fast:
   #!/usr/bin/env bash
   echo "Running: just test-fast"
-  GO_TEST_PKGS="$(go list ./... | rg -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
   echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
   go test $GO_TEST_PKGS
 
@@ -213,7 +213,7 @@ test-cover:
   #!/usr/bin/env bash
   echo "Running: just test-cover"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | rg -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
   printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
   go test \
     -tags=pebbledb \
