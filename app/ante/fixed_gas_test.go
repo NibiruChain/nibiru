@@ -30,7 +30,7 @@ import (
 )
 
 func (s *Suite) TestOraclePostPriceTransactionsHaveFixedPrice() {
-	priv1, addr := testutil.PrivKey()
+	priv1, addr := testutil.NewPrivKey()
 
 	tests := []struct {
 		name        string

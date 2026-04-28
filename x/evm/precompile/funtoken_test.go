@@ -51,7 +51,7 @@ func TestFailToPackABI(t *testing.T) {
 		{
 			name:       "wrong type for amount",
 			methodName: string(precompile.FunTokenMethod_sendToBank),
-			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), "foo", testutil.AccAddress().String()},
+			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), "foo", testutil.NewAccAddress().String()},
 			wantError:  "abi: cannot use string as type ptr as argument",
 		},
 		{
@@ -63,7 +63,7 @@ func TestFailToPackABI(t *testing.T) {
 		{
 			name:       "invalid method name",
 			methodName: "foo",
-			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), testutil.AccAddress().String()},
+			callArgs:   []any{gethcommon.HexToAddress("0x7D4B7B8CA7E1a24928Bb96D59249c7a5bd1DfBe6"), big.NewInt(1), testutil.NewAccAddress().String()},
 			wantError:  "method 'foo' not found",
 		},
 	}
@@ -188,7 +188,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 
 	s.Run("IFunToken.sendToBank()", func() {
-		randomAcc := testutil.AccAddress()
+		randomAcc := testutil.NewAccAddress()
 
 		input, err := embeds.SmartContract_FunToken.ABI.Pack(
 			string(precompile.FunTokenMethod_sendToBank),
@@ -246,7 +246,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 			deps.Sender.EthAddr,                 // from
 			&precompile.PrecompileAddr_FunToken, // to
 			contractInput,
-			evmstate.Erc20GasLimitQuery,
+			evm.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
@@ -363,7 +363,7 @@ func (s *FuntokenSuite) TestHappyPath() {
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)
-	randomAcc := testutil.AccAddress()
+	randomAcc := testutil.NewAccAddress()
 
 	deployResp, err := evmtest.DeployContract(
 		&deps, embeds.SmartContract_TestFunTokenPrecompileLocalGas,
@@ -526,7 +526,7 @@ func (s *FuntokenSuite) TestSendToEvm_MadeFromCoin() {
 	// We'll pick a brand new random account to receive them.
 
 	s.Run("Sending 400 tokens back from EVM to Cosmos bank => recipient:", func() {
-		randomRecipient := testutil.AccAddress()
+		randomRecipient := testutil.NewAccAddress()
 
 		contractInput, err := embeds.SmartContract_FunToken.ABI.Pack(
 			string(precompile.FunTokenMethod_sendToBank),

@@ -13,7 +13,7 @@ func (s *TestSuite) TestStoreWrite() {
 	subdenoms := []string{"aaaa", "bbbb"}
 	tfdenoms := []tftypes.TFDenom{}
 	for idx := 0; idx < numCreators; idx++ {
-		_, creator := testutil.PrivKey()
+		_, creator := testutil.NewPrivKey()
 		for _, subdenom := range subdenoms {
 			tfdenom := tftypes.TFDenom{
 				Creator:  creator.String(),
@@ -54,7 +54,7 @@ func (s *TestSuite) TestStoreWrite() {
 		}
 
 		// query by creator should fail for a random addr
-		s.False(api.HasCreator(s.ctx, testutil.AccAddress().String()))
+		s.False(api.HasCreator(s.ctx, testutil.NewAccAddress().String()))
 	})
 
 	s.Run("inserting invalid denom should fail", func() {
