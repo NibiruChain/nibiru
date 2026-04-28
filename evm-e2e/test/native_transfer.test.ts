@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt } from "ethers"
 
 import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
-import { alice } from "./utils"
+import { alice, txResultLite } from "./utils"
 
 describe("native transfer", () => {
   it(
@@ -37,7 +37,7 @@ describe("native transfer", () => {
         amountToSend,
         expectedSenderWei,
         senderBalanceAfter,
-        txResponse,
+        txResp: txResultLite(txResponse),
       })
       expect(recipientBalanceAfter).toEqual(
         recipientBalanceBefore + amountToSend,
