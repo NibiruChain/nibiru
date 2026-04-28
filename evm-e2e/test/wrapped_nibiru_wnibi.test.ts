@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
 import { deployContractWNIBI } from "./utils"
 
 test(
@@ -72,10 +72,7 @@ test(
       const alice = Wallet.createRandom()
       const amountToSend = parseUnits("200", 12) // WNIBI tokens for alice
 
-      let tx = await contract.transfer(
-        alice.address,
-        amountToSend,
-      )
+      let tx = await contract.transfer(alice.address, amountToSend)
       await tx.wait(1, TX_WAIT_TIMEOUT)
 
       // Check balances after transfer and correct total supply
@@ -85,9 +82,7 @@ test(
       const accountBalance = await contract.balanceOf(account.address)
 
       const totalSupply = await contract.totalSupply()
-      expect(totalSupply).toEqual(
-        accountBalance + aliceBalance,
-      )
+      expect(totalSupply).toEqual(accountBalance + aliceBalance)
     }
   },
   TEST_TIMEOUT * 2,

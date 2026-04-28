@@ -171,7 +171,7 @@ stop:
 
 passkey-demo:
   #!/usr/bin/env bash
-  scripts/passkey-demo.sh
+  contrib/scripts/passkey-demo.sh
 
 # Runs golang formatter (gofumpt)
 fmt:

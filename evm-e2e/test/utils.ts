@@ -16,7 +16,7 @@ import {
   TestERC20__factory,
   TransactionReverter__factory,
 } from "../types"
-import { account, provider, TX_WAIT_TIMEOUT } from "./setup"
+import { account, provider, TX_WAIT_TIMEOUT } from "./testdeps"
 
 export const alice = Wallet.createRandom()
 

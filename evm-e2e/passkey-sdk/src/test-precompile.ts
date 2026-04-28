@@ -1,4 +1,11 @@
-import { JsonRpcProvider, getBytes, hexlify, sha256, solidityPacked } from "ethers"
+import {
+  getBytes,
+  hexlify,
+  JsonRpcProvider,
+  sha256,
+  solidityPacked,
+} from "ethers"
+
 import { generateNodePasskey, signUserOpHash } from "./p256-node"
 
 const RPC_URL = process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
@@ -33,9 +40,9 @@ async function main() {
 
   const input = solidityPacked(
     ["bytes32", "bytes32", "bytes32", "bytes32", "bytes32"],
-    [digest, r, s, nodePasskey.pubQx, nodePasskey.pubQy]
+    [digest, r, s, nodePasskey.pubQx, nodePasskey.pubQy],
   )
-  
+
   console.log("Input length:", getBytes(input).length)
   // console.log("Input hex:", input)
 
@@ -43,18 +50,19 @@ async function main() {
   try {
     const result = await provider.call({
       to: "0x0000000000000000000000000000000000000100",
-      data: input
+      data: input,
     })
     console.log("Precompile result:", result)
-    
-    if (result === "0x" || result === "0x00") {
-        console.error("FAILURE: Precompile returned empty data. It might not be implemented or input is invalid.")
-    } else if (result.endsWith("01")) {
-        console.log("SUCCESS: Precompile returned valid signature confirmation.")
-    } else {
-        console.log("UNKNOWN RESULT:", result)
-    }
 
+    if (result === "0x" || result === "0x00") {
+      console.error(
+        "FAILURE: Precompile returned empty data. It might not be implemented or input is invalid.",
+      )
+    } else if (result.endsWith("01")) {
+      console.log("SUCCESS: Precompile returned valid signature confirmation.")
+    } else {
+      console.log("UNKNOWN RESULT:", result)
+    }
   } catch (e) {
     console.error("Error calling precompile:", e)
   }

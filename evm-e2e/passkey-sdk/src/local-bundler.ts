@@ -1,6 +1,14 @@
 import http, { IncomingMessage } from "http"
-import { Contract, ContractTransactionReceipt, Interface, JsonRpcProvider, Wallet, toBeHex } from "ethers"
-import { getUserOpHash, rpcUserOpToStruct, RpcUserOperation } from "./userop"
+import {
+  Contract,
+  ContractTransactionReceipt,
+  Interface,
+  JsonRpcProvider,
+  toBeHex,
+  Wallet,
+} from "ethers"
+
+import { getUserOpHash, RpcUserOperation, rpcUserOpToStruct } from "./userop"
 
 const RPC_URL = process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
 const ENTRY_POINT = requireEnv("ENTRY_POINT")
@@ -53,7 +61,11 @@ const FACTORY_ABI = [
   "function accountAddress(bytes32 _qx, bytes32 _qy) view returns (address predicted)",
   "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy, bytes32 salt)",
 ]
-const entryPoint = new Contract(ENTRY_POINT, new Interface(ENTRY_POINT_ABI), wallet)
+const entryPoint = new Contract(
+  ENTRY_POINT,
+  new Interface(ENTRY_POINT_ABI),
+  wallet,
+)
 const factoryInterface = new Interface(FACTORY_ABI)
 
 type JsonRpcId = number | string | null
@@ -82,7 +94,9 @@ const RECEIPT_LIMIT = 500
 
 async function main() {
   const network = await provider.getNetwork()
-  const chainId = process.env.CHAIN_ID ? BigInt(process.env.CHAIN_ID) : BigInt(network.chainId)
+  const chainId = process.env.CHAIN_ID
+    ? BigInt(process.env.CHAIN_ID)
+    : BigInt(network.chainId)
   const chainIdHex = toBeHex(chainId)
   console.log(
     `Local bundler listening on port ${PORT} (RPC=${RPC_URL}, entryPoint=${ENTRY_POINT}, chainId=${chainIdHex}, signer=${wallet.address})`,
@@ -110,8 +124,14 @@ async function main() {
       const body = await readBody(req)
       const payload = JSON.parse(body)
       if (Array.isArray(payload)) {
-        const responses = await Promise.all(payload.map((reqItem) => handleRpcRequest(reqItem, chainId, chainIdHex)))
-        res.writeHead(200, headers).end(JSON.stringify(responses.filter((r): r is object => !!r)))
+        const responses = await Promise.all(
+          payload.map((reqItem) =>
+            handleRpcRequest(reqItem, chainId, chainIdHex),
+          ),
+        )
+        res
+          .writeHead(200, headers)
+          .end(JSON.stringify(responses.filter((r): r is object => !!r)))
       } else {
         const response = await handleRpcRequest(payload, chainId, chainIdHex)
         res.writeHead(200, headers).end(JSON.stringify(response ?? null))
@@ -120,7 +140,12 @@ async function main() {
       console.error("bundler request failed:", err)
       res
         .writeHead(500, headers)
-        .end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32603, message: "Internal bundler error" } }))
+        .end(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            error: { code: -32603, message: "Internal bundler error" },
+          }),
+        )
     }
   })
 
@@ -151,24 +176,43 @@ async function handleRpcRequest(
     case "eth_supportedEntryPoints":
       return createResult(payload.id, [ENTRY_POINT])
     case "eth_sendUserOperation":
-      return createResult(payload.id, await handleSendUserOperation(payload.params ?? [], chainId))
+      return createResult(
+        payload.id,
+        await handleSendUserOperation(payload.params ?? [], chainId),
+      )
     case "eth_getUserOperationReceipt":
-      return createResult(payload.id, handleGetUserOpReceipt(payload.params ?? []))
+      return createResult(
+        payload.id,
+        handleGetUserOpReceipt(payload.params ?? []),
+      )
     case "passkey_createAccount":
-      return createResult(payload.id, await handleCreatePasskeyAccount(payload.params ?? []))
+      return createResult(
+        payload.id,
+        await handleCreatePasskeyAccount(payload.params ?? []),
+      )
     case "passkey_getLogs":
       return createResult(payload.id, handleGetLogs(payload.params ?? []))
     default:
-      return createError(payload.id, -32601, `Method ${payload.method} not found`)
+      return createError(
+        payload.id,
+        -32601,
+        `Method ${payload.method} not found`,
+      )
   }
 }
 
-async function handleSendUserOperation(params: any[], chainId: bigint): Promise<string> {
-  if (params.length < 2) throw new Error("eth_sendUserOperation requires (userOp, entryPoint)")
+async function handleSendUserOperation(
+  params: any[],
+  chainId: bigint,
+): Promise<string> {
+  if (params.length < 2)
+    throw new Error("eth_sendUserOperation requires (userOp, entryPoint)")
   const rpcUserOp = params[0] as RpcUserOperation
   const entryPointAddr = (params[1] as string) ?? ""
   if (entryPointAddr.toLowerCase() !== ENTRY_POINT.toLowerCase()) {
-    throw new Error(`Bundler configured for entryPoint ${ENTRY_POINT} but got ${entryPointAddr}`)
+    throw new Error(
+      `Bundler configured for entryPoint ${ENTRY_POINT} but got ${entryPointAddr}`,
+    )
   }
 
   console.log("Bundling UserOperation", rpcUserOp)
@@ -180,19 +224,27 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
     nonce: rpcUserOp.nonce,
   })
 
-  const bundlerNonce = await provider.getTransactionCount(wallet.address, "pending")
+  const bundlerNonce = await provider.getTransactionCount(
+    wallet.address,
+    "pending",
+  )
 
   const tx = await entryPoint.handleOps([userOp], wallet.address, {
-    gasLimit: userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas + 200000n,
+    gasLimit:
+      userOp.callGasLimit +
+      userOp.verificationGasLimit +
+      userOp.preVerificationGas +
+      200000n,
     nonce: bundlerNonce,
   })
   console.log(`handleOps tx broadcast: ${tx.hash}`)
 
-  tx
-    .wait()
+  tx.wait()
     .then((receipt: ContractTransactionReceipt) => {
       const actualGasUsed = toBeHex(receipt.gasUsed ?? 0n)
-      const actualGasCost = receipt.gasPrice ? toBeHex((receipt.gasUsed ?? 0n) * receipt.gasPrice) : actualGasUsed
+      const actualGasCost = receipt.gasPrice
+        ? toBeHex((receipt.gasUsed ?? 0n) * receipt.gasPrice)
+        : actualGasUsed
       storeReceipt(userOpHash, {
         userOpHash,
         entryPoint: ENTRY_POINT,
@@ -203,7 +255,9 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
         success: Boolean(receipt.status),
         receipt: { transactionHash: receipt.hash },
       })
-      console.log(`UserOperation ${userOpHash} executed in tx ${receipt.hash} (gas ${actualGasUsed})`)
+      console.log(
+        `UserOperation ${userOpHash} executed in tx ${receipt.hash} (gas ${actualGasUsed})`,
+      )
     })
     .catch((err: unknown) => {
       console.error("handleOps failed", err)
@@ -221,7 +275,8 @@ async function handleSendUserOperation(params: any[], chainId: bigint): Promise<
 }
 
 function handleGetUserOpReceipt(params: any[]): BundlerReceipt | null {
-  if (!params.length) throw new Error("eth_getUserOperationReceipt requires userOpHash")
+  if (!params.length)
+    throw new Error("eth_getUserOperationReceipt requires userOpHash")
   const hash = params[0] as string
   return receiptStore.get(hash) ?? null
 }
@@ -232,15 +287,21 @@ function handleGetLogs(params: any[]): BundlerLogEntry[] {
   return LOG_BUFFER.slice(-limit)
 }
 
-async function handleCreatePasskeyAccount(params: any[]): Promise<{ account: string; txHash: string }> {
+async function handleCreatePasskeyAccount(
+  params: any[],
+): Promise<{ account: string; txHash: string }> {
   const qx = params[0] as string | undefined
   const qy = params[1] as string | undefined
   const factoryAddr = (params[2] as string | undefined) ?? FACTORY_ADDR
   if (!factoryAddr) {
-    throw new Error("Factory address missing (set FACTORY_ADDR env var or pass as param[2])")
+    throw new Error(
+      "Factory address missing (set FACTORY_ADDR env var or pass as param[2])",
+    )
   }
   if (!qx || !qy) {
-    throw new Error("passkey_createAccount requires qx and qy (bytes32 hex strings)")
+    throw new Error(
+      "passkey_createAccount requires qx and qy (bytes32 hex strings)",
+    )
   }
 
   const factory = new Contract(factoryAddr, FACTORY_ABI, wallet)
@@ -250,7 +311,9 @@ async function handleCreatePasskeyAccount(params: any[]): Promise<{ account: str
 
   const account = parseAccountCreated(receipt.logs) ?? predicted
   if (!account) {
-    throw new Error("AccountCreated event not found; account address unavailable")
+    throw new Error(
+      "AccountCreated event not found; account address unavailable",
+    )
   }
 
   return { account, txHash: tx.hash }

@@ -3,12 +3,23 @@ import { toRpcUserOperation } from "./userop"
 
 let rpcId = 0
 
-type JsonRpcResponse<T> = { result?: T; error?: { code?: number; message?: string } }
+type JsonRpcResponse<T> = {
+  result?: T
+  error?: { code?: number; message?: string }
+}
 
-async function rpcCall<T>(opts: { url: string; method: string; params: any[]; timeoutMs?: number }): Promise<T> {
+async function rpcCall<T>(opts: {
+  url: string
+  method: string
+  params: any[]
+  timeoutMs?: number
+}): Promise<T> {
   const { url, method, params, timeoutMs = 10_000 } = opts
-  const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined
-  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined
+  const controller =
+    typeof AbortController !== "undefined" ? new AbortController() : undefined
+  const timer = controller
+    ? setTimeout(() => controller.abort(), timeoutMs)
+    : undefined
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -53,7 +64,13 @@ export async function waitForUserOpReceipt(opts: {
   timeoutMs?: number
   onError?: (err: unknown) => void
 }) {
-  const { bundlerUrl, userOpHash, pollIntervalMs = 2000, timeoutMs = 60_000, onError } = opts
+  const {
+    bundlerUrl,
+    userOpHash,
+    pollIntervalMs = 2000,
+    timeoutMs = 60_000,
+    onError,
+  } = opts
   const deadline = Date.now() + timeoutMs
 
   while (Date.now() < deadline) {

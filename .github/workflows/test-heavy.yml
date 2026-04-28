@@ -62,7 +62,9 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
           just localnet --no-build &
-          sleep 10
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          sleep 22
 
       - name: "Run all tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
