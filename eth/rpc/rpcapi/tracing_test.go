@@ -78,11 +78,11 @@ func (s *BackendSuite) TestTraceBlock() {
 	s.Require().NoError(err)
 
 	testCases := []struct {
-		name        string
-		tmBlock     *tmrpctypes.ResultBlock
-		txCount     int
-		traceConfig *evm.TraceConfig
-		wantErr     bool
+		name           string
+		tmBlock        *tmrpctypes.ResultBlock
+		txCount        int
+		traceConfig    *evm.TraceConfig
+		mayTimeoutRace bool
 	}{
 		{
 			name:        "happy: TraceBlock, no txs, tracer: default",
@@ -121,7 +121,7 @@ func (s *BackendSuite) TestTraceBlock() {
 			// behavior by injecting a controllable tracer/executor instead of
 			// relying on scheduler timing in this integration test.
 			// Issue: https://github.com/NibiruChain/nibiru/issues/2561
-			wantErr: true,
+			mayTimeoutRace: true,
 		},
 	}
 
@@ -133,21 +133,39 @@ func (s *BackendSuite) TestTraceBlock() {
 					rpc.BlockNumber(tc.tmBlock.Block.Height),
 					tc.traceConfig,
 				)
-				if tc.wantErr {
+				if tc.mayTimeoutRace {
+					s.T().Logf(
+						"[trace-timeout-debug] block=%d txs=%d timeout=%q tracer=%q onlyTopCall=%t",
+						tc.tmBlock.Block.Height,
+						len(tc.tmBlock.Block.Txs),
+						tc.traceConfig.Timeout,
+						tc.traceConfig.Tracer,
+						tc.traceConfig.TracerConfig.OnlyTopCall,
+					)
 					// This case is timing-sensitive: with a tiny timeout and a fast tx,
 					// tracing may either timeout or finish before the timeout goroutine
 					// stops the tracer.
-					if err == nil {
-						s.T().Log("trace completed before ultra-small timeout fired; treating as acceptable flaky timing outcome")
-					} else {
-						s.T().Logf("trace returned error under ultra-small timeout (acceptable): %v", err)
+					if err != nil {
+						s.T().Logf("[trace-timeout-debug] TraceBlockByNumber error type=%T", err)
+						s.T().Logf("[trace-timeout-debug] TraceBlockByNumber error=%q", err.Error())
+						s.Require().ErrorContains(err, "execution timeout")
+						return
 					}
-					return
+					s.T().Logf(
+						"[trace-timeout-debug] trace completed before timeout; results=%d firstResultType=%T",
+						len(txTraceResults),
+						func() any {
+							if len(txTraceResults) == 0 {
+								return nil
+							}
+							return txTraceResults[0].Result
+						}(),
+					)
 				}
 				s.Require().NoError(err)
 				resRes = append(resRes, txTraceResults)
 			}
-			{
+			if !tc.mayTimeoutRace {
 				txTraceResults, err := s.cli.EvmRpc.Debug.TraceBlockByHash(
 					gethcommon.BytesToHash(
 						tc.tmBlock.Block.Hash().Bytes(),
