@@ -208,7 +208,6 @@ test-cover:
   go test ./... \
     -tags=pebbledb \
     -coverprofile=coverage.out \
-    -covermode=atomic \
     -count=1
   go tool cover -func=coverage.out
 
