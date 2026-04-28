@@ -12,7 +12,7 @@
     "test": "tsx --test test/basic.test.ts"
   },
   "dependencies": {
-    "@fastify/cors": "^8.4.2",
+    "@fastify/cors": "^11.2.0",
     "better-sqlite3": "^11.10.0",
     "ethers": "^6.12.1",
     "fastify": "^5.7.3",
