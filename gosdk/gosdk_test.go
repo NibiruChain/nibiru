@@ -152,6 +152,7 @@ func (s *Suite) DoTestBroadcastMsgsGrpc() (txHashHex string) {
 }
 
 func (s *Suite) TearDownSuite() {
+	s.Require().NoError(s.localnetCLI.Close())
 	if s.grpcConn != nil {
 		s.Require().NoError(s.grpcConn.Close())
 	}
