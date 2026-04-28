@@ -36,6 +36,7 @@ import (
 
 	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 )
 
@@ -49,7 +50,7 @@ var (
 )
 
 type NodeSuite struct {
-	suite.Suite
+	testutil.LogRoutingSuite
 
 	cli            localnet.CLI
 	ethAPI         *rpcapi.EthAPI
@@ -174,6 +175,7 @@ func (s *Suite) TestExpectedMethods() {
 // SetupSuite runs before every test in the suite. Implements the
 // "suite.SetupAllSuite" interface.
 func (s *NodeSuite) SetupSuite() {
+	s.LogRoutingSuite.SetupSuite()
 	if err := nutil.EnsureLocalBlockchain(); err != nil {
 		s.T().Skipf("localnet unavailable: %v", err)
 	}
