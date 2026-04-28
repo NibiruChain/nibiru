@@ -430,9 +430,6 @@ func (s *BackendSuite) assertTxLogsAndTxIndex(
 			logs := evm.LogsToEthereum(eventTxLog.Logs)
 			if len(tc.Logs) > 0 {
 				s.Require().GreaterOrEqual(len(logs), len(tc.Logs))
-				if len(logs) < len(tc.Logs) {
-					return
-				}
 				s.assertTxLogsMatch(tc.Logs, logs, tc.TxInfo)
 			} else {
 				s.Require().NotNil(logs)
@@ -468,6 +465,12 @@ func (s *BackendSuite) assertTxLogsMatch(
 ) {
 	actualJson, _ := json.MarshalIndent(actualLogs, "", "  ")
 	expectedJson, _ := json.MarshalIndent(expectedLogs, "", "  ")
+	s.Require().GreaterOrEqualf(
+		len(actualLogs),
+		len(expectedLogs),
+		"missing tx logs, %s\nACTUAL logs: %s\nEXPECTED logs: %s",
+		txInfo, actualJson, expectedJson,
+	)
 
 	for idx, expectedLog := range expectedLogs {
 		actualLog := actualLogs[idx]

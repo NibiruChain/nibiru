@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -235,19 +236,35 @@ func (c CLI) ExecTxCmd(
 	opts ...TxOption,
 ) (*sdk.TxResponse, error) {
 	renderedCmd := c.RenderTxCmd(cmd, args, opts...)
-	args = c.txArgs(args, opts...)
-
-	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute tx %s: %w: %s", renderedCmd, err, out.String())
-	}
+	txArgs := c.txArgs(args, opts...)
 
 	txResp := new(sdk.TxResponse)
-	if err := c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp); err != nil {
-		return nil, fmt.Errorf("failed to decode tx response for %s: %w: %s", renderedCmd, err, out.String())
-	}
-	if txResp.Code != types.CodeTypeOK {
-		return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, txResp.Code, txResp.RawLog)
+	for attempt := 0; attempt < 3; attempt++ {
+		resetCmdContexts(cmd)
+		out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, txArgs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute tx %s: %w: %s", renderedCmd, err, out.String())
+		}
+
+		txResp = new(sdk.TxResponse)
+		if err := c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp); err != nil {
+			return nil, fmt.Errorf("failed to decode tx response for %s: %w: %s", renderedCmd, err, out.String())
+		}
+		if txResp.Code == types.CodeTypeOK {
+			break
+		}
+
+		expectedSeq, _, ok := parseAccountSequenceMismatch(txResp.RawLog)
+		if !ok || attempt == 2 {
+			return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, txResp.Code, txResp.RawLog)
+		}
+
+		accountNumber, _, err := c.ClientCtx.AccountRetriever.GetAccountNumberSequence(c.ClientCtx, c.FromAddr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get account number for sequence retry of %s: %w", renderedCmd, err)
+		}
+		txArgs = setTxRetryFlags(txArgs, strconv.FormatUint(accountNumber, 10), expectedSeq)
+		renderedCmd = renderNibidCmd("tx", cmd, txArgs)
 	}
 	if txResp.TxHash == "" {
 		return txResp, nil
@@ -262,6 +279,73 @@ func (c CLI) ExecTxCmd(
 	}
 
 	return deliveredResp, nil
+}
+
+func parseAccountSequenceMismatch(rawLog string) (expected string, got string, ok bool) {
+	if !strings.Contains(rawLog, "account sequence mismatch") {
+		return "", "", false
+	}
+
+	expected, ok = parseNumberAfter(rawLog, "expected ")
+	if !ok {
+		return "", "", false
+	}
+	got, ok = parseNumberAfter(rawLog, "got ")
+	if !ok {
+		return "", "", false
+	}
+	return expected, got, true
+}
+
+func parseNumberAfter(s string, marker string) (string, bool) {
+	start := strings.Index(s, marker)
+	if start < 0 {
+		return "", false
+	}
+	start += len(marker)
+
+	end := start
+	for end < len(s) && s[end] >= '0' && s[end] <= '9' {
+		end++
+	}
+	if end == start {
+		return "", false
+	}
+
+	num := s[start:end]
+	if _, err := strconv.ParseUint(num, 10, 64); err != nil {
+		return "", false
+	}
+	return num, true
+}
+
+func setTxRetryFlags(args []string, accountNumber string, sequence string) []string {
+	out := setTxFlag(args, flags.FlagOffline, "true")
+	out = setTxFlag(out, flags.FlagAccountNumber, accountNumber)
+	return setTxFlag(out, flags.FlagSequence, sequence)
+}
+
+func setTxFlag(args []string, flagName string, flagValue string) []string {
+	flagArg := fmt.Sprintf("--%s=%s", flagName, flagValue)
+	out := append([]string(nil), args...)
+	for i, arg := range out {
+		if arg == fmt.Sprintf("--%s", flagName) && i+1 < len(out) {
+			out[i+1] = flagValue
+			return out
+		}
+		if strings.HasPrefix(arg, fmt.Sprintf("--%s=", flagName)) {
+			out[i] = flagArg
+			return out
+		}
+	}
+	return append(out, flagArg)
+}
+
+func resetCmdContexts(cmd *cobra.Command) {
+	cmd.SetContext(nil)
+	for _, child := range cmd.Commands() {
+		resetCmdContexts(child)
+	}
 }
 
 func (c CLI) RenderQueryCmd(cmd *cobra.Command, args []string) string {
@@ -391,13 +475,21 @@ func (c CLI) WaitForHeightWithTimeout(h int64, timeout time.Duration) (int64, er
 		return 0, errors.New("localnet client context has no RPC client")
 	}
 
+	var latestHeight int64
+	status, err := c.ClientCtx.Client.Status(context.Background())
+	if err == nil && status != nil {
+		latestHeight = status.SyncInfo.LatestBlockHeight
+		if latestHeight >= h {
+			return latestHeight, nil
+		}
+	}
+
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
-	var latestHeight int64
 	for {
 		select {
 		case <-timer.C:
