@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -31,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
+		GetBalanceCmd(),
 		GetBalancesCmd(),
 		GetSpendableBalancesCmd(),
 		GetCmdQueryTotalSupply(),
@@ -41,16 +43,50 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
+func GetBalanceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "balance [addr] [denom]",
+		Short: "Query a single account balance by addr and denom",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query the balance of an account for a specific denomination.
+
+Example:
+  $ %s query %s balance [addr] [denom]
+`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			addr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			return queryBalanceByDenom(clientCtx, cmd.Context(), addr, args[1])
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func GetBalancesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "balances [address]",
-		Short: "Query for account balances by address",
+		Use:   "balances [addr]",
+		Short: "Query for account balances by addr",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the total balance of an account or of a specific denomination.
 
 Example:
-  $ %s query %s balances [address]
-  $ %s query %s balances [address] --denom=[denom]
+  $ %s query %s balances [addr]
+  $ %s query %s balances [addr] --denom=[denom]
 `,
 				version.AppName, types.ModuleName, version.AppName, types.ModuleName,
 			),
@@ -92,14 +128,7 @@ Example:
 				return clientCtx.PrintProto(res)
 			}
 
-			params := types.NewQueryBalanceRequest(addr, denom)
-
-			res, err := queryClient.Balance(ctx, params)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res.Balance)
+			return queryBalanceByDenom(clientCtx, ctx, addr, denom)
 		},
 	}
 
@@ -108,6 +137,18 @@ Example:
 	flags.AddPaginationFlagsToCmd(cmd, "all balances")
 
 	return cmd
+}
+
+func queryBalanceByDenom(clientCtx client.Context, ctx context.Context, addr sdk.AccAddress, denom string) error {
+	queryClient := types.NewQueryClient(clientCtx)
+	params := types.NewQueryBalanceRequest(addr, denom)
+
+	res, err := queryClient.Balance(ctx, params)
+	if err != nil {
+		return err
+	}
+
+	return clientCtx.PrintProto(res.Balance)
 }
 
 func GetSpendableBalancesCmd() *cobra.Command {

@@ -35,6 +35,11 @@ const (
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
 	Erc20GasLimitExecute uint64 = 200_000
+
+	// Erc20GasLimitQuery is the shared cap for readonly ERC20 calls such as
+	// balanceOf, name, symbol, and decimals. Keep this small because only
+	// malicious contracts should need more.
+	Erc20GasLimitQuery uint64 = 100_000
 )
 
 type contextKey string

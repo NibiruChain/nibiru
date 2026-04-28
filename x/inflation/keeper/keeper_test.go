@@ -23,14 +23,14 @@ func TestBurn(t *testing.T) {
 	}{
 		{
 			name:        "pass",
-			sender:      testutil.AccAddress(),
+			sender:      testutil.NewAccAddress(),
 			mintCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
 			burnCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
 			expectedErr: nil,
 		},
 		{
 			name:        "not enough coins",
-			sender:      testutil.AccAddress(),
+			sender:      testutil.NewAccAddress(),
 			mintCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
 			burnCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(101)),
 			expectedErr: fmt.Errorf("spendable balance 100unibi is smaller than 101unibi: insufficient funds"),

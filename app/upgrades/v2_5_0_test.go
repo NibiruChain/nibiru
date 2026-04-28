@@ -17,7 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
@@ -30,7 +29,7 @@ func (s *Suite) TestUpgrade() {
 		deps = evmtest.NewTestDeps()
 
 		// Original creator of the Bank Coin version of the token
-		erisAddr = testutil.AccAddress()
+		erisAddr = testutil.NewAccAddress()
 
 		// Metadata used for both faulty token formats of the stNIBI FunToken
 		// mapping of
@@ -44,16 +43,16 @@ func (s *Suite) TestUpgrade() {
 
 		// ten holders for testing
 		holders = []gethcommon.Address{
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()),
 		}
 	)
 
@@ -235,7 +234,7 @@ func (s *Suite) TestUpgrade() {
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmstate.Erc20GasLimitQuery,
+			evm.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)
