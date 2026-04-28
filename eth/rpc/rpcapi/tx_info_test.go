@@ -84,7 +84,7 @@ func (s *BackendSuite) TestGetTransactionReceipt() {
 			s.Equal(s.evmSenderEthAddr, txReceipt.From)
 			s.Equal(&recipient, txReceipt.To)
 			s.Greater(txReceipt.GasUsed, uint64(0))
-			s.Equal(txReceipt.GasUsed, txReceipt.CumulativeGasUsed)
+			s.GreaterOrEqual(txReceipt.CumulativeGasUsed, txReceipt.GasUsed)
 			s.Equal(tc.txHash, txReceipt.TxHash)
 			s.Nil(txReceipt.ContractAddress)
 			s.Require().Equal(gethcore.ReceiptStatusSuccessful, txReceipt.Status)

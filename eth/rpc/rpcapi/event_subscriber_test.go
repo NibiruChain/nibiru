@@ -123,11 +123,16 @@ func TestEventSubscriberConsumeEventsPublishesMatchingTopic(t *testing.T) {
 	sendResultEvent(t, tmWSClient, coretypes.ResultEvent{})
 	sendResultEvent(t, tmWSClient, coretypes.ResultEvent{Query: "unmatched.event"})
 
+	gotCh := make(chan coretypes.ResultEvent, 1)
+	go func() {
+		gotCh <- <-eventCh
+	}()
+
 	want := coretypes.ResultEvent{Query: event}
 	sendResultEvent(t, tmWSClient, want)
 
 	select {
-	case got := <-eventCh:
+	case got := <-gotCh:
 		if got.Query != want.Query {
 			t.Fatalf("unexpected event query: got %q want %q", got.Query, want.Query)
 		}

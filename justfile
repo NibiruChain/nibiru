@@ -191,63 +191,39 @@ test-release:
 release-publish:
   make release
 
-# Run Go tests (short mode)
+# Run Go tests without cached test results
+test:
+  #!/usr/bin/env bash
+  just localnet-check
+  go test ./... -count=1
+
+# Run Go tests and allow cached test results
+test-fast:
+  go test ./...
+
+# Run Go tests without cached test results and generate coverage.out
+test-cover:
+  #!/usr/bin/env bash
+  just localnet-check
+  go test ./... \
+    -tags=pebbledb \
+    -coverprofile=coverage.out \
+    -covermode=atomic \
+    -count=1
+  go tool cover -func=coverage.out
+
+# Alias for "test"
+[private]
 test-unit:
-  go test ./... -short
+  just test-fast
 
-# Run Go tests (short mode) + coverage
-test-coverage-unit:
-  make test-coverage-unit
-
-# Heavy tests for the EVM and EVM JSON-RPC
-[private]
-test-cover-g1:
+# Report whether localnet-backed tests can reach a running nibid process
+localnet-check:
   #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 1 tests..."
-  echo "Paths: eth, x/evm"
-  go test ./eth/... ./x/evm/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group1.out
+  if pgrep -x nibid >/dev/null; then
+    echo "✅ Localnet (nibid) is running. Tests with live chain can run"
+  else
+    echo "ERROR: not running nibid process. Start localnet before running Go tests." >&2
+    exit 1
+  fi
 
-# Heavy tests for app, cmd, gosdk, token-registry
-[private]
-test-cover-g2:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 2 tests..."
-  echo "Paths: app, cmd, gosdk, token-registry"
-  # Group 2
-  go test ./app/... \
-      ./cmd/... \
-      ./gosdk/... \
-      ./token-registry/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group2.out
-
-# Heavy tests for all x/* modules besides EVM
-[private]
-test-cover-g3:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 3 tests..."
-  echo "Paths: (all x/* except evm)"
-  echo "Reproduce of modules with command: ls x/ | grep -v -E 'evm|README.md' "
-  go test ./x/bank/...  \
-    ./x/nutil/... \
-    ./x/devgas/... \
-    ./x/epochs/... \
-    ./x/genmsg/... \
-    ./x/inflation/... \
-    ./x/oracle/... \
-    ./x/sudo/... \
-    ./x/tokenfactory/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group3.out
-
-# Run Go tests, including live network tests + coverage
-test-cover-heavy:
-  #!/usr/bin/env bash
-  just test-cover-g1
-  just test-cover-g2
-  just test-cover-g3

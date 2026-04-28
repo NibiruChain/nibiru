@@ -54,16 +54,19 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: "Run all heavy tests."
+      - name: "Build the nibid binary"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        run: just test-cover-heavy
+        run: just install
 
-      - name: "Merge coverage reports with gocovermerge"
+      - name: "Launch localnet"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
-          gocovmerge -o coverage.out \
-            coverage.group1.out coverage.group2.out coverage.group3.out
+          just localnet --no-build &
+          sleep 10
+
+      - name: "Run all tests."
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: just test-cover
       
       - name: "Upload coverage reports to Codecov"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
