@@ -3,8 +3,6 @@ package assertion
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/action"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,77 +10,56 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 )
 
-func AllBalancesEqual(account sdk.AccAddress, amount sdk.Coins) action.Action {
-	return &allBalancesEqual{Account: account, Amount: amount}
-}
-
-type allBalancesEqual struct {
-	Account sdk.AccAddress
-	Amount  sdk.Coins
-}
-
-func (b allBalancesEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	coins := app.BankKeeper.GetAllBalances(ctx, b.Account)
-	if !coins.IsEqual(b.Amount) {
-		return ctx, fmt.Errorf(
+func AllBalancesEqual(
+	nibiru *app.NibiruApp, ctx sdk.Context, account sdk.AccAddress, amount sdk.Coins,
+) error {
+	coins := nibiru.BankKeeper.GetAllBalances(ctx, account)
+	if !coins.IsEqual(amount) {
+		return fmt.Errorf(
 			"account %s balance not equal, expected %s, got %s",
-			b.Account.String(),
-			b.Amount.String(),
+			account.String(),
+			amount.String(),
 			coins.String(),
 		)
 	}
 
-	return ctx, nil
+	return nil
 }
 
-func BalanceEqual(account sdk.AccAddress, denom string, amount sdkmath.Int) action.Action {
-	return &balanceEqual{Account: account, Denom: denom, Amount: amount}
-}
-
-type balanceEqual struct {
-	Account sdk.AccAddress
-	Denom   string
-	Amount  sdkmath.Int
-}
-
-func (b balanceEqual) IsNotMandatory() {}
-
-func (b balanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	coin := app.BankKeeper.GetBalance(ctx, b.Account, b.Denom)
-	if !coin.Amount.Equal(b.Amount) {
-		return ctx, fmt.Errorf(
+func BalanceEqual(
+	nibiru *app.NibiruApp, ctx sdk.Context,
+	account sdk.AccAddress, denom string, amount sdkmath.Int,
+) error {
+	coin := nibiru.BankKeeper.GetBalance(ctx, account, denom)
+	if !coin.Amount.Equal(amount) {
+		return fmt.Errorf(
 			"account %s balance not equal, expected %s, got %s",
-			b.Account.String(),
-			b.Amount.String(),
+			account.String(),
+			amount.String(),
 			coin.String(),
 		)
 	}
 
-	return ctx, nil
+	return nil
 }
 
-func ModuleBalanceEqual(moduleName string, denom string, amount sdkmath.Int) action.Action {
-	return &moduleBalanceEqual{ModuleName: moduleName, Denom: denom, Amount: amount}
-}
-
-type moduleBalanceEqual struct {
-	ModuleName string
-	Denom      string
-	Amount     sdkmath.Int
-}
-
-func (b moduleBalanceEqual) IsNotMandatory() {}
-
-func (b moduleBalanceEqual) Do(app *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
-	coin := app.BankKeeper.GetBalance(ctx, app.AccountKeeper.GetModuleAddress(b.ModuleName), b.Denom)
-	if !coin.Amount.Equal(b.Amount) {
-		return ctx, fmt.Errorf(
+func ModuleBalanceEqual(
+	nibiru *app.NibiruApp, ctx sdk.Context,
+	moduleName string, denom string, amount sdkmath.Int,
+) error {
+	coin := nibiru.BankKeeper.GetBalance(
+		ctx,
+		nibiru.AccountKeeper.GetModuleAddress(moduleName),
+		denom,
+	)
+	if !coin.Amount.Equal(amount) {
+		return fmt.Errorf(
 			"module %s balance not equal, expected %s, got %s",
-			b.ModuleName,
-			b.Amount.String(),
+			moduleName,
+			amount.String(),
 			coin.String(),
 		)
 	}
 
-	return ctx, nil
+	return nil
 }
