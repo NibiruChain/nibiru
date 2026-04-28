@@ -117,7 +117,9 @@ func NewCLI() (CLI, error) {
 	}
 	if err := tmWSClient.OnStart(); err != nil {
 		evmRpcClient.Close()
-		_ = tmWSClient.Stop()
+		if tmWSClient.IsRunning() {
+			_ = tmWSClient.Stop()
+		}
 		return CLI{}, fmt.Errorf("start localnet Tendermint websocket client: %w", err)
 	}
 
@@ -171,7 +173,7 @@ func (c *CLI) Close() error {
 		if c.EvmRpcClient != nil {
 			c.EvmRpcClient.Close()
 		}
-		if c.tmWSClient != nil {
+		if c.tmWSClient != nil && c.tmWSClient.IsRunning() {
 			c.closeState.err = c.tmWSClient.Stop()
 		}
 	})
@@ -375,7 +377,9 @@ func setTxFlag(args []string, flagName string, flagValue string) []string {
 }
 
 func resetCmdContexts(cmd *cobra.Command) {
-	cmd.SetContext(context.TODO())
+	// Clear stale contexts so subcommands inherit the real client context that
+	// clitestutil.ExecTestCLICmd sets on the root command before execution.
+	cmd.SetContext(nil) //nolint:staticcheck // Cobra treats nil as "inherit parent context"; context.TODO would block inheritance.
 	for _, child := range cmd.Commands() {
 		resetCmdContexts(child)
 	}
