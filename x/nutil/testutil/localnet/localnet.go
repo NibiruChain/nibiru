@@ -22,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authcli "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
@@ -99,27 +100,37 @@ func WithTxGasAdjustment(gasAdjustment string) TxOption {
 	}
 }
 
-func NewCLI() (CLI, error) {
+func NewCLI() (out CLI, err error) {
 	clientCtx, err := newClientCtx()
 	if err != nil {
 		return CLI{}, err
 	}
 
-	evmRpcClient, err := ethclient.Dial(LocalnetEVMURI)
+	var (
+		evmRpcClient *ethclient.Client
+		tmWSClient   *rpcclient.WSClient
+	)
+	defer func() {
+		if err != nil {
+			if evmRpcClient != nil {
+				evmRpcClient.Close()
+			}
+			if tmWSClient != nil && tmWSClient.IsRunning() {
+				_ = tmWSClient.Stop()
+			}
+		}
+	}()
+
+	evmRpcClient, err = ethclient.Dial(LocalnetEVMURI)
 	if err != nil {
 		return CLI{}, fmt.Errorf("connect localnet EVM RPC client: %w", err)
 	}
 
-	tmWSClient, err := rpcclient.NewWS(NodeWSURI, NodeWSEndpoint)
+	tmWSClient, err = rpcclient.NewWS(NodeWSURI, NodeWSEndpoint)
 	if err != nil {
-		evmRpcClient.Close()
 		return CLI{}, fmt.Errorf("create localnet Tendermint websocket client: %w", err)
 	}
 	if err := tmWSClient.OnStart(); err != nil {
-		evmRpcClient.Close()
-		if tmWSClient.IsRunning() {
-			_ = tmWSClient.Stop()
-		}
 		return CLI{}, fmt.Errorf("start localnet Tendermint websocket client: %w", err)
 	}
 
@@ -143,10 +154,6 @@ func NewCLI() (CLI, error) {
 	)
 	evmRpcAPI, err := buildEvmRpcAPI(apis)
 	if err != nil {
-		evmRpcClient.Close()
-		if stopErr := tmWSClient.Stop(); stopErr != nil {
-			err = errors.Join(err, stopErr)
-		}
 		return CLI{}, err
 	}
 
@@ -255,14 +262,35 @@ func (c CLI) ExecQueryCmd(
 	args []string,
 	result codec.ProtoMarshaler,
 ) error {
+	out, err := c.ExecQueryCmdBz(cmd, args)
+	if err != nil {
+		return err
+	}
+	return c.ClientCtx.Codec.UnmarshalJSON(out, result)
+}
+
+func (c CLI) ExecQueryCmdBz(cmd *cobra.Command, args []string) ([]byte, error) {
 	renderedCmd := c.RenderQueryCmd(cmd, args)
 	args = c.queryArgs(args)
 
 	out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, args)
 	if err != nil {
-		return fmt.Errorf("failed to execute query %s: %w: %s", renderedCmd, err, out.String())
+		return nil, fmt.Errorf("failed to execute query %s: %w: %s", renderedCmd, err, out.String())
 	}
-	return c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), result)
+	return append([]byte(nil), out.Bytes()...), nil
+}
+
+func (c CLI) QueryTx(txHash string) (*sdk.TxResponse, error) {
+	var queryResp sdk.TxResponse
+	if err := c.ExecQueryCmd(
+		authcli.QueryTxCmd(),
+		[]string{txHash},
+		&queryResp,
+	); err != nil {
+		return nil, err
+	}
+
+	return &queryResp, nil
 }
 
 func (c CLI) ExecTxCmd(
@@ -316,6 +344,9 @@ func (c CLI) ExecTxCmd(
 	return deliveredResp, nil
 }
 
+// parseAccountSequenceMismatch extracts the sequence values from a delivered
+// tx error so ExecTxCmd can retry with explicit account-number and sequence
+// flags when concurrent localnet tests race the validator account nonce.
 func parseAccountSequenceMismatch(rawLog string) (expected string, got string, ok bool) {
 	if !strings.Contains(rawLog, "account sequence mismatch") {
 		return "", "", false
@@ -332,6 +363,9 @@ func parseAccountSequenceMismatch(rawLog string) (expected string, got string, o
 	return expected, got, true
 }
 
+// parseNumberAfter returns the unsigned integer immediately following marker.
+// It intentionally stays small and strict because it only parses SDK sequence
+// mismatch messages such as "expected 27, got 26".
 func parseNumberAfter(s string, marker string) (string, bool) {
 	start := strings.Index(s, marker)
 	if start < 0 {
@@ -477,7 +511,7 @@ func quoteShellArg(arg string) string {
 func (c CLI) WaitForTx(txHash string) (*sdk.TxResponse, error) {
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
-		txResp, err := QueryTx(c.ClientCtx, txHash)
+		txResp, err := c.QueryTx(txHash)
 		if err == nil {
 			return txResp, nil
 		}
