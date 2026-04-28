@@ -31,7 +31,9 @@ var (
 )
 
 func (s *Suite) SetupSuite() {
-	s.Require().NoError(nutil.EnsureLocalBlockchain())
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet tests since the chain isn't active: %v", err)
+	}
 
 	localnetCLI, err := localnet.NewCLI()
 	s.Require().NoError(err)
