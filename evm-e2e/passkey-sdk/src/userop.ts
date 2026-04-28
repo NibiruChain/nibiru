@@ -1,4 +1,11 @@
-import { AbiCoder, BytesLike, keccak256, toBeHex, toUtf8Bytes, zeroPadValue } from "ethers"
+import {
+  AbiCoder,
+  BytesLike,
+  keccak256,
+  toBeHex,
+  toUtf8Bytes,
+  zeroPadValue,
+} from "ethers"
 
 export interface UserOperation {
   sender: string
@@ -64,10 +71,17 @@ export function packUserOp(op: UserOperation): string {
 }
 
 // Compute the userOpHash per ERC-4337 v0.6 spec.
-export function getUserOpHash(op: UserOperation, entryPoint: string, chainId: bigint): string {
+export function getUserOpHash(
+  op: UserOperation,
+  entryPoint: string,
+  chainId: bigint,
+): string {
   const userOpPack = packUserOp(op)
   const userOpHash = keccak256(userOpPack)
-  const enc = new AbiCoder().encode(["bytes32", "address", "uint256"], [userOpHash, entryPoint, chainId])
+  const enc = new AbiCoder().encode(
+    ["bytes32", "address", "uint256"],
+    [userOpHash, entryPoint, chainId],
+  )
   return keccak256(enc)
 }
 

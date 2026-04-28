@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-
 import { join } from "path"
 
 type TxEvent = {
@@ -77,9 +76,7 @@ export function ensureTxOk(result: TxResRaw): void {
   }
 }
 
-export async function addZeroGasContract(
-  evmAddr: string,
-): Promise<void> {
+export async function addZeroGasContract(evmAddr: string): Promise<void> {
   const actors = JSON.stringify({
     senders: [] as string[],
     contracts: [] as string[],
@@ -94,4 +91,3 @@ export async function addZeroGasContract(
   const txRes = await waitForTx(txhash)
   ensureTxOk(txRes)
 }
-
