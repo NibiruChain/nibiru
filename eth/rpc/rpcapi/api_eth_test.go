@@ -539,5 +539,6 @@ func (s *NodeSuite) Test_SmartContract() {
 }
 
 func (s *NodeSuite) TearDownSuite() {
-	s.T().Log("NodeSuite uses persistent localnet; no in-process network cleanup")
+	s.Require().NoError(s.cli.Close())
+	s.T().Log("NodeSuite uses persistent localnet; cleaned up in-process clients")
 }

@@ -157,6 +157,10 @@ func (s *BackendSuite) SetupSuite() {
 	s.T().Log("------------- SetupSuite: END   ------------- ")
 }
 
+func (s *BackendSuite) TearDownSuite() {
+	s.Require().NoError(s.cli.Close())
+}
+
 func (s *BackendSuite) SuccessfulTxTransfer() SuccessfulTx {
 	return s.SuccessfulTxs["transfer"]
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cometbft/cometbft/abci/types"
@@ -54,6 +55,14 @@ type CLI struct {
 
 	EvmRpcClient *ethclient.Client
 	EvmRpc       EvmRpcAPI
+
+	tmWSClient *rpcclient.WSClient
+	closeState *cliCloseState
+}
+
+type cliCloseState struct {
+	once sync.Once
+	err  error
 }
 
 type EvmRpcAPI struct {
@@ -103,9 +112,12 @@ func NewCLI() (CLI, error) {
 
 	tmWSClient, err := rpcclient.NewWS(NodeWSURI, NodeWSEndpoint)
 	if err != nil {
+		evmRpcClient.Close()
 		return CLI{}, fmt.Errorf("create localnet Tendermint websocket client: %w", err)
 	}
 	if err := tmWSClient.OnStart(); err != nil {
+		evmRpcClient.Close()
+		_ = tmWSClient.Stop()
 		return CLI{}, fmt.Errorf("start localnet Tendermint websocket client: %w", err)
 	}
 
@@ -129,6 +141,10 @@ func NewCLI() (CLI, error) {
 	)
 	evmRpcAPI, err := buildEvmRpcAPI(apis)
 	if err != nil {
+		evmRpcClient.Close()
+		if stopErr := tmWSClient.Stop(); stopErr != nil {
+			err = errors.Join(err, stopErr)
+		}
 		return CLI{}, err
 	}
 
@@ -142,7 +158,24 @@ func NewCLI() (CLI, error) {
 		EthRpcBackend: backend,
 		EvmRpcClient:  evmRpcClient,
 		EvmRpc:        evmRpcAPI,
+		tmWSClient:    tmWSClient,
+		closeState:    new(cliCloseState),
 	}, nil
+}
+
+func (c *CLI) Close() error {
+	if c.closeState == nil {
+		return nil
+	}
+	c.closeState.once.Do(func() {
+		if c.EvmRpcClient != nil {
+			c.EvmRpcClient.Close()
+		}
+		if c.tmWSClient != nil {
+			c.closeState.err = c.tmWSClient.Stop()
+		}
+	})
+	return c.closeState.err
 }
 
 func buildEvmRpcAPI(apis []gethrpc.API) (EvmRpcAPI, error) {
@@ -342,7 +375,7 @@ func setTxFlag(args []string, flagName string, flagValue string) []string {
 }
 
 func resetCmdContexts(cmd *cobra.Command) {
-	cmd.SetContext(nil)
+	cmd.SetContext(context.TODO())
 	for _, child := range cmd.Commands() {
 		resetCmdContexts(child)
 	}

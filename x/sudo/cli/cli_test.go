@@ -190,6 +190,7 @@ func (s *Suite) TestMarshal_EditSudoers() {
 }
 
 func (s *TestSuite) TearDownSuite() {
+	s.Require().NoError(s.localnetCLI.Close())
 	s.T().Log("leaving localnet state in place")
 }
 

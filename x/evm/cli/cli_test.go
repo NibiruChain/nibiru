@@ -274,8 +274,8 @@ func (s *Suite) TestCmdQueryBalance_LocalnetNibi() {
 	s.Require().Equal(nutil.LocalnetValAddr.String(), resp.AddrBech32)
 	s.Require().NotNil(resp.BankCoinDenom)
 	s.Require().Equal("unibi", *resp.BankCoinDenom)
-	s.Require().NotNil(resp.BankAmount)
-	s.Require().NotEmpty(*resp.BankAmount)
-	s.Require().NotNil(resp.BankBalance)
-	s.Require().NotEmpty(*resp.BankBalance)
+	s.Require().NotNil(resp.BankBalanceBase)
+	s.Require().NotEmpty(*resp.BankBalanceBase)
+	s.Require().NotNil(resp.BankBalanceHuman)
+	s.Require().NotEmpty(*resp.BankBalanceHuman)
 }

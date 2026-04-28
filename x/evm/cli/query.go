@@ -34,17 +34,18 @@ type QueryEvmBalanceResp struct {
 	AddrEVM    string `json:"addr_evm"`
 	AddrBech32 string `json:"addr_bech32"`
 
-	Erc20Addr     *string `json:"erc20_addr"`
-	Erc20Amount   *string `json:"erc20_amount"`
-	Erc20Balance  *string `json:"erc20_balance"`
-	Erc20Name     *string `json:"erc20_name"`
-	Erc20Symbol   *string `json:"erc20_symbol"`
-	Erc20Decimals *uint8  `json:"erc20_decimals"`
+	Erc20Addr         *string `json:"erc20_addr"`
+	Erc20Symbol       *string `json:"erc20_symbol"`
+	Erc20BalanceHuman *string `json:"erc20_balance_human"`
+	Erc20Decimals     *uint8  `json:"erc20_decimals"`
+	Erc20Name         *string `json:"erc20_name"`
+	Erc20BalanceBase  *string `json:"erc20_balance_base"`
 
-	BankCoinDenom *string `json:"bank_coin_denom"`
-	BankAmount    *string `json:"bank_amount"`
-	BankBalance   *string `json:"bank_balance"`
-	BankDecimals  *uint32 `json:"bank_decimals"`
+	BankSymbol       *string `json:"bank_symbol"`
+	BankBalanceHuman *string `json:"bank_balance_human"`
+	BankDecimals     *uint32 `json:"bank_decimals"`
+	BankCoinDenom    *string `json:"bank_coin_denom"`
+	BankBalanceBase  *string `json:"bank_balance_base"`
 }
 
 func formatUnitsBig(amount *big.Int, decimals uint32) string {
@@ -231,8 +232,9 @@ Examples:
 				balance := formatUnitsBig(amountBig, decimals)
 
 				resp.BankCoinDenom = strPtr(denom)
-				resp.BankAmount = strPtr(amount)
-				resp.BankBalance = strPtr(balance)
+				resp.BankBalanceBase = strPtr(amount)
+				resp.BankBalanceHuman = strPtr(balance)
+				resp.BankSymbol = strPtr(metaResp.Metadata.Symbol)
 				resp.BankDecimals = u32Ptr(decimals)
 				return true, nil
 			}
@@ -354,11 +356,11 @@ Examples:
 
 				addr := contract.Hex()
 				resp.Erc20Addr = strPtr(addr)
-				resp.Erc20Amount = amountStr
+				resp.Erc20BalanceBase = amountStr
 				resp.Erc20Decimals = decimalsPtr
 				if amountBig != nil && decimalsPtr != nil {
 					balance := formatUnitsBig(amountBig, uint32(*decimalsPtr))
-					resp.Erc20Balance = strPtr(balance)
+					resp.Erc20BalanceHuman = strPtr(balance)
 				}
 				return true, nil
 			}
