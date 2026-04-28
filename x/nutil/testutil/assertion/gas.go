@@ -4,24 +4,13 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/action"
 )
 
-type gasConsumedShouldBe struct {
-	gasConsumed uint64
-}
-
-func (g gasConsumedShouldBe) Do(_ *app.NibiruApp, ctx sdk.Context) (sdk.Context, error) {
+func GasConsumedShouldBe(ctx sdk.Context, gasConsumed uint64) error {
 	gasUsed := ctx.GasMeter().GasConsumed()
-	if g.gasConsumed != gasUsed {
-		return ctx, fmt.Errorf("gas consumed should be %d, but got %d", g.gasConsumed, gasUsed)
+	if gasConsumed != gasUsed {
+		return fmt.Errorf("gas consumed should be %d, but got %d", gasConsumed, gasUsed)
 	}
 
-	return ctx, nil
-}
-
-func GasConsumedShouldBe(gasConsumed uint64) action.Action {
-	return &gasConsumedShouldBe{gasConsumed: gasConsumed}
+	return nil
 }
