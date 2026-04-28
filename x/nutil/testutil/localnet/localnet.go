@@ -317,7 +317,7 @@ func (c CLI) ExecTxCmd(
 			break
 		}
 
-		expectedSeq, _, ok := parseAccountSequenceMismatch(txResp.RawLog)
+		expectedSeq, _, ok := nutil.ParseAccountSequenceMismatch(txResp.RawLog)
 		if !ok || attempt == 2 {
 			return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, txResp.Code, txResp.RawLog)
 		}
@@ -326,7 +326,11 @@ func (c CLI) ExecTxCmd(
 		if err != nil {
 			return nil, fmt.Errorf("failed to get account number for sequence retry of %s: %w", renderedCmd, err)
 		}
-		txArgs = setTxRetryFlags(txArgs, strconv.FormatUint(accountNumber, 10), expectedSeq)
+		txArgs = setTxRetryFlags(
+			txArgs,
+			strconv.FormatUint(accountNumber, 10),
+			strconv.FormatUint(expectedSeq, 10),
+		)
 		renderedCmd = renderNibidCmd("tx", cmd, txArgs)
 	}
 	if txResp.TxHash == "" {
@@ -342,50 +346,6 @@ func (c CLI) ExecTxCmd(
 	}
 
 	return deliveredResp, nil
-}
-
-// parseAccountSequenceMismatch extracts the sequence values from a delivered
-// tx error so ExecTxCmd can retry with explicit account-number and sequence
-// flags when concurrent localnet tests race the validator account nonce.
-func parseAccountSequenceMismatch(rawLog string) (expected string, got string, ok bool) {
-	if !strings.Contains(rawLog, "account sequence mismatch") {
-		return "", "", false
-	}
-
-	expected, ok = parseNumberAfter(rawLog, "expected ")
-	if !ok {
-		return "", "", false
-	}
-	got, ok = parseNumberAfter(rawLog, "got ")
-	if !ok {
-		return "", "", false
-	}
-	return expected, got, true
-}
-
-// parseNumberAfter returns the unsigned integer immediately following marker.
-// It intentionally stays small and strict because it only parses SDK sequence
-// mismatch messages such as "expected 27, got 26".
-func parseNumberAfter(s string, marker string) (string, bool) {
-	start := strings.Index(s, marker)
-	if start < 0 {
-		return "", false
-	}
-	start += len(marker)
-
-	end := start
-	for end < len(s) && s[end] >= '0' && s[end] <= '9' {
-		end++
-	}
-	if end == start {
-		return "", false
-	}
-
-	num := s[start:end]
-	if _, err := strconv.ParseUint(num, 10, 64); err != nil {
-		return "", false
-	}
-	return num, true
 }
 
 func setTxRetryFlags(args []string, accountNumber string, sequence string) []string {
