@@ -66,6 +66,7 @@ require (
 	github.com/status-im/keycard-go v0.3.3
 	golang.org/x/crypto v0.45.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/mod v0.29.0
 	golang.org/x/net v0.47.0
 	golang.org/x/text v0.31.0
 	gotest.tools/v3 v3.5.2
