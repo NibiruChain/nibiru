@@ -160,10 +160,20 @@ describe("eth queries", () => {
       // Execute some contract TX
       const tx = await contract.transfer(alice, parseEther("0.01"))
       await tx.wait(1, TX_WAIT_TIMEOUT)
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+
+      // The Go filter API appends logs from an async SubscribeLogs goroutine
+      // into the filter's in-memory f.logs queue. tx.wait proves the tx mined,
+      // but the first filter poll can still arrive before that queue is filled.
+      let changes: Array<Record<string, unknown>> = []
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        changes = await provider.send("eth_getFilterChanges", [filterId])
+        if (changes.length > 0) {
+          break
+        }
+      }
 
       // Assert logs
-      const changes = await provider.send("eth_getFilterChanges", [filterId])
       expect(changes.length).toBeGreaterThan(0)
       expect(changes[0]).toHaveProperty("address")
       expect(changes[0]).toHaveProperty("data")

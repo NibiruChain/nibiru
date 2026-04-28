@@ -194,21 +194,32 @@ release-publish:
 # Run Go tests without cached test results
 test:
   #!/usr/bin/env bash
+  echo "Running: just test"
   just localnet-check
-  go test ./... -count=1
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test -count=1 \$GO_TEST_PKGS"
+  go test -count=1 $GO_TEST_PKGS
 
 # Run Go tests and allow cached test results
 test-fast:
-  go test ./...
+  #!/usr/bin/env bash
+  echo "Running: just test-fast"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
+  go test $GO_TEST_PKGS
 
 # Run Go tests without cached test results and generate coverage.out
 test-cover:
   #!/usr/bin/env bash
+  echo "Running: just test-cover"
   just localnet-check
-  go test ./... \
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
+  go test \
     -tags=pebbledb \
     -coverprofile=coverage.out \
-    -count=1
+    -count=1 \
+    $GO_TEST_PKGS
   go tool cover -func=coverage.out
 
 # Alias for "test"

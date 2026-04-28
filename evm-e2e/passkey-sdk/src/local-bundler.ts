@@ -138,14 +138,12 @@ async function main() {
       }
     } catch (err) {
       console.error("bundler request failed:", err)
-      res
-        .writeHead(500, headers)
-        .end(
-          JSON.stringify({
-            jsonrpc: "2.0",
-            error: { code: -32603, message: "Internal bundler error" },
-          }),
-        )
+      res.writeHead(500, headers).end(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "Internal bundler error" },
+        }),
+      )
     }
   })
 

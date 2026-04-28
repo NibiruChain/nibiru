@@ -4,6 +4,7 @@ import {
   ContractTransactionResponse,
   parseEther,
   toBigInt,
+  TransactionResponse,
   Wallet,
   type TransactionRequest,
 } from "ethers"
@@ -25,6 +26,48 @@ export const hexify = (x: number): string => {
 }
 
 export const INTRINSIC_TX_GAS: bigint = 21000n
+
+type TxResLite = {
+  hash: string
+  from: string
+  to: string | null
+  nonce: number
+  type: number
+  chainId: string
+  value: string
+  gasLimit: string
+  maxPriorityFeePerGas: string | null
+  maxFeePerGas: string | null
+  blockNumber: number | null
+  blockHash: string | null
+  data: string
+}
+
+export const txResultLite = (
+  txResponse: TransactionResponse | ContractTransactionResponse,
+): TxResLite => {
+  return {
+    hash: txResponse.hash,
+    from: txResponse.from,
+    to: txResponse.to,
+    nonce: txResponse.nonce,
+    type: txResponse.type,
+    chainId: txResponse.chainId.toString(),
+    value: txResponse.value.toString(),
+    gasLimit: txResponse.gasLimit.toString(),
+    maxPriorityFeePerGas:
+      txResponse.maxPriorityFeePerGas === null
+        ? null
+        : txResponse.maxPriorityFeePerGas.toString(),
+    maxFeePerGas:
+      txResponse.maxFeePerGas === null
+        ? null
+        : txResponse.maxFeePerGas.toString(),
+    blockNumber: txResponse.blockNumber,
+    blockHash: txResponse.blockHash,
+    data: txResponse.data,
+  }
+}
 
 export const deployContractTestERC20 = async () => {
   const factory = new TestERC20__factory(account)
@@ -69,7 +112,7 @@ export const sendTestNibi = async () => {
   }
   const txResponse = await account.sendTransaction(transaction)
   await txResponse.wait(1, TX_WAIT_TIMEOUT)
-  console.log(txResponse)
+  console.log("sendTestNibi txResp: %o", txResultLite(txResponse))
   return txResponse
 }
 
