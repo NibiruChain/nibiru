@@ -147,4 +147,28 @@ var (
 		CreateUpgradeHandler: DefaultUpgradeHandler,
 		StoreUpgrades:        store.StoreUpgrades{},
 	}
+
+	Upgrade2_12_0 = Upgrade{
+		UpgradeName: "v2.12.0",
+		CreateUpgradeHandler: func(
+			mm *module.Manager,
+			cfg module.Configurator,
+			nibiru *keepers.PublicKeepers,
+			clientKeeper clientkeeper.Keeper,
+		) upgradetypes.UpgradeHandler {
+			return func(
+				ctx sdk.Context,
+				plan upgradetypes.Plan,
+				fromVM module.VersionMap,
+			) (module.VersionMap, error) {
+				err := runUpgrade2_12_0(nibiru, ctx)
+				if err != nil {
+					return fromVM, fmt.Errorf("v2.12.0 upgrade failure: %w", err)
+				}
+
+				return mm.RunMigrations(ctx, cfg, fromVM)
+			}
+		},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
 )

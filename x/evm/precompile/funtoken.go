@@ -140,7 +140,8 @@ func (p precompileFunToken) DynamicRun(
 	// applies it via the returned gasCost from DynamicRun.
 	gasCost = startResult.Ctx.GasMeter().GasConsumed()
 	if err != nil {
-		return nil, gasCost, err
+		bz = revertBzForErr(err)
+		return bz, gasCost, err
 	}
 
 	// Emit extra events for the EVM if this is a transaction
@@ -190,6 +191,9 @@ func (p precompileFunToken) sendToBank(
 ) (bz []byte, err error) {
 	ctx, method, args := startResult.Ctx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+	if err := assertNotVMCaller(startResult.Ctx, startResult.Method); err != nil {
 		return nil, err
 	}
 
@@ -594,6 +598,9 @@ func (p precompileFunToken) sendToEvm(
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
 		return nil, err
 	}
+	if err := assertNotVMCaller(startResult.Ctx, startResult.Method); err != nil {
+		return nil, err
+	}
 	// parse call: (string bankDenom, uint256 amount, string to)
 	bankDenom, amount, toStr, err := parseArgsSendToEvm(args)
 	if err != nil {
@@ -742,6 +749,9 @@ func (p precompileFunToken) bankMsgSend(
 ) ([]byte, error) {
 	ctx, method, args := startResult.Ctx, startResult.Method, startResult.Args
 	if err := assertNotReadonlyTx(readOnly, method); err != nil {
+		return nil, err
+	}
+	if err := assertNotVMCaller(startResult.Ctx, startResult.Method); err != nil {
 		return nil, err
 	}
 

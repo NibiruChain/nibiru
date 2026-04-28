@@ -11,7 +11,6 @@ import (
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	xoracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
@@ -31,7 +30,6 @@ type Querier struct {
 	Devgas       devgas.QueryClient
 	Epoch        epochs.QueryClient
 	Inflation    inflation.QueryClient
-	Oracle       xoracle.QueryClient
 	TokenFactory tokenfactory.QueryClient
 }
 
@@ -54,7 +52,6 @@ func NewQuerier(
 		Devgas:       devgas.NewQueryClient(grpcConn),
 		Epoch:        epochs.NewQueryClient(grpcConn),
 		Inflation:    inflation.NewQueryClient(grpcConn),
-		Oracle:       xoracle.NewQueryClient(grpcConn),
 		TokenFactory: tokenfactory.NewQueryClient(grpcConn),
 	}, nil
 }

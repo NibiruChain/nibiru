@@ -9,7 +9,7 @@ func (s *TestSuite) TestGenesis() {
 	// Produces a valid token factory denom
 	randomTFDenom := func() string {
 		denom := types.TFDenom{
-			Creator:  testutil.AccAddress().String(),
+			Creator:  testutil.NewAccAddress().String(),
 			Subdenom: testutil.RandLetters(3),
 		}
 		s.Require().NoError(denom.Validate())
@@ -34,13 +34,13 @@ func (s *TestSuite) TestGenesis() {
 					{
 						Denom: randomTFDenom(),
 						AuthorityMetadata: types.DenomAuthorityMetadata{
-							Admin: testutil.AccAddress().String(),
+							Admin: testutil.NewAccAddress().String(),
 						},
 					},
 					{
 						Denom: randomTFDenom(),
 						AuthorityMetadata: types.DenomAuthorityMetadata{
-							Admin: testutil.AccAddress().String(),
+							Admin: testutil.NewAccAddress().String(),
 						},
 					},
 				},

@@ -11,7 +11,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudo "github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -112,7 +111,7 @@ func (s *TestSuite) TestCreateDenom() {
 }
 
 func (s *TestSuite) TestChangeAdmin() {
-	sbf := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
 
 	testCases := []struct {
 		Name     string
@@ -138,9 +137,9 @@ func (s *TestSuite) TestChangeAdmin() {
 		{
 			Name: "sad: non-admin tries to change admin",
 			txMsg: &types.MsgChangeAdmin{
-				Sender:   testutil.AccAddress().String(),
+				Sender:   testutil.NewAccAddress().String(),
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "only the current admin can set a new admin",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
@@ -159,7 +158,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
@@ -178,7 +177,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: collections.ErrNotFound.Error(),
 		},
@@ -239,7 +238,7 @@ func (s *TestSuite) TestUpdateModuleParams() {
 		{
 			name: "sad: must be gov proposal form x/gov module account",
 			txMsg: &types.MsgUpdateModuleParams{
-				Authority: testutil.AccAddress().String(),
+				Authority: testutil.NewAccAddress().String(),
 				Params:    types.DefaultModuleParams(),
 			},
 			wantErr: "expected gov account as only signer for proposal message",
@@ -480,7 +479,7 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
 						Coin:   nusd69420,
-						MintTo: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						MintTo: authtypes.NewModuleAddress(sudo.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},
@@ -488,7 +487,7 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgBurn{
 						Sender:   addrs[0].String(),
 						Coin:     nusd69420,
-						BurnFrom: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						BurnFrom: authtypes.NewModuleAddress(sudo.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},

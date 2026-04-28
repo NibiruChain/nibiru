@@ -12,13 +12,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
@@ -29,7 +27,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-	oraclecli "github.com/NibiruChain/nibiru/v2/x/oracle/cli"
+	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -140,12 +138,11 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		rpc.StatusCommand(),
 		genesisCommand(
 			encodingConfig,
-			oraclecli.AddGenesisPricefeederDelegationCmd(app.DefaultNodeHome),
 			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
 		),
-		queryCommand(),
-		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		nibidcmd.QueryCmd(),
+		nibidcmd.TxCmd(),
+		keysCommand(app.DefaultNodeHome),
 
 		// EVM Tx Indexer force catch up command
 		server.NewEVMTxIndexCmd(),
@@ -170,57 +167,6 @@ func genesisCommand(encodingConfig app.EncodingConfig, cmds ...*cobra.Command) *
 	for _, subCmd := range cmds {
 		cmd.AddCommand(subCmd)
 	}
-	return cmd
-}
-
-func queryCommand() *cobra.Command {
-	rootQueryCmd := &cobra.Command{
-		Use:                        "query",
-		Aliases:                    []string{"q"},
-		Short:                      "Querying subcommands",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	rootQueryCmd.AddCommand(
-		authcmd.GetAccountCmd(),
-		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
-		authcmd.QueryTxsByEventsCmd(),
-		authcmd.QueryTxCmd(),
-	)
-
-	// Adds all query commands to the 'rootQueryCmd'
-	app.ModuleBasics.AddQueryCommands(rootQueryCmd)
-	rootQueryCmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
-
-	return rootQueryCmd
-}
-
-func txCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                        "tx",
-		Short:                      "Transactions subcommands",
-		DisableFlagParsing:         true,
-		SuggestionsMinimumDistance: 2,
-		RunE:                       client.ValidateCmd,
-	}
-
-	cmd.AddCommand(
-		authcmd.GetSignCommand(),
-		authcmd.GetSignBatchCommand(),
-		authcmd.GetMultiSignCommand(),
-		authcmd.GetMultiSignBatchCmd(),
-		authcmd.GetValidateSignaturesCommand(),
-		authcmd.GetBroadcastCommand(),
-		authcmd.GetEncodeCommand(),
-		authcmd.GetDecodeCommand(),
-	)
-
-	app.ModuleBasics.AddTxCommands(cmd)
-	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
-
 	return cmd
 }
 

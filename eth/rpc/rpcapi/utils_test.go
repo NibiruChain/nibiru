@@ -22,16 +22,22 @@ func (s *BackendSuite) TestGetLogsFromBlockResults() {
 	s.Require().NoError(err)
 	s.Require().NotNil(logs)
 
+	deployTxResult, err := s.backend.GetTxByEthHash(
+		s.SuccessfulTxDeployContract().Receipt.TxHash,
+	)
+	s.Require().NoError(err)
+	s.Require().Less(int(deployTxResult.TxIndex), len(logs))
+
 	s.assertTxLogsMatch([]*gethcore.Log{
 		{
 			Address: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
 			Topics: []gethcommon.Hash{
 				gethcrypto.Keccak256Hash([]byte("Transfer(address,address,uint256)")),
 				gethcommon.Address{}.Hash(),
-				s.fundedAccEthAddr.Hash(),
+				s.evmSenderEthAddr.Hash(),
 			},
 		},
-	}, logs[0], "deploy contract tx")
+	}, logs[deployTxResult.TxIndex], "deploy contract tx")
 }
 
 func (s *BackendSuite) TestGetHexProofs() {

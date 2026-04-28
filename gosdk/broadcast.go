@@ -76,7 +76,26 @@ func BroadcastMsgs(
 	if err != nil {
 		return nil, err
 	}
-	return BroadcastMsgsWithSeq(args, from, nums.Sequence, msgs...)
+
+	seq := nums.Sequence
+	var txResp *sdk.TxResponse
+	for attempt := 0; attempt < 3; attempt++ {
+		txResp, err = BroadcastMsgsWithSeq(args, from, seq, msgs...)
+		if err != nil {
+			return nil, err
+		}
+		if txResp.Code == 0 {
+			return txResp, nil
+		}
+
+		expectedSeq, _, ok := nutil.ParseAccountSequenceMismatch(txResp.RawLog)
+		if !ok || attempt == 2 {
+			return txResp, nil
+		}
+		seq = expectedSeq
+	}
+
+	return txResp, nil
 }
 
 type Broadcaster interface {

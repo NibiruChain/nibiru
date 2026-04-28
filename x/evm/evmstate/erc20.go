@@ -20,10 +20,6 @@ import (
 const (
 	// Erc20GasLimitDeploy only used internally when deploying ERC20Minter.
 	Erc20GasLimitDeploy uint64 = 2_500_000
-
-	// Erc20GasLimitQuery used only for querying name, symbol and decimals
-	// Cannot be heavy. Only if the contract is malicious.
-	Erc20GasLimitQuery uint64 = 100_000
 )
 
 // getCallGas returns the gas limit for a call to an ERC20 contract following 63/64 rule (EIP-150)
@@ -220,10 +216,10 @@ func (e erc20Calls) loadERC20String(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
-		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, evm.Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
@@ -263,10 +259,10 @@ func (e erc20Calls) loadERC20Uint8(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&erc20Contract,
 		input,
-		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, evm.Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)
@@ -306,10 +302,10 @@ func (e erc20Calls) LoadERC20BigInt(
 	}
 	evmResp, err := e.CallContract(
 		evmObj,
-		evm.EVM_MODULE_ADDRESS,
+		evm.EVM_READONLY_ADDR,
 		&contract,
 		input,
-		getCallGasLimit63_64(ctx, Erc20GasLimitQuery),
+		getCallGasLimit63_64(ctx, evm.Erc20GasLimitQuery),
 		evm.COMMIT_READONLY, /*commit*/
 		nil,
 	)

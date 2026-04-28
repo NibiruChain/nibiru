@@ -164,7 +164,7 @@ func (s *TestSuite) TestStargate() {
 		s.ElementsMatch(denoms, []string{tfdenom.Denom().String()})
 	})
 
-	someoneElse := testutil.AccAddress()
+	someoneElse := testutil.NewAccAddress()
 	s.Run("mint from smart contract", func() {
 		execMsgJson := strings.Trim(fmt.Sprintf(`
 		{ 
@@ -282,7 +282,7 @@ func (s *TestSuite) TestStargateSerde() {
 				GetPortFn: func(ctx sdk.Context) string { return "myTransferPort" },
 			}
 			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Codec, ibcTransferPort)
-			mockContractAddr := testutil.AccAddress()
+			mockContractAddr := testutil.NewAccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
 				wasmvmtypes.CosmosMsg{
 					Stargate: &sgMsg,
