@@ -193,6 +193,10 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	)
 	// ibc-go v7.10+ requires ICA host keeper query router to be set before
 	// service registration.
+	// Note that `WithQueryRouter` on `*icahostkeeper.Keeper` has a pointer
+	// receiver and mutates queryRouter in place (no return value). Calling it on
+	// the embedded value field promotes to &app.icaHostKeeper, so assignment is
+	// unnecessary (and would not compile—the method returns nothing).
 	app.icaHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	wasmDir := filepath.Join(homePath, "data")
