@@ -36,7 +36,7 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 The `MNEMONIC` above is the same BIP-39 phrase used by
 `contrib/scripts/localnet.sh` to create the `validator` key on the
 `nibiru-localnet-0` chain. The `account` used in tests
-(`test/setup.ts`) is the EVM signer for that validator/dev account,
+(`test/testdeps.ts`) is the EVM signer for that validator/dev account,
 which is funded in genesis and used to deploy contracts, pay gas, and
 fund other test wallets.
 
@@ -70,6 +70,7 @@ Ran 6 tests across 4 files. [38.08s]
 ### Deploy PasskeyAccountFactory on Nibiru localnet
 
 Assumes:
+
 - Nibiru localnet running with the P-256 precompile at `0x0000000000000000000000000000000000000100`.
 - An ERC-4337 EntryPoint already deployed; pass its address via `ENTRY_POINT`.
 

@@ -77,7 +77,9 @@ jobs:
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: |
           just localnet --no-build &
-          sleep 10
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          sleep 22
 
       - name: "Run tests (just test)"
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
@@ -146,7 +148,9 @@ jobs:
       - if: steps.check_changes.outputs.check_changes == 'true'
         run: |
           just localnet --no-build &
-          sleep 10
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          sleep 22
 
       - if: steps.check_changes.outputs.check_changes == 'true'
         working-directory: "sai-trading"

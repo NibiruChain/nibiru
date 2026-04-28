@@ -22,7 +22,7 @@ function getArtifact(relPath) {
   const full = path.join(__dirname, relPath)
   if (!fs.existsSync(full)) {
     throw new Error(
-      `Missing artifact at ${relPath}. Run "npx hardhat compile" in evm-e2e first.`
+      `Missing artifact at ${relPath}. Run "npx hardhat compile" in evm-e2e first.`,
     )
   }
   return JSON.parse(fs.readFileSync(full, "utf8"))
@@ -38,17 +38,17 @@ async function main() {
   console.log("Deployer:", signer.address)
 
   const entrypointArtifact = getArtifact(
-    "../artifacts/@account-abstraction/contracts/core/EntryPoint.sol/EntryPoint.json"
+    "../artifacts/@account-abstraction/contracts/core/EntryPoint.sol/EntryPoint.json",
   )
   const factoryArtifact = getArtifact(
-    "../artifacts/contracts/passkey/PasskeyAccount.sol/PasskeyAccountFactory.json"
+    "../artifacts/contracts/passkey/PasskeyAccount.sol/PasskeyAccountFactory.json",
   )
 
   console.log("Deploying EntryPoint...")
   const entryPoint = await new ethers.ContractFactory(
     entrypointArtifact.abi,
     entrypointArtifact.bytecode,
-    signer
+    signer,
   ).deploy()
   await entryPoint.waitForDeployment()
   const entryPointAddr = await entryPoint.getAddress()
@@ -58,7 +58,7 @@ async function main() {
   const passkeyFactory = await new ethers.ContractFactory(
     factoryArtifact.abi,
     factoryArtifact.bytecode,
-    signer
+    signer,
   ).deploy(entryPointAddr)
   await passkeyFactory.waitForDeployment()
   const passkeyFactoryAddr = await passkeyFactory.getAddress()
