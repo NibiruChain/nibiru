@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 
-import { account, TEST_TIMEOUT } from "./setup"
+import { account, TEST_TIMEOUT } from "./testdeps"
 import { deployContractTestERC20 } from "./utils"
 
 describe("ERC-20 contract tests", () => {
