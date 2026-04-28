@@ -191,6 +191,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
 	)
+	// ibc-go v7.10+ requires ICA host keeper query router to be set before
+	// service registration.
+	app.icaHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
