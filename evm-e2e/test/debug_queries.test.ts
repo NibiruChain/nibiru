@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "bun:test"
 import { parseEther, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
-import { provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
+import { provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
 import { alice, deployContractTestERC20, hexify } from "./utils"
 
 describe("debug queries", () => {

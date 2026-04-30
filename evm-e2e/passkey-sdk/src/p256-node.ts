@@ -27,7 +27,10 @@ export function generateNodePasskey(seed?: Uint8Array): NodePasskey {
   }
 }
 
-export function signUserOpHash(userOpHash: string, privKey: Uint8Array): { r: string; s: string } {
+export function signUserOpHash(
+  userOpHash: string,
+  privKey: Uint8Array,
+): { r: string; s: string } {
   if (!p256.utils.isValidPrivateKey(privKey)) {
     throw new Error("invalid private key")
   }

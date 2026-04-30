@@ -21,7 +21,7 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	_, k, ctx := setup()
 
 	// Generate test addresses
-	rootAddr := testutil.AccAddress()
+	rootAddr := testutil.NewAccAddress()
 	_, contractAddrs := testutil.PrivKeyAddressPairs(3)
 	_, senderAddrs := testutil.PrivKeyAddressPairs(2)
 	_, zeroGasContractAddrs := testutil.PrivKeyAddressPairs(2)
@@ -48,7 +48,7 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	}
 
 	// CheckPermissions should fail for non-sudoer
-	nonSudoer := testutil.AccAddress()
+	nonSudoer := testutil.NewAccAddress()
 	s.Error(k.CheckPermissions(nonSudoer, ctx))
 
 	// Export Phase: Export genesis and verify it's valid

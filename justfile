@@ -183,7 +183,7 @@ stop:
 
 passkey-demo:
   #!/usr/bin/env bash
-  scripts/passkey-demo.sh
+  contrib/scripts/passkey-demo.sh
 
 # Runs golang formatter (gofumpt)
 fmt:
@@ -203,60 +203,49 @@ test-release:
 release-publish:
   make release
 
-# Run Go tests (short mode)
+# Run Go tests without cached test results
+test:
+  #!/usr/bin/env bash
+  echo "Running: just test"
+  just localnet-check
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test -count=1 \$GO_TEST_PKGS"
+  go test -count=1 $GO_TEST_PKGS
+
+# Run Go tests and allow cached test results
+test-fast:
+  #!/usr/bin/env bash
+  echo "Running: just test-fast"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
+  go test $GO_TEST_PKGS
+
+# Run Go tests without cached test results and generate coverage.out
+test-cover:
+  #!/usr/bin/env bash
+  echo "Running: just test-cover"
+  just localnet-check
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
+  go test \
+    -tags=pebbledb \
+    -coverprofile=coverage.out \
+    -count=1 \
+    $GO_TEST_PKGS
+  go tool cover -func=coverage.out
+
+# Alias for "test"
+[private]
 test-unit:
-  go test ./... -short
+  just test-fast
 
-# Run Go tests (short mode) + coverage
-test-coverage-unit:
-  make test-coverage-unit
-
-# Heavy tests for the EVM and EVM JSON-RPC
-test-cover-g1:
+# Report whether localnet-backed tests can reach a running nibid process
+localnet-check:
   #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 1 tests..."
-  echo "Paths: eth, x/evm"
-  go test ./eth/... ./x/evm/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group1.out
+  if pgrep -x nibid >/dev/null; then
+    echo "✅ Localnet (nibid) is running. Tests with live chain can run"
+  else
+    echo "ERROR: not running nibid process. Start localnet before running Go tests." >&2
+    exit 1
+  fi
 
-# Heavy tests for app, cmd, gosdk, token-registry
-test-cover-g2:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 2 tests..."
-  echo "Paths: app, cmd, gosdk, token-registry"
-  # Group 2
-  go test ./app/... \
-      ./cmd/... \
-      ./gosdk/... \
-      ./token-registry/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group2.out
-
-# Heavy tests for all x/* modules besides EVM
-test-cover-g3:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 3 tests..."
-  echo "Paths: (all x/* except evm)"
-  echo "Reproduce of modules with command: ls x/ | grep -v -E 'evm|README.md' "
-  go test ./x/bank/...  \
-    ./x/nutil/... \
-    ./x/devgas/... \
-    ./x/epochs/... \
-    ./x/genmsg/... \
-    ./x/inflation/... \
-    ./x/oracle/... \
-    ./x/sudo/... \
-    ./x/tokenfactory/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group3.out
-
-# Run Go tests, including live network tests + coverage
-test-cover-heavy:
-  #!/usr/bin/env bash
-  just test-cover-g1
-  just test-cover-g2
-  just test-cover-g3

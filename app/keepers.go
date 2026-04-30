@@ -134,7 +134,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.InflationKeeper.Hooks(),
-			app.OracleKeeper.Hooks(),
 		),
 	)
 
@@ -192,6 +191,13 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
 	)
+	// ibc-go v7.10+ requires ICA host keeper query router to be set before
+	// service registration.
+	// Note that `WithQueryRouter` on `*icahostkeeper.Keeper` has a pointer
+	// receiver and mutates queryRouter in place (no return value). Calling it on
+	// the embedded value field promotes to &app.icaHostKeeper, so assignment is
+	// unnecessary (and would not compile—the method returns nothing).
+	app.icaHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 
 	wasmDir := filepath.Join(homePath, "data")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)

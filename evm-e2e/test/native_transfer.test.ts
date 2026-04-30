@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
-import { alice } from "./utils"
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
+import { alice, txResultLite } from "./utils"
 
 describe("native transfer", () => {
   it(
@@ -37,9 +37,11 @@ describe("native transfer", () => {
         amountToSend,
         expectedSenderWei,
         senderBalanceAfter,
-        txResponse,
+        txResp: txResultLite(txResponse),
       })
-      expect(recipientBalanceAfter).toEqual(recipientBalanceBefore + amountToSend)
+      expect(recipientBalanceAfter).toEqual(
+        recipientBalanceBefore + amountToSend,
+      )
       const delta = senderBalanceAfter - expectedSenderWei
       const deltaFromExpectation = delta >= 0 ? delta : -delta
       expect(deltaFromExpectation).toBeLessThan(parseEther("0.1"))

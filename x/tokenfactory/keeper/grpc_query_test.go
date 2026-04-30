@@ -25,7 +25,7 @@ func (s *TestSuite) createDenom(
 }
 
 func (s *TestSuite) TestQueryDenoms() {
-	creator := testutil.AccAddress()
+	creator := testutil.NewAccAddress()
 	denom := types.TFDenom{
 		Creator:  creator.String(),
 		Subdenom: "abc",
@@ -65,7 +65,7 @@ func (s *TestSuite) TestQueryDenoms() {
 
 func (s *TestSuite) TestQueryDenomInfo() {
 	s.SetupTest()
-	creator := testutil.AccAddress()
+	creator := testutil.NewAccAddress()
 	denom := types.TFDenom{
 		Creator:  creator.String(),
 		Subdenom: "abc",

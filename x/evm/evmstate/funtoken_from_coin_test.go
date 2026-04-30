@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
@@ -261,6 +262,91 @@ func (s *SuiteFunToken) TestCreateFunTokenFromCoin() {
 				s.Require().ErrorContains(err, "metadata unsuitable to create FunToken mapping")
 			},
 		},
+	})
+}
+
+func (s *SuiteFunToken) TestCreateFunTokenPermissions_MainnetCoin() {
+	validBankMetadata := func(bankDenom string) bank.Metadata {
+		return bank.Metadata{
+			DenomUnits: []*bank.DenomUnit{
+				{
+					Denom:    bankDenom,
+					Exponent: 0,
+				},
+				{
+					Denom:    bankDenom + "_display",
+					Exponent: 6,
+				},
+			},
+			Base:    bankDenom,
+			Display: bankDenom,
+			Name:    bankDenom,
+			Symbol:  "TOKEN",
+		}
+	}
+
+	s.Run("sad: mainnet unauthorized sender does not pay fee", func() {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1"))
+
+		bankDenom := "mainnet-unauthorized"
+		fee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx())
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			deps.Sender.NibiruAddr,
+			fee,
+		))
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), validBankMetadata(bankDenom))
+
+		balanceBefore := deps.App.BankKeeper.GetBalance(
+			deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
+		).Amount
+
+		_, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx()),
+			&evm.MsgCreateFunToken{
+				FromBankDenom: bankDenom,
+				Sender:        deps.Sender.NibiruAddr.String(),
+			},
+		)
+		s.Require().ErrorContains(err, "invalid signing authority")
+
+		balanceAfter := deps.App.BankKeeper.GetBalance(
+			deps.Ctx(), deps.Sender.NibiruAddr, evm.EVMBankDenom,
+		).Amount
+		s.Require().Equal(balanceBefore, balanceAfter)
+	})
+
+	s.Run("happy: mainnet sudoer can create funtoken", func() {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().
+			WithChainID("cataclysm-1").
+			WithGasMeter(sdk.NewInfiniteGasMeter()))
+
+		bankDenom := "mainnet-sudoer"
+		fee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx())
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			deps.Sender.NibiruAddr,
+			fee,
+		))
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), validBankMetadata(bankDenom))
+		deps.App.SudoKeeper.Sudoers.Set(deps.Ctx(), sudo.Sudoers{
+			Root: deps.Sender.NibiruAddr.String(),
+		})
+
+		resp, err := deps.EvmKeeper.CreateFunToken(
+			sdk.WrapSDKContext(deps.Ctx()),
+			&evm.MsgCreateFunToken{
+				FromBankDenom: bankDenom,
+				Sender:        deps.Sender.NibiruAddr.String(),
+			},
+		)
+		s.Require().NoError(err)
+		s.Require().Equal(bankDenom, resp.FuntokenMapping.BankDenom)
+		s.Require().True(resp.FuntokenMapping.IsMadeFromCoin)
 	})
 }
 

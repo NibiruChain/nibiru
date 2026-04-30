@@ -313,7 +313,7 @@ func (s *WasmSuite) TestSadArgsCount() {
 
 func (s *WasmSuite) TestSadArgsExecute() {
 	methodName := precompile.WasmMethod_execute
-	contractAddr := testutil.AccAddress().String()
+	contractAddr := testutil.NewAccAddress().String()
 	wasmContractMsg := []byte(`
 	{ "create_denom": {
 		"subdenom": "ETH"

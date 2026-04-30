@@ -6,7 +6,6 @@ import (
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
@@ -117,20 +116,6 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.inflation.v1.Query/CirculatingSupply":  new(inflation.QueryCirculatingSupplyResponse),
 		"/nibiru.inflation.v1.Query/InflationRate":      new(inflation.QueryInflationRateResponse),
 		"/nibiru.inflation.v1.Query/Params":             new(inflation.QueryParamsResponse),
-
-		// nibiru oracle
-		"/nibiru.oracle.v1.Query/ExchangeRate":      new(oracle.QueryExchangeRateResponse),
-		"/nibiru.oracle.v1.Query/ExchangeRateTwap":  new(oracle.QueryExchangeRateResponse),
-		"/nibiru.oracle.v1.Query/ExchangeRates":     new(oracle.QueryExchangeRatesResponse),
-		"/nibiru.oracle.v1.Query/Actives":           new(oracle.QueryActivesResponse),
-		"/nibiru.oracle.v1.Query/VoteTargets":       new(oracle.QueryVoteTargetsResponse),
-		"/nibiru.oracle.v1.Query/FeederDelegation":  new(oracle.QueryFeederDelegationResponse),
-		"/nibiru.oracle.v1.Query/MissCounter":       new(oracle.QueryMissCounterResponse),
-		"/nibiru.oracle.v1.Query/AggregatePrevote":  new(oracle.QueryAggregatePrevoteResponse),
-		"/nibiru.oracle.v1.Query/AggregatePrevotes": new(oracle.QueryAggregatePrevotesResponse),
-		"/nibiru.oracle.v1.Query/AggregateVote":     new(oracle.QueryAggregateVoteResponse),
-		"/nibiru.oracle.v1.Query/AggregateVotes":    new(oracle.QueryAggregateVotesResponse),
-		"/nibiru.oracle.v1.Query/Params":            new(oracle.QueryParamsResponse),
 
 		// nibiru sudo
 		"/nibiru.sudo.v1.Query/QuerySudoers":       new(sudo.QuerySudoersResponse),

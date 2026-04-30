@@ -674,7 +674,7 @@ func (s *EIP712TestSuite) TestTypToEth() {
 }
 
 func (s *EIP712TestSuite) TestUnpackAny() {
-	_, addr := testutil.PrivKey()
+	_, addr := testutil.NewPrivKey()
 	cases := []struct {
 		wantWrappedType string
 		wantType        string

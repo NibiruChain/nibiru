@@ -1,17 +1,16 @@
+import { newClog } from "@uniquedivine/jiyuu"
 import { expect, test } from "bun:test" // eslint-disable-line import/no-unresolved
 import { parseUnits, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
 import { deployContractTestERC20 } from "./utils"
 import { addZeroGasContract } from "./zero_gas_chain_helpers"
-import { newClog } from "@uniquedivine/jiyuu"
 
 const { clog, cerr, clogCmd } = newClog(
   import.meta.url.includes("/")
     ? import.meta.url.split("/").pop()!
     : import.meta.url,
-);
-
+)
 
 test(
   "fresh account can call whitelisted ERC20 with zero gas",
@@ -41,13 +40,19 @@ test(
     expect(freshNibiBefore).toEqual(0n)
     const nonceBefore = await provider.getTransactionCount(fresh.address)
 
-    clog("4 - From the fresh account, send a zero-gas ERC20 transfer tx to the allowlisted contract.")
+    clog(
+      "4 - From the fresh account, send a zero-gas ERC20 transfer tx to the allowlisted contract.",
+    )
     const contractFromFresh = contract.connect(fresh)
     const amountToSend = parseUnits("10", 18)
-    const zeroGasTx = await contractFromFresh.transfer(recipient, amountToSend, {
-      maxFeePerGas: 0n,
-      maxPriorityFeePerGas: 0n,
-    })
+    const zeroGasTx = await contractFromFresh.transfer(
+      recipient,
+      amountToSend,
+      {
+        maxFeePerGas: 0n,
+        maxPriorityFeePerGas: 0n,
+      },
+    )
 
     clog("Tx should succeed and be directed to the zero-gas ERC20 contract.")
     const receipt = await zeroGasTx.wait(1, TX_WAIT_TIMEOUT)
@@ -71,4 +76,3 @@ test(
   },
   TEST_TIMEOUT * 2,
 )
-

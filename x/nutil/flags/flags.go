@@ -70,6 +70,16 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 		}
 		origHelpFn(c, args)
 	})
+	origArgs := cmd.Args
+	cmd.Args = func(c *cobra.Command, args []string) error {
+		if show, _ := c.Flags().GetBool(flagNameHelpVerbose); show {
+			return pflag.ErrHelp
+		}
+		if origArgs == nil {
+			return cobra.ArbitraryArgs(c, args)
+		}
+		return origArgs(c, args)
+	}
 
 	cmdFlagsSet.AddFlagSet(txFs)
 }

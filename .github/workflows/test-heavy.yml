@@ -23,7 +23,7 @@ jobs:
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             nibiru-go:
@@ -54,20 +54,25 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: "Run all heavy tests."
+      - name: "Build the nibid binary"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        run: just test-cover-heavy
+        run: just install
 
-      - name: "Merge coverage reports with gocovermerge"
+      - name: "Launch localnet"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
-          gocovmerge -o coverage.out \
-            coverage.group1.out coverage.group2.out coverage.group3.out
+          just localnet --no-build &
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          sleep 22
+
+      - name: "Run all tests."
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: just test-cover
       
       - name: "Upload coverage reports to Codecov"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         # Docs on usable "with" flags for codecov/codecov-action v5:
