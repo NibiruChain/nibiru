@@ -27,7 +27,7 @@ func TestStringValueEncoder(t *testing.T) {
 		{"hello"},
 		{"12345"},
 		{""},
-		{testutil.AccAddress().String()},
+		{testutil.NewAccAddress().String()},
 	}
 
 	for _, tc := range tests {

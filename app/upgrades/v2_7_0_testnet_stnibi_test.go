@@ -18,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
@@ -51,9 +50,9 @@ func (s *Suite2_7_0) TestTestnet() {
 		// some ERC20 holders of stNIBI to make sure the upgrade doesn't corrupt
 		// any EVM state
 		holders = []gethcommon.Address{
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 20
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 40
-			gethcommon.BytesToAddress(testutil.AccAddress().Bytes()), // bal 60
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 20
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 40
+			gethcommon.BytesToAddress(testutil.NewAccAddress().Bytes()), // bal 60
 		}
 	)
 
@@ -366,7 +365,7 @@ func (s *Suite2_7_0) TestTestnet() {
 			deps.Sender.EthAddr,
 			&funtoken.Erc20Addr.Address,
 			input,
-			evmstate.Erc20GasLimitQuery,
+			evm.Erc20GasLimitQuery,
 			evm.COMMIT_READONLY, /*commit*/
 			nil,
 		)

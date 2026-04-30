@@ -7,12 +7,13 @@ import (
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 func (s *BackendSuite) TestChainID() {
-	s.Require().Equal(appconst.ETH_CHAIN_ID_DEFAULT, s.backend.ChainID().ToInt().Int64())
+	chainID, err := s.cli.EvmRpc.Eth.ChainId()
+	s.Require().NoError(err)
+	s.Require().Equal(appconst.ETH_CHAIN_ID_DEFAULT, chainID.ToInt().Int64())
 }
 
 func (s *BackendSuite) TestChainConfig() {
@@ -34,19 +35,14 @@ func (s *BackendSuite) TestPendingTransactions() {
 	// Create pending tx: don't wait for next block
 	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
 	txHash := s.SendNibiViaEthTransfer(randomEthAddr, big.NewInt(123), false)
-	txs, err := s.backend.PendingTransactions()
+	txs, err := s.cli.EvmRpc.Eth.GetPendingTransactions()
 	s.Require().NoError(err)
 	s.Require().NotNil(txs)
 	s.Require().NotNil(txHash)
 	s.Require().Greater(len(txs), 0)
 	txFound := false
 	for _, tx := range txs {
-		msg, err := evm.UnwrapEthereumMsg(tx, txHash)
-		if err != nil {
-			// not ethereum tx
-			continue
-		}
-		if msg.Hash == txHash.String() {
+		if tx.Hash == txHash {
 			txFound = true
 		}
 	}
@@ -54,12 +50,12 @@ func (s *BackendSuite) TestPendingTransactions() {
 }
 
 func (s *BackendSuite) TestFeeHistory() {
-	currentBlock, err := s.backend.BlockNumber()
+	currentBlock, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err)
 	blockCount := 2 // blocks to search backwards from the current block
 	percentiles := []float64{50, 100}
 
-	res, err := s.backend.FeeHistory(
+	res, err := s.cli.EvmRpc.Eth.FeeHistory(
 		(gethmath.HexOrDecimal64)(blockCount),
 		gethrpc.BlockNumber(int64(currentBlock)),
 		percentiles,

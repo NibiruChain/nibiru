@@ -6,8 +6,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-
 	rpc "github.com/NibiruChain/nibiru/v2/eth/rpc"
 )
 
@@ -26,24 +24,24 @@ func (s *BackendSuite) TestGetCode() {
 		},
 		{
 			name:         "sad: not a contract address",
-			contractAddr: s.fundedAccEthAddr,
+			contractAddr: s.evmSenderEthAddr,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			codeFound:    false,
 		},
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			code, err := s.backend.GetCode(
+			code, err := s.cli.EvmRpc.Eth.GetCode(
 				tc.contractAddr,
 				rpc.BlockNumberOrHash{
 					BlockNumber: &tc.blockNumber,
 				},
 			)
+			s.Require().NoError(err)
 			if !tc.codeFound {
-				s.Require().Nil(code)
+				s.Require().Empty(code)
 				return
 			}
-			s.Require().NoError(err)
 			s.Require().NotNil(code)
 		})
 	}
@@ -61,15 +59,23 @@ func (s *BackendSuite) TestGetProof() {
 		{
 			name:         "happy: balance of the contract deployer",
 			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
-			address:      s.fundedAccEthAddr,
+			address:      s.evmSenderEthAddr,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
-			slot:         0,                        // _balances is the first slot in ERC20
-			wantValue:    "0xd3c21bcecceda1000000", // = 1000000 * (10**18), initial supply
+			slot:         0, // _balances is the first slot in ERC20
+			wantValue:    proofValueHex(s.accInfo.ExpectedERC20InitialSupplyWei),
 		},
 		{
-			name:         "sad: address which is not in contract storage",
-			contractAddr: s.fundedAccEthAddr,
-			address:      recipient,
+			name:         "happy: unused address has zero contract storage",
+			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
+			address:      s.accInfo.UnusedAddress,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
+			slot:         0,
+			wantValue:    "0x0",
+		},
+		{
+			name:         "sad: EOA has no contract storage",
+			contractAddr: s.evmSenderEthAddr,
+			address:      s.accInfo.UnusedAddress,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,
 			wantValue:    "0x0",
@@ -77,7 +83,7 @@ func (s *BackendSuite) TestGetProof() {
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			proof, err := s.backend.GetProof(
+			proof, err := s.cli.EvmRpc.Eth.GetProof(
 				tc.contractAddr,
 				[]string{generateStorageKey(tc.address, tc.slot)},
 				rpc.BlockNumberOrHash{
@@ -103,25 +109,33 @@ func (s *BackendSuite) TestGetStorageAt() {
 		{
 			name:         "happy: balance of the contract deployer",
 			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
-			address:      s.fundedAccEthAddr,
+			address:      s.evmSenderEthAddr,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			// _balances is the first slot in ERC20
 			slot: 0,
-			// = 1000000 * (10**18), initial supply
-			wantValue: "0x00000000000000000000000000000000000000000000d3c21bcecceda1000000",
+			// The TestERC20 constructor mints the initial supply to the deployer.
+			wantValue: storageWordHex(s.accInfo.ExpectedERC20InitialSupplyWei),
 		},
 		{
-			name:         "sad: address which is not in contract storage",
-			contractAddr: s.fundedAccEthAddr,
-			address:      recipient,
+			name:         "happy: unused address has zero contract storage",
+			contractAddr: *s.SuccessfulTxDeployContract().Receipt.ContractAddress,
+			address:      s.accInfo.UnusedAddress,
 			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
 			slot:         0,
-			wantValue:    "0x0000000000000000000000000000000000000000000000000000000000000000",
+			wantValue:    zeroStorageWordHex(),
+		},
+		{
+			name:         "sad: EOA has no contract storage",
+			contractAddr: s.evmSenderEthAddr,
+			address:      s.accInfo.UnusedAddress,
+			blockNumber:  *s.SuccessfulTxDeployContract().BlockNumberRpc,
+			slot:         0,
+			wantValue:    zeroStorageWordHex(),
 		},
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			value, err := s.backend.GetStorageAt(
+			value, err := s.cli.EvmRpc.Eth.GetStorageAt(
 				tc.contractAddr,
 				generateStorageKey(tc.address, tc.slot),
 				rpc.BlockNumberOrHash{
@@ -144,32 +158,32 @@ func (s *BackendSuite) TestGetBalance() {
 	}{
 		{
 			name:                "happy: funded account balance",
-			address:             s.fundedAccEthAddr,
+			address:             s.evmSenderEthAddr,
 			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: true,
 		},
 		{
-			name:                "happy: recipient balance at block 1",
-			address:             recipient,
-			blockNumber:         rpc.NewBlockNumber(big.NewInt(1)),
+			name:                "happy: recipient balance before transfer",
+			address:             s.accInfo.Recipient,
+			blockNumber:         s.accInfo.RecipientBalanceBeforeBlock,
 			wantPositiveBalance: false,
 		},
 		{
 			name:                "happy: recipient balance after transfer",
-			address:             recipient,
+			address:             s.accInfo.Recipient,
 			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: true,
 		},
 		{
 			name:                "sad: not existing account",
-			address:             evmtest.NewEthPrivAcc().EthAddr,
+			address:             s.accInfo.UnusedAddress,
 			blockNumber:         *s.SuccessfulTxTransfer().BlockNumberRpc,
 			wantPositiveBalance: false,
 		},
 	}
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			balance, err := s.backend.GetBalance(
+			balance, err := s.cli.EvmRpc.Eth.GetBalance(
 				tc.address,
 				rpc.BlockNumberOrHash{
 					BlockNumber: &tc.blockNumber,
@@ -178,12 +192,27 @@ func (s *BackendSuite) TestGetBalance() {
 			s.Require().NoError(err)
 			s.Require().NotNil(balance)
 			if tc.wantPositiveBalance {
-				s.Require().Greater(balance.ToInt().Int64(), int64(0))
+				s.Require().Positive(balance.ToInt().Sign())
 			} else {
-				s.Require().Equal(balance.ToInt().Int64(), int64(0))
+				s.Require().Zero(balance.ToInt().Sign())
 			}
 		})
 	}
+}
+
+func proofValueHex(value *big.Int) string {
+	if value.Sign() == 0 {
+		return "0x0"
+	}
+	return "0x" + value.Text(16)
+}
+
+func storageWordHex(value *big.Int) string {
+	return gethcommon.BytesToHash(value.Bytes()).Hex()
+}
+
+func zeroStorageWordHex() string {
+	return gethcommon.Hash{}.Hex()
 }
 
 // generateStorageKey produces the storage key from address and slot (order of the variable in solidity declaration)

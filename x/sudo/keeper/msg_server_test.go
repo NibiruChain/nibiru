@@ -36,11 +36,11 @@ func (s *Suite) TestGenesis() {
 			name: "happy genesis with contracts",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root: testutil.AccAddress().String(),
+					Root: testutil.NewAccAddress().String(),
 					Contracts: []string{
-						testutil.AccAddress().String(),
-						testutil.AccAddress().String(),
-						testutil.AccAddress().String(),
+						testutil.NewAccAddress().String(),
+						testutil.NewAccAddress().String(),
+						testutil.NewAccAddress().String(),
 					},
 				},
 			},
@@ -154,7 +154,7 @@ func (s *Suite) TestSudo_AddContracts() {
 	} {
 		s.Run(tc.name, func() {
 			_, _, _ = setup()
-			root := testutil.AccAddress().String()
+			root := testutil.NewAccAddress().String()
 			sudoers := keeper.Sudoers{
 				Root:      root,
 				Contracts: set.New(tc.start...),
@@ -176,9 +176,9 @@ func (s *Suite) TestMsgServer_ChangeRoot() {
 	_, err := app.SudoKeeper.Sudoers.Get(ctx)
 	s.Require().NoError(err)
 
-	actualRoot := testutil.AccAddress().String()
-	newRoot := testutil.AccAddress().String()
-	fakeRoot := testutil.AccAddress().String()
+	actualRoot := testutil.NewAccAddress().String()
+	newRoot := testutil.NewAccAddress().String()
+	fakeRoot := testutil.NewAccAddress().String()
 
 	app.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
 		Root: actualRoot,
@@ -494,7 +494,7 @@ func (s *Suite) TestEditZeroGasActors() {
 			Test: func() {
 				_, k, ctx := setup()
 				goCtx := sdk.WrapSDKContext(ctx)
-				notSudoer := testutil.AccAddress()
+				notSudoer := testutil.NewAccAddress()
 				_, err := k.EditZeroGasActors(goCtx, &sudo.MsgEditZeroGasActors{
 					Actors: sudo.ZeroGasActors{},
 					Sender: notSudoer.String(),

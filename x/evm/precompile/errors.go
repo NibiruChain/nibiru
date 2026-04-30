@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func assertNotReadonlyTx(readOnly bool, method *gethabi.Method) error {
@@ -24,6 +29,29 @@ func ErrPrecompileRun(err error, p vm.PrecompiledContract) error {
 		err = fmt.Errorf("precompile error: failed to run %s: %w", precompileType, err)
 	}
 	return err
+}
+
+var (
+	errorStringType, _  = gethabi.NewType("string", "", nil)
+	errorStringArgs     = gethabi.Arguments{{Type: errorStringType}}
+	errorStringSelector = selector4("Error(string)")
+)
+
+func selector4(signature string) []byte {
+	hash := crypto.Keccak256([]byte(signature))
+	return hash[:4]
+}
+
+func revertBzForErr(err error) []byte {
+	if err == nil {
+		return nil
+	}
+	packedReason, packErr := errorStringArgs.Pack(err.Error())
+	if packErr != nil {
+		return nil
+	}
+	revertBz := append(gethcommon.CopyBytes(errorStringSelector), packedReason...)
+	return revertBz
 }
 
 // Error short-hand for type validation
@@ -51,6 +79,18 @@ func assertContractQuery(contract *vm.Contract) error {
 		)
 	}
 
+	return nil
+}
+
+func assertNotVMCaller(
+	ctx sdk.Context,
+	method *gethabi.Method,
+) error {
+	if evm.IsVMSenderCtx(ctx) {
+		return fmt.Errorf("method %s is disabled during EVM-originated contract callback",
+			method.Name,
+		)
+	}
 	return nil
 }
 

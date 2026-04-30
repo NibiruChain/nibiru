@@ -6,189 +6,77 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
-func TestFeederDelegation(t *testing.T) {
+func TestMsgServer_DeprecatedTxHandlers(t *testing.T) {
 	input, msgServer := Setup(t)
 
-	exchangeRates := types.ExchangeRateTuples{
+	tests := []struct {
+		name string
+		call func() error
+	}{
 		{
-			Pair:         asset.NewPair(denoms.BTC, denoms.UUSD),
-			ExchangeRate: testExchangeRate,
+			name: "aggregate prevote deprecated",
+			call: func() error {
+				_, err := msgServer.AggregateExchangeRatePrevote(
+					sdk.WrapSDKContext(input.Ctx),
+					&types.MsgAggregateExchangeRatePrevote{
+						Hash:      "not-even-hex",
+						Feeder:    "invalid-feeder",
+						Validator: "invalid-validator",
+					},
+				)
+				return err
+			},
+		},
+		{
+			name: "aggregate vote deprecated",
+			call: func() error {
+				_, err := msgServer.AggregateExchangeRateVote(
+					sdk.WrapSDKContext(input.Ctx),
+					&types.MsgAggregateExchangeRateVote{
+						Salt:          "irrelevant",
+						ExchangeRates: "not-a-valid-tuple",
+						Feeder:        "invalid-feeder",
+						Validator:     "invalid-validator",
+					},
+				)
+				return err
+			},
+		},
+		{
+			name: "delegate feed consent deprecated",
+			call: func() error {
+				_, err := msgServer.DelegateFeedConsent(
+					sdk.WrapSDKContext(input.Ctx),
+					&types.MsgDelegateFeedConsent{
+						Operator: "invalid-operator",
+						Delegate: "invalid-delegate",
+					},
+				)
+				return err
+			},
+		},
+		{
+			name: "edit oracle params deprecated",
+			call: func() error {
+				_, err := msgServer.EditOracleParams(
+					sdk.WrapSDKContext(input.Ctx),
+					&types.MsgEditOracleParams{
+						Sender: "invalid-sender",
+						Params: &types.OracleParamsMsg{VotePeriod: 100},
+					},
+				)
+				return err
+			},
 		},
 	}
 
-	exchangeRateStr, err := exchangeRates.ToString()
-	require.NoError(t, err)
-	salt := "1"
-	hash := types.GetAggregateVoteHash(salt, exchangeRateStr, ValAddrs[0])
-
-	// Case 1: empty message
-	delegateFeedConsentMsg := types.MsgDelegateFeedConsent{}
-	_, err = msgServer.DelegateFeedConsent(sdk.WrapSDKContext(input.Ctx), &delegateFeedConsentMsg)
-	require.Error(t, err)
-
-	// Case 2: Normal Prevote - without delegation
-	prevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
-	require.NoError(t, err)
-
-	// Case 2.1: Normal Prevote - with delegation fails
-	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
-	require.Error(t, err)
-
-	// Case 2.2: Normal Vote - without delegation
-	voteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
-	require.NoError(t, err)
-
-	// Case 2.3: Normal Vote - with delegation fails
-	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
-	require.Error(t, err)
-
-	// Case 3: Normal MsgDelegateFeedConsent succeeds
-	msg := types.NewMsgDelegateFeedConsent(ValAddrs[0], Addrs[1])
-	_, err = msgServer.DelegateFeedConsent(sdk.WrapSDKContext(input.Ctx), msg)
-	require.NoError(t, err)
-
-	// Case 4.1: Normal Prevote - without delegation fails
-	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[2], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
-	require.Error(t, err)
-
-	// Case 4.2: Normal Prevote - with delegation succeeds
-	prevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), prevoteMsg)
-	require.NoError(t, err)
-
-	// Case 4.3: Normal Vote - without delegation fails
-	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[2], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
-	require.Error(t, err)
-
-	// Case 4.4: Normal Vote - with delegation succeeds
-	voteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRateStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx.WithBlockHeight(2)), voteMsg)
-	require.NoError(t, err)
-}
-
-func TestAggregatePrevoteVote(t *testing.T) {
-	input, msgServer := Setup(t)
-
-	salt := "1"
-	exchangeRates := types.ExchangeRateTuples{
-		{
-			Pair:         asset.PAIR_ATOM,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
-		},
-		{
-			Pair:         asset.PAIR_ETH,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
-		},
-
-		{
-			Pair:         asset.NewPair(denoms.BTC, denoms.UUSD),
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.27"),
-		},
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.call()
+			require.ErrorIs(t, err, types.ErrOracleDeprecated)
+		})
 	}
-
-	otherExchangeRate := types.ExchangeRateTuples{
-		{
-			Pair:         asset.PAIR_ATOM,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
-		},
-		{
-			Pair:         asset.PAIR_ETH,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
-		},
-
-		{
-			Pair:         asset.PAIR_ETH,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.27"),
-		},
-	}
-
-	unintendedExchangeRateStr := types.ExchangeRateTuples{
-		{
-			Pair:         asset.PAIR_ATOM,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("1000.23"),
-		},
-		{
-			Pair:         asset.PAIR_ETH,
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.29"),
-		},
-		{
-			Pair:         "BTC:CNY",
-			ExchangeRate: sdkmath.LegacyMustNewDecFromStr("0.27"),
-		},
-	}
-	exchangeRatesStr, err := exchangeRates.ToString()
-	require.NoError(t, err)
-
-	otherExchangeRateStr, err := otherExchangeRate.ToString()
-	require.NoError(t, err)
-
-	unintendedExchageRateStr, err := unintendedExchangeRateStr.ToString()
-	require.NoError(t, err)
-
-	hash := types.GetAggregateVoteHash(salt, exchangeRatesStr, ValAddrs[0])
-
-	aggregateExchangeRatePrevoteMsg := types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
-	require.NoError(t, err)
-
-	// Unauthorized feeder
-	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
-	require.Error(t, err)
-
-	// Invalid addr
-	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, sdk.AccAddress{}, ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
-	require.Error(t, err)
-
-	// Invalid validator addr
-	aggregateExchangeRatePrevoteMsg = types.NewMsgAggregateExchangeRatePrevote(hash, Addrs[0], sdk.ValAddress{})
-	_, err = msgServer.AggregateExchangeRatePrevote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRatePrevoteMsg)
-	require.Error(t, err)
-
-	// Invalid reveal period
-	aggregateExchangeRateVoteMsg := types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
-	// Invalid reveal period
-	input.Ctx = input.Ctx.WithBlockHeight(3)
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
-	// Other exchange rate with valid real period
-	input.Ctx = input.Ctx.WithBlockHeight(2)
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, otherExchangeRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
-	// Unauthorized feeder
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[1], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
-	// Unintended denom vote
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, unintendedExchageRateStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.Error(t, err)
-
-	// Valid exchange rate reveal submission
-	input.Ctx = input.Ctx.WithBlockHeight(2)
-	aggregateExchangeRateVoteMsg = types.NewMsgAggregateExchangeRateVote(salt, exchangeRatesStr, Addrs[0], ValAddrs[0])
-	_, err = msgServer.AggregateExchangeRateVote(sdk.WrapSDKContext(input.Ctx), aggregateExchangeRateVoteMsg)
-	require.NoError(t, err)
 }

@@ -35,6 +35,11 @@ const (
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
 	Erc20GasLimitExecute uint64 = 200_000
+
+	// Erc20GasLimitQuery is the shared cap for readonly ERC20 calls such as
+	// balanceOf, name, symbol, and decimals. Keep this small because only
+	// malicious contracts should need more.
+	Erc20GasLimitQuery uint64 = 100_000
 )
 
 type contextKey string
@@ -44,6 +49,7 @@ const (
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
 	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 	CtxKeyEvmEventTruncationMark   contextKey = "evm_event_truncation_mark"
+	CtxKeyVMSenderGuard            contextKey = "evm_vm_sender_guard"
 )
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
@@ -78,6 +84,14 @@ var (
 	CodeHashForNilAccount = gethcommon.Hash{}
 )
 
+func IsVMSenderCtx(ctx sdk.Context) bool {
+	isTrue, ok := ctx.Value(CtxKeyVMSenderGuard).(bool)
+	if ok && isTrue {
+		return true
+	}
+	return false
+}
+
 var PRECOMPILE_ADDRS []gethcommon.Address =
 // Using a set cleanly removes potential duplicates
 set.New[gethcommon.Address](
@@ -86,8 +100,6 @@ set.New[gethcommon.Address](
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
 		// Wasm 0x...802
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
-		// Oracle 0x...801
-		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
 		// P-256 verification precompile 0x...100
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
@@ -153,8 +165,14 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS        gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	EVM_MODULE_ADDRESS      gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+	// EVM_READONLY_ADDR is a dedicated low-privilege EVM caller identity for
+	// query-style external contract execution (for example ERC20 metadata and
+	// balance wrappers). It avoids borrowing x/evm module authority
+	// (EVM_MODULE_ADDRESS) for read paths while still allowing deterministic EVM
+	// execution with a stable caller address.
+	EVM_READONLY_ADDR         gethcommon.Address
 	FEE_COLLECTOR_ADDR        gethcommon.Address
 	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
@@ -162,6 +180,9 @@ var (
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	EVM_READONLY_ADDR = gethcommon.BytesToAddress(authtypes.NewModuleAddress(
+		fmt.Sprintf("%v_readonly_caller", ModuleName),
+	))
 	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }

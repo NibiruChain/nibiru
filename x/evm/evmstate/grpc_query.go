@@ -865,6 +865,24 @@ func (k *Keeper) TraceEthTxMsg(
 	deadlineCtx, cancel := context.WithTimeout(ctx.Context(), timeout)
 	defer cancel()
 
+	defer func() {
+		// A very small timeout can stop geth's native callTracer before it has
+		// initialized its root call frame. In that state, geth may panic while
+		// handling EVM callbacks or collecting the trace result. Surface the
+		// intended timeout error instead of leaking a low-level tracer panic.
+		if perr := recover(); perr != nil {
+			traceResult = nil
+			nextLogIndex = 0
+
+			if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {
+				err = grpcstatus.Error(grpccodes.DeadlineExceeded, "execution timeout")
+				return
+			}
+
+			err = grpcstatus.Errorf(grpccodes.Internal, "trace panic: %v", perr)
+		}
+	}()
+
 	go func() {
 		<-deadlineCtx.Done()
 		if errors.Is(deadlineCtx.Err(), context.DeadlineExceeded) {

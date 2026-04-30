@@ -12,10 +12,19 @@ import (
 
 var _ suite.SetupAllSuite = (*LogRoutingSuite)(nil)
 
+// LogRoutingSuite routes standard library log output through the active
+// testify suite's testing.T, so log.Print* calls show up with `go test -v`.
+//
+// Embed this suite in tests that need routed log output. If the embedding suite
+// defines its own SetupSuite, testify will call that method instead of the
+// embedded one, so the suite must call s.LogRoutingSuite.SetupSuite() itself.
 type LogRoutingSuite struct {
 	suite.Suite
 }
 
+// SetupSuite configures the global standard library logger to write through
+// the suite. Call this explicitly from user-defined SetupSuite methods on
+// suites that embed LogRoutingSuite.
 func (s *LogRoutingSuite) SetupSuite() {
 	log.SetFlags(0)
 	log.SetPrefix("")
@@ -23,7 +32,7 @@ func (s *LogRoutingSuite) SetupSuite() {
 }
 
 func (s *LogRoutingSuite) Write(p []byte) (int, error) {
-	s.T().Helper() // donΓÇÖt attribute to this frame in test output
+	s.T().Helper() // don't attribute to this frame in test output
 
 	// Find first frame outside log/* and this adapter.
 	file, line := findCaller(funcNameSkips(
@@ -32,7 +41,7 @@ func (s *LogRoutingSuite) Write(p []byte) (int, error) {
 		// "yourpkg.(*Suite)", // this adapter's Write frame
 	)...)
 
-	// Trim trailing newline so Logf doesnΓÇÖt add an extra blank line.
+	// Trim trailing newline so Logf doesn't add an extra blank line.
 	msg := string(bytes.TrimRight(p, "\n"))
 
 	if file != "" {

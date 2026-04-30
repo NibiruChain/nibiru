@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 		s.Len(resp.Feeshare, len(feeShares))
 	})
 	s.Run("from random", func() {
-		deployer := testutil.AccAddress().String()
+		deployer := testutil.NewAccAddress().String()
 		req := &devgastypes.QueryFeeSharesRequest{
 			Deployer: deployer,
 		}

@@ -53,7 +53,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
 			traceConfig := traceConfigCallTracer()
-			res, err := s.backend.TraceTransaction(
+			res, err := s.cli.EvmRpc.Debug.TraceTransaction(
 				tc.txHash,
 				traceConfig,
 			)
@@ -63,18 +63,7 @@ func (s *BackendSuite) TestTraceTransaction() {
 			}
 			s.Require().NoErrorf(err, "traceResult: %s", res)
 			s.Require().NotNil(res)
-			AssertTraceCall(s, res)
-
-			var res2 json.RawMessage
-			err = s.node.EvmRpcClient.Client().Call(
-				&res2,
-				"debug_traceTransaction",
-				tc.txHash,
-				traceConfig,
-			)
-			s.NoError(err)
-			s.NotEmpty(res2)
-			AssertTraceCall(s, res2)
+			AssertTraceCall(s, mustTraceRawMessage(s, res))
 		})
 	}
 }
@@ -85,57 +74,54 @@ func (s *BackendSuite) TestTraceBlock() {
 	)
 	s.Require().NoError(err)
 
-	blockNumberWithoutTx := rpc.NewBlockNumber(big.NewInt(1))
 	tmBlockWithoutTx, err := s.backend.TendermintBlockByNumber(1)
 	s.Require().NoError(err)
 
 	testCases := []struct {
-		name        string
-		blockNumber rpc.BlockNumber
-		tmBlock     *tmrpctypes.ResultBlock
-		txCount     int
-		traceConfig *evm.TraceConfig
-		wantErr     bool
+		name           string
+		tmBlock        *tmrpctypes.ResultBlock
+		txCount        int
+		traceConfig    *evm.TraceConfig
+		mayTimeoutRace bool
 	}{
 		{
 			name:        "happy: TraceBlock, no txs, tracer: default",
-			blockNumber: blockNumberWithoutTx,
 			tmBlock:     tmBlockWithoutTx,
 			txCount:     0,
 			traceConfig: traceConfigDefaultTracer(),
 		},
 		{
 			name:        "happy: TraceBlock, no txs, tracer: callTracer",
-			blockNumber: blockNumberWithoutTx,
 			tmBlock:     tmBlockWithoutTx,
 			txCount:     0,
 			traceConfig: traceConfigCallTracer(),
 		},
 		{
 			name:        "happy: TraceBlock, transfer tx, tracer: callTracer",
-			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
 			traceConfig: traceConfigCallTracer(),
 		},
 		{
 			name:        "happy: TraceBlock, transfer tx, tracer: default",
-			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
 			tmBlock:     tmBlockWithTx,
 			txCount:     1,
 			traceConfig: traceConfigDefaultTracer(),
 		},
 		{
-			name:        "sad: TraceBlock with ultra small timeout, causing tracer to stop too early",
-			blockNumber: *s.SuccessfulTxTransfer().BlockNumberRpc,
-			tmBlock:     tmBlockWithTx,
-			txCount:     1,
+			name:    "sad: TraceBlock with ultra small timeout, causing tracer to stop too early",
+			tmBlock: tmBlockWithTx,
+			txCount: 1,
 			traceConfig: func() *evm.TraceConfig {
 				cfg := traceConfigCallTracer()
 				cfg.Timeout = "1ns" // Force immediate timeout
 				return cfg
 			}(),
-			wantErr: true,
+			// TODO: Add a deterministic unit test around TraceEthTxMsg timeout
+			// behavior by injecting a controllable tracer/executor instead of
+			// relying on scheduler timing in this integration test.
+			// Issue: https://github.com/NibiruChain/nibiru/issues/2561
+			mayTimeoutRace: true,
 		},
 	}
 
@@ -143,52 +129,50 @@ func (s *BackendSuite) TestTraceBlock() {
 		s.Run(tc.name, func() {
 			resRes := [][]*evm.TxTraceResult{}
 			{
-				txTraceResults, err := s.backend.TraceBlock(
-					tc.blockNumber,
-					tc.traceConfig,
-					tc.tmBlock,
-				)
-				if tc.wantErr {
-					s.Require().Error(err, tc.wantErr)
-					return
-				}
-				s.Require().NoError(err)
-				resRes = append(resRes, txTraceResults)
-			}
-			{
-				var resJson json.RawMessage
-				err = s.node.EvmRpcClient.Client().Call(
-					&resJson,
-					"debug_traceBlockByNumber",
+				txTraceResults, err := s.cli.EvmRpc.Debug.TraceBlockByNumber(
 					rpc.BlockNumber(tc.tmBlock.Block.Height),
 					tc.traceConfig,
 				)
-				if tc.wantErr {
-					s.Require().Error(err)
-					return
+				if tc.mayTimeoutRace {
+					s.T().Logf(
+						"[trace-timeout-debug] block=%d txs=%d timeout=%q tracer=%q onlyTopCall=%t",
+						tc.tmBlock.Block.Height,
+						len(tc.tmBlock.Block.Txs),
+						tc.traceConfig.Timeout,
+						tc.traceConfig.Tracer,
+						tc.traceConfig.TracerConfig.OnlyTopCall,
+					)
+					// This case is timing-sensitive: with a tiny timeout and a fast tx,
+					// tracing may either timeout or finish before the timeout goroutine
+					// stops the tracer.
+					if err != nil {
+						s.T().Logf("[trace-timeout-debug] TraceBlockByNumber error type=%T", err)
+						s.T().Logf("[trace-timeout-debug] TraceBlockByNumber error=%q", err.Error())
+						s.Require().ErrorContains(err, "execution timeout")
+						return
+					}
+					s.T().Logf(
+						"[trace-timeout-debug] trace completed before timeout; results=%d firstResultType=%T",
+						len(txTraceResults),
+						func() any {
+							if len(txTraceResults) == 0 {
+								return nil
+							}
+							return txTraceResults[0].Result
+						}(),
+					)
 				}
 				s.Require().NoError(err)
-
-				var txTraceResults []*evm.TxTraceResult
-				err = json.Unmarshal(resJson, &txTraceResults)
-				s.Require().NoErrorf(err, "resp: %s", resJson)
 				resRes = append(resRes, txTraceResults)
 			}
-			{
-				var resJson json.RawMessage
-				err = s.node.EvmRpcClient.Client().Call(
-					&resJson,
-					"debug_traceBlockByHash",
+			if !tc.mayTimeoutRace {
+				txTraceResults, err := s.cli.EvmRpc.Debug.TraceBlockByHash(
 					gethcommon.BytesToHash(
 						tc.tmBlock.Block.Hash().Bytes(),
 					),
 					tc.traceConfig,
 				)
 				s.NoError(err)
-
-				var txTraceResults []*evm.TxTraceResult
-				err = json.Unmarshal(resJson, &txTraceResults)
-				s.Require().NoErrorf(err, "resp: %s", resJson)
 				resRes = append(resRes, txTraceResults)
 			}
 			for _, txTraceResults := range resRes {
@@ -211,16 +195,19 @@ func (s *BackendSuite) TestTraceBlock() {
 }
 
 func (s *BackendSuite) TestTraceCall() {
-	block, err := s.backend.BlockNumber()
+	block, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err)
-	nonce, err := s.backend.GetTransactionCount(s.fundedAccEthAddr, rpc.BlockNumber(block))
+	blockNumberForNonce := rpc.BlockNumber(block)
+	nonce, err := s.cli.EvmRpc.Eth.GetTransactionCount(s.evmSenderEthAddr, rpc.BlockNumberOrHash{
+		BlockNumber: &blockNumberForNonce,
+	})
 	s.NoError(err)
 	gas := hexutil.Uint64(evm.NativeToWei(big.NewInt(int64(params.TxGas))).Uint64())
 	amountToSendHex := hexutil.Big(*amountToSend)
 
 	txArgs := evm.JsonTxArgs{
 		Nonce: nonce,
-		From:  &s.fundedAccEthAddr,
+		From:  &s.evmSenderEthAddr,
 		To:    &recipient,
 		Value: &amountToSendHex,
 		Gas:   &gas,
@@ -228,13 +215,10 @@ func (s *BackendSuite) TestTraceCall() {
 	s.Require().NoError(err)
 
 	traceConfig := traceConfigDefaultTracer()
-	var res json.RawMessage
 	blockNumber := rpc.NewBlockNumber(
 		new(big.Int).SetUint64(uint64(block)),
 	)
-	err = s.node.EvmRpcClient.Client().Call(
-		&res,
-		"debug_traceCall",
+	res, err := s.cli.EvmRpc.Debug.TraceCall(
 		txArgs,
 		rpc.BlockNumberOrHash{
 			BlockNumber: &blockNumber,
@@ -243,7 +227,20 @@ func (s *BackendSuite) TestTraceCall() {
 	)
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	AssertTraceCall(s, res)
+	AssertTraceCall(s, mustTraceRawMessage(s, res))
+}
+
+func mustTraceRawMessage(s *BackendSuite, traceResult any) json.RawMessage {
+	switch typed := traceResult.(type) {
+	case json.RawMessage:
+		return typed
+	case []byte:
+		return json.RawMessage(typed)
+	default:
+		bz, err := json.Marshal(typed)
+		s.Require().NoError(err)
+		return bz
+	}
 }
 
 func AssertTraceCall(
@@ -255,7 +252,7 @@ func AssertTraceCall(
 	s.Require().NoErrorf(err, "error unmarshaling traceResult: traceResult %s", traceResult)
 
 	s.Require().Equal("CALL", trace["type"])
-	s.Require().Equal(strings.ToLower(s.fundedAccEthAddr.Hex()), trace["from"])
+	s.Require().Equal(strings.ToLower(s.evmSenderEthAddr.Hex()), trace["from"])
 	s.Require().Equal(strings.ToLower(recipient.Hex()), trace["to"])
 	s.Require().Equal("0x"+gethcommon.Bytes2Hex(amountToSend.Bytes()), trace["value"])
 }

@@ -35,13 +35,18 @@ export async function registerPasskey(opts: {
     authenticatorSelection: { userVerification: "required" },
   }
 
-  const cred = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential
+  const cred = (await navigator.credentials.create({
+    publicKey,
+  })) as PublicKeyCredential
   if (!cred) throw new Error("passkey registration failed")
 
-  const attObj = decodeFirst((cred.response as AuthenticatorAttestationResponse).attestationObject) as any
+  const attObj = decodeFirst(
+    (cred.response as AuthenticatorAttestationResponse).attestationObject,
+  ) as any
   const authData: ArrayBuffer = attObj.authData
   const parsed = parseAuthData(new Uint8Array(authData))
-  if (!parsed?.credentialPublicKey) throw new Error("no credentialPublicKey found")
+  if (!parsed?.credentialPublicKey)
+    throw new Error("no credentialPublicKey found")
 
   const { x, y } = extractP256(parsed.credentialPublicKey)
   return {
@@ -77,12 +82,16 @@ function parseAuthData(buf: Uint8Array) {
   return { aaguid, credId, credentialPublicKey }
 }
 
-function extractP256(pubKey: Map<number, any>): { x: Uint8Array; y: Uint8Array } {
+function extractP256(pubKey: Map<number, any>): {
+  x: Uint8Array
+  y: Uint8Array
+} {
   // COSE keys: 1=kty(EC2), -1=crv(1=P-256), -2=x, -3=y
   const crv = pubKey.get(-1)
   if (crv !== 1) throw new Error("unexpected curve (want P-256)")
   const x = pubKey.get(-2)
   const y = pubKey.get(-3)
-  if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array)) throw new Error("invalid pubkey coords")
+  if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array))
+    throw new Error("invalid pubkey coords")
   return { x, y }
 }

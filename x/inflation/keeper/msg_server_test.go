@@ -20,7 +20,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	require.False(t, params.InflationEnabled)
 
 	msg := types.MsgToggleInflation{
-		Sender: testutil.AccAddress().String(),
+		Sender: testutil.NewAccAddress().String(),
 		Enable: false,
 	}
 	_, err := msgServer.ToggleInflation(ctx, &msg)
@@ -50,7 +50,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 
 	newEpochPerPeriod := sdkmath.NewInt(42)
 	msg := types.MsgEditInflationParams{
-		Sender:          testutil.AccAddress().String(),
+		Sender:          testutil.NewAccAddress().String(),
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}
 	_, err := msgServer.EditInflationParams(ctx, &msg)

@@ -2,64 +2,76 @@ import { describe, expect, it } from "bun:test"
 import { ethers, Log, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
-import { account, TEST_TIMEOUT } from "./setup"
+import { account, TEST_TIMEOUT } from "./testdeps"
 import { deployContractEventsEmitter } from "./utils"
 
 describe("Transaction Receipt Tests", () => {
   let recipient = ethers.Wallet.createRandom().address
 
-  it("simple transfer receipt", async () => {
-    const value = ethers.parseEther("0.0001")
-    const tx = await account.sendTransaction({
-      to: recipient,
-      value,
-    })
-    const receipt = await tx.wait()
+  it(
+    "simple transfer receipt",
+    async () => {
+      const value = ethers.parseEther("0.0001")
+      const tx = await account.sendTransaction({
+        to: recipient,
+        value,
+      })
+      const receipt = await tx.wait()
 
-    assertBaseReceiptFields(receipt)
-    expect(receipt.to).toEqual(recipient)
-    expect(receipt.logs).toHaveLength(0) // ETH transfers have no logs
-  }, TEST_TIMEOUT)
+      assertBaseReceiptFields(receipt)
+      expect(receipt.to).toEqual(recipient)
+      expect(receipt.logs).toHaveLength(0) // ETH transfers have no logs
+    },
+    TEST_TIMEOUT,
+  )
 
-  it("contract deployment receipt", async () => {
-    const factory = new TestERC20__factory(account)
-    const deployTx = await factory.deploy()
-    const receipt = await deployTx.deploymentTransaction().wait()
+  it(
+    "contract deployment receipt",
+    async () => {
+      const factory = new TestERC20__factory(account)
+      const deployTx = await factory.deploy()
+      const receipt = await deployTx.deploymentTransaction().wait()
 
-    assertBaseReceiptFields(receipt)
-    expect(receipt.to).toBeNull() // Contract creation has no 'to' address
-    expect(receipt.contractAddress).toBeDefined()
+      assertBaseReceiptFields(receipt)
+      expect(receipt.to).toBeNull() // Contract creation has no 'to' address
+      expect(receipt.contractAddress).toBeDefined()
 
-    // Verify the deployed contract address is valid
-    const code = await account.provider.getCode(receipt.contractAddress!)
-    expect(code).not.toEqual("0x")
-  }, TEST_TIMEOUT)
+      // Verify the deployed contract address is valid
+      const code = await account.provider.getCode(receipt.contractAddress!)
+      expect(code).not.toEqual("0x")
+    },
+    TEST_TIMEOUT,
+  )
 
-  it("receipt with logs / events", async () => {
-    const contract = await deployContractEventsEmitter()
-    const expectedValue = 123n
+  it(
+    "receipt with logs / events",
+    async () => {
+      const contract = await deployContractEventsEmitter()
+      const expectedValue = 123n
 
-    const tx = await contract.emitEvent(expectedValue)
-    const receipt = await tx.wait()
+      const tx = await contract.emitEvent(expectedValue)
+      const receipt = await tx.wait()
 
-    assertBaseReceiptFields(receipt)
-    expect(receipt.to).toEqual(contract.target.toString())
+      assertBaseReceiptFields(receipt)
+      expect(receipt.to).toEqual(contract.target.toString())
 
-    // Event specific checks
-    expect(receipt.logs.length).toEqual(1)
-    const event = receipt.logs[0]
-    assertEventLogFields(event, contract.target.toString())
+      // Event specific checks
+      expect(receipt.logs.length).toEqual(1)
+      const event = receipt.logs[0]
+      assertEventLogFields(event, contract.target.toString())
 
-    // Event data checks
-    const eventSignature = "TestEvent(address,uint256)"
-    expect(event.topics[0]).toEqual(ethers.id(eventSignature))
-    expect(event.topics.length).toEqual(2) // topic[0] is hash, topic[1] is indexed param
-    expect(event["args"].sender).toEqual(account.address)
-    expect(event["args"].value).toEqual(expectedValue)
+      // Event data checks
+      const eventSignature = "TestEvent(address,uint256)"
+      expect(event.topics[0]).toEqual(ethers.id(eventSignature))
+      expect(event.topics.length).toEqual(2) // topic[0] is hash, topic[1] is indexed param
+      expect(event["args"].sender).toEqual(account.address)
+      expect(event["args"].value).toEqual(expectedValue)
 
-    // Verify indexed parameter encoding
-    expect(event.topics[1]).toEqual(ethers.zeroPadValue(account.address, 32)) // indexed address param
-  }, TEST_TIMEOUT)
+      // Verify indexed parameter encoding
+      expect(event.topics[1]).toEqual(ethers.zeroPadValue(account.address, 32)) // indexed address param
+    },
+    TEST_TIMEOUT,
+  )
 })
 
 function assertBaseReceiptFields(receipt: TransactionReceipt) {

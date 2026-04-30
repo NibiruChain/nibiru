@@ -8,7 +8,7 @@ jobs:
   pr-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: seferov/pr-lint-action@v1.2.0
+      - uses: seferov/pr-lint-action@v2.0.0
         with:
           # V2: Includes Nibiru-specific qualifiers and allows for
           title-regex: '^(evm|sai-trading|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-\.\/]+\))?(!)?: ([\w ])+([\s\S]*)'

@@ -12,7 +12,7 @@
 import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
+import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
 import { deployContractSendNibi } from "./utils"
 
 async function testSendNibi(
