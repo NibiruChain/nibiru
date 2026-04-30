@@ -17,7 +17,7 @@ jobs:
 
       - name: "Check for EVM-related changes"
         id: check_evm_changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             evm-changes:
@@ -98,7 +98,7 @@ jobs:
 
       - name: "Check for changes"
         id: check_changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             check_changes:
