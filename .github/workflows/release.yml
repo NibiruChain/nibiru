@@ -170,7 +170,7 @@ jobs:
           tags: ${{ needs.version.outputs.value }}
 
       - name: Build and push image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           target: release
           context: .
@@ -232,7 +232,7 @@ jobs:
           tags: ${{ needs.version.outputs.value }}
 
       - name: Build and push image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           target: release
           context: .
@@ -284,7 +284,7 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: ${{ steps.changes.outputs.changes }}
           files: |

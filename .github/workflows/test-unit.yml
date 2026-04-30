@@ -16,7 +16,7 @@ jobs:
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             nibiru-go:
@@ -63,7 +63,7 @@ jobs:
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             nibiru-go:
@@ -112,7 +112,7 @@ jobs:
 
       - name: "Check for Go-related changes"
         id: check_nibiru_go
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             nibiru-go:
@@ -161,7 +161,7 @@ jobs:
 
       - name: "Check for Go-related changes"
         id: check_changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             check_changes:
