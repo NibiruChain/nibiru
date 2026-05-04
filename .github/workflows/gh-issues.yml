@@ -17,7 +17,7 @@ jobs:
     name: "Add GH ticket to project"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v1.0.2
+      - uses: actions/add-to-project@v2.0.0
         with:
           project-url: https://github.com/orgs/NibiruChain/projects/8
           github-token: ${{ secrets.NIBIRU_PM }}
