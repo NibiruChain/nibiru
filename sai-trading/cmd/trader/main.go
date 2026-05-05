@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
@@ -52,14 +51,7 @@ to interact with Sai Perps contracts.`,
 	rootCmd.RunE = newOpenCmd().RunE
 
 	if err := rootCmd.Execute(); err != nil {
-		errMsg := err.Error()
-		skipPrint := false
-		if strings.Contains(errMsg, "balance is zero") || strings.Contains(errMsg, "insufficient balance") {
-			skipPrint = true
-		}
-		if !skipPrint {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		}
+		// Let Cobra handle error formatting/output.
 		os.Exit(1)
 	}
 }

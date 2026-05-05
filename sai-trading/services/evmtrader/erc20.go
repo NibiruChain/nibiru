@@ -21,6 +21,11 @@ func getWasmPrecompileABI() abi.ABI {
 	return *embeds.SmartContract_Wasm.ABI
 }
 
+// getFunTokenPrecompileABI returns the FunToken precompile ABI.
+func getFunTokenPrecompileABI() abi.ABI {
+	return *embeds.SmartContract_FunToken.ABI
+}
+
 var (
 	perpVaultEvmInterfaceABI     abi.ABI
 	perpVaultEvmInterfaceABIOnce sync.Once

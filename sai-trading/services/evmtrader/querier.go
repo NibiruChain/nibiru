@@ -393,6 +393,85 @@ func (t *EVMTrader) queryERC20Balance(ctx context.Context, erc20ABI abi.ABI, tok
 	return new(big.Int).SetBytes(out), nil
 }
 
+// queryERC20AddressForBankDenom queries the FunToken precompile to resolve a bank denom
+// to its mapped ERC20 address.
+func (t *EVMTrader) queryERC20AddressForBankDenom(ctx context.Context, bankDenom string) (common.Address, error) {
+	funTokenABI := getFunTokenPrecompileABI()
+	funTokenPrecompileAddr := precompile.PrecompileAddr_FunToken
+
+	data, err := funTokenABI.Pack("getErc20Address", bankDenom)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("pack getErc20Address: %w", err)
+	}
+
+	msg := ethereum.CallMsg{
+		From: t.accountAddr,
+		To:   &funTokenPrecompileAddr,
+		Data: data,
+	}
+	result, err := t.client.CallContract(ctx, msg, nil)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("call getErc20Address: %w", err)
+	}
+
+	unpacked, err := funTokenABI.Unpack("getErc20Address", result)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("unpack getErc20Address: %w", err)
+	}
+	if len(unpacked) == 0 {
+		return common.Address{}, fmt.Errorf("empty getErc20Address result")
+	}
+
+	addr, ok := unpacked[0].(common.Address)
+	if !ok {
+		return common.Address{}, fmt.Errorf("invalid getErc20Address type: %T", unpacked[0])
+	}
+	if addr == (common.Address{}) {
+		return common.Address{}, fmt.Errorf("no ERC20 mapping for bank denom %s", bankDenom)
+	}
+	return addr, nil
+}
+
+// resolveCollateralFunding determines how much of the required collateral can be funded
+// from bank balance and how much must be bridged from ERC20 using useERC20Amount.
+func (t *EVMTrader) resolveCollateralFunding(ctx context.Context, collateralIndex uint64, requiredAmt *big.Int) (denom string, bankBalance *big.Int, erc20Balance *big.Int, useERC20Amount *big.Int, err error) {
+	denom, err = t.queryCollateralDenom(ctx, collateralIndex)
+	if err != nil {
+		return "", nil, nil, nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
+	}
+
+	bankBalance, err = t.queryCosmosBalance(ctx, t.ethAddrBech32, denom)
+	if err != nil {
+		return "", nil, nil, nil, fmt.Errorf("query Cosmos balance for %s: %w", denom, err)
+	}
+
+	useERC20Amount = big.NewInt(0)
+	erc20Balance = big.NewInt(0)
+	if bankBalance.Cmp(requiredAmt) >= 0 {
+		return denom, bankBalance, erc20Balance, useERC20Amount, nil
+	}
+
+	erc20Addr, err := t.queryERC20AddressForBankDenom(ctx, denom)
+	if err != nil {
+		return "", nil, nil, nil, fmt.Errorf("resolve ERC20 mapping for %s: %w", denom, err)
+	}
+
+	erc20ABI := getERC20ABI()
+	erc20Balance, err = t.queryERC20Balance(ctx, erc20ABI, erc20Addr, t.accountAddr)
+	if err != nil {
+		return "", nil, nil, nil, fmt.Errorf("query ERC20 balance for %s: %w", erc20Addr.Hex(), err)
+	}
+
+	totalAvailable := new(big.Int).Add(new(big.Int).Set(bankBalance), erc20Balance)
+	if totalAvailable.Cmp(requiredAmt) < 0 {
+		return "", nil, nil, nil, fmt.Errorf("insufficient collateral: have bank=%s erc20=%s total=%s, need=%s (denom: %s)",
+			bankBalance.String(), erc20Balance.String(), totalAvailable.String(), requiredAmt.String(), denom)
+	}
+
+	useERC20Amount = new(big.Int).Sub(requiredAmt, bankBalance)
+	return denom, bankBalance, erc20Balance, useERC20Amount, nil
+}
+
 // QueryCollaterals queries the perp contract for all available collaterals
 func (t *EVMTrader) QueryCollaterals(ctx context.Context) ([]CollateralInfo, error) {
 	// Try list_collaterals query
