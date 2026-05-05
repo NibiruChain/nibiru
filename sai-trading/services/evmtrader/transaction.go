@@ -163,16 +163,19 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 }
 
 // sendOpenTradeTransaction sends the open_trade transaction via the PerpVaultEvmInterface contract.
-func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64) (*sdk.TxResponse, error) {
+func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64, useERC20Amount *big.Int) (*sdk.TxResponse, error) {
 	interfaceABI := getPerpVaultEvmInterfaceABI()
 	interfaceAddr := common.HexToAddress(t.addrs.EvmInterfaceAddress)
+	if useERC20Amount == nil {
+		useERC20Amount = big.NewInt(0)
+	}
 
 	data, err := interfaceABI.Pack(
 		"openTrade",
 		msgBytes,
 		new(big.Int).SetUint64(collateralIndex),
 		collateralAmt,
-		big.NewInt(0),
+		useERC20Amount,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("pack openTrade: %w", err)

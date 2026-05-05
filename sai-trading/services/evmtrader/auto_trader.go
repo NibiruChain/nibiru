@@ -276,47 +276,25 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 					collateralIndex = *market.QuoteToken
 				}
 
-				collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
-				if err != nil {
-					t.logError("Failed to query collateral denom",
-						"collateral_index", collateralIndex,
-						"error", err.Error(),
-					)
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
-				}
-
-				balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom)
-				if err != nil {
-					t.logError("Failed to query balance",
-						"denom", collateralDenom,
-						"error", err.Error(),
-					)
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
-				}
-
-				if balance.Cmp(big.NewInt(0)) == 0 {
-					t.logError("Balance is zero, stopping automated trading",
-						"balance", balance.String(),
-						"collateral_denom", collateralDenom,
-						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, collateralDenom),
-					)
-					return fmt.Errorf("balance is zero for collateral denom %s, fund this address %s", collateralDenom, t.ethAddrBech32)
-				}
-
 				collateralAmount := randomUint64(cfg.MinTradeSize, cfg.MaxTradeSize)
 				collateralAmtBig := new(big.Int).SetUint64(collateralAmount)
-
-				if balance.Cmp(collateralAmtBig) < 0 {
-					t.logError("Insufficient balance",
-						"balance", balance.String(),
+				collateralDenom, bankBalance, erc20Balance, useERC20Amount, err := t.resolveCollateralFunding(ctx, collateralIndex, collateralAmtBig)
+				if err != nil {
+					t.logError("Insufficient collateral",
 						"required", collateralAmtBig.String(),
-						"collateral_denom", collateralDenom,
-						"fund_this_address", fmt.Sprintf("%s with %s", t.ethAddrBech32, collateralDenom),
+						"collateral_index", collateralIndex,
+						"error", err.Error(),
+						"fund_this_address", fmt.Sprintf("%s with collateral index %d", t.ethAddrBech32, collateralIndex),
 					)
-					time.Sleep(time.Duration(cfg.LoopDelaySeconds) * time.Second)
-					continue
+					return fmt.Errorf("insufficient collateral for collateral index %d: %w", collateralIndex, err)
+				}
+				if useERC20Amount.Sign() > 0 {
+					t.logInfo("Using ERC20 fallback for this trade",
+						"collateral_denom", collateralDenom,
+						"bank_balance", bankBalance.String(),
+						"erc20_balance", erc20Balance.String(),
+						"use_erc20_amount", useERC20Amount.String(),
+					)
 				}
 
 				tradeSize := collateralAmount * leverage

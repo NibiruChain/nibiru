@@ -209,19 +209,17 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 		return nil
 	}
 
-	collateralDenom, err := t.queryCollateralDenom(ctx, params.CollateralIndex)
+	collateralDenom, bankBalance, erc20Balance, useERC20Amount, err := t.resolveCollateralFunding(ctx, params.CollateralIndex, params.CollateralAmt)
 	if err != nil {
-		return fmt.Errorf("query collateral denom for index %d: %w", params.CollateralIndex, err)
+		return err
 	}
-
-	balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom)
-	if err != nil {
-		return fmt.Errorf("query Cosmos balance for %s: %w", collateralDenom, err)
-	}
-
-	if balance.Cmp(params.CollateralAmt) < 0 {
-		return fmt.Errorf("insufficient balance: have %s, need %s (denom: %s)",
-			balance.String(), params.CollateralAmt.String(), collateralDenom)
+	if useERC20Amount.Sign() > 0 {
+		t.logInfo("Using ERC20 fallback for trade collateral",
+			"collateral_denom", collateralDenom,
+			"bank_balance", bankBalance.String(),
+			"erc20_balance", erc20Balance.String(),
+			"use_erc20_amount", useERC20Amount.String(),
+		)
 	}
 
 	// Execute the trade
@@ -242,6 +240,19 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		return fmt.Errorf("market %d is not fully configured: missing pair_depths", params.MarketIndex)
 	}
 
+	collateralDenom, bankBalance, erc20Balance, useERC20Amount, err := t.resolveCollateralFunding(ctx, params.CollateralIndex, params.CollateralAmt)
+	if err != nil {
+		return err
+	}
+	if useERC20Amount.Sign() > 0 {
+		t.logInfo("Bridging ERC20 collateral before open_trade",
+			"collateral_denom", collateralDenom,
+			"bank_balance", bankBalance.String(),
+			"erc20_balance", erc20Balance.String(),
+			"use_erc20_amount", useERC20Amount.String(),
+		)
+	}
+
 	// Build open_trade message
 	msgBytes, err := t.buildOpenTradeMessage(params)
 	if err != nil {
@@ -249,7 +260,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	}
 
 	// Send transaction
-	txResp, err := t.sendOpenTradeTransaction(ctx, chainID, msgBytes, params.CollateralAmt, params.CollateralIndex)
+	txResp, err := t.sendOpenTradeTransaction(ctx, chainID, msgBytes, params.CollateralAmt, params.CollateralIndex, useERC20Amount)
 	if err != nil {
 		return fmt.Errorf("send transaction: %w", err)
 	}
