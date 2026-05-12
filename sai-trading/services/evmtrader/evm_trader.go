@@ -3,14 +3,16 @@ package evmtrader
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/json"
+	"crypto/tls"
 	"fmt"
 	"math/big"
-	"os"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/cosmos/cosmos-sdk/client"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -18,20 +20,49 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 // EVMTrader encapsulates the EVM client and trading routine.
 type EVMTrader struct {
-	cfg         Config
-	client      *ethclient.Client
-	txClient    txtypes.ServiceClient
-	encCfg      client.TxConfig
-	grpcConn    *grpc.ClientConn // Store gRPC connection for cleanup
-	privKey     *ecdsa.PrivateKey
-	ethPrivKey  *ethsecp256k1.PrivKey
-	accountAddr common.Address
-	addrs       ContractAddresses
+	cfg        Config
+	client     *ethclient.Client
+	txClient   txtypes.ServiceClient
+	encCfg     client.TxConfig
+	grpcConn   *grpc.ClientConn // Store gRPC connection for cleanup
+	privKey    *ecdsa.PrivateKey
+	ethPrivKey *ethsecp256k1.PrivKey
+
+	accountAddr   common.Address
+	ethAddrBech32 string
+
+	addrs ContractAddresses
+
+	collateralDenomMap  map[uint64]string
+	marketTokenDenomMap map[uint64]string // For base and quote tokens
+
+	tradeLogMu sync.Mutex
+	openTrades map[uint64]*tradeLifecycle
+
+	keeper *KeeperClient
+}
+
+// tradeLifecycle stores metadata about an open trade so that when it closes,
+// we can log a single lifecycle row (open+close) to CSV.
+type tradeLifecycle struct {
+	OpenTimeUTC      time.Time
+	OpenBlock        int64
+	OpenPrice        string
+	MarketIndex      uint64
+	Direction        string
+	TradeType        string
+	CollateralIndex  uint64
+	CollateralAmount string
+	CollateralDenom  string
+	Leverage         string
+	TP               string
+	SL               string
 }
 
 // New returns a new EVMTrader after validating configuration.
@@ -43,8 +74,8 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	if cfg.EVMRPCUrl == "" {
 		return nil, fmt.Errorf("EVMRPCUrl is required")
 	}
-	if cfg.PrivateKeyHex == "" {
-		return nil, fmt.Errorf("PrivateKeyHex is required")
+	if cfg.PrivateKeyHex == "" && cfg.Mnemonic == "" {
+		return nil, fmt.Errorf("either PrivateKeyHex or Mnemonic is required")
 	}
 
 	// Connect to EVM RPC for queries
@@ -53,21 +84,49 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		return nil, fmt.Errorf("dial evm rpc: %w", err)
 	}
 
-	// Parse private key
-	priv, err := crypto.HexToECDSA(strings.TrimPrefix(cfg.PrivateKeyHex, "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("parse private key: %w", err)
-	}
-	accountAddr := crypto.PubkeyToAddress(priv.PublicKey)
+	var priv *ecdsa.PrivateKey
+	var accountAddr common.Address
+	var ethPrivKey *ethsecp256k1.PrivKey
+	var ethAddrBech32 string
 
-	// Convert to ethsecp256k1 for keyring signer
-	ethPrivKey := &ethsecp256k1.PrivKey{
-		Key: crypto.FromECDSA(priv),
+	if cfg.Mnemonic != "" {
+		accounts, err := DeriveAccountsFromMnemonic(cfg.Mnemonic, "nibi")
+		if err != nil {
+			return nil, fmt.Errorf("derive all addresses: %w", err)
+		}
+
+		priv, err = crypto.HexToECDSA(strings.TrimPrefix(accounts.EthPrivateKeyHex, "0x"))
+		if err != nil {
+			return nil, fmt.Errorf("parse derived private key: %w", err)
+		}
+		accountAddr = accounts.EthAddrHex
+		ethPrivKey = &ethsecp256k1.PrivKey{
+			Key: crypto.FromECDSA(priv),
+		}
+		ethAddrBech32 = accounts.EthAddrBech32
+	} else {
+		priv, err = crypto.HexToECDSA(strings.TrimPrefix(cfg.PrivateKeyHex, "0x"))
+		if err != nil {
+			return nil, fmt.Errorf("parse private key: %w", err)
+		}
+		accountAddr = crypto.PubkeyToAddress(priv.PublicKey)
+
+		ethPrivKey = &ethsecp256k1.PrivKey{
+			Key: crypto.FromECDSA(priv),
+		}
+		ethAddrBech32 = eth.EthAddrToNibiruAddr(accountAddr).String()
 	}
 
 	// Connect to gRPC for transaction broadcasting
+	// Use TLS for remote servers (testnet/mainnet), insecure for localhost
+	var grpcCreds credentials.TransportCredentials
+	if strings.Contains(cfg.GrpcUrl, ":443") || (!strings.Contains(cfg.GrpcUrl, "localhost") && !strings.Contains(cfg.GrpcUrl, "127.0.0.1")) {
+		grpcCreds = credentials.NewTLS(&tls.Config{})
+	} else {
+		grpcCreds = insecure.NewCredentials()
+	}
 	grpcConn, err := grpc.DialContext(ctx, cfg.GrpcUrl,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(grpcCreds),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
@@ -77,21 +136,43 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 	encCfg := getEncConfig()
 	txClient := txtypes.NewServiceClient(grpcConn)
 
-	addrs, err := loadContractAddresses(cfg.ContractsEnvFile)
-	if err != nil {
-		return nil, fmt.Errorf("load contracts: %w", err)
+	// Load contract addresses: use from Config if provided, otherwise load from file
+	var addrs ContractAddresses
+	if cfg.ContractAddresses != nil {
+		addrs = *cfg.ContractAddresses
+	} else {
+		var err error
+		addrs, err = loadContractAddresses(cfg.ContractsEnvFile)
+		if err != nil {
+			return nil, fmt.Errorf("load contracts: %w", err)
+		}
 	}
-	return &EVMTrader{
-		cfg:         cfg,
-		client:      client,
-		txClient:    txClient,
-		encCfg:      encCfg.TxConfig,
-		grpcConn:    grpcConn,
-		privKey:     priv,
-		ethPrivKey:  ethPrivKey,
-		accountAddr: accountAddr,
-		addrs:       addrs,
-	}, nil
+	trader := &EVMTrader{
+		cfg:        cfg,
+		client:     client,
+		txClient:   txClient,
+		encCfg:     encCfg.TxConfig,
+		grpcConn:   grpcConn,
+		privKey:    priv,
+		ethPrivKey: ethPrivKey,
+		// Ethereum path (m/44'/60'/0'/0/0) - MetaMask - USED FOR TRADING
+		accountAddr:         accountAddr,   // 0x1234... (hex, shown in MetaMask)
+		ethAddrBech32:       ethAddrBech32, // nibi1xyz... (bech32)
+		addrs:               addrs,
+		collateralDenomMap:  make(map[uint64]string),
+		marketTokenDenomMap: make(map[uint64]string),
+		openTrades:          make(map[uint64]*tradeLifecycle),
+	}
+
+	if cfg.KeeperDBDSN != "" {
+		if kc, err := NewKeeperClient(cfg.KeeperDBDSN); err != nil {
+			fmt.Printf("Warning: failed to init keeper client: %v\n", err)
+		} else {
+			trader.keeper = kc
+		}
+	}
+
+	return trader, nil
 }
 
 // Close releases underlying resources.
@@ -102,7 +183,13 @@ func (t *EVMTrader) Close() {
 
 	if t.grpcConn != nil {
 		if err := t.grpcConn.Close(); err != nil {
-			t.log("Failed to close gRPC connection", "error", err.Error())
+			t.logWarn("Failed to close gRPC connection", "error", err.Error())
+		}
+	}
+
+	if t.keeper != nil {
+		if err := t.keeper.Close(); err != nil {
+			t.logWarn("Failed to close keeper DB", "error", err.Error())
 		}
 	}
 }
@@ -114,25 +201,32 @@ func (t *EVMTrader) OpenTradeFromConfig(ctx context.Context) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Query ERC20 balance
-	erc20ABI := getERC20ABI()
-	erc20Addr := common.HexToAddress(t.addrs.TokenStNIBIERC20)
-	bal, err := t.queryERC20Balance(ctx, erc20ABI, erc20Addr, t.accountAddr)
-	if err != nil {
-		return fmt.Errorf("query ERC20 balance: %w", err)
-	}
-
-	// Prepare trade from config
-	params, err := t.prepareTradeFromConfig(ctx, bal)
+	params, err := t.prepareTradeFromConfig(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("prepare trade: %w", err)
 	}
 	if params == nil {
-		return nil // Insufficient balance or other skip condition
+		return nil
+	}
+
+	collateralDenom, bankBalance, erc20Balance, useERC20Amount, err := t.resolveCollateralFunding(ctx, params.CollateralIndex, params.CollateralAmt)
+	if err != nil {
+		return err
+	}
+	if useERC20Amount.Sign() > 0 {
+		t.logInfo("Using ERC20 fallback for trade collateral",
+			"collateral_denom", collateralDenom,
+			"bank_balance", bankBalance.String(),
+			"erc20_balance", erc20Balance.String(),
+			"use_erc20_amount", useERC20Amount.String(),
+		)
 	}
 
 	// Execute the trade
-	return t.OpenTrade(ctx, chainID, params)
+	if err := t.OpenTrade(ctx, chainID, params); err != nil {
+		return fmt.Errorf("open trade: %w", err)
+	}
+	return nil
 }
 
 // OpenTrade opens a trade with the given parameters
@@ -146,6 +240,19 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		return fmt.Errorf("market %d is not fully configured: missing pair_depths", params.MarketIndex)
 	}
 
+	collateralDenom, bankBalance, erc20Balance, useERC20Amount, err := t.resolveCollateralFunding(ctx, params.CollateralIndex, params.CollateralAmt)
+	if err != nil {
+		return err
+	}
+	if useERC20Amount.Sign() > 0 {
+		t.logInfo("Bridging ERC20 collateral before open_trade",
+			"collateral_denom", collateralDenom,
+			"bank_balance", bankBalance.String(),
+			"erc20_balance", erc20Balance.String(),
+			"use_erc20_amount", useERC20Amount.String(),
+		)
+	}
+
 	// Build open_trade message
 	msgBytes, err := t.buildOpenTradeMessage(params)
 	if err != nil {
@@ -153,16 +260,28 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 	}
 
 	// Send transaction
-	txResp, err := t.sendOpenTradeTransaction(ctx, chainID, msgBytes, params.CollateralAmt, params.CollateralIndex)
+	txResp, err := t.sendOpenTradeTransaction(ctx, chainID, msgBytes, params.CollateralAmt, params.CollateralIndex, useERC20Amount)
 	if err != nil {
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
+	// Query and log updated collateral balance after the trade
+	if collateralDenom, err := t.queryCollateralDenom(ctx, params.CollateralIndex); err == nil {
+		if balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom); err == nil {
+			t.logInfo("Collateral balance after trade",
+				"market_index", params.MarketIndex,
+				"collateral_index", params.CollateralIndex,
+				"collateral_denom", collateralDenom,
+				"balance", balance.String(),
+			)
+		}
+	}
+
 	// Parse trade ID from response
-	isLimitOrder := params.TradeType == "limit" || params.TradeType == "stop"
+	isLimitOrder := isLimitOrStopOrder(params.TradeType)
 	tradeID, err := t.parseTradeID(txResp)
 	if err != nil {
-		t.log("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
+		t.logError("Failed to parse trade ID", "error", err.Error(), "tx_hash", txResp.TxHash)
 		return err
 	}
 
@@ -171,12 +290,46 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 		whatTraderOpens = "limit order"
 	}
 
-	t.log("Successfully opened trade",
+	t.logInfo("Successfully opened trade",
 		"type", whatTraderOpens,
 		"trade_id", tradeID,
 		"tx_hash", txResp.TxHash,
 		"height", txResp.Height,
 	)
+
+	openPriceStr := ""
+	if params.OpenPrice != nil {
+		openPriceStr = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
+	}
+	tpStr := ""
+	if params.TP != nil {
+		tpStr = strconv.FormatFloat(*params.TP, 'f', -1, 64)
+	}
+	slStr := ""
+	if params.SL != nil {
+		slStr = strconv.FormatFloat(*params.SL, 'f', -1, 64)
+	}
+
+	// Record open lifecycle metadata so we can log a single lifecycle row on close.
+	t.tradeLogMu.Lock()
+	if t.openTrades == nil {
+		t.openTrades = make(map[uint64]*tradeLifecycle)
+	}
+	t.openTrades[uint64(tradeID)] = &tradeLifecycle{
+		OpenTimeUTC:      time.Now().UTC(),
+		OpenBlock:        txResp.Height,
+		OpenPrice:        openPriceStr,
+		MarketIndex:      params.MarketIndex,
+		Direction:        boolToDirection(params.Long),
+		TradeType:        params.TradeType,
+		CollateralIndex:  params.CollateralIndex,
+		CollateralAmount: params.CollateralAmt.String(),
+		CollateralDenom:  t.GetCollateralDenom(params.CollateralIndex),
+		Leverage:         fmt.Sprintf("%d", params.Leverage),
+		TP:               tpStr,
+		SL:               slStr,
+	}
+	t.tradeLogMu.Unlock()
 
 	return nil
 }
@@ -188,7 +341,7 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("chain id: %w", err)
 	}
 
-	// Build close_trade_market message
+	// Build close_trade message
 	msgBytes, err := t.buildCloseTradeMessage(tradeIndex)
 	if err != nil {
 		return fmt.Errorf("build message: %w", err)
@@ -200,28 +353,51 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		return fmt.Errorf("send transaction: %w", err)
 	}
 
-	t.log("Successfully closed trade",
+	t.logInfo("Successfully closed trade",
 		"trade_index", tradeIndex,
 		"tx_hash", txResp.TxHash,
 		"height", txResp.Height,
 	)
 
-	return nil
-}
+	trades, err := t.QueryTrades(ctx)
+	if err == nil {
+		for _, trade := range trades {
+			if trade.UserTradeIndex != tradeIndex {
+				continue
+			}
 
-// log is a minimal structured logger.
-func (t *EVMTrader) log(msg string, kv ...any) {
-	fields := map[string]any{}
-	for i := 0; i+1 < len(kv); i += 2 {
-		k, _ := kv[i].(string)
-		fields[k] = kv[i+1]
+			if collateralDenom, err := t.queryCollateralDenom(ctx, trade.CollateralIndex); err == nil {
+				if balance, err := t.queryCosmosBalance(ctx, t.ethAddrBech32, collateralDenom); err == nil {
+					t.logInfo("Collateral balance after close",
+						"market_index", trade.MarketIndex,
+						"collateral_index", trade.CollateralIndex,
+						"collateral_denom", collateralDenom,
+						"balance", balance.String(),
+					)
+				}
+			}
+
+			// Best-effort lifecycle CSV log: one row per trade.
+			t.tradeLogMu.Lock()
+			lc := t.openTrades[tradeIndex]
+			delete(t.openTrades, tradeIndex)
+			t.tradeLogMu.Unlock()
+			t.logTradeLifecycleCSV(tradeIndex, lc, trade, txResp.TxHash, txResp.Height)
+			break
+		}
 	}
-	fields["msg"] = msg
-	fields["ts"] = time.Now().UTC().Format(time.RFC3339)
-	_ = json.NewEncoder(os.Stdout).Encode(fields)
+
+	return nil
 }
 
 // getEncConfig returns the encoding configuration for the Nibiru chain.
 func getEncConfig() app.EncodingConfig {
 	return app.MakeEncodingConfig()
+}
+
+func boolToDirection(long bool) string {
+	if long {
+		return "LONG"
+	}
+	return "SHORT"
 }
