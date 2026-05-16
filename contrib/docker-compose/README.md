@@ -3,13 +3,12 @@
 - [contrib/docker-compose](#contribdocker-compose)
   - [docker-compose-chaosnet](#docker-compose-chaosnet)
   - [Usage](#usage)
-    - [Single validator node + pricefeeder](#single-validator-node--pricefeeder)
-    - [Two validator nodes + pricefeeder + IBC relayer](#two-validator-nodes--pricefeeder--ibc-relayer)
+    - [Single validator node](#single-validator-node)
+    - [Two validator nodes + IBC relayer](#two-validator-nodes--ibc-relayer)
     - [Single validator node + heartmonitor](#single-validator-node--heartmonitor)
     - [Other Commands](#other-commands)
   - [Services Overview](#services-overview)
     - [Nibiru node services](#nibiru-node-services)
-    - [Pricefeeder services](#pricefeeder-services)
     - [Hermes IBC relayer services](#hermes-ibc-relayer-services)
     - [Heart Monitor Services](#heart-monitor-services)
   - [Reference Materials](#reference-materials)
@@ -28,13 +27,13 @@ Features:
 
 ## Usage
 
-### Single validator node + pricefeeder
+### Single validator node
 
 ```sh
 docker compose -f docker-compose-chaosnet.yml up
 ```
 
-### Two validator nodes + pricefeeder + IBC relayer
+### Two validator nodes + IBC relayer
 
 ```sh
 docker compose -f docker-compose-chaosnet.yml --profile ibc up 
@@ -61,11 +60,6 @@ docker compose -f docker-compose-chaosnet.yml --profile heartmonitor up
 - `nibiru-0` and `nibiru-1` (Service): Represents two distinct Nibiru Chain nodes (nibiru-0 and nibiru-1)
   running on different ports, using unique mnemonics and chain IDs, imitating two
   independent blockchain networks.
-
-### Pricefeeder services
-
-- `pricefeeder-0` and `pricefeeder-1` (Service): Two price feeder services that push price
-  data to the respective Nibiru nodes.
 
 ### Hermes IBC relayer services
 
