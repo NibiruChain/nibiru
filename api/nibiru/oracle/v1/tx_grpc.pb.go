@@ -30,7 +30,7 @@ type MsgClient interface {
 	AggregateExchangeRateVote(ctx context.Context, in *MsgAggregateExchangeRateVote, opts ...grpc.CallOption) (*MsgAggregateExchangeRateVoteResponse, error)
 	// DelegateFeedConsent defines a method for delegating oracle voting rights
 	// to another address known as a price feeder.
-	// See https://github.com/NibiruChain/pricefeeder.
+	// Deprecated: x/oracle Msg RPCs are disabled on-chain (ErrOracleDeprecated).
 	DelegateFeedConsent(ctx context.Context, in *MsgDelegateFeedConsent, opts ...grpc.CallOption) (*MsgDelegateFeedConsentResponse, error)
 	EditOracleParams(ctx context.Context, in *MsgEditOracleParams, opts ...grpc.CallOption) (*MsgEditOracleParamsResponse, error)
 }
@@ -91,7 +91,7 @@ type MsgServer interface {
 	AggregateExchangeRateVote(context.Context, *MsgAggregateExchangeRateVote) (*MsgAggregateExchangeRateVoteResponse, error)
 	// DelegateFeedConsent defines a method for delegating oracle voting rights
 	// to another address known as a price feeder.
-	// See https://github.com/NibiruChain/pricefeeder.
+	// Deprecated: x/oracle Msg RPCs are disabled on-chain (ErrOracleDeprecated).
 	DelegateFeedConsent(context.Context, *MsgDelegateFeedConsent) (*MsgDelegateFeedConsentResponse, error)
 	EditOracleParams(context.Context, *MsgEditOracleParams) (*MsgEditOracleParamsResponse, error)
 	mustEmbedUnimplementedMsgServer()
