@@ -5,7 +5,6 @@ const (
 	// NOTE: US dollars. Use `denoms.USD` instead of `denoms.UUSD` going forward.
 	USD = "usd"
 	// Avalon Finance overcollateralized stablecoin.
-	// https://github.com/NibiruChain/pricefeeder/pull/64
 	USDA  = "usda"
 	SUSDA = "susda"
 )

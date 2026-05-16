@@ -37,10 +37,6 @@ chaosnet-down:
 chaosnet-logs:
 	docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml logs
 
-.PHONY: chaosnet-logs-pricefeeder
-chaosnet-logs-pricefeeder:
-	docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml logs pricefeeder --follow
-
 .PHONY: chaosnet-logs-go-heartmonitor
 chaosnet-logs-go-heartmonitor:
 	docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml logs go-heartmonitor

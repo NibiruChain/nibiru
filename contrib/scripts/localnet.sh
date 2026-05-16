@@ -286,7 +286,7 @@ cat >"$WNIBI_EVM_GENESIS_JSON" <<'EOF'
 EOF
 add_genesis_param_slurpfile '.app_state.evm.accounts += $wnibi_evm' "wnibi_evm" "$WNIBI_EVM_GENESIS_JSON"
 
-# hack for localnet since we don't have a pricefeeder yet
+# Static oracle exchange rates in genesis for local development and tests.
 price_btc="50000"
 price_eth="2000"
 add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uusd"'
