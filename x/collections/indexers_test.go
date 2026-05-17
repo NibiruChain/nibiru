@@ -31,7 +31,7 @@ func TestMultiIndex(t *testing.T) {
 	}
 
 	for _, p := range persons {
-		im.Insert(ctx, p.ID, p)
+		require.NoError(t, im.Insert(ctx, p.ID, p))
 	}
 
 	// test iterations and matches alongside PrimaryKeys ( and indirectly FullKeys )
@@ -42,7 +42,7 @@ func TestMultiIndex(t *testing.T) {
 	ks = im.ReverseExactMatch(ctx, "milan").PrimaryKeys()
 	require.Equal(t, []uint64{1, 0}, ks)
 	// test after removal it is not present
-	im.Delete(ctx, persons[0].ID, persons[0])
+	require.NoError(t, im.Delete(ctx, persons[0].ID, persons[0]))
 	ks = im.ExactMatch(ctx, "milan").PrimaryKeys()
 	require.Equal(t, []uint64{1}, ks)
 
@@ -62,8 +62,8 @@ func TestIndexerIterator(t *testing.T) {
 		func(v person) string { return v.City },
 	)
 
-	im.Insert(ctx, 0, person{ID: 0, City: "milan"})
-	im.Insert(ctx, 1, person{ID: 1, City: "milan"})
+	require.NoError(t, im.Insert(ctx, 0, person{ID: 0, City: "milan"}))
+	require.NoError(t, im.Insert(ctx, 1, person{ID: 1, City: "milan"}))
 
 	iter := im.Iterate(ctx, PairRange[string, uint64]{})
 	defer iter.Close()

@@ -144,7 +144,7 @@ var PairKeyEncoder collections.KeyEncoder[Pair] = pairKeyEncoder{}
 type pairKeyEncoder struct{}
 
 func (pairKeyEncoder) Stringify(a Pair) string { return a.String() }
-func (pairKeyEncoder) Encode(a Pair) []byte {
+func (pairKeyEncoder) Encode(a Pair) ([]byte, error) {
 	return collections.StringKeyEncoder.Encode(a.String())
 }
 

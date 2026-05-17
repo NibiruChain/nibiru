@@ -36,9 +36,15 @@ type protoValueEncoder[V any, PV interface {
 	cdc codec.BinaryCodec
 }
 
-func (p protoValueEncoder[V, PV]) Name() string          { return proto.MessageName(PV(new(V))) }
-func (p protoValueEncoder[V, PV]) Encode(value V) []byte { return p.cdc.MustMarshal(PV(&value)) }
-func (p protoValueEncoder[V, PV]) Stringify(v V) string  { return PV(&v).String() }
+func (p protoValueEncoder[V, PV]) Name() string { return proto.MessageName(PV(new(V))) }
+func (p protoValueEncoder[V, PV]) Encode(value V) ([]byte, error) {
+	bz, err := p.cdc.Marshal(PV(&value))
+	if err != nil {
+		return nil, fmt.Errorf("collections: proto marshal: %w", err)
+	}
+	return bz, nil
+}
+func (p protoValueEncoder[V, PV]) Stringify(v V) string { return PV(&v).String() }
 func (p protoValueEncoder[V, PV]) Decode(b []byte) V {
 	v := PV(new(V))
 	p.cdc.MustUnmarshal(b, v)
@@ -49,12 +55,12 @@ func (p protoValueEncoder[V, PV]) Decode(b []byte) V {
 
 type decValueEncoder struct{}
 
-func (d decValueEncoder) Encode(value sdk.Dec) []byte {
+func (d decValueEncoder) Encode(value sdk.Dec) ([]byte, error) {
 	b, err := value.Marshal()
 	if err != nil {
-		panic(fmt.Errorf("%w %s", err, HumanizeBytes(b)))
+		return nil, fmt.Errorf("%w %s", err, HumanizeBytes(b))
 	}
-	return b
+	return b, nil
 }
 
 func (d decValueEncoder) Decode(b []byte) sdk.Dec {
@@ -78,16 +84,16 @@ func (d decValueEncoder) Name() string {
 
 type accAddressValueEncoder struct{}
 
-func (a accAddressValueEncoder) Encode(value sdk.AccAddress) []byte    { return value }
-func (a accAddressValueEncoder) Decode(b []byte) sdk.AccAddress        { return b }
-func (a accAddressValueEncoder) Stringify(value sdk.AccAddress) string { return value.String() }
-func (a accAddressValueEncoder) Name() string                          { return "sdk.AccAddress" }
+func (a accAddressValueEncoder) Encode(value sdk.AccAddress) ([]byte, error) { return value, nil }
+func (a accAddressValueEncoder) Decode(b []byte) sdk.AccAddress              { return b }
+func (a accAddressValueEncoder) Stringify(value sdk.AccAddress) string       { return value.String() }
+func (a accAddressValueEncoder) Name() string                                { return "sdk.AccAddress" }
 
 // IntValueEncoder ValueEncoder[sdk.Int]
 
 type intValueEncoder struct{}
 
-func (intValueEncoder) Encode(value sdkmath.Int) []byte {
+func (intValueEncoder) Encode(value sdkmath.Int) ([]byte, error) {
 	return IntKeyEncoder.Encode(value)
 }
 
@@ -104,27 +110,28 @@ func (intValueEncoder) Name() string {
 	return "math.Int"
 }
 
-// IntKeyEncoder
-
+// IntKeyEncoder encodes non-negative [cosmossdk.io/math.Int] values into a fixed-width
+// big-endian byte slice for lexicographic ordering. Nil or negative inputs return
+// [ErrNilIntKey] or [ErrNegativeIntKey] from Encode.
 var IntKeyEncoder KeyEncoder[sdkmath.Int] = intKeyEncoder{}
 
 type intKeyEncoder struct{}
 
 const maxIntKeyLen = sdkmath.MaxBitLen / 8
 
-func (intKeyEncoder) Encode(key sdkmath.Int) []byte {
+func (intKeyEncoder) Encode(key sdkmath.Int) ([]byte, error) {
 	if key.IsNil() {
-		panic("cannot encode invalid math.Int")
+		return nil, ErrNilIntKey
 	}
 	if key.IsNegative() {
-		panic("cannot encode negative math.Int")
+		return nil, ErrNegativeIntKey
 	}
 	i := key.BigInt()
 
 	be := i.Bytes()
 	padded := make([]byte, maxIntKeyLen)
 	copy(padded[maxIntKeyLen-len(be):], be)
-	return padded
+	return padded, nil
 }
 
 func (intKeyEncoder) Decode(b []byte) (int, sdkmath.Int) {

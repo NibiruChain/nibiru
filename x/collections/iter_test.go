@@ -11,12 +11,12 @@ func TestRangeBounds(t *testing.T) {
 
 	ks := NewKeySet[uint64](sk, 0, Uint64KeyEncoder)
 
-	ks.Insert(ctx, 1)
-	ks.Insert(ctx, 2)
-	ks.Insert(ctx, 3)
-	ks.Insert(ctx, 4)
-	ks.Insert(ctx, 5)
-	ks.Insert(ctx, 6)
+	require.NoError(t, ks.Insert(ctx, 1))
+	require.NoError(t, ks.Insert(ctx, 2))
+	require.NoError(t, ks.Insert(ctx, 3))
+	require.NoError(t, ks.Insert(ctx, 4))
+	require.NoError(t, ks.Insert(ctx, 5))
+	require.NoError(t, ks.Insert(ctx, 6))
 
 	// let's range (1-5]; expected: 2..5
 	result := ks.Iterate(ctx, Range[uint64]{}.StartExclusive(1).EndInclusive(5)).Keys()

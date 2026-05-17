@@ -12,7 +12,8 @@ import (
 )
 
 func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], key T) {
-	encodedKey := encoder.Encode(key)
+	encodedKey, err := encoder.Encode(key)
+	require.NoError(t, err)
 	readLen, decodedKey := encoder.Decode(encodedKey)
 	require.Equal(t, len(encodedKey), readLen, "encoded key and read bytes must have same size")
 	require.Equal(t, key, decodedKey, "encoding and decoding produces different keys")
@@ -23,7 +24,8 @@ func assertBijectiveKey[T any](t *testing.T, encoder collections.KeyEncoder[T], 
 }
 
 func assertBijectiveValue[T any](t *testing.T, encoder collections.ValueEncoder[T], value T) {
-	encodedValue := encoder.Encode(value)
+	encodedValue, err := encoder.Encode(value)
+	require.NoError(t, err)
 	decodedValue := encoder.Decode(encodedValue)
 	require.Equal(t, value, decodedValue, "encoding and decoding produces different values")
 

@@ -72,15 +72,15 @@ type MultiIndex[IK, PK, V any] struct {
 }
 
 // Insert implements the Indexer interface.
-func (i MultiIndex[IK, PK, V]) Insert(ctx sdk.Context, pk PK, v V) {
+func (i MultiIndex[IK, PK, V]) Insert(ctx sdk.Context, pk PK, v V) error {
 	indexingKey := i.getIndexingKey(v)
-	i.jointKeys.Insert(ctx, Join(indexingKey, pk))
+	return i.jointKeys.Insert(ctx, Join(indexingKey, pk))
 }
 
 // Delete implements the Indexer interface.
-func (i MultiIndex[IK, PK, V]) Delete(ctx sdk.Context, pk PK, v V) {
+func (i MultiIndex[IK, PK, V]) Delete(ctx sdk.Context, pk PK, v V) error {
 	indexingKey := i.getIndexingKey(v)
-	i.jointKeys.Delete(ctx, Join(indexingKey, pk))
+	return i.jointKeys.Delete(ctx, Join(indexingKey, pk))
 }
 
 // Iterate iterates over the provided range.

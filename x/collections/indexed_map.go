@@ -1,6 +1,8 @@
 package collections
 
 import (
+	"errors"
+
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -22,11 +24,11 @@ type Indexer[PK any, V any] interface {
 	// an object into its state, so the Indexer here
 	// creates the relationship between primary key
 	// and the fields of the object V.
-	Insert(ctx sdk.Context, primaryKey PK, v V)
+	Insert(ctx sdk.Context, primaryKey PK, v V) error
 	// Delete is called when the IndexedMap is removing
 	// the object V and hence the relationship between
 	// V and its primary keys need to be removed too.
-	Delete(ctx sdk.Context, primaryKey PK, v V)
+	Delete(ctx sdk.Context, primaryKey PK, v V) error
 }
 
 // NewIndexedMap instantiates a new IndexedMap instance.
@@ -64,16 +66,21 @@ func (i IndexedMap[PK, V, I]) GetOr(ctx sdk.Context, key PK, def V) V {
 // Insert inserts the object v into the Map using the primary key, then
 // iterates over every registered Indexer and instructs them to create
 // the relationship between the primary key PK and the object v.
-func (i IndexedMap[PK, V, I]) Insert(ctx sdk.Context, key PK, v V) {
+func (i IndexedMap[PK, V, I]) Insert(ctx sdk.Context, key PK, v V) error {
 	// before inserting we need to assert if another instance of this
 	// primary key exist in order to remove old relationships from indexes.
 	old, err := i.m.Get(ctx, key)
 	if err == nil {
-		i.unindex(ctx, key, old)
+		if err := i.unindex(ctx, key, old); err != nil {
+			return err
+		}
+	} else if !errors.Is(err, ErrNotFound) {
+		return err
 	}
-	// insert and index
-	i.m.Insert(ctx, key, v)
-	i.index(ctx, key, v)
+	if err := i.m.Insert(ctx, key, v); err != nil {
+		return err
+	}
+	return i.index(ctx, key, v)
 }
 
 // Delete fetches the object from the Map removes it from the Map
@@ -90,7 +97,9 @@ func (i IndexedMap[PK, V, I]) Delete(ctx sdk.Context, key PK) error {
 		// this must never happen
 		panic(err)
 	}
-	i.unindex(ctx, key, v)
+	if err := i.unindex(ctx, key, v); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -115,14 +124,20 @@ func (i IndexedMap[PK, V, I]) Collect(ctx sdk.Context, iter interface{ PrimaryKe
 	return vs
 }
 
-func (i IndexedMap[PK, V, I]) index(ctx sdk.Context, key PK, v V) {
+func (i IndexedMap[PK, V, I]) index(ctx sdk.Context, key PK, v V) error {
 	for _, indexer := range i.Indexes.IndexerList() {
-		indexer.Insert(ctx, key, v)
+		if err := indexer.Insert(ctx, key, v); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (i IndexedMap[PK, V, I]) unindex(ctx sdk.Context, key PK, v V) {
+func (i IndexedMap[PK, V, I]) unindex(ctx sdk.Context, key PK, v V) error {
 	for _, indexer := range i.Indexes.IndexerList() {
-		indexer.Delete(ctx, key, v)
+		if err := indexer.Delete(ctx, key, v); err != nil {
+			return err
+		}
 	}
+	return nil
 }

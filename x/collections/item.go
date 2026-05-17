@@ -31,7 +31,9 @@ func (i Item[V]) Get(ctx sdk.Context) (V, error) { return (Map[uint64, V])(i).Ge
 func (i Item[V]) GetOr(ctx sdk.Context, def V) V { return (Map[uint64, V])(i).GetOr(ctx, itemKey, def) }
 
 // Set sets the item value to v.
-func (i Item[V]) Set(ctx sdk.Context, v V) { (Map[uint64, V])(i).Insert(ctx, itemKey, v) }
+func (i Item[V]) Set(ctx sdk.Context, v V) error {
+	return (Map[uint64, V])(i).Insert(ctx, itemKey, v)
+}
 
 // NewItem instantiates a new Item instance.
 func NewItemTransient[V any](
@@ -64,6 +66,6 @@ func (i ItemTransient[V]) GetOr(ctx sdk.Context, def V) V {
 }
 
 // Set sets the item value to v.
-func (i ItemTransient[V]) Set(ctx sdk.Context, v V) {
-	(MapTransient[uint64, V])(i).Insert(ctx, itemKey, v)
+func (i ItemTransient[V]) Set(ctx sdk.Context, v V) error {
+	return (MapTransient[uint64, V])(i).Insert(ctx, itemKey, v)
 }
