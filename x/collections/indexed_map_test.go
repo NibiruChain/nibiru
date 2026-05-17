@@ -33,9 +33,9 @@ func TestIndexedMap(t *testing.T) {
 		},
 	)
 
-	m.Insert(ctx, 0, person{ID: 0, City: "milan"})
-	m.Insert(ctx, 1, person{ID: 1, City: "new york"})
-	m.Insert(ctx, 2, person{ID: 2, City: "milan"})
+	require.NoError(t, m.Insert(ctx, 0, person{ID: 0, City: "milan"}))
+	require.NoError(t, m.Insert(ctx, 1, person{ID: 1, City: "new york"}))
+	require.NoError(t, m.Insert(ctx, 2, person{ID: 2, City: "milan"}))
 
 	// correct insertion
 	res := m.Indexes.City.ExactMatch(ctx, "milan").PrimaryKeys()
@@ -55,7 +55,7 @@ func TestIndexedMap(t *testing.T) {
 	// insertion on an already existing primary key
 	// clears the old indexes, hence PK 2 => city "milan"
 	// is now converted to PK 2 => city "new york"
-	m.Insert(ctx, 2, person{ID: 2, City: "new york"})
+	require.NoError(t, m.Insert(ctx, 2, person{ID: 2, City: "new york"}))
 	require.Empty(t, m.Indexes.City.ExactMatch(ctx, "milan").PrimaryKeys())
 	res = m.Indexes.City.ExactMatch(ctx, "new york").PrimaryKeys()
 	require.Equal(t, []uint64{1, 2}, res)

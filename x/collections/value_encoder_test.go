@@ -69,8 +69,10 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	s.Require().Equal(maxIntKeyLen, len(maxBigInt.Bytes()))
 
 	// test encoding ordering
-	enc1 := IntKeyEncoder.Encode(sdk.NewInt(50_000))
-	enc2 := IntKeyEncoder.Encode(sdk.NewInt(100_000))
+	enc1, err := IntKeyEncoder.Encode(sdk.NewInt(50_000))
+	s.Require().NoError(err)
+	enc2, err := IntKeyEncoder.Encode(sdk.NewInt(100_000))
+	s.Require().NoError(err)
 	s.Less(enc1, enc2)
 
 	// test decoding
@@ -80,23 +82,19 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	s.Equal(sdk.NewInt(50_000), got1)
 	s.Equal(sdk.NewInt(100_000), got2)
 
-	// require panics on negative values
-	s.Panics(func() {
-		IntKeyEncoder.Encode(sdk.NewInt(-1))
-	})
-	// require panics on invalid int
-	s.Panics(func() {
-		IntKeyEncoder.Encode(sdkmath.Int{})
-	})
+	_, err = IntKeyEncoder.Encode(sdk.NewInt(-1))
+	s.Require().ErrorIs(err, ErrNegativeIntKey)
+
+	_, err = IntKeyEncoder.Encode(sdkmath.Int{})
+	s.Require().ErrorIs(err, ErrNilIntKey)
 
 	// test value encoder
 	value := sdk.NewInt(50_000)
-	valueBytes := IntValueEncoder.Encode(value)
+	valueBytes, err := IntValueEncoder.Encode(value)
+	s.Require().NoError(err)
 	gotValue := IntValueEncoder.Decode(valueBytes)
 	s.Equal(value, gotValue)
 
-	// panics on invalid math.Int
-	s.Panics(func() {
-		IntValueEncoder.Encode(sdkmath.Int{})
-	})
+	_, err = IntValueEncoder.Encode(sdkmath.Int{})
+	s.Require().ErrorIs(err, ErrNilIntKey)
 }

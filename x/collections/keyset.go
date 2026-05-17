@@ -29,14 +29,14 @@ func (s KeySet[K]) Has(ctx sdk.Context, k K) bool {
 }
 
 // Insert inserts the key K in the set.
-func (s KeySet[K]) Insert(ctx sdk.Context, k K) {
-	(Map[K, setObject])(s).Insert(ctx, k, setObject{})
+func (s KeySet[K]) Insert(ctx sdk.Context, k K) error {
+	return (Map[K, setObject])(s).Insert(ctx, k, setObject{})
 }
 
 // Delete deletes the key from the set.
 // Does not check if the key exists or not.
-func (s KeySet[K]) Delete(ctx sdk.Context, k K) {
-	_ = (Map[K, setObject])(s).Delete(ctx, k)
+func (s KeySet[K]) Delete(ctx sdk.Context, k K) error {
+	return (Map[K, setObject])(s).Delete(ctx, k)
 }
 
 // Iterate returns a KeySetIterator over the provided keys.Range of keys.
@@ -66,7 +66,7 @@ func (s KeySetIterator[K]) Keys() []K { return (Iterator[K, setObject])(s).Keys(
 // it also implements the ValueEncoder interface for itself.
 type setObject struct{}
 
-func (s setObject) Encode(_ setObject) []byte { return []byte{} }
+func (s setObject) Encode(_ setObject) ([]byte, error) { return []byte{}, nil }
 
 func (s setObject) Decode(b []byte) setObject {
 	if !bytes.Equal(b, []byte{}) {

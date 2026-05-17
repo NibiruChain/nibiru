@@ -33,7 +33,8 @@ func TestStringValueEncoder(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.given, func(t *testing.T) {
 			want := tc.given
-			encoded := encoder.Encode(tc.given)
+			encoded, err := encoder.Encode(tc.given)
+			require.NoError(t, err)
 			got := encoder.Decode(encoded)
 			assert.Equal(t, want, got)
 			assert.Equal(t, want, encoder.Stringify(got))

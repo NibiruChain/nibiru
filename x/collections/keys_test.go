@@ -19,7 +19,9 @@ func TestUint64(t *testing.T) {
 
 	t.Run("empty", func(t *testing.T) {
 		var k uint64
-		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, Uint64KeyEncoder.Encode(k))
+		b, err := Uint64KeyEncoder.Encode(k)
+		require.NoError(t, err)
+		require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 0}, b)
 	})
 }
 
@@ -28,12 +30,13 @@ func TestStringKey(t *testing.T) {
 		assertBijective[string](t, StringKeyEncoder, "test")
 	})
 
-	t.Run("panics", func(t *testing.T) {
-		// invalid string key
-		require.Panics(t, func() {
-			invalid := []byte{0x1, 0x0, 0x3}
-			StringKeyEncoder.Encode(string(invalid))
-		})
+	t.Run("invalid string key", func(t *testing.T) {
+		invalid := []byte{0x1, 0x0, 0x3}
+		_, err := StringKeyEncoder.Encode(string(invalid))
+		require.Error(t, err)
+	})
+
+	t.Run("decode panics", func(t *testing.T) {
 		// invalid bytes do not end with 0x0
 		require.Panics(t, func() {
 			StringKeyEncoder.Decode([]byte{0x1, 0x2})
@@ -45,7 +48,8 @@ func TestStringKey(t *testing.T) {
 	})
 
 	t.Run("empty string", func(t *testing.T) {
-		b := StringKeyEncoder.Encode("")
+		b, err := StringKeyEncoder.Encode("")
+		require.NoError(t, err)
 		i, r := StringKeyEncoder.Decode(b)
 		require.Equal(t, 1, i)
 		require.Equal(t, "", r)
@@ -61,7 +65,9 @@ func TestStringKey(t *testing.T) {
 		bytesStringKeys := make([][]byte, len(stringKeys))
 		for i, sk := range stringKeys {
 			strings[i] = sk
-			bytesStringKeys[i] = StringKeyEncoder.Encode(sk)
+			enc, err := StringKeyEncoder.Encode(sk)
+			require.NoError(t, err)
+			bytesStringKeys[i] = enc
 		}
 
 		sort.Strings(strings)

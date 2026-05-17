@@ -24,7 +24,7 @@ type MapImpl[K, V any] interface {
 	Get(ctx sdk.Context, k K) (v V, err error)
 	GetOr(ctx sdk.Context, key K, def V) (v V)
 	GetStore(ctx sdk.Context) sdk.KVStore
-	Insert(ctx sdk.Context, k K, v V)
+	Insert(ctx sdk.Context, k K, v V) error
 	Iterate(ctx sdk.Context, rng Ranger[K]) Iterator[K, V]
 }
 
@@ -52,7 +52,7 @@ func RunTestMap(t *testing.T, ctx sdk.Context, m MapImpl[string, string]) {
 	expected := "test"
 
 	// test insert and get
-	m.Insert(ctx, key, expected)
+	require.NoError(t, m.Insert(ctx, key, expected))
 	got, err := m.Get(ctx, key)
 	require.NoError(t, err)
 	require.Equal(t, expected, got)
@@ -75,7 +75,7 @@ func RunTestMap(t *testing.T, ctx sdk.Context, m MapImpl[string, string]) {
 func RunTestMapGetOrDefault(t *testing.T, ctx sdk.Context, m MapImpl[string, string]) {
 	assert.EqualValues(t, "default", m.GetOr(ctx, "foo", "default"))
 
-	m.Insert(ctx, "foo", "not-default")
+	require.NoError(t, m.Insert(ctx, "foo", "not-default"))
 	assert.EqualValues(t, "not-default", m.GetOr(ctx, "foo", "default"))
 }
 
@@ -91,10 +91,10 @@ func RunTestMapIterate(t *testing.T, ctx sdk.Context, m MapImpl[string, string])
 		kv("a"), kv("aa"), kv("b"), kv("bb"),
 	}
 
-	m.Insert(ctx, "a", "a")
-	m.Insert(ctx, "aa", "aa")
-	m.Insert(ctx, "b", "b")
-	m.Insert(ctx, "bb", "bb")
+	require.NoError(t, m.Insert(ctx, "a", "a"))
+	require.NoError(t, m.Insert(ctx, "aa", "aa"))
+	require.NoError(t, m.Insert(ctx, "b", "b"))
+	require.NoError(t, m.Insert(ctx, "bb", "bb"))
 
 	// test iteration ascending
 	iter := m.Iterate(ctx, Range[string]{})

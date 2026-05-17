@@ -13,21 +13,21 @@ func TestKeySet(t *testing.T) {
 
 	// test insert and get
 	key := "hi"
-	keyset.Insert(ctx, key)
+	require.NoError(t, keyset.Insert(ctx, key))
 	require.True(t, keyset.Has(ctx, key))
 
 	// test delete and get error
-	keyset.Delete(ctx, key)
+	require.NoError(t, keyset.Delete(ctx, key))
 	require.False(t, keyset.Has(ctx, key))
 }
 
 func TestKeySet_Iterate(t *testing.T) {
 	sk, ctx, _ := deps()
 	keyset := NewKeySet[string](sk, 0, StringKeyEncoder)
-	keyset.Insert(ctx, "a")
-	keyset.Insert(ctx, "aa")
-	keyset.Insert(ctx, "b")
-	keyset.Insert(ctx, "bb")
+	require.NoError(t, keyset.Insert(ctx, "a"))
+	require.NoError(t, keyset.Insert(ctx, "aa"))
+	require.NoError(t, keyset.Insert(ctx, "b"))
+	require.NoError(t, keyset.Insert(ctx, "bb"))
 
 	expectedKeys := []string{"a", "aa", "b", "bb"}
 
@@ -42,7 +42,7 @@ func TestKeysetIterator(t *testing.T) {
 	sk, ctx, _ := deps()
 
 	keyset := NewKeySet[string](sk, 0, StringKeyEncoder)
-	keyset.Insert(ctx, "a")
+	require.NoError(t, keyset.Insert(ctx, "a"))
 
 	iter := keyset.Iterate(ctx, Range[string]{})
 	defer iter.Close()

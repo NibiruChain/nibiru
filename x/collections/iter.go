@@ -105,15 +105,31 @@ func (r Range[K]) RangeValues() (prefix *K, start *Bound[K], end *Bound[K], orde
 
 // iteratorFromRange generates an Iterator instance, with the proper prefixing and ranging.
 func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], vc ValueEncoder[V]) Iterator[K, V] {
+	iter, err := tryIteratorFromRange(s, r, kc, vc)
+	if err != nil {
+		panic(err)
+	}
+	return iter
+}
+
+func tryIteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], vc ValueEncoder[V]) (Iterator[K, V], error) {
 	pfx, start, end, order := r.RangeValues()
 	var prefixBytes []byte
 	if pfx != nil {
-		prefixBytes = kc.Encode(*pfx)
+		var err error
+		prefixBytes, err = kc.Encode(*pfx)
+		if err != nil {
+			return Iterator[K, V]{}, err
+		}
 		s = prefix.NewStore(s, prefixBytes)
 	}
 	var startBytes []byte // default is nil
 	if start != nil {
-		startBytes = kc.Encode(start.value)
+		sb, err := kc.Encode(start.value)
+		if err != nil {
+			return Iterator[K, V]{}, err
+		}
+		startBytes = sb
 		// iterators are inclusive at start by default
 		// so if we want to make the iteration exclusive
 		// we extend by one byte.
@@ -123,7 +139,11 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 	}
 	var endBytes []byte // default is nil
 	if end != nil {
-		endBytes = kc.Encode(end.value)
+		eb, err := kc.Encode(end.value)
+		if err != nil {
+			return Iterator[K, V]{}, err
+		}
+		endBytes = eb
 		// iterators are exclusive at end by default
 		// so if we want to make the iteration
 		// inclusive we need to extend by one byte.
@@ -139,7 +159,7 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 	case OrderDescending:
 		iter = s.ReverseIterator(startBytes, endBytes)
 	default:
-		panic(fmt.Errorf("unrecognized Order: %v", order))
+		return Iterator[K, V]{}, fmt.Errorf("unrecognized Order: %v", order)
 	}
 
 	return Iterator[K, V]{
@@ -147,7 +167,7 @@ func iteratorFromRange[K, V any](s sdk.KVStore, r Ranger[K], kc KeyEncoder[K], v
 		vc:          vc,
 		iter:        iter,
 		prefixBytes: prefixBytes,
-	}
+	}, nil
 }
 
 // Iterator defines a generic wrapper around an sdk.Iterator.

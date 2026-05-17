@@ -9,14 +9,16 @@ import (
 )
 
 func assertBijective[T any](t *testing.T, encoder KeyEncoder[T], key T) {
-	encodedKey := encoder.Encode(key)
+	encodedKey, err := encoder.Encode(key)
+	require.NoError(t, err)
 	read, decodedKey := encoder.Decode(encodedKey)
 	require.Equal(t, len(encodedKey), read, "encoded key and read bytes must have same size")
 	require.Equal(t, key, decodedKey, "encoding and decoding produces different keys")
 }
 
 func assertValueBijective[T any](t *testing.T, encoder ValueEncoder[T], value T) {
-	encodedValue := encoder.Encode(value)
+	encodedValue, err := encoder.Encode(value)
+	require.NoError(t, err)
 	decodedValue := encoder.Decode(encodedValue)
 	require.Equal(t, value, decodedValue, "encoding and decoding produces different values")
 }
@@ -24,18 +26,21 @@ func assertValueBijective[T any](t *testing.T, encoder ValueEncoder[T], value T)
 // stringValue is a ValueEncoder for string, used for testing.
 type stringValue struct{}
 
-func (s stringValue) Encode(value string) []byte    { return []byte(value) }
-func (s stringValue) Decode(b []byte) string        { return string(b) }
-func (s stringValue) Stringify(value string) string { return value }
-func (s stringValue) Name() string                  { return "test string" }
+func (s stringValue) Encode(value string) ([]byte, error) { return []byte(value), nil }
+func (s stringValue) Decode(b []byte) string              { return string(b) }
+func (s stringValue) Stringify(value string) string       { return value }
+func (s stringValue) Name() string                        { return "test string" }
 
 // jsonValue is a ValueEncoder for objects to be turned into json.
 // used for testing.
 type jsonValue[T any] struct{}
 
-func (jsonValue[T]) Encode(value T) []byte {
-	b, _ := json.Marshal(value)
-	return b
+func (jsonValue[T]) Encode(value T) ([]byte, error) {
+	b, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 func (jsonValue[T]) Decode(b []byte) T {

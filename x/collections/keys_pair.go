@@ -42,16 +42,23 @@ func (p pairKeyEncoder[K1, K2]) Stringify(key Pair[K1, K2]) string {
 // Encode encodes the Pair.
 // If both parts of the keys are present, then the byte version of K1 and K2 are joined together.
 // If only the first part is present then
-func (p pairKeyEncoder[K1, K2]) Encode(key Pair[K1, K2]) []byte {
+func (p pairKeyEncoder[K1, K2]) Encode(key Pair[K1, K2]) ([]byte, error) {
 	if key.k1 != nil && key.k2 != nil {
-		return append(p.kc1.Encode(*key.k1), p.kc2.Encode(*key.k2)...)
+		b1, err := p.kc1.Encode(*key.k1)
+		if err != nil {
+			return nil, err
+		}
+		b2, err := p.kc2.Encode(*key.k2)
+		if err != nil {
+			return nil, err
+		}
+		return append(b1, b2...), nil
 	} else if key.k1 != nil && key.k2 == nil {
 		return p.kc1.Encode(*key.k1)
 	} else if key.k1 == nil && key.k2 != nil {
 		return p.kc2.Encode(*key.k2)
-	} else {
-		panic("empty Pair key")
 	}
+	return nil, ErrEmptyPairKey
 }
 
 // Decode decodes the Pair. It assumes that the provided bytes contain both the K1 and K2 part.

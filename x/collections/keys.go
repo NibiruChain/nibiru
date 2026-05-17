@@ -27,11 +27,11 @@ var (
 
 type stringKey struct{}
 
-func (stringKey) Encode(s string) []byte {
+func (stringKey) Encode(s string) ([]byte, error) {
 	if err := validString(s); err != nil {
-		panic(fmt.Errorf("invalid StringKey: %w", err))
+		return nil, fmt.Errorf("collections: invalid StringKey: %w", err)
 	}
-	return append([]byte(s), 0) // null terminate it for safe prefixing
+	return append([]byte(s), 0), nil // null terminate it for safe prefixing
 }
 
 func (stringKey) Decode(b []byte) (int, string) {
@@ -51,14 +51,14 @@ func (stringKey) Decode(b []byte) (int, string) {
 
 type uint64Key struct{}
 
-func (uint64Key) Stringify(u uint64) string     { return strconv.FormatUint(u, 10) }
-func (uint64Key) Encode(u uint64) []byte        { return sdk.Uint64ToBigEndian(u) }
-func (uint64Key) Decode(b []byte) (int, uint64) { return 8, sdk.BigEndianToUint64(b) }
+func (uint64Key) Stringify(u uint64) string       { return strconv.FormatUint(u, 10) }
+func (uint64Key) Encode(u uint64) ([]byte, error) { return sdk.Uint64ToBigEndian(u), nil }
+func (uint64Key) Decode(b []byte) (int, uint64)   { return 8, sdk.BigEndianToUint64(b) }
 
 type timeKey struct{}
 
-func (timeKey) Stringify(t time.Time) string { return t.String() }
-func (timeKey) Encode(t time.Time) []byte    { return sdk.FormatTimeBytes(t) }
+func (timeKey) Stringify(t time.Time) string       { return t.String() }
+func (timeKey) Encode(t time.Time) ([]byte, error) { return sdk.FormatTimeBytes(t), nil }
 func (timeKey) Decode(b []byte) (int, time.Time) {
 	t, err := sdk.ParseTimeBytes(b)
 	if err != nil {
@@ -70,7 +70,7 @@ func (timeKey) Decode(b []byte) (int, time.Time) {
 type accAddressKey struct{}
 
 func (accAddressKey) Stringify(addr sdk.AccAddress) string { return addr.String() }
-func (accAddressKey) Encode(addr sdk.AccAddress) []byte {
+func (accAddressKey) Encode(addr sdk.AccAddress) ([]byte, error) {
 	return StringKeyEncoder.Encode(addr.String())
 }
 
@@ -81,7 +81,7 @@ func (accAddressKey) Decode(b []byte) (int, sdk.AccAddress) {
 
 type valAddressKeyEncoder struct{}
 
-func (v valAddressKeyEncoder) Encode(key sdk.ValAddress) []byte {
+func (v valAddressKeyEncoder) Encode(key sdk.ValAddress) ([]byte, error) {
 	return StringKeyEncoder.Encode(key.String())
 }
 
@@ -110,7 +110,7 @@ func validString(s string) error {
 
 type consAddressKeyEncoder struct{}
 
-func (consAddressKeyEncoder) Encode(key sdk.ConsAddress) []byte {
+func (consAddressKeyEncoder) Encode(key sdk.ConsAddress) ([]byte, error) {
 	return StringKeyEncoder.Encode(key.String())
 }
 
@@ -128,12 +128,12 @@ type sdkDecKeyEncoder struct{}
 
 func (sdkDecKeyEncoder) Stringify(key sdk.Dec) string { return key.String() }
 
-func (sdkDecKeyEncoder) Encode(key sdk.Dec) []byte {
+func (sdkDecKeyEncoder) Encode(key sdk.Dec) ([]byte, error) {
 	bz, err := key.Marshal()
 	if err != nil {
-		panic(fmt.Errorf("invalid DecKey: %w %s", err, HumanizeBytes(bz)))
+		return nil, fmt.Errorf("collections: invalid DecKey: %w%s", err, HumanizeBytes(bz))
 	}
-	return bz
+	return bz, nil
 }
 
 func (sdkDecKeyEncoder) Decode(b []byte) (int, sdk.Dec) {

@@ -38,13 +38,25 @@ func NewMap[K, V any](
 	}
 }
 
-func (m Map[K, V]) Insert(ctx sdk.Context, k K, v V) {
-	m.GetStore(ctx).
-		Set(m.kc.Encode(k), m.vc.Encode(v))
+func (m Map[K, V]) Insert(ctx sdk.Context, k K, v V) error {
+	kBytes, err := m.kc.Encode(k)
+	if err != nil {
+		return err
+	}
+	vBytes, err := m.vc.Encode(v)
+	if err != nil {
+		return err
+	}
+	m.GetStore(ctx).Set(kBytes, vBytes)
+	return nil
 }
 
 func (m Map[K, V]) Get(ctx sdk.Context, k K) (v V, err error) {
-	vBytes := m.GetStore(ctx).Get(m.kc.Encode(k))
+	kBytes, encErr := m.kc.Encode(k)
+	if encErr != nil {
+		return v, encErr
+	}
+	vBytes := m.GetStore(ctx).Get(kBytes)
 	if vBytes == nil {
 		return v, fmt.Errorf("%w: '%s' with key %s", ErrNotFound, m.typeName, m.kc.Stringify(k))
 	}
@@ -64,7 +76,10 @@ func (m Map[K, V]) GetOr(ctx sdk.Context, key K, def V) (v V) {
 // Delete removes the key-value pair associated with the key from the map.
 // Returns an error if the key does not exist.
 func (m Map[K, V]) Delete(ctx sdk.Context, k K) error {
-	kBytes := m.kc.Encode(k)
+	kBytes, err := m.kc.Encode(k)
+	if err != nil {
+		return err
+	}
 	store := m.GetStore(ctx)
 	if !store.Has(kBytes) {
 		return fmt.Errorf("%w: '%s' with key %s", ErrNotFound, m.typeName, m.kc.Stringify(k))
