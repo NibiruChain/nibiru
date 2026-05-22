@@ -1,0 +1,3461 @@
+diff --git a/libwasmvm/Cargo.lock b/libwasmvm/Cargo.lock
+index c5dd2de..96f4cc4 100644
+--- a/libwasmvm/Cargo.lock
++++ b/libwasmvm/Cargo.lock
+@@ -28,6 +28,24 @@ dependencies = [
+  "version_check",
+ ]
+ 
++[[package]]
++name = "ahash"
++version = "0.8.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
++dependencies = [
++ "cfg-if",
++ "once_cell",
++ "version_check",
++ "zerocopy",
++]
++
++[[package]]
++name = "allocator-api2"
++version = "0.2.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
++
+ [[package]]
+ name = "arrayvec"
+ version = "0.7.4"
+@@ -108,15 +126,6 @@ dependencies = [
+  "wyz",
+ ]
+ 
+-[[package]]
+-name = "block-buffer"
+-version = "0.9.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "4152116fd6e9dadb291ae18fc1ec3575ed6d84c29642d97890f4b4a3417297e4"
+-dependencies = [
+- "generic-array",
+-]
+-
+ [[package]]
+ name = "block-buffer"
+ version = "0.10.4"
+@@ -255,12 +264,11 @@ dependencies = [
+ [[package]]
+ name = "cosmwasm-crypto"
+ version = "1.5.11"
+-source = "git+https://github.com/CosmWasm/cosmwasm.git?rev=v1.5.11#c05011a7d0ed5e55dabeb16394a93a470e0490fb"
+ dependencies = [
+- "digest 0.10.7",
++ "digest",
+  "ed25519-zebra",
+  "k256",
+- "rand_core 0.6.4",
++ "rand_core",
+  "thiserror",
+ ]
+ 
+@@ -288,7 +296,7 @@ dependencies = [
+  "schemars",
+  "serde",
+  "serde-json-wasm",
+- "sha2 0.10.7",
++ "sha2",
+  "static_assertions",
+  "thiserror",
+ ]
+@@ -311,7 +319,7 @@ dependencies = [
+  "schemars",
+  "serde",
+  "serde_json",
+- "sha2 0.10.7",
++ "sha2",
+  "thiserror",
+  "wasmer",
+  "wasmer-middlewares",
+@@ -479,7 +487,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "cf4c2f4e1afd912bc40bfd6fed5d9dc1f288e0ba01bfcc835cc5bc3eb13efe15"
+ dependencies = [
+  "generic-array",
+- "rand_core 0.6.4",
++ "rand_core",
+  "subtle",
+  "zeroize",
+ ]
+@@ -496,17 +504,31 @@ dependencies = [
+ 
+ [[package]]
+ name = "curve25519-dalek"
+-version = "3.2.0"
++version = "4.1.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0b9fdf9972b2bd6af2d913799d9ebc165ea4d2e65878e329d9c6b372c4491b61"
++checksum = "97fb8b7c4503de7d6ae7b42ab72a5a59857b4c937ec27a3d4539dba95b5ab2be"
+ dependencies = [
+- "byteorder",
+- "digest 0.9.0",
+- "rand_core 0.5.1",
++ "cfg-if",
++ "cpufeatures",
++ "curve25519-dalek-derive",
++ "digest",
++ "fiat-crypto",
++ "rustc_version",
+  "subtle",
+  "zeroize",
+ ]
+ 
++[[package]]
++name = "curve25519-dalek-derive"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.117",
++]
++
+ [[package]]
+ name = "darling"
+ version = "0.20.1"
+@@ -527,7 +549,7 @@ dependencies = [
+  "ident_case",
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -538,7 +560,7 @@ checksum = "29a358ff9f12ec09c3e61fef9b5a9902623a695a46a917b07f269bff1445611a"
+ dependencies = [
+  "darling_core",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -584,22 +606,13 @@ dependencies = [
+  "syn 1.0.109",
+ ]
+ 
+-[[package]]
+-name = "digest"
+-version = "0.9.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "d3dd60d1080a57a05ab032377049e0591415d2b31afd7028356dbf3cc6dcb066"
+-dependencies = [
+- "generic-array",
+-]
+-
+ [[package]]
+ name = "digest"
+ version = "0.10.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
+ dependencies = [
+- "block-buffer 0.10.4",
++ "block-buffer",
+  "const-oid",
+  "crypto-common",
+  "subtle",
+@@ -644,25 +657,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "a4b1e0c257a9e9f25f90ff76d7a68360ed497ee519c8e428d1825ef0000799d4"
+ dependencies = [
+  "der",
+- "digest 0.10.7",
++ "digest",
+  "elliptic-curve",
+  "rfc6979",
+  "signature",
+  "spki",
+ ]
+ 
++[[package]]
++name = "ed25519"
++version = "2.2.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
++dependencies = [
++ "signature",
++]
++
+ [[package]]
+ name = "ed25519-zebra"
+-version = "3.1.0"
++version = "4.0.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7c24f403d068ad0b359e577a77f92392118be3f3c927538f2bb544a5ecd828c6"
++checksum = "7d9ce6874da5d4415896cd45ffbc4d1cfc0c4f9c079427bd870742c30f2f65a9"
+ dependencies = [
+  "curve25519-dalek",
+- "hashbrown 0.12.3",
++ "ed25519",
++ "hashbrown 0.14.0",
+  "hex",
+- "rand_core 0.6.4",
+- "serde",
+- "sha2 0.9.9",
++ "rand_core",
++ "sha2",
+  "zeroize",
+ ]
+ 
+@@ -680,12 +702,12 @@ checksum = "b5e6043086bf7973472e0c7dff2142ea0b680d30e18d9cc40f267efbf222bd47"
+ dependencies = [
+  "base16ct",
+  "crypto-bigint",
+- "digest 0.10.7",
++ "digest",
+  "ff",
+  "generic-array",
+  "group",
+  "pkcs8",
+- "rand_core 0.6.4",
++ "rand_core",
+  "sec1",
+  "subtle",
+  "zeroize",
+@@ -729,7 +751,7 @@ dependencies = [
+  "darling",
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -785,10 +807,16 @@ version = "0.13.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
+ dependencies = [
+- "rand_core 0.6.4",
++ "rand_core",
+  "subtle",
+ ]
+ 
++[[package]]
++name = "fiat-crypto"
++version = "0.2.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
++
+ [[package]]
+ name = "fnv"
+ version = "1.0.7"
+@@ -871,7 +899,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
+ dependencies = [
+  "ff",
+- "rand_core 0.6.4",
++ "rand_core",
+  "subtle",
+ ]
+ 
+@@ -881,7 +909,7 @@ version = "0.12.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
+ dependencies = [
+- "ahash",
++ "ahash 0.7.6",
+ ]
+ 
+ [[package]]
+@@ -889,6 +917,10 @@ name = "hashbrown"
+ version = "0.14.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
++dependencies = [
++ "ahash 0.8.12",
++ "allocator-api2",
++]
+ 
+ [[package]]
+ name = "heck"
+@@ -932,7 +964,7 @@ version = "0.12.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
+ dependencies = [
+- "digest 0.10.7",
++ "digest",
+ ]
+ 
+ [[package]]
+@@ -1006,7 +1038,7 @@ dependencies = [
+  "ecdsa",
+  "elliptic-curve",
+  "once_cell",
+- "sha2 0.10.7",
++ "sha2",
+  "signature",
+ ]
+ 
+@@ -1147,12 +1179,6 @@ version = "1.19.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
+ 
+-[[package]]
+-name = "opaque-debug"
+-version = "0.3.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
+-
+ [[package]]
+ name = "os_str_bytes"
+ version = "6.5.1"
+@@ -1226,9 +1252,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "proc-macro2"
+-version = "1.0.63"
++version = "1.0.106"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7b368fba921b0dce7e60f5e04ec15e565b3303972b42bcfde1d0713b881959eb"
++checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
+ dependencies = [
+  "unicode-ident",
+ ]
+@@ -1255,9 +1281,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "quote"
+-version = "1.0.28"
++version = "1.0.45"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "1b9ab9c7eadfd8df19006f1cf1a4aed13540ed5cbc047010ece5826e10825488"
++checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
+ dependencies = [
+  "proc-macro2",
+ ]
+@@ -1268,12 +1294,6 @@ version = "0.7.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
+ 
+-[[package]]
+-name = "rand_core"
+-version = "0.5.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "90bde5296fc891b0cef12a6d03ddccc162ce7b2aff54160af9338f8d40df6d19"
+-
+ [[package]]
+ name = "rand_core"
+ version = "0.6.4"
+@@ -1392,6 +1412,15 @@ version = "0.1.23"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "d626bb9dae77e28219937af045c257c28bfd3f69333c512553507f5f9798cb76"
+ 
++[[package]]
++name = "rustc_version"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
++dependencies = [
++ "semver",
++]
++
+ [[package]]
+ name = "rustix"
+ version = "0.37.20"
+@@ -1468,6 +1497,12 @@ version = "1.0.3"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "58bf37232d3bb9a2c4e641ca2a11d83b5062066f88df7fed36c28772046d65ba"
+ 
++[[package]]
++name = "semver"
++version = "1.0.28"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
++
+ [[package]]
+ name = "serde"
+ version = "1.0.188"
+@@ -1505,7 +1540,7 @@ checksum = "4eca7ac642d82aa35b60049a6eccb4be6be75e599bd2e9adb5f875a737654af2"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -1530,19 +1565,6 @@ dependencies = [
+  "serde",
+ ]
+ 
+-[[package]]
+-name = "sha2"
+-version = "0.9.9"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "4d58a1e1bf39749807d89cf2d98ac2dfa0ff1cb3faa38fbb64dd88ac8013d800"
+-dependencies = [
+- "block-buffer 0.9.0",
+- "cfg-if",
+- "cpufeatures",
+- "digest 0.9.0",
+- "opaque-debug",
+-]
+-
+ [[package]]
+ name = "sha2"
+ version = "0.10.7"
+@@ -1551,7 +1573,7 @@ checksum = "479fb9d862239e610720565ca91403019f2f00410f1864c5aa7479b950a76ed8"
+ dependencies = [
+  "cfg-if",
+  "cpufeatures",
+- "digest 0.10.7",
++ "digest",
+ ]
+ 
+ [[package]]
+@@ -1570,8 +1592,8 @@ version = "2.1.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "5e1788eed21689f9cf370582dfc467ef36ed9c707f073528ddafa8d83e3b8500"
+ dependencies = [
+- "digest 0.10.7",
+- "rand_core 0.6.4",
++ "digest",
++ "rand_core",
+ ]
+ 
+ [[package]]
+@@ -1639,9 +1661,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "syn"
+-version = "2.0.29"
++version = "2.0.117"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "c324c494eba9d92503e6f1ef2e6df781e78f6a7705a0202d9801b198807d518a"
++checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+@@ -1706,7 +1728,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -1784,7 +1806,7 @@ checksum = "5f4f31f56159e98206da9efd823404b79b6ef3143b4a7ab76e67b1751b25a4ab"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+ ]
+ 
+ [[package]]
+@@ -1873,7 +1895,7 @@ dependencies = [
+  "once_cell",
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+  "wasm-bindgen-shared",
+ ]
+ 
+@@ -1918,7 +1940,7 @@ checksum = "54681b18a46765f095758388f2d0cf16eb8d4169b639ab575a8f5693af210c7b"
+ dependencies = [
+  "proc-macro2",
+  "quote",
+- "syn 2.0.29",
++ "syn 2.0.117",
+  "wasm-bindgen-backend",
+  "wasm-bindgen-shared",
+ ]
+@@ -2102,7 +2124,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "wasmvm"
+-version = "1.5.9"
++version = "1.5.9-nibiru.1"
+ dependencies = [
+  "cbindgen",
+  "cosmwasm-std",
+@@ -2265,8 +2287,42 @@ dependencies = [
+  "tap",
+ ]
+ 
++[[package]]
++name = "zerocopy"
++version = "0.8.48"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eed437bf9d6692032087e337407a86f04cd8d6a16a37199ed57949d415bd68e9"
++dependencies = [
++ "zerocopy-derive",
++]
++
++[[package]]
++name = "zerocopy-derive"
++version = "0.8.48"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "70e3cd084b1788766f53af483dd21f93881ff30d7320490ec3ef7526d203bad4"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.117",
++]
++
+ [[package]]
+ name = "zeroize"
+ version = "1.8.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
++dependencies = [
++ "zeroize_derive",
++]
++
++[[package]]
++name = "zeroize_derive"
++version = "1.4.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "85a5b4158499876c763cb03bc4e49185d3cccbabb15b33c627f7884f43db852e"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn 2.0.117",
++]
+diff --git a/libwasmvm/Cargo.toml b/libwasmvm/Cargo.toml
+index fad033b..df88db4 100644
+--- a/libwasmvm/Cargo.toml
++++ b/libwasmvm/Cargo.toml
+@@ -1,6 +1,6 @@
+ [package]
+ name = "wasmvm"
+-version = "1.5.9"
++version = "1.5.9-nibiru.1"
+ publish = false
+ authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+ edition = "2021"
+@@ -49,6 +49,9 @@ tempfile = "3.4.0"
+ [build-dependencies]
+ cbindgen = "0.24.3"
+ 
++[patch."https://github.com/CosmWasm/cosmwasm.git"]
++cosmwasm-crypto = { path = "vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344" }
++
+ [profile.release]
+ opt-level = 3
+ debug = false
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.lock b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.lock
+new file mode 100644
+index 0000000..5a7905e
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.lock
+@@ -0,0 +1,1100 @@
++# This file is automatically @generated by Cargo.
++# It is not intended for manual editing.
++version = 4
++
++[[package]]
++name = "ahash"
++version = "0.8.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
++dependencies = [
++ "cfg-if",
++ "once_cell",
++ "version_check",
++ "zerocopy",
++]
++
++[[package]]
++name = "aho-corasick"
++version = "1.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
++dependencies = [
++ "memchr",
++]
++
++[[package]]
++name = "allocator-api2"
++version = "0.2.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
++
++[[package]]
++name = "anes"
++version = "0.1.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
++
++[[package]]
++name = "atty"
++version = "0.2.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d9b39be18770d11421cdb1b9947a45dd3f37e93092cbf377614828a319d5fee8"
++dependencies = [
++ "hermit-abi",
++ "libc",
++ "winapi",
++]
++
++[[package]]
++name = "autocfg"
++version = "1.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
++
++[[package]]
++name = "base16ct"
++version = "0.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
++
++[[package]]
++name = "base64ct"
++version = "1.8.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
++
++[[package]]
++name = "bitflags"
++version = "1.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
++
++[[package]]
++name = "block-buffer"
++version = "0.10.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
++dependencies = [
++ "generic-array",
++]
++
++[[package]]
++name = "bumpalo"
++version = "3.20.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
++
++[[package]]
++name = "cast"
++version = "0.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
++
++[[package]]
++name = "cfg-if"
++version = "1.0.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
++
++[[package]]
++name = "ciborium"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
++dependencies = [
++ "ciborium-io",
++ "ciborium-ll",
++ "serde",
++]
++
++[[package]]
++name = "ciborium-io"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
++
++[[package]]
++name = "ciborium-ll"
++version = "0.2.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
++dependencies = [
++ "ciborium-io",
++ "half",
++]
++
++[[package]]
++name = "clap"
++version = "3.2.25"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4ea181bf566f71cb9a5d17a59e1871af638180a18fb0035c92ae62b705207123"
++dependencies = [
++ "bitflags",
++ "clap_lex",
++ "indexmap",
++ "textwrap",
++]
++
++[[package]]
++name = "clap_lex"
++version = "0.2.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
++dependencies = [
++ "os_str_bytes",
++]
++
++[[package]]
++name = "const-oid"
++version = "0.9.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
++
++[[package]]
++name = "cosmwasm-crypto"
++version = "1.5.11"
++dependencies = [
++ "criterion",
++ "digest",
++ "ed25519-zebra",
++ "english-numbers",
++ "hex",
++ "hex-literal",
++ "k256",
++ "rand_core",
++ "serde",
++ "serde_json",
++ "sha2",
++ "thiserror",
++]
++
++[[package]]
++name = "cpufeatures"
++version = "0.2.17"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
++dependencies = [
++ "libc",
++]
++
++[[package]]
++name = "criterion"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e7c76e09c1aae2bc52b3d2f29e13c6572553b30c4aa1b8a49fd70de6412654cb"
++dependencies = [
++ "anes",
++ "atty",
++ "cast",
++ "ciborium",
++ "clap",
++ "criterion-plot",
++ "itertools",
++ "lazy_static",
++ "num-traits",
++ "oorandom",
++ "plotters",
++ "rayon",
++ "regex",
++ "serde",
++ "serde_derive",
++ "serde_json",
++ "tinytemplate",
++ "walkdir",
++]
++
++[[package]]
++name = "criterion-plot"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6b50826342786a51a89e2da3a28f1c32b06e387201bc2d19791f622c673706b1"
++dependencies = [
++ "cast",
++ "itertools",
++]
++
++[[package]]
++name = "crossbeam-deque"
++version = "0.8.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9dd111b7b7f7d55b72c0a6ae361660ee5853c9af73f70c3c2ef6858b950e2e51"
++dependencies = [
++ "crossbeam-epoch",
++ "crossbeam-utils",
++]
++
++[[package]]
++name = "crossbeam-epoch"
++version = "0.9.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
++dependencies = [
++ "crossbeam-utils",
++]
++
++[[package]]
++name = "crossbeam-utils"
++version = "0.8.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
++
++[[package]]
++name = "crunchy"
++version = "0.2.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
++
++[[package]]
++name = "crypto-bigint"
++version = "0.5.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0dc92fb57ca44df6db8059111ab3af99a63d5d0f8375d9972e319a379c6bab76"
++dependencies = [
++ "generic-array",
++ "rand_core",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "crypto-common"
++version = "0.1.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
++dependencies = [
++ "generic-array",
++ "typenum",
++]
++
++[[package]]
++name = "curve25519-dalek"
++version = "4.1.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "97fb8b7c4503de7d6ae7b42ab72a5a59857b4c937ec27a3d4539dba95b5ab2be"
++dependencies = [
++ "cfg-if",
++ "cpufeatures",
++ "curve25519-dalek-derive",
++ "digest",
++ "fiat-crypto",
++ "rustc_version",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "curve25519-dalek-derive"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "der"
++version = "0.7.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e7c1832837b905bbfb5101e07cc24c8deddf52f93225eee6ead5f4d63d53ddcb"
++dependencies = [
++ "const-oid",
++ "zeroize",
++]
++
++[[package]]
++name = "digest"
++version = "0.10.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
++dependencies = [
++ "block-buffer",
++ "const-oid",
++ "crypto-common",
++ "subtle",
++]
++
++[[package]]
++name = "ecdsa"
++version = "0.16.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ee27f32b5c5292967d2d4a9d7f1e0b0aed2c15daded5a60300e4abb9d8020bca"
++dependencies = [
++ "der",
++ "digest",
++ "elliptic-curve",
++ "rfc6979",
++ "signature",
++ "spki",
++]
++
++[[package]]
++name = "ed25519"
++version = "2.2.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "115531babc129696a58c64a4fef0a8bf9e9698629fb97e9e40767d235cfbcd53"
++dependencies = [
++ "signature",
++]
++
++[[package]]
++name = "ed25519-zebra"
++version = "4.0.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7d9ce6874da5d4415896cd45ffbc4d1cfc0c4f9c079427bd870742c30f2f65a9"
++dependencies = [
++ "curve25519-dalek",
++ "ed25519",
++ "hashbrown 0.14.5",
++ "hex",
++ "rand_core",
++ "sha2",
++ "zeroize",
++]
++
++[[package]]
++name = "either"
++version = "1.15.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
++
++[[package]]
++name = "elliptic-curve"
++version = "0.13.8"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b5e6043086bf7973472e0c7dff2142ea0b680d30e18d9cc40f267efbf222bd47"
++dependencies = [
++ "base16ct",
++ "crypto-bigint",
++ "digest",
++ "ff",
++ "generic-array",
++ "group",
++ "pkcs8",
++ "rand_core",
++ "sec1",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "english-numbers"
++version = "0.3.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4e4f5d6e192964d498b45abee72ca445e91909094bc8e8791259e82c2a0d1aa6"
++
++[[package]]
++name = "ff"
++version = "0.13.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c0b50bfb653653f9ca9095b427bed08ab8d75a137839d9ad64eb11810d5b6393"
++dependencies = [
++ "rand_core",
++ "subtle",
++]
++
++[[package]]
++name = "fiat-crypto"
++version = "0.2.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
++
++[[package]]
++name = "futures-core"
++version = "0.3.32"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
++
++[[package]]
++name = "futures-task"
++version = "0.3.32"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "037711b3d59c33004d3856fbdc83b99d4ff37a24768fa1be9ce3538a1cde4393"
++
++[[package]]
++name = "futures-util"
++version = "0.3.32"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
++dependencies = [
++ "futures-core",
++ "futures-task",
++ "pin-project-lite",
++ "slab",
++]
++
++[[package]]
++name = "generic-array"
++version = "0.14.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4bb6743198531e02858aeaea5398fcc883e71851fcbcb5a2f773e2fb6cb1edf2"
++dependencies = [
++ "typenum",
++ "version_check",
++ "zeroize",
++]
++
++[[package]]
++name = "getrandom"
++version = "0.2.17"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
++dependencies = [
++ "cfg-if",
++ "libc",
++ "wasi",
++]
++
++[[package]]
++name = "group"
++version = "0.13.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f0f9ef7462f7c099f518d754361858f86d8a07af53ba9af0fe635bbccb151a63"
++dependencies = [
++ "ff",
++ "rand_core",
++ "subtle",
++]
++
++[[package]]
++name = "half"
++version = "2.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b"
++dependencies = [
++ "cfg-if",
++ "crunchy",
++ "zerocopy",
++]
++
++[[package]]
++name = "hashbrown"
++version = "0.12.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
++
++[[package]]
++name = "hashbrown"
++version = "0.14.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
++dependencies = [
++ "ahash",
++ "allocator-api2",
++]
++
++[[package]]
++name = "hermit-abi"
++version = "0.1.19"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
++dependencies = [
++ "libc",
++]
++
++[[package]]
++name = "hex"
++version = "0.4.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
++
++[[package]]
++name = "hex-literal"
++version = "0.3.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
++
++[[package]]
++name = "hmac"
++version = "0.12.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
++dependencies = [
++ "digest",
++]
++
++[[package]]
++name = "indexmap"
++version = "1.9.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
++dependencies = [
++ "autocfg",
++ "hashbrown 0.12.3",
++]
++
++[[package]]
++name = "itertools"
++version = "0.10.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
++dependencies = [
++ "either",
++]
++
++[[package]]
++name = "itoa"
++version = "1.0.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
++
++[[package]]
++name = "js-sys"
++version = "0.3.98"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "67df7112613f8bfd9150013a0314e196f4800d3201ae742489d999db2f979f08"
++dependencies = [
++ "cfg-if",
++ "futures-util",
++ "once_cell",
++ "wasm-bindgen",
++]
++
++[[package]]
++name = "k256"
++version = "0.13.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f6e3919bbaa2945715f0bb6d3934a173d1e9a59ac23767fbaaef277265a7411b"
++dependencies = [
++ "cfg-if",
++ "ecdsa",
++ "elliptic-curve",
++ "once_cell",
++ "sha2",
++ "signature",
++]
++
++[[package]]
++name = "lazy_static"
++version = "1.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
++
++[[package]]
++name = "libc"
++version = "0.2.186"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
++
++[[package]]
++name = "memchr"
++version = "2.8.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
++
++[[package]]
++name = "num-traits"
++version = "0.2.19"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
++dependencies = [
++ "autocfg",
++]
++
++[[package]]
++name = "once_cell"
++version = "1.21.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
++
++[[package]]
++name = "oorandom"
++version = "11.1.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
++
++[[package]]
++name = "os_str_bytes"
++version = "6.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
++
++[[package]]
++name = "pin-project-lite"
++version = "0.2.17"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
++
++[[package]]
++name = "pkcs8"
++version = "0.10.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
++dependencies = [
++ "der",
++ "spki",
++]
++
++[[package]]
++name = "plotters"
++version = "0.3.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5aeb6f403d7a4911efb1e33402027fc44f29b5bf6def3effcc22d7bb75f2b747"
++dependencies = [
++ "num-traits",
++ "plotters-backend",
++ "plotters-svg",
++ "wasm-bindgen",
++ "web-sys",
++]
++
++[[package]]
++name = "plotters-backend"
++version = "0.3.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "df42e13c12958a16b3f7f4386b9ab1f3e7933914ecea48da7139435263a4172a"
++
++[[package]]
++name = "plotters-svg"
++version = "0.3.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "51bae2ac328883f7acdfea3d66a7c35751187f870bc81f94563733a154d7a670"
++dependencies = [
++ "plotters-backend",
++]
++
++[[package]]
++name = "proc-macro2"
++version = "1.0.106"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
++dependencies = [
++ "unicode-ident",
++]
++
++[[package]]
++name = "quote"
++version = "1.0.45"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
++dependencies = [
++ "proc-macro2",
++]
++
++[[package]]
++name = "rand_core"
++version = "0.6.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
++dependencies = [
++ "getrandom",
++]
++
++[[package]]
++name = "rayon"
++version = "1.12.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "fb39b166781f92d482534ef4b4b1b2568f42613b53e5b6c160e24cfbfa30926d"
++dependencies = [
++ "either",
++ "rayon-core",
++]
++
++[[package]]
++name = "rayon-core"
++version = "1.13.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
++dependencies = [
++ "crossbeam-deque",
++ "crossbeam-utils",
++]
++
++[[package]]
++name = "regex"
++version = "1.12.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-automata",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-automata"
++version = "0.4.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-syntax"
++version = "0.8.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
++
++[[package]]
++name = "rfc6979"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f8dd2a808d456c4a54e300a23e9f5a67e122c3024119acbfd73e3bf664491cb2"
++dependencies = [
++ "hmac",
++ "subtle",
++]
++
++[[package]]
++name = "rustc_version"
++version = "0.4.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
++dependencies = [
++ "semver",
++]
++
++[[package]]
++name = "rustversion"
++version = "1.0.22"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
++
++[[package]]
++name = "same-file"
++version = "1.0.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
++dependencies = [
++ "winapi-util",
++]
++
++[[package]]
++name = "sec1"
++version = "0.7.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d3e97a565f76233a6003f9f5c54be1d9c5bdfa3eccfb189469f11ec4901c47dc"
++dependencies = [
++ "base16ct",
++ "der",
++ "generic-array",
++ "pkcs8",
++ "subtle",
++ "zeroize",
++]
++
++[[package]]
++name = "semver"
++version = "1.0.28"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
++
++[[package]]
++name = "serde"
++version = "1.0.228"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
++dependencies = [
++ "serde_core",
++ "serde_derive",
++]
++
++[[package]]
++name = "serde_core"
++version = "1.0.228"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
++dependencies = [
++ "serde_derive",
++]
++
++[[package]]
++name = "serde_derive"
++version = "1.0.228"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "serde_json"
++version = "1.0.149"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
++dependencies = [
++ "itoa",
++ "memchr",
++ "serde",
++ "serde_core",
++ "zmij",
++]
++
++[[package]]
++name = "sha2"
++version = "0.10.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
++dependencies = [
++ "cfg-if",
++ "cpufeatures",
++ "digest",
++]
++
++[[package]]
++name = "signature"
++version = "2.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
++dependencies = [
++ "digest",
++ "rand_core",
++]
++
++[[package]]
++name = "slab"
++version = "0.4.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
++
++[[package]]
++name = "spki"
++version = "0.7.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
++dependencies = [
++ "base64ct",
++ "der",
++]
++
++[[package]]
++name = "subtle"
++version = "2.6.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
++
++[[package]]
++name = "syn"
++version = "2.0.117"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "unicode-ident",
++]
++
++[[package]]
++name = "textwrap"
++version = "0.16.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c13547615a44dc9c452a8a534638acdf07120d4b6847c8178705da06306a3057"
++
++[[package]]
++name = "thiserror"
++version = "1.0.69"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
++dependencies = [
++ "thiserror-impl",
++]
++
++[[package]]
++name = "thiserror-impl"
++version = "1.0.69"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "tinytemplate"
++version = "1.2.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
++dependencies = [
++ "serde",
++ "serde_json",
++]
++
++[[package]]
++name = "typenum"
++version = "1.20.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
++
++[[package]]
++name = "unicode-ident"
++version = "1.0.24"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
++
++[[package]]
++name = "version_check"
++version = "0.9.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
++
++[[package]]
++name = "walkdir"
++version = "2.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
++dependencies = [
++ "same-file",
++ "winapi-util",
++]
++
++[[package]]
++name = "wasi"
++version = "0.11.1+wasi-snapshot-preview1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
++
++[[package]]
++name = "wasm-bindgen"
++version = "0.2.121"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "49ace1d07c165b0864824eee619580c4689389afa9dc9ed3a4c75040d82e6790"
++dependencies = [
++ "cfg-if",
++ "once_cell",
++ "rustversion",
++ "wasm-bindgen-macro",
++ "wasm-bindgen-shared",
++]
++
++[[package]]
++name = "wasm-bindgen-macro"
++version = "0.2.121"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8e68e6f4afd367a562002c05637acb8578ff2dea1943df76afb9e83d177c8578"
++dependencies = [
++ "quote",
++ "wasm-bindgen-macro-support",
++]
++
++[[package]]
++name = "wasm-bindgen-macro-support"
++version = "0.2.121"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d95a9ec35c64b2a7cb35d3fead40c4238d0940c86d107136999567a4703259f2"
++dependencies = [
++ "bumpalo",
++ "proc-macro2",
++ "quote",
++ "syn",
++ "wasm-bindgen-shared",
++]
++
++[[package]]
++name = "wasm-bindgen-shared"
++version = "0.2.121"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c4e0100b01e9f0d03189a92b96772a1fb998639d981193d7dbab487302513441"
++dependencies = [
++ "unicode-ident",
++]
++
++[[package]]
++name = "web-sys"
++version = "0.3.98"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4b572dff8bcf38bad0fa19729c89bb5748b2b9b1d8be70cf90df697e3a8f32aa"
++dependencies = [
++ "js-sys",
++ "wasm-bindgen",
++]
++
++[[package]]
++name = "winapi"
++version = "0.3.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5c839a674fcd7a98952e593242ea400abe93992746761e38641405d28b00f419"
++dependencies = [
++ "winapi-i686-pc-windows-gnu",
++ "winapi-x86_64-pc-windows-gnu",
++]
++
++[[package]]
++name = "winapi-i686-pc-windows-gnu"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
++
++[[package]]
++name = "winapi-util"
++version = "0.1.11"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
++dependencies = [
++ "windows-sys",
++]
++
++[[package]]
++name = "winapi-x86_64-pc-windows-gnu"
++version = "0.4.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
++
++[[package]]
++name = "windows-link"
++version = "0.2.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
++
++[[package]]
++name = "windows-sys"
++version = "0.61.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
++dependencies = [
++ "windows-link",
++]
++
++[[package]]
++name = "zerocopy"
++version = "0.8.48"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "eed437bf9d6692032087e337407a86f04cd8d6a16a37199ed57949d415bd68e9"
++dependencies = [
++ "zerocopy-derive",
++]
++
++[[package]]
++name = "zerocopy-derive"
++version = "0.8.48"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "70e3cd084b1788766f53af483dd21f93881ff30d7320490ec3ef7526d203bad4"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "zeroize"
++version = "1.8.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b97154e67e32c85465826e8bcc1c59429aaaf107c1e4a9e53c8d8ccd5eff88d0"
++dependencies = [
++ "zeroize_derive",
++]
++
++[[package]]
++name = "zeroize_derive"
++version = "1.4.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "85a5b4158499876c763cb03bc4e49185d3cccbabb15b33c627f7884f43db852e"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "zmij"
++version = "1.0.21"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml
+new file mode 100644
+index 0000000..c98ce3a
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml
+@@ -0,0 +1,83 @@
++# THIS FILE IS AUTOMATICALLY GENERATED BY CARGO
++#
++# When uploading crates to the registry Cargo will automatically
++# "normalize" Cargo.toml files for maximal compatibility
++# with all versions of Cargo and also rewrite `path` dependencies
++# to registry (e.g., crates.io) dependencies.
++#
++# If you are reading this file be aware that the original Cargo.toml
++# will likely look very different (and much more reasonable).
++# See Cargo.toml.orig for the original contents.
++
++[package]
++edition = "2021"
++name = "cosmwasm-crypto"
++version = "1.5.11"
++authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
++build = false
++autobins = false
++autoexamples = false
++autotests = false
++autobenches = false
++description = "Crypto bindings for cosmwasm contracts"
++readme = "README.md"
++license = "Apache-2.0"
++repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
++
++[lib]
++name = "cosmwasm_crypto"
++path = "src/lib.rs"
++bench = false
++
++[[bench]]
++name = "main"
++path = "benches/main.rs"
++harness = false
++
++[dependencies.digest]
++version = "0.10"
++
++[dependencies.ed25519-zebra]
++version = "=4.0.3"
++default-features = false
++
++[dependencies.k256]
++version = "0.13.3"
++features = ["ecdsa"]
++
++[dependencies.rand_core]
++version = "0.6"
++features = ["getrandom"]
++
++[dependencies.thiserror]
++version = "1.0.38"
++
++[dev-dependencies.criterion]
++version = "0.4"
++
++[dev-dependencies.english-numbers]
++version = "0.3"
++
++[dev-dependencies.hex]
++version = "0.4"
++
++[dev-dependencies.hex-literal]
++version = "0.3.1"
++
++[dev-dependencies.serde]
++version = "1.0.103"
++features = [
++    "derive",
++    "alloc",
++]
++default-features = false
++
++[dev-dependencies.serde_json]
++version = "1.0.40"
++
++[dev-dependencies.sha2]
++version = "0.10"
++
++[features]
++backtraces = []
++default = []
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml.orig b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml.orig
+new file mode 100644
+index 0000000..caf4865
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/Cargo.toml.orig
+@@ -0,0 +1,39 @@
++[package]
++name = "cosmwasm-crypto"
++version.workspace = true
++authors = ["Mauro Lacy <maurolacy@users.noreply.github.com>"]
++edition = "2021"
++description = "Crypto bindings for cosmwasm contracts"
++repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto"
++license = "Apache-2.0"
++
++[features]
++default = []
++# backtraces provides much better context at runtime errors (in non-wasm code)
++# at the cost of a bit of code size and performance.
++# This feature requires Rust nightly because it depends on the unstable backtrace feature.
++backtraces = []
++
++[lib]
++# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
++bench = false
++
++[dependencies]
++k256 = { version = "0.13.3", features = ["ecdsa"] }
++ed25519-zebra = { version = "=4.0.3", default-features = false }
++digest = "0.10"
++rand_core = { version = "0.6", features = ["getrandom"] }
++thiserror = "1.0.38"
++
++[dev-dependencies]
++criterion = "0.4"
++serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
++serde_json = "1.0.40"
++sha2 = "0.10"
++hex = "0.4"
++hex-literal = "0.3.1"
++english-numbers = "0.3"
++
++[[bench]]
++name = "main"
++harness = false
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/README.md b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/README.md
+new file mode 100644
+index 0000000..cf92787
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/README.md
+@@ -0,0 +1,29 @@
++# CosmWasm Crypto
++
++[![cosmwasm-crypto on crates.io](https://img.shields.io/crates/v/cosmwasm-crypto.svg)](https://crates.io/crates/cosmwasm-crypto)
++
++This crate implements cryptography-related functions, so that they can be
++available for both, the [cosmwasm-vm](`https://crates.io/crates/cosmwasm-vm`)
++and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
++
++## Implementations
++
++- `secp256k1_verify()`: Digital signature verification using the ECDSA sepc256k1
++  scheme, for Cosmos signature / public key formats.
++- `ed25519_verify()`: Digital signature verification using the EdDSA ed25519
++  scheme, for Tendermint signature / public key formats.
++- `ed25519_batch_verify()`: Batch digital signature verification using the EdDSA
++  ed25519 scheme, for Tendermint signature / public key formats.
++
++## Benchmarking
++
++```
++cd packages/crypto
++cargo bench
++```
++
++## License
++
++This package is part of the cosmwasm repository, licensed under the Apache
++License 2.0 (see [NOTICE](https://github.com/CosmWasm/cosmwasm/blob/main/NOTICE)
++and [LICENSE](https://github.com/CosmWasm/cosmwasm/blob/main/LICENSE)).
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/SAI_PATCH.md b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/SAI_PATCH.md
+new file mode 100644
+index 0000000..923c3e0
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/SAI_PATCH.md
+@@ -0,0 +1,15 @@
++# Sai Patch
++
++This is a minimal vendored patch of `cosmwasm-crypto` 1.5.11.
++
++The only dependency change is:
++
++- `ed25519-zebra = "3"` -> `ed25519-zebra = { version = "=4.0.3", default-features = false }`
++
++This keeps the CosmWasm 1.5.11 API in place while resolving
++`RUSTSEC-2024-0344`, which is reported through `curve25519-dalek` 3.2.0 in the
++host-only `cosmwasm-std` crypto path. `ed25519-zebra` 4.0.3 resolves
++`curve25519-dalek` to 4.1.3 under its `< 4.2` dependency range.
++
++Remove this patch when the workspace migrates to a Nibiru/CosmWasm release that
++ships the fixed crypto dependency directly.
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/benches/main.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/benches/main.rs
+new file mode 100644
+index 0000000..ce4b8d2
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/benches/main.rs
+@@ -0,0 +1,190 @@
++use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
++use std::time::Duration;
++
++use english_numbers::convert_no_fmt;
++use hex_literal::hex;
++use serde::Deserialize;
++
++// Crypto stuff
++use digest::Digest;
++use k256::ecdsa::SigningKey; // type alias
++use sha2::Sha256;
++
++use cosmwasm_crypto::{
++    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify,
++};
++use std::cmp::min;
++
++const COSMOS_SECP256K1_MSG_HEX: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
++const COSMOS_SECP256K1_SIGNATURE_HEX: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
++const COSMOS_SECP256K1_PUBKEY_HEX: &str =
++    "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
++
++// TEST 3 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
++const COSMOS_ED25519_MSG_HEX: &str = "af82";
++const COSMOS_ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
++const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
++    "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
++
++// Test data from https://tools.ietf.org/html/rfc8032#section-7.1
++const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
++
++#[derive(Deserialize, Debug)]
++struct Encoded {
++    #[serde(rename = "privkey")]
++    #[allow(dead_code)]
++    private_key: String,
++    #[serde(rename = "pubkey")]
++    public_key: String,
++    message: String,
++    signature: String,
++}
++
++fn read_cosmos_sigs() -> Vec<Encoded> {
++    use std::fs::File;
++    use std::io::BufReader;
++
++    // Open the file in read-only mode with buffer.
++    let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
++    let reader = BufReader::new(file);
++
++    serde_json::from_reader(reader).unwrap()
++}
++
++#[allow(clippy::type_complexity)]
++fn read_decode_cosmos_sigs() -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<Vec<u8>>) {
++    let codes = read_cosmos_sigs();
++
++    let mut messages: Vec<Vec<u8>> = vec![];
++    let mut signatures: Vec<Vec<u8>> = vec![];
++    let mut public_keys: Vec<Vec<u8>> = vec![];
++
++    for encoded in codes {
++        let message = hex::decode(&encoded.message).unwrap();
++        messages.push(message);
++
++        let signature = hex::decode(&encoded.signature).unwrap();
++        signatures.push(signature);
++
++        let public_key = hex::decode(&encoded.public_key).unwrap();
++        public_keys.push(public_key);
++    }
++
++    (messages, signatures, public_keys)
++}
++
++fn bench_crypto(c: &mut Criterion) {
++    let mut group = c.benchmark_group("Crypto");
++
++    group.bench_function("secp256k1_verify", |b| {
++        let message = hex::decode(COSMOS_SECP256K1_MSG_HEX).unwrap();
++        let message_hash = Sha256::digest(message);
++        let signature = hex::decode(COSMOS_SECP256K1_SIGNATURE_HEX).unwrap();
++        let public_key = hex::decode(COSMOS_SECP256K1_PUBKEY_HEX).unwrap();
++        b.iter(|| {
++            assert!(secp256k1_verify(&message_hash, &signature, &public_key).unwrap());
++        });
++    });
++
++    group.bench_function("secp256k1_recover_pubkey", |b| {
++        let message_hash =
++            hex!("82ff40c0a986c6a5cfad4ddf4c3aa6996f1a7837f9c398e17e5de5cbd5a12b28");
++        let private_key =
++            hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
++        let r_s = hex!("99e71a99cb2270b8cac5254f9e99b6210c6c10224a1579cf389ef88b20a1abe9129ff05af364204442bdb53ab6f18a99ab48acc9326fa689f228040429e3ca66");
++        let recovery_param: u8 = 0;
++
++        let expected = SigningKey::from_bytes(&private_key.into())
++            .unwrap()
++            .verifying_key()
++            .to_encoded_point(false)
++            .as_bytes()
++            .to_vec();
++
++        b.iter(|| {
++            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
++            assert_eq!(pubkey, expected);
++        });
++    });
++
++    group.bench_function("ed25519_verify", |b| {
++        let message = hex::decode(COSMOS_ED25519_MSG_HEX).unwrap();
++        let signature = hex::decode(COSMOS_ED25519_SIGNATURE_HEX).unwrap();
++        let public_key = hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX).unwrap();
++        b.iter(|| {
++            assert!(ed25519_verify(&message, &signature, &public_key).unwrap());
++        });
++    });
++
++    // Ed25519 batch verification of different batch lengths
++    {
++        let (messages, signatures, public_keys) = read_decode_cosmos_sigs();
++        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        for n in (1..=min(messages.len(), 10)).step_by(2) {
++            group.bench_function(
++                format!("ed25519_batch_verify_{}", convert_no_fmt(n as i64)),
++                |b| {
++                    b.iter(|| {
++                        assert!(ed25519_batch_verify(
++                            &messages[..n],
++                            &signatures[..n],
++                            &public_keys[..n]
++                        )
++                        .unwrap());
++                    });
++                },
++            );
++        }
++    }
++
++    // Ed25519 batch verification of different batch lengths, with the same pubkey
++    {
++        //FIXME: Use different messages / signatures
++        let messages = [hex::decode(COSMOS_ED25519_MSG_HEX).unwrap()];
++        let signatures = [hex::decode(COSMOS_ED25519_SIGNATURE_HEX).unwrap()];
++        let public_keys = [hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX).unwrap()];
++
++        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        for n in (1..10).step_by(2) {
++            group.bench_function(
++                format!(
++                    "ed25519_batch_verify_one_pubkey_{}",
++                    convert_no_fmt(n as i64)
++                ),
++                |b| {
++                    b.iter(|| {
++                        assert!(ed25519_batch_verify(
++                            &messages.repeat(n),
++                            &signatures.repeat(n),
++                            &public_keys
++                        )
++                        .unwrap());
++                    });
++                },
++            );
++        }
++    }
++
++    group.finish();
++}
++
++fn make_config() -> Criterion {
++    Criterion::default()
++        .plotting_backend(PlottingBackend::Plotters)
++        .without_plots()
++        .measurement_time(Duration::new(10, 0))
++        .sample_size(12)
++}
++
++criterion_group!(
++    name = crypto;
++    config = make_config();
++    targets = bench_crypto
++);
++criterion_main!(crypto);
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/ed25519.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/ed25519.rs
+new file mode 100644
+index 0000000..7b87aff
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/ed25519.rs
+@@ -0,0 +1,576 @@
++use ed25519_zebra::{batch, Signature, VerificationKey};
++use rand_core::OsRng;
++
++use crate::errors::{CryptoError, CryptoResult};
++
++/// Length of a serialized public key
++pub const EDDSA_PUBKEY_LEN: usize = 32;
++
++/// EdDSA ed25519 implementation.
++///
++/// This function verifies messages against a signature, with the public key of the signer,
++/// using the ed25519 elliptic curve digital signature parametrization / algorithm.
++///
++/// The maximum currently supported message length is 4096 bytes.
++/// The signature and public key are in [Tendermint](https://docs.tendermint.com/v0.32/spec/blockchain/encoding.html#public-key-cryptography)
++/// format:
++/// - signature: raw ED25519 signature (64 bytes).
++/// - public key: raw ED25519 public key (32 bytes).
++pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
++    // Validation
++    let signature = read_signature(signature)?;
++    let pubkey = read_pubkey(public_key)?;
++
++    // Verification
++    match VerificationKey::try_from(pubkey)
++        .and_then(|vk| vk.verify(&Signature::from(signature), message))
++    {
++        Ok(()) => Ok(true),
++        Err(_) => Ok(false),
++    }
++}
++
++/// Performs batch Ed25519 signature verification.
++///
++/// Batch verification asks whether all signatures in some set are valid, rather than asking whether
++/// each of them is valid. This allows sharing computations among all signature verifications,
++/// performing less work overall, at the cost of higher latency (the entire batch must complete),
++/// complexity of caller code (which must assemble a batch of signatures across work-items),
++/// and loss of the ability to easily pinpoint failing signatures.
++///
++/// This batch verification implementation is adaptive, in the sense that it detects multiple
++/// signatures created with the same verification key, and automatically coalesces terms
++/// in the final verification equation.
++///
++/// In the limiting case where all signatures in the batch are made with the same verification key,
++/// coalesced batch verification runs twice as fast as ordinary batch verification.
++///
++/// Three Variants are suppported in the input for convenience:
++///  - Equal number of messages, signatures, and public keys: Standard, generic functionality.
++///  - One message, and an equal number of signatures and public keys: Multiple digital signature
++/// (multisig) verification of a single message.
++///  - One public key, and an equal number of messages and signatures: Verification of multiple
++/// messages, all signed with the same private key.
++///
++/// Any other variants of input vectors result in an error.
++///
++/// Notes:
++///  - The "one-message, with zero signatures and zero public keys" case, is considered the empty
++/// case.
++///  - The "one-public key, with zero messages and zero signatures" case, is considered the empty
++/// case.
++///  - The empty case (no messages, no signatures and no public keys) returns true.
++pub fn ed25519_batch_verify(
++    messages: &[&[u8]],
++    signatures: &[&[u8]],
++    public_keys: &[&[u8]],
++) -> CryptoResult<bool> {
++    // Structural checks
++    let messages_len = messages.len();
++    let signatures_len = signatures.len();
++    let public_keys_len = public_keys.len();
++
++    let mut messages = messages.to_vec();
++    let mut public_keys = public_keys.to_vec();
++    if messages_len == signatures_len && messages_len == public_keys_len { // We're good to go
++    } else if messages_len == 1 && signatures_len == public_keys_len {
++        // Replicate message, for multisig
++        messages = messages.repeat(signatures_len);
++    } else if public_keys_len == 1 && messages_len == signatures_len {
++        // Replicate pubkey
++        public_keys = public_keys.repeat(messages_len);
++    } else {
++        return Err(CryptoError::batch_err(
++            "Mismatched / erroneous number of messages / signatures / public keys",
++        ));
++    }
++    debug_assert_eq!(messages.len(), signatures_len);
++    debug_assert_eq!(messages.len(), public_keys.len());
++
++    let mut batch = batch::Verifier::new();
++
++    for ((&message, &signature), &public_key) in messages
++        .iter()
++        .zip(signatures.iter())
++        .zip(public_keys.iter())
++    {
++        // Validation
++        let signature = read_signature(signature)?;
++        let pubkey = read_pubkey(public_key)?;
++
++        // Enqueing
++        batch.queue((pubkey.into(), signature.into(), message));
++    }
++
++    // Batch verification
++    match batch.verify(OsRng) {
++        Ok(()) => Ok(true),
++        Err(_) => Ok(false),
++    }
++}
++
++/// Error raised when signature is not 64 bytes long
++struct InvalidEd25519SignatureFormat;
++
++impl From<InvalidEd25519SignatureFormat> for CryptoError {
++    fn from(_original: InvalidEd25519SignatureFormat) -> Self {
++        CryptoError::invalid_signature_format()
++    }
++}
++
++fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidEd25519SignatureFormat> {
++    data.try_into().map_err(|_| InvalidEd25519SignatureFormat)
++}
++
++/// Error raised when pubkey is not 32 bytes long
++struct InvalidEd25519PubkeyFormat;
++
++impl From<InvalidEd25519PubkeyFormat> for CryptoError {
++    fn from(_original: InvalidEd25519PubkeyFormat) -> Self {
++        CryptoError::invalid_pubkey_format()
++    }
++}
++
++fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
++    data.try_into().map_err(|_| InvalidEd25519PubkeyFormat)
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use ed25519_zebra::SigningKey;
++    use serde::Deserialize;
++
++    // For generic signature verification
++    const MSG: &str = "Hello World!";
++
++    // Cosmos ed25519 signature verification
++    // TEST 1 from https://tools.ietf.org/html/rfc8032#section-7.1
++    const COSMOS_ED25519_MSG: &str = "";
++    const COSMOS_ED25519_PRIVATE_KEY_HEX: &str =
++        "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
++    const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
++        "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
++    const COSMOS_ED25519_SIGNATURE_HEX: &str = "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
++
++    // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
++    const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
++
++    #[derive(Deserialize, Debug)]
++    struct Encoded {
++        #[serde(rename = "privkey")]
++        #[allow(dead_code)]
++        private_key: String,
++        #[serde(rename = "pubkey")]
++        public_key: String,
++        message: String,
++        signature: String,
++    }
++
++    fn read_cosmos_sigs() -> Vec<Encoded> {
++        use std::fs::File;
++        use std::io::BufReader;
++
++        // Open the file in read-only mode with buffer.
++        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
++        let reader = BufReader::new(file);
++
++        serde_json::from_reader(reader).unwrap()
++    }
++
++    #[test]
++    fn test_ed25519_verify() {
++        let message = MSG.as_bytes();
++        // Signing
++        let secret_key = SigningKey::new(OsRng);
++        let signature = secret_key.sign(message);
++
++        let public_key = VerificationKey::from(&secret_key);
++
++        // Serialization. Types can be converted to raw byte arrays with From/Into
++        let signature_bytes: [u8; 64] = signature.into();
++        let public_key_bytes: [u8; 32] = public_key.into();
++
++        // Verification
++        assert!(ed25519_verify(message, &signature_bytes, &public_key_bytes).unwrap());
++
++        // Wrong message fails
++        let bad_message = [message, b"\0"].concat();
++        assert!(!ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).unwrap());
++
++        // Other pubkey fails
++        let other_secret_key = SigningKey::new(OsRng);
++        let other_public_key = VerificationKey::from(&other_secret_key);
++        let other_public_key_bytes: [u8; 32] = other_public_key.into();
++        assert!(!ed25519_verify(message, &signature_bytes, &other_public_key_bytes).unwrap());
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_verify() {
++        let secret_key = SigningKey::try_from(
++            hex::decode(COSMOS_ED25519_PRIVATE_KEY_HEX)
++                .unwrap()
++                .as_slice(),
++        )
++        .unwrap();
++        let public_key = VerificationKey::try_from(
++            hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX)
++                .unwrap()
++                .as_slice(),
++        )
++        .unwrap();
++        let signature = secret_key.sign(COSMOS_ED25519_MSG.as_bytes());
++
++        let signature_bytes: [u8; 64] = signature.into();
++        let public_key_bytes: [u8; 32] = public_key.into();
++
++        assert_eq!(
++            signature_bytes,
++            hex::decode(COSMOS_ED25519_SIGNATURE_HEX)
++                .unwrap()
++                .as_slice()
++        );
++
++        assert!(ed25519_verify(
++            COSMOS_ED25519_MSG.as_bytes(),
++            &signature_bytes,
++            &public_key_bytes
++        )
++        .unwrap());
++    }
++
++    #[test]
++    fn test_cosmos_extra_ed25519_verify() {
++        let codes = read_cosmos_sigs();
++
++        for (i, encoded) in (1..).zip(codes) {
++            let message = hex::decode(&encoded.message).unwrap();
++
++            let signature = hex::decode(&encoded.signature).unwrap();
++
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++
++            // ed25519_verify() works
++            assert!(
++                ed25519_verify(&message, &signature, &public_key).unwrap(),
++                "verify() failed (test case {i})"
++            );
++        }
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify() {
++        let codes = read_cosmos_sigs();
++
++        let mut messages: Vec<Vec<u8>> = vec![];
++        let mut signatures: Vec<Vec<u8>> = vec![];
++        let mut public_keys: Vec<Vec<u8>> = vec![];
++
++        for encoded in codes {
++            let message = hex::decode(&encoded.message).unwrap();
++            messages.push(message);
++
++            let signature = hex::decode(&encoded.signature).unwrap();
++            signatures.push(signature);
++
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++            public_keys.push(public_key);
++        }
++
++        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        // ed25519_batch_verify() works
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++    }
++
++    // structural tests
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_empty_works() {
++        let messages: Vec<&[u8]> = vec![];
++        let signatures: Vec<&[u8]> = vec![];
++        let public_keys: Vec<&[u8]> = vec![];
++
++        // ed25519_batch_verify() works for empty msgs / sigs / pubkeys
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_wrong_number_of_items_errors() {
++        let codes = read_cosmos_sigs();
++
++        let mut messages: Vec<Vec<u8>> = vec![];
++        let mut signatures: Vec<Vec<u8>> = vec![];
++        let mut public_keys: Vec<Vec<u8>> = vec![];
++
++        for encoded in codes {
++            let message = hex::decode(&encoded.message).unwrap();
++            messages.push(message);
++
++            let signature = hex::decode(&encoded.signature).unwrap();
++            signatures.push(signature);
++
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++            public_keys.push(public_key);
++        }
++
++        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        // Check the whole set passes
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++
++        // Remove one message
++        let msg = messages.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore messages
++        messages.push(msg);
++
++        // Remove one signature
++        let sig = signatures.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore signatures
++        signatures.push(sig);
++
++        // Remove one public key
++        let pubkey = public_keys.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore public keys
++        public_keys.push(pubkey);
++
++        // Add one message
++        messages.push(messages[0]);
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore messages
++        messages.pop();
++
++        // Add one signature
++        signatures.push(signatures[0]);
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore signatures
++        signatures.pop();
++
++        // Add one public keys
++        public_keys.push(public_keys[0]);
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_one_msg_different_number_of_sigs_pubkeys_errors() {
++        let codes = read_cosmos_sigs();
++
++        let mut messages: Vec<Vec<u8>> = vec![];
++        let mut signatures: Vec<Vec<u8>> = vec![];
++        let mut public_keys: Vec<Vec<u8>> = vec![];
++
++        for encoded in codes {
++            let message = hex::decode(&encoded.message).unwrap();
++            messages.push(message);
++
++            let signature = hex::decode(&encoded.signature).unwrap();
++            signatures.push(signature);
++
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++            public_keys.push(public_key);
++        }
++
++        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        // Check the whole set passes
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++
++        // Just one message
++        messages.truncate(1);
++
++        // Check (in passing) this fails verification
++        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++
++        // Remove one sig
++        let sig = signatures.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore signatures
++        signatures.push(sig);
++
++        // Remove one public key
++        let pubkey = public_keys.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore public keys
++        public_keys.push(pubkey);
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_one_pubkey_different_number_of_msgs_sigs_errors() {
++        let codes = read_cosmos_sigs();
++
++        let mut messages: Vec<Vec<u8>> = vec![];
++        let mut signatures: Vec<Vec<u8>> = vec![];
++        let mut public_keys: Vec<Vec<u8>> = vec![];
++
++        for encoded in codes {
++            let message = hex::decode(&encoded.message).unwrap();
++            messages.push(message);
++
++            let signature = hex::decode(&encoded.signature).unwrap();
++            signatures.push(signature);
++
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++            public_keys.push(public_key);
++        }
++
++        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
++        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        // Check the whole set passes
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++
++        // Just one public key
++        public_keys.truncate(1);
++
++        // Check (in passing) this fails verification
++        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++
++        // Remove one sig
++        let sig = signatures.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore signatures
++        signatures.push(sig);
++
++        // Remove one msg
++        let msg = messages.pop().unwrap();
++
++        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
++        match res.unwrap_err() {
++            CryptoError::BatchErr { msg, .. } => assert_eq!(
++                msg,
++                "Mismatched / erroneous number of messages / signatures / public keys"
++            ),
++            _ => panic!("Wrong error message"),
++        }
++
++        // Restore messages
++        messages.push(msg);
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_one_msg_zero_sigs_pubkeys_works() {
++        let codes = read_cosmos_sigs();
++
++        let mut messages: Vec<Vec<u8>> = vec![];
++        // Zero sigs / pubkeys
++        let signatures: Vec<&[u8]> = vec![];
++        let public_keys: Vec<&[u8]> = vec![];
++
++        // Just one message
++        for encoded in codes[..1].iter() {
++            let message = hex::decode(&encoded.message).unwrap();
++            messages.push(message);
++        }
++        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
++
++        // ed25519_batch_verify() works for empty sigs / pubkeys
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++    }
++
++    #[test]
++    fn test_cosmos_ed25519_batch_verify_one_pubkey_zero_msgs_sigs_works() {
++        let codes = read_cosmos_sigs();
++
++        // Zero msgs / sigs
++        let messages: Vec<&[u8]> = vec![];
++        let signatures: Vec<&[u8]> = vec![];
++        let mut public_keys: Vec<Vec<u8>> = vec![];
++
++        // Just one public key
++        for encoded in codes[..1].iter() {
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++            public_keys.push(public_key);
++        }
++        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
++
++        // ed25519_batch_verify() works for empty msgs / sigs
++        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
++    }
++}
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/errors.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/errors.rs
+new file mode 100644
+index 0000000..b48f154
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/errors.rs
+@@ -0,0 +1,156 @@
++#[cfg(feature = "backtraces")]
++use std::backtrace::Backtrace;
++use std::fmt::Debug;
++use thiserror::Error;
++
++pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
++
++#[derive(Error, Debug)]
++pub enum CryptoError {
++    #[error("Batch verify error: {msg}")]
++    BatchErr {
++        msg: String,
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++    #[error("Crypto error: {msg}")]
++    GenericErr {
++        msg: String,
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++    #[error("Invalid hash format")]
++    InvalidHashFormat {
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++    #[error("Invalid public key format")]
++    InvalidPubkeyFormat {
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++    #[error("Invalid signature format")]
++    InvalidSignatureFormat {
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
++    InvalidRecoveryParam {
++        #[cfg(feature = "backtraces")]
++        backtrace: Backtrace,
++    },
++}
++
++impl CryptoError {
++    pub fn batch_err(msg: impl Into<String>) -> Self {
++        CryptoError::BatchErr {
++            msg: msg.into(),
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    pub fn generic_err(msg: impl Into<String>) -> Self {
++        CryptoError::GenericErr {
++            msg: msg.into(),
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    pub fn invalid_hash_format() -> Self {
++        CryptoError::InvalidHashFormat {
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    pub fn invalid_pubkey_format() -> Self {
++        CryptoError::InvalidPubkeyFormat {
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    pub fn invalid_signature_format() -> Self {
++        CryptoError::InvalidSignatureFormat {
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    pub fn invalid_recovery_param() -> Self {
++        CryptoError::InvalidRecoveryParam {
++            #[cfg(feature = "backtraces")]
++            backtrace: Backtrace::capture(),
++        }
++    }
++
++    /// Numeric error code that can easily be passed over the
++    /// contract VM boundary.
++    pub fn code(&self) -> u32 {
++        match self {
++            CryptoError::InvalidHashFormat { .. } => 3,
++            CryptoError::InvalidSignatureFormat { .. } => 4,
++            CryptoError::InvalidPubkeyFormat { .. } => 5,
++            CryptoError::InvalidRecoveryParam { .. } => 6,
++            CryptoError::BatchErr { .. } => 7,
++            CryptoError::GenericErr { .. } => 10,
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    // constructors
++    #[test]
++    fn batch_err_works() {
++        let error = CryptoError::batch_err("something went wrong in a batch way");
++        match error {
++            CryptoError::BatchErr { msg, .. } => {
++                assert_eq!(msg, "something went wrong in a batch way")
++            }
++            _ => panic!("wrong error type!"),
++        }
++    }
++
++    #[test]
++    fn generic_err_works() {
++        let error = CryptoError::generic_err("something went wrong in a general way");
++        match error {
++            CryptoError::GenericErr { msg, .. } => {
++                assert_eq!(msg, "something went wrong in a general way")
++            }
++            _ => panic!("wrong error type!"),
++        }
++    }
++
++    #[test]
++    fn invalid_hash_format_works() {
++        let error = CryptoError::invalid_hash_format();
++        match error {
++            CryptoError::InvalidHashFormat { .. } => {}
++            _ => panic!("wrong error type!"),
++        }
++    }
++
++    #[test]
++    fn invalid_signature_format_works() {
++        let error = CryptoError::invalid_signature_format();
++        match error {
++            CryptoError::InvalidSignatureFormat { .. } => {}
++            _ => panic!("wrong error type!"),
++        }
++    }
++
++    #[test]
++    fn invalid_pubkey_format_works() {
++        let error = CryptoError::invalid_pubkey_format();
++        match error {
++            CryptoError::InvalidPubkeyFormat { .. } => {}
++            _ => panic!("wrong error type!"),
++        }
++    }
++}
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/identity_digest.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/identity_digest.rs
+new file mode 100644
+index 0000000..c043f2d
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/identity_digest.rs
+@@ -0,0 +1,39 @@
++//! Dummy 256-bits Digest impl.
++//! This digest stores/accepts a value of the proper length.
++//! To be used for / with already hashed values, just to comply with the Digest contract.
++//!
++//! Adapted from `sha2` [sha256.rs](https://github.com/RustCrypto/hashes/blob/master/sha2/src/sha256.rs)
++use digest::consts::U32;
++use digest::generic_array::GenericArray;
++use digest::{FixedOutput, HashMarker, Output, OutputSizeUser, Reset, Update};
++
++/// The 256-bits identity container
++#[derive(Clone, Default)]
++pub struct Identity256 {
++    array: GenericArray<u8, U32>,
++}
++
++impl Update for Identity256 {
++    fn update(&mut self, hash: &[u8]) {
++        assert_eq!(hash.as_ref().len(), 32);
++        self.array = *GenericArray::from_slice(hash);
++    }
++}
++
++impl OutputSizeUser for Identity256 {
++    type OutputSize = U32;
++}
++
++impl FixedOutput for Identity256 {
++    fn finalize_into(self, out: &mut Output<Self>) {
++        *out = self.array;
++    }
++}
++
++impl HashMarker for Identity256 {}
++
++impl Reset for Identity256 {
++    fn reset(&mut self) {
++        *self = Self::default();
++    }
++}
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/lib.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/lib.rs
+new file mode 100644
+index 0000000..01ee97b
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/lib.rs
+@@ -0,0 +1,22 @@
++//! The crypto crate is intended to be used in internal crates / utils.
++//! Please don't use any of these types directly, as
++//! they might change frequently, or be removed in the future.
++//! This crate does not adhere to semantic versioning.
++#![cfg_attr(feature = "backtraces", feature(error_generic_member_access))]
++#![cfg_attr(feature = "backtraces", feature(provide_any))]
++
++mod ed25519;
++mod errors;
++mod identity_digest;
++mod secp256k1;
++
++#[doc(hidden)]
++pub use crate::ed25519::EDDSA_PUBKEY_LEN;
++#[doc(hidden)]
++pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
++#[doc(hidden)]
++pub use crate::errors::{CryptoError, CryptoResult};
++#[doc(hidden)]
++pub use crate::secp256k1::{secp256k1_recover_pubkey, secp256k1_verify};
++#[doc(hidden)]
++pub use crate::secp256k1::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/secp256k1.rs b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/secp256k1.rs
+new file mode 100644
+index 0000000..75761c2
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/src/secp256k1.rs
+@@ -0,0 +1,432 @@
++use digest::{Digest, Update}; // trait
++use k256::{
++    ecdsa::signature::DigestVerifier,             // traits
++    ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
++};
++
++use crate::errors::{CryptoError, CryptoResult};
++use crate::identity_digest::Identity256;
++
++/// Max length of a message hash for secp256k1 verification in bytes.
++/// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
++/// are possible but currently not supported by the implementation. Let us know when you need them.
++pub const MESSAGE_HASH_MAX_LEN: usize = 32;
++
++/// ECDSA (secp256k1) parameters
++/// Length of a serialized signature
++pub const ECDSA_SIGNATURE_LEN: usize = 64;
++
++/// Length of a serialized compressed public key
++const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
++/// Length of a serialized uncompressed public key
++const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
++/// Max length of a serialized public key
++pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
++
++/// ECDSA secp256k1 implementation.
++///
++/// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,
++/// with the public key of the signer, using the secp256k1 elliptic curve digital signature
++/// parametrization / algorithm.
++///
++/// The signature and public key are in "Cosmos" format:
++/// - signature:  Serialized "compact" signature (64 bytes).
++/// - public key: [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html)
++/// (33 or 65 bytes).
++///
++/// This implementation accepts both high-S and low-S signatures. Some applications
++/// including Ethereum transactions consider high-S signatures invalid in order to
++/// avoid malleability. If that's the case for your protocol, the signature needs
++/// to be tested for low-S in addition to this verification.
++pub fn secp256k1_verify(
++    message_hash: &[u8],
++    signature: &[u8],
++    public_key: &[u8],
++) -> CryptoResult<bool> {
++    let message_hash = read_hash(message_hash)?;
++    let signature = read_signature(signature)?;
++    check_pubkey(public_key)?;
++
++    // Already hashed, just build Digest container
++    let message_digest = Identity256::new().chain(message_hash);
++
++    let mut signature = Signature::from_bytes(&signature.into())
++        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
++
++    // High-S signatures require normalization since our verification implementation
++    // rejects them by default. If we had a verifier that does not restrict to
++    // low-S only, this step was not needed.
++    if let Some(normalized) = signature.normalize_s() {
++        signature = normalized;
++    }
++
++    let public_key = VerifyingKey::from_sec1_bytes(public_key)
++        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
++
++    match public_key.verify_digest(message_digest, &signature) {
++        Ok(()) => Ok(true),
++        Err(_) => Ok(false),
++    }
++}
++
++/// Recovers a public key from a message hash and a signature.
++///
++/// This is required when working with Ethereum where public keys
++/// are not stored on chain directly.
++///
++/// `recovery_param` must be 0 or 1. The values 2 and 3 are unsupported by this implementation,
++/// which is the same restriction as Ethereum has (https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469).
++/// All other values are invalid.
++///
++/// Returns the recovered pubkey in compressed form, which can be used
++/// in secp256k1_verify directly.
++///
++/// This implementation accepts both high-S and low-S signatures. This is the
++/// same behavior as Ethereum's `ecrecover`. The reason is that high-S signatures
++/// may be perfectly valid if the application protocol does not disallow them.
++/// Or as [EIP-2] put it "The ECDSA recover precompiled contract remains unchanged
++/// and will keep accepting high s-values; this is useful e.g. if a contract
++/// recovers old Bitcoin signatures.".
++///
++/// See also OpenZeppelin's [ECDSA.recover implementation](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.8.1/contracts/utils/cryptography/ECDSA.sol#L138-L149)
++/// which adds further restrictions to avoid potential signature malleability.
++/// Please note that restricting signatures to low-S does not make signatures unique
++/// in the sense that for each (pubkey, message) there is only one signature. The
++/// signer can generate an arbitrary amount of valid signatures.
++/// <https://medium.com/@simonwarta/signature-determinism-for-blockchain-developers-dbd84865a93e>
++///
++/// [EIP-2]: https://eips.ethereum.org/EIPS/eip-2
++pub fn secp256k1_recover_pubkey(
++    message_hash: &[u8],
++    signature: &[u8],
++    recovery_param: u8,
++) -> Result<Vec<u8>, CryptoError> {
++    let message_hash = read_hash(message_hash)?;
++    let signature = read_signature(signature)?;
++
++    // params other than 0 and 1 are explicitly not supported
++    let mut id = match recovery_param {
++        0 => RecoveryId::new(false, false),
++        1 => RecoveryId::new(true, false),
++        _ => return Err(CryptoError::invalid_recovery_param()),
++    };
++
++    // Compose extended signature
++    let mut signature = Signature::from_bytes(&signature.into())
++        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
++
++    // Recover
++    let message_digest = Identity256::new().chain(message_hash);
++
++    if let Some(normalized) = signature.normalize_s() {
++        signature = normalized;
++        id = RecoveryId::new(!id.is_y_odd(), id.is_x_reduced());
++    }
++
++    let pubkey = VerifyingKey::recover_from_digest(message_digest, &signature, id)
++        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
++    let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
++    Ok(encoded)
++}
++
++/// Error raised when hash is not 32 bytes long
++struct InvalidSecp256k1HashFormat;
++
++impl From<InvalidSecp256k1HashFormat> for CryptoError {
++    fn from(_original: InvalidSecp256k1HashFormat) -> Self {
++        CryptoError::invalid_hash_format()
++    }
++}
++
++fn read_hash(data: &[u8]) -> Result<[u8; 32], InvalidSecp256k1HashFormat> {
++    data.try_into().map_err(|_| InvalidSecp256k1HashFormat)
++}
++
++/// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
++struct InvalidSecp256k1SignatureFormat;
++
++impl From<InvalidSecp256k1SignatureFormat> for CryptoError {
++    fn from(_original: InvalidSecp256k1SignatureFormat) -> Self {
++        CryptoError::invalid_signature_format()
++    }
++}
++
++fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidSecp256k1SignatureFormat> {
++    data.try_into().map_err(|_| InvalidSecp256k1SignatureFormat)
++}
++
++/// Error raised when public key is not in one of the two supported formats:
++/// 1. Uncompressed: 65 bytes starting with 0x04
++/// 2. Compressed: 33 bytes starting with 0x02 or 0x03
++struct InvalidSecp256k1PubkeyFormat;
++
++impl From<InvalidSecp256k1PubkeyFormat> for CryptoError {
++    fn from(_original: InvalidSecp256k1PubkeyFormat) -> Self {
++        CryptoError::invalid_pubkey_format()
++    }
++}
++
++fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
++    let ok = match data.first() {
++        Some(0x02) | Some(0x03) => data.len() == ECDSA_COMPRESSED_PUBKEY_LEN,
++        Some(0x04) => data.len() == ECDSA_UNCOMPRESSED_PUBKEY_LEN,
++        _ => false,
++    };
++    if ok {
++        Ok(())
++    } else {
++        Err(InvalidSecp256k1PubkeyFormat)
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    use hex_literal::hex;
++    use k256::{
++        ecdsa::signature::DigestSigner, // trait
++        ecdsa::SigningKey,              // type alias
++        elliptic_curve::rand_core::OsRng,
++    };
++    use serde::Deserialize;
++    use sha2::Sha256;
++    use std::fs::File;
++    use std::io::BufReader;
++
++    // For generic signature verification
++    const MSG: &str = "Hello World!";
++
++    // Cosmos secp256k1 signature verification
++    // tendermint/PubKeySecp256k1 pubkey
++    const COSMOS_SECP256K1_PUBKEY_HEX: &str =
++        "034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c70290";
++
++    const COSMOS_SECP256K1_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
++    const COSMOS_SECP256K1_MSG_HEX2: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
++    const COSMOS_SECP256K1_MSG_HEX3: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180212130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
++
++    const COSMOS_SECP256K1_SIGNATURE_HEX1: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
++    const COSMOS_SECP256K1_SIGNATURE_HEX2: &str = "525adc7e61565a509c60497b798c549fbf217bb5cd31b24cc9b419d098cc95330c99ecc4bc72448f85c365a4e3f91299a3d40412fb3751bab82f1940a83a0a4c";
++    const COSMOS_SECP256K1_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
++
++    // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
++    const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
++
++    #[derive(Deserialize, Debug)]
++    struct Encoded {
++        message: String,
++        message_hash: String,
++        signature: String,
++        #[serde(rename = "pubkey")]
++        public_key: String,
++    }
++
++    #[test]
++    fn test_secp256k1_verify() {
++        // Explicit / external hashing
++        let message_digest = Sha256::new().chain(MSG);
++        let message_hash = message_digest.clone().finalize();
++
++        // Signing
++        let secret_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
++
++        // Note: the signature type must be annotated or otherwise inferrable as
++        // `Signer` has many impls of the `Signer` trait (for both regular and
++        // recoverable signature types).
++        let signature: Signature = secret_key.sign_digest(message_digest);
++
++        let public_key = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
++
++        // Verification (uncompressed public key)
++        assert!(secp256k1_verify(
++            &message_hash,
++            signature.to_bytes().as_slice(),
++            public_key.to_encoded_point(false).as_bytes()
++        )
++        .unwrap());
++
++        // Verification (compressed public key)
++        assert!(secp256k1_verify(
++            &message_hash,
++            signature.to_bytes().as_slice(),
++            public_key.to_encoded_point(true).as_bytes()
++        )
++        .unwrap());
++
++        // Wrong message fails
++        let bad_message_hash = Sha256::new().chain(MSG).chain("\0").finalize();
++        assert!(!secp256k1_verify(
++            &bad_message_hash,
++            signature.to_bytes().as_slice(),
++            public_key.to_encoded_point(false).as_bytes()
++        )
++        .unwrap());
++
++        // Other pubkey fails
++        let other_secret_key = SigningKey::random(&mut OsRng);
++        let other_public_key = VerifyingKey::from(&other_secret_key);
++        assert!(!secp256k1_verify(
++            &message_hash,
++            signature.to_bytes().as_slice(),
++            other_public_key.to_encoded_point(false).as_bytes()
++        )
++        .unwrap());
++    }
++
++    #[test]
++    fn test_cosmos_secp256k1_verify() {
++        let public_key = hex::decode(COSMOS_SECP256K1_PUBKEY_HEX).unwrap();
++
++        for ((i, msg), sig) in (1..)
++            .zip(&[
++                COSMOS_SECP256K1_MSG_HEX1,
++                COSMOS_SECP256K1_MSG_HEX2,
++                COSMOS_SECP256K1_MSG_HEX3,
++            ])
++            .zip(&[
++                COSMOS_SECP256K1_SIGNATURE_HEX1,
++                COSMOS_SECP256K1_SIGNATURE_HEX2,
++                COSMOS_SECP256K1_SIGNATURE_HEX3,
++            ])
++        {
++            let message = hex::decode(msg).unwrap();
++            let signature = hex::decode(sig).unwrap();
++
++            // Explicit hash
++            let message_hash = Sha256::digest(message);
++
++            // secp256k1_verify works
++            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
++            assert!(valid, "secp256k1_verify() failed (test case {i})",);
++        }
++    }
++
++    #[test]
++    fn test_cosmos_extra_secp256k1_verify() {
++        // Open the file in read-only mode with buffer.
++        let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
++        let reader = BufReader::new(file);
++
++        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
++
++        for (i, encoded) in (1..).zip(codes) {
++            let message = hex::decode(&encoded.message).unwrap();
++            let signature = hex::decode(&encoded.signature).unwrap();
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++
++            let hash = hex::decode(&encoded.message_hash).unwrap();
++            let message_hash = Sha256::digest(message);
++            assert_eq!(hash.as_slice(), message_hash.as_slice());
++
++            // secp256k1_verify() works
++            let valid = secp256k1_verify(&message_hash, &signature, &public_key).unwrap();
++            assert!(
++                valid,
++                "secp256k1_verify failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"
++            );
++        }
++    }
++
++    #[test]
++    fn secp256k1_recover_pubkey_works() {
++        // Test data from https://github.com/ethereumjs/ethereumjs-util/blob/v6.1.0/test/index.js#L496
++        {
++            let private_key =
++                hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
++            let expected = SigningKey::from_bytes(&private_key.into())
++                .unwrap()
++                .verifying_key()
++                .to_encoded_point(false)
++                .as_bytes()
++                .to_vec();
++            let r_s = hex!("99e71a99cb2270b8cac5254f9e99b6210c6c10224a1579cf389ef88b20a1abe9129ff05af364204442bdb53ab6f18a99ab48acc9326fa689f228040429e3ca66");
++            let recovery_param: u8 = 0;
++            let message_hash =
++                hex!("82ff40c0a986c6a5cfad4ddf4c3aa6996f1a7837f9c398e17e5de5cbd5a12b28");
++            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
++            assert_eq!(pubkey, expected);
++        }
++
++        // Test data from https://github.com/randombit/botan/blob/2.9.0/src/tests/data/pubkey/ecdsa_key_recovery.vec
++        // This is a high-s value (`0x81F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0` is true)
++        {
++            let expected_x = "F3F8BB913AA68589A2C8C607A877AB05252ADBD963E1BE846DDEB8456942AEDC";
++            let expected_y = "A2ED51F08CA3EF3DAC0A7504613D54CD539FC1B3CBC92453CD704B6A2D012B2C";
++            let expected = hex::decode(format!("04{expected_x}{expected_y}")).unwrap();
++            let r_s = hex!("E30F2E6A0F705F4FB5F8501BA79C7C0D3FAC847F1AD70B873E9797B17B89B39081F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F");
++            let recovery_param: u8 = 0;
++            let message_hash =
++                hex!("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
++            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
++            assert_eq!(pubkey, expected);
++        }
++
++        // Test data calculated via Secp256k1.createSignature from @cosmjs/crypto
++        {
++            let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
++            let r_s = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
++            let recovery_param: u8 = 1;
++            let message_hash =
++                hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
++            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
++            assert_eq!(pubkey, expected);
++        }
++
++        let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
++        let reader = BufReader::new(file);
++        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
++        for (i, encoded) in (1..).zip(codes) {
++            let message = hex::decode(&encoded.message).unwrap();
++            let signature = hex::decode(&encoded.signature).unwrap();
++            let public_key = hex::decode(&encoded.public_key).unwrap();
++
++            let hash = hex::decode(&encoded.message_hash).unwrap();
++            let message_hash = Sha256::digest(message);
++            assert_eq!(hash.as_slice(), message_hash.as_slice());
++
++            // Since the recovery param is missing in the test vectors, we try both 0 and 1
++            let try0 = secp256k1_recover_pubkey(&message_hash, &signature, 0);
++            let try1 = secp256k1_recover_pubkey(&message_hash, &signature, 1);
++            match (try0, try1) {
++                (Ok(recovered0), Ok(recovered1)) => {
++                    // Got two different pubkeys. Without the recovery param, we don't know which one is the right one.
++                    assert!(recovered0 == public_key || recovered1 == public_key)
++                },
++                (Ok(recovered), Err(_)) => assert_eq!(recovered, public_key),
++                (Err(_), Ok(recovered)) => assert_eq!(recovered, public_key),
++                (Err(_), Err(_)) => panic!("secp256k1_recover_pubkey failed (test case {i} in {COSMOS_SECP256K1_TESTS_JSON})"),
++            }
++        }
++    }
++
++    #[test]
++    fn secp256k1_recover_pubkey_fails_for_invalid_recovery_param() {
++        let r_s = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
++        let message_hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
++
++        // 2 and 3 are explicitly unsupported
++        let recovery_param: u8 = 2;
++        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
++            CryptoError::InvalidRecoveryParam { .. } => {}
++            err => panic!("Unexpected error: {err}"),
++        }
++        let recovery_param: u8 = 3;
++        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
++            CryptoError::InvalidRecoveryParam { .. } => {}
++            err => panic!("Unexpected error: {err}"),
++        }
++
++        // Other values are garbage
++        let recovery_param: u8 = 4;
++        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
++            CryptoError::InvalidRecoveryParam { .. } => {}
++            err => panic!("Unexpected error: {err}"),
++        }
++        let recovery_param: u8 = 255;
++        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
++            CryptoError::InvalidRecoveryParam { .. } => {}
++            err => panic!("Unexpected error: {err}"),
++        }
++    }
++}
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/ed25519_tests.json b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/ed25519_tests.json
+new file mode 100644
+index 0000000..cc86fce
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/ed25519_tests.json
+@@ -0,0 +1,32 @@
++[
++  {
++    "privkey": "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60",
++    "pubkey": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a",
++    "message": "",
++    "signature": "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"
++  },
++	{
++    "privkey": "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb",
++    "pubkey": "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c",
++    "message": "72",
++    "signature": "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00"
++	},
++	{
++    "privkey": "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7",
++    "pubkey": "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025",
++    "message": "af82",
++    "signature": "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a"
++	},
++	{
++    "privkey": "f5e5767cf153319517630f226876b86c8160cc583bc013744c6bf255f5cc0ee5",
++    "pubkey": "278117fc144c72340f67d0f2316e8386ceffbf2b2428c9c51fef7c597f1d426e",
++    "message": "08b8b2b733424243760fe426a4b54908632110a66c2f6591eabd3345e3e4eb98fa6e264bf09efe12ee50f8f54e9f77b1e355f6c50544e23fb1433ddf73be84d879de7c0046dc4996d9e773f4bc9efe5738829adb26c81b37c93a1b270b20329d658675fc6ea534e0810a4432826bf58c941efb65d57a338bbd2e26640f89ffbc1a858efcb8550ee3a5e1998bd177e93a7363c344fe6b199ee5d02e82d522c4feba15452f80288a821a579116ec6dad2b3b310da903401aa62100ab5d1a36553e06203b33890cc9b832f79ef80560ccb9a39ce767967ed628c6ad573cb116dbefefd75499da96bd68a8a97b928a8bbc103b6621fcde2beca1231d206be6cd9ec7aff6f6c94fcd7204ed3455c68c83f4a41da4af2b74ef5c53f1d8ac70bdcb7ed185ce81bd84359d44254d95629e9855a94a7c1958d1f8ada5d0532ed8a5aa3fb2d17ba70eb6248e594e1a2297acbbb39d502f1a8c6eb6f1ce22b3de1a1f40cc24554119a831a9aad6079cad88425de6bde1a9187ebb6092cf67bf2b13fd65f27088d78b7e883c8759d2c4f5c65adb7553878ad575f9fad878e80a0c9ba63bcbcc2732e69485bbc9c90bfbd62481d9089beccf80cfe2df16a2cf65bd92dd597b0707e0917af48bbb75fed413d238f5555a7a569d80c3414a8d0859dc65a46128bab27af87a71314f318c782b23ebfe808b82b0ce26401d2e22f04d83d1255dc51addd3b75a2b1ae0784504df543af8969be3ea7082ff7fc9888c144da2af58429ec96031dbcad3dad9af0dcbaaaf268cb8fcffead94f3c7ca495e056a9b47acdb751fb73e666c6c655ade8297297d07ad1ba5e43f1bca32301651339e22904cc8c42f58c30c04aafdb038dda0847dd988dcda6f3bfd15c4b4c4525004aa06eeff8ca61783aacec57fb3d1f92b0fe2fd1a85f6724517b65e614ad6808d6f6ee34dff7310fdc82aebfd904b01e1dc54b2927094b2db68d6f903b68401adebf5a7e08d78ff4ef5d63653a65040cf9bfd4aca7984a74d37145986780fc0b16ac451649de6188a7dbdf191f64b5fc5e2ab47b57f7f7276cd419c17a3ca8e1b939ae49e488acba6b965610b5480109c8b17b80e1b7b750dfc7598d5d5011fd2dcc5600a32ef5b52a1ecc820e308aa342721aac0943bf6686b64b2579376504ccc493d97e6aed3fb0f9cd71a43dd497f01f17c0e2cb3797aa2a2f256656168e6c496afc5fb93246f6b1116398a346f1a641f3b041e989f7914f90cc2c7fff357876e506b50d334ba77c225bc307ba537152f3f1610e4eafe595f6d9d90d11faa933a15ef1369546868a7f3a45a96768d40fd9d03412c091c6315cf4fde7cb68606937380db2eaaa707b4c4185c32eddcdd306705e4dc1ffc872eeee475a64dfac86aba41c0618983f8741c5ef68d3a101e8a3b8cac60c905c15fc910840b94c00a0b9d0",
++    "signature": "0aab4c900501b3e24d7cdf4663326a3a87df5e4843b2cbdb67cbf6e460fec350aa5371b1508f9f4528ecea23c436d94b5e8fcd4f681e30a6ac00a9704a188a03"
++	},
++	{
++    "privkey": "833fe62409237b9d62ec77587520911e9a759cec1d19755b7da901b96dca3d42",
++    "pubkey": "ec172b93ad5e563bf4932c70e1245034c35467ef2efd4d64ebf819683467e2bf",
++    "message": "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
++    "signature": "dc2a4459e7369633a52b1bf277839a00201009a3efbf3ecb69bea2186c26b58909351fc9ac90b3ecfdfbc7c66431e0303dca179c138ac17ad9bef1177331a704"
++	}
++]
+diff --git a/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/secp256k1_tests.json b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/secp256k1_tests.json
+new file mode 100644
+index 0000000..223c693
+--- /dev/null
++++ b/libwasmvm/vendor/cosmwasm-crypto-1.5.11-rustsec-2024-0344/testdata/secp256k1_tests.json
+@@ -0,0 +1,122 @@
++[
++  {
++    "message": "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7",
++    "message_hash": "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0",
++    "signature": "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4",
++    "pubkey": "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73"
++  },
++  {
++    "message": "17cd4a74d724d55355b6fb2b0759ca095298e3fd1856b87ca1cb2df5409058022736d21be071d820b16dfc441be97fbcea5df787edc886e759475469e2128b22f26b82ca993be6695ab190e673285d561d3b6d42fcc1edd6d12db12dcda0823e9d6079e7bc5ff54cd452dad308d52a15ce9c7edd6ef3dad6a27becd8e001e80f",
++    "message_hash": "586052916fb6f746e1d417766cceffbe1baf95579bab67ad49addaaa6e798862",
++    "signature": "626d61b7be1488b563e8a85bfb623b2331903964b5c0476c9f9ad29144f076fe2002a2c0ab5e48626bf761cf677dfeede9c7309d2436d4b8c2b89f21ee2ebc6a",
++    "pubkey": "04ff28290d214a783da7d76098b632c387b3dd5fd33677df8ca7109e3c941e5df2e5a6530c0bb58fbba14ecbc3d76a2a3d5017c66fc260f9214a028b8b3a7b2dce"
++  },
++  {
++    "message": "db0d31717b04802adbbae1997487da8773440923c09b869e12a57c36dda34af11b8897f266cd81c02a762c6b74ea6aaf45aaa3c52867eb8f270f5092a36b498f88b65b2ebda24afe675da6f25379d1e194d093e7a2f66e450568dbdffebff97c4597a00c96a5be9ba26deefcca8761c1354429622c8db269d6a0ec0cc7a8585c",
++    "message_hash": "c36d0ecf4bfd178835c97aae7585f6a87de7dfa23cc927944f99a8d60feff68b",
++    "signature": "83de9be443bcf480892b8c8ca1d5ee65c79a315642c3f7b5305aff3065fda2789747932122b93cec42cad8ee4630a8f6cbe127578b8c495b4ab927275f657658",
++    "pubkey": "048f83776cbb355dbe59756c6b3d9b40a3470b6c64d49d9361a73bafcc1e7ba69beb05acb126fc4358b3c7008e1e864b4327086157412a84700d82672de27cb627"
++  },
++  {
++    "message": "47c9deddfd8c841a63a99be96e972e40fa035ae10d929babfc86c437b9d5d495577a45b7f8a35ce3f880e7d8ae8cd8eb685cf41f0506e68046ccf5559232c674abb9c3683829dcc8002683c4f4ca3a29a7bfde20d96dd0f1a0ead847dea18f297f220f94932536ca4deacedc2c6701c3ee50e28e358dcc54cdbf69daf0eb87f6",
++    "message_hash": "a761293b02c5d8327f909d61a38173556c1f1f770c488810a9b360cf7786c148",
++    "signature": "723da69da81c8f6b081a9a728b9bba785d2067e0ed769675f8a7563d22ed8a163a993793cf39b96b3cd625df0e06f206e17579cd8ebcb7e704174c3d94dba684",
++    "pubkey": "0429b0c44bd3887a9ab60fd1c9bb81c9ab421e51b4736cedfa75e4cf960e6098315eab750d173d20842dfdebf861ea7898fdea0527211f8c86f31d9d48b6b65e63"
++  },
++  {
++    "message": "f15433188c2bbc93b2150bb2f34d36ba8ae49f8f7e4e81aed651c8fb2022b2a7e851c4dbbbc21c14e27380316bfdebb0a049246349537dba687581c1344e40f75afd2735bb21ea074861de6801d28b22e8beb76fdd25598812b2061ca3fba229daf59a4ab416704543b02e16b8136c22acc7e197748ae19b5cbbc160fdc3a8cd",
++    "message_hash": "08ec76ab0f1bc9dc27b3b3bd4f949c60ecc8bbf27678b28f2ee8de055ee8bf59",
++    "signature": "0e0c5228e6783bee4d0406f4f7b7d79f705f0dbb55126966f79e631bd8b23079faae33aec5b0fafd3413c14bfdef9c7c9ac6abd06c923c48ab136a2c56826118",
++    "pubkey": "04441ef6e211e3fa6cffce9d34b4765487bc0d98d95b21ccfaeef42d7de2fef9a57886a20b6b10f97f5d05caa904ca3e287b92955658566639031e67cd243d8657"
++  },
++  {
++    "message": "1bc796124b87793b7f7fdd53b896f8f0d0f2d2be36d1944e3c2a0ac5c6b2839f59a4b4fad200f8035ec98630c51ef0d40863a5ddd69b703d73f06b4afae8ad1a88e19b1b26e8c10b7bff953c05eccc82fd771b220910165f3a906b7c931683e431998d1fd06c32dd11b4f872bf980d547942f22124c7e50c9523321aee23a36d",
++    "message_hash": "ffbe3fd342a1a991848d02258cf5e3df301974b7a8f0fe10a88222a9503f67e0",
++    "signature": "b9d3962edadc893f8eeff379f136c7b8fc6ea824a5afc6cbda7e3cb4c7a1e860bb1c1f901cf450edfdce20686352bb0cf0a643301123140ec87c92480d7f9d6a",
++    "pubkey": "04ad98fbf6748401963e4c732b0ba4c4b5016f1d87935c5edf84b55c38b28eb3cf35f91b470e007cc5f5c2e12c9b8725bc92a6feb259968436881c72906a14ca84"
++  },
++  {
++    "message": "18e55ac264031da435b613fc9dc6c4aafc49aae8ddf6f220d523415896ff915fae5c5b2e6aed61d88e5721823f089c46173afc5d9b47fd917834c85284f62dda6ed2d7a6ff10eb553b9312b05dad7decf7f73b69479c02f14ea0a2aa9e05ec07396cd37c28795c90e590631137102315635d702278e352aa41d0826adadff5e1",
++    "message_hash": "434fea583df79f781e41f18735a24409cf404f28e930290cc97c67ef158e5789",
++    "signature": "9369ab86afae5e22ed5f4012964804d2a19c36b8b58cf2855205b1cfcc937422a27dfc38d899b78edcf38a1b2b53578e72270b083d7d69424c4b4a7d25d39f4d",
++    "pubkey": "04061d7152dc6263a6764c6e810ee02f6333c844d90d70043b2bb6d4efacfac78e4391f7f17063bd69bd0d19061cc09eeb429561f3d88a3b38019ac82ca152c35c"
++  },
++  {
++    "message": "a5290666c97294d090f8da898e555cbd33990579e5e95498444bfb318b4aa1643e0d4348425e21c7c6f99f9955f3048f56c22b68c4a516af5c90ed5268acc9c5a20fec0200c2a282a90e20d3c46d4ecdda18ba18b803b19263de2b79238da921707a0864799cdee9f02913b40681c02c6923070688844b58fe415b7d71ea6845",
++    "message_hash": "c352f58e118fc0d7810b8020bdb306b7dc115b41bbb0b642c7ea73a60cc2a4eb",
++    "signature": "c5e439cef76b28dc0fe9d260763bec05b5e795ac8d90b25d9fccbc1918bc32f31b06144e6b191224d5eda822a5b3b2026af6aa7f25a9061c9e81c312728aa94a",
++    "pubkey": "043eab98ab69bca21ad18136a092a4f398cb0a7d34c4bf18bbe9c81bdfce3dde752f8a82a4c1cbe5535d4acd9218ba6df4a96db88963d36108d562795473dedeae"
++  },
++  {
++    "message": "13ad0600229c2a66b2f11617f69c7210ad044c49265dc98ec3c64f56e56a083234d277d404e2c40523c414ad23af5cc2f91a47fe59e7ca572f7fe1d3d3cfceaedadac4396749a292a38e92727273272335f12b2acea21cf069682e67d7e7d7a31ab5bb8e472298a9451aeae6f160f36e6623c9b632b9c93371a002818addc243",
++    "message_hash": "6ff9153ede285fc0e486f1dd4dd9e32a0fb23e9653c55841b67c2e5a090aac63",
++    "signature": "ee8615a5fab6fc674e6d3d9cde8da2b18dece076ae94d96662e16109db12d7203171705cdab2b3d34c58e556c80358c105807e98243f5754b70b771071308b94",
++    "pubkey": "042aaf49401b01083bf0657a379530f1b2b5db414e3fe91fca07048c89df05a4dae584ef2fe20d2f3293ff46df73155a76218349336977250055dc9ae7f28e57e0"
++  },
++  {
++    "message": "51ad843da5eafc177d49a50a82609555e52773c5dfa14d7c02db5879c11a6b6e2e0860df38452dc579d763f91a83ade23b73f4fcbd703f35dd6ecfbb4c9578d5b604ed809c8633e6ac5679a5f742ce94fea3b97b5ba8a29ea28101a7b35f9eaa894dda54e3431f2464d18faf8342b7c59dfe0598c0ab29a14622a08eea70126b",
++    "message_hash": "8e19143e34fee546fab3d56e816f2e21586e27912a2ad7d80af75942e0ff585a",
++    "signature": "f753c447161aa3a58e5deeca31797f21484fb0ec3a7fe6e464ab1914896f253b99640fbcce1f25fd66744b046e0dfd57fa23070555f438af6c5e5828d47e9fa7",
++    "pubkey": "048c59a63c27b0b4e1e1b67f6e97180d5fa679791cde6af650271a274c369361421b42e36a7029f8982d346264f81f46cbc2e8c823568b2ad15649794fc835f87e"
++  },
++  {
++    "message": "678b505467d55ce01aec23fd4851957137c3a1de3ff2c673ec95a577aa9fb011b4b4a8eb7a0e6f391d4236a35b7e769692ace5851d7c53700e180fa522d3d37dbaa496163f3de6d96391e38ff83271e621f2458729ff74de462cdce6b3029f308d4eb8aef036357b9de06d68558e0388a6e88af91340c875050b8c91c4e26fc8",
++    "message_hash": "6fe86a3b533114e1db444217999ce5907237e69acc47cfb8d30b4e14ee58817a",
++    "signature": "439fd0423bde36a1616a6fa4343bb7e07a6b3f6dc629aa8c93c91831055e476c20998a26ae4b96ef36d48d83e8af0288f0bbc2db5ca5c8271a42f3fdc478fcb2",
++    "pubkey": "04817e21214a40f8135e2053656dc3d9a66eade80f9428f347d11ea249095e9513df446f64d7db0e8161fc1c03c60ddae5d73a8d80ad134600acefc06b3c8c9eda"
++  },
++  {
++    "message": "9bf457159f0d44b78d0e151ee53c41cecd98fb4e4129fcda8cc84a758636f84dcad9032f3ec422219d8a7ec61ea89f45d19cab3c3d451de1a634e3d2532231bc03031973d7150cf8e83d8b6a34f25fc136446878e3851b780abdca069c8e981b3ea3f1bf1ff6e47a03f97aed64c1cc90dd00389fa21bb973f142af5e8ceccef4",
++    "message_hash": "03b3e33ade25fad2eeb530433b6785fb1e977228e0049e572437caa33baa059e",
++    "signature": "4ce72a83cf1d148db4d1e46e2f773c677f72933c40d7100b9192750a1c8222a89d5fbd67ce89ba8c79df9dc3b42922026a8498921c2bdb4ea8f36496d88c2cfb",
++    "pubkey": "04571a598076a318dcd7af6ff35c2ab35198197faa1df9612f951d516456c97ef7a30a1405958f554fdf1bad22d22333acb4fe4c968c74a281c524020ad949c9ef"
++  },
++  {
++    "message": "2469172b7a046e6112dfe365590dfddb7c045cccd4ab353edc3076091aad1c780a9a73ff93f3dbf9e2189c5d1fdd6f6167d0ae8cc0f53dc8950e60dd0410e23589999d4ce4fa49e268774defd4edce01c05b205014b63591a041745bfffc6ae4d72d3add353e49478106653cc735b07b0fe665c42d0e6766e525bb9718264c87",
++    "message_hash": "b90651535080381884a0917c02fdf9e176798c4d65bed76568ec1de95e3c9641",
++    "signature": "1f1e1fb673e9a7dee09961c6824b473189904deb4f0d8e28da51f77f4de2efe6ae8df1fcdb226fac8b46e494720e45f6d9a5350174faaf22e47b6329ee6c5e1b",
++    "pubkey": "048db80c468a88ffb4bcdb5ccddbfc9da8cf728a651ab937edf729ad279d9375b50b97422368aa4b3ac13aa18c89ca2af86c14b1948325f1477d5ea9f5156bcc52"
++  },
++  {
++    "message": "6f8983e74f304c3657cffde0682b42699cb2c3475b925058ff37292c40a0aa296690ad129730339ac60cf784225b2fd3db58297c8ce5889df7a48d3e74a363ae4135e8a234cab53ca4c11c031d561a6cf7dd47b925ed5bc4c2794ba7b74a868b0c3da31ff1e4540d0768612192a236d86f74fb8c73f375b71c62f1648c0e6126",
++    "message_hash": "1095c90de2734d4b9dfedefbdd3f76f592f0a3e1697d1321f0eab3f78129c8ce",
++    "signature": "9cf7d941dcbbbe61c2a6f5112cb518094e79e5d203891de2247e75fd532c3f21fc5a04579b2526f2543efd2a57e82b647da08b6924bff39cf021398a56ad70de",
++    "pubkey": "0406e22a39ec06c32bcb4d235f23630a198a884a43e8c200a7c3b3f68ef4002de902c574035c08d39857caa492088d35cff9b1d4e1b73e8414b7d71fe53167f7cf"
++  },
++  {
++    "message": "6fbe6f0f178fdc8a3ad1a8eecb02d37108c5831281fe85e3ff8eeb66ca1082a217b6d602439948f828e140140412544f994da75b6efc203b295235deca060ecfc7b71f05e5af2acc564596772ddbfb4078b4665f6b85f4e70641af26e31f6a14e5c88604459df4eeeed9b77b33c4b82a3c1458bd2fd1dc7214c04f9c79c8f09b",
++    "message_hash": "164025d15dfec124cd37db98daf196cfbe44716968112dc8a4be24e350abd559",
++    "signature": "59cd6c2a30227afbd693d87b201d0989435d6e116c144276a5223466a822c0f2b01495efda969b3fd3a2c05aa098a4e04b0d0e748726fc6174627da15b143799",
++    "pubkey": "04db6816cec58836ef290e39429f506f00c5541376128bedea089b88094f42cd950b23e68cd57203d9fedeeacef680c26baf25be682ad808f308d2ddd5828fdeae"
++  },
++  {
++    "message": "2b49de971bb0f705a3fb5914eb7638d72884a6c3550667dbfdf301adf26bde02f387fd426a31be6c9ff8bfe8690c8113c88576427f1466508458349fc86036afcfb66448b947707e791e71f558b2bf4e7e7507773aaf4e9af51eda95cbce0a0f752b216f8a54a045d47801ff410ee411a1b66a516f278327df2462fb5619470e",
++    "message_hash": "00c6fc53c1986d19a8a8b580ee553dc1240745d760647d1c0adf442c133c7f56",
++    "signature": "9eaf69170aeba44966afe957295526ee9852b5034c18dc5aeef3255c8567838aebd4c8de2c22b5cb8803d6e070186786f6d5dae2202b9f899276fa31a66cb3bb",
++    "pubkey": "04d2a23e34dcb8e1fbaaf2c3c0e83500824b3a122e83737f1251fa34ccf0d2fb8719030b3d567ed019ba62ee392990a9a23f88ee990f26ed50783e4f671572371f"
++  },
++  {
++    "message": "1fa7201d96ad4d190415f2656d1387fa886afc38e5cd18b8c60da367acf32c627d2c9ea19ef3f030e559fc2a21695cdbb65ddf6ba36a70af0d3fa292a32de31da6acc6108ab2be8bd37843338f0c37c2d62648d3d49013edeb9e179dadf78bf885f95e712fcdfcc8a172e47c09ab159f3a00ed7b930f628c3c48257e92fc7407",
++    "message_hash": "fb5dd3b8d280fe7c4838f01b2a5c28493ed3084f46b40642600ba39e43fbff7b",
++    "signature": "91058d1b912514940e1002855cc930c01a21234bad88f607f213af495c32b69f005d387ce3de25f1b9bad1fb180de110686d91b461ae2972fa4e4a7018519870",
++    "pubkey": "048a86bbf4f7014a8ef557ff6a87681b5728957fc68342a1b2b0164eef5a3c7bb1cbe75d53a1a222990470161143bf18b5cec7c75616bbacdddf2f0af45514f9ca"
++  },
++  {
++    "message": "74715fe10748a5b98b138f390f7ca9629c584c5d6ad268fc455c8de2e800b73fa1ea9aaee85de58baa2ce9ce68d822fc31842c6b153baef3a12bf6b4541f74af65430ae931a64c8b4950ad1c76b31aea8c229b3623390e233c112586aa5907bbe419841f54f0a7d6d19c003b91dc84bbb59b14ec477a1e9d194c137e21c75bbb",
++    "message_hash": "f4083aebe08c9bdb8c08ff844ffc207f80fa4406fb73bdbc1c6020f71281bdae",
++    "signature": "fe43eb9c38b506d118e20f8605ac8954fc0406efd306ba7ea5b07577a2735d15d589e91bf5014c7c360342ad135259dd7ae684e2c21234d7a912b43d148fcf19",
++    "pubkey": "04ab11970c6a01f45f6730b57d8eee6c9e1e7be824b34b27f9b45d2c5f5b6e601d4d946af7e4f5b98647634cfbacb4eecf7507c2fea1b114117902e4bafe9e1eb0"
++  },
++  {
++    "message": "d10131982dd1a1d839aba383cd72855bf41061c0cb04dfa1acad3181f240341d744ca6002b52f25fb3c63f16d050c4a4ef2c0ebf5f16ce987558f4b9d4a5ad3c6b81b617de00e04ba32282d8bf223bfedbb325b741dfdc8f56fa85c65d42f05f6a1330d8cc6664ad32050dd7b9e3993f4d6c91e5e12cbd9e82196e009ad22560",
++    "message_hash": "cb017b280093879c4b114b52ea670f14e97b661074abccc8539a23280fe136b4",
++    "signature": "ccdbbd2500043bf7f705536d5984ab5f05fdc0fa3cf464d8c88f861e3fc8e54cd5c6342c08dcd8242e1daf3595cae968e320a025aa45ec4bc725795da3d1becb",
++    "pubkey": "040827dce898102fa27e52172e8246368b062ade896d34b7f25d8c24fca4a424f91d283f6ebac2b4f6167477ee624e2249c52a7c321e67b6fef711fba2f90d20d7"
++  },
++  {
++    "message": "ef9dbd90ded96ad627a0a987ab90537a3e7acc1fdfa991088e9d999fd726e3ce1e1bd89a7df08d8c2bf51085254c89dc67bc21e8a1a93f33a38c18c0ce3880e958ac3e3dbe8aec49f981821c4ac6812dd29fab3a9ebe7fbd799fb50f12021b48d1d9abca8842547b3b99befa612cc8b4ca5f9412e0352e72ab1344a0ac2913db",
++    "message_hash": "5f1d77f456d7ed30acad33795b50733d54226e57df4281a43d3821d0762f12fe",
++    "signature": "5c707b6df7667324f950216b933d28e307a0223b24d161bc5887208d7f880b3a4b7bc56586dc51d806ac3ad72807bc62d1d06d0812f121bd91e9770d84885c39",
++    "pubkey": "0436748f1a531e91a40b9e6bfc502488cfd749c3b9529633d4e4dabdb058708b7ac4b0672c9a7105b6dbf63b8054e5d266d43d37cf51241ce289d8f9140fe28996"
++  }
++]
+\ No newline at end of file
