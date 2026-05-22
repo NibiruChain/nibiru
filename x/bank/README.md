@@ -794,7 +794,7 @@ Example Output:
 
 ### Query DenomOwners
 
-The `DenomOwners` endpoint allows users to query metadata for a single coin denomination.
+The `DenomOwners` endpoint allows users to query all account addresses and their balances for a given coin denomination (paginated).
 
 ```bash
 cosmos.bank.v1beta1.Query/DenomOwners
@@ -827,7 +827,7 @@ Example Output:
         "denom": "unibi",
         "amount": "5000000000"
       }
-    },
+    }
   ],
   "pagination": {
     "total": "2"
