@@ -74,5 +74,5 @@ jobs:
           # Removing a label that does not exist results in 404. 
           joined="$(IFS=,; echo "${labels_to_remove[*]}")"
           gh issue edit "$GH_ISSUE_NUM" \
-            --repo "$GH_REPO" 
+            --repo "$GH_REPO" \
             --remove-label "$joined"
