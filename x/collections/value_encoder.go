@@ -14,6 +14,7 @@ var (
 	AccAddressValueEncoder ValueEncoder[sdk.AccAddress] = accAddressValueEncoder{}
 	DecValueEncoder        ValueEncoder[sdk.Dec]        = decValueEncoder{}
 	IntValueEncoder        ValueEncoder[sdkmath.Int]    = intValueEncoder{}
+	UintValueEncoder       ValueEncoder[sdkmath.Uint]   = uintValueEncoder{}
 	Uint64ValueEncoder     ValueEncoder[uint64]         = uint64Value{}
 )
 
@@ -88,23 +89,53 @@ func (a accAddressValueEncoder) Name() string                          { return 
 type intValueEncoder struct{}
 
 func (intValueEncoder) Encode(value sdkmath.Int) []byte {
-	return IntKeyEncoder.Encode(value)
+	bz, err := value.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("invalid math.Int %s: %w", value, err))
+	}
+	return bz
 }
 
 func (intValueEncoder) Decode(b []byte) sdkmath.Int {
-	_, got := IntKeyEncoder.Decode(b)
-	return got
+	n := new(sdkmath.Int)
+	if err := n.Unmarshal(b); err != nil {
+		panic(fmt.Errorf("decoding math.Int from bytes failed: %w", err))
+	}
+	return *n
 }
 
 func (intValueEncoder) Stringify(value sdkmath.Int) string {
-	return IntKeyEncoder.Stringify(value)
+	return value.String()
 }
 
 func (intValueEncoder) Name() string {
-	return "math.Int"
+	return "math.Int (signed)"
 }
 
-// IntKeyEncoder
+// UintValueEncoder ValueEncoder[sdk.Uint]
+
+type uintValueEncoder struct{}
+
+func (uintValueEncoder) Encode(value sdkmath.Uint) []byte {
+	if value.IsNil() {
+		panic("cannot encode invalid math.Uint")
+	}
+	return encodeFixedWidthUnsignedBigEndian(value.BigInt())
+}
+
+func (uintValueEncoder) Decode(b []byte) sdkmath.Uint {
+	return sdkmath.NewUintFromBigInt(decodeFixedWidthUnsignedBigEndian(b))
+}
+
+func (uintValueEncoder) Stringify(value sdkmath.Uint) string {
+	return value.String()
+}
+
+func (uintValueEncoder) Name() string {
+	return "math.Uint (fixed-width BE)"
+}
+
+// IntKeyEncoder KeyEncoder[sdk.Int]
 
 var IntKeyEncoder KeyEncoder[sdkmath.Int] = intKeyEncoder{}
 
@@ -119,20 +150,25 @@ func (intKeyEncoder) Encode(key sdkmath.Int) []byte {
 	if key.IsNegative() {
 		panic("cannot encode negative math.Int")
 	}
-	i := key.BigInt()
+	return encodeFixedWidthUnsignedBigEndian(key.BigInt())
+}
 
+func (intKeyEncoder) Decode(b []byte) (int, sdkmath.Int) {
+	return maxIntKeyLen, sdkmath.NewIntFromBigInt(decodeFixedWidthUnsignedBigEndian(b))
+}
+
+func (intKeyEncoder) Stringify(key sdkmath.Int) string { return key.String() }
+
+func encodeFixedWidthUnsignedBigEndian(i *big.Int) []byte {
 	be := i.Bytes()
 	padded := make([]byte, maxIntKeyLen)
 	copy(padded[maxIntKeyLen-len(be):], be)
 	return padded
 }
 
-func (intKeyEncoder) Decode(b []byte) (int, sdkmath.Int) {
+func decodeFixedWidthUnsignedBigEndian(b []byte) *big.Int {
 	if len(b) != maxIntKeyLen {
-		panic("invalid key length")
+		panic("invalid fixed-width uint bytes length")
 	}
-	i := new(big.Int).SetBytes(b)
-	return maxIntKeyLen, sdkmath.NewIntFromBigInt(i)
+	return new(big.Int).SetBytes(b)
 }
-
-func (intKeyEncoder) Stringify(key sdkmath.Int) string { return key.String() }

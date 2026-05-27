@@ -281,8 +281,8 @@ func (k BaseSendKeeper) getWeiStoreBalance(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 ) (storeBal *uint256.Int) {
-	balInt := k.weiStore.GetOr(ctx, addr, sdkmath.ZeroInt())
-	return uint256.MustFromBig(balInt.BigInt())
+	balUint := k.weiStore.GetOr(ctx, addr, sdkmath.ZeroUint())
+	return uint256.MustFromBig(balUint.BigInt())
 }
 
 func (k BaseSendKeeper) setWeiStoreBalance(
@@ -304,7 +304,7 @@ func (k BaseSendKeeper) setWeiStoreBalance(
 		return
 	}
 
-	k.weiStore.Insert(ctx, addr, sdkmath.NewIntFromBigInt(newStoreBal.ToBig()))
+	k.weiStore.Insert(ctx, addr, sdkmath.NewUintFromBigInt(newStoreBal.ToBig()))
 }
 
 // WeiBlockDelta is the net sum of all calls of [AddWei] and [SubWei] in the
@@ -326,7 +326,9 @@ func (k BaseSendKeeper) SumWeiStoreBals(ctx sdk.Context) sdkmath.Int {
 	iter := k.weiStore.Iterate(ctx, collections.Range[sdk.AccAddress]{})
 	totalStoreBalWei := sdkmath.ZeroInt()
 	for _, storeBalWei := range iter.Values() {
-		totalStoreBalWei = totalStoreBalWei.Add(storeBalWei)
+		totalStoreBalWei = totalStoreBalWei.Add(
+			sdkmath.NewIntFromBigInt(storeBalWei.BigInt()),
+		)
 	}
 	return totalStoreBalWei
 }
