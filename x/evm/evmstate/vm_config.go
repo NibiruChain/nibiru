@@ -40,7 +40,7 @@ func (k Keeper) VMConfig(
 ) vm.Config {
 	return vm.Config{
 		Tracer:    tracer,
-		NoBaseFee: false,
+		NoBaseFee: evm.IsZeroGasEthTx(ctx),
 		ExtraEips: cfg.Params.EIPs(),
 	}
 }

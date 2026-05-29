@@ -14,6 +14,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -331,6 +332,39 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	// Bypass: no deduction, no refund. Fee collector and sender stay at 0.
 	s.Require().Equal(0, feeCollectorBal.Cmp(uint256.NewInt(0)), "fee collector balance should be 0")
 	s.Require().Equal(0, senderBal.Cmp(uint256.NewInt(0)), "sender balance should be 0")
+}
+
+func (s *Suite) TestMsgEthereumTx_ZeroGas_ClassifiesAllowlistedType2Tx() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := deps.Sender
+	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	ethTxMsg, err := evmtest.NewEthTxMsgFromTxData(
+		&deps,
+		gethcore.DynamicFeeTxType,
+		nil,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
+		&to,
+		big.NewInt(0),
+		100_000,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.HexToHash(ethTxMsg.Hash)),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
 }
 
 // TestMsgEthereumTx_ZeroGas_WithRefund is like TestMsgEthereumTx_ZeroGas but uses a

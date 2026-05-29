@@ -19,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by
@@ -334,13 +335,46 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 		receipt.ContractAddress = &addr
 	}
 
-	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
+	if b.isZeroGasMsgAtHeight(res.Height, ethMsg) {
+		receipt.EffectiveGasPrice = (*hexutil.Big)(new(big.Int))
+	} else if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
 		baseFeeWei := evm.BASE_FEE_WEI
 		receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
 	} else {
 		receipt.EffectiveGasPrice = (*hexutil.Big)(txData.GetGasPrice())
 	}
 	return &receipt, nil
+}
+
+func (b *Backend) isZeroGasMsgAtHeight(height int64, msg *evm.MsgEthereumTx) bool {
+	txData, err := evm.UnpackTxData(msg.Data)
+	if err != nil {
+		return false
+	}
+	to := txData.GetTo()
+	if to == nil {
+		return false
+	}
+	if value := txData.GetValueWei(); value != nil && value.Sign() != 0 {
+		return false
+	}
+
+	res, err := sudo.NewQueryClient(b.clientCtx).QueryZeroGasActors(
+		rpc.NewContextWithHeight(height),
+		&sudo.QueryZeroGasActorsRequest{},
+	)
+	if err != nil || res == nil {
+		return false
+	}
+	for _, raw := range res.Actors.AlwaysZeroGasContracts {
+		if !gethcommon.IsHexAddress(raw) {
+			continue
+		}
+		if gethcommon.HexToAddress(raw) == *to {
+			return true
+		}
+	}
+	return false
 }
 
 // GetTransactionByBlockHashAndIndex returns the Ethereum-formatted transaction

@@ -62,14 +62,33 @@ func (k *Keeper) EthereumTx(
 	}()
 
 	log.Printf(`[EVM] TX START { txhash="%s" }`, txMsg.Hash)
-	coreTx, _, err := txMsg.Validate()
-	if err != nil {
-		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
-	}
+	var (
+		coreTx    *gethcore.Transaction
+		isZeroGas bool
+	)
 
 	// Initialize SDB
 	{
 		ctx := sdk.UnwrapSDKContext(goCtx)
+		isZeroGas, _, err = evm.IsZeroGasMsgEthereumTx(ctx, k.SudoKeeper, txMsg)
+		if err != nil {
+			return evmResp, sdkioerrors.Wrap(err, "EthereumTx zero-gas classification failed")
+		}
+
+		var txValidation evm.TxValidation
+		if isZeroGas {
+			txValidation = evm.ValidationZeroGas
+		} else {
+			txValidation = evm.ValidationDefault
+		}
+		coreTx, _, err = txMsg.Validate(txValidation)
+		if err != nil {
+			return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
+		}
+		if isZeroGas {
+			ctx = evm.WithZeroGasMeta(ctx)
+		}
+
 		txConfig := k.TxConfig(ctx, coreTx.Hash())
 		sdb = k.NewSDB(ctx, txConfig)
 	}
@@ -83,6 +102,10 @@ func (k *Keeper) EthereumTx(
 	if err != nil {
 		stage = "core_tx_to_msg"
 		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
+	}
+	if isZeroGas {
+		normalized := evm.NormalizeZeroGasMessage(*evmMsg)
+		evmMsg = &normalized
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
