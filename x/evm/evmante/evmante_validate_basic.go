@@ -46,9 +46,9 @@ func AnteStepValidateBasic(
 
 	// Validate the Ethereum transaction message. Classified zero-gas txs keep
 	// raw hash/signature identity but skip fee-price-only validation.
-	validationType := evm.ValidationDefault
+	validationType := evm.TxGasKind_Default
 	if evm.IsZeroGasEthTx(sdb.Ctx()) {
-		validationType = evm.ValidationZeroGas
+		validationType = evm.TxGasKind_ZeroGas
 	}
 	_, txData, err := msgEthTx.Validate(validationType)
 	if err != nil {
@@ -56,7 +56,7 @@ func AnteStepValidateBasic(
 	}
 
 	// Tx gas limit must be at least enough for the intrinsic gas cost.
-	gasLimit := msgEthTx.GetGas()
+	gasLimit := txData.GetGas()
 
 	// Compute actual intrinsic gas (same as in ApplyEvmMsg)
 	rules := k.GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
