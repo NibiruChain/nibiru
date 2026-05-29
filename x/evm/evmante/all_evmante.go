@@ -29,8 +29,8 @@ func NewAnteHandlerEvm(
 	steps := []AnteStep{
 		AnteStepSetupCtx, // outermost AnteDecorator. AnteStepSetupCtx must be called first
 		EthSigVerification,
+		AnteStepDetectZeroGas, // must run before ValidateBasic, MempoolGasPrice, VerifyEthAcc, CanTransfer, DeductGas
 		AnteStepValidateBasic,
-		AnteStepDetectZeroGas, // must run before MempoolGasPrice, VerifyEthAcc, CanTransfer, DeductGas
 		AnteStepMempoolGasPrice,
 		AnteStepBlockGasMeter,
 		AnteStepVerifyEthAcc,

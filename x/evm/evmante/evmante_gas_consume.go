@@ -204,7 +204,10 @@ func AnteStepGasWanted(
 		gasWanted += txData.GetGas()
 	}
 
-	priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
+	priority := evm.DefaultZeroGasTxPriority
+	if !evm.IsZeroGasEthTx(sdb.Ctx()) {
+		priority = evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
+	}
 
 	if priority < minPriority {
 		minPriority = priority
