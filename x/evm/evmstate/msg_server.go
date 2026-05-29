@@ -75,11 +75,11 @@ func (k *Keeper) EthereumTx(
 			return evmResp, sdkioerrors.Wrap(err, "EthereumTx zero-gas classification failed")
 		}
 
-		var txValidation evm.TxValidation
+		var txValidation evm.TxGasKind
 		if isZeroGas {
-			txValidation = evm.ValidationZeroGas
+			txValidation = evm.TxGasKind_ZeroGas
 		} else {
-			txValidation = evm.ValidationDefault
+			txValidation = evm.TxGasKind_Default
 		}
 		coreTx, _, err = txMsg.Validate(txValidation)
 		if err != nil {
