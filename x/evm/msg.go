@@ -165,26 +165,26 @@ func (msg MsgEthereumTx) Type() string { return proto.MessageName(new(MsgEthereu
 // (stateless) validation checks of a Transaction. If returns an error if
 // validation fails.
 func (msg MsgEthereumTx) ValidateBasic() error {
-	_, _, err := msg.Validate(ValidationDefault)
+	_, _, err := msg.Validate(TxGasKind_Default)
 	return err
 }
 
-type TxValidation string
+type TxGasKind string
 
 const (
-	ValidationDefault TxValidation = "default"
+	TxGasKind_Default TxGasKind = "default"
 
-	// ValidationZeroGas performs stateless validation for a previously
+	// TxGasKind_ZeroGas performs stateless validation for a previously
 	// classified zero-gas EVM transaction. It preserves non-fee checks and skips
 	// only fee-price checks that are irrelevant once native gas payment is
 	// exempt.
-	ValidationZeroGas TxValidation = "zero_gas"
+	TxGasKind_ZeroGas TxGasKind = "zero_gas"
 )
 
 // Validate performs stateless validation for the transaction. Here, "stateless"
 // means validation that does not depend on the blockchain state.
 func (msg MsgEthereumTx) Validate(
-	kind TxValidation,
+	kind TxGasKind,
 ) (
 	coreTx *gethcore.Transaction,
 	txData TxData,
@@ -231,16 +231,19 @@ func (msg MsgEthereumTx) Validate(
 	}
 
 	switch kind {
-	case ValidationDefault:
+	case TxGasKind_Default:
 		if err := txData.Validate(); err != nil {
 			rerr = sdkioerrors.Wrap(err, "failed \"TxData.Validate\"")
 			return
 		}
-	case ValidationZeroGas:
+	case TxGasKind_ZeroGas:
 		if err := ValidateZeroGasTxData(txData); err != nil {
 			rerr = sdkioerrors.Wrap(err, "failed \"ValidateZeroGasTxData\"")
 			return
 		}
+	default:
+		rerr = fmt.Errorf("invalid TxGasKind %s", kind)
+		return
 	}
 
 	// Validate EthHash field after validated txData to avoid panic
