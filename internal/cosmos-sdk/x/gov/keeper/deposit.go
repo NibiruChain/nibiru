@@ -118,6 +118,10 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 		return false, sdkerrors.Wrapf(types.ErrInactiveProposal, "%d", proposalID)
 	}
 
+	if err := keeper.validateDepositDenoms(ctx, depositAmount); err != nil {
+		return false, err
+	}
+
 	// update the governance module's account coins pool
 	err := keeper.bankKeeper.SendCoinsFromAccountToModule(ctx, depositorAddr, types.ModuleName, depositAmount)
 	if err != nil {
@@ -160,6 +164,27 @@ func (keeper Keeper) AddDeposit(ctx sdk.Context, proposalID uint64, depositorAdd
 	keeper.SetDeposit(ctx, deposit)
 
 	return activatedVotingPeriod, nil
+}
+
+func (keeper Keeper) validateDepositDenoms(ctx sdk.Context, depositAmount sdk.Coins) error {
+	params := keeper.GetParams(ctx)
+	allowedDenoms := map[string]struct{}{}
+	for _, coin := range params.MinDeposit {
+		allowedDenoms[coin.Denom] = struct{}{}
+	}
+
+	for _, coin := range depositAmount {
+		if _, ok := allowedDenoms[coin.Denom]; !ok {
+			return sdkerrors.Wrapf(
+				sdkerrors.ErrInvalidCoins,
+				"invalid gov deposit denom %q; expected one of the MinDeposit denoms (%s)",
+				coin.Denom,
+				sdk.NewCoins(params.MinDeposit...).String(),
+			)
+		}
+	}
+
+	return nil
 }
 
 // RefundAndDeleteDeposits refunds and deletes all the deposits on a specific proposal.

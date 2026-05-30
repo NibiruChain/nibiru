@@ -17,6 +17,7 @@ func (s *TestSuite) createDenom(
 	creator sdk.AccAddress,
 	subdenom string,
 ) {
+	s.GrantSudo(creator.String())
 	msg := &types.MsgCreateDenom{
 		Sender:   creator.String(),
 		Subdenom: subdenom,

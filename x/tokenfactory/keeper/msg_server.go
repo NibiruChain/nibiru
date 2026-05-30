@@ -26,6 +26,10 @@ func (k Keeper) CreateDenom(
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := k.checkCreateDenomPermission(ctx, txMsg.Sender); err != nil {
+		return resp, err
+	}
+
 	denom := types.TFDenom{
 		Creator:  txMsg.Sender,
 		Subdenom: txMsg.Subdenom,
@@ -38,6 +42,25 @@ func (k Keeper) CreateDenom(
 	return &types.MsgCreateDenomResponse{
 		NewTokenDenom: denom.Denom().String(),
 	}, err
+}
+
+func (k Keeper) checkCreateDenomPermission(ctx sdk.Context, sender string) error {
+	if sender == k.authority {
+		return nil
+	}
+
+	senderAddr, err := sdk.AccAddressFromBech32(sender)
+	if err != nil {
+		return err
+	}
+	if err := k.sudoKeeper.CheckPermissions(senderAddr, ctx); err == nil {
+		return nil
+	}
+
+	return govtypes.ErrInvalidSigner.Wrapf(
+		"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+		k.authority, sender,
+	)
 }
 
 func (k Keeper) ChangeAdmin(
@@ -149,20 +172,24 @@ func (k Keeper) mint(
 		return err
 	}
 
-	coins := sdk.NewCoins(coin)
-	err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
-	if err != nil {
-		return err
-	}
-
 	mintToAddr, err := sdk.AccAddressFromBech32(mintTo)
 	if err != nil {
 		return err
 	}
 
+	if k.isConfiguredModuleAccount(mintToAddr) {
+		return types.ErrBlockedAddress.Wrapf(
+			"failed to mint to module account %s", mintToAddr)
+	}
+
 	if k.bankKeeper.BlockedAddr(mintToAddr) {
 		return types.ErrBlockedAddress.Wrapf(
 			"failed to mint to %s", mintToAddr)
+	}
+
+	coins := sdk.NewCoins(coin)
+	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
+		return err
 	}
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(
@@ -225,6 +252,11 @@ func (k Keeper) burn(
 		return err
 	}
 
+	if k.isConfiguredModuleAccount(burnFromAddr) {
+		return types.ErrBlockedAddress.Wrapf(
+			"failed to burn from module account %s", burnFromAddr)
+	}
+
 	if k.bankKeeper.BlockedAddr(burnFromAddr) {
 		return types.ErrBlockedAddress.Wrapf(
 			"failed to burn from %s", burnFromAddr)
@@ -238,6 +270,16 @@ func (k Keeper) burn(
 	}
 
 	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+}
+
+func (k Keeper) isConfiguredModuleAccount(addr sdk.AccAddress) bool {
+	for _, permAddr := range k.accountKeeper.GetModulePermissions() {
+		if permAddr.GetAddress().Equals(addr) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // SetDenomMetadata: Message handler for the abci.Msg: MsgSetDenomMetadata
