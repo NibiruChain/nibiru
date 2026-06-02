@@ -98,7 +98,7 @@ var (
 // handlers, EVM execution, and the BASEFEE opcode continue to use the real chain
 // base fee.
 func WalletZeroBaseFeeWei() *big.Int {
-	return Big0
+	return big.NewInt(0)
 }
 
 func IsVMSenderCtx(ctx sdk.Context) bool {

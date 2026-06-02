@@ -364,6 +364,10 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 ) (map[string]any, error) {
 	ethRPCTxs := []any{}
 	block := resBlock.Block
+	// Wallet zero-fee hint compatibility: fullTx block responses are still part
+	// of the wallet-facing RPC surface. Keep embedded tx fee-price reporting
+	// coherent with the zero baseFeePerGas header view so wallets do not rebuild
+	// a native-NIBI preflight requirement from block transaction objects.
 	baseFeeWei := evm.WalletZeroBaseFeeWei()
 
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
@@ -384,6 +388,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 			baseFeeWei,
 			b.chainID,
 		)
+		rpcTx.GasPrice = (*hexutil.Big)(evm.WalletZeroBaseFeeWei())
 		ethRPCTxs = append(ethRPCTxs, rpcTx)
 	}
 
