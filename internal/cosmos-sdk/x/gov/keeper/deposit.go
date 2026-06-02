@@ -179,7 +179,7 @@ func (keeper Keeper) validateDepositDenoms(ctx sdk.Context, depositAmount sdk.Co
 				sdkerrors.ErrInvalidCoins,
 				"invalid gov deposit denom %q; expected one of the MinDeposit denoms (%s)",
 				coin.Denom,
-				sdk.NewCoins(params.MinDeposit...).String(),
+				sdk.Coins(params.MinDeposit).String(),
 			)
 		}
 	}
