@@ -307,7 +307,7 @@ func (b *Backend) DoCall(
 // appropriate fee fields from the tx arguments directly.
 func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	var (
-		// Wallet zero-fee hint compatibility: <PR URL>
+		// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 		//
 		// Previous behavior returned the latest block base fee plus the
 		// suggested tip. Wallets used that transaction-agnostic value as a

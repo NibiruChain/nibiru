@@ -91,7 +91,7 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 	s.Require().Greater(block.Transactions().Len(), 0)
 	s.Require().NotNil(block.ParentHash())
 	s.Require().NotNil(block.UncleHash())
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	s.Require().Equal(evm.WalletZeroBaseFeeWei(), block.BaseFee())
 }
 
@@ -122,6 +122,6 @@ func AssertBlockJsonZeroGasFields(s *BackendSuite, blockMap map[string]any) {
 	s.Equal(int64(blockNumber), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 	baseFee, ok := blockMap["baseFeePerGas"].(*hexutil.Big)
 	s.Truef(ok, "unexpected base fee type: %T", blockMap["baseFeePerGas"])
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	s.Equal(evm.WalletZeroBaseFeeWei(), baseFee.ToInt())
 }

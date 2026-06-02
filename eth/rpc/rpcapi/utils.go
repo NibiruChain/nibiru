@@ -112,7 +112,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	targetOneFeeHistory *rpc.OneFeeHistory,
 ) error {
 	blockHeight := tendermintBlock.Block.Height
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	//
 	// Previous fee-history behavior exposed the chain base fee and calculated the
 	// next EIP-1559 base fee:
@@ -183,7 +183,7 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 			if _, ok := msg.(*evm.MsgEthereumTx); !ok {
 				continue
 			}
-			// Wallet zero-fee hint compatibility: <PR URL>
+			// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 			//
 			// Previous behavior derived percentile rewards from each transaction:
 			//

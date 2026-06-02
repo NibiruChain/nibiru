@@ -69,7 +69,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 			s.Require().Greater(*jsonTxArgs.Gas, hexutil.Uint64(0))
 			s.Require().Equal(jsonTxArgs.ChainID.ToInt().Int64(), appconst.ETH_CHAIN_ID_DEFAULT)
 			if tc.name == "happy: minimal args set" {
-				// Wallet zero-fee hint compatibility: <PR URL>
+				// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 				s.Require().Equal(evm.Big0, jsonTxArgs.MaxPriorityFeePerGas.ToInt())
 				s.Require().Equal(evm.Big0, jsonTxArgs.MaxFeePerGas.ToInt())
 			}
@@ -111,6 +111,6 @@ func (s *BackendSuite) TestGasPrice() {
 	gasPrice, err := s.cli.EvmRpc.Eth.GasPrice()
 	s.Require().NoError(err)
 	s.Require().NotNil(gasPrice)
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	s.Require().Equal(evm.Big0, gasPrice.ToInt())
 }

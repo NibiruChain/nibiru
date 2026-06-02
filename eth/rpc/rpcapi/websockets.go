@@ -392,7 +392,7 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 	}
 
 	// TODO: use events
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	//
 	// Previous behavior used geth's initial base fee:
 	//
