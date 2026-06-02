@@ -306,7 +306,6 @@ func (b *Backend) DoCall(
 // GasPrice returns the current "suggested" gas price. Paid transactions
 // appropriate fee fields from the tx arguments directly.
 func (b *Backend) GasPrice() (*hexutil.Big, error) {
-
 	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	//
 	// Previous behavior returned the latest block base fee plus the
@@ -332,7 +331,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	//
 	// Chain execution still uses the real base fee. This method is only a
 	// wallet-facing fee hint.
-	var result *big.Int = evm.WalletZeroBaseFeeWei()
+	var result = evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }
