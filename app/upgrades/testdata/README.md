@@ -70,7 +70,7 @@ Mainnet code ID `2` is used by:
   `nibi15wd4ac2383fq65uymu72dg4u4u60t2du545fzxeakdw3kf7hd7yqtg45z7`
 
 Local source reference:
-`/home/realu/ki/nibi-wasm/contracts/core-cw3-flex-msig/src/msg.rs`.
+`nibi-wasm/contracts/core-cw3-flex-msig/src/msg.rs`.
 
 Entrypoint message types:
 
@@ -111,7 +111,7 @@ Mainnet code ID `1` is used by:
   `nibi1pqh0j0jzasj4f7mfm7hp6dq94fcuemrl9afas4k48pw0x3j8gxysdsy4n2`
 
 Local source reference:
-`/home/realu/ki/wasm-cw-plus/contracts/cw4-group/src/msg.rs`.
+`wasm-cw-plus/contracts/cw4-group/src/msg.rs`.
 
 Entrypoint message types:
 

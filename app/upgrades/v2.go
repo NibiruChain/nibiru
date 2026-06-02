@@ -187,7 +187,13 @@ var (
 			) (module.VersionMap, error) {
 				err := runUpgrade2_14_0(nibiru, ctx)
 				if err != nil {
-					return fromVM, fmt.Errorf("v2.14.0 upgrade failure: %w", err)
+					ctx.Logger().Error("v2.14.0 upgrade failure", "err", err)
+					ctx.EventManager().EmitEvent(
+						sdk.NewEvent(
+							"v2_14_0_upgrade_failure",
+							sdk.NewAttribute("error", err.Error()),
+						),
+					)
 				}
 
 				return mm.RunMigrations(ctx, cfg, fromVM)

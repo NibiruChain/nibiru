@@ -2,6 +2,7 @@ package upgrades
 
 import (
 	"encoding/json"
+	"fmt"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -91,21 +92,25 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	permissionedWasmKeeper := wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper)
-	updateWasmAdmin := func(contract, currentAdmin, newAdmin sdk.AccAddress) {
+	updateWasmAdmin := func(contract, currentAdmin, newAdmin sdk.AccAddress) error {
 		info := nibiru.WasmKeeper.GetContractInfo(ctx, contract)
 		if info == nil || info.Admin == "" {
-			return
+			return fmt.Errorf("contract info not found or admin empty for %s", contract.String())
 		}
 
 		admin := mustAccAddress(info.Admin)
 		if admin.Equals(newAdmin) {
-			return
+			return nil
 		}
 		if !admin.Equals(currentAdmin) {
-			return
+			return fmt.Errorf("current admin mismatch for %s: expected %s, actual %s", contract.String(), currentAdmin.String(), admin.String())
 		}
 
-		_ = permissionedWasmKeeper.UpdateContractAdmin(ctx, contract, currentAdmin, newAdmin)
+		err := permissionedWasmKeeper.UpdateContractAdmin(ctx, contract, currentAdmin, newAdmin)
+		if err != nil {
+			return fmt.Errorf("failed to update contract admin for %s: %w", contract.String(), err)
+		}
+		return nil
 	}
 
 	// -------------------------------------------------------------------------
@@ -123,13 +128,13 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	// -------------------------------------------------------------------------
 	respBz, err := nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"list_members":{}}`))
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to query Treasury CW4 Group members: %w", err)
 	}
 
 	var membersResp cw4ListMembersResponse
 	err = json.Unmarshal(respBz, &membersResp)
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to unmarshal Treasury CW4 Group members response: %w", err)
 	}
 
 	currentMembers := make(map[string]bool, len(membersResp.Members))
@@ -158,14 +163,14 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 		msg.UpdateMembers.Remove = removeMembers
 		msgBz, err := json.Marshal(msg)
 		if err != nil {
-			return nil
+			return fmt.Errorf("failed to marshal Treasury CW4 Group update members message: %w", err)
 		}
 
 		_, err = permissionedWasmKeeper.Execute(
 			ctx, addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, msgBz, sdk.Coins{},
 		)
 		if err != nil {
-			return nil
+			return fmt.Errorf("failed to execute Treasury CW4 Group update members: %w", err)
 		}
 	}
 
@@ -174,13 +179,13 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	// -------------------------------------------------------------------------
 	respBz, err = nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"admin":{}}`))
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to query Treasury CW4 Group admin: %w", err)
 	}
 
 	var adminResp cw4AdminResponse
 	err = json.Unmarshal(respBz, &adminResp)
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to unmarshal Treasury CW4 Group admin response: %w", err)
 	}
 
 	switch adminResp.Admin {
@@ -190,24 +195,28 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 		msg.UpdateAdmin.Admin = addrCfg.TreasuryCW3.String()
 		msgBz, err := json.Marshal(msg)
 		if err != nil {
-			return nil
+			return fmt.Errorf("failed to marshal Treasury CW4 Group update admin message: %w", err)
 		}
 
 		_, err = permissionedWasmKeeper.Execute(
 			ctx, addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, msgBz, sdk.Coins{},
 		)
 		if err != nil {
-			return nil
+			return fmt.Errorf("failed to execute Treasury CW4 Group update admin: %w", err)
 		}
 	default:
-		return nil
+		return fmt.Errorf("unexpected Treasury CW4 Group admin: %s", adminResp.Admin)
 	}
 
 	// -------------------------------------------------------------------------
 	// STEP 4: Move Treasury CW4 and CW3 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
-	updateWasmAdmin(addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3)
-	updateWasmAdmin(addrCfg.TreasuryCW3, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3)
+	if err := updateWasmAdmin(addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3); err != nil {
+		return err
+	}
+	if err := updateWasmAdmin(addrCfg.TreasuryCW3, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3); err != nil {
+		return err
+	}
 
 	// -------------------------------------------------------------------------
 	// STEP 5: Mainnet-only guard for dormant Hot Wallet cleanup.
@@ -226,17 +235,21 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	if !balances.IsZero() {
 		err = nibiru.BankKeeper.SendCoins(ctx, addrCfg.HotWalletCW3, addrCfg.TreasuryCW3, balances)
 		if err != nil {
-			return nil
+			return fmt.Errorf("failed to sweep Hot Wallet CW3 balance: %w", err)
 		}
 	}
 
 	// -------------------------------------------------------------------------
 	// STEP 7: Move Hot Wallet CW3 and CW4 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
-	updateWasmAdmin(addrCfg.HotWalletCW3, addrCfg.KevinNanoS, addrCfg.TreasuryCW3)
+	if err := updateWasmAdmin(addrCfg.HotWalletCW3, addrCfg.KevinNanoS, addrCfg.TreasuryCW3); err != nil {
+		return err
+	}
 
 	if nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.HotWalletCW4Group) {
-		updateWasmAdmin(addrCfg.HotWalletCW4Group, addrCfg.KevinNanoS, addrCfg.TreasuryCW3)
+		if err := updateWasmAdmin(addrCfg.HotWalletCW4Group, addrCfg.KevinNanoS, addrCfg.TreasuryCW3); err != nil {
+			return err
+		}
 	}
 
 	return nil
