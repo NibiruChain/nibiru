@@ -47,9 +47,7 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_10_0,
 	Upgrade2_11_0,
 	Upgrade2_12_0,
-	Upgrade2_13_0,       // FIXME: Remove before actual release
-	Upgrade2_13_1_test3, // FIXME: Remove before actual release
-	// Upgrade2_14_0, // TODO: Add back real upgrade handler
+	Upgrade2_14_0,
 }
 
 // DefaultUpgradeHandler runs module manager migrations without running any other
