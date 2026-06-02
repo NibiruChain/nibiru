@@ -172,6 +172,12 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
+	Upgrade2_13_0 = Upgrade{
+		UpgradeName:          "v2.13.0",
+		CreateUpgradeHandler: DefaultUpgradeHandler,
+		StoreUpgrades:        store.StoreUpgrades{},
+	}
+
 	// FIXME: Remove before actual release.
 	Upgrade2_13_1_test3 = Upgrade{
 		UpgradeName: "v2.13.1-test.3",
