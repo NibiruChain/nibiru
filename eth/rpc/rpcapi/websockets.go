@@ -21,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/eth/filters"
-	"github.com/ethereum/go-ethereum/params"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -393,7 +392,15 @@ func (api *pubSubAPI) subscribeNewHeads(wsConn *wsConn, subID gethrpc.ID) (pubsu
 	}
 
 	// TODO: use events
-	baseFeeWeiPerGas := big.NewInt(params.InitialBaseFee)
+	// Wallet zero-fee hint compatibility: <PR URL>
+	//
+	// Previous behavior used geth's initial base fee:
+	//
+	//   baseFeeWeiPerGas := big.NewInt(params.InitialBaseFee)
+	//
+	// WebSocket newHeads is a wallet-facing fee-hint surface just like HTTP block
+	// responses, so it should report the same zero base fee.
+	baseFeeWeiPerGas := evm.WalletZeroBaseFeeWei()
 
 	go func() {
 		headersCh := sub.EventCh

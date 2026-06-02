@@ -84,6 +84,23 @@ var (
 	CodeHashForNilAccount = gethcommon.Hash{}
 )
 
+// WalletZeroBaseFeeWei returns the base fee shown by wallet-facing JSON-RPC fee
+// hints.
+//
+// Nibiru supports allowlisted zero-gas EVM transactions, but browser wallets
+// run transaction-agnostic preflight checks before signing or broadcasting. If
+// RPC fee hints expose the chain's internal base fee, those wallets can reject a
+// valid zero-gas transaction because the sender has no native NIBI for gas. The
+// wallet-facing RPC surface therefore reports a zero base fee so preflight UX
+// matches the zero-cost transactions that the chain already accepts.
+//
+// This value is only for JSON-RPC fee hints and serialization. Consensus, ante
+// handlers, EVM execution, and the BASEFEE opcode continue to use the real chain
+// base fee.
+func WalletZeroBaseFeeWei() *big.Int {
+	return Big0
+}
+
 func IsVMSenderCtx(ctx sdk.Context) bool {
 	isTrue, ok := ctx.Value(CtxKeyVMSenderGuard).(bool)
 	if ok && isTrue {
