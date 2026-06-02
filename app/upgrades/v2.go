@@ -172,6 +172,32 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
+	// FIXME: Remove before actual release.
+	Upgrade2_13_1_test3 = Upgrade{
+		UpgradeName: "v2.13.1-test.3",
+		CreateUpgradeHandler: func(
+			mm *module.Manager,
+			cfg module.Configurator,
+			nibiru *keepers.PublicKeepers,
+			clientKeeper clientkeeper.Keeper,
+		) upgradetypes.UpgradeHandler {
+			return func(
+				ctx sdk.Context,
+				plan upgradetypes.Plan,
+				fromVM module.VersionMap,
+			) (module.VersionMap, error) {
+				err := runUpgrade2_14_0(nibiru, ctx)
+				if err != nil {
+					return fromVM, fmt.Errorf("v2.14.0 upgrade failure: %w", err)
+				}
+
+				return mm.RunMigrations(ctx, cfg, fromVM)
+			}
+		},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
+
+	// FIXME: Add v2.14.0 before actual release.
 	Upgrade2_14_0 = Upgrade{
 		UpgradeName: "v2.14.0",
 		CreateUpgradeHandler: func(
