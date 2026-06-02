@@ -15,7 +15,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus/misc/eip1559"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -113,16 +112,28 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 	targetOneFeeHistory *rpc.OneFeeHistory,
 ) error {
 	blockHeight := tendermintBlock.Block.Height
-	blockBaseFee := evm.BASE_FEE_WEI
+	// Wallet zero-fee hint compatibility: <PR URL>
+	//
+	// Previous fee-history behavior exposed the chain base fee and calculated the
+	// next EIP-1559 base fee:
+	//
+	//   blockBaseFee := evm.BASE_FEE_WEI
+	//   targetOneFeeHistory.BaseFee = blockBaseFee
+	//   cfg := b.ChainConfig()
+	//   header, err := b.CurrentHeader()
+	//   if err != nil {
+	//       return err
+	//   }
+	//   targetOneFeeHistory.NextBaseFee = eip1559.CalcBaseFee(cfg, header)
+	//
+	// Wallets can use both baseFeePerGas[] and the next base fee for native
+	// balance preflight, so the wallet-facing RPC response reports zero for both.
+	// Chain execution still uses the real base fee.
+	blockBaseFee := evm.WalletZeroBaseFeeWei()
 
 	// set basefee
 	targetOneFeeHistory.BaseFee = blockBaseFee
-	cfg := b.ChainConfig()
-	header, err := b.CurrentHeader()
-	if err != nil {
-		return err
-	}
-	targetOneFeeHistory.NextBaseFee = eip1559.CalcBaseFee(cfg, header)
+	targetOneFeeHistory.NextBaseFee = evm.WalletZeroBaseFeeWei()
 
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
@@ -169,15 +180,19 @@ func (b *Backend) retrieveEVMTxFeesFromBlock(
 		}
 		txGasUsed := uint64(eachTendermintTxResult.GasUsed) // #nosec G701
 		for _, msg := range tx.GetMsgs() {
-			ethMsg, ok := msg.(*evm.MsgEthereumTx)
-			if !ok {
+			if _, ok := msg.(*evm.MsgEthereumTx); !ok {
 				continue
 			}
-			tx := ethMsg.AsTransaction()
-			reward := tx.EffectiveGasTipValue(blockBaseFee)
-			if reward == nil {
-				reward = big.NewInt(0)
-			}
+			// Wallet zero-fee hint compatibility: <PR URL>
+			//
+			// Previous behavior derived percentile rewards from each transaction:
+			//
+			//   tx := ethMsg.AsTransaction()
+			//   reward := tx.EffectiveGasTipValue(blockBaseFee)
+			//
+			// Wallets can add fee-history reward values to the base-fee hint during
+			// preflight. Keep the wallet-facing priority-fee reward at zero too.
+			reward := big.NewInt(0)
 			sorter = append(sorter, txGasAndReward{gasUsed: txGasUsed, reward: reward})
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func (s *BackendSuite) TestBlockNumber() {
@@ -26,18 +27,14 @@ func (s *BackendSuite) TestGetBlockByNumberr() {
 	block, err := s.cli.EvmRpc.Eth.GetBlockByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc, true)
 	s.Require().NoError(err)
-	s.Require().NotNil(block)
-	s.Require().Greater(len(block["transactions"].([]any)), 0)
-	s.Require().NotNil(block["size"])
-	s.Require().NotNil(block["nonce"])
-	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	AssertBlockJsonZeroGasFields(s, block)
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
 	fullTx := true
 	blockMap, err := s.cli.EvmRpc.Eth.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, fullTx)
 	s.Require().NoError(err)
-	AssertBlockContents(s, blockMap)
+	AssertBlockJsonZeroGasFields(s, blockMap)
 }
 
 func (s *BackendSuite) TestBlockNumberFromTendermint() {
@@ -94,6 +91,8 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 	s.Require().Greater(block.Transactions().Len(), 0)
 	s.Require().NotNil(block.ParentHash())
 	s.Require().NotNil(block.UncleHash())
+	// Wallet zero-fee hint compatibility: <PR URL>
+	s.Require().Equal(evm.WalletZeroBaseFeeWei(), block.BaseFee())
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
@@ -109,13 +108,20 @@ func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
-func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
-	s.Require().NotNil(blockMap)
-	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
-	s.Require().NotNil(blockMap["size"])
-	s.Require().NotNil(blockMap["nonce"])
+// AssertBlockJsonZeroGasFields checks wallet-facing JSON block fields that
+// should report zero gas fee hints without changing consensus block semantics.
+func AssertBlockJsonZeroGasFields(s *BackendSuite, blockMap map[string]any) {
+	s.T().Helper()
+	s.NotNil(blockMap)
+	s.Greater(len(blockMap["transactions"].([]any)), 0)
+	s.NotNil(blockMap["size"])
+	s.NotNil(blockMap["nonce"])
 	s.T().Logf("blockMap: %s", blockMap)
 	blockNumber, ok := blockMap["number"].(hexutil.Uint64)
-	s.Require().Truef(ok, "unexpected block number type: %T", blockMap["number"])
-	s.Require().Equal(int64(blockNumber), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	s.Truef(ok, "unexpected block number type: %T", blockMap["number"])
+	s.Equal(int64(blockNumber), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	baseFee, ok := blockMap["baseFeePerGas"].(*hexutil.Big)
+	s.Truef(ok, "unexpected base fee type: %T", blockMap["baseFeePerGas"])
+	// Wallet zero-fee hint compatibility: <PR URL>
+	s.Equal(evm.WalletZeroBaseFeeWei(), baseFee.ToInt())
 }

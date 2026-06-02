@@ -19,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by
@@ -76,17 +77,25 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		return nil, pkgerrors.New("can't find index of ethereum tx")
 	}
 
-	baseFeeWei := evm.BASE_FEE_WEI
+	txData, err := evm.UnpackTxData(msg.Data)
+	if err != nil {
+		return nil, err
+	}
+	baseFeeWei, isZeroGasTx := b.reportingBaseFeeWei(txData, res.Height)
 	height := uint64(res.Height)    //#nosec G701 -- checked for int overflow already
 	index := uint64(res.EthTxIndex) //#nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsgEthTx(
+	rpcTx := rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
 		index,
 		baseFeeWei,
 		b.chainID,
-	), nil
+	)
+	if isZeroGasTx {
+		rpcTx.GasPrice = (*hexutil.Big)(evm.Big0)
+	}
+	return rpcTx, nil
 }
 
 // getTransactionByHashPending find pending tx from mempool
@@ -334,6 +343,11 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 		receipt.ContractAddress = &addr
 	}
 
+	_, isZeroGasTx := b.reportingBaseFeeWei(txData, res.Height)
+	if isZeroGasTx {
+		receipt.EffectiveGasPrice = (*hexutil.Big)(evm.Big0)
+		return &receipt, nil
+	}
 	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
 		baseFeeWei := evm.BASE_FEE_WEI
 		receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
@@ -473,17 +487,72 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		msg = ethMsgs[i]
 	}
 
-	baseFeeWei := evm.BASE_FEE_WEI
+	txData, err := evm.UnpackTxData(msg.Data)
+	if err != nil {
+		return nil, err
+	}
+	baseFeeWei, isZeroGasTx := b.reportingBaseFeeWei(txData, block.Block.Height)
 	height := uint64(block.Block.Height) // #nosec G701 -- checked for int overflow already
 	index := uint64(idx)                 // #nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsgEthTx(
+	rpcTx := rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.Block.Hash()),
 		height,
 		index,
 		baseFeeWei,
 		b.chainID,
-	), nil
+	)
+	if isZeroGasTx {
+		rpcTx.GasPrice = (*hexutil.Big)(evm.Big0)
+	}
+	return rpcTx, nil
+}
+
+func (b *Backend) reportingBaseFeeWei(txData evm.TxData, height int64) (*big.Int, bool) {
+	// Wallet zero-fee reporting compatibility: <PR URL>
+	//
+	// Previous post-broadcast RPC reporting always used:
+	//
+	//   baseFeeWei := evm.BASE_FEE_WEI
+	//
+	// For transactions that actually matched the zero-gas allowlist at their
+	// block height, report the fee paid as zero while leaving normal paid txs on
+	// the chain base fee path.
+	isZeroGasTxAtHeight := func(txData evm.TxData, height int64) bool {
+		to := txData.GetTo()
+		if to == nil {
+			return false
+		}
+		value := txData.GetValueWei()
+		if value != nil && value.Sign() != 0 {
+			return false
+		}
+
+		queryClient := sudo.NewQueryClient(b.clientCtx)
+		res, err := queryClient.QueryZeroGasActors(
+			rpc.NewContextWithHeight(height),
+			&sudo.QueryZeroGasActorsRequest{},
+		)
+		if err != nil {
+			b.logger.Debug("failed to query zero-gas actors for RPC fee reporting", "height", height, "error", err.Error())
+			return false
+		}
+
+		for _, rawAddr := range res.Actors.AlwaysZeroGasContracts {
+			addr, err := eth.NewEIP55AddrFromStr(rawAddr)
+			if err != nil {
+				continue
+			}
+			if addr.Address == *to {
+				return true
+			}
+		}
+		return false
+	}(txData, height)
+	if isZeroGasTxAtHeight {
+		return evm.WalletZeroBaseFeeWei(), true
+	}
+	return evm.BASE_FEE_WEI, false
 }
 
 func (b *Backend) GetTransactionLogs(txHash gethcommon.Hash) ([]*gethcore.Log, error) {

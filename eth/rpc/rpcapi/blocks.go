@@ -328,7 +328,7 @@ func (b *Backend) HeaderByNumber(blockNum rpc.BlockNumber) (*gethcore.Header, er
 	}
 
 	bloom := b.BlockBloom(blockRes)
-	baseFeeWei := evm.BASE_FEE_WEI
+	baseFeeWei := evm.WalletZeroBaseFeeWei()
 
 	ethHeader := rpc.EthHeaderFromTendermint(resBlock.Block.Header, bloom, baseFeeWei)
 	return ethHeader, nil
@@ -364,7 +364,7 @@ func (b *Backend) RPCBlockFromTendermintBlock(
 ) (map[string]any, error) {
 	ethRPCTxs := []any{}
 	block := resBlock.Block
-	baseFeeWei := evm.BASE_FEE_WEI
+	baseFeeWei := evm.WalletZeroBaseFeeWei()
 
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
 	for txIndex, ethMsg := range msgs {
@@ -462,7 +462,7 @@ func (b *Backend) EthBlockFromTendermintBlock(
 ) (*gethcore.Block, error) {
 	block := resBlock.Block
 	bloom := b.BlockBloom(blockRes)
-	baseFeeWei := evm.BASE_FEE_WEI
+	baseFeeWei := evm.WalletZeroBaseFeeWei()
 
 	ethHeader := rpc.EthHeaderFromTendermint(block.Header, bloom, baseFeeWei)
 	msgs := b.EthMsgsFromTendermintBlock(resBlock, blockRes)
