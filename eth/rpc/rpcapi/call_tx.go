@@ -306,34 +306,33 @@ func (b *Backend) DoCall(
 // GasPrice returns the current "suggested" gas price. Paid transactions
 // appropriate fee fields from the tx arguments directly.
 func (b *Backend) GasPrice() (*hexutil.Big, error) {
-	var (
-		// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
-		//
-		// Previous behavior returned the latest block base fee plus the
-		// suggested tip. Wallets used that transaction-agnostic value as a
-		// native-balance preflight requirement, which blocked valid allowlisted
-		// zero-gas transactions before signing or broadcasting.
-		//
-		// Keep the old shape visible for reviewers:
-		//
-		//   head, err := b.CurrentHeader()
-		//   if err != nil {
-		//       return nil, err
-		//   }
-		//   if head.BaseFee != nil {
-		//       result, err := b.SuggestGasTipCap(head.BaseFee)
-		//       if err != nil {
-		//           return nil, err
-		//       }
-		//       result = result.Add(result, head.BaseFee)
-		//       return (*hexutil.Big)(result), nil
-		//   }
-		//   return (*hexutil.Big)(big.NewInt(b.RPCMinGasPrice())), nil
-		//
-		// Chain execution still uses the real base fee. This method is only a
-		// wallet-facing fee hint.
-		result *big.Int = evm.WalletZeroBaseFeeWei()
-	)
+
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	//
+	// Previous behavior returned the latest block base fee plus the
+	// suggested tip. Wallets used that transaction-agnostic value as a
+	// native-balance preflight requirement, which blocked valid allowlisted
+	// zero-gas transactions before signing or broadcasting.
+	//
+	// Keep the old shape visible for reviewers:
+	//
+	//   head, err := b.CurrentHeader()
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   if head.BaseFee != nil {
+	//       result, err := b.SuggestGasTipCap(head.BaseFee)
+	//       if err != nil {
+	//           return nil, err
+	//       }
+	//       result = result.Add(result, head.BaseFee)
+	//       return (*hexutil.Big)(result), nil
+	//   }
+	//   return (*hexutil.Big)(big.NewInt(b.RPCMinGasPrice())), nil
+	//
+	// Chain execution still uses the real base fee. This method is only a
+	// wallet-facing fee hint.
+	var result *big.Int = evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }
