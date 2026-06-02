@@ -67,7 +67,7 @@ func (s *BackendSuite) TestFeeHistory() {
 	s.Require().Len(res.BaseFee, blockCount+1)
 	s.Require().Len(res.GasUsedRatio, len(percentiles))
 
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	for _, baseFee := range res.BaseFee {
 		s.Require().NotNil(baseFee)
 		s.Require().Equal(evm.Big0, baseFee.ToInt())

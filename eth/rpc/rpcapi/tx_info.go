@@ -509,7 +509,7 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 }
 
 func (b *Backend) reportingBaseFeeWei(txData evm.TxData, height int64) (*big.Int, bool) {
-	// Wallet zero-fee reporting compatibility: <PR URL>
+	// Wallet zero-fee reporting compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	//
 	// Previous post-broadcast RPC reporting always used:
 	//

@@ -317,7 +317,7 @@ func (s *NodeSuite) Test_EstimateGas() {
 func (s *NodeSuite) Test_SuggestGasPrice() {
 	gasPrice, err := s.ethAPI.GasPrice()
 	s.NoError(err)
-	// Wallet zero-fee hint compatibility: <PR URL>
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
 	s.Equal(evm.Big0, gasPrice.ToInt())
 }
 
