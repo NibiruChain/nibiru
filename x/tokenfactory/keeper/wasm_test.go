@@ -149,6 +149,7 @@ func (s *TestSuite) TestStargate() {
 		Creator:  contract.Addr.String(),
 		Subdenom: "zzz",
 	}
+	s.GrantSudo(contract.Addr.String())
 	s.Run("create denom from smart contract", func() {
 		_, err := s.ExecuteAgainstContract(contract, strings.Trim(`
 		{
