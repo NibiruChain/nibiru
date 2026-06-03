@@ -73,6 +73,46 @@ test(
       freshTokenBalanceAfterFund - amountToSend,
     )
     expect(recipientTokenBalance).toEqual(amountToSend)
+
+    clog(`7 - A second transfer still pays no NIBI when the wallet supplies
+    nonzero EIP-1559 fee fields.`)
+    const secondRecipient = Wallet.createRandom().address
+    const secondAmountToSend = parseUnits("5", 18)
+    const freshNibiBeforeNonzeroFeeTx = await provider.getBalance(fresh.address)
+    const nonceBeforeNonzeroFeeTx = await provider.getTransactionCount(
+      fresh.address,
+    )
+    const nonzeroFeeTx = await contractFromFresh.transfer(
+      secondRecipient,
+      secondAmountToSend,
+      {
+        gasLimit: 780_749n,
+        maxFeePerGas: 1_200_000_000_000n,
+        maxPriorityFeePerGas: 1_000_000_000n,
+      },
+    )
+    const nonzeroFeeReceipt = await nonzeroFeeTx.wait(1, TX_WAIT_TIMEOUT)
+    expect(nonzeroFeeReceipt.status).toEqual(1)
+    expect(nonzeroFeeReceipt.to?.toLowerCase()).toEqual(
+      zeroGasErc20Addr.toLowerCase(),
+    )
+
+    const freshNibiAfterNonzeroFeeTx = await provider.getBalance(fresh.address)
+    expect(freshNibiAfterNonzeroFeeTx).toEqual(freshNibiBeforeNonzeroFeeTx)
+    const nonceAfterNonzeroFeeTx = await provider.getTransactionCount(
+      fresh.address,
+    )
+    expect(nonceAfterNonzeroFeeTx).toEqual(nonceBeforeNonzeroFeeTx + 1)
+
+    const freshTokenBalanceAfterNonzeroFeeTx = await contract.balanceOf(
+      fresh.address,
+    )
+    const secondRecipientTokenBalance =
+      await contract.balanceOf(secondRecipient)
+    expect(freshTokenBalanceAfterNonzeroFeeTx).toEqual(
+      freshTokenBalanceAfterSend - secondAmountToSend,
+    )
+    expect(secondRecipientTokenBalance).toEqual(secondAmountToSend)
   },
-  TEST_TIMEOUT * 2,
+  TEST_TIMEOUT * 3,
 )

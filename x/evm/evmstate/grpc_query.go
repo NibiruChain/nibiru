@@ -272,12 +272,21 @@ func (k *Keeper) EthCall(
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
 	evmCfg := k.GetEVMConfig(ctx)
+	isZeroGas := evm.IsZeroGasJsonTxArgs(ctx, k.SudoKeeper, args)
+	if isZeroGas {
+		ctx = evm.WithZeroGasMeta(ctx)
+	}
 
 	// ApplyMessageWithConfig expect correct nonce set in msg
 	nonce := k.GetAccNonce(ctx, args.GetFrom())
 	args.Nonce = (*hexutil.Uint64)(&nonce)
 
-	msg, err := args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
+	var msg core.Message
+	if isZeroGas {
+		msg, err = args.ToZeroGasMessage(req.GasCap, evmCfg.BaseFeeWei)
+	} else {
+		msg, err = args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
+	}
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
@@ -330,6 +339,10 @@ func (k Keeper) EstimateGas(
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.InvalidArgument, err.Error())
 	}
+	isZeroGas := evm.IsZeroGasJsonTxArgs(rootCtx, k.SudoKeeper, args)
+	if isZeroGas {
+		rootCtx = evm.WithZeroGasMeta(rootCtx)
+	}
 
 	// ApplyMessageWithConfig expect correct nonce set in msg
 	nonce := k.GetAccNonce(rootCtx, args.GetFrom())
@@ -375,7 +388,12 @@ func (k Keeper) EstimateGas(
 	}
 
 	// convert the tx args to an ethereum message
-	evmMsg, err := args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
+	var evmMsg core.Message
+	if isZeroGas {
+		evmMsg, err = args.ToZeroGasMessage(req.GasCap, evmCfg.BaseFeeWei)
+	} else {
+		evmMsg, err = args.ToMessage(req.GasCap, evmCfg.BaseFeeWei)
+	}
 	if err != nil {
 		return nil, grpcstatus.Error(grpccodes.Internal, err.Error())
 	}
@@ -546,14 +564,20 @@ func (k Keeper) TraceTx(
 		if err != nil {
 			continue
 		}
+		execCtx := ctx
+		if isZeroGas, _, classErr := evm.IsZeroGasMsgEthereumTx(ctx, k.SudoKeeper, tx); classErr == nil && isZeroGas {
+			execCtx = evm.WithZeroGasMeta(ctx)
+			normalized := evm.NormalizeZeroGasMessage(*msg)
+			msg = &normalized
+		}
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
 		// reset gas meter for each transaction
-		ctx = ctx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
+		execCtx = execCtx.WithGasMeter(eth.NewInfiniteGasMeterWithLimit(msg.GasLimit)).
 			WithKVGasConfig(storetypes.GasConfig{}).
 			WithTransientKVGasConfig(storetypes.GasConfig{})
-		sdb := NewSDB(ctx, &k, txConfig)
-		evmObj := k.NewEVM(ctx, *msg, evmCfg, nil /*tracer*/, sdb)
+		sdb := NewSDB(execCtx, &k, txConfig)
+		evmObj := k.NewEVM(execCtx, *msg, evmCfg, nil /*tracer*/, sdb)
 		rsp, err := k.ApplyEvmMsg(*msg, evmObj, false /*commit*/)
 		if err != nil {
 			continue
@@ -577,8 +601,14 @@ func (k Keeper) TraceTx(
 	if err != nil {
 		return nil, err
 	}
+	traceCtx := ctx
+	if isZeroGas, _, classErr := evm.IsZeroGasMsgEthereumTx(ctx, k.SudoKeeper, req.Msg); classErr == nil && isZeroGas {
+		traceCtx = evm.WithZeroGasMeta(ctx)
+		normalized := evm.NormalizeZeroGasMessage(*msg)
+		msg = &normalized
+	}
 
-	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
+	result, _, err := k.TraceEthTxMsg(traceCtx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -655,7 +685,12 @@ func (k Keeper) TraceCall(
 		SkipNonceChecks:  false,
 		SkipFromEOACheck: false,
 	}
-	result, _, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, evmMsg, req.TraceConfig, tracerConfig)
+	traceCtx := ctx
+	if evm.IsZeroGasTxData(ctx, k.SudoKeeper, txData) {
+		traceCtx = evm.WithZeroGasMeta(ctx)
+		evmMsg = evm.NormalizeZeroGasMessage(evmMsg)
+	}
+	result, _, err := k.TraceEthTxMsg(traceCtx, evmCfg, txConfig, evmMsg, req.TraceConfig, tracerConfig)
 	if err != nil {
 		// error will be returned with detail status from traceTx
 		return nil, err
@@ -747,7 +782,13 @@ func (k Keeper) TraceBlock(
 		// not to be nil, and potential signer errors are not relevant for
 		// tracing, as this is only a query.
 		msg, _ = core.TransactionToMessage(ethTx, signer, evmCfg.BaseFeeWei)
-		traceResult, logIndex, err := k.TraceEthTxMsg(ctx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
+		traceCtx := ctx
+		if isZeroGas, _, classErr := evm.IsZeroGasMsgEthereumTx(ctx, k.SudoKeeper, tx); classErr == nil && isZeroGas {
+			traceCtx = evm.WithZeroGasMeta(ctx)
+			normalized := evm.NormalizeZeroGasMessage(*msg)
+			msg = &normalized
+		}
+		traceResult, logIndex, err := k.TraceEthTxMsg(traceCtx, evmCfg, txConfig, *msg, req.TraceConfig, tracerConfig)
 		if err != nil {
 			// Since Nibiru uses native tracers from geth, failure to trace any
 			// tx means block tracing fails too.

@@ -22,6 +22,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // SendRawTransaction send a raw Ethereum transaction.
@@ -42,10 +43,6 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	if err := ethereumTx.FromEthereumTx(tx); err != nil {
 		b.logger.Error("transaction converting failed", "error", err.Error())
 		return common.Hash{}, err
-	}
-
-	if err := ethereumTx.ValidateBasic(); err != nil {
-		return common.Hash{}, pkgerrors.Wrap(err, "tx failed basic validation")
 	}
 
 	cosmosTx, err := ethereumTx.BuildTx(b.clientCtx.TxConfig.NewTxBuilder(), evm.EVMBankDenom)
@@ -85,7 +82,10 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 // SetTxDefaults populates tx message with default values in case they are not
 // provided on the args
 func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
-	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
+	isZeroGas := b.isZeroGasJsonTxArgsLatest(args)
+	if !isZeroGas &&
+		args.GasPrice != nil &&
+		(args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
 		return args, pkgerrors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
@@ -115,11 +115,11 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 				args.MaxFeePerGas = (*hexutil.Big)(gasFeeCap)
 			}
 
-			if args.MaxFeePerGas.ToInt().Cmp(args.MaxPriorityFeePerGas.ToInt()) < 0 {
+			if !isZeroGas && args.MaxFeePerGas.ToInt().Cmp(args.MaxPriorityFeePerGas.ToInt()) < 0 {
 				return args, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", args.MaxFeePerGas, args.MaxPriorityFeePerGas)
 			}
 		} else {
-			if args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil {
+			if !isZeroGas && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
 				return args, pkgerrors.New("maxFeePerGas or maxPriorityFeePerGas specified but london is not active yet")
 			}
 
@@ -139,7 +139,7 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 		}
 	} else {
 		// Both maxPriorityfee and maxFee set by caller. Sanity-check their internal relation
-		if args.MaxFeePerGas.ToInt().Cmp(args.MaxPriorityFeePerGas.ToInt()) < 0 {
+		if !isZeroGas && args.MaxFeePerGas.ToInt().Cmp(args.MaxPriorityFeePerGas.ToInt()) < 0 {
 			return args, fmt.Errorf("maxFeePerGas (%v) < maxPriorityFeePerGas (%v)", args.MaxFeePerGas, args.MaxPriorityFeePerGas)
 		}
 	}
@@ -208,6 +208,33 @@ func (b *Backend) SetTxDefaults(args evm.JsonTxArgs) (evm.JsonTxArgs, error) {
 	}
 
 	return args, nil
+}
+
+func (b *Backend) isZeroGasJsonTxArgsLatest(args evm.JsonTxArgs) bool {
+	if args.To == nil {
+		return false
+	}
+	if args.Value != nil && args.Value.ToInt().Sign() != 0 {
+		return false
+	}
+
+	res, err := sudo.NewQueryClient(b.clientCtx).QueryZeroGasActors(
+		context.Background(),
+		&sudo.QueryZeroGasActorsRequest{},
+	)
+	if err != nil || res == nil {
+		return false
+	}
+
+	for _, raw := range res.Actors.AlwaysZeroGasContracts {
+		if !common.IsHexAddress(raw) {
+			continue
+		}
+		if common.HexToAddress(raw) == *args.To {
+			return true
+		}
+	}
+	return false
 }
 
 // EstimateGas returns an estimate of gas usage for the given smart contract call.
