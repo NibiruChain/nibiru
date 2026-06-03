@@ -162,8 +162,28 @@ func (args *JsonTxArgs) ToMsgEthTx() *MsgEthereumTx {
 // ToMessage converts the arguments to the Message type used by the core evm.
 // This assumes that setTxDefaults has been called.
 func (args *JsonTxArgs) ToMessage(globalGasCap uint64, baseFeeWei *big.Int) (core.Message, error) {
+	return args.toMessage(globalGasCap, baseFeeWei, false)
+}
+
+// ToZeroGasMessage converts JSON-RPC args into an EVM message while ignoring
+// fee-style conflicts and normalizing fee-price fields to zero.
+func (args *JsonTxArgs) ToZeroGasMessage(globalGasCap uint64, baseFeeWei *big.Int) (core.Message, error) {
+	msg, err := args.toMessage(globalGasCap, baseFeeWei, true)
+	if err != nil {
+		return core.Message{}, err
+	}
+	return NormalizeZeroGasMessage(msg), nil
+}
+
+func (args *JsonTxArgs) toMessage(
+	globalGasCap uint64,
+	baseFeeWei *big.Int,
+	ignoreFeeStyleConflict bool,
+) (core.Message, error) {
 	// Reject invalid combinations of pre- and post-1559 fee styles
-	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
+	if !ignoreFeeStyleConflict &&
+		args.GasPrice != nil &&
+		(args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
 		return core.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
