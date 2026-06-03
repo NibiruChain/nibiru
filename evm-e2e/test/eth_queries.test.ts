@@ -65,7 +65,9 @@ describe("eth queries", () => {
     async () => {
       const gasPrice = await provider.send("eth_gasPrice", [])
       expect(gasPrice).toBeDefined()
-      expect(gasPrice).toEqual(hexify(1000000000000)) // 1 micronibi == 10^{12} wei
+      // Wallet zero-fee hint compatibility: eth_gasPrice is a preflight hint,
+      // while consensus and execution continue to use the real internal base fee.
+      expect(gasPrice).toEqual(hexify(0))
     },
     TEST_TIMEOUT,
   )

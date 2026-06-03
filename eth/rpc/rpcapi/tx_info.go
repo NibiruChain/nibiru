@@ -76,17 +76,21 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 		return nil, pkgerrors.New("can't find index of ethereum tx")
 	}
 
-	baseFeeWei := evm.BASE_FEE_WEI
 	height := uint64(res.Height)    //#nosec G701 -- checked for int overflow already
 	index := uint64(res.EthTxIndex) //#nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsgEthTx(
+	rpcTx := rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.BlockID.Hash.Bytes()),
 		height,
 		index,
-		baseFeeWei,
+		evm.WalletZeroBaseFeeWei(),
 		b.chainID,
-	), nil
+	)
+	// Wallet zero-fee reporting compatibility: confirmed tx RPC responses are
+	// still wallet-facing. Report the applied/effective gas price as zero while
+	// preserving raw submitted fee-cap fields such as maxFeePerGas.
+	rpcTx.GasPrice = (*hexutil.Big)(evm.WalletZeroBaseFeeWei())
+	return rpcTx, nil
 }
 
 // getTransactionByHashPending find pending tx from mempool
@@ -334,12 +338,9 @@ func (b *Backend) GetTransactionReceipt(hash gethcommon.Hash) (*TransactionRecei
 		receipt.ContractAddress = &addr
 	}
 
-	if dynamicTx, ok := txData.(*evm.DynamicFeeTx); ok {
-		baseFeeWei := evm.BASE_FEE_WEI
-		receipt.EffectiveGasPrice = (*hexutil.Big)(dynamicTx.EffectiveGasPriceWeiPerGas(baseFeeWei))
-	} else {
-		receipt.EffectiveGasPrice = (*hexutil.Big)(txData.GetGasPrice())
-	}
+	// Wallet zero-fee reporting compatibility: this is a serialized RPC fee
+	// price, not consensus fee accounting. GasUsed remains the real execution gas.
+	receipt.EffectiveGasPrice = (*hexutil.Big)(evm.WalletZeroBaseFeeWei())
 	return &receipt, nil
 }
 
@@ -473,17 +474,20 @@ func (b *Backend) GetTransactionByBlockAndIndex(block *tmrpctypes.ResultBlock, i
 		msg = ethMsgs[i]
 	}
 
-	baseFeeWei := evm.BASE_FEE_WEI
 	height := uint64(block.Block.Height) // #nosec G701 -- checked for int overflow already
 	index := uint64(idx)                 // #nosec G701 -- checked for int overflow already
-	return rpc.NewRPCTxFromMsgEthTx(
+	rpcTx := rpc.NewRPCTxFromMsgEthTx(
 		msg,
 		gethcommon.BytesToHash(block.Block.Hash()),
 		height,
 		index,
-		baseFeeWei,
+		evm.WalletZeroBaseFeeWei(),
 		b.chainID,
-	), nil
+	)
+	// Wallet zero-fee reporting compatibility: match eth_getTransactionByHash
+	// and fullTx block responses by reporting the applied/effective price as zero.
+	rpcTx.GasPrice = (*hexutil.Big)(evm.WalletZeroBaseFeeWei())
+	return rpcTx, nil
 }
 
 func (b *Backend) GetTransactionLogs(txHash gethcommon.Hash) ([]*gethcore.Log, error) {

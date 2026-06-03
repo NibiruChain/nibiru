@@ -227,6 +227,33 @@ func (suite *Suite) TestToMessageEVM() {
 	}
 }
 
+func (suite *Suite) TestToZeroGasMessageEVM() {
+	txArgs := evm.JsonTxArgs{
+		From:                 &suite.addr,
+		To:                   &suite.addr,
+		Gas:                  &suite.hexUint64,
+		GasPrice:             &suite.hexBigInt,
+		MaxFeePerGas:         &suite.hexBigInt,
+		MaxPriorityFeePerGas: &suite.hexBigInt,
+		Nonce:                &suite.hexUint64,
+		Data:                 &suite.hexDataBytes,
+		ChainID:              &suite.hexBigInt,
+	}
+
+	_, err := txArgs.ToMessage(uint64(1), suite.bigInt)
+	suite.Require().ErrorContains(err, "both gasPrice")
+
+	msg, err := txArgs.ToZeroGasMessage(uint64(1), suite.bigInt)
+	suite.Require().NoError(err)
+	suite.Require().Equal(0, msg.GasPrice.Sign())
+	suite.Require().Equal(0, msg.GasFeeCap.Sign())
+	suite.Require().Equal(0, msg.GasTipCap.Sign())
+	suite.Require().Equal(suite.addr, msg.From)
+	suite.Require().NotNil(msg.To)
+	suite.Require().Equal(suite.addr, *msg.To)
+	suite.Require().Equal([]byte("data"), msg.Data)
+}
+
 func (suite *Suite) TestGetFrom() {
 	testCases := []struct {
 		name       string
