@@ -147,9 +147,6 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 			)
 			return ctx, err
 		}
-		log.Printf("AnteHandlerEvm step %v passed",
-			handlerGroup.StepNames[idx],
-		)
 	}
 
 	log.Printf(

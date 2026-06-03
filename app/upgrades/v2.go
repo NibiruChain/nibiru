@@ -172,9 +172,36 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
-	Upgrade2_13_0 = Upgrade{
-		UpgradeName:          "v2.13.0",
-		CreateUpgradeHandler: DefaultUpgradeHandler,
-		StoreUpgrades:        store.StoreUpgrades{},
+	// FIXME: Add v2.14.0 to all_upgrades.go before actual release.
+	// Ran on testnet:
+	//   - UpgradeName:        "v2.13.0",
+	//   - UpgradeName: "v2.13.1-test.3",
+	Upgrade2_14_0 = Upgrade{
+		UpgradeName: "v2.14.0",
+		CreateUpgradeHandler: func(
+			mm *module.Manager,
+			cfg module.Configurator,
+			nibiru *keepers.PublicKeepers,
+			clientKeeper clientkeeper.Keeper,
+		) upgradetypes.UpgradeHandler {
+			return func(
+				ctx sdk.Context,
+				plan upgradetypes.Plan,
+				fromVM module.VersionMap,
+			) (module.VersionMap, error) {
+				err := runUpgrade2_14_0(nibiru, ctx)
+				if err != nil {
+					ctx.Logger().Error("v2.14.0 upgrade failure", "err", err)
+					ctx.EventManager().EmitEvent(
+						sdk.NewEvent(
+							"v2_14_0_upgrade_failure",
+							sdk.NewAttribute("error", err.Error()),
+						),
+					)
+				}
+				return mm.RunMigrations(ctx, cfg, fromVM)
+			}
+		},
+		StoreUpgrades: store.StoreUpgrades{},
 	}
 )

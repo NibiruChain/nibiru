@@ -315,9 +315,10 @@ func (s *NodeSuite) Test_EstimateGas() {
 
 // Test_SuggestGasPrice EVM method: eth_gasPrice
 func (s *NodeSuite) Test_SuggestGasPrice() {
-	// TODO: the backend method is stubbed to 0
-	_, err := s.ethAPI.GasPrice()
+	gasPrice, err := s.ethAPI.GasPrice()
 	s.NoError(err)
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	s.Equal(evm.Big0, gasPrice.ToInt())
 }
 
 // Test_SimpleTransferTransaction EVM method: eth_sendRawTransaction
