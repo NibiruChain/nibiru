@@ -103,7 +103,7 @@ lint:
     golangci/golangci-lint:$image_version \
     golangci-lint run -v --fix 2>&1
 
-# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --features featureA"
+# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --log-level info"
 localnet *PASS_FLAGS:
   make localnet FLAGS="{{PASS_FLAGS}}"
 
@@ -147,11 +147,13 @@ test-e2e:
 test-localnet:
   #!/usr/bin/env bash
   source contrib/bashlib.sh
+  log_info "Sleeping for 8 seconds to give network time to spin up and run a few blocks."
+  set -x
   just install
-  bash contrib/scripts/localnet.sh &
-  log_info "Sleeping for 6 seconds to give network time to spin up and run a few blocks."
-  sleep 6 
+  just localnet --no-build &
+  sleep 8
   kill $(pgrep -x nibid) # Stops network running as background process.
+  set +x
   log_success "Spun up localnet"
 
 # Test: "chaosnet.sh" script
