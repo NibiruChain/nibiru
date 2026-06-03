@@ -69,17 +69,19 @@ console_log_text_color() {
   COLOR_GREEN=""
   COLOR_BLUE=""
   COLOR_RESET=""
-  if [[ -z "${TERM:-}" ]] || ! which_ok tput; then
+  if [[ -z "${TERM:-}" ]] \
+    || ! which_ok tput    \
+    || ! tput setaf 9 >/dev/null 2>&1; then
     echo "[localnet.sh/console_log_text_color] Console coloring disabled."
     printf "\nMacOS has tput by default. For Ubuntu and Debian, try installing this:"
     printf "\n  apt-get install libncurses5-dbg -y"
     return 0
   fi
 
-  COLOR_RED=$(tput setaf 9)
-  COLOR_GREEN=$(tput setaf 10)
-  COLOR_BLUE=$(tput setaf 12)
-  COLOR_RESET=$(tput sgr0)
+  COLOR_RED=$(tput setaf 9 >/dev/null 2>&1 || true)
+  COLOR_GREEN=$(tput setaf 10 >/dev/null 2>&1 || true)
+  COLOR_BLUE=$(tput setaf 12 >/dev/null 2>&1 || true)
+  COLOR_RESET=$(tput sgr0 >/dev/null 2>&1 || true)
   echo "[localnet.sh/console_log_text_color] Succesfully toggled on console coloring"
 }
 
