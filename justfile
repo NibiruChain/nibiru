@@ -103,13 +103,9 @@ lint:
     golangci/golangci-lint:$image_version \
     golangci-lint run -v --fix 2>&1
 
-# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --log-level info"
+# Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-  make localnet FLAGS="{{PASS_FLAGS}}"
-
-# Runs a Nibiru local network without building and installing. "just localnet --no-build"
-localnet-fast:
-  make localnet FLAGS="--no-build"
+  bash contrib/scripts/localnet.sh --run {{PASS_FLAGS}}
 
 # Clears the logs directory
 log-clear:

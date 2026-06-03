@@ -38,33 +38,6 @@ if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-# ------------------------------------------------------------
-# Set up colored text logging
-# ------------------------------------------------------------
-
-COLOR_RED=""
-COLOR_GREEN=""
-COLOR_BLUE=""
-COLOR_RESET=""
-
-echo_info() {
-  echo "${COLOR_BLUE}"
-  echo "$1"
-  echo "${COLOR_RESET}"
-}
-
-echo_error() {
-  echo "${COLOR_RED}"
-  echo "$1"
-  echo "${COLOR_RESET}"
-}
-
-echo_success() {
-  echo "${COLOR_GREEN}"
-  echo "$1"
-  echo "${COLOR_RESET}"
-}
-
 # which_ok: Check if the given binary is in the $PATH or if it is something
 # callable in a bash program.
 # Returns code 0 on success and code 1 if the command fails.
@@ -82,9 +55,13 @@ which_ok() {
     return 0
   fi
 
-  echo_error "$1 is not present in \$PATH"
+  echo "$1 is not present in \$PATH"
   return 1
 }
+
+# ------------------------------------------------------------
+# Set up colored text logging
+# ------------------------------------------------------------
 
 # Console log text colour
 console_log_text_color() {
@@ -107,6 +84,24 @@ console_log_text_color() {
 }
 
 console_log_text_color
+
+echo_info() {
+  echo "${COLOR_BLUE}"
+  echo "$1"
+  echo "${COLOR_RESET}"
+}
+
+echo_error() {
+  echo "${COLOR_RED}"
+  echo "$1"
+  echo "${COLOR_RESET}"
+}
+
+echo_success() {
+  echo "${COLOR_GREEN}"
+  echo "$1"
+  echo "${COLOR_RESET}"
+}
 
 # ------------------------------------------------------------
 # Flag parsing
