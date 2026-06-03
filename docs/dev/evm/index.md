@@ -39,5 +39,5 @@ The EVM is a decentralized computing platform that runs smart contracts, which a
 ## Related Pages
 
 - [EVM on Nibiru](../../evm/index.md)
-- [EVM Alpha](../../evm/evm-alpha-test.md)
+- [EVM Alpha](../../evm/news/evm-alpha-test.md)
 - [EVM RPC](../../evm/json-rpc.md)

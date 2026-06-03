@@ -22,7 +22,7 @@ machine](../../concepts/tx-msgs.md#state-machine). This is where transactions ar
   style="border-style: solid; border-width: 2px; border-color: var(--color-sidebar-dim, inherit);" >
 
 This piece of the architecture includes the [Nibiru EVM](../../evm/) and
-[Wasm](../../ecosystem/wasm/) execution
+[Wasm](../wasm/) execution
 environments for smart contracts and other [custom "modules"](#modules-nibiru).  
 
 ## NibiruBFT Consensus Engine

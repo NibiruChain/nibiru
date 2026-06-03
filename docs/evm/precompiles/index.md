@@ -155,4 +155,4 @@ Nibiru's innovative use of custom precompiles opens up exciting possibilities fo
 
 - [Nibiru-Specific Precompiled Contracts](./nibiru.md)
 - [Precompiles Common Between Ethereum and Nibiru](./ethereum.md)
-- [Execution Engine](../../concepts/arch/execution.md)
+- [Execution Engine](../../concepts/arch/execution/index.md)

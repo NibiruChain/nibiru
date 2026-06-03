@@ -35,7 +35,7 @@ const boxesEnd = [
     text: `Instant finality, consistent security, and Byzantine Fault Tolerant state machine replication.`},
   { id: 2, title: "Frequently Asked Questions (FAQ)", href: "/docs/learn/faq/",
     text: `Kickstart your journey as a user of Nibiru. Learn how to create wallets, stake NIBI, participate in campaigns, or use the Nibiru web application.` },
-  { id: 3, title: "Nibiru Wasm", href: "/docs/ecosystem/wasm/",
+  { id: 3, title: "Nibiru Wasm", href: "/docs/concepts/wasm/",
     text: `WebAssembly (Wasm) smart contract execution environment programmed in Rust.` },
   { id: 4, title: "Nibiru Roadmap (2025)", href: "/docs/ecosystem/future/",
     text: `A brief sneak peek at onging and upcoming improvements to Nibiru.`,
@@ -105,7 +105,7 @@ Engage with Nibiru's fast-growing community or get started by accessing a wealth
 Nibiru acts as a permission-less platform for developers to deploy secure,
 production-grade smart contracts.
 
-- [Smart Contracts on Nibiru](./ecosystem/wasm)
+- [Smart Contracts on Nibiru](./concepts/wasm/)
 - [Learn: Core Concepts](./concepts/tx-msgs.html)
 - [Learn: Blockchain Modules](./arch/)
 

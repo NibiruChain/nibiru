@@ -112,7 +112,7 @@ compiles to EVM bytecode.
 
 ### Rust
 
-In addition to EVM bytecode, Nibiru's execution engine supports [Wasm (WebAssembly) smart contracts](../ecosystem/wasm/index.md). This allows developers to write smart contracts in Rust that compile downto Wasm bytecode.
+In addition to EVM bytecode, Nibiru's execution engine supports [Wasm (WebAssembly) smart contracts](../concepts/wasm/index.md). This allows developers to write smart contracts in Rust that compile downto Wasm bytecode.
 
 Notably, these Rust/Wasm contracts can be called directly from smart contracts
 on the EVM. This is made possible by the Nibiru [Wasm precompile](./precompiles/index.md), which enables EVM contracts to invoke and execute Wasm contracts. This multi-VM interoperability is compatible with standard Ethereum development libraries like ethers.js.

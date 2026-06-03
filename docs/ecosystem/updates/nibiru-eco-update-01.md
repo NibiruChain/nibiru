@@ -46,7 +46,7 @@ Prepared By: [The Nibiru Team](https://nibiru.fi/team)
 Code complete as of June 19, 2024, this performance improvement to the chain is
 planned as one of the upgrades following Nibiru’s V2 release.
 
-**2.1.2 [Nibiru EVM](https://nibiru.fi/docs/evm/evm-alpha-test.html)** (Nibiru’s
+**2.1.2 [Nibiru EVM](https://nibiru.fi/docs/evm/news/evm-alpha-test.html)** (Nibiru’s
 V2 Upgrade)
 
 Nibiru EVM is a fully backward compatible upgrade to Nibiru that makes it power

@@ -83,7 +83,7 @@ Engage with Nibiru's fast-growing community or get started by accessing a wealth
 Nibiru acts as a permission-less platform for developers to deploy secure,
 production-grade smart contracts.
 
-- [Smart Contracts on Nibiru](./ecosystem/wasm)
+- [Smart Contracts on Nibiru](./concepts/wasm/)
 - [Learn: Core Concepts](./concepts/tx-msgs.html)
 - [Learn: Blockchain Modules](./arch/)
 

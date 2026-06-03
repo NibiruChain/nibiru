@@ -33,6 +33,6 @@ Any application that can exist on Ethereum can easily launch on Nibiru and benef
 
 ## Nibiru in Early Innings
 
-Nibiru has been operational on mainnet since March 2024, supporting [Wasm (Web Assembly)](https://nibiru.fi/docs/ecosystem/wasm/) smart contracts written in the Rust programming language. In two months, the blockchain has seen more than 6 million transactions from more than half a million unique wallets.
+Nibiru has been operational on mainnet since March 2024, supporting [Wasm (Web Assembly)](https://nibiru.fi/docs/concepts/wasm/) smart contracts written in the Rust programming language. In two months, the blockchain has seen more than 6 million transactions from more than half a million unique wallets.
 
 With the upcoming launch of Nibiru EVM, Ethereum developers can look forward to a high-performance execution environment that maintains compatibility and enhances scalability. Nibiru is set to play a pivotal role in the future of decentralized applications, driving further innovation and mainstream adoption.
