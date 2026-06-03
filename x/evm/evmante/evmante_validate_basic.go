@@ -44,19 +44,19 @@ func AnteStepValidateBasic(
 		return nil
 	}
 
-	// Validate the Ethereum transaction message
-	if err := msgEthTx.ValidateBasic(); err != nil {
+	// Validate the Ethereum transaction message. Classified zero-gas txs keep
+	// raw hash/signature identity but skip fee-price-only validation.
+	validationType := evm.TxGasKind_Default
+	if evm.IsZeroGasEthTx(sdb.Ctx()) {
+		validationType = evm.TxGasKind_ZeroGas
+	}
+	_, txData, err := msgEthTx.Validate(validationType)
+	if err != nil {
 		return fmt.Errorf("tx basic validation failed: %w", err)
 	}
 
-	// Unpack and validate transaction data
-	txData, err := evm.UnpackTxData(msgEthTx.Data)
-	if err != nil {
-		return sdkioerrors.Wrap(err, "failed to unpack MsgEthereumTx Data")
-	}
-
 	// Tx gas limit must be at least enough for the intrinsic gas cost.
-	gasLimit := msgEthTx.GetGas()
+	gasLimit := txData.GetGas()
 
 	// Compute actual intrinsic gas (same as in ApplyEvmMsg)
 	rules := k.GetEVMConfig(sdb.Ctx()).ChainConfig.Rules(
@@ -85,14 +85,16 @@ func AnteStepValidateBasic(
 		)
 	}
 
-	// Validate effective fee calculation
-	baseFeeWei := k.BaseFeeWeiPerGas(sdb.Ctx())
-	effectiveFeeWei := txData.EffectiveFeeWei(baseFeeWei)
-	if effectiveFeeWei.Sign() < 0 {
-		return sdkioerrors.Wrap(
-			sdkerrors.ErrInvalidRequest,
-			"effective fee cannot be negative",
-		)
+	if !evm.IsZeroGasEthTx(sdb.Ctx()) {
+		// Validate effective fee calculation only for fee-paying txs.
+		baseFeeWei := k.BaseFeeWeiPerGas(sdb.Ctx())
+		effectiveFeeWei := txData.EffectiveFeeWei(baseFeeWei)
+		if effectiveFeeWei.Sign() < 0 {
+			return sdkioerrors.Wrap(
+				sdkerrors.ErrInvalidRequest,
+				"effective fee cannot be negative",
+			)
+		}
 	}
 
 	return nil
