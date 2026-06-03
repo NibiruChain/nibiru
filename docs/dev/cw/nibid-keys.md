@@ -3,7 +3,7 @@ order: 3
 description: >-
   To deploy a CosmWasm contract on Nibiru, set up a wallet with
   nibid keys add wallet and acquire funds from the Nibiru Faucet
-  using Leap or Keplr. Remember to keep your mnemonic or private
+  using Keplr, Fox, or another supported IBC wallet. Remember to keep your mnemonic or private
   key secure.
 ---
 # Nibid Keys & Faucet
@@ -28,7 +28,7 @@ nibid keys show -a wallet
 ## Faucet
 
 Currently, only way to acquire funds for Nibiru's Testnets is via the [app.nibiru.fi/faucet](https://app.nibiru.fi/faucet).
-First connect your wallet to the recommends [Wallet extensions](../../ecosystem/wallets/index.md), Leap or Keplr.
+First connect your wallet using a [supported IBC wallet](../../wallets/index.md) such as Keplr or Fox.
 Then you should be able to request funds. You are limited to once per day.
 
 In order to verify that your funds have been added to your account, you can query your balance by running:

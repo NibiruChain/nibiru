@@ -11,7 +11,7 @@ description: Common questions about Nibiru and their answers.
 - [FAQ: General](#faq-general)
 - [FAQ: NIBI Token](#faq-nibi-token)
 - [FAQ: Validators](#faq-validators)
-- [FAQ: Nibiru V2 EVM Campaign](./evm-campaign.md)
+- [FAQ: Nibiru EVM (Nibiru V2)](./evm-campaign.md)
 - [Nibiru: Roadmap (2025)](../../ecosystem/future/)
 
 ---

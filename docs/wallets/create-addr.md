@@ -18,19 +18,19 @@ There are a few steps you'll need to complete to get a Nibiru wallet address.
 
 ## 1 & 2 | Wallet Installation and Account Creation 
 
-Follow these tutorials to set up Leap wallet or Keplr if you have not already:
+Follow these tutorials to set up Keplr or Fox Wallet if you have not already:
 
-- [How-To: Setup Leap Wallet (For Beginners)](./setup-leap.html) 
 - [How-To: Set Up Keplr Wallet (For Beginners)](./setup-keplr.html) 
+- [How-To: Set Up Fox Wallet](./setup-fox.md)
 
 ## 3 | (Mobile) Copy your Nibiru Address
 
-Our **recommended wallet for Nibiru is Leap Wallet**. After installing the
-mobile app on Android or iOS and creating an account, you can continue on to
-complete the following steps.
+We **recommend Keplr** for IBC interactions on Nibiru. After installing the
+mobile app on Android or iOS and creating an account, open your Nibiru account in
+Keplr and copy your address from the account details screen.
 
 :::tip
-Note that if you instead use Keplr, you'll need to upgrade to Keplr V2. 
+Note that Keplr mobile requires Keplr V2.
 :::
 
 :::tip
@@ -38,10 +38,7 @@ Q: Is there a difference between the address for mainnet and testnet?
 A: **No, the address is the same for both networks**. While the address itself may be the same, transactions and accounts on testnet and mainnet are separate. Transactions intended for one network do not affect the other.
 :::
 
-<img style="border-radius: 1.5rem;" src="../img/wallets/wallet-leap-screens-1.png">
-
-<img style="border-radius: 1.5rem;" src="../img/wallets/wallet-leap-screens-2.png">
-
+For a screenshot walkthrough on mobile, see [How to Set Up Fox Wallet](./setup-fox.md#fox-wallet-mobile-finding-your-nibiru-chain-address).
 
 ## 3 | (Desktop) Connect to Nibiru Chain
 

@@ -21,7 +21,7 @@ description: >-
 
 - [How to stake NIBI](#how-to-stake-nibi)
 - [How to unstake NIBI or switch validators](#how-to-unstake-nibi-or-switch-validators)
-- [Liquid Staking on the Horizon](#liquid-staking-on-the-horizon)
+- [Liquid staking with stNIBI](#liquid-staking-with-stnibi)
 - [Related Questions](#related-questions)
     - [1. How often do users receive staking emissions?](#1-how-often-do-users-receive-staking-emissions)
     - [2. How often do users get regular rewards?](#2-how-often-do-users-get-regular-rewards)
@@ -35,7 +35,7 @@ description: >-
 
 1. [Visit the Nibiru Web App](https://app.nibiru.fi/stake) either from a desktop
    or mobile device.
-2. Click “Connect Wallet” and use Leap or Keplr.
+2. Click “Connect Wallet” and use Keplr, Fox, or another [supported IBC wallet](../wallets/index.md).
    <img src="../img/use/stake/0-staking.png" >
 
 3. Choose a validator to stake with. While you don't have to pick Nibiru's validator, there are many validators available for delegation.
@@ -45,8 +45,7 @@ description: >-
    <img src="../img/use/stake/2-stake-polkachu.png" >
 
 5. Click “**Stake”**
-6. Next, **“Approve”** the transaction
-   <img src="../img/use/stake/3-leap-approval.png" >
+6. Next, **“Approve”** the transaction in your connected wallet.
 
 7. You will now see the validators you've staked NIBI to.
    <img src="../img/use/stake/4-my-delegations.png" >
@@ -66,12 +65,20 @@ However, if you choose to “Redelegate” NIBI, you can stake it with another v
 
 4. After 21 days of initiating the unstake, the NIBI will automatically return to the address.
 
-## Liquid Staking on the Horizon
+## Liquid staking with stNIBI
 
-Soon, users will have the ability to participate in Liquid Staking. Liquid staking opens up the doors for many new possibilities:
+Liquid staking is available in the [Nibiru web app](https://app.nibiru.fi/stake#liquid).
+When you liquid stake NIBI through Eris Protocol, you receive **stNIBI** (liquid
+staked NIBI). You keep a transferable token while the underlying NIBI remains
+staked and rewards accrue to stNIBI over time.
 
-1. Staking tokens across different DeFi protocols, allows users to explore new investment opportunities while still earning passive income from staking.
-2. Liquid Staking improves the scalability of blockchain networks by allowing more efficient use of capital. This aspect is crucial for the sustained growth and adoption of blockchain tech across different sectors.
+- **Step-by-step guide:** [Guide: Liquid Staking on Nibiru (stNIBI)](./liquid-stake.md)
+- **How stNIBI works:** [Liquid Staked Nibiru (stNIBI)](../learn/liquid-stake/index.md)
+
+Use the **Liquid** tab on the staking page to stake, view balances, or redeem stNIBI.
+Native staking on this page (validator delegations above) is separate from liquid
+staking: native rewards are claimed manually in the app, while stNIBI compounds
+through the liquid staking token.
 
 ## Related Questions
 

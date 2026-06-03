@@ -38,7 +38,6 @@ Use this sitemap to find your way around the Nibiru website.
 
 - [Nibiru Wallets](./wallets/index.md)
 - [Create a Nibiru Wallet Address](./wallets/create-addr.md)
-- [How to Set Up Leap Wallet](./wallets/setup-leap.md)
 - [How to Set Up Keplr Wallet](./wallets/setup-keplr.md)
 - [How to Set Up Fox Wallet](./wallets/setup-fox.md)
 - [Token Addresses (Nibiru EVM)](./wallets/common-tokens-evm.md)
