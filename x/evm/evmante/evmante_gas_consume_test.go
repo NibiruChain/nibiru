@@ -231,3 +231,25 @@ func (s *Suite) TestEthAnteGasWanted() {
 		})
 	}
 }
+
+func (s *Suite) TestEthAnteGasWanted_ZeroGasUsesFixedPriority() {
+	deps := evmtest.NewTestDeps()
+	sdb := deps.NewStateDB()
+	tx := evmtest.HappyCreateContractTx(&deps)
+
+	sdb.SetCtx(
+		evm.WithZeroGasMeta(sdb.Ctx()).
+			WithIsCheckTx(true).
+			WithBlockGasMeter(eth.NewInfiniteGasMeterWithLimit(happyGasLimit().Uint64())),
+	)
+
+	err := evmante.AnteStepGasWanted(
+		sdb,
+		sdb.Keeper(),
+		tx,
+		false,
+		AnteOptionsForTests{},
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(evm.DefaultZeroGasTxPriority, sdb.Ctx().Priority())
+}

@@ -23,7 +23,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
-	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/fixture"
+	fixture "github.com/NibiruChain/nibiru/v2/x/tokenfactory/testdata"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
@@ -91,7 +91,7 @@ func StoreContract(
 	require.NoError(t, err)
 	pathToModulePkg := path.Dir(pkgDir)
 	require.Equal(t, tftypes.ModuleName, path.Base(pathToModulePkg))
-	pathToWasmBin := pathToModulePkg + fmt.Sprintf("/fixture/%s", wasmName)
+	pathToWasmBin := pathToModulePkg + fmt.Sprintf("/testdata/%s", wasmName)
 	wasmBytecode, err := os.ReadFile(pathToWasmBin)
 	require.NoError(t, err)
 
@@ -149,6 +149,7 @@ func (s *TestSuite) TestStargate() {
 		Creator:  contract.Addr.String(),
 		Subdenom: "zzz",
 	}
+	s.GrantSudo(contract.Addr.String())
 	s.Run("create denom from smart contract", func() {
 		_, err := s.ExecuteAgainstContract(contract, strings.Trim(`
 		{
