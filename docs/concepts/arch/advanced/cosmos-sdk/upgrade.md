@@ -499,7 +499,7 @@ cosmos.upgrade.v1beta1.Query/CurrentPlan
 Example:
 
 ```bash
-grpcurl -plaintext localhost:9090 cosmos.slashing.v1beta1.Query/CurrentPlan
+grpcurl -plaintext localhost:9090 cosmos.upgrade.v1beta1.Query/CurrentPlan
 ```
 
 Example Output:
@@ -521,7 +521,7 @@ cosmos.upgrade.v1beta1.Query/ModuleVersions
 Example:
 
 ```bash
-grpcurl -plaintext localhost:9090 cosmos.slashing.v1beta1.Query/ModuleVersions
+grpcurl -plaintext localhost:9090 cosmos.upgrade.v1beta1.Query/ModuleVersions
 ```
 
 Example Output:
