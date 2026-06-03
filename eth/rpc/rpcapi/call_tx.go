@@ -303,37 +303,35 @@ func (b *Backend) DoCall(
 	return res, nil
 }
 
-// GasPrice returns the current gas price based on Ethermint's gas price oracle.
+// GasPrice returns the current "suggested" gas price. Paid transactions
+// appropriate fee fields from the tx arguments directly.
 func (b *Backend) GasPrice() (*hexutil.Big, error) {
-	var (
-		result *big.Int
-		err    error
-	)
-
-	head, err := b.CurrentHeader()
-	if err != nil {
-		return nil, err
-	}
-
-	if head.BaseFee != nil {
-		result, err = b.SuggestGasTipCap(head.BaseFee)
-		if err != nil {
-			return nil, err
-		}
-		result = result.Add(result, head.BaseFee)
-	} else {
-		result = big.NewInt(b.RPCMinGasPrice())
-	}
-
-	// return at least GlobalMinGasPrice
-	minGasPrice, err := b.GlobalMinGasPrice()
-	if err != nil {
-		return nil, err
-	}
-	minGasPriceInt := minGasPrice
-	if result.Cmp(minGasPriceInt) < 0 {
-		result = minGasPriceInt
-	}
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	//
+	// Previous behavior returned the latest block base fee plus the
+	// suggested tip. Wallets used that transaction-agnostic value as a
+	// native-balance preflight requirement, which blocked valid allowlisted
+	// zero-gas transactions before signing or broadcasting.
+	//
+	// Keep the old shape visible for reviewers:
+	//
+	//   head, err := b.CurrentHeader()
+	//   if err != nil {
+	//       return nil, err
+	//   }
+	//   if head.BaseFee != nil {
+	//       result, err := b.SuggestGasTipCap(head.BaseFee)
+	//       if err != nil {
+	//           return nil, err
+	//       }
+	//       result = result.Add(result, head.BaseFee)
+	//       return (*hexutil.Big)(result), nil
+	//   }
+	//   return (*hexutil.Big)(big.NewInt(b.RPCMinGasPrice())), nil
+	//
+	// Chain execution still uses the real base fee. This method is only a
+	// wallet-facing fee hint.
+	var result = evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }

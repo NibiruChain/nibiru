@@ -7,6 +7,7 @@ import (
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -65,6 +66,18 @@ func (s *BackendSuite) TestFeeHistory() {
 	s.Require().Len(res.Reward, blockCount)
 	s.Require().Len(res.BaseFee, blockCount+1)
 	s.Require().Len(res.GasUsedRatio, len(percentiles))
+
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	for _, baseFee := range res.BaseFee {
+		s.Require().NotNil(baseFee)
+		s.Require().Equal(evm.Big0, baseFee.ToInt())
+	}
+	for _, rewards := range res.Reward {
+		for _, reward := range rewards {
+			s.Require().NotNil(reward)
+			s.Require().Equal(evm.Big0, reward.ToInt())
+		}
+	}
 
 	for _, gasUsed := range res.GasUsedRatio {
 		s.Require().LessOrEqual(gasUsed, float64(1))

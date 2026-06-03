@@ -98,7 +98,10 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 			return fmt.Errorf("contract info not found or admin empty for %s", contract.String())
 		}
 
-		admin := mustAccAddress(info.Admin)
+		admin, err := sdk.AccAddressFromBech32(info.Admin)
+		if err != nil {
+			return fmt.Errorf("failed to decode wasm admin for %s: %w", contract.String(), err)
+		}
 		if admin.Equals(newAdmin) {
 			return nil
 		}
@@ -106,7 +109,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 			return fmt.Errorf("current admin mismatch for %s: expected %s, actual %s", contract.String(), currentAdmin.String(), admin.String())
 		}
 
-		err := permissionedWasmKeeper.UpdateContractAdmin(ctx, contract, currentAdmin, newAdmin)
+		err = permissionedWasmKeeper.UpdateContractAdmin(ctx, contract, currentAdmin, newAdmin)
 		if err != nil {
 			return fmt.Errorf("failed to update contract admin for %s: %w", contract.String(), err)
 		}

@@ -172,6 +172,10 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
+	// FIXME: Add v2.14.0 to all_upgrades.go before actual release.
+	// Ran on testnet:
+	//   - UpgradeName:        "v2.13.0",
+	//   - UpgradeName: "v2.13.1-test.3",
 	Upgrade2_14_0 = Upgrade{
 		UpgradeName: "v2.14.0",
 		CreateUpgradeHandler: func(
@@ -195,7 +199,6 @@ var (
 						),
 					)
 				}
-
 				return mm.RunMigrations(ctx, cfg, fromVM)
 			}
 		},
