@@ -385,11 +385,11 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 					openingLogMsg = fmt.Sprintf("Opening position: %s x%d %s, collateral %s %s",
 						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol)
 				case TradeTypeLimit:
-					openingLogMsg = fmt.Sprintf("Opening limit order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
-						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+					openingLogMsg = fmt.Sprintf("Opening limit order: %s x%d %s, collateral %s %s, trigger price: %s",
+						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, formatPriceForLog(*openPrice))
 				default: // stop
-					openingLogMsg = fmt.Sprintf("Opening stop order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
-						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+					openingLogMsg = fmt.Sprintf("Opening stop order: %s x%d %s, collateral %s %s, trigger price: %s",
+						direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, formatPriceForLog(*openPrice))
 				}
 				t.logInfo(openingLogMsg,
 					"market_index", selectedMarketIndex,
@@ -420,11 +420,11 @@ func (t *EVMTrader) RunAutoTradingWithLoader(ctx context.Context, loader *Config
 						logMsg = fmt.Sprintf("Opened position: %s x%d %s, collateral %s %s",
 							direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol)
 					case TradeTypeLimit:
-						logMsg = fmt.Sprintf("Opened limit order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
-							direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+						logMsg = fmt.Sprintf("Opened limit order: %s x%d %s, collateral %s %s, trigger price: %s",
+							direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, formatPriceForLog(*openPrice))
 					case TradeTypeStop: // stop
-						logMsg = fmt.Sprintf("Opened stop order: %s x%d %s, collateral %s %s, trigger price: $%.2f",
-							direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, *openPrice)
+						logMsg = fmt.Sprintf("Opened stop order: %s x%d %s, collateral %s %s, trigger price: %s",
+							direction, leverage, marketPair, collateralAmountFormatted, collateralSymbol, formatPriceForLog(*openPrice))
 					default:
 						t.logError("Unknown trade type", "trade_type", tradeType)
 					}

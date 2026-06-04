@@ -17,13 +17,14 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 	}
 
 	openTradeMsgData := map[string]interface{}{
-		"market_index":     fmt.Sprintf("MarketIndex(%d)", params.MarketIndex),
-		"leverage":         strconv.FormatUint(params.Leverage, 10),
-		"long":             params.Long,
-		"collateral_index": fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
-		"trade_type":       params.TradeType,
-		"slippage_p":       params.SlippageP,
-		"is_evm_origin":    true, // Required when calling from EVM
+		"market_index":      fmt.Sprintf("MarketIndex(%d)", params.MarketIndex),
+		"leverage":          strconv.FormatUint(params.Leverage, 10),
+		"long":              params.Long,
+		"collateral_index":  fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
+		"trade_type":        params.TradeType,
+		"slippage_p":        params.SlippageP,
+		"is_evm_origin":     true, // Required when calling from EVM
+		"collateral_amount": params.CollateralAmt.String(),
 	}
 
 	// open_price is required by the contract for all trade types
@@ -34,15 +35,15 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 	if isLimitOrStopOrder(params.TradeType) && *params.OpenPrice == 0 {
 		return nil, fmt.Errorf("open_price must be non-zero for %s orders", params.TradeType)
 	}
-	openTradeMsgData["open_price"] = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
+	openTradeMsgData["open_price"] = formatWasmDecimal(*params.OpenPrice)
 
 	// Only set TP/SL if explicitly provided by user
 	// Note: The contract may set its own default TP/SL values for limit/stop orders
 	if params.TP != nil {
-		openTradeMsgData["tp"] = strconv.FormatFloat(*params.TP, 'f', -1, 64)
+		openTradeMsgData["tp"] = formatWasmDecimal(*params.TP)
 	}
 	if params.SL != nil {
-		openTradeMsgData["sl"] = strconv.FormatFloat(*params.SL, 'f', -1, 64)
+		openTradeMsgData["sl"] = formatWasmDecimal(*params.SL)
 	}
 
 	openTradeMsg := map[string]interface{}{

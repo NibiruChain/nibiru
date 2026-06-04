@@ -299,7 +299,7 @@ func (t *EVMTrader) OpenTrade(ctx context.Context, chainID *big.Int, params *Ope
 
 	openPriceStr := ""
 	if params.OpenPrice != nil {
-		openPriceStr = strconv.FormatFloat(*params.OpenPrice, 'f', -1, 64)
+		openPriceStr = formatWasmDecimal(*params.OpenPrice)
 	}
 	tpStr := ""
 	if params.TP != nil {
