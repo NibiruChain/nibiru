@@ -14,6 +14,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -333,6 +334,39 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	s.Require().Equal(0, senderBal.Cmp(uint256.NewInt(0)), "sender balance should be 0")
 }
 
+func (s *Suite) TestMsgEthereumTx_ZeroGas_ClassifiesAllowlistedType2Tx() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := deps.Sender
+	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	ethTxMsg, err := evmtest.NewEthTxMsgFromTxData(
+		&deps,
+		gethcore.DynamicFeeTxType,
+		nil,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
+		&to,
+		big.NewInt(0),
+		100_000,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.HexToHash(ethTxMsg.Hash)),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
+}
+
 // TestMsgEthereumTx_ZeroGas_WithRefund is like TestMsgEthereumTx_ZeroGas but uses a
 // higher gas limit. With bypass, RefundGas is skipped so no refund occurs. Balances stay at 0.
 // Same setup: msg_server only, zero-gas marker injected in context (ante not run).
@@ -478,4 +512,60 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	}
 	// Normal EVM tx (not zero-gas): context must not have ZeroGasMeta set.
 	s.Require().False(evm.IsZeroGasEthTx(deps.Ctx()), "IsZeroGasEthTx should be false for normal EVM tx")
+}
+
+func (s *Suite) TestEthereumTx_ABCI_ZeroGasAutomaticForNonLegacy() {
+	deps := evmtest.NewTestDeps()
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20,
+	)
+	s.Require().NoError(err)
+	to := deployResp.ContractAddr
+	input, err := deployResp.ContractData.ABI.Pack(
+		"transfer", gethcommon.HexToAddress("0x0000000000000000000000000000000000010f2C"), big.NewInt(0),
+	)
+	s.Require().NoError(err)
+
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	gasLimit := uint64(780_749)
+	evmTxMsg := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     deps.EvmKeeper.GetAccNonce(deps.Ctx(), deps.Sender.EthAddr),
+		GasLimit:  gasLimit,
+		Input:     input,
+		GasFeeCap: big.NewInt(1_200_000_000_000),
+		GasTipCap: big.NewInt(0),
+		Amount:    big.NewInt(0),
+		To:        &to,
+	})
+	evmTxMsg.From = deps.Sender.EthAddr.Hex()
+	s.Require().NoError(evmTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner))
+	rawTxHash := evmTxMsg.AsTransaction().Hash()
+	s.Require().Equal(uint8(gethcore.DynamicFeeTxType), evmTxMsg.AsTransaction().Type())
+
+	blockHeader := deps.Ctx().BlockHeader()
+	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+
+	txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
+	s.Require().NoError(err)
+	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
+	s.Require().NoError(err)
+
+	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
+	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
+	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx().BlockHeight()})
+	s.Require().NotZero(deliverTxResp.GasUsed)
+	s.Require().EqualValues(gasLimit, deliverTxResp.GasWanted)
+	s.Require().Equal(rawTxHash.Hex(), evmTxMsg.Hash)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), rawTxHash),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(deps.Sender.EthAddr).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
 }
