@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
 
 # Set localnet settings
 BINARY="nibid"
@@ -7,9 +7,57 @@ CHAIN_ID="nibiru-localnet-0"
 MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 GENESIS_COINS="10000000000000unibi,10000000000000unusd,10000000000000uusdt,10000000000000uusdc"
 CHAIN_DIR="$HOME/.nibid"
+LOG_LEVEL="debug"
 
-echo "CHAIN_DIR: $CHAIN_DIR"
-echo "CHAIN_ID: $CHAIN_ID"
+show_help() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Run a single-node Nibiru localnet.
+
+Options:
+  --run               Execute the localnet setup and start the node.
+  --no-build          Skip building the nibid binary before starting localnet.
+  --log-level LEVEL   Node log level passed to "nibid start".
+                      Default: $LOG_LEVEL
+  -h, --help          Show this help.
+
+Examples:
+  $(basename "$0")
+  $(basename "$0") --run
+  $(basename "$0") --run --no-build
+  $(basename "$0") --run --log-level info
+  $(basename "$0") --run --no-build --log-level debug
+
+By default, this script only prints help. Use --run to reset and start localnet.
+EOF
+}
+
+if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
+# which_ok: Check if the given binary is in the $PATH or if it is something
+# callable in a bash program.
+# Returns code 0 on success and code 1 if the command fails.
+which_ok() {
+
+  # Runnable binary on $PATH? Ex: "jq", "bun", etc.
+  # Alias? Ex: "ls" (I have it aliased to exa).
+  # Built-in? Ex: "echo", "cd"
+  if which "$1" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # Function? An example for this is "nvm", which is a pure bash function.
+  if type -a "$1" >/dev/null; then
+    return 0
+  fi
+
+  echo "$1 is not present in \$PATH"
+  return 1
+}
 
 # ------------------------------------------------------------
 # Set up colored text logging
@@ -17,35 +65,44 @@ echo "CHAIN_ID: $CHAIN_ID"
 
 # Console log text colour
 console_log_text_color() {
-  red=$(tput setaf 9)
-  green=$(tput setaf 10)
-  blue=$(tput setaf 12)
-  reset=$(tput sgr0)
+  COLOR_RED=""
+  COLOR_GREEN=""
+  COLOR_BLUE=""
+  COLOR_RESET=""
+  if [[ -z "${TERM:-}" ]] \
+    || ! which_ok tput    \
+    || ! tput setaf 9 >/dev/null 2>&1; then
+    echo "[localnet.sh/console_log_text_color] Console coloring disabled."
+    printf "\nMacOS has tput by default. For Ubuntu and Debian, try installing this:"
+    printf "\n  apt-get install libncurses5-dbg -y"
+    return 0
+  fi
+
+  COLOR_RED=$(tput setaf 9 >/dev/null 2>&1 || true)
+  COLOR_GREEN=$(tput setaf 10 >/dev/null 2>&1 || true)
+  COLOR_BLUE=$(tput setaf 12 >/dev/null 2>&1 || true)
+  COLOR_RESET=$(tput sgr0 >/dev/null 2>&1 || true)
+  echo "[localnet.sh/console_log_text_color] Succesfully toggled on console coloring"
 }
 
-if [ console_log_text_color ]; then
-  echo "succesfully toggled console coloring"
-else
-  # For Ubuntu and Debian. MacOS has tput by default.
-  apt-get install libncurses5-dbg -y
-fi
+console_log_text_color
 
 echo_info() {
-  echo "${blue}"
+  echo "${COLOR_BLUE}"
   echo "$1"
-  echo "${reset}"
+  echo "${COLOR_RESET}"
 }
 
 echo_error() {
-  echo "${red}"
+  echo "${COLOR_RED}"
   echo "$1"
-  echo "${reset}"
+  echo "${COLOR_RESET}"
 }
 
 echo_success() {
-  echo "${green}"
+  echo "${COLOR_GREEN}"
   echo "$1"
-  echo "${reset}"
+  echo "${COLOR_RESET}"
 }
 
 # ------------------------------------------------------------
@@ -54,9 +111,20 @@ echo_success() {
 
 echo_info "Parsing flags for the script..."
 
+require_flag_value() {
+  local flag="$1"
+  local value="$2"
+
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo_error "Error: $flag requires a value."
+    exit 1
+  fi
+}
+
 # $FLAG_SKIP_BUILD: toggles whether to build from source. The default
 #   behavior of the script is to run make install if the flag --no-build is omitted.
 FLAG_SKIP_BUILD=false
+RUN=false
 
 
 build_from_source() {
@@ -69,40 +137,51 @@ build_from_source() {
   fi
 }
 
-# enable_feature_flag: Enables feature flags variables if present
-enable_feature_flag() {
-  case $1 in
-  spot) FLAG_SPOT=true ;;
-  *) echo_error "Unknown feature: $1" ;;
-  esac
-}
-
-# Iterate over flags, handling the cases: "--no-build" and "--features"
+# Iterate over flags, handling the cases: "--run", "--no-build", and "--log-level".
 while [[ $# -gt 0 ]]; do
   case $1 in
+  --run)
+    RUN=true
+    shift
+    ;;
   --no-build)
     FLAG_SKIP_BUILD=true
     shift
     ;;
-  --features)
-    shift # Remove '--features' from arguments
-    while [[ $# -gt 0 && $1 != --* ]]; do
-      enable_feature_flag "$1"
-      shift # Remove the feature name from arguments
-    done
+  --log-level)
+    require_flag_value "$1" "${2:-}"
+    LOG_LEVEL="$2"
+    shift 2
     ;;
-  *) shift ;; # Unknown arg
+  -h | --help)
+    show_help
+    exit 0
+    ;;
+  *)
+    echo_error "Unknown option: $1"
+    show_help
+    exit 1
+    ;;
   esac
 done
 
+if ! $RUN; then
+  show_help
+  exit 0
+fi
+
+echo "CHAIN_DIR: $CHAIN_DIR"
+echo "CHAIN_ID: $CHAIN_ID"
 
 # Check if FLAG_SKIP_BUILD was set to true
 if ! $FLAG_SKIP_BUILD; then
   build_from_source
 fi
 
-echo_info "Features flags:"
+echo_info "Script settings:"
+echo "RUN: $RUN"
 echo "FLAG_SKIP_BUILD: $FLAG_SKIP_BUILD"
+echo "LOG_LEVEL: $LOG_LEVEL"
 
 SEDOPTION=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -198,18 +277,46 @@ echo_success "Successfully added genesis account: $val_key_name"
 # Configure genesis params
 # ------------------------------------------------------------------------
 
-# add_genesis_params runs a jq command to edit fields of the genesis.json .
+# add_genesis_param runs a jq command to edit fields of genesis.json.
 #
 # Args:
 #   $1 : the jq input that gets mapped to the json.
+#
+# Examples:
+#   add_genesis_param '.app_state.sudo.sudoers.root = "'"$val_address"'"'
+#   add_genesis_param '.app_state.evm.params.canonical_wnibi = "'"$MAINNET_WNIBI_ADDR"'"'
+#   add_genesis_param '.app_state.auth.accounts += [{
+#     "@type": "/eth.types.v1.EthAccount",
+#     "base_account": {
+#       "address": "'"$MAINNET_WNIBI_BECH32"'",
+#       "pub_key": null,
+#       "account_number": ((.app_state.auth.accounts | length) | tostring),
+#       "sequence": "0"
+#     },
+#     "code_hash": "'"$MAINNET_WNIBI_CODE_HASH"'"
+#   }]'
 add_genesis_param() {
   echo "jq input $1"
   # copy param ($1) to tmp_genesis.json
-  cat $CHAIN_DIR/config/genesis.json | jq "$1" >$CHAIN_DIR/config/tmp_genesis.json
+  cat "$CHAIN_DIR/config/genesis.json" | jq "$1" >"$CHAIN_DIR/config/tmp_genesis.json"
   # rewrite genesis.json with the contents of tmp_genesis.json
-  mv $CHAIN_DIR/config/tmp_genesis.json $CHAIN_DIR/config/genesis.json
+  mv "$CHAIN_DIR/config/tmp_genesis.json" "$CHAIN_DIR/config/genesis.json"
 }
 
+# add_genesis_param_slurpfile runs a jq command against genesis.json while
+# loading another JSON file into a jq variable with --slurpfile. Use this for
+# large JSON payloads that would be hard to read or safely escape inline.
+#
+# Example:
+#   add_genesis_param_slurpfile \
+#     '.app_state.evm.accounts += $wnibi_evm' \
+#     "wnibi_evm" \
+#     "$WNIBI_EVM_GENESIS_JSON"
+#
+# Args:
+#   $1 : the jq input that gets mapped to genesis.json.
+#   $2 : the jq variable name used for the slurped JSON file.
+#   $3 : the path to the JSON file to load.
 add_genesis_param_slurpfile() {
   local jq_input="$1"
   local slurp_var="$2"
@@ -286,14 +393,6 @@ cat >"$WNIBI_EVM_GENESIS_JSON" <<'EOF'
 EOF
 add_genesis_param_slurpfile '.app_state.evm.accounts += $wnibi_evm' "wnibi_evm" "$WNIBI_EVM_GENESIS_JSON"
 
-# Static oracle exchange rates in genesis for local development and tests.
-price_btc="50000"
-price_eth="2000"
-add_genesis_param '.app_state.oracle.exchange_rates[0].pair = "ubtc:uusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[0].exchange_rate = "'"$price_btc"'"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].pair = "ueth:uusd"'
-add_genesis_param '.app_state.oracle.exchange_rates[1].exchange_rate = "'"$price_eth"'"'
-
 # ------------------------------------------------------------------------
 # Gentx
 # ------------------------------------------------------------------------
@@ -317,4 +416,4 @@ fi
 # ------------------------------------------------------------------------
 
 echo_info "Starting $CHAIN_ID in $CHAIN_DIR..."
-$BINARY start --home "$CHAIN_DIR" --pruning nothing
+$BINARY start --home "$CHAIN_DIR" --pruning nothing --log_level "$LOG_LEVEL"

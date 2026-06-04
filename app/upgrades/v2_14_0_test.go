@@ -20,6 +20,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	nutiltestutil "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
@@ -282,7 +283,7 @@ func instantiateCW4Group(
 		Admin   *string     `json:"admin"`
 		Members []cw4Member `json:"members"`
 	}{
-		Admin:   ptr(admin.String()),
+		Admin:   nutil.Ptr(admin.String()),
 		Members: members,
 	}
 
@@ -499,11 +500,6 @@ func mustJSON(t *testing.T, v any) []byte {
 // mustAccAddress converts a known-good bech32 account literal for test setup.
 func mustAccAddress(addr string) sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(addr)
-}
-
-// ptr returns a pointer to a literal value for JSON message construction.
-func ptr[T any](v T) *T {
-	return &v
 }
 
 type cw4Member struct {
