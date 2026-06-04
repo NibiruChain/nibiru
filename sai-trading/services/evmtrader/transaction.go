@@ -125,6 +125,18 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		case <-tick.C:
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
+				if err := evmTxResponseError(resp.TxResponse); err != nil {
+					t.logTransactionCSV(
+						resp.TxResponse.TxHash,
+						"failed",
+						err.Error(),
+						to.Hex(),
+						resp.TxResponse.Height,
+						uint64(resp.TxResponse.GasWanted),
+						uint64(resp.TxResponse.GasUsed),
+					)
+					return nil, err
+				}
 				t.logTransactionCSV(
 					resp.TxResponse.TxHash,
 					"success",
@@ -195,6 +207,24 @@ func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.
 	}
 
 	return t.sendEVMTransaction(ctx, interfaceAddr, big.NewInt(0), data, chainID)
+}
+
+// evmTxResponseError returns an error when an EVM transaction reverted on-chain.
+func evmTxResponseError(txResp *sdk.TxResponse) error {
+	for _, event := range txResp.Events {
+		if event.Type != evm.TypeUrlEventEthereumTx {
+			continue
+		}
+		ethTx, err := evm.EventEthereumTxFromABCIEvent(event)
+		if err != nil {
+			continue
+		}
+		if ethTx.VmError == "" {
+			return nil
+		}
+		return fmt.Errorf("EVM execution failed: %s (tx %s)", ethTx.VmError, txResp.TxHash)
+	}
+	return nil
 }
 
 // parseContractError parses common contract errors and provides user-friendly error messages.

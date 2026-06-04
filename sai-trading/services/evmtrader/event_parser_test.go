@@ -188,6 +188,41 @@ func TestParseTradeID(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "sai/perp store_trade with plain trade_index",
+			txResp: &sdk.TxResponse{
+				Height: 100,
+				Events: []abcitypes.Event{
+					{
+						Type: "wasm-sai/perp/store_trade",
+						Attributes: []abcitypes.EventAttribute{
+							{Key: "trade_index", Value: "7"},
+						},
+					},
+				},
+			},
+			expected:    7,
+			expectError: false,
+		},
+		{
+			name: "sai/perp register_trade trade JSON",
+			txResp: &sdk.TxResponse{
+				Height: 100,
+				Events: []abcitypes.Event{
+					{
+						Type: "wasm-sai/perp/register_trade",
+						Attributes: []abcitypes.EventAttribute{
+							{
+								Key:   "trade",
+								Value: `{"user":"nibi1abc","user_trade_index":"UserTradeIndex(321)"}`,
+							},
+						},
+					},
+				},
+			},
+			expected:    321,
+			expectError: false,
+		},
+		{
 			name: "multiple events - use first match",
 			txResp: &sdk.TxResponse{
 				Height: 100,
