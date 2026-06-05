@@ -355,7 +355,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	//
 	// Chain execution still uses the real base fee. This method is only a
 	// wallet-facing fee hint.
-	var result = evm.WalletZeroBaseFeeWei()
+	result := evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }

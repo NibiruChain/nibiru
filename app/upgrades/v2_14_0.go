@@ -6,11 +6,34 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
+
+var _ HandlerImpl = (*Handler_v2_14)(nil)
+
+type Handler_v2_14 struct{}
+
+func (h Handler_v2_14) Handler(
+	mm *module.Manager,
+	cfg module.Configurator,
+	nibiru *keepers.PublicKeepers,
+) upgradetypes.UpgradeHandler {
+	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		err := h.runUpgrade2_14_0(nibiru, ctx)
+		if err != nil {
+			ctx.Logger().Error("v2.14.0 upgrade failure", "err", err)
+			ctx.EventManager().EmitEvent(
+				NewEventUpgradeFailure("v2.14.0", err),
+			)
+		}
+		return mm.RunMigrations(ctx, cfg, fromVM)
+	}
+}
 
 // Upgrade2_14_AddrCfg contains the deployed contract addresses touched
 // by the v2.14 upgrade. Tests can override these values after instantiating
@@ -87,7 +110,7 @@ type cw4UpdateAdminMsg struct {
 	} `json:"update_admin"`
 }
 
-func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
+func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	addrCfg := AddrCfg_v2_14
 
 	// -------------------------------------------------------------------------
@@ -103,7 +126,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	// STEP 1: Mainnet-only zero-gas allowlist update for LayerZero OFT adapters.
 	// -------------------------------------------------------------------------
 	if ctx.ChainID() == addrCfg.MainnetChainID {
-		if err := addZeroGasContracts(ctx, nibiru, addrCfg.LayerZeroOFTAdapters); err != nil {
+		if err := h.addZeroGasContracts(ctx, nibiru, addrCfg.LayerZeroOFTAdapters); err != nil {
 			return err
 		}
 	}
@@ -275,7 +298,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	return nil
 }
 
-func addZeroGasContracts(ctx sdk.Context, nibiru *keepers.PublicKeepers, addrs []string) error {
+func (h Handler_v2_14) addZeroGasContracts(ctx sdk.Context, nibiru *keepers.PublicKeepers, addrs []string) error {
 	actors := nibiru.SudoKeeper.GetZeroGasActors(ctx)
 
 	nextActors := sudo.ZeroGasActors{

@@ -429,7 +429,7 @@ func executeCW4UpdateAdmin(
 // runUpgradeForTest invokes a registered upgrade handler with the same app
 // wiring used by other upgrade tests.
 func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.CreateUpgradeHandler(
+	upgradeHandler := upgrade.Handler.Handler(
 		deps.App.ModuleManager,
 		module.NewConfigurator(
 			deps.App.AppCodec(),
@@ -437,7 +437,6 @@ func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
 			deps.App.GRPCQueryRouter(),
 		),
 		&deps.App.PublicKeepers,
-		deps.App.GetIBCKeeper().ClientKeeper,
 	)
 
 	plan := upgradetypes.Plan{
