@@ -214,9 +214,6 @@ func (b *Backend) isZeroGasJsonTxArgsLatest(args evm.JsonTxArgs) bool {
 	if args.To == nil {
 		return false
 	}
-	if args.Value != nil && args.Value.ToInt().Sign() != 0 {
-		return false
-	}
 
 	res, err := sudo.NewQueryClient(b.clientCtx).QueryZeroGasActors(
 		context.Background(),

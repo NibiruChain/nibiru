@@ -19,7 +19,6 @@ var _ AnteStep = AnteStepDetectZeroGas
 //
 // Eligibility:
 //   - tx.To is in ZeroGasActors.AlwaysZeroGasContracts (EVM hex address list)
-//   - tx.Value == 0
 //
 // No state mutations. Only sets ZeroGasMeta in context as a marker.
 func AnteStepDetectZeroGas(

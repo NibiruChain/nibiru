@@ -134,7 +134,7 @@ func TestAnteStepDetectZeroGas_Eligible_NonLegacyNonZeroFeeFields(t *testing.T) 
 	require.Equal(t, 0, balBefore.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
+func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_SetsMeta(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	// Configure ZeroGasActors with an always_zero_gas_contracts entry.
 	targetAddr := addr3
@@ -144,7 +144,7 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 
 	sdb := deps.NewStateDB()
 
-	// Create a tx that targets the allowlisted contract but with non-zero value.
+	// Create a tx that targets the allowlisted contract with non-zero value.
 	to := targetAddr
 	tx := evm.NewTx(&evm.EvmTxArgs{
 		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
@@ -152,7 +152,7 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 		GasLimit: 50_000,
 		GasPrice: big.NewInt(1),
 		To:       &to,
-		Amount:   big.NewInt(1), // non-zero value should make tx ineligible
+		Amount:   big.NewInt(1),
 	})
 	tx.From = deps.Sender.EthAddr.Hex()
 
@@ -168,10 +168,9 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// No meta should be set for non-zero value.
-	require.False(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
 
-	// Balance should be unchanged.
+	// Detection only sets metadata; value solvency is checked by later ante steps.
 	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
