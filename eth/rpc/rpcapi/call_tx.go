@@ -214,9 +214,6 @@ func (b *Backend) isZeroGasJsonTxArgsLatest(args evm.JsonTxArgs) bool {
 	if args.To == nil {
 		return false
 	}
-	if args.Value != nil && args.Value.ToInt().Sign() != 0 {
-		return false
-	}
 
 	res, err := sudo.NewQueryClient(b.clientCtx).QueryZeroGasActors(
 		context.Background(),
@@ -358,7 +355,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	//
 	// Chain execution still uses the real base fee. This method is only a
 	// wallet-facing fee hint.
-	var result = evm.WalletZeroBaseFeeWei()
+	result := evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }

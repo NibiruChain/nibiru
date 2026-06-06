@@ -7,18 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 )
 
 type Upgrade struct {
 	UpgradeName string
 
-	CreateUpgradeHandler func(
-		mm *module.Manager,
-		cfg module.Configurator,
-		nibiru *keepers.PublicKeepers,
-		ibcKeeperClientKeeper clientkeeper.Keeper,
-	) upgradetypes.UpgradeHandler
+	Handler HandlerImpl
 
 	// StoreUpgrades defines a series of transformations to apply the multistore db
 	// upon load
@@ -50,16 +44,40 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_14_0,
 }
 
-// DefaultUpgradeHandler runs module manager migrations without running any other
-// logic that uses the Nibiru keepers. This is the most common value for
-// the "CreateUpgradeHandler" field of an [Upgrade].
-func DefaultUpgradeHandler(
+// HandlerImpl is a struct wrapper
+type HandlerImpl interface {
+	Handler(
+		mm *module.Manager,
+		cfg module.Configurator,
+		nibiru *keepers.PublicKeepers,
+	) upgradetypes.UpgradeHandler
+}
+
+// DefaultUpgraderHandler runs module manager migrations without running any
+// other logic that uses the Nibiru keepers.
+type DefaultUpgraderHandler struct{}
+
+var _ HandlerImpl = (*DefaultUpgraderHandler)(nil)
+
+// Handler for [DefaultUpgraderHandler] runs module manager migrations without
+// running any other logic that uses the Nibiru keepers.
+func (h DefaultUpgraderHandler) Handler(
 	mm *module.Manager,
 	cfg module.Configurator,
 	nibiru *keepers.PublicKeepers,
-	clientKeeper clientkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
+}
+
+// NewEventUpgradeFailure builds an [sdk.Event] to use when an upgrade fails and
+// exits. This is used to debug why an upgrade failed while allowing it to
+// proceed without panicking and halting the blockchain.
+func NewEventUpgradeFailure(upgradeName string, err error) sdk.Event {
+	return sdk.NewEvent(
+		"upgrade_failure",
+		sdk.NewAttribute("upgrade", upgradeName),
+		sdk.NewAttribute("error", err.Error()),
+	)
 }

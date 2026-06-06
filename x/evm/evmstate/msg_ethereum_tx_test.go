@@ -367,6 +367,48 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_ClassifiesAllowlistedType2Tx() {
 	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
 }
 
+func (s *Suite) TestMsgEthereumTx_ZeroGas_NonZeroValueTransfersWithoutGasPayment() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := deps.Sender
+	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	valueWei := evm.NativeToWei(big.NewInt(1))
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
+	))
+
+	ethTxMsg, err := evmtest.NewEthTxMsgFromTxData(
+		&deps,
+		gethcore.DynamicFeeTxType,
+		nil,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
+		&to,
+		valueWei,
+		100_000,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.HexToHash(ethTxMsg.Hash)),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(to).Cmp(uint256.MustFromBig(valueWei)))
+}
+
 // TestMsgEthereumTx_ZeroGas_WithRefund is like TestMsgEthereumTx_ZeroGas but uses a
 // higher gas limit. With bypass, RefundGas is skipped so no refund occurs. Balances stay at 0.
 // Same setup: msg_server only, zero-gas marker injected in context (ante not run).

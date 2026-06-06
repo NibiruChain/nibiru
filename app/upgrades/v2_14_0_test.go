@@ -24,6 +24,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	nutiltestutil "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 const (
@@ -39,6 +40,9 @@ const (
 	addrTreasuryAddSigner = "nibi1cj6edencz3tetxuwkxcdrlfwpg8cr02ef3uvz2"
 	addrGimeno            = "nibi1wwhdx03msygelmm8tm5z6nzh4dklwkettwd5vj"
 	addrJC                = "nibi1aj6vgnj5hh0ehe5memz0f38z2lla2z5gdj5vst"
+
+	addrLayerZeroUSDCeAdapter = "0x12a272A581feE5577A5dFa371afEB4b2F3a8C2F8"
+	addrLayerZeroWNIBIAdapter = "0x4DF4eFa0a3707b6Cc964F62042E8a303A0376F54"
 )
 
 // TestUpgrade2_14_0_HappyPath stores and instantiates real CW4 group and CW3
@@ -144,6 +148,66 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	require.Equal(t, treasuryCW3.String(), contractAdmin(t, deps, hotWalletCW4))
 	require.True(t, deps.App.BankKeeper.GetAllBalances(ctx, hotWalletCW3).IsZero())
 	require.Equal(t, hotWalletBalance, deps.App.BankKeeper.GetAllBalances(ctx, treasuryCW3))
+}
+
+func TestUpgrade2_14_0_AddsLayerZeroAdaptersToZeroGasActorsMainnet(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+
+	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:                []string{addrTreasuryAddSigner},
+		Contracts:              []string{addrLegacyMultisig},
+		AlwaysZeroGasContracts: []string{existingAlwaysZeroGas},
+	})
+
+	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+
+	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
+	require.Equal(t, []string{addrTreasuryAddSigner}, actors.Senders)
+	require.Equal(t, []string{addrLegacyMultisig}, actors.Contracts)
+	require.Equal(t, []string{
+		existingAlwaysZeroGas,
+		addrLayerZeroUSDCeAdapter,
+		addrLayerZeroWNIBIAdapter,
+	}, actors.AlwaysZeroGasContracts)
+}
+
+func TestUpgrade2_14_0_DoesNotDuplicateLayerZeroAdapters(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+
+	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{
+			existingAlwaysZeroGas,
+			addrLayerZeroUSDCeAdapter,
+			addrLayerZeroWNIBIAdapter,
+		},
+	})
+
+	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+
+	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
+	require.Equal(t, []string{
+		existingAlwaysZeroGas,
+		addrLayerZeroUSDCeAdapter,
+		addrLayerZeroWNIBIAdapter,
+	}, actors.AlwaysZeroGasContracts)
+}
+
+func TestUpgrade2_14_0_DoesNotAddLayerZeroAdaptersOffMainnet(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(upgrades.AddrCfg_v2_14.Testnet2ChainID))
+
+	existingActors := sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{"0x0000000000000000000000000000000000000005"},
+	}
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), existingActors)
+
+	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+
+	require.Equal(t, existingActors, deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx()))
 }
 
 // assertUpgrade2_14_0Events checks the observable event footprint of the happy
@@ -365,7 +429,7 @@ func executeCW4UpdateAdmin(
 // runUpgradeForTest invokes a registered upgrade handler with the same app
 // wiring used by other upgrade tests.
 func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.CreateUpgradeHandler(
+	upgradeHandler := upgrade.Handler.Handler(
 		deps.App.ModuleManager,
 		module.NewConfigurator(
 			deps.App.AppCodec(),
@@ -373,7 +437,6 @@ func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
 			deps.App.GRPCQueryRouter(),
 		),
 		&deps.App.PublicKeepers,
-		deps.App.GetIBCKeeper().ClientKeeper,
 	)
 
 	plan := upgradetypes.Plan{
