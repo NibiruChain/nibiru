@@ -3,19 +3,14 @@ package upgrades_test
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
@@ -116,7 +111,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	}()
 
 	eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
-	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 	eventsInUpgrade := nutiltestutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())
 	eventsJSON, err := json.MarshalIndent(eventsInUpgrade, "", "  ")
 	require.NoError(t, err)
@@ -161,7 +156,7 @@ func TestUpgrade2_14_0_AddsLayerZeroAdaptersToZeroGasActorsMainnet(t *testing.T)
 		AlwaysZeroGasContracts: []string{existingAlwaysZeroGas},
 	})
 
-	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 
 	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
 	require.Equal(t, []string{addrTreasuryAddSigner}, actors.Senders)
@@ -186,7 +181,7 @@ func TestUpgrade2_14_0_DoesNotDuplicateLayerZeroAdapters(t *testing.T) {
 		},
 	})
 
-	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 
 	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
 	require.Equal(t, []string{
@@ -205,7 +200,7 @@ func TestUpgrade2_14_0_DoesNotAddLayerZeroAdaptersOffMainnet(t *testing.T) {
 	}
 	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), existingActors)
 
-	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 
 	require.Equal(t, existingActors, deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx()))
 }
@@ -424,38 +419,6 @@ func executeCW4UpdateAdmin(
 		sdk.Coins{},
 	)
 	require.NoError(t, err)
-}
-
-// runUpgradeForTest invokes a registered upgrade handler with the same app
-// wiring used by other upgrade tests.
-func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.Handler.Handler(
-		deps.App.ModuleManager,
-		module.NewConfigurator(
-			deps.App.AppCodec(),
-			deps.App.MsgServiceRouter(),
-			deps.App.GRPCQueryRouter(),
-		),
-		&deps.App.PublicKeepers,
-	)
-
-	plan := upgradetypes.Plan{
-		Name:                upgrade.UpgradeName,
-		Time:                time.Time{},
-		Height:              deps.Ctx().BlockHeight(),
-		Info:                "Testing Upgrade " + upgrade.UpgradeName,
-		UpgradedClientState: (*codectypes.Any)(nil),
-	}
-	if err := plan.ValidateBasic(); err != nil {
-		return fmt.Errorf("invalid upgrade.Plan: %w", err)
-	}
-
-	_, err := upgradeHandler(
-		deps.Ctx(),
-		plan,
-		deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx()),
-	)
-	return err
 }
 
 // testUpgrade2_14_0AddressConfig keeps production signers/admins but swaps the
