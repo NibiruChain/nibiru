@@ -355,7 +355,7 @@ func NewNibiruApp(
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
-		ibc.NewAppModule(app.ibcKeeper),
+		ibc.NewAppModule(app.IbcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
@@ -430,7 +430,7 @@ func NewNibiruApp(
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
-		IBCKeeper:         app.ibcKeeper,
+		IBCKeeper:         app.IbcKeeper,
 		TxCounterStoreKey: app.keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
@@ -620,7 +620,7 @@ func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
-	return app.ibcKeeper
+	return app.IbcKeeper
 }
 
 func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {

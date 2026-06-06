@@ -65,7 +65,7 @@ consensus determinism.
 ### 1 - Main Highlights
 
 - **Fixed** - Successful EVM transactions were sometimes shown as failed due to Cosmos SDK gas-meter issues. No longer. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
-- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender with no gas balance, as long as value is 0. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
+- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
 - **Improved** - Precompiles now report gas cleanly with dynamic handling, and SDK out-of-gas panics are recovered into normal errors instead of crashing the node. ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
 - **Security** - Upgraded CometBFT to patched v0.37.18 for CSA-2026-001 (Tachyon), a critical consensus-level issue affecting block time guarantees. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
 - **Consensus safety** - Removed nondeterministic Go map iteration in consensus-critical paths (oracle + EVM state commit), addressing intermittent apphash mismatches. ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
@@ -91,8 +91,8 @@ Includes:
 **What it enables:** First-time onboarding and "no gas balance" execution for calls into governance-allowlisted contracts.
 
 **How it works:**
-- If a transaction calls a **governance-allowlisted contract** and `value == 0`, the chain marks it as "zero gas" early in the ante handler.
-- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`.
+- If a transaction calls a **governance-allowlisted contract**, the chain marks it as "zero gas" early in the ante handler.
+- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`, including native value solvency for `msg.value`.
 - A governance-managed list `ZeroGasActors.always_zero_gas_contracts` allows **any sender** to invoke specific EVM contracts with zero gas.
 
 **Governance:** This is controlled by a governance-managed allowlist. Manage via `sudo edit-zero-gas` and the `always_zero_gas_contracts` field.
@@ -134,7 +134,7 @@ This release upgrades CometBFT to **v0.37.18**, which includes the required fix 
 
 #### For Builders
 - **Tx status correctness** — Successful EVM calls should no longer be mislabeled as failed due to SDK gas-meter issues.
-- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it with `value == 0` and no gas balance.
+- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance.
 - **Precompile behavior** — Expect cleaner out-of-gas error surfaces and more accurate gas reporting around dynamic precompiles.
 - **Passkeys / account abstraction** — New contracts and SDK exist for passkey-secured ERC-4337 flows; good time to prototype onboarding without seed phrases.
 - **CLI flags** — Transaction flags are more concise by default so developers can see command-specific flags more clearly. ([#2449](https://github.com/NibiruChain/nibiru/pull/2449))

@@ -6,10 +6,34 @@ import (
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
+
+var _ HandlerImpl = (*Handler_v2_14)(nil)
+
+type Handler_v2_14 struct{}
+
+func (h Handler_v2_14) Handler(
+	mm *module.Manager,
+	cfg module.Configurator,
+	nibiru *keepers.PublicKeepers,
+) upgradetypes.UpgradeHandler {
+	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+		err := h.runUpgrade2_14_0(nibiru, ctx)
+		if err != nil {
+			ctx.Logger().Error("v2.14.0 upgrade failure", "err", err)
+			ctx.EventManager().EmitEvent(
+				NewEventUpgradeFailure("v2.14.0", err),
+			)
+		}
+		return mm.RunMigrations(ctx, cfg, fromVM)
+	}
+}
 
 // Upgrade2_14_AddrCfg contains the deployed contract addresses touched
 // by the v2.14 upgrade. Tests can override these values after instantiating
@@ -28,6 +52,8 @@ type Upgrade2_14_AddrCfg struct {
 
 	TreasuryAddSigner     sdk.AccAddress
 	TreasuryRemoveSigners []sdk.AccAddress
+
+	LayerZeroOFTAdapters []string
 }
 
 // AddrCfg_v2_14 is the deployed address configuration used by the v2.14
@@ -50,6 +76,11 @@ var AddrCfg_v2_14 = Upgrade2_14_AddrCfg{
 		mustAccAddress("nibi1wwhdx03msygelmm8tm5z6nzh4dklwkettwd5vj"), // Gimeno
 		mustAccAddress("nibi1aj6vgnj5hh0ehe5memz0f38z2lla2z5gdj5vst"), // JC
 		mustAccAddress("nibi1w3s6gdtt09ekhmwzfszc6qtxh298fstu895gn8"), // Kevin NanoS
+	},
+
+	LayerZeroOFTAdapters: []string{
+		"0x12a272A581feE5577A5dFa371afEB4b2F3a8C2F8", // USDC.e LayerZero OFT adapter
+		"0x4DF4eFa0a3707b6Cc964F62042E8a303A0376F54", // WNIBI LayerZero OFT adapter
 	},
 }
 
@@ -79,7 +110,7 @@ type cw4UpdateAdminMsg struct {
 	} `json:"update_admin"`
 }
 
-func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
+func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	addrCfg := AddrCfg_v2_14
 
 	// -------------------------------------------------------------------------
@@ -89,6 +120,15 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	case addrCfg.MainnetChainID, addrCfg.Testnet2ChainID:
 	default:
 		return nil
+	}
+
+	// -------------------------------------------------------------------------
+	// STEP 1: Mainnet-only zero-gas allowlist update for LayerZero OFT adapters.
+	// -------------------------------------------------------------------------
+	if ctx.ChainID() == addrCfg.MainnetChainID {
+		if err := h.addZeroGasContracts(ctx, nibiru, addrCfg.LayerZeroOFTAdapters); err != nil {
+			return err
+		}
 	}
 
 	permissionedWasmKeeper := wasmkeeper.NewDefaultPermissionKeeper(nibiru.WasmKeeper)
@@ -117,7 +157,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 1: Skip cleanup if the Treasury CW3 and CW4 contracts are absent.
+	// STEP 2: Skip cleanup if the Treasury CW3 and CW4 contracts are absent.
 	// -------------------------------------------------------------------------
 	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW4Group) {
 		return nil
@@ -127,7 +167,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 2: Update Treasury CW4 membership with a query-first diff.
+	// STEP 3: Update Treasury CW4 membership with a query-first diff.
 	// -------------------------------------------------------------------------
 	respBz, err := nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"list_members":{}}`))
 	if err != nil {
@@ -178,7 +218,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 3: Hand Treasury CW4 group admin from nibimultisig to Treasury CW3.
+	// STEP 4: Hand Treasury CW4 group admin from nibimultisig to Treasury CW3.
 	// -------------------------------------------------------------------------
 	respBz, err = nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"admin":{}}`))
 	if err != nil {
@@ -212,7 +252,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 4: Move Treasury CW4 and CW3 wasm admin metadata to Treasury CW3.
+	// STEP 5: Move Treasury CW4 and CW3 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
 	if err := updateWasmAdmin(addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3); err != nil {
 		return err
@@ -222,7 +262,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 5: Mainnet-only guard for dormant Hot Wallet cleanup.
+	// STEP 6: Mainnet-only guard for dormant Hot Wallet cleanup.
 	// -------------------------------------------------------------------------
 	if ctx.ChainID() != addrCfg.MainnetChainID {
 		return nil
@@ -232,7 +272,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 6: Sweep the Hot Wallet CW3 bank balance into Treasury CW3.
+	// STEP 7: Sweep the Hot Wallet CW3 bank balance into Treasury CW3.
 	// -------------------------------------------------------------------------
 	balances := nibiru.BankKeeper.GetAllBalances(ctx, addrCfg.HotWalletCW3)
 	if !balances.IsZero() {
@@ -243,7 +283,7 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 7: Move Hot Wallet CW3 and CW4 wasm admin metadata to Treasury CW3.
+	// STEP 8: Move Hot Wallet CW3 and CW4 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
 	if err := updateWasmAdmin(addrCfg.HotWalletCW3, addrCfg.KevinNanoS, addrCfg.TreasuryCW3); err != nil {
 		return err
@@ -255,6 +295,37 @@ func runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 		}
 	}
 
+	return nil
+}
+
+func (h Handler_v2_14) addZeroGasContracts(ctx sdk.Context, nibiru *keepers.PublicKeepers, addrs []string) error {
+	actors := nibiru.SudoKeeper.GetZeroGasActors(ctx)
+
+	nextActors := sudo.ZeroGasActors{
+		Senders:                append([]string(nil), actors.Senders...),
+		Contracts:              append([]string(nil), actors.Contracts...),
+		AlwaysZeroGasContracts: make([]string, 0, len(actors.AlwaysZeroGasContracts)+len(addrs)),
+	}
+	seenAlwaysZeroGas := make(map[string]bool, len(actors.AlwaysZeroGasContracts)+len(addrs))
+	for _, addr := range actors.AlwaysZeroGasContracts {
+		if seenAlwaysZeroGas[addr] {
+			continue
+		}
+		nextActors.AlwaysZeroGasContracts = append(nextActors.AlwaysZeroGasContracts, addr)
+		seenAlwaysZeroGas[addr] = true
+	}
+	for _, addr := range addrs {
+		if seenAlwaysZeroGas[addr] {
+			continue
+		}
+		nextActors.AlwaysZeroGasContracts = append(nextActors.AlwaysZeroGasContracts, addr)
+		seenAlwaysZeroGas[addr] = true
+	}
+
+	if err := nextActors.Validate(); err != nil {
+		return fmt.Errorf("failed to validate zero-gas LayerZero OFT adapter state: %w", err)
+	}
+	nibiru.SudoKeeper.ZeroGasActors.Set(ctx, nextActors)
 	return nil
 }
 

@@ -47,12 +47,12 @@ func (app *NibiruApp) setupUpgrades() {
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
 		app.UpgradeKeeper.SetUpgradeHandler(u.UpgradeName,
-			u.CreateUpgradeHandler(
+			u.Handler.Handler(
 				app.ModuleManager,
 				app.Configurator(),
 				&app.PublicKeepers,
-				app.ibcKeeper.ClientKeeper,
-			))
+			),
+		)
 	}
 }
 

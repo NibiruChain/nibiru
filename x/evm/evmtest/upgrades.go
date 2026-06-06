@@ -12,7 +12,7 @@ import (
 )
 
 func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.CreateUpgradeHandler(
+	upgradeHandler := upgrade.Handler.Handler(
 		deps.App.ModuleManager,
 		module.NewConfigurator(
 			deps.App.AppCodec(),
@@ -20,7 +20,6 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 			deps.App.GRPCQueryRouter(),
 		),
 		&deps.App.PublicKeepers,
-		deps.App.GetIBCKeeper().ClientKeeper,
 	)
 
 	// ---- Run the upgrade handler. ----

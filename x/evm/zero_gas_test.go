@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
-func TestZeroGasClassificationUsesAllowlistAndZeroValue(t *testing.T) {
+func TestZeroGasClassificationUsesAllowlist(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	allowlisted := gethcommon.HexToAddress("0x1111111111111111111111111111111111111111")
 	other := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
@@ -25,7 +25,7 @@ func TestZeroGasClassificationUsesAllowlistAndZeroValue(t *testing.T) {
 		AlwaysZeroGasContracts: []string{allowlisted.Hex()},
 	})
 
-	tx := newSignedDynamicFeeTx(t, &deps, &allowlisted, big.NewInt(0), big.NewInt(1), big.NewInt(2))
+	tx := newSignedDynamicFeeTx(t, &deps, &allowlisted, big.NewInt(1), big.NewInt(1), big.NewInt(2))
 	isZeroGas, txData, err := evm.IsZeroGasMsgEthereumTx(deps.Ctx(), deps.App.SudoKeeper, tx)
 	require.NoError(t, err)
 	require.True(t, isZeroGas)
@@ -38,7 +38,7 @@ func TestZeroGasClassificationUsesAllowlistAndZeroValue(t *testing.T) {
 	}))
 
 	nonzeroValue := (*hexutil.Big)(big.NewInt(1))
-	require.False(t, evm.IsZeroGasJsonTxArgs(deps.Ctx(), deps.App.SudoKeeper, evm.JsonTxArgs{
+	require.True(t, evm.IsZeroGasJsonTxArgs(deps.Ctx(), deps.App.SudoKeeper, evm.JsonTxArgs{
 		To:    &allowlisted,
 		Value: nonzeroValue,
 	}))
@@ -131,7 +131,35 @@ func TestValidateZeroGasTxDataSkipsFeeChecksAndKeepsNonFeeChecks(t *testing.T) {
 	valueTransfer := newSignedDynamicFeeTx(t, &deps, &to, big.NewInt(1), big.NewInt(1), big.NewInt(1))
 	valueTransferData, err := evm.UnpackTxData(valueTransfer.Data)
 	require.NoError(t, err)
-	require.ErrorContains(t, evm.ValidateZeroGasTxData(valueTransferData), "zero-gas tx value must be zero")
+	require.NoError(t, evm.ValidateZeroGasTxData(valueTransferData))
+
+	zeroValue := newSignedDynamicFeeTx(t, &deps, &to, big.NewInt(0), big.NewInt(1), big.NewInt(1))
+	zeroValueData, err := evm.UnpackTxData(zeroValue.Data)
+	require.NoError(t, err)
+	require.NoError(t, evm.ValidateZeroGasTxData(zeroValueData))
+
+	chainID := sdkmath.NewIntFromBigInt(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+	nilValue := &evm.DynamicFeeTx{
+		ChainID:   &chainID,
+		Nonce:     0,
+		GasLimit:  21_000,
+		GasFeeCap: nutil.Ptr(sdkmath.NewInt(1)),
+		GasTipCap: nutil.Ptr(sdkmath.NewInt(1)),
+		To:        to.Hex(),
+	}
+	require.NoError(t, evm.ValidateZeroGasTxData(nilValue))
+
+	negativeAmount := sdkmath.NewInt(-1)
+	negativeValue := &evm.DynamicFeeTx{
+		ChainID:   &chainID,
+		Nonce:     0,
+		GasLimit:  21_000,
+		GasFeeCap: nutil.Ptr(sdkmath.NewInt(1)),
+		GasTipCap: nutil.Ptr(sdkmath.NewInt(1)),
+		To:        to.Hex(),
+		Amount:    &negativeAmount,
+	}
+	require.ErrorContains(t, evm.ValidateZeroGasTxData(negativeValue), "amount cannot be negative")
 
 	missingChainID := &evm.DynamicFeeTx{
 		Nonce:     0,

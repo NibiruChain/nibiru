@@ -15,8 +15,8 @@ import (
 // must not buy priority.
 const DefaultZeroGasTxPriority int64 = 0
 
-// IsZeroGasTxData returns true when txData matches the contract-level zero-gas
-// policy: value == 0 and to is in the `always_zero_gas_contracts` set.
+// IsZeroGasTxData returns true when txData targets a contract in the
+// `always_zero_gas_contracts` set.
 func IsZeroGasTxData(
 	ctx sdk.Context,
 	sudoKeeper SudoKeeper,
@@ -28,10 +28,6 @@ func IsZeroGasTxData(
 
 	to := txData.GetTo()
 	if to == nil {
-		return false
-	}
-
-	if value := txData.GetValueWei(); value != nil && value.Sign() != 0 {
 		return false
 	}
 
@@ -63,7 +59,7 @@ func IsZeroGasMsgEthereumTx(
 	return IsZeroGasTxData(ctx, sudoKeeper, txData), txData, nil
 }
 
-// IsZeroGasJsonTxArgs classifies JSON-RPC call args using the same to/value
+// IsZeroGasJsonTxArgs classifies JSON-RPC call args using the same destination
 // policy as signed execution.
 func IsZeroGasJsonTxArgs(
 	ctx sdk.Context,
@@ -71,10 +67,6 @@ func IsZeroGasJsonTxArgs(
 	args JsonTxArgs,
 ) bool {
 	if sudoKeeper == nil || args.To == nil {
-		return false
-	}
-
-	if args.Value != nil && args.Value.ToInt().Sign() != 0 {
 		return false
 	}
 
@@ -106,9 +98,6 @@ func NormalizeZeroGasMessage(msg core.Message) core.Message {
 func ValidateZeroGasTxData(txData TxData) error {
 	if txData.GetTo() == nil {
 		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "zero-gas tx must not be contract creation")
-	}
-	if value := txData.GetValueWei(); value != nil && value.Sign() != 0 {
-		return sdkioerrors.Wrapf(ErrInvalidAmount, "zero-gas tx value must be zero: %s", value)
 	}
 	for _, err := range []error{
 		ValidateTxDataAmount(txData),
