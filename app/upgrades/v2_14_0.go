@@ -160,7 +160,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	// STEP 2: Update Treasury CW4 membership with a query-first diff.
 	// -------------------------------------------------------------------------
 	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW4Group) {
-		return fmt.Errorf("Step 2: Skip CW4 group update because contract does not exist for addr %s", addrCfg.TreasuryCW4Group.String())
+		return fmt.Errorf("Step 2: Treasury CW4 Group contract does not exist for addr %s", addrCfg.TreasuryCW4Group.String())
 	}
 
 	respBz, err := nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"list_members":{}}`))
@@ -215,7 +215,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	// STEP 3: Hand Treasury CW4 group admin from nibimultisig to Treasury CW3.
 	// -------------------------------------------------------------------------
 	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW3) {
-		return fmt.Errorf("Step 3: Skip Treasury CW3 update because contract does not exist for addr %s", addrCfg.TreasuryCW3.String())
+		return fmt.Errorf("Step 3: Treasury CW3 contract does not exist for addr %s", addrCfg.TreasuryCW3.String())
 	}
 
 	respBz, err = nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"admin":{}}`))
