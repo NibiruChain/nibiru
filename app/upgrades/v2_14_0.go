@@ -157,18 +157,12 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 2: Skip cleanup if the Treasury CW3 and CW4 contracts are absent.
+	// STEP 2: Update Treasury CW4 membership with a query-first diff.
 	// -------------------------------------------------------------------------
 	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW4Group) {
-		return nil
-	}
-	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW3) {
-		return nil
+		return fmt.Errorf("Step 2: Treasury CW4 Group contract does not exist for addr %s", addrCfg.TreasuryCW4Group.String())
 	}
 
-	// -------------------------------------------------------------------------
-	// STEP 3: Update Treasury CW4 membership with a query-first diff.
-	// -------------------------------------------------------------------------
 	respBz, err := nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"list_members":{}}`))
 	if err != nil {
 		return fmt.Errorf("failed to query Treasury CW4 Group members: %w", err)
@@ -218,8 +212,12 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 4: Hand Treasury CW4 group admin from nibimultisig to Treasury CW3.
+	// STEP 3: Hand Treasury CW4 group admin from nibimultisig to Treasury CW3.
 	// -------------------------------------------------------------------------
+	if !nibiru.WasmKeeper.HasContractInfo(ctx, addrCfg.TreasuryCW3) {
+		return fmt.Errorf("Step 3: Treasury CW3 contract does not exist for addr %s", addrCfg.TreasuryCW3.String())
+	}
+
 	respBz, err = nibiru.WasmKeeper.QuerySmart(ctx, addrCfg.TreasuryCW4Group, []byte(`{"admin":{}}`))
 	if err != nil {
 		return fmt.Errorf("failed to query Treasury CW4 Group admin: %w", err)
@@ -252,7 +250,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 5: Move Treasury CW4 and CW3 wasm admin metadata to Treasury CW3.
+	// STEP 4: Move Treasury CW4 and CW3 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
 	if err := updateWasmAdmin(addrCfg.TreasuryCW4Group, addrCfg.LegacyMultisig, addrCfg.TreasuryCW3); err != nil {
 		return err
@@ -262,7 +260,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 6: Mainnet-only guard for dormant Hot Wallet cleanup.
+	// STEP 5: Mainnet-only guard for dormant Hot Wallet cleanup.
 	// -------------------------------------------------------------------------
 	if ctx.ChainID() != addrCfg.MainnetChainID {
 		return nil
@@ -272,7 +270,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 7: Sweep the Hot Wallet CW3 bank balance into Treasury CW3.
+	// STEP 6: Sweep the Hot Wallet CW3 bank balance into Treasury CW3.
 	// -------------------------------------------------------------------------
 	balances := nibiru.BankKeeper.GetAllBalances(ctx, addrCfg.HotWalletCW3)
 	if !balances.IsZero() {
@@ -283,7 +281,7 @@ func (h Handler_v2_14) runUpgrade2_14_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 
 	// -------------------------------------------------------------------------
-	// STEP 8: Move Hot Wallet CW3 and CW4 wasm admin metadata to Treasury CW3.
+	// STEP 7: Move Hot Wallet CW3 and CW4 wasm admin metadata to Treasury CW3.
 	// -------------------------------------------------------------------------
 	if err := updateWasmAdmin(addrCfg.HotWalletCW3, addrCfg.KevinNanoS, addrCfg.TreasuryCW3); err != nil {
 		return err
