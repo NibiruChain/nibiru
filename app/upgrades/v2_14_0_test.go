@@ -28,16 +28,18 @@ const (
 	artifactCW4Group        = "cw4_group.wasm"
 
 	chainIDMainnet = "cataclysm-1"
+)
 
-	addrLegacyMultisig = "nibi1xfdlvvmx03nyav4840z25m33qrwzy67p4eadn7"
-	addrKevinNanoS     = "nibi1w3s6gdtt09ekhmwzfszc6qtxh298fstu895gn8"
+var (
+	addrLegacyMultisig = upgrades.AddrCfg_v2_14.LegacyMultisig.String()
+	addrKevinNanoS     = upgrades.AddrCfg_v2_14.KevinNanoS.String()
 
-	addrTreasuryAddSigner = "nibi1cj6edencz3tetxuwkxcdrlfwpg8cr02ef3uvz2"
-	addrGimeno            = "nibi1wwhdx03msygelmm8tm5z6nzh4dklwkettwd5vj"
-	addrJC                = "nibi1aj6vgnj5hh0ehe5memz0f38z2lla2z5gdj5vst"
+	addrTreasuryAddSigner = upgrades.AddrCfg_v2_14.TreasuryAddSigner.String()
+	addrGimeno            = upgrades.AddrCfg_v2_14.TreasuryRemoveSigners[0].String()
+	addrJC                = upgrades.AddrCfg_v2_14.TreasuryRemoveSigners[1].String()
 
-	addrLayerZeroUSDCeAdapter = "0x12a272A581feE5577A5dFa371afEB4b2F3a8C2F8"
-	addrLayerZeroWNIBIAdapter = "0x4DF4eFa0a3707b6Cc964F62042E8a303A0376F54"
+	addrLayerZeroUSDCeAdapter = upgrades.AddrCfg_v2_14.LayerZeroOFTAdapters[0]
+	addrLayerZeroWNIBIAdapter = upgrades.AddrCfg_v2_14.LayerZeroOFTAdapters[1]
 )
 
 // TestUpgrade2_14_0_HappyPath stores and instantiates real CW4 group and CW3
