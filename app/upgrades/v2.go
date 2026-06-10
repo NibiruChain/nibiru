@@ -18,7 +18,7 @@ import (
 var (
 	Upgrade2_0_0 = Upgrade{
 		UpgradeName: "v2.0.0",
-		Handler:     DefaultUpgraderHandler{},
+		Handler:     DefaultUpgradeHandler{},
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{evm.ModuleName},
 		},
@@ -32,23 +32,11 @@ var (
 		},
 	}
 
-	Upgrade2_2_0 = Upgrade{
-		UpgradeName:   "v2.2.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_2_0 = NewVanillaUpgrade("v2.2.0")
 
-	Upgrade2_3_0 = Upgrade{
-		UpgradeName:   "v2.3.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_3_0 = NewVanillaUpgrade("v2.3.0")
 
-	Upgrade2_4_0 = Upgrade{
-		UpgradeName:   "v2.4.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_4_0 = NewVanillaUpgrade("v2.4.0")
 
 	Upgrade2_5_0 = Upgrade{
 		UpgradeName:   "v2.5.0",
@@ -56,11 +44,7 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
-	Upgrade2_6_0 = Upgrade{
-		UpgradeName:   "v2.6.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_6_0 = NewVanillaUpgrade("v2.6.0")
 
 	Upgrade2_7_0 = Upgrade{
 		UpgradeName:   "v2.7.0",
@@ -68,35 +52,20 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
-	Upgrade2_8_0 = Upgrade{
-		UpgradeName:   "v2.8.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_8_0 = NewVanillaUpgrade("v2.8.0")
 
-	Upgrade2_9_0 = Upgrade{
-		UpgradeName:   "v2.9.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_9_0 = NewVanillaUpgrade("v2.9.0")
 
-	Upgrade2_10_0 = Upgrade{
-		UpgradeName:   "v2.10.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_10_0 = NewVanillaUpgrade("v2.10.0")
 
-	Upgrade2_11_0 = Upgrade{
-		UpgradeName:   "v2.11.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade2_11_0 = NewVanillaUpgrade("v2.11.0")
 
 	Upgrade2_12_0 = Upgrade{
 		UpgradeName:   "v2.12.0",
 		Handler:       Handler_v2_12{},
 		StoreUpgrades: store.StoreUpgrades{},
 	}
+	Upgrade2_13_0 = NewVanillaUpgrade("v2.13.0")
 
 	// FIXME: Add v2.14.0 to all_upgrades.go before actual release.
 	// Ran on testnet:

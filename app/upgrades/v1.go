@@ -21,39 +21,23 @@ import (
 
 var (
 	// Tests the upgrade process and move to newer version of rocksdb
-	Upgrade1_0_1 = Upgrade{
-		UpgradeName:   "v1.0.1",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_0_1 = NewVanillaUpgrade("v1.0.1")
 
 	// Newer version of the Cosmos-SDK
-	Upgrade1_0_2 = Upgrade{
-		UpgradeName:   "v1.0.2",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_0_2 = NewVanillaUpgrade("v1.0.2")
 
 	// Newer version of the Cosmos-SDK
-	Upgrade1_0_3 = Upgrade{
-		UpgradeName:   "v1.0.3",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_0_3 = NewVanillaUpgrade("v1.0.3")
 
 	Upgrade1_1_0 = Upgrade{
 		UpgradeName: "v1.1.0",
-		Handler:     DefaultUpgraderHandler{},
+		Handler:     DefaultUpgradeHandler{},
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{inflationtypes.ModuleName},
 		},
 	}
 
-	Upgrade1_2_0 = Upgrade{
-		UpgradeName:   "v1.2.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_2_0 = NewVanillaUpgrade("v1.2.0")
 
 	Upgrade1_3_0 = Upgrade{
 		UpgradeName: "v1.3.0",
@@ -63,17 +47,9 @@ var (
 		},
 	}
 
-	Upgrade1_4_0 = Upgrade{
-		UpgradeName:   "v1.4.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_4_0 = NewVanillaUpgrade("v1.4.0")
 
-	Upgrade1_5_0 = Upgrade{
-		UpgradeName:   "v1.5.0",
-		Handler:       DefaultUpgraderHandler{},
-		StoreUpgrades: store.StoreUpgrades{},
-	}
+	Upgrade1_5_0 = NewVanillaUpgrade("v1.5.0")
 )
 
 var _ HandlerImpl = (*Handler_v1_3)(nil)

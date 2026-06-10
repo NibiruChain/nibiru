@@ -9,13 +9,22 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
+// Upgrade describes the behavior for a named Nibiru software upgrade and the
+// upgrade plan (See [upgradetypes.Plan]).
 type Upgrade struct {
+	// UpgradeName must match the name in the on-chain software upgrade plan.
+	// The upgrade keeper uses this value to register the handler and the store
+	// loader for the height specified by governance.
 	UpgradeName string
 
+	// Handler builds the upgrade handler that runs at the upgrade height. Use a
+	// custom handler when the upgrade needs app-specific state changes before
+	// module migrations. Otherwise use [DefaultUpgradeHandler].
 	Handler HandlerImpl
 
-	// StoreUpgrades defines a series of transformations to apply the multistore db
-	// upon load
+	// StoreUpgrades declares store keys added, renamed, or deleted when the node
+	// loads the upgraded binary. Leave this empty when the upgrade does not
+	// change the multistore layout.
 	StoreUpgrades store.StoreUpgrades
 }
 
@@ -41,10 +50,11 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_10_0,
 	Upgrade2_11_0,
 	Upgrade2_12_0,
+	Upgrade2_13_0,
 	Upgrade2_14_0,
 }
 
-// HandlerImpl is a struct wrapper
+// HandlerImpl is a struct wrapper for custom upgrade handler implementations.
 type HandlerImpl interface {
 	Handler(
 		mm *module.Manager,
@@ -53,15 +63,27 @@ type HandlerImpl interface {
 	) upgradetypes.UpgradeHandler
 }
 
-// DefaultUpgraderHandler runs module manager migrations without running any
+// NewVanillaUpgrade returns an [Upgrade] that only performs standard module
+// consensus version migrations without running any custom logic that uses the
+// Nibiru keepers. Standard releases that bump the binary to a new version and
+// modify the state machine are considered "vanilla" upgrades.
+func NewVanillaUpgrade(upgradeName string) Upgrade {
+	return Upgrade{
+		UpgradeName:   upgradeName,
+		Handler:       DefaultUpgradeHandler{},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
+}
+
+// DefaultUpgradeHandler runs module manager migrations without running any
 // other logic that uses the Nibiru keepers.
-type DefaultUpgraderHandler struct{}
+type DefaultUpgradeHandler struct{}
 
-var _ HandlerImpl = (*DefaultUpgraderHandler)(nil)
+var _ HandlerImpl = (*DefaultUpgradeHandler)(nil)
 
-// Handler for [DefaultUpgraderHandler] runs module manager migrations without
+// Handler for [DefaultUpgradeHandler] runs module manager migrations without
 // running any other logic that uses the Nibiru keepers.
-func (h DefaultUpgraderHandler) Handler(
+func (h DefaultUpgradeHandler) Handler(
 	mm *module.Manager,
 	cfg module.Configurator,
 	nibiru *keepers.PublicKeepers,
