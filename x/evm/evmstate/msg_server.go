@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 
@@ -34,8 +33,6 @@ func (k *Keeper) EthereumTx(
 	goCtx context.Context, txMsg *evm.MsgEthereumTx,
 ) (evmResp *evm.MsgEthereumTxResponse, err error) {
 	var (
-		// Debugging string that communicates where the tx failed
-		stage = "validate_basic"
 		// Stateful object that represents and mutates the world state during EVM
 		// execution. The [SDB] (State DB) is the EVM's connection to the chain
 		// state.
@@ -46,22 +43,11 @@ func (k *Keeper) EthereumTx(
 	// Return values are assigned to the local vars (evmResp, err) before we
 	// enter this defer scope.
 	defer func() {
-		switch {
-		case err != nil:
+		if err != nil {
 			err = fmt.Errorf("EthereumTx error: %w", err)
-			if evmResp != nil {
-				log.Printf(`[EVM] TX TRUE FAILURE { stage=%q, txhash="%s", gasUsed=%d, err="%s" }`, stage, txMsg.Hash, evmResp.GasUsed, err)
-			} else {
-				log.Printf(`[EVM] TX TRUE FAILURE { stage=%q, txhash="%s", err="%s" }`, stage, txMsg.Hash, err)
-			}
-		case evmResp != nil && evmResp.Failed() && sdb.Ctx().LastErrApplyEvmMsg() != nil:
-			log.Printf(`[EVM] TX executed but failed { txhash="%s", gasUsed=%d, vmError="%v" }`, txMsg.Hash, evmResp.GasUsed, evmResp.VmError)
-		default:
-			log.Printf(`[EVM] TX TRUE SUCCESS { txhash="%s", gasUsed=%d }`, txMsg.Hash, evmResp.GasUsed)
 		}
 	}()
 
-	log.Printf(`[EVM] TX START { txhash="%s" }`, txMsg.Hash)
 	coreTx, _, err := txMsg.Validate()
 	if err != nil {
 		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
@@ -81,12 +67,10 @@ func (k *Keeper) EthereumTx(
 		gethcore.NewLondonSigner(evmCfg.ChainConfig.ChainID), evmCfg.BaseFeeWei,
 	)
 	if err != nil {
-		stage = "core_tx_to_msg"
 		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
-	stage = "apply_evm_msg"
 	evmObj := k.NewEVM(sdb.Ctx(), *evmMsg, evmCfg, nil /*tracer*/, sdb)
 
 	var applyErr error
@@ -101,14 +85,12 @@ func (k *Keeper) EthereumTx(
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 			return nil, sdkioerrors.Wrap(applyErr, "consensus error in ethereum message")
 		} else {
-			// Execution error - log but continue processing
-			log.Printf("EthereumTx: execution error { stage=%q, applyErr=%q }", stage, applyErr)
+			// Execution errors are represented on the EVM response and continue processing.
 			sdb.Ctx().WithLastErrApplyEvmMsg(applyErr)
 		}
 	}
 
 	if evmResp != nil {
-		stage = "safe_consume_gas"
 		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
 		if gasErr != nil {
 			if !evmResp.Failed() { // only set VmError if not already failed
@@ -117,7 +99,6 @@ func (k *Keeper) EthereumTx(
 		}
 	}
 
-	stage = "post_execution_gas_refund"
 	// rootCtxGasless: Mutable sdb.RootCtx() with ignored gas metering. After
 	// the "apply_evm_msg" stage, gas metering has no chance of infinite
 	// consumption, and metering should be ignored. The "evmResp" determines
@@ -154,7 +135,6 @@ func (k *Keeper) EthereumTx(
 		}
 	}
 
-	stage = "post_execution_events_and_tx_index"
 	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
 
 	err = txEvents.EmitEvents(rootCtxGasless)

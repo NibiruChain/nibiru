@@ -4,7 +4,6 @@ package evmante
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"path"
 	"reflect"
@@ -125,16 +124,13 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 		handlerGroup.TxConfig(ctx, msgEthTx.AsTransaction().Hash()),
 	)
 
-	log.Printf(
-		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ IsCheckTx %v, IsDeliverTx %v  ReCheckTx%v }",
-		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.IsDeliverTx(), sdb.Ctx().IsReCheckTx())
 	sdb.SetCtx(
 		sdb.Ctx().
 			WithIsEvmTx(true).
 			WithEvmTxHash(sdb.TxCfg().TxHash),
 	)
 
-	for idx, evmHandler := range handlerGroup.Steps {
+	for _, evmHandler := range handlerGroup.Steps {
 		err = evmHandler(
 			sdb,
 			handlerGroup.EVMKeeper,
@@ -143,19 +139,10 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 			handlerGroup.Opts,
 		)
 		if err != nil {
-			log.Printf("AnteHandlerEvm step %v failed: %s",
-				handlerGroup.StepNames[idx], err,
-			)
 			return ctx, err
 		}
-		log.Printf("AnteHandlerEvm step %v passed",
-			handlerGroup.StepNames[idx],
-		)
 	}
 
-	log.Printf(
-		"EthState AnteHandle END (SUCCESS):\ntxhash: %s\n{ IsCheckTx %v, ReCheckTx %v, IsDeliverTx %v }",
-		msgEthTx.Hash, sdb.Ctx().IsCheckTx(), sdb.Ctx().IsReCheckTx(), sdb.IsDeliverTx())
 	if evmstate.IsDeliverTx(sdb.Ctx()) {
 		sdb.Commit() // Persist
 	}
