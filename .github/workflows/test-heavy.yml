@@ -61,10 +61,21 @@ jobs:
       - name: "Launch localnet"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: |
-          just localnet --no-build &
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
           # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
           # sleep 22s to keep a small stability buffer and reduce startup races.
-          sleep 22
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
 
       - name: "Run all tests."
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'

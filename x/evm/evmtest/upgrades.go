@@ -12,20 +12,18 @@ import (
 )
 
 func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.CreateUpgradeHandler(
-		deps.App.ModuleManager,
-		module.NewConfigurator(
-			deps.App.AppCodec(),
-			deps.App.MsgServiceRouter(),
-			deps.App.GRPCQueryRouter(),
-		),
-		&deps.App.PublicKeepers,
-		deps.App.GetIBCKeeper().ClientKeeper,
-	)
-
-	// ---- Run the upgrade handler. ----
-
 	var (
+		// ---- Run the upgrade handler. ----
+		upgradeHandler = upgrade.Handler.Handler(
+			deps.App.ModuleManager,
+			module.NewConfigurator(
+				deps.App.AppCodec(),
+				deps.App.MsgServiceRouter(),
+				deps.App.GRPCQueryRouter(),
+			),
+			&deps.App.PublicKeepers,
+		)
+
 		// Use the real, persisted module versions from state (ctx)
 		//
 		// The "module.Manager.RunMigrations" interprets an empty

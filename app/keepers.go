@@ -80,9 +80,6 @@ type AppKeepers struct {
 	   the IBC light client misbehavior evidence route. */
 	evidenceKeeper evidencekeeper.Keeper
 
-	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
-	   the app, so we can SetRouter on it correctly. */
-	ibcKeeper    *ibckeeper.Keeper
 	ibcFeeKeeper ibcfeekeeper.Keeper
 	/* ibcTransferKeeper is for cross-chain fungible token transfers. */
 	ibcTransferKeeper   ibctransferkeeper.Keeper
@@ -139,7 +136,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	// ---------------------------------- IBC keepers
 
-	app.ibcKeeper = ibckeeper.NewKeeper(
+	app.IbcKeeper = ibckeeper.NewKeeper(
 		app.appCodec,
 		app.keys[ibcexported.StoreKey],
 		app.getSubspace(ibcexported.ModuleName),
@@ -151,9 +148,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	// IBC Fee Module keeper
 	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
 		app.appCodec, app.keys[ibcfeetypes.StoreKey],
-		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.IbcKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.IbcKeeper.ChannelKeeper,
+		&app.IbcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 	)
@@ -163,8 +160,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.keys[ibctransfertypes.StoreKey],
 		/* paramSubspace */ app.getSubspace(ibctransfertypes.ModuleName),
 		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
-		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.IbcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.IbcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ScopedTransferKeeper,
@@ -174,8 +171,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.appCodec, app.keys[icacontrollertypes.StoreKey],
 		app.getSubspace(icacontrollertypes.SubModuleName),
 		app.ibcFeeKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		&app.IbcKeeper.PortKeeper,
 		app.ScopedICAControllerKeeper,
 		app.MsgServiceRouter(),
 	)
@@ -185,8 +182,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.keys[icahosttypes.StoreKey],
 		app.getSubspace(icahosttypes.SubModuleName),
 		app.ibcFeeKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		&app.IbcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
@@ -236,7 +233,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	wmha := wasmext.MsgHandlerArgs{
 		Router:           app.MsgServiceRouter(),
 		Ics4Wrapper:      app.ibcFeeKeeper,
-		ChannelKeeper:    app.ibcKeeper.ChannelKeeper,
+		ChannelKeeper:    app.IbcKeeper.ChannelKeeper,
 		CapabilityKeeper: app.ScopedWasmKeeper,
 		BankKeeper:       app.BankKeeper,
 		Unpacker:         app.appCodec,
@@ -252,7 +249,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		wmha.Ics4Wrapper, // ISC4 Wrapper: fee IBC middleware
 		wmha.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		&app.IbcKeeper.PortKeeper,
 		wmha.CapabilityKeeper,
 		wmha.PortSource,
 		wmha.Router,
@@ -267,7 +264,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
 		app.appCodec,
 		app.keys[ibcwasmtypes.StoreKey],
-		app.ibcKeeper.ClientKeeper,
+		app.IbcKeeper.ClientKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmVM,
 		app.GRPCQueryRouter(),
@@ -323,7 +320,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	icaHostStack := icahost.NewIBCModule(app.icaHostKeeper)
 
 	var wasmStack porttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.ibcKeeper.ChannelKeeper, app.ibcFeeKeeper)
+	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IbcKeeper.ChannelKeeper, app.ibcFeeKeeper)
 	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.ibcFeeKeeper)
 
 	// Add transfer stack to IBC Router
@@ -351,14 +348,14 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
-	app.ibcKeeper.SetRouter(ibcRouter)
+	app.IbcKeeper.SetRouter(ibcRouter)
 
 	govRouter := govv1beta1types.NewRouter()
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IbcKeeper.ClientKeeper))
 
 	app.GovKeeper.SetLegacyRouter(govRouter)
 

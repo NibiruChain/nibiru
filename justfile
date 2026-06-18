@@ -94,22 +94,48 @@ gen-proto-openapi:
 
 lint: 
   #!/usr/bin/env bash
-  echo "Running golangci-lint with docker!"
+  set -euo pipefail
+  source contrib/bashlib.sh
+
   image_version="v2.6.1"
+  lint_cmd=(golangci-lint run -v --fix)
+
+  if which_ok golangci-lint >/dev/null 2>&1; then
+    local_version="$(golangci-lint version --short 2>/dev/null || true)"
+    image_major="${image_version#v}"
+    image_major="${image_major%%.*}"
+    local_major="${local_version#v}"
+    local_major="${local_major%%.*}"
+
+    if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
+      log_info "Running local golangci-lint $local_version"
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
+      log_warning "Running local golangci-lint ${local_version:-unknown}; repo pins $image_version"
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    log_warning "Local golangci-lint version ${local_version:-unknown} does not match major version $image_major; using Docker"
+  else
+    log_info "golangci-lint not found locally; using Docker"
+  fi
+
+  which_ok docker
+  log_info "Running golangci-lint with Docker image golangci/golangci-lint:$image_version"
   docker run --rm \
     -v "$(pwd)":/app \
     -v ~/.cache/golangci-lint/$image_version:/root/.cache \
     -w /app \
     golangci/golangci-lint:$image_version \
-    golangci-lint run -v --fix 2>&1
+    "${lint_cmd[@]}" 2>&1
 
-# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --features featureA"
+# Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-  make localnet FLAGS="{{PASS_FLAGS}}"
-
-# Runs a Nibiru local network without building and installing. "just localnet --no-build"
-localnet-fast:
-  make localnet FLAGS="--no-build"
+  bash contrib/scripts/localnet.sh --run {{PASS_FLAGS}}
 
 # Clears the logs directory
 log-clear:
@@ -147,11 +173,13 @@ test-e2e:
 test-localnet:
   #!/usr/bin/env bash
   source contrib/bashlib.sh
+  log_info "Sleeping for 8 seconds to give network time to spin up and run a few blocks."
+  set -x
   just install
-  bash contrib/scripts/localnet.sh &
-  log_info "Sleeping for 6 seconds to give network time to spin up and run a few blocks."
-  sleep 6 
+  just localnet --no-build &
+  sleep 8
   kill $(pgrep -x nibid) # Stops network running as background process.
+  set +x
   log_success "Spun up localnet"
 
 # Test: "chaosnet.sh" script

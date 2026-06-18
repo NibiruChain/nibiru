@@ -42,11 +42,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ...
 
+## v2.14.0
+
+Nibiru v2.14 makes the Treasury multisig self-managing, hardens governance and
+tokenfactory safety around deposits and module accounts, and expands zero-gas
+EVM support so allowlisted applications work more cleanly with browser wallets
+and payable calls.
+
+- [Release Link: v2.14.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.14.0).
+- Date: 2026-06-10
+- Draft source range: non-Dependabot release PRs through `v2.14.0`.
+
+### 1 - Main Highlights
+
+- **Governance operations** - Treasury CW3 becomes the admin for the Treasury CW4 voter group, removing the legacy SDK multisig from routine voter-set administration. Future voter changes can pass through normal CW3 proposals instead of depending on unavailable legacy signers. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+- **Mainnet Treasury cleanup** - The v2.14 upgrade handler updates Treasury wasm admin metadata, deprecates the dormant Hot Wallet on mainnet, sweeps its bank balance into Treasury, and leaves its contracts on chain without using them for new operations. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+- **Governance safety** - Governance deposits are restricted to the configured `MinDeposit` denoms, tokenfactory mint and burn messages cannot target module accounts, and tokenfactory denom creation is limited to governance or sudoers. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+- **Zero-gas EVM UX** - Eligible calls to `always_zero_gas_contracts` are classified before fee-sensitive validation, so wallets that submit nonzero fee fields do not accidentally block otherwise valid gasless transactions. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596), [#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+- **Wallet RPC compatibility** - Wallet-facing EVM JSON-RPC fee hints now report zero fee surfaces for zero-gas flows, including gas price, EIP-1559 block fee fields, fee history, WebSocket heads, transactions, and receipts. Consensus fee rules and EVM execution semantics remain unchanged for non-exempt transactions. ([#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+- **Payable zero-gas calls** - Allowlisted zero-gas contracts can receive nonzero native `msg.value` without requiring NIBI gas payment, while still enforcing that the sender has enough native EVM balance for the value transfer. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+- **Release wiring** - Upgrade registration was tightened with shared helper wiring, historical `v2.13.0` registration, stronger v2.14 contract-existence checks, and upgrade tests that use the app's real handler path. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+### 2 - Treasury CW3 Self-Administration
+
+**What it enables:** Active Treasury CW3 voters can manage the CW4 voter set
+through on-chain proposals, without depending on the legacy `nibimultisig`
+keyring multisig.
+
+The v2.14 upgrade handler performs the Treasury migration on `cataclysm-1` and
+`nibiru-testnet-2`. It removes unavailable legacy voters when present, adds the
+new Treasury voter, and changes the Treasury CW4 group admin to the Treasury CW3
+contract. The Treasury CW3 threshold remains 3-of-N. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+
+The same upgrade also aligns wasm module admin authority for Treasury CW3 and
+CW4 with the Treasury CW3 contract. On mainnet only, it deprecates the old Hot
+Wallet by sweeping its remaining bank balance into Treasury and moving Hot
+Wallet CW3/CW4 wasm admin authority to Treasury CW3. The Hot Wallet contracts
+remain on chain, but should not be used for new operations. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+
+### 3 - Governance and Tokenfactory Safety
+
+**Why it matters:** Governance deposit escrow must not be burnable or stranded
+through custom tokenfactory denoms.
+
+This release closes a failure path where a tokenfactory denom admin could burn
+governance deposit escrow for a custom denom, leaving governance with refund
+state but no coins and causing repeated EndBlock panics when deposits expired.
+The forked SDK gov keeper now rejects deposits whose denom is not listed in
+`MinDeposit`, covering both initial proposal deposits and later `MsgDeposit`
+calls. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+
+Tokenfactory also rejects `MsgMint` and `MsgBurn` requests that target module
+accounts, and `MsgCreateDenom` is restricted to the governance module authority
+or addresses allowed by `x/sudo`. On Nibiru mainnet, this effectively keeps gov
+deposits on `unibi` while reducing spam and defense-in-depth risk from
+admin-controlled custom denoms. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+
+### 4 - Zero-Gas EVM Wallet Compatibility
+
+**What it enables:** Allowlisted applications can offer gasless EVM calls to
+users whose wallets still populate standard Ethereum fee fields or run native
+balance preflight checks.
+
+The chain now classifies eligible EVM transactions before fee-sensitive ante and
+message-server validation. For calls to `always_zero_gas_contracts`, execution
+uses zero-gas-aware validation while preserving the raw signed Ethereum
+transaction for identity, signature, hash, chain ID, nonce, transaction views,
+and debugging. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596))
+
+JSON-RPC simulation and tracing paths use the same zero-fee execution semantics
+for allowlisted calls, including `eth_call`, `eth_estimateGas`,
+`debug_traceCall`, and `debug_traceTransaction`. Receipts report zero applied
+fee for classified zero-gas transactions, while raw submitted wallet fee fields
+remain visible where clients expect them. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596), [#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+
+Wallet-facing RPC hints also return zero fee surfaces across `eth_gasPrice`,
+`eth_feeHistory`, `eth_getBlockByNumber`, `eth_getBlockByHash`, WebSocket
+`newHeads`, transaction responses, and receipts. This targets browser wallet
+preflight behavior without changing consensus rules, ante enforcement, EVM
+execution, refunds, or `BASEFEE` semantics for non-exempt transactions. ([#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+
+### 5 - Payable Zero-Gas Calls
+
+v2.14 removes the old `tx.Value == 0` eligibility requirement for
+`always_zero_gas_contracts`. Payable calls to allowlisted contracts can execute
+without native NIBI gas payment, but the sender must still have enough native
+EVM balance for `msg.value`. In short: zero-gas skips gas affordability, not
+value solvency. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+
+The release adds regression coverage for nonzero-value classification,
+nil/zero/positive/negative value validation, exact-balance ante cases, and
+message-server value transfer without gas payment. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+
+### 6 - Release Wiring, Docs, and Test Infrastructure
+
+The v2.14 release wiring adds a shared `NewVanillaUpgrade` helper for standard
+migration-only releases, registers `v2.13.0` in the historical upgrade list
+before `v2.14.0`, and makes required Treasury CW3/CW4 contract lookups fail
+loudly instead of silently skipping required mainnet or testnet updates. Upgrade
+tests now reuse the shared EVM test upgrade runner so they exercise the app's
+real handler wiring. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+The repository now also carries the official docs corpus under `docs/`, plus
+local sync scripts, docs cleanup, and localnet developer-experience fixes.
+`contrib/scripts/localnet.sh` gained safer shell settings, configurable log
+levels, help text, and better color-output guards, while CI detects localnet
+startup failures more directly. ([#2609](https://github.com/NibiruChain/nibiru/pull/2609))
+
+Security-report docs were refreshed with the Code4rena competitive audit PDF and
+direct report links. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+### 7 - Appendix for v2.14.0
+
+#### For Builders
+
+- **Gasless app flows** - Calls to allowlisted `always_zero_gas_contracts` should work more reliably with browser wallets that add fee fields or inspect EIP-1559 fee hints before signing.
+- **Payable gasless calls** - Allowlisted payable contracts can receive native value without requiring native NIBI gas payment, but senders still need enough balance for the transferred value.
+- **RPC expectations** - Wallet-facing fee hints may show zero for compatibility, while raw submitted transaction fee fields remain available for debugging.
+- **Docs in repo** - Official docs content now lives in `docs/`, making chain docs easier to review alongside code changes.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.14.0`.
+- **Governance checks:** After upgrade, verify Treasury CW4 contract-state admin and wasm module admin point to Treasury CW3 on the expected chain.
+- **Safety checks:** Watch for required Treasury contract lookup failures during upgrade rehearsal; v2.14 is designed to fail loudly if required contracts are missing.
+- **EVM checks:** Validate allowlisted zero-gas flows through wallet RPC surfaces, transaction execution, receipts, and payable value-transfer cases.
+
+#### For Contributors / Repo Maintainers
+
+- Upgrade definitions use shared helper wiring so custom handlers stand out from standard migration-only releases.
+- The v2.14 multisig upgrade tests instantiate mainnet-derived CW3/CW4 wasm artifacts and assert membership, admin changes, bank sweep behavior, and expected events.
+- Tokenfactory and gov tests cover deposit-denom restrictions, module-account mint/burn protection, and sudo-gated denom creation.
+- Localnet and docs changes are intentionally included in this release branch but are not consensus-critical upgrade behavior.
+
+## v2.12.0
+
 ### Improvements
 
 * evm: remove oracle precompile registration, runtime implementation, and EVM address `0x...0801` from the precompile address set.
 * evm-embeds: drop oracle Solidity interfaces/wrappers and generated oracle ABI/artifact outputs from `@nibiruchain/solidity`.
 * evm-e2e: remove oracle precompile contract/tests and related helper wiring.
+* evm: truncate leaked SDK events on VM-failed EVM transactions while preserving canonical EVM failure metadata. ([#2543](https://github.com/NibiruChain/nibiru/pull/2543))
 
 ### API Breaking
 
@@ -65,7 +201,7 @@ consensus determinism.
 ### 1 - Main Highlights
 
 - **Fixed** - Successful EVM transactions were sometimes shown as failed due to Cosmos SDK gas-meter issues. No longer. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
-- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender with no gas balance, as long as value is 0. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
+- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
 - **Improved** - Precompiles now report gas cleanly with dynamic handling, and SDK out-of-gas panics are recovered into normal errors instead of crashing the node. ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
 - **Security** - Upgraded CometBFT to patched v0.37.18 for CSA-2026-001 (Tachyon), a critical consensus-level issue affecting block time guarantees. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
 - **Consensus safety** - Removed nondeterministic Go map iteration in consensus-critical paths (oracle + EVM state commit), addressing intermittent apphash mismatches. ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
@@ -91,8 +227,8 @@ Includes:
 **What it enables:** First-time onboarding and "no gas balance" execution for calls into governance-allowlisted contracts.
 
 **How it works:**
-- If a transaction calls a **governance-allowlisted contract** and `value == 0`, the chain marks it as "zero gas" early in the ante handler.
-- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`.
+- If a transaction calls a **governance-allowlisted contract**, the chain marks it as "zero gas" early in the ante handler.
+- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`, including native value solvency for `msg.value`.
 - A governance-managed list `ZeroGasActors.always_zero_gas_contracts` allows **any sender** to invoke specific EVM contracts with zero gas.
 
 **Governance:** This is controlled by a governance-managed allowlist. Manage via `sudo edit-zero-gas` and the `always_zero_gas_contracts` field.
@@ -134,7 +270,7 @@ This release upgrades CometBFT to **v0.37.18**, which includes the required fix 
 
 #### For Builders
 - **Tx status correctness** — Successful EVM calls should no longer be mislabeled as failed due to SDK gas-meter issues.
-- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it with `value == 0` and no gas balance.
+- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance.
 - **Precompile behavior** — Expect cleaner out-of-gas error surfaces and more accurate gas reporting around dynamic precompiles.
 - **Passkeys / account abstraction** — New contracts and SDK exist for passkey-secured ERC-4337 flows; good time to prototype onboarding without seed phrases.
 - **CLI flags** — Transaction flags are more concise by default so developers can see command-specific flags more clearly. ([#2449](https://github.com/NibiruChain/nibiru/pull/2449))

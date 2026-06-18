@@ -166,6 +166,97 @@ func (s *Suite) TestAnteHandlerEVM() {
 				s.Require().True(evm.IsZeroGasEthTx(newCtx), "expected IsZeroGasEthTx to be true for zero-gas tx")
 			},
 		},
+		{
+			name: "zero-gas: nonzero value with exact value balance passes full ante",
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+				targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+				deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+					AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+				})
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(123))
+			},
+			ctxSetup: func(deps *evmtest.TestDeps) {
+				gasPrice := sdk.NewInt64Coin("unibi", 1)
+				maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
+				cp := &tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{
+						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
+					},
+				}
+				deps.SetCtx(deps.Ctx().
+					WithMinGasPrices(sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice))).
+					WithIsCheckTx(true).
+					WithConsensusParams(cp),
+				)
+			},
+			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
+				targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+				txMsg := evm.NewTx(&evm.EvmTxArgs{
+					ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+					Nonce:    0,
+					GasLimit: 50_000,
+					GasPrice: evm.NativeToWei(big.NewInt(1)),
+					To:       &targetAddr,
+					Amount:   big.NewInt(123),
+				})
+				txMsg.From = deps.Sender.EthAddr.Hex()
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
+				s.Require().NoError(err)
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
+				s.Require().NoError(err)
+				return tx
+			},
+			wantErr: "",
+			onSuccess: func(newCtx sdk.Context) {
+				s.Require().True(evm.IsZeroGasEthTx(newCtx), "expected IsZeroGasEthTx to be true for payable zero-gas tx")
+			},
+		},
+		{
+			name: "zero-gas: nonzero value with insufficient value balance fails full ante",
+			beforeTxSetup: func(deps *evmtest.TestDeps, sdb *evmstate.SDB) {
+				targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+				deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+					AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+				})
+				AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(122))
+			},
+			ctxSetup: func(deps *evmtest.TestDeps) {
+				gasPrice := sdk.NewInt64Coin("unibi", 1)
+				maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
+				cp := &tmproto.ConsensusParams{
+					Block: &tmproto.BlockParams{
+						MaxGas: evm.NativeToWei(maxGasMicronibi).Int64(),
+					},
+				}
+				deps.SetCtx(deps.Ctx().
+					WithMinGasPrices(sdk.NewDecCoins(sdk.NewDecCoinFromCoin(gasPrice))).
+					WithIsCheckTx(true).
+					WithConsensusParams(cp),
+				)
+			},
+			txSetup: func(deps *evmtest.TestDeps) sdk.FeeTx {
+				targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+				txMsg := evm.NewTx(&evm.EvmTxArgs{
+					ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+					Nonce:    0,
+					GasLimit: 50_000,
+					GasPrice: big.NewInt(0),
+					To:       &targetAddr,
+					Amount:   big.NewInt(123),
+				})
+				txMsg.From = deps.Sender.EthAddr.Hex()
+				gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+				err := txMsg.Sign(gethSigner, deps.Sender.KeyringSigner)
+				s.Require().NoError(err)
+				txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+				tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
+				s.Require().NoError(err)
+				return tx
+			},
+			wantErr: "failed to transfer 123 wei",
+		},
 	}
 
 	for _, tc := range testCases {
