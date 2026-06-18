@@ -2,3 +2,12 @@ artifacts/solidity/build-info
 *.dbg.json
 
 .env
+
+# Compiled binaries
+trader
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib

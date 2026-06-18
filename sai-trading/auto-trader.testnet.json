@@ -1,0 +1,21 @@
+{
+  "network": {
+    "mode": "testnet",
+    "networks_toml": "networks.toml"
+  },
+  "trading": {
+    "market_indices": [0, 1, 14, 18, 44],
+    "collateral_indices": [4],
+    "min_trade_size": 10000,
+    "max_trade_size": 100000,
+    "min_leverage": 1,
+    "max_leverage": 5
+  },
+  "bot": {
+    "blocks_before_close": 10,
+    "max_open_positions": 2,
+    "loop_delay_seconds": 10,
+    "min_seconds_between_opens": 600,
+    "health_check_interval_seconds": 1800
+  }
+}

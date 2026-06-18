@@ -15,5 +15,21 @@ e2e-deploy:
   #!/usr/bin/env bash
   bun run e2e_deploy.ts
 
+e2e-test:
+  #!/usr/bin/env bash
+  go test -tags=e2e -v -timeout 15m ./services/evmtrader -run TestAutoTrading
+
 run-trader *args:
-  go run ./cmd/trader {{args}} 
+  go run ./cmd/trader {{args}}
+
+run-auto-trader *args:
+  go run ./cmd/trader auto {{args}}
+
+run-auto-localnet:
+  go run ./cmd/trader auto --config auto-trader.localnet.json
+
+run-auto-testnet:
+  go run ./cmd/trader auto --config auto-trader.testnet.json
+
+docker-build: 
+  docker build -f Dockerfile -t sai-trader:latest ..
