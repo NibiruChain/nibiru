@@ -119,6 +119,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		GetBuildWasmMsg(),
 		DecodeBase64Cmd(app.DefaultNodeHome),
+		LocalnetCmd(),
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
