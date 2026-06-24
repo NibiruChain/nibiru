@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 
 import { account, TEST_TIMEOUT } from "./testdeps"
-import { deployContractTestERC20 } from "./utils"
+import { deployContractTestERC20, txWait } from "./utils"
 
 describe("ERC-20 contract tests", () => {
   it(
@@ -20,7 +20,7 @@ describe("ERC-20 contract tests", () => {
       // send to alice
       const amountToSend = parseUnits("1000", 18) // contract tokens
       let tx = await contract.transfer(alice, amountToSend)
-      await tx.wait()
+      await txWait(tx, { label: "erc20 transfer" })
 
       expect(contract.balanceOf(account)).resolves.toEqual(
         ownerInitialBalance - amountToSend,

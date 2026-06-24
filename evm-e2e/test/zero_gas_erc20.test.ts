@@ -2,8 +2,8 @@ import { newClog } from "@uniquedivine/jiyuu"
 import { expect, test } from "bun:test" // eslint-disable-line import/no-unresolved
 import { parseUnits, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
-import { deployContractTestERC20 } from "./utils"
+import { account, provider, TEST_TIMEOUT } from "./testdeps"
+import { deployContractTestERC20, txWait } from "./utils"
 import { addZeroGasContract } from "./zero_gas_chain_helpers"
 
 const { clog, cerr, clogCmd } = newClog(
@@ -33,7 +33,7 @@ test(
     expect(freshInitialTokenBalance).toEqual(0n)
     const amountToFundFresh = parseUnits("100", 18)
     const fundTx = await contract.transfer(fresh.address, amountToFundFresh)
-    await fundTx.wait(1, TX_WAIT_TIMEOUT)
+    await txWait(fundTx, { label: "zero_gas fund fresh account" })
     const freshTokenBalanceAfterFund = await contract.balanceOf(fresh.address)
     expect(freshTokenBalanceAfterFund).toEqual(amountToFundFresh)
     const freshNibiBefore = await provider.getBalance(fresh.address)
@@ -55,7 +55,7 @@ test(
     )
 
     clog("Tx should succeed and be directed to the zero-gas ERC20 contract.")
-    const receipt = await zeroGasTx.wait(1, TX_WAIT_TIMEOUT)
+    const receipt = await txWait(zeroGasTx, { label: "zero_gas transfer" })
     expect(receipt.status).toEqual(1)
     expect(receipt.to?.toLowerCase()).toEqual(zeroGasErc20Addr.toLowerCase())
 
@@ -91,7 +91,9 @@ test(
         maxPriorityFeePerGas: 1_000_000_000n,
       },
     )
-    const nonzeroFeeReceipt = await nonzeroFeeTx.wait(1, TX_WAIT_TIMEOUT)
+    const nonzeroFeeReceipt = await txWait(nonzeroFeeTx, {
+      label: "zero_gas nonzero fee transfer",
+    })
     expect(nonzeroFeeReceipt.status).toEqual(1)
     expect(nonzeroFeeReceipt.to?.toLowerCase()).toEqual(
       zeroGasErc20Addr.toLowerCase(),

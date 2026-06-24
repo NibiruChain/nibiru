@@ -3,7 +3,7 @@ import { ethers, Log, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
 import { account, TEST_TIMEOUT } from "./testdeps"
-import { deployContractEventsEmitter } from "./utils"
+import { deployContractEventsEmitter, txWait } from "./utils"
 
 describe("Transaction Receipt Tests", () => {
   let recipient = ethers.Wallet.createRandom().address
@@ -16,7 +16,7 @@ describe("Transaction Receipt Tests", () => {
         to: recipient,
         value,
       })
-      const receipt = await tx.wait()
+      const receipt = await txWait(tx, { label: "receipt simple transfer" })
 
       assertBaseReceiptFields(receipt)
       expect(receipt.to).toEqual(recipient)
@@ -30,7 +30,9 @@ describe("Transaction Receipt Tests", () => {
     async () => {
       const factory = new TestERC20__factory(account)
       const deployTx = await factory.deploy()
-      const receipt = await deployTx.deploymentTransaction().wait()
+      const receipt = await txWait(deployTx.deploymentTransaction()!, {
+        label: "receipt contract deployment",
+      })
 
       assertBaseReceiptFields(receipt)
       expect(receipt.to).toBeNull() // Contract creation has no 'to' address
@@ -50,7 +52,7 @@ describe("Transaction Receipt Tests", () => {
       const expectedValue = 123n
 
       const tx = await contract.emitEvent(expectedValue)
-      const receipt = await tx.wait()
+      const receipt = await txWait(tx, { label: "receipt event emission" })
 
       assertBaseReceiptFields(receipt)
       expect(receipt.to).toEqual(contract.target.toString())
