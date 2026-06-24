@@ -12,8 +12,8 @@
 import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
-import { deployContractSendNibi } from "./utils"
+import { account, provider, TEST_TIMEOUT } from "./testdeps"
+import { deployContractSendNibi, txWait } from "./utils"
 
 async function testSendNibi(
   method: "sendViaTransfer" | "sendViaSend" | "sendViaCall",
@@ -27,7 +27,7 @@ async function testSendNibi(
   expect(recipientBalanceBefore).toEqual(BigInt(0))
 
   const tx = await contract[method](recipient, { value: weiToSend })
-  const receipt = await tx.wait(1, TX_WAIT_TIMEOUT)
+  const receipt = await txWait(tx, { label: `send_nibi ${method}` })
 
   const tenPow12 = toBigInt(1e12)
   const txCostMicronibi = weiToSend / tenPow12 + receipt.gasUsed
