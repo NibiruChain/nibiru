@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/CosmWasm/wasmd v0.44.0
-	github.com/CosmWasm/wasmvm v1.9.0
+	github.com/CosmWasm/wasmvm v1.10.0
 
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.37.18
@@ -261,7 +261,7 @@ replace (
 
 	// Replace for Cosmos-SDK using local repo. Uncomment to use.
 	github.com/CosmWasm/wasmd => ./internal/wasmd
-	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.9.0
+	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
 	github.com/cosmos/cosmos-sdk => ./internal/cosmos-sdk
 
 	// Replace statements using GitHub tags prior to use of internal. Left
