@@ -73,7 +73,7 @@ func parseStargateMsgs(jsonData any, msgs *[]wasmvm.StargateMsg) {
 // "wasmvm.StargateMsg".
 type StargateMsgDecoded struct {
 	TypeURL string `json:"type_url"`
-	Value   string `json:"value"`
+	Value   any    `json:"value"`
 }
 
 // DecodeBase64StargateMsgs decodes a series of base64-encoded
@@ -131,13 +131,25 @@ func DecodeBase64StargateMsgs(
 				return newSgMsgs, err
 			}
 
-			newSgMsgs = append(newSgMsgs,
-				StargateMsgDecoded{sgMsg.TypeURL, string(outBytes)},
-			)
+			var outValue any
+			if err := json.Unmarshal(outBytes, &outValue); err != nil {
+				return newSgMsgs, err
+			}
+
+			newSgMsgs = append(newSgMsgs, StargateMsgDecoded{
+				TypeURL: sgMsg.TypeURL,
+				Value:   outValue,
+			})
 		} else if _, err := json.Marshal(value); err == nil {
-			newSgMsgs = append(newSgMsgs,
-				StargateMsgDecoded{sgMsg.TypeURL, string(sgMsg.Value)},
-			)
+			var outValue any
+			if err := json.Unmarshal([]byte(value), &outValue); err != nil {
+				outValue = string(sgMsg.Value)
+			}
+
+			newSgMsgs = append(newSgMsgs, StargateMsgDecoded{
+				TypeURL: sgMsg.TypeURL,
+				Value:   outValue,
+			})
 		} else {
 			return newSgMsgs, fmt.Errorf(
 				"parse error: encountered wasmvm.StargateMsg with unexpected format: %s", sgMsg)
@@ -160,7 +172,11 @@ The input should be a JSON object with 'type_url' and 'value' fields.`,
 
 			outMessage, err := DecodeBase64StargateMsgs([]byte(args[0]), clientCtx)
 			if err == nil {
-				fmt.Println(outMessage)
+				outBytes, err := json.MarshalIndent(outMessage, "", "  ")
+				if err != nil {
+					return err
+				}
+				cmd.Println(string(outBytes))
 			}
 			return err
 		},
