@@ -93,9 +93,7 @@ wasmvmlib: $(TEMPDIR)/
 	then \
 	  if [ "$(OS_NAME)" = "darwin" ] ; \
 	  then \
-	    echo "Darwin builds are not supported for Nibiru wasmvm v$(WASMVM_VERSION) yet."; \
-	    echo "TODO: publish libwasmvmstatic_darwin.a in NibiruChain/go-wasmvm before enabling Darwin builds."; \
-	    exit 1; \
+	    wget https://github.com/NibiruChain/go-wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvmstatic_darwin.a; \
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
