@@ -4,6 +4,7 @@ import {
   ContractTransactionResponse,
   parseEther,
   toBigInt,
+  TransactionReceipt,
   TransactionResponse,
   Wallet,
   type TransactionRequest,
@@ -69,6 +70,102 @@ export const txResultLite = (
   }
 }
 
+type WaitForTxReceiptOptions = {
+  attempts?: number
+  blockTimeoutMs?: number
+  pollIntervalMs?: number
+  label?: string
+  requireSuccess?: boolean
+}
+
+const waitForBlockAfter = async (
+  blockNumber: number,
+  timeoutMs: number,
+  pollIntervalMs: number,
+  txHash: string,
+): Promise<number> => {
+  const startedAt = Date.now()
+  let latestBlock = blockNumber
+
+  while (Date.now() - startedAt < timeoutMs) {
+    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
+    latestBlock = await provider.getBlockNumber()
+    if (latestBlock > blockNumber) {
+      return latestBlock
+    }
+  }
+
+  throw new Error(
+    `[txWait] timed out after ${timeoutMs}ms waiting for next block after ${blockNumber} while waiting for tx ${txHash}; latestBlock=${latestBlock}`,
+  )
+}
+
+type TxWaitInput = string | TransactionResponse | ContractTransactionResponse
+
+const txHashOf = (tx: TxWaitInput): string => {
+  return typeof tx === "string" ? tx : tx.hash
+}
+
+export const txWait = async (
+  tx: TxWaitInput,
+  options: WaitForTxReceiptOptions = {},
+): Promise<TransactionReceipt> => {
+  const normalizedTxHash = txHashOf(tx).trim()
+  if (normalizedTxHash.length === 0) {
+    throw new Error("txWait received an empty tx hash")
+  }
+
+  const attempts = options.attempts ?? 4
+  const blockTimeoutMs = options.blockTimeoutMs ?? TX_WAIT_TIMEOUT
+  const pollIntervalMs = options.pollIntervalMs ?? 250
+  const requireSuccess = options.requireSuccess ?? true
+  const label = options.label ?? "tx"
+  const startedAt = Date.now()
+
+  let receipt: TransactionReceipt | null = null
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const latestBlock = await provider.getBlockNumber()
+    console.log(
+      `[txWait:${label}] txQuery=${attempt}/${attempts} tx=${normalizedTxHash} latestBlock=${latestBlock}`,
+    )
+
+    receipt = await provider.getTransactionReceipt(normalizedTxHash)
+    if (receipt !== null) {
+      console.log(
+        `[txWait:${label}] confirmed txQuery=${attempt}/${attempts} tx=${normalizedTxHash} block=${receipt.blockNumber} status=${receipt.status} logs=${receipt.logs.length} elapsedMs=${Date.now() - startedAt}`,
+      )
+      break
+    }
+
+    if (attempt < attempts) {
+      await waitForBlockAfter(
+        latestBlock,
+        blockTimeoutMs,
+        pollIntervalMs,
+        normalizedTxHash,
+      )
+    }
+  }
+
+  if (receipt === null) {
+    throw new Error(
+      `[txWait:${label}] tx ${normalizedTxHash} not found after ${attempts} receipt queries and ${attempts - 1} block waits; elapsedMs=${Date.now() - startedAt}`,
+    )
+  }
+
+  if (typeof tx !== "string") {
+    receipt = (await tx.wait(0)) ?? receipt
+  }
+
+  if (requireSuccess && receipt.status !== 1) {
+    throw new Error(
+      `transaction execution reverted: [txWait:${label}] tx=${normalizedTxHash} block=${receipt.blockNumber} status=${receipt.status} logs=${receipt.logs.length} elapsedMs=${Date.now() - startedAt}`,
+    )
+  }
+
+  return receipt
+}
+
 export const deployContractTestERC20 = async () => {
   const factory = new TestERC20__factory(account)
   const contract = await factory.deploy()
@@ -111,7 +208,7 @@ export const sendTestNibi = async () => {
     value: parseEther("0.01"),
   }
   const txResponse = await account.sendTransaction(transaction)
-  await txResponse.wait(1, TX_WAIT_TIMEOUT)
+  await txWait(txResponse, { label: "sendTestNibi" })
   console.log("sendTestNibi txResp: %o", txResultLite(txResponse))
   return txResponse
 }

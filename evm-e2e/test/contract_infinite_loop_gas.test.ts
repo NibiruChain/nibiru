@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { toBigInt } from "ethers"
 
 import { TEST_TIMEOUT } from "./testdeps"
-import { deployContractInfiniteLoopGas } from "./utils"
+import { deployContractInfiniteLoopGas, txWait } from "./utils"
 
 describe("Infinite loop gas contract", () => {
   it(
@@ -14,7 +14,7 @@ describe("Infinite loop gas contract", () => {
 
       try {
         const tx = await contract.forever({ gasLimit: 1e6 })
-        await tx.wait()
+        await txWait(tx, { label: "infinite_loop forever" })
         throw new Error("The transaction should have failed but did not.")
       } catch (error) {
         expect(error.message).toContain("transaction execution reverted")
