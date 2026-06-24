@@ -261,6 +261,9 @@ replace (
 
 	// Replace for Cosmos-SDK using local repo. Uncomment to use.
 	github.com/CosmWasm/wasmd => ./internal/wasmd
+
+	// Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
+	// ARM64 Singlepass relocation panics.
 	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
 	github.com/cosmos/cosmos-sdk => ./internal/cosmos-sdk
 
