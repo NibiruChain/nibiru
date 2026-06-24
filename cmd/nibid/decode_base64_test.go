@@ -1,7 +1,9 @@
 package main_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -20,9 +22,10 @@ import (
 
 func TestBase64Decode(t *testing.T) {
 	type TestCase struct {
-		name         string
-		json_message string
-		expectError  bool
+		name        string
+		jsonMessage string
+		expectError bool
+		assertOut   func(t *testing.T, out string)
 	}
 
 	executeTest := func(t *testing.T, testCase TestCase) {
@@ -49,14 +52,19 @@ func TestBase64Decode(t *testing.T) {
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
 			cmd := nibid.DecodeBase64Cmd(home)
+			var stdout bytes.Buffer
+			cmd.SetOut(&stdout)
 			cmd.SetArgs([]string{
-				tc.json_message,
+				tc.jsonMessage,
 			})
 
 			if tc.expectError {
 				require.Error(t, cmd.ExecuteContext(ctx))
 			} else {
 				require.NoError(t, cmd.ExecuteContext(ctx))
+				if tc.assertOut != nil {
+					tc.assertOut(t, stdout.String())
+				}
 			}
 		})
 	}
@@ -64,18 +72,38 @@ func TestBase64Decode(t *testing.T) {
 	testCases := []TestCase{
 		{
 			name: "valid message",
-			json_message: `
+			jsonMessage: `
 			{
 				"stargate": {
 				  "type_url": "/cosmos.staking.v1beta1.MsgUndelegate",
 				  "value": "Cj9uaWJpMTdwOXJ6d25uZnhjanAzMnVuOXVnN3loaHpndGtodmw5amZrc3p0Z3c1dWg2OXdhYzJwZ3N5bjcwbmoSMm5pYml2YWxvcGVyMXdqNWtma25qa3BjNmpkMzByeHRtOHRweGZqZjd4cWx3eDM4YzdwGgwKBXVuaWJpEgMxMTE="
 				}
 			  }`,
+			assertOut: func(t *testing.T, out string) {
+				var decoded []map[string]any
+				require.NoError(t, json.Unmarshal([]byte(out), &decoded))
+				require.Len(t, decoded, 1)
+				require.Equal(t,
+					"/cosmos.staking.v1beta1.MsgUndelegate",
+					decoded[0]["type_url"],
+				)
+
+				value, ok := decoded[0]["value"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t,
+					"nibi17p9rzwnnfxcjp32un9ug7yhhzgtkhvl9jfksztgw5uh69wac2pgsyn70nj",
+					value["delegator_address"],
+				)
+				require.Equal(t,
+					map[string]any{"amount": "111", "denom": "unibi"},
+					value["amount"],
+				)
+			},
 			expectError: false,
 		},
 		{
 			name: "valid message",
-			json_message: `
+			jsonMessage: `
 			{
 				"stargate": {
 					"type_url": "/cosmos.staking.v1beta1.MsgUndelegate",
@@ -90,7 +118,7 @@ func TestBase64Decode(t *testing.T) {
 		},
 		{
 			name: "valid message",
-			json_message: `
+			jsonMessage: `
 			{
 				"another": {
 					"type_url": "/cosmos.staking.v1beta1.MsgDelegate",
@@ -101,7 +129,7 @@ func TestBase64Decode(t *testing.T) {
 		},
 		{
 			name: "empty message",
-			json_message: `
+			jsonMessage: `
 			{
 
 			}`,
@@ -109,7 +137,7 @@ func TestBase64Decode(t *testing.T) {
 		},
 		{
 			name: "invalid json",
-			json_message: `
+			jsonMessage: `
 
 			}`,
 			expectError: true,
