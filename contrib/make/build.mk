@@ -26,6 +26,7 @@ SUDO := $(shell if [ "$(shell id -u)" != "0" ]; then echo "sudo"; fi)
 CMT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 ROCKSDB_VERSION := 8.9.1
 WASMVM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $$2); print $$2}')
+WASMVM_DOWNLOAD_BASE_URL := https://github.com/NibiruChain/go-wasmvm/releases/download/v$(WASMVM_VERSION)
 BUILDDIR ?= $(CURDIR)/build
 TEMPDIR ?= $(CURDIR)/temp
 
@@ -93,13 +94,13 @@ wasmvmlib: $(TEMPDIR)/
 	then \
 	  if [ "$(OS_NAME)" = "darwin" ] ; \
 	  then \
-	    wget https://github.com/NibiruChain/go-wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvmstatic_darwin.a; \
+	    wget $(WASMVM_DOWNLOAD_BASE_URL)/libwasmvmstatic_darwin.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvmstatic_darwin.a; \
 	  else \
 		if [ "$(ARCH_NAME)" = "amd64" ] ; \
 		then \
-		  wget https://github.com/NibiruChain/go-wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget $(WASMVM_DOWNLOAD_BASE_URL)/libwasmvm_muslc.x86_64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		else \
-		  wget https://github.com/NibiruChain/go-wasmvm/releases/download/v$(WASMVM_VERSION)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
+		  wget $(WASMVM_DOWNLOAD_BASE_URL)/libwasmvm_muslc.aarch64.a -O $(TEMPDIR)/wasmvm/$(WASMVM_VERSION)/lib/$(OS_NAME)_$(ARCH_NAME)/libwasmvm_muslc.a; \
 		fi; \
 	  fi; \
 	fi
