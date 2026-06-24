@@ -736,7 +736,7 @@ func SimulateMsgUpdateGroupPolicyAdmin(cdc *codec.ProtoCodec, ak group.AccountKe
 	}
 }
 
-// // SimulateMsgUpdateGroupPolicyDecisionPolicy generates a NewMsgUpdateGroupPolicyDecisionPolicy with random values
+// SimulateMsgUpdateGroupPolicyDecisionPolicy generates a NewMsgUpdateGroupPolicyDecisionPolicy with random values
 func SimulateMsgUpdateGroupPolicyDecisionPolicy(cdc *codec.ProtoCodec, ak group.AccountKeeper,
 	bk group.BankKeeper, k keeper.Keeper,
 ) simtypes.Operation {
@@ -797,7 +797,7 @@ func SimulateMsgUpdateGroupPolicyDecisionPolicy(cdc *codec.ProtoCodec, ak group.
 	}
 }
 
-// // SimulateMsgUpdateGroupPolicyMetadata generates a MsgUpdateGroupPolicyMetadata with random values
+// SimulateMsgUpdateGroupPolicyMetadata generates a MsgUpdateGroupPolicyMetadata with random values
 func SimulateMsgUpdateGroupPolicyMetadata(cdc *codec.ProtoCodec, ak group.AccountKeeper,
 	bk group.BankKeeper, k keeper.Keeper,
 ) simtypes.Operation {
@@ -1063,7 +1063,7 @@ func SimulateMsgVote(cdc *codec.ProtoCodec, ak group.AccountKeeper,
 	}
 }
 
-// // SimulateMsgExec generates a MsgExec with random values
+// SimulateMsgExec generates a MsgExec with random values
 func SimulateMsgExec(cdc *codec.ProtoCodec, ak group.AccountKeeper,
 	bk group.BankKeeper, k keeper.Keeper,
 ) simtypes.Operation {
