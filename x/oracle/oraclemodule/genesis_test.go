@@ -1,4 +1,4 @@
-package oracle_test
+package oraclemodule_test
 
 import (
 	"testing"
@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/oracle"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemodule"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
@@ -33,11 +33,11 @@ func TestExportInitGenesis(t *testing.T) {
 		VotePeriods: 100,
 		Coins:       sdk.NewCoins(sdk.NewInt64Coin("test", 1000)),
 	})
-	genesis := oracle.ExportGenesis(input.Ctx, input.OracleKeeper)
+	genesis := oraclemodule.ExportGenesis(input.Ctx, input.OracleKeeper)
 
 	newInput := keeper.CreateTestFixture(t)
-	oracle.InitGenesis(newInput.Ctx, newInput.OracleKeeper, genesis)
-	newGenesis := oracle.ExportGenesis(newInput.Ctx, newInput.OracleKeeper)
+	oraclemodule.InitGenesis(newInput.Ctx, newInput.OracleKeeper, genesis)
+	newGenesis := oraclemodule.ExportGenesis(newInput.Ctx, newInput.OracleKeeper)
 
 	require.Equal(t, genesis, newGenesis)
 }
@@ -46,7 +46,7 @@ func TestInitGenesis(t *testing.T) {
 	input := keeper.CreateTestFixture(t)
 	genesis := types.DefaultGenesisState()
 	require.NotPanics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.FeederDelegations = []types.FeederDelegation{{
@@ -55,7 +55,7 @@ func TestInitGenesis(t *testing.T) {
 	}}
 
 	require.Panics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.FeederDelegations = []types.FeederDelegation{{
@@ -64,7 +64,7 @@ func TestInitGenesis(t *testing.T) {
 	}}
 
 	require.Panics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.FeederDelegations = []types.FeederDelegation{{
@@ -80,7 +80,7 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	require.Panics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.MissCounters = []types.MissCounter{
@@ -99,7 +99,7 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	require.Panics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.AggregateExchangeRatePrevotes = []types.AggregateExchangeRatePrevote{
@@ -123,7 +123,7 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	require.Panics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 
 	genesis.AggregateExchangeRateVotes = []types.AggregateExchangeRateVote{
@@ -139,6 +139,6 @@ func TestInitGenesis(t *testing.T) {
 	}
 
 	require.NotPanics(t, func() {
-		oracle.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+		oraclemodule.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
 	})
 }
