@@ -576,6 +576,12 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
+	want.WasmPlugins = []evm.WasmPlugin{
+		{
+			Name: evm.WasmPluginNameXOracle,
+			Addr: deps.Sender.NibiruAddr.String(),
+		},
+	}
 	err := deps.EvmKeeper.SetParams(deps.Ctx(), want)
 	s.NoError(err)
 

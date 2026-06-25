@@ -27,6 +27,63 @@ func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
+func (s *TestSuite) TestDefaultParamsWasmPlugins() {
+	params := evm.DefaultParams()
+	s.Require().NotNil(params.WasmPlugins)
+	s.Require().Empty(params.WasmPlugins)
+}
+
+func (s *TestSuite) TestParamsValidateWasmPlugins() {
+	validAddr := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	otherAddr := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	for _, tc := range []struct {
+		name        string
+		plugins     []evm.WasmPlugin
+		errContains string
+	}{
+		{
+			name: "valid",
+			plugins: []evm.WasmPlugin{
+				{Name: evm.WasmPluginNameXOracle, Addr: validAddr},
+			},
+		},
+		{
+			name: "empty name",
+			plugins: []evm.WasmPlugin{
+				{Name: "", Addr: validAddr},
+			},
+			errContains: "wasm plugin name cannot be empty",
+		},
+		{
+			name: "duplicate name",
+			plugins: []evm.WasmPlugin{
+				{Name: evm.WasmPluginNameXOracle, Addr: validAddr},
+				{Name: evm.WasmPluginNameXOracle, Addr: otherAddr},
+			},
+			errContains: "duplicate wasm plugin name: x-oracle",
+		},
+		{
+			name: "invalid address",
+			plugins: []evm.WasmPlugin{
+				{Name: evm.WasmPluginNameXOracle, Addr: "not-a-bech32-address"},
+			},
+			errContains: "invalid wasm plugin address for x-oracle",
+		},
+	} {
+		s.Run(tc.name, func() {
+			params := evm.DefaultParams()
+			params.WasmPlugins = tc.plugins
+
+			err := params.Validate()
+			if tc.errContains == "" {
+				s.Require().NoError(err)
+			} else {
+				s.Require().ErrorContains(err, tc.errContains)
+			}
+		})
+	}
+}
+
 func (s *TestSuite) TestFunToken() {
 	for idx, tc := range []struct {
 		bankDenom string
