@@ -4,10 +4,11 @@ import _ "embed"
 
 // XOracleAdapterWasm is the Sai x-oracle adapter contract fixture.
 //
-// Source: /home/realu/ki/sai-perps/contracts/x-oracle-adapter
-// Build: cargo wasm from the x-oracle-adapter contract directory.
+// - Source Repo: https://github.com/NibiruChain/sai-perps
+// - Path: sai-perps/contracts/x-oracle
+// - Build: Wasm optimized build artifact.
 //
-//go:embed x_oracle_adapter.wasm
+//go:embed x_oracle.wasm
 var XOracleAdapterWasm []byte
 
 type XOracleAdapterMode struct {

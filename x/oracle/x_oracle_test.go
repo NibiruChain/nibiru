@@ -2,6 +2,7 @@ package oracle_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -84,7 +85,7 @@ func TestXOracleAdapterFixtureModeSmartQueries(t *testing.T) {
 			symbol  string
 			price18 string
 		}{
-			{"atom", "138000000000000000000"},
+			{"atom", "138" + strings.Repeat("0", 18)},
 			{"btc", "420000000000000000000"},
 			{"eth", "69000000000000000000"},
 			{"nibi", "138000000000000000000"},
