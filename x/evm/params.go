@@ -23,6 +23,10 @@ const (
 	// NIBI on Nibru EVM, implying that the EVMBankDenom is "unibi", the coin
 	// base of the NIBI token.
 	EVMBankDenom = appconst.DENOM_UNIBI
+
+	// WasmPluginNameXOracle identifies the Wasm adapter backing the legacy
+	// oracle precompile at 0x0000000000000000000000000000000000000801.
+	WasmPluginNameXOracle = "x-oracle"
 )
 
 // DefaultParams returns default evm parameters
@@ -36,6 +40,7 @@ func DefaultParams() Params {
 		CanonicalWnibi: eth.EIP55Addr{
 			Address: gethcommon.HexToAddress("0x0CaCF669f8446BeCA826913a3c6B96aCD4b02a97"),
 		},
+		WasmPlugins: []WasmPlugin{},
 	}
 }
 
@@ -112,4 +117,27 @@ func validateEIPs(i any) error {
 	}
 
 	return nil
+}
+
+// Equal supports generated Params equality checks for the WasmPlugins field.
+func (this *WasmPlugin) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*WasmPlugin)
+	if !ok {
+		that2, ok := that.(WasmPlugin)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	return this.Name == that1.Name && this.Addr == that1.Addr
 }

@@ -64,6 +64,21 @@ message Params {
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
     (gogoproto.nullable) = false
   ];
+
+  repeated eth.evm.v1.WasmPlugin wasm_plugins = 11 [(gogoproto.nullable) = false];
+}
+
+// WasmPlugin binds a stable plugin name to a Wasm contract address.
+//
+// EVM code should look up plugins by name instead of hard-coding Wasm contract
+// addresses. For example, plugin name "x-oracle" can identify the Wasm adapter
+// used by the legacy oracle precompile at
+// 0x0000000000000000000000000000000000000801.
+message WasmPlugin {
+  // Name is a human-readable name for the plugin.
+  string name = 1;
+  // Addr is the Wasm smart contract address that defines the plugin
+  string addr = 2;
 }
 
 // State represents a single Storage key value pair item.
@@ -164,5 +179,5 @@ message TraceConfig {
   // enable_return_data switches the capture of return data
   bool enable_return_data = 12 [(gogoproto.jsontag) = "enableReturnData"];
   // tracer_config configures the tracer options
-  TracerConfig tracer_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
+  eth.evm.v1.TracerConfig tracer_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
 }

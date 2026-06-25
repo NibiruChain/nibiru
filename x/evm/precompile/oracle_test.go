@@ -60,7 +60,7 @@ func TestOraclePrecompileQueriesAdapter(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	evmObj, _ := deps.NewEVM()
 	adapterAddr := instantiateXOracleAdapterFixtureForPrecompile(t, &deps)
-	deps.App.OracleKeeper.ImplAdapterAddr.Set(deps.Ctx(), adapterAddr)
+	setXOracleWasmPluginForPrecompile(t, &deps, adapterAddr)
 
 	t.Run("queryExchangeRate", func(t *testing.T) {
 		input, err := embeds.SmartContract_Oracle.ABI.Pack(
@@ -124,7 +124,7 @@ func TestOraclePrecompileQueriesAdapter(t *testing.T) {
 func TestOraclePrecompileSupportsFeeHandlerQuote(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	adapterAddr := instantiateXOracleAdapterFixtureForPrecompile(t, &deps)
-	deps.App.OracleKeeper.ImplAdapterAddr.Set(deps.Ctx(), adapterAddr)
+	setXOracleWasmPluginForPrecompile(t, &deps, adapterAddr)
 
 	require.NoError(t, testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -185,14 +185,14 @@ func TestOraclePrecompileErrors(t *testing.T) {
 			nil,
 		)
 		require.Error(t, err)
-		require.True(t, strings.Contains(err.Error(), "oracle impl adapter contract address is not configured"))
+		require.True(t, strings.Contains(err.Error(), "x-oracle wasm plugin is not configured"))
 	})
 
 	t.Run("unsupported pair", func(t *testing.T) {
 		deps := evmtest.NewTestDeps()
 		evmObj, _ := deps.NewEVM()
 		adapterAddr := instantiateXOracleAdapterFixtureForPrecompile(t, &deps)
-		deps.App.OracleKeeper.ImplAdapterAddr.Set(deps.Ctx(), adapterAddr)
+		setXOracleWasmPluginForPrecompile(t, &deps, adapterAddr)
 		input, err := embeds.SmartContract_Oracle.ABI.Pack(
 			string(precompile.OracleMethod_queryExchangeRate),
 			"uusdt:uusd",
@@ -253,4 +253,21 @@ func instantiateXOracleAdapterFixtureForPrecompile(
 	require.NoError(t, err)
 
 	return contractAddr
+}
+
+func setXOracleWasmPluginForPrecompile(
+	t *testing.T,
+	deps *evmtest.TestDeps,
+	adapterAddr sdk.AccAddress,
+) {
+	t.Helper()
+
+	params := deps.EvmKeeper.GetParams(deps.Ctx())
+	params.WasmPlugins = []evm.WasmPlugin{
+		{
+			Name: evm.WasmPluginNameXOracle,
+			Addr: adapterAddr.String(),
+		},
+	}
+	require.NoError(t, deps.EvmKeeper.SetParams(deps.Ctx(), params))
 }

@@ -27,6 +27,12 @@ func TestSuite_RunAll(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }
 
+func (s *TestSuite) TestDefaultParamsWasmPlugins() {
+	params := evm.DefaultParams()
+	s.Require().NotNil(params.WasmPlugins)
+	s.Require().Empty(params.WasmPlugins)
+}
+
 func (s *TestSuite) TestFunToken() {
 	for idx, tc := range []struct {
 		bankDenom string

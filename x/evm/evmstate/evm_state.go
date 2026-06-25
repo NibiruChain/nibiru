@@ -49,6 +49,10 @@ type EvmState struct {
 	BlockBloom collections.ItemTransient[[]byte]
 
 	NetWeiBlockDelta collections.Item[sdkmath.Int]
+
+	// WasmPlugins is a derived index from evm.Params.WasmPlugins for fast lookup
+	// by EVM execution paths. Mutate it only via SetParams.
+	WasmPlugins collections.Map[string, sdk.AccAddress]
 }
 
 func (k *Keeper) EVMState() EvmState { return k.EvmState }
@@ -93,6 +97,12 @@ func NewEvmState(
 			evm.KeyPrefixNetWeiBlockDelta,
 			eth.SignedIntValueEncoder,
 		),
+		WasmPlugins: collections.NewMap(
+			storeKey,
+			evm.KeyPrefixWasmPlugins,
+			collections.StringKeyEncoder,
+			collections.AccAddressValueEncoder,
+		),
 	}
 }
 
@@ -122,6 +132,30 @@ func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) (err error) {
 	if params.CreateFuntokenFee.IsNegative() {
 		return fmt.Errorf("createFuntokenFee cannot be negative: %s", params.CreateFuntokenFee)
+	}
+
+	pluginAddrByName := make(map[string]sdk.AccAddress, len(params.WasmPlugins))
+	pluginNames := make([]string, 0, len(params.WasmPlugins))
+	for _, plugin := range params.WasmPlugins {
+		if plugin.Name == "" {
+			return fmt.Errorf("wasm plugin name cannot be empty")
+		}
+		if _, exists := pluginAddrByName[plugin.Name]; exists {
+			return fmt.Errorf("duplicate wasm plugin name: %s", plugin.Name)
+		}
+		addr, err := sdk.AccAddressFromBech32(plugin.Addr)
+		if err != nil {
+			return fmt.Errorf("invalid wasm plugin address for %s: %w", plugin.Name, err)
+		}
+		pluginAddrByName[plugin.Name] = addr
+		pluginNames = append(pluginNames, plugin.Name)
+	}
+
+	for _, name := range k.EvmState.WasmPlugins.Iterate(ctx, collections.Range[string]{}).Keys() {
+		_ = k.EvmState.WasmPlugins.Delete(ctx, name)
+	}
+	for _, name := range pluginNames {
+		k.EvmState.WasmPlugins.Insert(ctx, name, pluginAddrByName[name])
 	}
 
 	k.EvmState.ModuleParams.Set(ctx, params)

@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 var (
@@ -130,14 +130,14 @@ func (p precompileOracle) DynamicRun(
 
 func PrecompileOracle(keepers keepers.PublicKeepers) NibiruCustomPrecompile {
 	return precompileOracle{
-		oracleKeeper: keepers.OracleKeeper,
-		wasmKeeper:   keepers.WasmKeeper,
+		evmKeeper:  keepers.EvmKeeper,
+		wasmKeeper: keepers.WasmKeeper,
 	}
 }
 
 type precompileOracle struct {
-	oracleKeeper oraclekeeper.Keeper
-	wasmKeeper   wasmkeeper.Keeper
+	evmKeeper  *evmstate.Keeper
+	wasmKeeper wasmkeeper.Keeper
 }
 
 // Implements "IOracle.queryExchangeRate"
@@ -278,14 +278,14 @@ func (p precompileOracle) queryLegacyExchangeRate(
 	ctx sdk.Context,
 	pair string,
 ) (xOracleAdapterLegacyExchangeRateResp, error) {
-	adapterAddr, err := p.oracleKeeper.ImplAdapterAddr.Get(ctx)
+	adapterAddr, err := p.evmKeeper.EVMState().WasmPlugins.Get(ctx, evm.WasmPluginNameXOracle)
 	if err != nil {
 		return xOracleAdapterLegacyExchangeRateResp{},
-			fmt.Errorf("oracle impl adapter contract address is not configured: %w", err)
+			fmt.Errorf("x-oracle wasm plugin is not configured: %w", err)
 	}
 	if adapterAddr.Empty() {
 		return xOracleAdapterLegacyExchangeRateResp{},
-			fmt.Errorf("oracle impl adapter contract address is empty")
+			fmt.Errorf("x-oracle wasm plugin address is empty")
 	}
 
 	req, err := json.Marshal(xOracleAdapterQueryMsg{
