@@ -118,26 +118,3 @@ func validateEIPs(i any) error {
 
 	return nil
 }
-
-// Equal supports generated Params equality checks for the WasmPlugins field.
-func (this *WasmPlugin) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*WasmPlugin)
-	if !ok {
-		that2, ok := that.(WasmPlugin)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	return this.Name == that1.Name && this.Addr == that1.Addr
-}

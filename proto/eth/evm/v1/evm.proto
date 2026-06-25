@@ -75,6 +75,8 @@ message Params {
 // used by the legacy oracle precompile at
 // 0x0000000000000000000000000000000000000801.
 message WasmPlugin {
+  option (gogoproto.equal) = true;
+
   // Name is a human-readable name for the plugin.
   string name = 1;
   // Addr is the Wasm smart contract address that defines the plugin
