@@ -36,6 +36,7 @@ type Keeper struct {
 	WhitelistedPairs collections.KeySet[asset.Pair]
 	Rewards          collections.Map[uint64, types.Rewards]
 	RewardsID        collections.Sequence
+	ImplAdapterAddr  collections.Item[sdk.AccAddress]
 }
 
 // NewKeeper constructs a new keeper for oracle
@@ -63,7 +64,8 @@ func NewKeeper(
 		Rewards: collections.NewMap(
 			storeKey, 7,
 			collections.Uint64KeyEncoder, collections.ProtoValueEncoder[types.Rewards](cdc)),
-		RewardsID: collections.NewSequence(storeKey, 9),
+		RewardsID:       collections.NewSequence(storeKey, 9),
+		ImplAdapterAddr: collections.NewItem(storeKey, 12, collections.AccAddressValueEncoder),
 	}
 	return k
 }

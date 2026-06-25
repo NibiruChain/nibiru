@@ -44,6 +44,7 @@ func InitPrecompiles(
 	// Custom precompiles
 	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) NibiruCustomPrecompile{
 		PrecompileFunToken,
+		PrecompileOracle,
 		PrecompileWasm,
 		PrecompileP256,
 	} {
