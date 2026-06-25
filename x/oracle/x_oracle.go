@@ -37,7 +37,7 @@ type XOracleAdapterInstantiateMsg struct {
 }
 
 type XOracleAdapterLegacyMapping struct {
-	Pair       string `json:"pair"`
+	Symbol     string `json:"symbol"`
 	TokenIndex uint16 `json:"token_index"`
 }
 
@@ -53,7 +53,7 @@ type XOracleAdapterGetPriceQuery struct {
 }
 
 type XOracleAdapterLegacyExchangeRateQuery struct {
-	Pair string `json:"pair"`
+	Symbol string `json:"symbol"`
 }
 
 type XOracleAdapterLegacyExchangeRatesQuery struct{}

@@ -95,7 +95,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemodule"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
@@ -148,7 +148,7 @@ var (
 		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
-		oracle.AppModuleBasic{},
+		oraclemodule.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},

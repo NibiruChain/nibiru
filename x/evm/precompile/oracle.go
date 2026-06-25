@@ -15,6 +15,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	xoracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 )
 
 var (
@@ -153,6 +154,7 @@ type precompileOracle struct {
 //
 // blockTimeMs is the adapter's underlying Sai oracle price update time in
 // milliseconds, preserving legacy freshness semantics despite the field name.
+// blockHeight is the current Nibiru block height for the query.
 func (p precompileOracle) queryExchangeRate(
 	ctx sdk.Context,
 	method *gethabi.Method,
@@ -173,7 +175,7 @@ func (p precompileOracle) queryExchangeRate(
 		return nil, err
 	}
 
-	blockTimeMs := adapterResp.blockTimeMs()
+	blockTimeMs := adapterBlockTimeMs(adapterResp)
 	return method.Outputs.Pack(
 		price18,
 		blockTimeMs,
@@ -193,6 +195,10 @@ func (p precompileOracle) parseQueryExchangeRateArgs(args []any) (
 	pair, ok := args[0].(string)
 	if !ok {
 		err = ErrArgTypeValidation("string pair", args[0])
+		return
+	}
+	if pair == "" {
+		err = fmt.Errorf("pair cannot be empty")
 		return
 	}
 
@@ -243,7 +249,7 @@ func (p precompileOracle) chainLinkLatestRoundData(
 	// Chainlink consumers commonly use updatedAt for staleness checks. Keep
 	// both timestamps tied to the Sai oracle price update time reported by the
 	// adapter, not this query's block time.
-	timestampSeconds := new(big.Int).SetUint64(adapterResp.updateTimeSeconds())
+	timestampSeconds := new(big.Int).SetUint64(adapterUpdateTimeSeconds(adapterResp))
 	answeredInRound := big.NewInt(420) // for no reason in particular / unused
 	return method.Outputs.Pack(
 		roundId,
@@ -254,55 +260,35 @@ func (p precompileOracle) chainLinkLatestRoundData(
 	)
 }
 
-type xOracleAdapterQueryMsg struct {
-	LegacyExchangeRate *xOracleAdapterLegacyExchangeRateQuery `json:"legacy_exchange_rate,omitempty"`
-}
-
-type xOracleAdapterLegacyExchangeRateQuery struct {
-	Pair string `json:"pair"`
-}
-
-type xOracleAdapterLegacyExchangeRateResp struct {
-	Symbol       string `json:"symbol"`
-	TokenIndex   uint16 `json:"token_index"`
-	Price18      string `json:"price_18"`
-	PriceDecimal string `json:"price_decimal"`
-	Decimals     uint8  `json:"decimals"`
-	// UpdateTimeSeconds is the underlying Sai oracle price update timestamp.
-	// The x-oracle-adapter fixture may use query block time as test data, but
-	// proxy mode forwards PriceResponse.last_update_time from the Sai oracle.
-	UpdateTimeSeconds *uint64 `json:"update_time_seconds"`
-}
-
 func (p precompileOracle) queryLegacyExchangeRate(
 	ctx sdk.Context,
 	pair string,
-) (xOracleAdapterLegacyExchangeRateResp, error) {
+) (xoracle.XOracleAdapterLegacyExchangeRateResp, error) {
 	adapterAddr, err := p.evmKeeper.EVMState().WasmPlugins.Get(ctx, evm.WasmPluginNameXOracle)
 	if err != nil {
-		return xOracleAdapterLegacyExchangeRateResp{},
+		return xoracle.XOracleAdapterLegacyExchangeRateResp{},
 			fmt.Errorf("x-oracle wasm plugin is not configured: %w", err)
 	}
 	if adapterAddr.Empty() {
-		return xOracleAdapterLegacyExchangeRateResp{},
+		return xoracle.XOracleAdapterLegacyExchangeRateResp{},
 			fmt.Errorf("x-oracle wasm plugin address is empty")
 	}
 
-	req, err := json.Marshal(xOracleAdapterQueryMsg{
-		LegacyExchangeRate: &xOracleAdapterLegacyExchangeRateQuery{Pair: pair},
+	req, err := json.Marshal(xoracle.XOracleAdapterQueryMsg{
+		LegacyExchangeRate: &xoracle.XOracleAdapterLegacyExchangeRateQuery{Symbol: pair},
 	})
 	if err != nil {
-		return xOracleAdapterLegacyExchangeRateResp{}, err
+		return xoracle.XOracleAdapterLegacyExchangeRateResp{}, err
 	}
 
 	respBz, err := p.wasmKeeper.QuerySmart(ctx, adapterAddr, req)
 	if err != nil {
-		return xOracleAdapterLegacyExchangeRateResp{}, err
+		return xoracle.XOracleAdapterLegacyExchangeRateResp{}, err
 	}
 
-	var resp xOracleAdapterLegacyExchangeRateResp
+	var resp xoracle.XOracleAdapterLegacyExchangeRateResp
 	if err := json.Unmarshal(respBz, &resp); err != nil {
-		return xOracleAdapterLegacyExchangeRateResp{}, err
+		return xoracle.XOracleAdapterLegacyExchangeRateResp{}, err
 	}
 	return resp, nil
 }
@@ -318,13 +304,13 @@ func parseAdapterPrice18(price18 string) (*big.Int, error) {
 	return price, nil
 }
 
-func (r xOracleAdapterLegacyExchangeRateResp) updateTimeSeconds() uint64 {
+func adapterUpdateTimeSeconds(r xoracle.XOracleAdapterLegacyExchangeRateResp) uint64 {
 	if r.UpdateTimeSeconds != nil {
 		return *r.UpdateTimeSeconds
 	}
 	return 0
 }
 
-func (r xOracleAdapterLegacyExchangeRateResp) blockTimeMs() uint64 {
-	return r.updateTimeSeconds() * 1000
+func adapterBlockTimeMs(r xoracle.XOracleAdapterLegacyExchangeRateResp) uint64 {
+	return adapterUpdateTimeSeconds(r) * 1000
 }

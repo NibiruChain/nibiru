@@ -6,6 +6,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
@@ -79,6 +80,10 @@ func (p Params) Validate() error {
 		return err
 	}
 
+	if err := ValidateWasmPlugins(p.WasmPlugins); err != nil {
+		return fmt.Errorf("ParamsError: %w", err)
+	}
+
 	return nil
 }
 
@@ -117,4 +122,36 @@ func validateEIPs(i any) error {
 	}
 
 	return nil
+}
+
+// ValidateWasmPlugins checks the named Wasm plugin config used by EVM
+// execution paths. Plugin order is preserved by callers, so the returned names
+// from WasmPluginAddrsByName should be used for deterministic writes.
+func ValidateWasmPlugins(plugins []WasmPlugin) error {
+	_, _, err := WasmPluginAddrsByName(plugins)
+	return err
+}
+
+// WasmPluginAddrsByName validates plugins and returns decoded addresses keyed by
+// name, plus the original name order for deterministic state writes.
+func WasmPluginAddrsByName(
+	plugins []WasmPlugin,
+) (map[string]sdk.AccAddress, []string, error) {
+	pluginAddrByName := make(map[string]sdk.AccAddress, len(plugins))
+	pluginNames := make([]string, 0, len(plugins))
+	for _, plugin := range plugins {
+		if plugin.Name == "" {
+			return nil, nil, fmt.Errorf("wasm plugin name cannot be empty")
+		}
+		if _, exists := pluginAddrByName[plugin.Name]; exists {
+			return nil, nil, fmt.Errorf("duplicate wasm plugin name: %s", plugin.Name)
+		}
+		addr, err := sdk.AccAddressFromBech32(plugin.Addr)
+		if err != nil {
+			return nil, nil, fmt.Errorf("invalid wasm plugin address for %s: %w", plugin.Name, err)
+		}
+		pluginAddrByName[plugin.Name] = addr
+		pluginNames = append(pluginNames, plugin.Name)
+	}
+	return pluginAddrByName, pluginNames, nil
 }

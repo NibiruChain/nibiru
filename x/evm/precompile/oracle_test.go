@@ -209,7 +209,31 @@ func TestOraclePrecompileErrors(t *testing.T) {
 			nil,
 		)
 		require.Error(t, err)
-		require.True(t, strings.Contains(err.Error(), "unsupported legacy pair"))
+		require.True(t, strings.Contains(err.Error(), "unsupported legacy symbol"))
+	})
+
+	t.Run("empty pair", func(t *testing.T) {
+		deps := evmtest.NewTestDeps()
+		evmObj, _ := deps.NewEVM()
+		adapterAddr := instantiateXOracleAdapterFixtureForPrecompile(t, &deps)
+		setXOracleWasmPluginForPrecompile(t, &deps, adapterAddr)
+		input, err := embeds.SmartContract_Oracle.ABI.Pack(
+			string(precompile.OracleMethod_queryExchangeRate),
+			"",
+		)
+		require.NoError(t, err)
+
+		_, err = deps.EvmKeeper.CallContract(
+			evmObj,
+			deps.Sender.EthAddr,
+			&precompile.PrecompileAddr_Oracle,
+			input,
+			oraclePrecompileGasLimit,
+			evm.COMMIT_READONLY,
+			nil,
+		)
+		require.Error(t, err)
+		require.True(t, strings.Contains(err.Error(), "pair cannot be empty"))
 	})
 }
 
@@ -232,11 +256,11 @@ func instantiateXOracleAdapterFixtureForPrecompile(
 		Owner: deps.Sender.NibiruAddr.String(),
 		Mode:  oracle.XOracleAdapterFixtureMode(),
 		LegacyMappings: []oracle.XOracleAdapterLegacyMapping{
-			{Pair: "uusdc:uusd", TokenIndex: 1},
-			{Pair: "ubtc:uusd", TokenIndex: 3},
-			{Pair: "ueth:uusd", TokenIndex: 4},
-			{Pair: "uatom:uusd", TokenIndex: 5},
-			{Pair: "unibi:uusd", TokenIndex: 49},
+			{Symbol: "uusdc:uusd", TokenIndex: 1},
+			{Symbol: "ubtc:uusd", TokenIndex: 3},
+			{Symbol: "ueth:uusd", TokenIndex: 4},
+			{Symbol: "uatom:uusd", TokenIndex: 5},
+			{Symbol: "unibi:uusd", TokenIndex: 49},
 		},
 	})
 	require.NoError(t, err)

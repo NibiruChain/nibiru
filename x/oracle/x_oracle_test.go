@@ -48,7 +48,7 @@ func TestXOracleAdapterFixtureModeSmartQueries(t *testing.T) {
 				contractAddr,
 				oracle.XOracleAdapterQueryMsg{
 					LegacyExchangeRate: &oracle.XOracleAdapterLegacyExchangeRateQuery{
-						Pair: tc.pair,
+						Symbol: tc.pair,
 					},
 				},
 				&resp,
@@ -133,11 +133,11 @@ func instantiateXOracleAdapterFixture(
 		Owner: deps.Sender.NibiruAddr.String(),
 		Mode:  oracle.XOracleAdapterFixtureMode(),
 		LegacyMappings: []oracle.XOracleAdapterLegacyMapping{
-			{Pair: "uusdc:uusd", TokenIndex: 1},
-			{Pair: "ubtc:uusd", TokenIndex: 3},
-			{Pair: "ueth:uusd", TokenIndex: 4},
-			{Pair: "uatom:uusd", TokenIndex: 5},
-			{Pair: "unibi:uusd", TokenIndex: 49},
+			{Symbol: "uusdc:uusd", TokenIndex: 1},
+			{Symbol: "ubtc:uusd", TokenIndex: 3},
+			{Symbol: "ueth:uusd", TokenIndex: 4},
+			{Symbol: "uatom:uusd", TokenIndex: 5},
+			{Symbol: "unibi:uusd", TokenIndex: 49},
 		},
 	})
 	require.NoError(t, err)

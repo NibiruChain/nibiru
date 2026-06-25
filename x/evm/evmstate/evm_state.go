@@ -134,21 +134,9 @@ func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) (err error) {
 		return fmt.Errorf("createFuntokenFee cannot be negative: %s", params.CreateFuntokenFee)
 	}
 
-	pluginAddrByName := make(map[string]sdk.AccAddress, len(params.WasmPlugins))
-	pluginNames := make([]string, 0, len(params.WasmPlugins))
-	for _, plugin := range params.WasmPlugins {
-		if plugin.Name == "" {
-			return fmt.Errorf("wasm plugin name cannot be empty")
-		}
-		if _, exists := pluginAddrByName[plugin.Name]; exists {
-			return fmt.Errorf("duplicate wasm plugin name: %s", plugin.Name)
-		}
-		addr, err := sdk.AccAddressFromBech32(plugin.Addr)
-		if err != nil {
-			return fmt.Errorf("invalid wasm plugin address for %s: %w", plugin.Name, err)
-		}
-		pluginAddrByName[plugin.Name] = addr
-		pluginNames = append(pluginNames, plugin.Name)
+	pluginAddrByName, pluginNames, err := evm.WasmPluginAddrsByName(params.WasmPlugins)
+	if err != nil {
+		return err
 	}
 
 	for _, name := range k.EvmState.WasmPlugins.Iterate(ctx, collections.Range[string]{}).Keys() {
