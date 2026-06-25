@@ -20,7 +20,11 @@ func (h Handler_v2_15) Handler(
 	cfg module.Configurator,
 	nibiru *keepers.PublicKeepers,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	return func(
+		ctx sdk.Context,
+		plan upgradetypes.Plan,
+		fromVM module.VersionMap,
+	) (module.VersionMap, error) {
 		err := h.runUpgrade2_15_0(nibiru, ctx)
 		if err != nil {
 			ctx.Logger().Error("v2.15.0 upgrade failure", "err", err)
@@ -32,14 +36,6 @@ func (h Handler_v2_15) Handler(
 	}
 }
 
-type Upgrade2_15_AddrCfg struct {
-	XOraclePluginAddr string
-}
-
-const (
-	XOracleAdapterAddr_v2_15 = "nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r"
-)
-
 // XOracleAdapterAddr_v2_15 is the deterministic instantiate2 address of the
 // Sai x-oracle Wasm adapter. The bytecode is release artifact
 // x_oracle.wasm from sai-perps tag wasm-contracts/v1.22.0, source commit
@@ -49,18 +45,15 @@ const (
 // The same address exists on mainnet and testnet because instantiate2 used
 // the same creator (Foundation Treasury CW3), salt ("x-oracle-nibiru"),
 // optimized Wasm code hash, and fixed init JSON. The contract config differs
-// by chain only after testnet UpdateConfig points it at the testnet Sai
-// oracle.
-var AddrCfg_v2_15 = Upgrade2_15_AddrCfg{
-	XOraclePluginAddr: "nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r",
-}
+// by chain only after testnet UpdateConfig points it at the testnet Sai oracle.
+const (
+	XOracleAdapterAddr_v2_15 = "nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r"
+)
 
-func (h Handler_v2_15) runUpgrade2_15_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
-	addrCfg := AddrCfg_v2_15
-	if len(addrCfg.XOraclePluginAddr) == 0 {
-		return fmt.Errorf("x-oracle wasm plugin address not configured in upgrade handler")
-	}
-
+func (h Handler_v2_15) runUpgrade2_15_0(
+	nibiru *keepers.PublicKeepers,
+	ctx sdk.Context,
+) error {
 	params := nibiru.EvmKeeper.GetParams(ctx)
 	wasmPlugins := make([]evm.WasmPlugin, 0, len(params.WasmPlugins)+1)
 	for _, plugin := range params.WasmPlugins {
@@ -70,7 +63,7 @@ func (h Handler_v2_15) runUpgrade2_15_0(nibiru *keepers.PublicKeepers, ctx sdk.C
 	}
 	wasmPlugins = append(wasmPlugins, evm.WasmPlugin{
 		Name: evm.WasmPluginNameXOracle,
-		Addr: addrCfg.XOraclePluginAddr,
+		Addr: XOracleAdapterAddr_v2_15,
 	})
 	params.WasmPlugins = wasmPlugins
 	if err := nibiru.EvmKeeper.SetParams(ctx, params); err != nil {
