@@ -16,8 +16,8 @@ Usage: $(basename "$0") [OPTIONS]
 Run a single-node Nibiru localnet.
 
 Options:
-  --run               Execute the localnet setup and start the node.
-  --no-build          Skip building the nibid binary before starting localnet.
+  --run               Execute the localnet setup and start the node. This is the default.
+  --no-build          Accepted for compatibility. This embedded script never builds nibid.
   --log-level LEVEL   Node log level passed to "nibid start".
                       Default: $LOG_LEVEL
   -h, --help          Show this help.
@@ -29,11 +29,11 @@ Examples:
   $(basename "$0") --run --log-level info
   $(basename "$0") --run --no-build --log-level debug
 
-By default, this script only prints help. Use --run to reset and start localnet.
+By default, this script resets and starts localnet.
 EOF
 }
 
-if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   show_help
   exit 0
 fi
@@ -121,21 +121,9 @@ require_flag_value() {
   fi
 }
 
-# $FLAG_SKIP_BUILD: toggles whether to build from source. The default
-#   behavior of the script is to run make install if the flag --no-build is omitted.
-FLAG_SKIP_BUILD=false
-RUN=false
-
-
-build_from_source() {
-  echo_info "Building from source..."
-  if make install; then
-    echo_success "Successfully built binary"
-  else
-    echo_error "Could not build binary. Failed to make install."
-    exit 1
-  fi
-}
+# $FLAG_SKIP_BUILD is always true in the embedded script emitted by "nibid localnet --script".
+FLAG_SKIP_BUILD=true
+RUN=true
 
 # Iterate over flags, handling the cases: "--run", "--no-build", and "--log-level".
 while [[ $# -gt 0 ]]; do
@@ -172,11 +160,6 @@ fi
 
 echo "CHAIN_DIR: $CHAIN_DIR"
 echo "CHAIN_ID: $CHAIN_ID"
-
-# Check if FLAG_SKIP_BUILD was set to true
-if ! $FLAG_SKIP_BUILD; then
-  build_from_source
-fi
 
 echo_info "Script settings:"
 echo "RUN: $RUN"

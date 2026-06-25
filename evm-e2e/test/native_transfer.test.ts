@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
-import { alice, txResultLite } from "./utils"
+import { account, provider, TEST_TIMEOUT } from "./testdeps"
+import { alice, txResultLite, txWait } from "./utils"
 
 describe("native transfer", () => {
   it(
@@ -20,8 +20,8 @@ describe("native transfer", () => {
         value: amountToSend,
       }
       const txResponse = await account.sendTransaction(transaction)
-      await txResponse.wait(1, TX_WAIT_TIMEOUT)
-      expect(txResponse).toHaveProperty("blockHash")
+      const receipt = await txWait(txResponse, { label: "native transfer" })
+      expect(receipt.blockHash).toBeDefined()
 
       const senderBalanceAfter = await provider.getBalance(account)
       const recipientBalanceAfter = await provider.getBalance(alice)
