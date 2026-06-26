@@ -10,6 +10,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
@@ -260,5 +261,90 @@ func (s *Suite) TestUpdateParams() {
 		})
 		s.Require().Error(err)
 		s.Require().ErrorContains(err, "invalid signing authority")
+	})
+}
+
+func (s *Suite) TestSetParamsWasmPlugins() {
+	s.Run("writes derived wasm plugin state", func() {
+		deps := evmtest.NewTestDeps()
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().NoError(err)
+
+		got, err := deps.EvmKeeper.EVMState().WasmPlugins.Get(deps.Ctx(), evm.WasmPluginNameXOracle)
+		s.Require().NoError(err)
+		s.Require().Equal(deps.Sender.NibiruAddr.String(), got.String())
+	})
+
+	s.Run("removes stale derived wasm plugin state", func() {
+		deps := evmtest.NewTestDeps()
+		stalePluginAddr := evmtest.NewEthPrivAcc().NibiruAddr
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+			{
+				Name: "stale",
+				Addr: stalePluginAddr.String(),
+			},
+		}
+		s.Require().NoError(deps.EvmKeeper.SetParams(deps.Ctx(), params))
+
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+		}
+		s.Require().NoError(deps.EvmKeeper.SetParams(deps.Ctx(), params))
+
+		gotKeys := deps.EvmKeeper.EVMState().WasmPlugins.
+			Iterate(deps.Ctx(), collections.Range[string]{}).
+			Keys()
+		s.Require().Equal([]string{evm.WasmPluginNameXOracle}, gotKeys)
+		_, err := deps.EvmKeeper.EVMState().WasmPlugins.Get(deps.Ctx(), "stale")
+		s.Require().Error(err)
+	})
+
+	s.Run("rejects duplicate plugin names", func() {
+		deps := evmtest.NewTestDeps()
+		otherAddr := evmtest.NewEthPrivAcc().NibiruAddr
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: otherAddr.String(),
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().ErrorContains(err, "duplicate wasm plugin name: x-oracle")
+	})
+
+	s.Run("rejects invalid plugin addresses", func() {
+		deps := evmtest.NewTestDeps()
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: "not-a-bech32-address",
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().ErrorContains(err, "invalid wasm plugin address for x-oracle")
 	})
 }

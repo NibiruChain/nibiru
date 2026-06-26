@@ -38,9 +38,190 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v2.15.0
 
-- ...
+Nibiru v2.15 restores the legacy EVM oracle precompile path needed by MIM OFT
+fee quoting, ships the patched Wasmer runtime needed for Sai Wasm deployment on
+ARM64, and makes local development and EVM end-to-end tests easier to run and
+debug.
+
+- [Release Link: v2.15.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.15.0).
+- Date: 2026-06-25
+- Draft source range: non-Dependabot release PRs from `v2.14.0` through
+  `v2.15.0`.
+
+### 1 - Main Highlights
+
+- **MIM OFT bridge recovery** - The legacy EVM oracle precompile at `0x0801` is restored as a narrow compatibility surface for deployed contracts that still call `chainLinkLatestRoundData("unibi:uusd")`. The precompile now reads a configured `x-oracle` Wasm adapter backed by Sai oracle data instead of native `x/oracle` state. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **No return to native oracle operations** - Native oracle voting, feeder duties, slashing, messages, and stale module exchange-rate state remain deprecated. v2.15 restores only the EVM compatibility path needed by legacy Chainlink-like callers. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **Upgrade-time EVM plugin wiring** - The v2.15 upgrade handler configures EVM params field `wasm_plugins` with plugin name `x-oracle` and the verified deterministic adapter address `nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r`. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **Patched Wasmer runtime** - `Nibiru` now consumes Nibiru-published `go-wasmvm v1.10.0`, which carries the ARM64 Singlepass relocation fix needed to store and instantiate larger Sai Wasm contracts without the `ImpossibleRelocation(Dynamic(DynamicLabel(0)))` panic. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+- **Darwin build support for the patched runtime** - Build tooling downloads the Nibiru `go-wasmvm` Darwin static library asset, removing the prior Darwin guard for this runtime line and making macOS validation part of the normal artifact path. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+- **Localnet in the binary** - `nibid localnet --script | bash` prints an embedded single-node localnet script, so developers can start a localnet from an installed `nibid` binary instead of finding `contrib/scripts/localnet.sh` in the repository. ([#2616](https://github.com/NibiruChain/nibiru/pull/2616))
+- **EVM E2E diagnostics** - EVM end-to-end tests use a shared receipt polling helper with explicit query counts, block waits, tx hashes, receipt status, log counts, and elapsed time. This targets hanging `ethers` waits and makes CI failures easier to interpret. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+### 2 - MIM OFT and Legacy Oracle Compatibility
+
+**What it enables:** MIM OFT fee quoting can use the historical Chainlink-like
+EVM oracle ABI again, while Nibiru continues to keep native `x/oracle`
+operations disabled.
+
+The production failure path was:
+
+```txt
+MIM OFT send(...)
+-> FeeHandler.quoteNativeFee()
+-> aggregator.latestRoundData()
+-> 0x0801 chainLinkLatestRoundData("unibi:uusd")
+-> revert because native x/oracle is disabled
+```
+
+v2.15 restores precompile address `0x0000000000000000000000000000000000000801`
+for read-only compatibility. The revived precompile supports
+`queryExchangeRate` and `chainLinkLatestRoundData`, preserves the old
+18-decimal response shape expected by legacy Solidity callers, and returns
+timestamps from the underlying Sai oracle update time where Chainlink consumers
+typically perform freshness checks. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The data path is intentionally narrow:
+
+```txt
+EVM precompile 0x0801
+-> EVM params plugin "x-oracle"
+-> x-oracle Wasm adapter
+-> Sai oracle contract
+```
+
+The adapter owns legacy pair routing and Sai token-index mapping. The initial
+supported legacy symbols are `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`,
+`unibi:uusd`, and `uusdc:uusd`. `uusdt:uusd` remains unsupported unless Sai adds
+a deterministic USDT source. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621), [sai-perps#379](https://github.com/NibiruChain/sai-perps/pull/379))
+
+### 3 - Upgrade Handler and EVM Plugin State
+
+**Why it matters:** The EVM precompile needs a chain-configured adapter address,
+not a hard-coded side channel or a revived oracle module state store.
+
+v2.15 adds EVM params field `wasm_plugins`, with plugin name `x-oracle` pointing
+at the adapter contract address used by precompile execution. `SetParams`
+validates plugin names and Bech32 addresses, rejects duplicate plugin names, and
+derives `EvmState.WasmPlugins` from the ordered params slice so writes remain
+deterministic. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The v2.15 upgrade handler sets:
+
+```txt
+wasm_plugins:
+  - name: x-oracle
+    addr: nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r
+```
+
+That address is the deterministic `instantiate2` address of the Sai x-oracle
+adapter from Sai Wasm artifact release
+[`wasm-contracts/v1.22.0`](https://github.com/NibiruChain/sai-perps/releases/tag/wasm-contracts/v1.22.0).
+The same adapter address exists on mainnet and testnet because the deployment
+used the same Foundation Treasury CW3 creator, optimized Wasm code hash, fixed
+salt `x-oracle-nibiru`, and fixed init JSON. Testnet then used a Treasury
+`UpdateConfig` transaction to point the same adapter address at the testnet Sai
+oracle. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The handler follows the existing non-halting upgrade convention: if plugin
+configuration fails, it logs `v2.15.0 upgrade failure`, emits an
+`upgrade_failure` event, and still runs module migrations. Direct `0x0801` calls
+then fail clearly until EVM params are corrected. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+### 4 - Wasmer Runtime and Cross-Platform Builds
+
+**What it fixes:** ARM64 environments could panic while compiling larger
+CosmWasm artifacts, including Sai perp Wasm, with error
+`ImpossibleRelocation(Dynamic(DynamicLabel(0)))`.
+
+v2.15 bumps module `github.com/CosmWasm/wasmvm` to `v1.10.0` and replaces it
+with Nibiru-published module `github.com/NibiruChain/go-wasmvm v1.10.0`. This
+keeps the public import path stable while consuming a Nibiru runtime build that
+includes the ARM64 Singlepass relocation fix validated against the real Sai perp
+Wasm artifact. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+
+Build tooling now downloads `libwasmvm` assets from
+`NibiruChain/go-wasmvm` instead of upstream `CosmWasm/wasmvm`. Linux builds use
+the patched musl archives, and Darwin builds fetch release asset
+`libwasmvmstatic_darwin.a`. This narrows the runtime upgrade to the current
+CosmWasm v1 stack and leaves the broader CosmWasm v2 / SDK migration as separate
+work. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+Validation recorded in the issue and PR includes `go mod tidy`, `go mod verify`,
+a clean `just install`, `nibid version --long` showing the module replacement,
+and a local Sai deploy path that stored and instantiated Sai Wasm contracts
+successfully. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+
+### 5 - CLI and Local Development
+
+`nibid localnet` is now part of the installed binary. With `--script`, it prints
+an embedded localnet setup script that can be piped into Bash:
+
+```bash
+nibid localnet --script | bash
+```
+
+Without `--script`, the command shows help. The embedded script is tuned for
+CLI use, while `contrib/scripts/localnet.sh` also gained support for a `BINARY`
+environment override and more reliable process detection when a custom binary
+path is used. ([#2616](https://github.com/NibiruChain/nibiru/pull/2616))
+
+The `nibid` helper for decoding base64-encoded Stargate messages now emits
+decoded protobuf message values as proper JSON objects instead of stringified
+JSON. This makes multisig proposal payload inspection easier when reviewing
+generated CW3 stargate messages. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+### 6 - EVM Test Reliability
+
+EVM E2E tests now use helper `txWait` instead of direct `tx.wait(...)` calls in
+standard test files. The helper polls `getTransactionReceipt`, waits for new
+blocks between bounded attempts, and logs enough context to see whether a test
+is missing a receipt, waiting on block production, or observing a reverted
+transaction. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+This change does not alter chain behavior. It reduces CI ambiguity for EVM
+tests around receipts, filters, logs, zero-gas flows, native transfers, and
+debug queries. Passkey-specific paths keep their direct wait behavior where
+appropriate. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+### 7 - Release Wiring and Maintenance
+
+The release branch also registers `v2.14.1` as a vanilla historical upgrade
+before `v2.15.0`, so upgrade tests and local rehearsal paths know about the
+intermediate release tag. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+Build metadata and release asset URL construction were cleaned up while moving
+`libwasmvm` downloads to `NibiruChain/go-wasmvm`. This keeps the asset source
+explicit and avoids mixing upstream `CosmWasm/wasmvm` release naming with
+Nibiru-published runtime artifacts. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+### 8 - Appendix for v2.15.0
+
+#### For Builders
+
+- **MIM OFT quotes** - Legacy callers that reach precompile address `0x0801` through `chainLinkLatestRoundData("unibi:uusd")` should be able to receive Sai-backed oracle data after the v2.15 upgrade configures plugin `x-oracle`.
+- **Oracle compatibility scope** - This is not a full native oracle revival. The supported path is EVM precompile `0x0801` backed by the configured x-oracle adapter.
+- **Supported legacy symbols** - Initial adapter mappings cover `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`, `unibi:uusd`, and `uusdc:uusd`.
+- **Localnet startup** - Installed binaries can start localnet with `nibid localnet --script | bash`; source checkout of `contrib/scripts/localnet.sh` is no longer required for the common path.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.15.0`.
+- **Runtime change:** The binary links against Nibiru-published `go-wasmvm v1.10.0`, carrying the patched Wasmer runtime and updated native library assets.
+- **Post-upgrade EVM check:** Query EVM params and verify plugin name `x-oracle` points at `nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r`.
+- **Post-upgrade MIM check:** Validate the MIM-shaped fee quote path through `0x0801`, especially `chainLinkLatestRoundData("unibi:uusd")`.
+- **Upgrade-handler behavior:** If x-oracle plugin configuration fails, the handler logs and emits an upgrade failure event but still runs module migrations. Monitor upgrade logs and EVM params rather than assuming a halt.
+
+#### For Contributors / Repo Maintainers
+
+- EVM params now include repeated field `wasm_plugins`; keep plugin writes deterministic by going through keeper `SetParams`.
+- The x-oracle adapter fixture is embedded under `x/oracle/x_oracle.wasm` and shares schema types with the precompile tests.
+- Oracle precompile tests exercise a real adapter smart-query boundary and a FeeHandler-shaped Solidity caller instead of mocking the full MIM path.
+- The Wasmer runtime fix depends on Nibiru-owned runtime release artifacts. Keep `contrib/make/build.mk` asset naming aligned with `NibiruChain/go-wasmvm` releases for Linux and Darwin.
+- `v2.14.1` is registered as a vanilla historical upgrade before `v2.15.0`; keep future upgrade lists ordered by executed release history.
+- EVM E2E tests should prefer `txWait` for ordinary transaction receipt waits so failures carry tx hashes, query counts, blocks, status, logs, and elapsed time.
 
 ## v2.14.0
 
