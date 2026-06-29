@@ -23,6 +23,8 @@ var (
 	funtokenPrecompileJSON []byte
 	//go:embed artifacts/contracts/Wasm.sol/IWasm.json
 	wasmPrecompileJSON []byte
+	//go:embed artifacts/contracts/IOracle.sol/IOracle.json
+	oraclePrecompileJSON []byte
 	//go:embed artifacts/contracts/WNIBI.sol/WNIBI.json
 	wnibiContractJSON []byte
 
@@ -56,6 +58,8 @@ var (
 	testDirtyStateAttack4 []byte
 	//go:embed artifacts/contracts/TestDirtyStateAttack5.sol/TestDirtyStateAttack5.json
 	testDirtyStateAttack5 []byte
+	//go:embed artifacts/contracts/TestOracleAsLZNativeFeeHandler.sol/TestOracleAsLZNativeFeeHandler.json
+	testOracleAsLZNativeFeeHandler []byte
 )
 
 var (
@@ -87,6 +91,12 @@ var (
 	SmartContract_Wasm = CompiledEvmContract{
 		Name:      "Wasm.sol",
 		EmbedJSON: wasmPrecompileJSON,
+	}
+	// SmartContract_Oracle: Precompile contract interface for "IOracle.sol".
+	// Only the ABI is used.
+	SmartContract_Oracle = CompiledEvmContract{
+		Name:      "IOracle.sol",
+		EmbedJSON: oraclePrecompileJSON,
 	}
 	// SmartContract_Funtoken: Wrapped NIBI contract ERC20.
 	SmartContract_WNIBI = CompiledEvmContract{
@@ -189,12 +199,19 @@ var (
 		Name:      "TestDirtyStateAttack5.sol",
 		EmbedJSON: testDirtyStateAttack5,
 	}
+	// SmartContract_TestOracleAsLZNativeFeeHandler exercises the oracle precompile
+	// through a native-fee quote interface.
+	SmartContract_TestOracleAsLZNativeFeeHandler = CompiledEvmContract{
+		Name:      "TestOracleAsLZNativeFeeHandler.sol",
+		EmbedJSON: testOracleAsLZNativeFeeHandler,
+	}
 )
 
 func init() {
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
+	SmartContract_Oracle.MustLoad()
 	SmartContract_WNIBI.MustLoad()
 
 	SmartContract_TestERC20.MustLoad()
@@ -212,6 +229,7 @@ func init() {
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
+	SmartContract_TestOracleAsLZNativeFeeHandler.MustLoad()
 }
 
 type CompiledEvmContract struct {

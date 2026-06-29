@@ -115,6 +115,8 @@ set.New[gethcommon.Address](
 	append(gethvm.PrecompiledAddressesBerlin, []gethcommon.Address{
 		// FunToken 0x...800
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
+		// Oracle 0x...801
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
 		// Wasm 0x...802
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// P-256 verification precompile 0x...100
@@ -153,6 +155,8 @@ const (
 	KeyPrefixFunTokenIdxBankDenom collections.Namespace = 7
 
 	KeyPrefixNetWeiBlockDelta collections.Namespace = 8
+
+	KeyPrefixWasmPlugins collections.Namespace = 9
 )
 
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only

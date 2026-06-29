@@ -3,6 +3,7 @@ import { describe, expect, it } from "bun:test"
 import { Contract, Wallet } from "ethers"
 
 import { account, provider, TEST_TIMEOUT } from "./testdeps"
+import { txWait } from "./utils"
 
 // Load the full ABI from the artifact file
 const contractArtifact = JSON.parse(
@@ -85,7 +86,11 @@ describe("StateDB corruption test", () => {
       }
 
       const transactions = await Promise.all(txPromises)
-      const receipts = await Promise.all(transactions.map((tx) => tx.wait()))
+      const receipts = await Promise.all(
+        transactions.map((tx, idx) =>
+          txWait(tx, { label: `precompile_statedb bankMsgSend ${idx}` }),
+        ),
+      )
 
       // Stop simulations
       simulationRunning = false

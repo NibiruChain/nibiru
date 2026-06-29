@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { AbiCoder, ethers, keccak256, parseEther } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
+import { account, provider, TEST_TIMEOUT } from "./testdeps"
 import {
   alice,
   deployContractSendNibi,
@@ -10,6 +10,7 @@ import {
   INTRINSIC_TX_GAS,
   numberToHex,
   sendTestNibi,
+  txWait,
 } from "./utils"
 
 describe("eth queries", () => {
@@ -161,7 +162,9 @@ describe("eth queries", () => {
 
       // Execute some contract TX
       const tx = await contract.transfer(alice, parseEther("0.01"))
-      await tx.wait(1, TX_WAIT_TIMEOUT)
+      await txWait(tx.hash, {
+        label: "eth_getFilterChanges transfer",
+      })
 
       // The Go filter API appends logs from an async SubscribeLogs goroutine
       // into the filter's in-memory f.logs queue. tx.wait proves the tx mined,
@@ -184,7 +187,7 @@ describe("eth queries", () => {
       const success = await provider.send("eth_uninstallFilter", [filterId])
       expect(success).toBeTruthy()
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT * 2,
   )
 
   it(
@@ -200,7 +203,9 @@ describe("eth queries", () => {
       }
       // Execute some contract TX
       const tx = await contract.transfer(alice, parseEther("0.01"))
-      await tx.wait(1, TX_WAIT_TIMEOUT)
+      await txWait(tx.hash, {
+        label: "eth_getFilterLogs transfer",
+      })
       await new Promise((resolve) => setTimeout(resolve, 3000))
 
       // Create the filter for a contract
@@ -214,7 +219,7 @@ describe("eth queries", () => {
       expect(changes[0]).toHaveProperty("data")
       expect(changes[0]).toHaveProperty("topics")
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT * 2,
   )
 
   it(
@@ -230,7 +235,7 @@ describe("eth queries", () => {
       }
       // Execute some contract TX
       const tx = await contract.transfer(alice, parseEther("0.01"))
-      await tx.wait(1, TX_WAIT_TIMEOUT)
+      await txWait(tx.hash, { label: "eth_getLogs transfer" })
       await new Promise((resolve) => setTimeout(resolve, 3000))
 
       // Assert logs
@@ -240,7 +245,7 @@ describe("eth queries", () => {
       expect(changes[0]).toHaveProperty("data")
       expect(changes[0]).toHaveProperty("topics")
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT * 2,
   )
 
   it(

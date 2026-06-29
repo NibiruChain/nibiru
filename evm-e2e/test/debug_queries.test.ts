@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from "bun:test"
 import { parseEther, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
-import { provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./testdeps"
-import { alice, deployContractTestERC20, hexify } from "./utils"
+import { provider, TEST_TIMEOUT } from "./testdeps"
+import { alice, deployContractTestERC20, hexify, txWait } from "./utils"
 
 describe("debug queries", () => {
   let contractAddress: string
@@ -19,7 +19,7 @@ describe("debug queries", () => {
 
     // Execute some contract TX
     const txResponse = await contract.transfer(alice, parseEther("0.01"))
-    await txResponse.wait(1, TX_WAIT_TIMEOUT)
+    await txWait(txResponse, { label: "debug_queries transfer" })
 
     const receipt: TransactionReceipt = await provider.getTransactionReceipt(
       txResponse.hash,

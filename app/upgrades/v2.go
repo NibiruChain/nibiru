@@ -78,6 +78,12 @@ var (
 	}
 
 	Upgrade2_14_1 = NewVanillaUpgrade("v2.14.1")
+
+	Upgrade2_15_0 = Upgrade{
+		UpgradeName:   "v2.15.0",
+		Handler:       Handler_v2_15{},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
 )
 
 var _ HandlerImpl = (*Handler_v2_1)(nil)
