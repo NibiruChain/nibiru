@@ -23,7 +23,8 @@ var (
 func ProtoValueEncoder[V any, PV interface {
 	*V
 	codec.ProtoMarshaler
-}](cdc codec.BinaryCodec) ValueEncoder[V] {
+}](cdc codec.BinaryCodec,
+) ValueEncoder[V] {
 	return protoValueEncoder[V, PV]{
 		cdc: cdc,
 	}
