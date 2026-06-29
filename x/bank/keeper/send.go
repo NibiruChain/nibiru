@@ -16,8 +16,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
-
-	"github.com/NibiruChain/nibiru/v2/eth"
 )
 
 // SendKeeper defines a module interface that facilitates the transfer of coins
@@ -74,7 +72,7 @@ type BaseSendKeeper struct {
 	// The [weiStore] is NOT necessarily the balance from [GetWeiBalance].
 	// Rather, it the key-value store that holds NIBI balances smaller than 1
 	// micronibi (unibi).
-	weiStore      collections.Map[sdk.AccAddress, sdkmath.Int]
+	weiStore      collections.Map[sdk.AccAddress, sdkmath.Uint]
 	weiBlockDelta collections.ItemTransient[sdkmath.Int]
 }
 
@@ -100,12 +98,12 @@ func NewBaseSendKeeper(
 			storeKey,
 			NAMESPACE_BALANCE_WEI,
 			collections.AccAddressKeyEncoder,
-			collections.IntValueEncoder,
+			collections.UintValueEncoder,
 		),
 		weiBlockDelta: collections.NewItemTransient(
 			transientStoreKey,
 			NAMESPACE_WEI_BLOCK_DELTA,
-			eth.SignedIntValueEncoder,
+			collections.IntValueEncoder,
 		),
 	}
 }
