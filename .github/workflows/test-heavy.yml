@@ -83,7 +83,7 @@ jobs:
       
       - name: "Upload coverage reports to Codecov"
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         # Docs on usable "with" flags for codecov/codecov-action v5:
