@@ -214,10 +214,10 @@ Examples:
 			loadBankSide := func(denom string) (bool, error) {
 				metaResp, err := bankQuery.DenomMetadata(cmd.Context(), &banktypes.QueryDenomMetadataRequest{Denom: denom})
 				if err != nil {
-					if grpcstatus.Code(err) == grpccodes.NotFound {
-						return false, nil
+					if grpcstatus.Code(err) != grpccodes.NotFound {
+						return false, err
 					}
-					return false, err
+					metaResp = nil
 				}
 				balResp, err := bankQuery.Balance(cmd.Context(), &banktypes.QueryBalanceRequest{
 					Address: addrBech32.String(),
@@ -226,7 +226,10 @@ Examples:
 				if err != nil {
 					return false, err
 				}
-				decimals := bankDecimalsFromMetadata(metaResp.Metadata)
+				var decimals uint32
+				if metaResp != nil {
+					decimals = bankDecimalsFromMetadata(metaResp.Metadata)
+				}
 				amountBig := new(big.Int).Set(balResp.Balance.Amount.BigInt())
 				amount := amountBig.String()
 				balance := formatUnitsBig(amountBig, decimals)
@@ -234,7 +237,9 @@ Examples:
 				resp.BankCoinDenom = strPtr(denom)
 				resp.BankBalanceBase = strPtr(amount)
 				resp.BankBalanceHuman = strPtr(balance)
-				resp.BankSymbol = strPtr(metaResp.Metadata.Symbol)
+				if metaResp != nil {
+					resp.BankSymbol = strPtr(metaResp.Metadata.Symbol)
+				}
 				resp.BankDecimals = u32Ptr(decimals)
 				return true, nil
 			}
