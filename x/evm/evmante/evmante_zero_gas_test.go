@@ -101,7 +101,40 @@ func TestAnteStepDetectZeroGas_Eligible_SetsMetaNoCredit(t *testing.T) {
 	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 
-func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
+func TestAnteStepDetectZeroGas_Eligible_NonLegacyNonZeroFeeFields(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+
+	targetAddr := addr3
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+	})
+
+	sdb := deps.NewStateDB()
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     0,
+		GasLimit:  50_000,
+		GasFeeCap: big.NewInt(1_200_000_000_000),
+		GasTipCap: big.NewInt(0),
+		To:        &targetAddr,
+		Amount:    big.NewInt(0),
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+	require.NoError(t, tx.Sign(deps.GethSigner(), deps.Sender.KeyringSigner))
+
+	from := tx.FromAddr()
+	balBefore := new(big.Int).Set(sdb.GetBalance(from).ToBig())
+
+	require.NoError(t, evmante.AnteStepDetectZeroGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+
+	require.NoError(t, evmante.AnteStepValidateBasic(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.NoError(t, evmante.AnteStepVerifyEthAcc(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.NoError(t, evmante.AnteStepDeductGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.Equal(t, 0, balBefore.Cmp(sdb.GetBalance(from).ToBig()))
+}
+
+func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_SetsMeta(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	// Configure ZeroGasActors with an always_zero_gas_contracts entry.
 	targetAddr := addr3
@@ -111,7 +144,7 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 
 	sdb := deps.NewStateDB()
 
-	// Create a tx that targets the allowlisted contract but with non-zero value.
+	// Create a tx that targets the allowlisted contract with non-zero value.
 	to := targetAddr
 	tx := evm.NewTx(&evm.EvmTxArgs{
 		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
@@ -119,7 +152,7 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 		GasLimit: 50_000,
 		GasPrice: big.NewInt(1),
 		To:       &to,
-		Amount:   big.NewInt(1), // non-zero value should make tx ineligible
+		Amount:   big.NewInt(1),
 	})
 	tx.From = deps.Sender.EthAddr.Hex()
 
@@ -135,10 +168,9 @@ func TestAnteStepDetectZeroGas_Eligible_NonZeroValue_NoMeta(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// No meta should be set for non-zero value.
-	require.False(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
 
-	// Balance should be unchanged.
+	// Detection only sets metadata; value solvency is checked by later ante steps.
 	require.Equal(t, 0, initialBal.Cmp(sdb.GetBalance(from).ToBig()))
 }
 

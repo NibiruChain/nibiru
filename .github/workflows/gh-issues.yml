@@ -1,11 +1,11 @@
-name: "Auto-add GH issues to project"
+name: "Automation for GitHub project and issues"
 # Add all issues opened to the issue board for triage and assignment
 # GitHub Org and Project Automation
 # https://www.notion.so/nibiru/GitHub-Org-and-Project-Automation-c771d671109849ee9fda7c8b741cd66a?pvs=4
 
 on:
   issues:
-    types: ["opened", "labeled"]
+    types: ["opened", "labeled", "closed"]
 
 permissions:
   issues: write
@@ -17,13 +17,13 @@ jobs:
     name: "Add GH ticket to project"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v1.0.2
+      - uses: actions/add-to-project@v2.0.0
         with:
           project-url: https://github.com/orgs/NibiruChain/projects/8
           github-token: ${{ secrets.NIBIRU_PM }}
 
   label-triage:
-    name: "Add GH ticket to project"
+    name: "Label GH ticket for triage"
     runs-on: ubuntu-latest
     # The action comes from the "Activity types" for the "issues" webhook event
     # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#issues
@@ -36,3 +36,43 @@ jobs:
           configuration-path: ".github/issue-labeler-config.yml"
           enable-versioned-regex: 0
           not-before: "2024-05-01T00:00:00Z"
+
+  label-cleanup-on-close:
+    name: "Clean up labels when GitHub issue/ticket is closed"
+    runs-on: ubuntu-latest
+    if: "github.event.action == 'closed'"
+    steps:
+      - name: "Remove triage and priority labels if present"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ISSUE_NUM: ${{ github.event.issue.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          current_labels="$(
+            gh issue view "$GH_ISSUE_NUM" \
+              --repo "$GH_REPO" \
+              --json labels \
+              --jq '.labels[].name'
+          )"
+
+          labels_to_remove=()
+
+          for label in "S-triage" "S-needs-scope" "S-someday-maybe"; do
+            if grep -Fxq "$label" <<< "$current_labels"; then
+              labels_to_remove+=("$label")
+            fi
+          done
+
+          if [ ${#labels_to_remove[@]} -eq 0 ]; then
+            echo "No cleanup labels present."
+            exit 0
+          fi
+
+          # Command needs comma-separated labels.
+          # Removing a label that does not exist results in 404. 
+          joined="$(IFS=,; echo "${labels_to_remove[*]}")"
+          gh issue edit "$GH_ISSUE_NUM" \
+            --repo "$GH_REPO" \
+            --remove-label "$joined"

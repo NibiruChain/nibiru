@@ -98,7 +98,7 @@ func deployWasmBytecode(
 	for _, wasmFile := range []string{
 		// nibi_stargate.wasm is a compiled version of:
 		// https://github.com/NibiruChain/nibiru-wasm/blob/main/contracts/nibi-stargate/src/contract.rs
-		"x/tokenfactory/fixture/nibi_stargate.wasm",
+		"x/tokenfactory/testdata/nibi_stargate.wasm",
 
 		// hello_world_counter.wasm is a compiled version of:
 		// https://github.com/NibiruChain/nibiru-wasm/tree/ec3ab9f09587a11fbdfbd4021c7617eca3912044/contracts/00-hello-world-counter

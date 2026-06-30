@@ -19,7 +19,6 @@ var _ AnteStep = AnteStepDetectZeroGas
 //
 // Eligibility:
 //   - tx.To is in ZeroGasActors.AlwaysZeroGasContracts (EVM hex address list)
-//   - tx.Value == 0
 //
 // No state mutations. Only sets ZeroGasMeta in context as a marker.
 func AnteStepDetectZeroGas(
@@ -29,31 +28,15 @@ func AnteStepDetectZeroGas(
 	simulate bool,
 	opts AnteOptionsEVM,
 ) (err error) {
-	txData, err := evm.UnpackTxData(msgEthTx.Data)
+	isZeroGas, _, err := evm.IsZeroGasMsgEthereumTx(sdb.Ctx(), k.SudoKeeper, msgEthTx)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "AnteStepDetectZeroGas: failed to unpack tx data")
 	}
-
-	to := txData.GetTo()
-	if to == nil {
+	if !isZeroGas {
 		return nil
 	}
 
-	evmContracts := k.SudoKeeper.GetZeroGasEvmContracts(sdb.Ctx())
-	if len(evmContracts) == 0 {
-		return nil
-	}
-	if _, ok := evmContracts[*to]; !ok {
-		return nil
-	}
-
-	if txValue := txData.GetValueWei(); txValue != nil && txValue.Sign() != 0 {
-		return nil
-	}
-
-	sdb.SetCtx(
-		sdb.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{}),
-	)
+	sdb.SetCtx(evm.WithZeroGasMeta(sdb.Ctx()))
 
 	return nil
 }

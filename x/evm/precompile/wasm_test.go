@@ -83,6 +83,10 @@ func (s *WasmSuite) TestExecute() {
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
+	sudoers, err := deps.App.SudoKeeper.Sudoers.Get(deps.Ctx())
+	s.Require().NoError(err)
+	sudoers.Contracts = append(sudoers.Contracts, wasmContract.String())
+	deps.App.SudoKeeper.Sudoers.Set(deps.Ctx(), sudoers)
 
 	s.Run("create denom", func() {
 		msgArgsBz := []byte(`
@@ -313,7 +317,7 @@ func (s *WasmSuite) TestSadArgsCount() {
 
 func (s *WasmSuite) TestSadArgsExecute() {
 	methodName := precompile.WasmMethod_execute
-	contractAddr := testutil.AccAddress().String()
+	contractAddr := testutil.NewAccAddress().String()
 	wasmContractMsg := []byte(`
 	{ "create_denom": {
 		"subdenom": "ETH"

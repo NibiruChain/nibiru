@@ -14,17 +14,15 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
-	"github.com/cosmos/cosmos-sdk/crypto"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testnetwork"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -68,36 +66,17 @@ func (msg MsgEditSudoersPlus) ToJson(t *testing.T) (fileJsonBz []byte, fileName 
 	return fileJsonBz, fileName
 }
 
-func (MsgEditSudoersPlus) Exec(
-	network *testnetwork.Network,
-	fileName string,
-	from sdk.AccAddress,
-) (*sdk.TxResponse, error) {
-	args := []string{
-		fileName,
-	}
-	return network.ExecTxCmd(cli.CmdEditSudoers(), from, args)
-}
-
 var _ suite.TearDownAllSuite = (*TestSuite)(nil)
 
 type TestSuite struct {
 	suite.Suite
-	cfg     testnetwork.Config
-	network *testnetwork.Network
-	root    Account
-}
 
-type Account struct {
-	privKey    cryptotypes.PrivKey
-	addr       sdk.AccAddress
-	passphrase string
+	localnetCLI localnet.CLI
+	root        sdk.AccAddress
 }
 
 func TestSudoIntegration(t *testing.T) {
-	testutil.RetrySuiteRunIfDbClosed(t, func() {
-		suite.Run(t, new(TestSuite))
-	}, 2)
+	suite.Run(t, new(TestSuite))
 }
 
 // ———————————————————————————————————————————————————————————————————
@@ -105,58 +84,24 @@ func TestSudoIntegration(t *testing.T) {
 // ———————————————————————————————————————————————————————————————————
 
 func (s *TestSuite) SetupSuite() {
-	testutil.BeforeIntegrationSuite(s.T())
-
-	// configure the custom sudo genesis
-	sudoGenesis := sudo.DefaultGenesis()
-
-	// Set the root user
-	privKeys, addrs := testutil.PrivKeyAddressPairs(1)
-	rootPrivKey := privKeys[0]
-	rootAddr := addrs[0]
-	sudoGenesis.Sudoers.Root = rootAddr.String()
-	sudoGenesis.Sudoers.Contracts = []string{rootAddr.String()}
-
-	encoding := app.MakeEncodingConfig()
-	gen := app.ModuleBasics.DefaultGenesis(encoding.Codec)
-	gen[sudo.ModuleName] = encoding.Codec.MustMarshalJSON(sudoGenesis)
-
-	s.root = Account{
-		privKey:    rootPrivKey,
-		addr:       rootAddr,
-		passphrase: "secure-password",
+	if err := nutil.EnsureLocalBlockchain(); err != nil {
+		s.T().Skipf("skipping localnet-backed sudo CLI tests: %v", err)
 	}
-	s.cfg = testnetwork.BuildNetworkConfig(gen)
-	network := testnetwork.New(&s.Suite, s.cfg)
 
-	s.network = network
-	s.FundRoot(s.root)
-	s.AddRootToKeyring(s.root)
-}
+	localnetCLI, err := localnet.NewCLI()
+	s.Require().NoError(err)
+	s.localnetCLI = localnetCLI
 
-func (s *TestSuite) FundRoot(root Account) {
-	val := s.network.Validators[0]
-	funds := sdk.NewCoins(
-		sdk.NewInt64Coin(denoms.NIBI, 420*nutil.TO_MICRO),
-	)
-	feeDenom := denoms.NIBI
+	// `contrib/scripts/localnet.sh` patches genesis so the recovered
+	// `validator` account is the x/sudo root; `nutil.LocalnetValAddr` matches
+	// that fixed localnet account.
+	s.root = nutil.LocalnetValAddr
 
-	_, err := testnetwork.FillWalletFromValidator(
-		root.addr, funds, val, feeDenom,
-	)
-	s.NoError(err)
-}
-
-func (s *TestSuite) AddRootToKeyring(root Account) {
-	s.T().Log("add the x/sudo root account to the clientCtx.Keyring")
-	// Encrypt the x/sudo root account's private key to get its "armor"
-	passphrase := root.passphrase
-	privKey := root.privKey
-	armor := crypto.EncryptArmorPrivKey(privKey, passphrase, privKey.Type())
-	// Import this account to the keyring
-	val := s.network.Validators[0]
-	s.NoError(
-		val.ClientCtx.Keyring.ImportPrivKey("root", armor, passphrase),
+	state := s.querySudoers()
+	s.Require().Equal(
+		s.root.String(),
+		state.Sudoers.Root,
+		"localnet sudo root must be the validator account",
 	)
 }
 
@@ -165,92 +110,52 @@ func (s *TestSuite) AddRootToKeyring(root Account) {
 // ———————————————————————————————————————————————————————————————————
 
 func (s *TestSuite) TestCmdEditSudoers() {
-	val := s.network.Validators[0]
-
-	_, contractAddrs := testutil.PrivKeyAddressPairs(3)
-	var contracts []string
-	for _, addr := range contractAddrs {
-		contracts = append(contracts, addr.String())
-	}
-
-	sender := s.root.addr
+	initialState := s.querySudoers()
+	initialContracts := set.New(initialState.Sudoers.Contracts...)
+	contracts := s.newContracts(3, initialContracts)
+	sender := s.root
 
 	pbMsg := sudo.MsgEditSudoers{
 		Action:    "add_contracts",
-		Contracts: []string{contracts[0], contracts[1], contracts[2]},
+		Contracts: contracts,
 		Sender:    sender.String(),
 	}
 
 	msg := MsgEditSudoersPlus{pbMsg}
-	jsonBz, fileName := msg.ToJson(s.T())
-
-	s.T().Log("sending from the wrong address should fail.")
-	wrongSender := testutil.AccAddress()
-	msg.Sender = wrongSender.String()
-	out, err := msg.Exec(s.network, fileName, wrongSender)
-	s.Assert().Errorf(err, "out: %s\n", out)
-	s.Contains(err.Error(), "key not found", "msg: %s\nout: %s", jsonBz, out)
+	_, fileName := msg.ToJson(s.T())
 
 	s.T().Log("happy - add_contracts exec tx")
-	msg.Sender = sender.String()
-	out, err = msg.Exec(s.network, fileName, sender)
-	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
+	s.Require().NoError(s.execLocalTx("edit-sudoers", fileName))
 
-	state, err := testnetwork.QuerySudoers(val.ClientCtx)
-	s.NoError(err)
-
+	state := s.querySudoers()
 	gotRoot := state.Sudoers.Root
-	s.Equal(s.root.addr.String(), gotRoot)
+	s.Equal(s.root.String(), gotRoot)
 
 	gotContracts := set.New(state.Sudoers.Contracts...)
-	s.Equal(len(contracts), gotContracts.Len())
 	for _, contract := range contracts {
 		s.True(gotContracts.Has(contract))
 	}
 
 	pbMsg = sudo.MsgEditSudoers{
 		Action:    "remove_contracts",
-		Contracts: []string{contracts[1]},
+		Contracts: contracts,
 		Sender:    sender.String(),
 	}
 
 	msg = MsgEditSudoersPlus{pbMsg}
-	jsonBz, fileName = msg.ToJson(s.T())
+	_, fileName = msg.ToJson(s.T())
 
 	s.T().Log("happy - remove_contracts exec tx")
-	out, err = msg.Exec(s.network, fileName, sender)
-	s.NoErrorf(err, "msg: %s\nout: %s", jsonBz, out)
+	s.Require().NoError(s.execLocalTx("edit-sudoers", fileName))
 
-	state, err = testnetwork.QuerySudoers(val.ClientCtx)
-	s.NoError(err)
-
+	state = s.querySudoers()
 	gotRoot = state.Sudoers.Root
-	s.Equal(s.root.addr.String(), gotRoot)
-
-	wantContracts := []string{contracts[0], contracts[2]}
+	s.Equal(s.root.String(), gotRoot)
 	gotContracts = set.New(state.Sudoers.Contracts...)
-	s.Equal(len(wantContracts), gotContracts.Len())
-	for _, contract := range wantContracts {
+	s.Require().Equal(initialContracts.Len(), gotContracts.Len())
+	for _, contract := range initialState.Sudoers.Contracts {
 		s.True(gotContracts.Has(contract))
 	}
-}
-
-func (s *TestSuite) Test_ZCmdChangeRoot() {
-	val := s.network.Validators[0]
-
-	sudoers, err := testnetwork.QuerySudoers(val.ClientCtx)
-	s.NoError(err)
-	initialRoot := sudoers.Sudoers.Root
-
-	newRoot := testutil.AccAddress()
-	_, err = s.network.ExecTxCmd(
-		cli.CmdChangeRoot(), s.root.addr, []string{newRoot.String()})
-	require.NoError(s.T(), err)
-
-	sudoers, err = testnetwork.QuerySudoers(val.ClientCtx)
-	s.NoError(err)
-	require.NotEqual(s.T(), sudoers.Sudoers.Root, initialRoot)
-	require.Equal(s.T(), sudoers.Sudoers.Root, newRoot.String())
 }
 
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
@@ -285,8 +190,55 @@ func (s *Suite) TestMarshal_EditSudoers() {
 }
 
 func (s *TestSuite) TearDownSuite() {
-	s.T().Log("tearing down integration test suite")
-	s.network.Cleanup()
+	s.Require().NoError(s.localnetCLI.Close())
+	s.T().Log("leaving localnet state in place")
+}
+
+func (s *TestSuite) querySudoers() *sudo.QuerySudoersResponse {
+	resp := new(sudo.QuerySudoersResponse)
+	s.Require().NoError(s.execLocalQuery(resp, "state"))
+	return resp
+}
+
+func (s *TestSuite) execLocalQuery(
+	result codec.ProtoMarshaler,
+	args ...string,
+) error {
+	cmd := cli.GetQueryCmd()
+	s.T().Log(s.localnetCLI.RenderQueryCmd(cmd, args))
+	return s.localnetCLI.ExecQueryCmd(cmd, args, result)
+}
+
+func (s *TestSuite) execLocalTx(args ...string) error {
+	cmd := cli.GetTxCmd()
+	s.T().Log(s.localnetCLI.RenderTxCmd(cmd, args))
+	_, err := s.localnetCLI.ExecTxCmd(cmd, args)
+	return err
+}
+
+func (s *TestSuite) newContracts(
+	n int,
+	existing set.Set[string],
+) []string {
+	contracts := make([]string, 0, n)
+	for len(contracts) < n {
+		addr := testutil.NewAccAddress().String()
+		if existing.Has(addr) {
+			continue
+		}
+		alreadySelected := false
+		for _, contract := range contracts {
+			if contract == addr {
+				alreadySelected = true
+				break
+			}
+		}
+		if alreadySelected {
+			continue
+		}
+		contracts = append(contracts, addr)
+	}
+	return contracts
 }
 
 // ———————————————————————————————————————————————————————————————————
@@ -300,15 +252,15 @@ func (s *Suite) TestCliCmdEditSudoers() {
 	// Create temporary JSON files for testing
 	addContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "add_contracts",
-		"contracts": []string{testutil.AccAddress().String(), testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String(), testutil.NewAccAddress().String()},
 	})
 	removeContractsJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "remove_contracts",
-		"contracts": []string{testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String()},
 	})
 	invalidActionJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "invalid_action",
-		"contracts": []string{testutil.AccAddress().String()},
+		"contracts": []string{testutil.NewAccAddress().String()},
 	})
 	invalidAddressJSON := s.createTempJSONFile(tempDir, map[string]any{
 		"action":    "add_contracts",
@@ -388,7 +340,7 @@ func (s *Suite) TestCliCmdEditSudoers() {
 
 func (s *Suite) TestCliCmdChangeRoot() {
 	testVars := SetupTestVars(s.T())
-	newRootAddr := testutil.AccAddress().String()
+	newRootAddr := testutil.NewAccAddress().String()
 
 	testCases := []TestCase{
 		{
@@ -438,8 +390,8 @@ func (s *Suite) TestCliCmdEditZeroGasActors() {
 	testVars := SetupTestVars(s.T())
 
 	// Generate test addresses
-	validSender1 := testutil.AccAddress().String()
-	validSender2 := testutil.AccAddress().String()
+	validSender1 := testutil.NewAccAddress().String()
+	validSender2 := testutil.NewAccAddress().String()
 	validContract1 := "0x1234567890123456789012345678901234567890"
 	validContract2 := "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"
 

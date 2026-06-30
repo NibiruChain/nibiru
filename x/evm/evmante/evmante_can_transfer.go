@@ -68,7 +68,7 @@ func AnteStepVerifyEthAcc(
 		return nil
 	}
 
-	if err := evmstate.CheckSenderBalance(
+	if err := CheckSenderBalance(
 		sdb.GetBalance(fromAddr), txData,
 	); err != nil {
 		return err
@@ -100,6 +100,11 @@ func AnteStepCanTransfer(
 			"failed to create an ethereum core.Message from signer %T", signer,
 		)
 	}
+	isZeroGas := evm.IsZeroGasEthTx(sdb.Ctx())
+	if isZeroGas {
+		normalized := evm.NormalizeZeroGasMessage(*coreMsg)
+		coreMsg = &normalized
+	}
 
 	if baseFeeWeiPerGas == nil {
 		return sdkioerrors.Wrap(
@@ -108,7 +113,8 @@ func AnteStepCanTransfer(
 		)
 	}
 
-	if msgEthTx.EffectiveGasCapWei(baseFeeWeiPerGas).Cmp(baseFeeWeiPerGas) < 0 {
+	if !isZeroGas &&
+		msgEthTx.EffectiveGasCapWei(baseFeeWeiPerGas).Cmp(baseFeeWeiPerGas) < 0 {
 		return sdkioerrors.Wrapf(
 			sdkerrors.ErrInsufficientFee,
 			"gas fee cap (wei) less than block base fee (wei); (%s < %s)",

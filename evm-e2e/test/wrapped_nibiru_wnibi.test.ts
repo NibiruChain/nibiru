@@ -1,8 +1,8 @@
-import { expect, test } from "@jest/globals"
+import { expect, test } from "bun:test"
 import { parseUnits, toBigInt, Wallet } from "ethers"
 
-import { account, provider, TEST_TIMEOUT, TX_WAIT_TIMEOUT } from "./setup"
-import { deployContractWNIBI } from "./utils"
+import { account, provider, TEST_TIMEOUT } from "./testdeps"
+import { deployContractWNIBI, txWait } from "./utils"
 
 test(
   "WNIBI.sol deposits via ether transfer",
@@ -27,7 +27,7 @@ test(
         to: contractAddr,
         value: amountWei,
       })
-      await txResp.wait()
+      await txWait(txResp, { label: "wnibi transfer deposit" })
 
       // Check balances after deposit
       const contractBalWei = await provider.getBalance(contractAddr)
@@ -42,7 +42,7 @@ test(
     {
       const amountWei = parseUnits("351", 12)
       const txResp = await contract.withdraw(amountWei)
-      await txResp.wait()
+      await txWait(txResp, { label: "wnibi withdraw" })
 
       // Check balanaces after withdraw
       const contractBalWei = await provider.getBalance(contractAddr)
@@ -60,7 +60,7 @@ test(
       let tx = await contract.deposit({
         value: amountToSend,
       })
-      await tx.wait(1, TX_WAIT_TIMEOUT)
+      await txWait(tx, { label: "wnibi method deposit" })
 
       // Check balanaces after deposit
       const balanceAfter = await contract.balanceOf(account.address)
@@ -72,11 +72,8 @@ test(
       const alice = Wallet.createRandom()
       const amountToSend = parseUnits("200", 12) // WNIBI tokens for alice
 
-      let tx = await contract.transfer(
-        alice.address,
-        amountToSend,
-      )
-      await tx.wait(1, TX_WAIT_TIMEOUT)
+      let tx = await contract.transfer(alice.address, amountToSend)
+      await txWait(tx, { label: "wnibi transfer" })
 
       // Check balances after transfer and correct total supply
       const aliceBalance = await contract.balanceOf(alice)
@@ -85,9 +82,7 @@ test(
       const accountBalance = await contract.balanceOf(account.address)
 
       const totalSupply = await contract.totalSupply()
-      expect(totalSupply).toEqual(
-        accountBalance + aliceBalance,
-      )
+      expect(totalSupply).toEqual(accountBalance + aliceBalance)
     }
   },
   TEST_TIMEOUT * 2,

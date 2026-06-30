@@ -201,9 +201,8 @@ func happyGasLimit() *big.Int {
 	)
 }
 
-// TestCanTransfer_ZeroGas_RunsAndPasses documents that CanTransfer runs (does not skip)
-// for zero-gas txs and passes. EffectiveGasFeeCapWei returns max(baseFee, txCap), so the
-// gas cap check passes; value is 0 by eligibility so the value check no-ops.
+// TestCanTransfer_ZeroGas_RunsAndPasses documents that CanTransfer runs (does
+// not skip) for zero-gas txs and passes. The zero value check no-ops.
 func TestCanTransfer_ZeroGas_RunsAndPasses(t *testing.T) {
 	targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
 	deps := evmtest.NewTestDeps()
@@ -234,4 +233,68 @@ func TestCanTransfer_ZeroGas_RunsAndPasses(t *testing.T) {
 
 	err = evmante.AnteStepCanTransfer(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED)
 	require.NoError(t, err, "CanTransfer must run and pass for zero-gas tx")
+}
+
+func TestCanTransfer_ZeroGas_NonZeroValueExactBalancePasses(t *testing.T) {
+	targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+	deps := evmtest.NewTestDeps()
+
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+	})
+
+	sdb := deps.NewStateDB()
+	valueWei := big.NewInt(123)
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, valueWei)
+
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     0,
+		GasLimit:  50_000,
+		GasFeeCap: big.NewInt(1_200_000_000_000),
+		GasTipCap: big.NewInt(0),
+		To:        &targetAddr,
+		Amount:    valueWei,
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+
+	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+	require.NoError(t, tx.Sign(gethSigner, deps.Sender.KeyringSigner))
+
+	require.NoError(t, evmante.AnteStepDetectZeroGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+
+	require.NoError(t, evmante.AnteStepCanTransfer(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+}
+
+func TestCanTransfer_ZeroGas_NonZeroValueInsufficientBalanceFails(t *testing.T) {
+	targetAddr := gethcommon.HexToAddress("0x2222222222222222222222222222222222222222")
+	deps := evmtest.NewTestDeps()
+
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{targetAddr.Hex()},
+	})
+
+	sdb := deps.NewStateDB()
+	valueWei := big.NewInt(123)
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(122))
+
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:  deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:    0,
+		GasLimit: 50_000,
+		GasPrice: big.NewInt(0),
+		To:       &targetAddr,
+		Amount:   valueWei,
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+
+	gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+	require.NoError(t, tx.Sign(gethSigner, deps.Sender.KeyringSigner))
+
+	require.NoError(t, evmante.AnteStepDetectZeroGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	require.True(t, evm.IsZeroGasEthTx(sdb.Ctx()))
+
+	err := evmante.AnteStepCanTransfer(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED)
+	require.ErrorContains(t, err, "failed to transfer 123 wei")
 }

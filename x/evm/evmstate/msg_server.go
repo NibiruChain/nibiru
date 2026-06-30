@@ -48,14 +48,33 @@ func (k *Keeper) EthereumTx(
 		}
 	}()
 
-	coreTx, _, err := txMsg.Validate()
-	if err != nil {
-		return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
-	}
+	var (
+		coreTx    *gethcore.Transaction
+		isZeroGas bool
+	)
 
 	// Initialize SDB
 	{
 		ctx := sdk.UnwrapSDKContext(goCtx)
+		isZeroGas, _, err = evm.IsZeroGasMsgEthereumTx(ctx, k.SudoKeeper, txMsg)
+		if err != nil {
+			return evmResp, sdkioerrors.Wrap(err, "EthereumTx zero-gas classification failed")
+		}
+
+		var txValidation evm.TxGasKind
+		if isZeroGas {
+			txValidation = evm.TxGasKind_ZeroGas
+		} else {
+			txValidation = evm.TxGasKind_Default
+		}
+		coreTx, _, err = txMsg.Validate(txValidation)
+		if err != nil {
+			return evmResp, sdkioerrors.Wrap(err, "EthereumTx validate basic failed")
+		}
+		if isZeroGas {
+			ctx = evm.WithZeroGasMeta(ctx)
+		}
+
 		txConfig := k.TxConfig(ctx, coreTx.Hash())
 		sdb = k.NewSDB(ctx, txConfig)
 	}
@@ -68,6 +87,10 @@ func (k *Keeper) EthereumTx(
 	)
 	if err != nil {
 		return nil, sdkioerrors.Wrap(err, "failed to convert ethereum transaction as core message")
+	}
+	if isZeroGas {
+		normalized := evm.NormalizeZeroGasMessage(*evmMsg)
+		evmMsg = &normalized
 	}
 
 	// ApplyEvmMsg - Perform the EVM State transition
@@ -91,12 +114,22 @@ func (k *Keeper) EthereumTx(
 	}
 
 	if evmResp != nil {
-		gasErr := evm.SafeConsumeGas(sdb.RootCtx(), evmResp.GasUsed, "execute EthereumTx")
-		if gasErr != nil {
-			if !evmResp.Failed() { // only set VmError if not already failed
-				evmResp.VmError = gasErr.Error()
-			}
+		// Reset any gas consumed on the root context's gas meter so that
+		// [sdk.GasMeter] gas accounting for this transaction reflects only the
+		// EVM gas used. This ensures that if evmResp.GasUsed <= evmMsg.GasLimit,
+		// then the tx cannot fail due to [sdk.GasMeter] gas exhaustion, matching
+		// Ethereum semantics.
+		if sdb.RootCtx().GasMeter().GasConsumed() > 0 {
+			sdb.RootCtx().GasMeter().RefundGas(
+				sdb.RootCtx().GasMeter().GasConsumed(),
+				"reset gas before EVM charge",
+			)
 		}
+		_ = evm.SafeConsumeGas(
+			sdb.RootCtx(),
+			evmResp.GasUsed,
+			"execute EthereumTx",
+		)
 	}
 
 	// rootCtxGasless: Mutable sdb.RootCtx() with ignored gas metering. After
@@ -135,6 +168,7 @@ func (k *Keeper) EthereumTx(
 		}
 	}
 
+	MaybeTruncateEventsForFailedEvmTx(rootCtxGasless, evmResp)
 	txEvents := k.GetEvmTxEvents(sdb.Ctx(), coreTx.To(), coreTx.Type(), *evmMsg, evmResp)
 
 	err = txEvents.EmitEvents(rootCtxGasless)
@@ -159,6 +193,31 @@ func (k *Keeper) EthereumTx(
 		)
 	}
 	return evmResp, nil
+}
+
+// MaybeTruncateEventsForFailedEvmTx truncates the current tx event stream to an
+// ante-computed mark when the EVM response indicates VM-level failure.
+//
+// This is part of the mitigation for leaked non-EVM module/precompile events on
+// failed EVM transactions:
+// https://github.com/NibiruChain/nibiru/issues/2542
+func MaybeTruncateEventsForFailedEvmTx(
+	ctx sdk.Context,
+	evmResp *evm.MsgEthereumTxResponse,
+) {
+	if evmResp == nil || !evmResp.Failed() {
+		return
+	}
+
+	mark, ok := evm.GetEvmEventTruncationMark(ctx)
+	if !ok {
+		return
+	}
+
+	// Keep only ante-phase events (up to mark) when the EVM execution fails.
+	// Canonical EVM metadata events are emitted immediately after this call in
+	// EthereumTx via txEvents.EmitEvents and EventTxLog.
+	ctx.EventManager().TruncateEvents(mark)
 }
 
 // NewEVM generates a go-ethereum VM.
@@ -513,8 +572,20 @@ func (k *Keeper) CreateFunToken(
 		return nil, err
 	}
 
-	// Deduct fee upon registration.
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if k.EthChainID(ctx).Cmp(big.NewInt(appconst.ETH_CHAIN_ID_MAINNET)) == 0 {
+		sender := sdk.MustAccAddressFromBech32(msg.Sender)
+		sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+		havePerms := (sudoPermsErr == nil) || (k.authority.String() == msg.Sender)
+		if !havePerms {
+			return nil, fmt.Errorf(
+				"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+				k.authority, msg.Sender,
+			)
+		}
+	}
+
+	// Deduct fee upon registration.
 	err = k.deductCreateFunTokenFee(ctx, msg)
 	if err != nil {
 		return nil, err
@@ -692,6 +763,32 @@ func (k *Keeper) ConvertEvmToCoin(
 	}
 
 	return &evm.MsgConvertEvmToCoinResponse{}, err
+}
+
+func (k *Keeper) UpdateParams(
+	goCtx context.Context, req *evm.MsgUpdateParams,
+) (resp *evm.MsgUpdateParamsResponse, err error) {
+	if err := req.ValidateBasic(); err != nil {
+		return resp, err
+	}
+
+	sender := sdk.MustAccAddressFromBech32(req.Authority)
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+	havePerms := (sudoPermsErr == nil) || (k.authority.String() == req.Authority)
+	if !havePerms {
+		return resp, fmt.Errorf(
+			"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+			k.authority, req.Authority,
+		)
+	}
+
+	err = k.SetParams(ctx, req.Params)
+	if err != nil {
+		return nil, sdkioerrors.Wrapf(err, "failed to set params")
+	}
+	return &evm.MsgUpdateParamsResponse{}, nil
 }
 
 // TxEvents represents ABCI events that are emitted an Ethereum tx. Nil fields

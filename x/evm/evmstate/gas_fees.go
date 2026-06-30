@@ -2,7 +2,6 @@
 package evmstate
 
 import (
-	"fmt"
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -90,52 +89,6 @@ func gasToRefund(availableRefundAmount, gasUsed uint64) uint64 {
 		return availableRefundAmount
 	}
 	return refundAmount
-}
-
-// CheckSenderBalance validates that the tx cost value is positive and that the
-// sender has enough funds to pay for the fees and value of the transaction.
-func CheckSenderBalance(
-	balanceWei *uint256.Int,
-	txData evm.TxData,
-) error {
-	cost := txData.Cost()
-
-	if cost.Sign() < 0 {
-		return sdkioerrors.Wrapf(
-			sdkerrors.ErrInvalidCoins,
-			"tx cost (%s) is negative and invalid", cost,
-		)
-	}
-
-	if balanceWei.ToBig().Cmp(cost) < 0 {
-		return sdkioerrors.Wrapf(
-			sdkerrors.ErrInsufficientFunds,
-			"sender balance < tx cost (%s < %s)", balanceWei, cost,
-		)
-	}
-	return nil
-}
-
-// DeductTxCostsFromUserBalance deducts the fees from the user balance. Returns
-// an error if the specified sender address does not exist or the account balance
-// is not sufficient.
-func (k *Keeper) DeductTxCostsFromUserBalance(
-	sdb *SDB,
-	costInWei *uint256.Int,
-	from gethcommon.Address,
-) error {
-	// fetch sender balance
-	balWei := sdb.GetBalance(from)
-
-	// deduct the full gas cost from the user balance
-	if balWei.Cmp(costInWei) < 0 {
-		return fmt.Errorf(`insufficient funds: failed to deduct full gas cost %s: balance="%s", user="%s"`, costInWei, balWei, from)
-	}
-
-	sdb.SubBalance(from, costInWei, tracing.BalanceDecreaseGasBuy)
-	sdb.AddBalance(evm.FEE_COLLECTOR_ADDR, costInWei, tracing.BalanceDecreaseGasBuy)
-
-	return nil
 }
 
 // VerifyFee is used to return the fee, or token payment, for the given

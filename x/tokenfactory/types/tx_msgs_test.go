@@ -39,7 +39,7 @@ func (vbt ValidateBasicTest) test() func(t *testing.T) {
 
 // TestMsgCreateDenom_ValidateBasic: Tests if MsgCreateDenom is properly validated.
 func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
-	addr := testutil.AccAddress().String()
+	addr := testutil.NewAccAddress().String()
 	for _, tc := range []ValidateBasicTest{
 		{
 			name: "happy",
@@ -72,7 +72,7 @@ func TestMsgCreateDenom_ValidateBasic(t *testing.T) {
 
 // TestMsgChangeAdmin_ValidateBasic: Tests if MsgChangeAdmin is properly validated.
 func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
-	sbf := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
 	for _, tc := range []ValidateBasicTest{
 		{
@@ -80,7 +80,7 @@ func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 			msg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    validDenom,
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "",
 		},
@@ -89,7 +89,7 @@ func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 			msg: &types.MsgChangeAdmin{
 				Sender:   "sender",
 				Denom:    validDenom,
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "invalid sender",
 		},
@@ -107,7 +107,7 @@ func TestMsgChangeAdmin_ValidateBasic(t *testing.T) {
 			msg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    "tf/",
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "denom format error",
 		},
@@ -121,7 +121,7 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 		{
 			name: "happy",
 			msg: &types.MsgUpdateModuleParams{
-				Authority: testutil.AccAddress().String(),
+				Authority: testutil.NewAccAddress().String(),
 				Params:    types.DefaultModuleParams(),
 			},
 			wantErr: "",
@@ -140,7 +140,7 @@ func TestMsgUpdateModuleParams_ValidateBasic(t *testing.T) {
 }
 
 func TestTxMsgInterface(t *testing.T) {
-	creator := testutil.AccAddress().String()
+	creator := testutil.NewAccAddress().String()
 	subdenom := testutil.RandLetters(4)
 	denomStr := fmt.Sprintf("tf/%s/%s", creator, subdenom)
 	for _, msg := range []legacytx.LegacyMsg{
@@ -151,7 +151,7 @@ func TestTxMsgInterface(t *testing.T) {
 		&types.MsgChangeAdmin{
 			Sender:   creator,
 			Denom:    denomStr,
-			NewAdmin: testutil.AccAddress().String(),
+			NewAdmin: testutil.NewAccAddress().String(),
 		},
 	} {
 		t.Run(msg.Type(), func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestTxMsgInterface(t *testing.T) {
 // TestMsgMint_ValidateBasic: Tests if tx msgs MsgMint and MsgBurn are properly
 // validated.
 func TestMsgMint_ValidateBasic(t *testing.T) {
-	sbf := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
 	validCoin := sdk.NewInt64Coin(validDenom, 420)
 	for _, tc := range []ValidateBasicTest{
@@ -244,7 +244,7 @@ func TestMsgMint_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgBurn_ValidateBasic(t *testing.T) {
-	sbf := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
 	validDenom := fmt.Sprintf("tf/%s/ftt", sbf)
 	validCoin := sdk.NewInt64Coin(validDenom, 420)
 	for _, tc := range []ValidateBasicTest{
@@ -299,8 +299,8 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 }
 
 func TestMsgSetDenomMetadata_ValidateBasic(t *testing.T) {
-	sbf := testutil.AccAddress().String()
-	satoshi := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
+	satoshi := testutil.NewAccAddress().String()
 	ubtcDenom := fmt.Sprintf("tf/%s/ubtc", satoshi)
 	for _, tc := range []ValidateBasicTest{
 		{

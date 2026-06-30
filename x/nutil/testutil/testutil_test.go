@@ -35,7 +35,7 @@ func (s *TestSuite) TestSampleFns() {
 	s.T().Log("consecutive calls give different addrs")
 	addrs := set.New[string]()
 	for times := 0; times < 16; times++ {
-		newAddr := testutil.AccAddress().String()
+		newAddr := testutil.NewAccAddress().String()
 		s.False(addrs.Has(newAddr))
 		addrs.Add(newAddr)
 	}

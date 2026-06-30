@@ -44,8 +44,8 @@ func InitPrecompiles(
 	// Custom precompiles
 	for _, precompileSetupFn := range []func(k keepers.PublicKeepers) NibiruCustomPrecompile{
 		PrecompileFunToken,
-		PrecompileWasm,
 		PrecompileOracle,
+		PrecompileWasm,
 		PrecompileP256,
 	} {
 		pc := precompileSetupFn(k)
@@ -227,6 +227,4 @@ var isMutation map[PrecompileMethod]bool = map[PrecompileMethod]bool{
 
 	FunTokenMethod_sendToEvm:   true,
 	FunTokenMethod_bankMsgSend: true,
-
-	OracleMethod_queryExchangeRate: false,
 }

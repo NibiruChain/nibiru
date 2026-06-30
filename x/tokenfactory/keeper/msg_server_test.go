@@ -8,10 +8,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	sudo "github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
@@ -31,6 +31,7 @@ func (s *TestSuite) TestCreateDenom() {
 			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
 			wantErr: "",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.GrantSudo(addrs[0].String())
 				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
 					Iterate(ctx, collections.Range[string]{}).Values()
 				s.Len(allDenoms, 0)
@@ -47,6 +48,7 @@ func (s *TestSuite) TestCreateDenom() {
 			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
 			wantErr: "attempting to create denom that is already registered",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.GrantSudo(addrs[0].String())
 				allDenoms := bapp.TokenFactoryKeeper.Store.Denoms.
 					Iterate(ctx, collections.Range[string]{}).Values()
 				s.Len(allDenoms, 0)
@@ -77,6 +79,11 @@ func (s *TestSuite) TestCreateDenom() {
 			name:    "sad: denom",
 			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: ""},
 			wantErr: "denom format error",
+		},
+		{
+			name:    "sad: sender lacks gov or sudo permission",
+			txMsg:   &types.MsgCreateDenom{Sender: addrs[0].String(), Subdenom: "nusd"},
+			wantErr: "invalid signing authority",
 		},
 	}
 
@@ -112,7 +119,7 @@ func (s *TestSuite) TestCreateDenom() {
 }
 
 func (s *TestSuite) TestChangeAdmin() {
-	sbf := testutil.AccAddress().String()
+	sbf := testutil.NewAccAddress().String()
 
 	testCases := []struct {
 		Name     string
@@ -138,12 +145,13 @@ func (s *TestSuite) TestChangeAdmin() {
 		{
 			Name: "sad: non-admin tries to change admin",
 			txMsg: &types.MsgChangeAdmin{
-				Sender:   testutil.AccAddress().String(),
+				Sender:   testutil.NewAccAddress().String(),
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "only the current admin can set a new admin",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.GrantSudo(sbf)
 				_, err := bapp.TokenFactoryKeeper.CreateDenom(
 					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
 						Sender:   sbf,
@@ -159,10 +167,11 @@ func (s *TestSuite) TestChangeAdmin() {
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: "",
 			preHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
+				s.GrantSudo(sbf)
 				_, err := bapp.TokenFactoryKeeper.CreateDenom(
 					sdk.WrapSDKContext(ctx), &types.MsgCreateDenom{
 						Sender:   sbf,
@@ -178,7 +187,7 @@ func (s *TestSuite) TestChangeAdmin() {
 			txMsg: &types.MsgChangeAdmin{
 				Sender:   sbf,
 				Denom:    types.TFDenom{Creator: sbf, Subdenom: "ftt"}.Denom().String(),
-				NewAdmin: testutil.AccAddress().String(),
+				NewAdmin: testutil.NewAccAddress().String(),
 			},
 			wantErr: collections.ErrNotFound.Error(),
 		},
@@ -239,7 +248,7 @@ func (s *TestSuite) TestUpdateModuleParams() {
 		{
 			name: "sad: must be gov proposal form x/gov module account",
 			txMsg: &types.MsgUpdateModuleParams{
-				Authority: testutil.AccAddress().String(),
+				Authority: testutil.NewAccAddress().String(),
 				Params:    types.DefaultModuleParams(),
 			},
 			wantErr: "expected gov account as only signer for proposal message",
@@ -297,6 +306,9 @@ type TestCaseTx struct {
 
 func (tc TestCaseTx) RunTest(s *TestSuite) {
 	for _, txMsg := range tc.SetupMsgs {
+		if createDenomMsg, ok := txMsg.(*types.MsgCreateDenom); ok {
+			s.GrantSudo(createDenomMsg.Sender)
+		}
 		err := s.HandleMsg(txMsg)
 		s.Require().NoError(err)
 	}
@@ -480,7 +492,7 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgMint{
 						Sender: addrs[0].String(),
 						Coin:   nusd69420,
-						MintTo: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						MintTo: authtypes.NewModuleAddress(sudo.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},
@@ -488,7 +500,23 @@ func (s *TestSuite) TestMintBurn() {
 					TestMsg: &types.MsgBurn{
 						Sender:   addrs[0].String(),
 						Coin:     nusd69420,
-						BurnFrom: authtypes.NewModuleAddress(oracletypes.ModuleName).String(),
+						BurnFrom: authtypes.NewModuleAddress(sudo.ModuleName).String(),
+					},
+					WantErr: types.ErrBlockedAddress.Error(),
+				},
+				{
+					TestMsg: &types.MsgMint{
+						Sender: addrs[0].String(),
+						Coin:   nusd69420,
+						MintTo: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+					},
+					WantErr: types.ErrBlockedAddress.Error(),
+				},
+				{
+					TestMsg: &types.MsgBurn{
+						Sender:   addrs[0].String(),
+						Coin:     nusd69420,
+						BurnFrom: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 					},
 					WantErr: types.ErrBlockedAddress.Error(),
 				},
@@ -777,14 +805,10 @@ func (s *TestSuite) TestSudoSetDenomMetadata() {
 			SetupMsgs: []sdk.Msg{},
 			PreHook: func(ctx sdk.Context, bapp *app.NibiruApp) {
 				bapp.SudoKeeper.Sudoers.Set(ctx, sudoers)
+				err := bapp.TokenFactoryKeeper.Store.InsertDenom(ctx, tfdenomStNIBI)
+				s.Require().NoError(err)
 			},
 			TestMsgs: []TestMsgElem{
-				{
-					TestMsg: &types.MsgCreateDenom{
-						Sender:   tfdenomStNIBI.Creator,
-						Subdenom: tfdenomStNIBI.Subdenom,
-					},
-				},
 				{
 					TestMsg: &types.MsgSudoSetDenomMetadata{
 						Sender:   tfdenomStNIBI.Creator,

@@ -6,12 +6,10 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
@@ -21,17 +19,7 @@ import (
 
 // Keeper of the oracle store
 type Keeper struct {
-	cdc      codec.BinaryCodec
-	storeKey storetypes.StoreKey
-
-	AccountKeeper  types.AccountKeeper
-	bankKeeper     types.BankKeeper
-	distrKeeper    types.DistributionKeeper
-	StakingKeeper  types.StakingKeeper
-	slashingKeeper types.SlashingKeeper
-	sudoKeeper     types.SudoKeeper
-
-	distrModuleName string
+	AccountKeeper types.AccountKeeper
 
 	// Module parameters
 	ModuleParams      collections.Item[types.Params]
@@ -56,13 +44,6 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 
 	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	distrKeeper types.DistributionKeeper,
-	stakingKeeper types.StakingKeeper,
-	slashingKeeper types.SlashingKeeper,
-	sudoKeeper types.SudoKeeper,
-
-	distrName string,
 ) Keeper {
 	// ensure oracle module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -70,15 +51,7 @@ func NewKeeper(
 	}
 
 	k := Keeper{
-		cdc:               cdc,
-		storeKey:          storeKey,
 		AccountKeeper:     accountKeeper,
-		bankKeeper:        bankKeeper,
-		distrKeeper:       distrKeeper,
-		StakingKeeper:     stakingKeeper,
-		slashingKeeper:    slashingKeeper,
-		sudoKeeper:        sudoKeeper,
-		distrModuleName:   distrName,
 		ModuleParams:      collections.NewItem(storeKey, 11, collections.ProtoValueEncoder[types.Params](cdc)),
 		ExchangeRateMap:   collections.NewMap(storeKey, 1, asset.PairKeyEncoder, collections.ProtoValueEncoder[types.ExchangeRateAtBlock](cdc)),
 		PriceSnapshots:    collections.NewMap(storeKey, 10, collections.PairKeyEncoder(asset.PairKeyEncoder, collections.TimeKeyEncoder), collections.ProtoValueEncoder[types.PriceSnapshot](cdc)),
@@ -98,33 +71,6 @@ func NewKeeper(
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// ValidateFeeder return the given feeder is allowed to feed the message or not
-func (k Keeper) ValidateFeeder(
-	ctx sdk.Context, feederAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
-) error {
-	// A validator delegates price feeder consent to itself by default.
-	// Thus, we only need to verify consent for price feeder addresses that don't
-	// match the validator address.
-	if !feederAddr.Equals(validatorAddr) {
-		delegate := k.FeederDelegations.GetOr(
-			ctx, validatorAddr, sdk.AccAddress(validatorAddr))
-		if !delegate.Equals(feederAddr) {
-			return sdkioerrors.Wrapf(
-				types.ErrNoVotingPermission,
-				"wanted: %s, got: %s", delegate.String(), feederAddr.String())
-		}
-	}
-
-	// Check that the given validator is in the active set for consensus.
-	if val := k.StakingKeeper.Validator(ctx, validatorAddr); val == nil || !val.IsBonded() {
-		return sdkioerrors.Wrapf(
-			stakingtypes.ErrNoValidatorFound,
-			"validator %s is not active set", validatorAddr.String())
-	}
-
-	return nil
 }
 
 func (k Keeper) GetExchangeRateTwap(ctx sdk.Context, pair asset.Pair) (price sdkmath.LegacyDec, err error) {

@@ -9,7 +9,7 @@ interface IOracle {
     /// @return price The exchange rate for the given pair
     /// @return blockTimeMs The block time in milliseconds when the price was
     /// last updated
-    /// @return blockHeight The block height when the price was last updated
+    /// @return blockHeight The current Nibiru block height for the query.
     /// @dev This function is view-only and does not modify state.
     function queryExchangeRate(
         string memory pair

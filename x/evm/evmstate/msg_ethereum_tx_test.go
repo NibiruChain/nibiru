@@ -14,6 +14,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -21,6 +22,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
@@ -240,8 +242,60 @@ func (s *Suite) TestMsgEthereumTx_SimpleTransfer() {
 	}
 }
 
-// TestMsgEthereumTx_ZeroGas verifies the bypass path: ZeroGasMeta in context causes
-// RefundGas to be skipped. Sender with zero balance can execute a zero-value transfer.
+func (s *Suite) TestMaybeTruncateEventsForFailedEvmTx() {
+	mkDeps := func() evmtest.TestDeps {
+		deps := evmtest.NewTestDeps()
+		deps.SetCtx(deps.Ctx().WithEventManager(sdk.NewEventManager()))
+		deps.Ctx().EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent("e1"),
+			sdk.NewEvent("e2"),
+			sdk.NewEvent("e3"),
+		})
+		deps.SetCtx(deps.Ctx().WithValue(evm.CtxKeyEvmEventTruncationMark, 2))
+		return deps
+	}
+
+	testCases := []struct {
+		name      string
+		evmResp   *evm.MsgEthereumTxResponse
+		wantTypes []string
+	}{
+		{
+			name:      "vm error truncates to mark",
+			evmResp:   &evm.MsgEthereumTxResponse{VmError: "execution reverted"},
+			wantTypes: []string{"e1", "e2"},
+		},
+		{
+			name:      "success keeps all events",
+			evmResp:   &evm.MsgEthereumTxResponse{},
+			wantTypes: []string{"e1", "e2", "e3"},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			deps := mkDeps()
+			evmstate.MaybeTruncateEventsForFailedEvmTx(deps.Ctx(), tc.evmResp)
+
+			events := deps.Ctx().EventManager().Events()
+			s.Require().Len(events, len(tc.wantTypes))
+			for i, wantType := range tc.wantTypes {
+				s.Require().Equal(wantType, events[i].Type)
+			}
+		})
+	}
+}
+
+// The following zero-gas tests exercise only the EthereumTx msg_server. They do not
+// run the ante handler. The context is given the same zero-gas marker (CtxKeyZeroGasMeta)
+// that the ante would set in production. We verify that the msg_server skips RefundGas
+// when that marker is present, as it would after ante ran in a real DeliverTx.
+
+// TestMsgEthereumTx_ZeroGas verifies the msg_server bypass. When the context carries
+// the zero-gas marker (as it would after the ante handler ran), RefundGas is skipped.
+// This test does not run the ante. It injects the marker to simulate that. Sender with
+// zero balance can execute a zero-value transfer. We assert no deduction and no refund
+// (fee collector and sender stay at 0).
 func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -260,6 +314,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	)
 	s.Require().NoError(err)
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)
@@ -279,8 +334,84 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas() {
 	s.Require().Equal(0, senderBal.Cmp(uint256.NewInt(0)), "sender balance should be 0")
 }
 
+func (s *Suite) TestMsgEthereumTx_ZeroGas_ClassifiesAllowlistedType2Tx() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := deps.Sender
+	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	ethTxMsg, err := evmtest.NewEthTxMsgFromTxData(
+		&deps,
+		gethcore.DynamicFeeTxType,
+		nil,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
+		&to,
+		big.NewInt(0),
+		100_000,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.HexToHash(ethTxMsg.Hash)),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
+}
+
+func (s *Suite) TestMsgEthereumTx_ZeroGas_NonZeroValueTransfersWithoutGasPayment() {
+	deps := evmtest.NewTestDeps()
+	ethAcc := deps.Sender
+	to := gethcommon.HexToAddress("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	valueWei := evm.NativeToWei(big.NewInt(1))
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewInt64Coin("unibi", 1)),
+	))
+
+	ethTxMsg, err := evmtest.NewEthTxMsgFromTxData(
+		&deps,
+		gethcore.DynamicFeeTxType,
+		nil,
+		deps.EvmKeeper.GetAccNonce(deps.Ctx(), ethAcc.EthAddr),
+		&to,
+		valueWei,
+		100_000,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().NoError(ethTxMsg.ValidateBasic())
+
+	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(deps.Ctx()), ethTxMsg)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.HexToHash(ethTxMsg.Hash)),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(ethAcc.EthAddr).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(to).Cmp(uint256.MustFromBig(valueWei)))
+}
+
 // TestMsgEthereumTx_ZeroGas_WithRefund is like TestMsgEthereumTx_ZeroGas but uses a
-// higher gas limit. With bypass, RefundGas is skipped so no refund occurs; balances stay at 0.
+// higher gas limit. With bypass, RefundGas is skipped so no refund occurs. Balances stay at 0.
+// Same setup: msg_server only, zero-gas marker injected in context (ante not run).
 func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -300,6 +431,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	)
 	s.Require().NoError(err)
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)
@@ -319,8 +451,9 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_WithRefund() {
 	s.Require().Equal(0, senderBal.Cmp(uint256.NewInt(0)), "sender balance should be 0")
 }
 
-// TestMsgEthereumTx_ZeroGas_Reverted ensures zero-gas bypass works on reverted execution:
-// no deduction, no refund. Fee collector unchanged from deploy; sender stays at 0.
+// TestMsgEthereumTx_ZeroGas_Reverted ensures zero-gas bypass works on reverted execution.
+// No deduction, no refund. Fee collector unchanged from deploy, sender stays at 0.
+// Context is given the zero-gas marker so we test msg_server behavior without running ante.
 func (s *Suite) TestMsgEthereumTx_ZeroGas_Reverted() {
 	deps := evmtest.NewTestDeps()
 	ethAcc := deps.Sender
@@ -362,6 +495,7 @@ func (s *Suite) TestMsgEthereumTx_ZeroGas_Reverted() {
 	s.Require().NoError(err)
 	s.Require().NoError(ethTxMsg.ValidateBasic())
 
+	// Simulate ante having run. Same marker the ante sets, so the msg_server sees zero-gas and skips RefundGas.
 	ctxWithMeta := deps.Ctx().WithValue(evm.CtxKeyZeroGasMeta, &evm.ZeroGasMeta{})
 
 	resp, err := deps.App.EvmKeeper.EthereumTx(sdk.WrapSDKContext(ctxWithMeta), ethTxMsg)
@@ -420,4 +554,60 @@ func (s *Suite) TestEthereumTx_ABCI() {
 	}
 	// Normal EVM tx (not zero-gas): context must not have ZeroGasMeta set.
 	s.Require().False(evm.IsZeroGasEthTx(deps.Ctx()), "IsZeroGasEthTx should be false for normal EVM tx")
+}
+
+func (s *Suite) TestEthereumTx_ABCI_ZeroGasAutomaticForNonLegacy() {
+	deps := evmtest.NewTestDeps()
+	deployResp, err := evmtest.DeployContract(
+		&deps, embeds.SmartContract_TestERC20,
+	)
+	s.Require().NoError(err)
+	to := deployResp.ContractAddr
+	input, err := deployResp.ContractData.ABI.Pack(
+		"transfer", gethcommon.HexToAddress("0x0000000000000000000000000000000000010f2C"), big.NewInt(0),
+	)
+	s.Require().NoError(err)
+
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	gasLimit := uint64(780_749)
+	evmTxMsg := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     deps.EvmKeeper.GetAccNonce(deps.Ctx(), deps.Sender.EthAddr),
+		GasLimit:  gasLimit,
+		Input:     input,
+		GasFeeCap: big.NewInt(1_200_000_000_000),
+		GasTipCap: big.NewInt(0),
+		Amount:    big.NewInt(0),
+		To:        &to,
+	})
+	evmTxMsg.From = deps.Sender.EthAddr.Hex()
+	s.Require().NoError(evmTxMsg.Sign(deps.GethSigner(), deps.Sender.KeyringSigner))
+	rawTxHash := evmTxMsg.AsTransaction().Hash()
+	s.Require().Equal(uint8(gethcore.DynamicFeeTxType), evmTxMsg.AsTransaction().Type())
+
+	blockHeader := deps.Ctx().BlockHeader()
+	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+
+	txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+	blockTx, err := evmTxMsg.BuildTx(txBuilder, evm.EVMBankDenom)
+	s.Require().NoError(err)
+	txBz, err := deps.App.GetTxConfig().TxEncoder()(blockTx)
+	s.Require().NoError(err)
+
+	deliverTxResp := deps.App.DeliverTx(abci.RequestDeliverTx{Tx: txBz})
+	s.Require().True(deliverTxResp.IsOK(), "%#v", deliverTxResp)
+	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx().BlockHeight()})
+	s.Require().NotZero(deliverTxResp.GasUsed)
+	s.Require().EqualValues(gasLimit, deliverTxResp.GasWanted)
+	s.Require().Equal(rawTxHash.Hex(), evmTxMsg.Hash)
+
+	sdbAfter := deps.EvmKeeper.NewSDB(
+		deps.Ctx(),
+		deps.EvmKeeper.TxConfig(deps.Ctx(), rawTxHash),
+	)
+	s.Require().Equal(0, sdbAfter.GetBalance(deps.Sender.EthAddr).Cmp(uint256.NewInt(0)))
+	s.Require().Equal(0, sdbAfter.GetBalance(evm.FEE_COLLECTOR_ADDR).Cmp(uint256.NewInt(0)))
 }

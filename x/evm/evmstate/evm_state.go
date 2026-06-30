@@ -51,6 +51,10 @@ type EvmState struct {
 	BlockZeroGasTxCount collections.ItemTransient[uint64]
 
 	NetWeiBlockDelta collections.Item[sdkmath.Int]
+
+	// WasmPlugins is a derived index from evm.Params.WasmPlugins for fast lookup
+	// by EVM execution paths. Mutate it only via SetParams.
+	WasmPlugins collections.Map[string, sdk.AccAddress]
 }
 
 func (k *Keeper) EVMState() EvmState { return k.EvmState }
@@ -100,6 +104,12 @@ func NewEvmState(
 			evm.KeyPrefixNetWeiBlockDelta,
 			eth.SignedIntValueEncoder,
 		),
+		WasmPlugins: collections.NewMap(
+			storeKey,
+			evm.KeyPrefixWasmPlugins,
+			collections.StringKeyEncoder,
+			collections.AccAddressValueEncoder,
+		),
 	}
 }
 
@@ -129,6 +139,18 @@ func (k Keeper) GetParams(ctx sdk.Context) (params evm.Params) {
 func (k Keeper) SetParams(ctx sdk.Context, params evm.Params) (err error) {
 	if params.CreateFuntokenFee.IsNegative() {
 		return fmt.Errorf("createFuntokenFee cannot be negative: %s", params.CreateFuntokenFee)
+	}
+
+	pluginAddrByName, pluginNames, err := evm.WasmPluginAddrsByName(params.WasmPlugins)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range k.EvmState.WasmPlugins.Iterate(ctx, collections.Range[string]{}).Keys() {
+		_ = k.EvmState.WasmPlugins.Delete(ctx, name)
+	}
+	for _, name := range pluginNames {
+		k.EvmState.WasmPlugins.Insert(ctx, name, pluginAddrByName[name])
 	}
 
 	k.EvmState.ModuleParams.Set(ctx, params)

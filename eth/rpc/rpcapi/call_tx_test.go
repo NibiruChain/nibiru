@@ -21,7 +21,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "happy: minimal args set",
 			jsonTxArgs: evm.JsonTxArgs{
-				From:  &s.fundedAccEthAddr,
+				From:  &s.evmSenderEthAddr,
 				To:    &recipient,
 				Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 			},
@@ -30,7 +30,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "happy: gas price set",
 			jsonTxArgs: evm.JsonTxArgs{
-				From:     &s.fundedAccEthAddr,
+				From:     &s.evmSenderEthAddr,
 				To:       &recipient,
 				GasPrice: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 				Value:    (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
@@ -40,7 +40,7 @@ func (s *BackendSuite) TestSetTxDefaults() {
 		{
 			name: "sad: no to (contract creation) and no data",
 			jsonTxArgs: evm.JsonTxArgs{
-				From: &s.fundedAccEthAddr,
+				From: &s.evmSenderEthAddr,
 			},
 			wantErr: "contract creation without any data provided",
 		},
@@ -68,13 +68,18 @@ func (s *BackendSuite) TestSetTxDefaults() {
 			s.Require().Greater(*jsonTxArgs.Nonce, hexutil.Uint64(0))
 			s.Require().Greater(*jsonTxArgs.Gas, hexutil.Uint64(0))
 			s.Require().Equal(jsonTxArgs.ChainID.ToInt().Int64(), appconst.ETH_CHAIN_ID_DEFAULT)
+			if tc.name == "happy: minimal args set" {
+				// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+				s.Require().Equal(evm.Big0, jsonTxArgs.MaxPriorityFeePerGas.ToInt())
+				s.Require().Equal(evm.Big0, jsonTxArgs.MaxFeePerGas.ToInt())
+			}
 		})
 	}
 }
 
 func (s *BackendSuite) TestDoCall() {
 	jsonTxArgs := evm.JsonTxArgs{
-		From:  &s.fundedAccEthAddr,
+		From:  &s.evmSenderEthAddr,
 		To:    &recipient,
 		Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
 	}
@@ -86,22 +91,26 @@ func (s *BackendSuite) TestDoCall() {
 	txRespJsonBz, _ := json.Marshal(txResponse)
 	s.T().Logf("txResponse from Backend.DoCall on penging block number: %s\n", txRespJsonBz)
 
-	s.T().Log("eth_call via RPC with the same block number should query latest and properly propagate the true error")
-	var res json.RawMessage
+	s.T().Log("typed eth_call should propagate the true insufficient-balance error")
 	blockNumber := rpc.EthPendingBlockNumber
-	err = s.node.EvmRpcClient.Client().Call(
-		&res, "eth_call",
-		jsonTxArgs,
+	callArgs := evm.JsonTxArgs{
+		To:    &recipient,
+		Value: (*hexutil.Big)(evm.NativeToWei(big.NewInt(1))),
+	}
+	_, err = s.cli.EvmRpc.Eth.Call(
+		callArgs,
 		rpc.BlockNumberOrHash{
 			BlockNumber: &blockNumber,
 		},
+		nil,
 	)
-	s.Require().ErrorContainsf(err, "insufficient balance for transfer", "res: %s", res)
+	s.Require().ErrorContains(err, "insufficient balance for transfer")
 }
 
 func (s *BackendSuite) TestGasPrice() {
-	gasPrice, err := s.backend.GasPrice()
+	gasPrice, err := s.cli.EvmRpc.Eth.GasPrice()
 	s.Require().NoError(err)
 	s.Require().NotNil(gasPrice)
-	s.Require().Greater(gasPrice.ToInt().Int64(), int64(0))
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	s.Require().Equal(evm.Big0, gasPrice.ToInt())
 }

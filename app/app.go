@@ -50,7 +50,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -96,7 +95,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemodule"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
@@ -140,7 +139,6 @@ var (
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
-		groupmodule.AppModuleBasic{},
 		// ibc 'AppModuleBasic's
 		ibc.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
@@ -150,7 +148,7 @@ var (
 		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
-		oracle.AppModuleBasic{},
+		oraclemodule.AppModuleBasic{},
 		epochs.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},
@@ -357,7 +355,7 @@ func NewNibiruApp(
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
-		ibc.NewAppModule(app.ibcKeeper),
+		ibc.NewAppModule(app.IbcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
 		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
@@ -432,7 +430,7 @@ func NewNibiruApp(
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
-		IBCKeeper:         app.ibcKeeper,
+		IBCKeeper:         app.IbcKeeper,
 		TxCounterStoreKey: app.keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
@@ -622,7 +620,7 @@ func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
-	return app.ibcKeeper
+	return app.IbcKeeper
 }
 
 func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {

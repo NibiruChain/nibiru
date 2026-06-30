@@ -94,22 +94,48 @@ gen-proto-openapi:
 
 lint: 
   #!/usr/bin/env bash
-  echo "Running golangci-lint with docker!"
+  set -euo pipefail
+  source contrib/bashlib.sh
+
   image_version="v2.6.1"
+  lint_cmd=(golangci-lint run -v --fix)
+
+  if which_ok golangci-lint >/dev/null 2>&1; then
+    local_version="$(golangci-lint version --short 2>/dev/null || true)"
+    image_major="${image_version#v}"
+    image_major="${image_major%%.*}"
+    local_major="${local_version#v}"
+    local_major="${local_major%%.*}"
+
+    if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
+      log_info "Running local golangci-lint $local_version"
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
+      log_warning "Running local golangci-lint ${local_version:-unknown}; repo pins $image_version"
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    log_warning "Local golangci-lint version ${local_version:-unknown} does not match major version $image_major; using Docker"
+  else
+    log_info "golangci-lint not found locally; using Docker"
+  fi
+
+  which_ok docker
+  log_info "Running golangci-lint with Docker image golangci/golangci-lint:$image_version"
   docker run --rm \
     -v "$(pwd)":/app \
     -v ~/.cache/golangci-lint/$image_version:/root/.cache \
     -w /app \
     golangci/golangci-lint:$image_version \
-    golangci-lint run -v --fix 2>&1
+    "${lint_cmd[@]}" 2>&1
 
-# Runs a Nibiru local network. Ex: "just localnet", "just localnet --no-build", "just localnet --features featureA"
+# Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-  make localnet FLAGS="{{PASS_FLAGS}}"
-
-# Runs a Nibiru local network without building and installing. "just localnet --no-build"
-localnet-fast:
-  make localnet FLAGS="--no-build"
+  bash contrib/scripts/localnet.sh --run {{PASS_FLAGS}}
 
 # Clears the logs directory
 log-clear:
@@ -147,11 +173,13 @@ test-e2e:
 test-localnet:
   #!/usr/bin/env bash
   source contrib/bashlib.sh
+  log_info "Sleeping for 8 seconds to give network time to spin up and run a few blocks."
+  set -x
   just install
-  bash contrib/scripts/localnet.sh &
-  log_info "Sleeping for 6 seconds to give network time to spin up and run a few blocks."
-  sleep 6 
+  just localnet --no-build &
+  sleep 8
   kill $(pgrep -x nibid) # Stops network running as background process.
+  set +x
   log_success "Spun up localnet"
 
 # Test: "chaosnet.sh" script
@@ -171,7 +199,7 @@ stop:
 
 passkey-demo:
   #!/usr/bin/env bash
-  scripts/passkey-demo.sh
+  contrib/scripts/passkey-demo.sh
 
 # Runs golang formatter (gofumpt)
 fmt:
@@ -191,60 +219,49 @@ test-release:
 release-publish:
   make release
 
-# Run Go tests (short mode)
+# Run Go tests without cached test results
+test:
+  #!/usr/bin/env bash
+  echo "Running: just test"
+  just localnet-check
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test -count=1 \$GO_TEST_PKGS"
+  go test -count=1 $GO_TEST_PKGS
+
+# Run Go tests and allow cached test results
+test-fast:
+  #!/usr/bin/env bash
+  echo "Running: just test-fast"
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
+  go test $GO_TEST_PKGS
+
+# Run Go tests without cached test results and generate coverage.out
+test-cover:
+  #!/usr/bin/env bash
+  echo "Running: just test-cover"
+  just localnet-check
+  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
+  go test \
+    -tags=pebbledb \
+    -coverprofile=coverage.out \
+    -count=1 \
+    $GO_TEST_PKGS
+  go tool cover -func=coverage.out
+
+# Alias for "test"
+[private]
 test-unit:
-  go test ./... -short
+  just test-fast
 
-# Run Go tests (short mode) + coverage
-test-coverage-unit:
-  make test-coverage-unit
-
-# Heavy tests for the EVM and EVM JSON-RPC
-test-cover-g1:
+# Report whether localnet-backed tests can reach a running nibid process
+localnet-check:
   #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 1 tests..."
-  echo "Paths: eth, x/evm"
-  go test ./eth/... ./x/evm/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group1.out
+  if pgrep -x nibid >/dev/null; then
+    echo "✅ Localnet (nibid) is running. Tests with live chain can run"
+  else
+    echo "ERROR: not running nibid process. Start localnet before running Go tests." >&2
+    exit 1
+  fi
 
-# Heavy tests for app, cmd, gosdk, token-registry
-test-cover-g2:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 2 tests..."
-  echo "Paths: app, cmd, gosdk, token-registry"
-  # Group 2
-  go test ./app/... \
-      ./cmd/... \
-      ./gosdk/... \
-      ./token-registry/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group2.out
-
-# Heavy tests for all x/* modules besides EVM
-test-cover-g3:
-  #!/usr/bin/env bash
-  echo "------------------------------------------------"
-  echo "Running Group 3 tests..."
-  echo "Paths: (all x/* except evm)"
-  echo "Reproduce of modules with command: ls x/ | grep -v -E 'evm|README.md' "
-  go test ./x/bank/...  \
-    ./x/nutil/... \
-    ./x/devgas/... \
-    ./x/epochs/... \
-    ./x/genmsg/... \
-    ./x/inflation/... \
-    ./x/oracle/... \
-    ./x/sudo/... \
-    ./x/tokenfactory/... \
-    -tags=pebbledb -covermode=atomic -race \
-    -coverprofile=coverage.group3.out
-
-# Run Go tests, including live network tests + coverage
-test-cover-heavy:
-  #!/usr/bin/env bash
-  just test-cover-g1
-  just test-cover-g2
-  just test-cover-g3

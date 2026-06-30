@@ -1,8 +1,22 @@
-import { Contract, Interface, JsonRpcProvider, Wallet, formatEther, getBytes, parseEther } from "ethers"
+import {
+  Contract,
+  formatEther,
+  getBytes,
+  Interface,
+  JsonRpcProvider,
+  parseEther,
+  Wallet,
+} from "ethers"
+
 import { sendUserOp, waitForUserOpReceipt } from "./bundler"
 import { generateNodePasskey, signUserOpHash } from "./p256-node"
+import {
+  defaultUserOp,
+  encodeSignature,
+  getUserOpHash,
+  UserOperation,
+} from "./userop"
 import { bytes32FromUint } from "./utils"
-import { defaultUserOp, encodeSignature, getUserOpHash, UserOperation } from "./userop"
 
 const RPC_URL = process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
 const BUNDLER_URL = process.env.BUNDLER_URL ?? "http://127.0.0.1:4337"
@@ -20,7 +34,9 @@ const FACTORY_ABI = [
   "event AccountCreated(address indexed account, bytes32 qx, bytes32 qy, bytes32 salt)",
 ]
 const ACCOUNT_ABI = ["function nonce() view returns (uint256)"]
-const ACCOUNT_INTERFACE = new Interface(["function execute(address to, uint256 value, bytes data)"])
+const ACCOUNT_INTERFACE = new Interface([
+  "function execute(address to, uint256 value, bytes data)",
+])
 
 function requireEnv(name: string): string {
   const value = process.env[name]
@@ -45,7 +61,10 @@ async function main() {
   await ensureP256Stub(provider)
   const wallet = Wallet.fromPhrase(MNEMONIC, provider)
   console.log("Deployer:", wallet.address)
-  let deployerNonce = await provider.getTransactionCount(wallet.address, "pending")
+  let deployerNonce = await provider.getTransactionCount(
+    wallet.address,
+    "pending",
+  )
 
   // 1) "Register" a deterministic passkey for Node testing.
   const nodePasskey = generateNodePasskey(getSeedFromEnv())
@@ -59,16 +78,13 @@ async function main() {
   const predictedAccount = await factory.accountAddress(qxHex, qyHex)
   console.log("Predicted PasskeyAccount:", predictedAccount)
 
-  const txCreate = await factory.createAccount(qxHex, qyHex, { nonce: deployerNonce++ })
+  const txCreate = await factory.createAccount(qxHex, qyHex, {
+    nonce: deployerNonce++,
+  })
   console.log("createAccount tx hash:", txCreate.hash)
   await txCreate.wait()
 
   const account = new Contract(predictedAccount, ACCOUNT_ABI, provider)
-  const entryPointContract = new Contract(
-    ENTRY_POINT,
-    ["function depositTo(address account) payable", "function balanceOf(address account) view returns (uint256)"],
-    wallet,
-  )
 
   // 3) Fund the PasskeyAccount.
   const fundTx = await wallet.sendTransaction({
@@ -102,20 +118,6 @@ async function main() {
     maxPriorityFeePerGas: maxPriority,
   }
 
-  const requiredPrefund =
-    (userOp.callGasLimit + userOp.verificationGasLimit + userOp.preVerificationGas) * userOp.maxFeePerGas
-  console.log("Depositing prefund:", formatEther(requiredPrefund), "NIBI")
-  const depositTx = await entryPointContract.depositTo(predictedAccount, {
-    value: requiredPrefund,
-    nonce: deployerNonce++,
-  })
-  await depositTx.wait()
-  console.log(
-    "EntryPoint deposit before bundling:",
-    formatEther(await entryPointContract.balanceOf(predictedAccount)),
-    "NIBI",
-  )
-
   const chainId = BigInt((await provider.getNetwork()).chainId)
   const userOpHash = getUserOpHash(userOp, ENTRY_POINT, chainId)
   const { r, s } = signUserOpHash(userOpHash, nodePasskey.privKey)
@@ -140,16 +142,16 @@ async function main() {
     console.log("UserOperation executed in tx:", txHash)
     await provider.waitForTransaction(txHash)
   } else {
-    console.warn("Bundler receipt did not include transaction hash - continuing.")
+    console.warn(
+      "Bundler receipt did not include transaction hash - continuing.",
+    )
   }
 
   // 6) Confirm nonce + balance changes on-chain.
   const nonceAfter = (await account.nonce()) as bigint
   const balanceAfter = await provider.getBalance(predictedAccount)
-  const depositAfter = await entryPointContract.balanceOf(predictedAccount)
   console.log("Nonce after:", nonceAfter.toString())
   console.log("Account balance after:", formatEther(balanceAfter), "NIBI")
-  console.log("EntryPoint deposit after:", formatEther(depositAfter), "NIBI")
 
   if (nonceAfter === onChainNonce + 1n && balanceAfter < balanceBefore) {
     console.log("✅ Passkey ERC-4337 flow completed successfully")

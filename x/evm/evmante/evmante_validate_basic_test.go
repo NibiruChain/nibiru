@@ -13,6 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func (s *Suite) TestAnteStepValidateBasic() {
@@ -101,6 +102,36 @@ func (s *Suite) TestAnteStepValidateBasic() {
 	}
 
 	RunAnteTCs(&s.Suite, testCases)
+}
+
+func (s *Suite) TestAnteStepValidateBasic_ZeroGasSkipsDynamicFeeOnlyValidation() {
+	deps := evmtest.NewTestDeps()
+	sdb := deps.NewStateDB()
+	to := evmtest.NewEthPrivAcc().EthAddr
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.App.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     0,
+		GasLimit:  50_000,
+		GasFeeCap: big.NewInt(1),
+		GasTipCap: big.NewInt(2),
+		Amount:    big.NewInt(0),
+		To:        &to,
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+	s.Require().NoError(tx.Sign(
+		gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx())),
+		deps.Sender.KeyringSigner,
+	))
+	s.Require().ErrorContains(tx.ValidateBasic(), "max priority fee per gas higher than max fee per gas")
+
+	s.Require().NoError(evmante.EthSigVerification(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	s.Require().NoError(evmante.AnteStepDetectZeroGas(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
+	s.Require().True(evm.IsZeroGasEthTx(sdb.Ctx()))
+	s.Require().NoError(evmante.AnteStepValidateBasic(sdb, sdb.Keeper(), tx, false, ANTE_OPTIONS_UNUSED))
 }
 
 // buildTx constructs a Cosmos SDK tx (optionally with Ethereum extension options)

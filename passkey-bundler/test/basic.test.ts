@@ -7,7 +7,6 @@ import { test } from "node:test"
 import { loadConfig } from "../src/config"
 import { RateLimiter } from "../src/rateLimiter"
 import { SqliteStore } from "../src/store"
-import { requiredPrefund } from "../src/userop"
 import { NonceManager } from "../src/submission"
 import { calldataGasCost, estimatePreVerificationGas } from "../src/validation"
 
@@ -58,9 +57,6 @@ const bundlerEnvKeys = [
   "VALIDATION_ENABLED",
   "GAS_BUMP",
   "GAS_BUMP_WEI",
-  "PREFUND_ENABLED",
-  "MAX_PREFUND_WEI",
-  "PREFUND_ALLOWLIST",
   "SUBMISSION_TIMEOUT_MS",
   "FINALITY_BLOCKS",
   "RECEIPT_LIMIT",
@@ -81,23 +77,6 @@ test("rate limiter enforces window", () => {
   assert.equal(limiter.allow("a"), true)
   assert.equal(limiter.allow("a"), true)
   assert.equal(limiter.allow("a"), false)
-})
-
-test("required prefund sums gas limits and maxFeePerGas", () => {
-  const prefund = requiredPrefund({
-    sender: "0x0000000000000000000000000000000000000001",
-    nonce: 0n,
-    initCode: "0x",
-    callData: "0x",
-    callGasLimit: 1000n,
-    verificationGasLimit: 2000n,
-    preVerificationGas: 3000n,
-    maxFeePerGas: 10n,
-    maxPriorityFeePerGas: 1n,
-    paymasterAndData: "0x",
-    signature: "0x",
-  })
-  assert.equal(prefund, 60000n)
 })
 
 test("nonce manager reuses failed nonce and avoids gaps", async () => {

@@ -38,17 +38,463 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v2.15.0
 
-* ci(dependabot.yml): ignore updates to Cosmos-SDK, CometBFT, and Wasmd, as they are often breaking changes
+Nibiru v2.15 restores the legacy EVM oracle precompile path needed by MIM OFT
+fee quoting, ships the patched Wasmer runtime needed for Sai Wasm deployment on
+ARM64, and makes local development and EVM end-to-end tests easier to run and
+debug.
+
+- [Release Link: v2.15.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.15.0).
+- Date: 2026-06-25
+- Draft source range: non-Dependabot release PRs from `v2.14.0` through
+  `v2.15.0`.
+
+### 1 - Main Highlights
+
+- **MIM OFT bridge recovery** - The legacy EVM oracle precompile at `0x0801` is restored as a narrow compatibility surface for deployed contracts that still call `chainLinkLatestRoundData("unibi:uusd")`. The precompile now reads a configured `x-oracle` Wasm adapter backed by Sai oracle data instead of native `x/oracle` state. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **No return to native oracle operations** - Native oracle voting, feeder duties, slashing, messages, and stale module exchange-rate state remain deprecated. v2.15 restores only the EVM compatibility path needed by legacy Chainlink-like callers. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **Upgrade-time EVM plugin wiring** - The v2.15 upgrade handler configures EVM params field `wasm_plugins` with plugin name `x-oracle` and the verified deterministic adapter address `nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r`. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+- **Patched Wasmer runtime** - `Nibiru` now consumes Nibiru-published `go-wasmvm v1.10.0`, which carries the ARM64 Singlepass relocation fix needed to store and instantiate larger Sai Wasm contracts without the `ImpossibleRelocation(Dynamic(DynamicLabel(0)))` panic. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+- **Darwin build support for the patched runtime** - Build tooling downloads the Nibiru `go-wasmvm` Darwin static library asset, removing the prior Darwin guard for this runtime line and making macOS validation part of the normal artifact path. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+- **Localnet in the binary** - `nibid localnet --script | bash` prints an embedded single-node localnet script, so developers can start a localnet from an installed `nibid` binary instead of finding `contrib/scripts/localnet.sh` in the repository. ([#2616](https://github.com/NibiruChain/nibiru/pull/2616))
+- **EVM E2E diagnostics** - EVM end-to-end tests use a shared receipt polling helper with explicit query counts, block waits, tx hashes, receipt status, log counts, and elapsed time. This targets hanging `ethers` waits and makes CI failures easier to interpret. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+### 2 - MIM OFT and Legacy Oracle Compatibility
+
+**What it enables:** MIM OFT fee quoting can use the historical Chainlink-like
+EVM oracle ABI again, while Nibiru continues to keep native `x/oracle`
+operations disabled.
+
+The production failure path was:
+
+```txt
+MIM OFT send(...)
+-> FeeHandler.quoteNativeFee()
+-> aggregator.latestRoundData()
+-> 0x0801 chainLinkLatestRoundData("unibi:uusd")
+-> revert because native x/oracle is disabled
+```
+
+v2.15 restores precompile address `0x0000000000000000000000000000000000000801`
+for read-only compatibility. The revived precompile supports
+`queryExchangeRate` and `chainLinkLatestRoundData`, preserves the old
+18-decimal response shape expected by legacy Solidity callers, and returns
+timestamps from the underlying Sai oracle update time where Chainlink consumers
+typically perform freshness checks. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The data path is intentionally narrow:
+
+```txt
+EVM precompile 0x0801
+-> EVM params plugin "x-oracle"
+-> x-oracle Wasm adapter
+-> Sai oracle contract
+```
+
+The adapter owns legacy pair routing and Sai token-index mapping. The initial
+supported legacy symbols are `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`,
+`unibi:uusd`, and `uusdc:uusd`. `uusdt:uusd` remains unsupported unless Sai adds
+a deterministic USDT source. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621), [sai-perps#379](https://github.com/NibiruChain/sai-perps/pull/379))
+
+### 3 - Upgrade Handler and EVM Plugin State
+
+**Why it matters:** The EVM precompile needs a chain-configured adapter address,
+not a hard-coded side channel or a revived oracle module state store.
+
+v2.15 adds EVM params field `wasm_plugins`, with plugin name `x-oracle` pointing
+at the adapter contract address used by precompile execution. `SetParams`
+validates plugin names and Bech32 addresses, rejects duplicate plugin names, and
+derives `EvmState.WasmPlugins` from the ordered params slice so writes remain
+deterministic. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The v2.15 upgrade handler sets:
+
+```txt
+wasm_plugins:
+  - name: x-oracle
+    addr: nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r
+```
+
+That address is the deterministic `instantiate2` address of the Sai x-oracle
+adapter from Sai Wasm artifact release
+[`wasm-contracts/v1.22.0`](https://github.com/NibiruChain/sai-perps/releases/tag/wasm-contracts/v1.22.0).
+The same adapter address exists on mainnet and testnet because the deployment
+used the same Foundation Treasury CW3 creator, optimized Wasm code hash, fixed
+salt `x-oracle-nibiru`, and fixed init JSON. Testnet then used a Treasury
+`UpdateConfig` transaction to point the same adapter address at the testnet Sai
+oracle. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+The handler follows the existing non-halting upgrade convention: if plugin
+configuration fails, it logs `v2.15.0 upgrade failure`, emits an
+`upgrade_failure` event, and still runs module migrations. Direct `0x0801` calls
+then fail clearly until EVM params are corrected. ([#2621](https://github.com/NibiruChain/nibiru/pull/2621))
+
+### 4 - Wasmer Runtime and Cross-Platform Builds
+
+**What it fixes:** ARM64 environments could panic while compiling larger
+CosmWasm artifacts, including Sai perp Wasm, with error
+`ImpossibleRelocation(Dynamic(DynamicLabel(0)))`.
+
+v2.15 bumps module `github.com/CosmWasm/wasmvm` to `v1.10.0` and replaces it
+with Nibiru-published module `github.com/NibiruChain/go-wasmvm v1.10.0`. This
+keeps the public import path stable while consuming a Nibiru runtime build that
+includes the ARM64 Singlepass relocation fix validated against the real Sai perp
+Wasm artifact. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+
+Build tooling now downloads `libwasmvm` assets from
+`NibiruChain/go-wasmvm` instead of upstream `CosmWasm/wasmvm`. Linux builds use
+the patched musl archives, and Darwin builds fetch release asset
+`libwasmvmstatic_darwin.a`. This narrows the runtime upgrade to the current
+CosmWasm v1 stack and leaves the broader CosmWasm v2 / SDK migration as separate
+work. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+Validation recorded in the issue and PR includes `go mod tidy`, `go mod verify`,
+a clean `just install`, `nibid version --long` showing the module replacement,
+and a local Sai deploy path that stored and instantiated Sai Wasm contracts
+successfully. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618), [#2617](https://github.com/NibiruChain/nibiru/issues/2617))
+
+### 5 - CLI and Local Development
+
+`nibid localnet` is now part of the installed binary. With `--script`, it prints
+an embedded localnet setup script that can be piped into Bash:
+
+```bash
+nibid localnet --script | bash
+```
+
+Without `--script`, the command shows help. The embedded script is tuned for
+CLI use, while `contrib/scripts/localnet.sh` also gained support for a `BINARY`
+environment override and more reliable process detection when a custom binary
+path is used. ([#2616](https://github.com/NibiruChain/nibiru/pull/2616))
+
+The `nibid` helper for decoding base64-encoded Stargate messages now emits
+decoded protobuf message values as proper JSON objects instead of stringified
+JSON. This makes multisig proposal payload inspection easier when reviewing
+generated CW3 stargate messages. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+### 6 - EVM Test Reliability
+
+EVM E2E tests now use helper `txWait` instead of direct `tx.wait(...)` calls in
+standard test files. The helper polls `getTransactionReceipt`, waits for new
+blocks between bounded attempts, and logs enough context to see whether a test
+is missing a receipt, waiting on block production, or observing a reverted
+transaction. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+This change does not alter chain behavior. It reduces CI ambiguity for EVM
+tests around receipts, filters, logs, zero-gas flows, native transfers, and
+debug queries. Passkey-specific paths keep their direct wait behavior where
+appropriate. ([#2620](https://github.com/NibiruChain/nibiru/pull/2620))
+
+### 7 - Release Wiring and Maintenance
+
+The release branch also registers `v2.14.1` as a vanilla historical upgrade
+before `v2.15.0`, so upgrade tests and local rehearsal paths know about the
+intermediate release tag. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+Build metadata and release asset URL construction were cleaned up while moving
+`libwasmvm` downloads to `NibiruChain/go-wasmvm`. This keeps the asset source
+explicit and avoids mixing upstream `CosmWasm/wasmvm` release naming with
+Nibiru-published runtime artifacts. ([#2618](https://github.com/NibiruChain/nibiru/pull/2618))
+
+### 8 - Appendix for v2.15.0
+
+#### For Builders
+
+- **MIM OFT quotes** - Legacy callers that reach precompile address `0x0801` through `chainLinkLatestRoundData("unibi:uusd")` should be able to receive Sai-backed oracle data after the v2.15 upgrade configures plugin `x-oracle`.
+- **Oracle compatibility scope** - This is not a full native oracle revival. The supported path is EVM precompile `0x0801` backed by the configured x-oracle adapter.
+- **Supported legacy symbols** - Initial adapter mappings cover `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`, `unibi:uusd`, and `uusdc:uusd`.
+- **Localnet startup** - Installed binaries can start localnet with `nibid localnet --script | bash`; source checkout of `contrib/scripts/localnet.sh` is no longer required for the common path.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.15.0`.
+- **Runtime change:** The binary links against Nibiru-published `go-wasmvm v1.10.0`, carrying the patched Wasmer runtime and updated native library assets.
+- **Post-upgrade EVM check:** Query EVM params and verify plugin name `x-oracle` points at `nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r`.
+- **Post-upgrade MIM check:** Validate the MIM-shaped fee quote path through `0x0801`, especially `chainLinkLatestRoundData("unibi:uusd")`.
+- **Upgrade-handler behavior:** If x-oracle plugin configuration fails, the handler logs and emits an upgrade failure event but still runs module migrations. Monitor upgrade logs and EVM params rather than assuming a halt.
+
+#### For Contributors / Repo Maintainers
+
+- EVM params now include repeated field `wasm_plugins`; keep plugin writes deterministic by going through keeper `SetParams`.
+- The x-oracle adapter fixture is embedded under `x/oracle/x_oracle.wasm` and shares schema types with the precompile tests.
+- Oracle precompile tests exercise a real adapter smart-query boundary and a FeeHandler-shaped Solidity caller instead of mocking the full MIM path.
+- The Wasmer runtime fix depends on Nibiru-owned runtime release artifacts. Keep `contrib/make/build.mk` asset naming aligned with `NibiruChain/go-wasmvm` releases for Linux and Darwin.
+- `v2.14.1` is registered as a vanilla historical upgrade before `v2.15.0`; keep future upgrade lists ordered by executed release history.
+- EVM E2E tests should prefer `txWait` for ordinary transaction receipt waits so failures carry tx hashes, query counts, blocks, status, logs, and elapsed time.
+
+## v2.14.0
+
+Nibiru v2.14 makes the Treasury multisig self-managing, hardens governance and
+tokenfactory safety around deposits and module accounts, and expands zero-gas
+EVM support so allowlisted applications work more cleanly with browser wallets
+and payable calls.
+
+- [Release Link: v2.14.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.14.0).
+- Date: 2026-06-10
+- Draft source range: non-Dependabot release PRs through `v2.14.0`.
+
+### 1 - Main Highlights
+
+- **Governance operations** - Treasury CW3 becomes the admin for the Treasury CW4 voter group, removing the legacy SDK multisig from routine voter-set administration. Future voter changes can pass through normal CW3 proposals instead of depending on unavailable legacy signers. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+- **Mainnet Treasury cleanup** - The v2.14 upgrade handler updates Treasury wasm admin metadata, deprecates the dormant Hot Wallet on mainnet, sweeps its bank balance into Treasury, and leaves its contracts on chain without using them for new operations. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+- **Governance safety** - Governance deposits are restricted to the configured `MinDeposit` denoms, tokenfactory mint and burn messages cannot target module accounts, and tokenfactory denom creation is limited to governance or sudoers. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+- **Zero-gas EVM UX** - Eligible calls to `always_zero_gas_contracts` are classified before fee-sensitive validation, so wallets that submit nonzero fee fields do not accidentally block otherwise valid gasless transactions. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596), [#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+- **Wallet RPC compatibility** - Wallet-facing EVM JSON-RPC fee hints now report zero fee surfaces for zero-gas flows, including gas price, EIP-1559 block fee fields, fee history, WebSocket heads, transactions, and receipts. Consensus fee rules and EVM execution semantics remain unchanged for non-exempt transactions. ([#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+- **Payable zero-gas calls** - Allowlisted zero-gas contracts can receive nonzero native `msg.value` without requiring NIBI gas payment, while still enforcing that the sender has enough native EVM balance for the value transfer. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+- **Release wiring** - Upgrade registration was tightened with shared helper wiring, historical `v2.13.0` registration, stronger v2.14 contract-existence checks, and upgrade tests that use the app's real handler path. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+### 2 - Treasury CW3 Self-Administration
+
+**What it enables:** Active Treasury CW3 voters can manage the CW4 voter set
+through on-chain proposals, without depending on the legacy `nibimultisig`
+keyring multisig.
+
+The v2.14 upgrade handler performs the Treasury migration on `cataclysm-1` and
+`nibiru-testnet-2`. It removes unavailable legacy voters when present, adds the
+new Treasury voter, and changes the Treasury CW4 group admin to the Treasury CW3
+contract. The Treasury CW3 threshold remains 3-of-N. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+
+The same upgrade also aligns wasm module admin authority for Treasury CW3 and
+CW4 with the Treasury CW3 contract. On mainnet only, it deprecates the old Hot
+Wallet by sweeping its remaining bank balance into Treasury and moving Hot
+Wallet CW3/CW4 wasm admin authority to Treasury CW3. The Hot Wallet contracts
+remain on chain, but should not be used for new operations. ([#2602](https://github.com/NibiruChain/nibiru/pull/2602))
+
+### 3 - Governance and Tokenfactory Safety
+
+**Why it matters:** Governance deposit escrow must not be burnable or stranded
+through custom tokenfactory denoms.
+
+This release closes a failure path where a tokenfactory denom admin could burn
+governance deposit escrow for a custom denom, leaving governance with refund
+state but no coins and causing repeated EndBlock panics when deposits expired.
+The forked SDK gov keeper now rejects deposits whose denom is not listed in
+`MinDeposit`, covering both initial proposal deposits and later `MsgDeposit`
+calls. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+
+Tokenfactory also rejects `MsgMint` and `MsgBurn` requests that target module
+accounts, and `MsgCreateDenom` is restricted to the governance module authority
+or addresses allowed by `x/sudo`. On Nibiru mainnet, this effectively keeps gov
+deposits on `unibi` while reducing spam and defense-in-depth risk from
+admin-controlled custom denoms. ([#2603](https://github.com/NibiruChain/nibiru/pull/2603))
+
+### 4 - Zero-Gas EVM Wallet Compatibility
+
+**What it enables:** Allowlisted applications can offer gasless EVM calls to
+users whose wallets still populate standard Ethereum fee fields or run native
+balance preflight checks.
+
+The chain now classifies eligible EVM transactions before fee-sensitive ante and
+message-server validation. For calls to `always_zero_gas_contracts`, execution
+uses zero-gas-aware validation while preserving the raw signed Ethereum
+transaction for identity, signature, hash, chain ID, nonce, transaction views,
+and debugging. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596))
+
+JSON-RPC simulation and tracing paths use the same zero-fee execution semantics
+for allowlisted calls, including `eth_call`, `eth_estimateGas`,
+`debug_traceCall`, and `debug_traceTransaction`. Receipts report zero applied
+fee for classified zero-gas transactions, while raw submitted wallet fee fields
+remain visible where clients expect them. ([#2596](https://github.com/NibiruChain/nibiru/pull/2596), [#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+
+Wallet-facing RPC hints also return zero fee surfaces across `eth_gasPrice`,
+`eth_feeHistory`, `eth_getBlockByNumber`, `eth_getBlockByHash`, WebSocket
+`newHeads`, transaction responses, and receipts. This targets browser wallet
+preflight behavior without changing consensus rules, ante enforcement, EVM
+execution, refunds, or `BASEFEE` semantics for non-exempt transactions. ([#2601](https://github.com/NibiruChain/nibiru/pull/2601))
+
+### 5 - Payable Zero-Gas Calls
+
+v2.14 removes the old `tx.Value == 0` eligibility requirement for
+`always_zero_gas_contracts`. Payable calls to allowlisted contracts can execute
+without native NIBI gas payment, but the sender must still have enough native
+EVM balance for `msg.value`. In short: zero-gas skips gas affordability, not
+value solvency. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+
+The release adds regression coverage for nonzero-value classification,
+nil/zero/positive/negative value validation, exact-balance ante cases, and
+message-server value transfer without gas payment. ([#2610](https://github.com/NibiruChain/nibiru/pull/2610))
+
+### 6 - Release Wiring, Docs, and Test Infrastructure
+
+The v2.14 release wiring adds a shared `NewVanillaUpgrade` helper for standard
+migration-only releases, registers `v2.13.0` in the historical upgrade list
+before `v2.14.0`, and makes required Treasury CW3/CW4 contract lookups fail
+loudly instead of silently skipping required mainnet or testnet updates. Upgrade
+tests now reuse the shared EVM test upgrade runner so they exercise the app's
+real handler wiring. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+The repository now also carries the official docs corpus under `docs/`, plus
+local sync scripts, docs cleanup, and localnet developer-experience fixes.
+`contrib/scripts/localnet.sh` gained safer shell settings, configurable log
+levels, help text, and better color-output guards, while CI detects localnet
+startup failures more directly. ([#2609](https://github.com/NibiruChain/nibiru/pull/2609))
+
+Security-report docs were refreshed with the Code4rena competitive audit PDF and
+direct report links. ([#2612](https://github.com/NibiruChain/nibiru/pull/2612))
+
+### 7 - Appendix for v2.14.0
+
+#### For Builders
+
+- **Gasless app flows** - Calls to allowlisted `always_zero_gas_contracts` should work more reliably with browser wallets that add fee fields or inspect EIP-1559 fee hints before signing.
+- **Payable gasless calls** - Allowlisted payable contracts can receive native value without requiring native NIBI gas payment, but senders still need enough balance for the transferred value.
+- **RPC expectations** - Wallet-facing fee hints may show zero for compatibility, while raw submitted transaction fee fields remain available for debugging.
+- **Docs in repo** - Official docs content now lives in `docs/`, making chain docs easier to review alongside code changes.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.14.0`.
+- **Governance checks:** After upgrade, verify Treasury CW4 contract-state admin and wasm module admin point to Treasury CW3 on the expected chain.
+- **Safety checks:** Watch for required Treasury contract lookup failures during upgrade rehearsal; v2.14 is designed to fail loudly if required contracts are missing.
+- **EVM checks:** Validate allowlisted zero-gas flows through wallet RPC surfaces, transaction execution, receipts, and payable value-transfer cases.
+
+#### For Contributors / Repo Maintainers
+
+- Upgrade definitions use shared helper wiring so custom handlers stand out from standard migration-only releases.
+- The v2.14 multisig upgrade tests instantiate mainnet-derived CW3/CW4 wasm artifacts and assert membership, admin changes, bank sweep behavior, and expected events.
+- Tokenfactory and gov tests cover deposit-denom restrictions, module-account mint/burn protection, and sudo-gated denom creation.
+- Localnet and docs changes are intentionally included in this release branch but are not consensus-critical upgrade behavior.
+
+## v2.12.0
+
+### Improvements
+
+* evm: remove oracle precompile registration, runtime implementation, and EVM address `0x...0801` from the precompile address set.
+* evm-embeds: drop oracle Solidity interfaces/wrappers and generated oracle ABI/artifact outputs from `@nibiruchain/solidity`.
+* evm-e2e: remove oracle precompile contract/tests and related helper wiring.
+* evm: truncate leaked SDK events on VM-failed EVM transactions while preserving canonical EVM failure metadata. ([#2543](https://github.com/NibiruChain/nibiru/pull/2543))
+
+### API Breaking
+
+* npm: `@nibiruchain/solidity` no longer ships the oracle precompile interface/ABI surfaces (`IOracle` and `NibiruOracleChainLinkLike*`).
+
+## v2.11.0
+
+EVM reliability got tighter, gasless onboarding got broader, and CometBFT got a
+critical security patch. Plus: passkey (ERC-4337) building blocks and better
+consensus determinism. 
+
+- [Release Link: v2.11.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.11.0).
+- Date: 2026-02-11
+- The prior upgrade on mainnet was [v2.9.0](#v290).
+
+### 1 - Main Highlights
+
+- **Fixed** - Successful EVM transactions were sometimes shown as failed due to Cosmos SDK gas-meter issues. No longer. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
+- **New** - Governance-allowlisted "always zero gas" EVM contracts can be called by any sender without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance. ([#2517](https://github.com/NibiruChain/nibiru/pull/2517))
+- **Improved** - Precompiles now report gas cleanly with dynamic handling, and SDK out-of-gas panics are recovered into normal errors instead of crashing the node. ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
+- **Security** - Upgraded CometBFT to patched v0.37.18 for CSA-2026-001 (Tachyon), a critical consensus-level issue affecting block time guarantees. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
+- **Consensus safety** - Removed nondeterministic Go map iteration in consensus-critical paths (oracle + EVM state commit), addressing intermittent apphash mismatches. ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
+- **New** - Passkey-secured smart accounts (ERC-4337 style) with P-256 signatures: contracts, SDK, and bundler tooling for developers. ([#2443](https://github.com/NibiruChain/nibiru/pull/2443), [#2493](https://github.com/NibiruChain/nibiru/pull/2493), [#2500](https://github.com/NibiruChain/nibiru/pull/2500))
+- **New** - Sai trading: EVM trader service. Trades against local network. ([#2440](https://github.com/NibiruChain/nibiru/pull/2440))
+
+### 2 - Added Passkeys + Account Abstraction (ERC-4337)
+
+**What it enables:** A passkey-secured smart account flow (ERC-4337 style) for Nibiru EVM development and end-to-end testing, built around P-256 signatures.
+
+Includes:
+
+- `PasskeyAccount` and `PasskeyAccountFactory` contracts (minimal ERC-4337 account abstraction, P-256–secured) ([#2443](https://github.com/NibiruChain/nibiru/pull/2443))
+- TypeScript `passkey-sdk` for building UserOperations and talking to a bundler ([#2443](https://github.com/NibiruChain/nibiru/pull/2443))
+- Bundler for passkey transactions ([#2493](https://github.com/NibiruChain/nibiru/pull/2493))
+- Published passkey-bundler package ([#2500](https://github.com/NibiruChain/nibiru/pull/2500))
+- Tooling and docs updates for deploying the factory, running a bundler, and E2E testing the flow
+
+**Status:** This is primarily a developer-facing foundation (contracts + SDK + bundler workflow). Available for integrators today; coming to end-user surfaces as apps integrate.
+
+### 3 - Expanded Gasless EVM Calls ("Zero Gas")
+
+**What it enables:** First-time onboarding and "no gas balance" execution for calls into governance-allowlisted contracts.
+
+**How it works:**
+- If a transaction calls a **governance-allowlisted contract**, the chain marks it as "zero gas" early in the ante handler.
+- It then skips gas-related checks (fee deduction, balance-vs-cost checks, mempool min gas price checks, and `RefundGas`) while still enforcing account checks and `CanTransfer`, including native value solvency for `msg.value`.
+- A governance-managed list `ZeroGasActors.always_zero_gas_contracts` allows **any sender** to invoke specific EVM contracts with zero gas.
+
+**Governance:** This is controlled by a governance-managed allowlist. Manage via `sudo edit-zero-gas` and the `always_zero_gas_contracts` field.
+
+### 4 - Precompiles: Dynamic Gas + Clean Failure Mode
+
+**Key Takeaway:** More predictable gas reporting around precompiles and fewer confusing failure modes under OOG.
+- FunToken precompile now supports the dynamic-precompile flow so gas accounting and reporting match the EVM's expectations (better tracing and estimation behavior). ([#2516](https://github.com/NibiruChain/nibiru/pull/2516))
+- Removed redundant internal gas deductions that could double-report gas changes to tracers.
+- SDK out-of-gas panics inside bounded meters are recovered and returned as normal out-of-gas errors, so execution fails cleanly instead of crashing the process. ([#2447](https://github.com/NibiruChain/nibiru/pull/2447))
+
+
+### 5 - Fixed - EVM "False Failed" Transactions
+
+**Symptom:** Explorers and receipts could show failure even when the EVM execution actually succeeded, triggered by late Cosmos SDK gas-meter errors.
+
+**Fix:** EVM execution is treated as the ground truth. If the SDK gas meter errors after a successful EVM result, the node logs the issue but does **not** flip the transaction to failed. ([#2521](https://github.com/NibiruChain/nibiru/pull/2521))
+
+**What to expect after upgrading:** Successful EVM transactions should no longer appear as failed solely due to gas-meter misalignment. Any remaining SDK gas-meter issues should surface as logs, not incorrect tx status.
+
+### 6 - Fixed - Consensus Determinism (No More Random Map Order)
+
+**Why it matters:** Go map iteration is nondeterministic and can cause consensus failures when order affects state writes or event emission.
+
+**Fixes included:**
+- Sorted iteration for oracle validator performance processing and event emission
+- Sorted account address processing in the EVM StateDB commit path
+- Addresses intermittent apphash mismatches observed on long-running mainnet nodes ([#2503](https://github.com/NibiruChain/nibiru/pull/2503))
+
+### 7 - Security Patch - CometBFT CSA-2026-001 (Tachyon)
+
+This release upgrades CometBFT to **v0.37.18**, which includes the required fix for **CSA-2026-001**. ([#2512](https://github.com/NibiruChain/nibiru/pull/2512))
+
+**What class of issue is this?** A consensus-level vulnerability in CometBFT's "BFT Time" implementation, stemming from an inconsistency between commit signature verification and block time derivation. The advisory labels it **Critical** and notes it impacts validators and protocols that rely on block timestamps.
+
+**Operator guidance:** Treat this upgrade as high priority if you run validators or timestamp-sensitive applications. Upgrade to `nibid v2.11.0` (or later) to receive the patched CometBFT.
+
+### 8 - Appendix for v2.11.0
+
+#### For Builders
+- **Tx status correctness** — Successful EVM calls should no longer be mislabeled as failed due to SDK gas-meter issues.
+- **Gasless calls** — If your contract is allowlisted under `always_zero_gas_contracts`, any sender can call it without paying native NIBI gas fees. Nonzero `msg.value` still requires sender balance.
+- **Precompile behavior** — Expect cleaner out-of-gas error surfaces and more accurate gas reporting around dynamic precompiles.
+- **Passkeys / account abstraction** — New contracts and SDK exist for passkey-secured ERC-4337 flows; good time to prototype onboarding without seed phrases.
+- **CLI flags** — Transaction flags are more concise by default so developers can see command-specific flags more clearly. ([#2449](https://github.com/NibiruChain/nibiru/pull/2449))
+
+#### For Operators / Validators
+- **Upgrade type:** Release tag and GitHub release; mainnet upgrade applies the same workflow as other versions.
+- **Steps:** Upgrade binary to `nibid v2.11.0`, restart. Standard upgrade procedure—no extra state migrations or config changes known.
+- **Priority:** High. The CometBFT CSA-2026-001 fix is critical for consensus safety.
+- **Monitoring checklist:**
+    - Watch for any lingering "gas-meter misalignment" logs (should not flip tx status).
+    - Validate precompile-heavy workloads (FunToken, Wasm, oracle precompiles) for expected behavior under load.
+    - Confirm determinism fixes reduce apphash mismatch risk on long-running nodes.
+
+#### For Contributors / Repo Maintainers
+
+- Internal Cosmos-SDK moved under `internal/cosmos-sdk` for smoother core edits. ([#2451](https://github.com/NibiruChain/nibiru/pull/2451))
+- Collections library merged into repo; gnark-crypto and go-kzg-4844 updated for compatibility. ([#2490](https://github.com/NibiruChain/nibiru/pull/2490))
+- CI / Docker workflow cleanup; release tag trigger fixes.
+- Duplicate `nibid add-genesis-account` command removed (use `nibid genesis add-genesis-account`). ([#2448](https://github.com/NibiruChain/nibiru/pull/2448))
+* fix(ci): fix release tag trigger
+* feat: upgrade v2.10 in [#2504](https://github.com/NibiruChain/nibiru/pull/2504) - ([5cfc50e](https://github.com/NibiruChain/nibiru/commit/5cfc50e0c532c2612b9738147245d671c2a81eff))
+* refactor: omit unnecessary reassignment in [#2470](https://github.com/NibiruChain/nibiru/pull/2470) - ([8916455](https://github.com/NibiruChain/nibiru/commit/8916455863e33de9dd8231eff347b3149c66b509))
 * fix(Dockerfile): copy over files before "go mod download"
-* refactor: move cosmos-sdk to internal/cosmos-sdk for smoother edits to baseapp and the SDK types in [#2451](https://github.com/NibiruChain/nibiru/pull/2451) - ([2abb6c9](https://github.com/NibiruChain/nibiru/commit/2abb6c9610e3a0785eefc7dac23c7b3a82dc42ac))
-* refactor(cmd): remove duplicate nibid add-genesis-account command, since it's one of the nibid genesis subcommands in [#2448](https://github.com/NibiruChain/nibiru/pull/2448) - ([7dbfe7d](https://github.com/NibiruChain/nibiru/commit/7dbfe7d05db6a10ab93673e10907cc5c37726146))
+
+
+#### Refactors and Tech Debt Improvements
+* fix(internal/cosmos-sdk): resolve ledger error in tests using build tags in [#2505](https://github.com/NibiruChain/nibiru/pull/2505) - ([9547d17](https://github.com/NibiruChain/nibiru/commit/9547d1719f7a870056cc800351839bd790dbed38))
 * docs: remove duplicate word in comment in [#2430](https://github.com/NibiruChain/nibiru/pull/2430) - ([798b6d2](https://github.com/NibiruChain/nibiru/commit/798b6d208010199cb970d4b776807cafb5993963))
 * sai-trading: project scaffolding with script to deploy all Sai contracts in [#2433](https://github.com/NibiruChain/nibiru/pull/2433) - ([f77f32f](https://github.com/NibiruChain/nibiru/commit/f77f32ff5239732454ccefc07a76a62e2f4df628))
 
-## [v2.9.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.9.0) - 2025-11-10
+#### Dependencies and CI
+* ci(docker): simplify workflows; free more disk space to fix docker builds; combine into docker.yml
+* docs(changelog): update with version 2.9 and 2.8; fix(justfile/gen-changelog): use config from current branch, not main in [#2465](https://github.com/NibiruChain/nibiru/pull/2465) - ([9acdf4e](https://github.com/NibiruChain/nibiru/commit/9acdf4e8eb6e60272f73d477993b88c4549b0051))
+* ci(dependabot.yml): ignore updates to Cosmos-SDK, CometBFT, and Wasmd, as they are often breaking changes
 
+---
+
+## v2.9.0
+
+- [Release Link: v2.9.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.9.0).
+- Date: 2025-11-10
+
+Changes:
 * fix(evmante): use deterministic ResponseDeliverTx gas wanted and gas consumed on failed EVM tx; nonce increment on the ctx should only happen in DeliverTx and ReCheckTx, not CheckTx in [#2434](https://github.com/NibiruChain/nibiru/pull/2434) - ([68bb5ba](https://github.com/NibiruChain/nibiru/commit/68bb5ba3d1b4655ed3aa0c71cd7904688147c0c7))
 * ci(golangci-lint): update linter version to latest (v2.6.1); improve CI caching in [#2431](https://github.com/NibiruChain/nibiru/pull/2431) - ([ba418d7](https://github.com/NibiruChain/nibiru/commit/ba418d746441753bf6872a29a3d9258a0581b00f))
 

@@ -4,17 +4,19 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 )
 
 func (s *BackendSuite) TestBlockNumber() {
-	blockHeight, err := s.backend.BlockNumber()
+	blockHeight, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err)
 	blockHeightU64, err := hexutil.DecodeUint64(blockHeight.String())
 	s.NoError(err)
 	s.Greater(blockHeightU64, uint64(1))
 
-	latestHeight, _ := s.network.LatestHeight()
-	resp, err := s.backend.BlockNumber()
+	latestHeight, err := s.cli.LatestHeight()
+	s.Require().NoError(err)
+	resp, err := s.cli.EvmRpc.Eth.BlockNumber()
 	s.Require().NoError(err, resp)
 	// Rather than checking exact equality, which might not be true due to
 	// latency. Add a cushion of 2 blocks.
@@ -22,26 +24,17 @@ func (s *BackendSuite) TestBlockNumber() {
 }
 
 func (s *BackendSuite) TestGetBlockByNumberr() {
-	block, err := s.backend.GetBlockByNumber(
+	block, err := s.cli.EvmRpc.Eth.GetBlockByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc, true)
 	s.Require().NoError(err)
-	s.Require().NotNil(block)
-	s.Require().Greater(len(block["transactions"].([]any)), 0)
-	s.Require().NotNil(block["size"])
-	s.Require().NotNil(block["nonce"])
-	s.Require().Equal(int64(block["number"].(hexutil.Uint64)), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	AssertBlockJsonZeroGasFields(s, block)
 }
 
 func (s *BackendSuite) TestGetBlockByHash() {
 	fullTx := true
-	var blockMap map[string]any
-	err := s.node.EvmRpcClient.Client().Call(
-		&blockMap, "eth_getBlockByHash",
-		*s.SuccessfulTxTransfer().BlockHash,
-		fullTx,
-	)
+	blockMap, err := s.cli.EvmRpc.Eth.GetBlockByHash(*s.SuccessfulTxTransfer().BlockHash, fullTx)
 	s.Require().NoError(err)
-	AssertBlockContents(s, blockMap)
+	AssertBlockJsonZeroGasFields(s, blockMap)
 }
 
 func (s *BackendSuite) TestBlockNumberFromTendermint() {
@@ -98,28 +91,37 @@ func (s *BackendSuite) TestEthBlockByNumber() {
 	s.Require().Greater(block.Transactions().Len(), 0)
 	s.Require().NotNil(block.ParentHash())
 	s.Require().NotNil(block.UncleHash())
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	s.Require().Equal(evm.WalletZeroBaseFeeWei(), block.BaseFee())
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByHash() {
-	txCount, err := s.backend.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
+	txCount, err := s.cli.EvmRpc.Eth.GetBlockTransactionCountByHash(*s.SuccessfulTxTransfer().BlockHash)
 	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
 func (s *BackendSuite) TestGetBlockTransactionCountByNumber() {
-	txCount, err := s.backend.GetBlockTransactionCountByNumber(
+	txCount, err := s.cli.EvmRpc.Eth.GetBlockTransactionCountByNumber(
 		*s.SuccessfulTxTransfer().BlockNumberRpc)
 	s.NoError(err)
 	s.Require().Greater((uint64)(*txCount), uint64(0))
 }
 
-func AssertBlockContents(s *BackendSuite, blockMap map[string]any) {
-	s.Require().NotNil(blockMap)
-	s.Require().Greater(len(blockMap["transactions"].([]any)), 0)
-	s.Require().NotNil(blockMap["size"])
-	s.Require().NotNil(blockMap["nonce"])
+// AssertBlockJsonZeroGasFields checks wallet-facing JSON block fields that
+// should report zero gas fee hints without changing consensus block semantics.
+func AssertBlockJsonZeroGasFields(s *BackendSuite, blockMap map[string]any) {
+	s.T().Helper()
+	s.NotNil(blockMap)
+	s.Greater(len(blockMap["transactions"].([]any)), 0)
+	s.NotNil(blockMap["size"])
+	s.NotNil(blockMap["nonce"])
 	s.T().Logf("blockMap: %s", blockMap)
-	blockNumber, err := hexutil.DecodeBig(blockMap["number"].(string))
-	s.NoError(err)
-	s.Require().Equal(blockNumber.Int64(), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	blockNumber, ok := blockMap["number"].(hexutil.Uint64)
+	s.Truef(ok, "unexpected block number type: %T", blockMap["number"])
+	s.Equal(int64(blockNumber), s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
+	baseFee, ok := blockMap["baseFeePerGas"].(*hexutil.Big)
+	s.Truef(ok, "unexpected base fee type: %T", blockMap["baseFeePerGas"])
+	// Wallet zero-fee hint compatibility: https://github.com/NibiruChain/nibiru/pull/2601
+	s.Equal(evm.WalletZeroBaseFeeWei(), baseFee.ToInt())
 }

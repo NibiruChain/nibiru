@@ -2,12 +2,17 @@ package evmstate_test
 
 import (
 	"math"
+	"math/big"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -173,4 +178,173 @@ func (s *Suite) TestGetHashFn() {
 	s.Equal(gethcommon.BytesToHash(deps.Ctx().HeaderHash()), fn(uint64(deps.Ctx().BlockHeight())))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())+1))
 	s.Equal(gethcommon.Hash{}, fn(uint64(deps.Ctx().BlockHeight())-1))
+}
+
+// TestCallContract_VMSenderGuard is a regression for [evmstate.CallContract]:
+// module-originated external execution sets CtxKeyVMSenderGuard for the duration
+// of ApplyEvmMsg and restores the prior value afterward. TestERC20MaliciousCallback
+// delegatecalls FunToken bankMsgSend from transfer() so the guard must be active
+// during that nested call; after CallContract returns, the guard must be clear.
+//
+// This targets CallContract guard scoping, not Wasm or full FunToken flows. No
+// complex initial conditions are needed because the expected failure happens at
+// the guard boundary before privileged Cosmos-side work should proceed.
+func (s *Suite) TestCallContract_VMSenderGuard() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+
+	evmObj, sdb := deps.NewEVM()
+	s.Require().False(evm.IsVMSenderCtx(sdb.Ctx()),
+		"sanity: VM-sender guard must start inactive")
+
+	metadata := evm.ERC20Metadata{
+		Name:     "erc20name",
+		Symbol:   "TOKEN",
+		Decimals: 18,
+	}
+	deployResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_TestERC20MaliciousCallback,
+		metadata.Name, metadata.Symbol, metadata.Decimals,
+	)
+	s.Require().NoError(err)
+	erc20Addr := deployResp.ContractAddr
+
+	transferInput, err := embeds.SmartContract_TestERC20MaliciousCallback.ABI.Pack(
+		"transfer",
+		deps.Sender.EthAddr,
+		big.NewInt(1),
+	)
+	s.Require().NoError(err)
+
+	evmResp, err := deps.EvmKeeper.CallContract(
+		evmObj,
+		evm.EVM_MODULE_ADDRESS,
+		&erc20Addr,
+		transferInput,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX, /*commit*/
+		nil,
+	)
+	s.Require().ErrorContains(err, "disabled during EVM-originated contract callback")
+	s.Require().NotNil(evmResp)
+	s.Require().False(evm.IsVMSenderCtx(sdb.Ctx()),
+		"VM-sender guard must be restored after CallContract returns")
+}
+
+func (s *Suite) TestUpdateParams() {
+	deps := evmtest.NewTestDeps()
+
+	s.Run("happy path: with permission and valid input", func() {
+		authority := authtypes.NewModuleAddress(govtypes.ModuleName).String()
+		params := evm.DefaultParams()
+
+		resp, err := deps.EvmKeeper.UpdateParams(deps.GoCtx(), &evm.MsgUpdateParams{
+			Authority: authority,
+			Params:    params,
+		})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		got := deps.EvmKeeper.GetParams(deps.Ctx())
+		s.Require().Equal(params.CreateFuntokenFee, got.CreateFuntokenFee)
+		s.Require().Equal(params.CanonicalWnibi.Hex(), got.CanonicalWnibi.Hex())
+	})
+
+	s.Run("sad path: no permission", func() {
+		authority := deps.Sender.NibiruAddr.String()
+		params := evm.DefaultParams()
+
+		_, err := deps.EvmKeeper.UpdateParams(deps.GoCtx(), &evm.MsgUpdateParams{
+			Authority: authority,
+			Params:    params,
+		})
+		s.Require().Error(err)
+		s.Require().ErrorContains(err, "invalid signing authority")
+	})
+}
+
+func (s *Suite) TestSetParamsWasmPlugins() {
+	s.Run("writes derived wasm plugin state", func() {
+		deps := evmtest.NewTestDeps()
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().NoError(err)
+
+		got, err := deps.EvmKeeper.EVMState().WasmPlugins.Get(deps.Ctx(), evm.WasmPluginNameXOracle)
+		s.Require().NoError(err)
+		s.Require().Equal(deps.Sender.NibiruAddr.String(), got.String())
+	})
+
+	s.Run("removes stale derived wasm plugin state", func() {
+		deps := evmtest.NewTestDeps()
+		stalePluginAddr := evmtest.NewEthPrivAcc().NibiruAddr
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+			{
+				Name: "stale",
+				Addr: stalePluginAddr.String(),
+			},
+		}
+		s.Require().NoError(deps.EvmKeeper.SetParams(deps.Ctx(), params))
+
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+		}
+		s.Require().NoError(deps.EvmKeeper.SetParams(deps.Ctx(), params))
+
+		gotKeys := deps.EvmKeeper.EVMState().WasmPlugins.
+			Iterate(deps.Ctx(), collections.Range[string]{}).
+			Keys()
+		s.Require().Equal([]string{evm.WasmPluginNameXOracle}, gotKeys)
+		_, err := deps.EvmKeeper.EVMState().WasmPlugins.Get(deps.Ctx(), "stale")
+		s.Require().Error(err)
+	})
+
+	s.Run("rejects duplicate plugin names", func() {
+		deps := evmtest.NewTestDeps()
+		otherAddr := evmtest.NewEthPrivAcc().NibiruAddr
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: deps.Sender.NibiruAddr.String(),
+			},
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: otherAddr.String(),
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().ErrorContains(err, "duplicate wasm plugin name: x-oracle")
+	})
+
+	s.Run("rejects invalid plugin addresses", func() {
+		deps := evmtest.NewTestDeps()
+		params := evm.DefaultParams()
+		params.WasmPlugins = []evm.WasmPlugin{
+			{
+				Name: evm.WasmPluginNameXOracle,
+				Addr: "not-a-bech32-address",
+			},
+		}
+
+		err := deps.EvmKeeper.SetParams(deps.Ctx(), params)
+		s.Require().ErrorContains(err, "invalid wasm plugin address for x-oracle")
+	})
 }

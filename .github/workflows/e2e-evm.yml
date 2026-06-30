@@ -13,11 +13,11 @@ jobs:
   e2e-evm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: "Check for EVM-related changes"
         id: check_evm_changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             evm-changes:
@@ -43,7 +43,7 @@ jobs:
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
         uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           # cache: "The action has a built-in functionality for caching and
           # restoring go modules and build outputs. It uses [actions/cache@v4]."
           # - Handles go module cache (go env GOMODCACHE).
@@ -76,8 +76,21 @@ jobs:
       - name: "Launch localnet"
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: |
-          just localnet --no-build &
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
           sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
 
       - name: "Run tests (just test)"
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
@@ -92,11 +105,11 @@ jobs:
   sai-trading:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: "Check for changes"
         id: check_changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             check_changes:
@@ -110,7 +123,7 @@ jobs:
         if: steps.check_changes.outputs.check_changes == 'true'
         uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           # cache: "The action has a built-in functionality for caching and
           # restoring go modules and build outputs. It uses [actions/cache@v4]."
           # - Handles go module cache (go env GOMODCACHE).
@@ -145,8 +158,21 @@ jobs:
 
       - if: steps.check_changes.outputs.check_changes == 'true'
         run: |
-          just localnet --no-build &
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
           sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
 
       - if: steps.check_changes.outputs.check_changes == 'true'
         working-directory: "sai-trading"

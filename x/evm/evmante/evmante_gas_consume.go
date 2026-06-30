@@ -125,7 +125,7 @@ func AnteStepDeductGas(
 			return nil
 		}
 
-		if err := k.DeductTxCostsFromUserBalance(
+		if err := DeductTxCostsFromUserBalance(
 			sdb, effFeeWei, gethcommon.BytesToAddress(feePayer),
 		); err != nil {
 			return sdkioerrors.Wrapf(err, "failed to deduct transaction costs from user balance")
@@ -204,7 +204,10 @@ func AnteStepGasWanted(
 		gasWanted += txData.GetGas()
 	}
 
-	priority := evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
+	priority := evm.DefaultZeroGasTxPriority
+	if !evm.IsZeroGasEthTx(sdb.Ctx()) {
+		priority = evm.GetTxPriority(txData, baseFeeMicronibiPerGas)
+	}
 
 	if priority < minPriority {
 		minPriority = priority
@@ -217,10 +220,12 @@ func AnteStepGasWanted(
 	// Gas consumption follows a two-phase approach:
 	// 1. Ante handlers use infinite gas meters to avoid premature failures
 	// 2. EVM execution tracks actual gas consumption separately via gasRemaining
-	// 3. Only the final consumed amount is recorded via SafeConsumeGas
+	// 3. Only the final consumed amount is recorded to the [sdk.GasMeter] via
+	// `SafeConsumeGas`
 	//
-	// This design ensures that Cosmos gas accounting reflects actual EVM gas usage
-	// without double-counting or premature gas failures during validation.
+	// This design ensures that [sdk.GasMeter] accounting reflects actual EVM gas
+	// usage that occurs in `EthereumTx` without gas failures during [AnteStep]
+	// validation.
 	newCtx := sdb.Ctx().
 		WithGasMeter(eth.NewInfiniteGasMeterWithLimit(gasWanted)).
 		WithPriority(minPriority)

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
@@ -20,6 +21,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 type TestCase[In, Out any] struct {
@@ -30,8 +32,80 @@ type TestCase[In, Out any] struct {
 		req In,
 		wantResp Out,
 	)
-	onTestEnd func(deps *evmtest.TestDeps)
+	onTestEnd func(deps *evmtest.TestDeps, gotResp Out)
 	wantErr   string
+}
+
+const zeroGasSentinelGasLimit uint64 = 780_749
+
+type zeroGasSentinelFixture struct {
+	to   gethcommon.Address
+	data []byte
+}
+
+func setupZeroGasSentinelFixture(deps *evmtest.TestDeps) zeroGasSentinelFixture {
+	deployResp, err := evmtest.DeployContract(deps, embeds.SmartContract_TestERC20)
+	if err != nil {
+		panic(err)
+	}
+	data, err := deployResp.ContractData.ABI.Pack(
+		"transfer", gethcommon.HexToAddress("0x0000000000000000000000000000000000010f2C"), big.NewInt(0),
+	)
+	if err != nil {
+		panic(err)
+	}
+	to := deployResp.ContractAddr
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{to.Hex()},
+	})
+	return zeroGasSentinelFixture{to: to, data: data}
+}
+
+func setupZeroGasSentinelArgs(deps *evmtest.TestDeps) evm.JsonTxArgs {
+	fixture := setupZeroGasSentinelFixture(deps)
+	gas := hexutil.Uint64(zeroGasSentinelGasLimit)
+	return evm.JsonTxArgs{
+		From:                 &deps.Sender.EthAddr,
+		To:                   &fixture.to,
+		Value:                (*hexutil.Big)(big.NewInt(0)),
+		Gas:                  &gas,
+		GasPrice:             (*hexutil.Big)(big.NewInt(1_000_000_000_000)),
+		MaxFeePerGas:         (*hexutil.Big)(big.NewInt(1_200_000_000_000)),
+		MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
+		Data:                 (*hexutil.Bytes)(&fixture.data),
+	}
+}
+
+func setupZeroGasSentinelTx(deps *evmtest.TestDeps) *evm.MsgEthereumTx {
+	args := setupZeroGasSentinelArgs(deps)
+	tx := evm.NewTx(&evm.EvmTxArgs{
+		ChainID:   deps.EvmKeeper.EthChainID(deps.Ctx()),
+		Nonce:     deps.EvmKeeper.GetAccNonce(deps.Ctx(), deps.Sender.EthAddr),
+		GasLimit:  zeroGasSentinelGasLimit,
+		Input:     args.GetData(),
+		GasFeeCap: args.MaxFeePerGas.ToInt(),
+		GasTipCap: args.MaxPriorityFeePerGas.ToInt(),
+		Amount:    big.NewInt(0),
+		To:        args.To,
+	})
+	tx.From = deps.Sender.EthAddr.Hex()
+	if err := tx.Sign(deps.GethSigner(), deps.Sender.KeyringSigner); err != nil {
+		panic(err)
+	}
+	return tx
+}
+
+func TraceResCallTracer_ZeroGasSentinel(
+	fromAddr, toAddr gethcommon.Address,
+) (traceResFields map[string]string) {
+	f := make(map[string]string)
+	gas := hexutil.Uint64(zeroGasSentinelGasLimit)
+	f["from"] = fromAddr.Hex()
+	f["gas"] = gas.String()
+	f["to"] = toAddr.Hex()
+	f["value"] = hexutil.Uint64(0).String()
+	f["type"] = "CALL"
+	return f
 }
 
 func InvalidEthAddr() string { return "0x0000" }
@@ -502,6 +576,12 @@ func (s *Suite) TestQueryCode() {
 func (s *Suite) TestQueryParams() {
 	deps := evmtest.NewTestDeps()
 	want := evm.DefaultParams()
+	want.WasmPlugins = []evm.WasmPlugin{
+		{
+			Name: evm.WasmPluginNameXOracle,
+			Addr: deps.Sender.NibiruAddr.String(),
+		},
+	}
 	err := deps.EvmKeeper.SetParams(deps.Ctx(), want)
 	s.NoError(err)
 
@@ -551,6 +631,17 @@ func (s *Suite) TestQueryEthCall() {
 					From: &deps.Sender.EthAddr,
 					Data: (*hexutil.Bytes)(&fungibleTokenContract.Bytecode),
 				})
+				s.Require().NoError(err)
+				return &evm.EthCallRequest{Args: jsonTxArgs}, &evm.MsgEthereumTxResponse{
+					Hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+				}
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: zero-gas call with wallet-managed fee fields",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				jsonTxArgs, err := json.Marshal(setupZeroGasSentinelArgs(deps))
 				s.Require().NoError(err)
 				return &evm.EthCallRequest{Args: jsonTxArgs}, &evm.MsgEthereumTxResponse{
 					Hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -770,8 +861,24 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				return req, wantResp
 			},
 			wantErr: "",
-			onTestEnd: func(deps *evmtest.TestDeps) {
+		},
+		{
+			name: "happy: zero-gas estimate with wallet-managed fee fields",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				jsonTxArgs, err := json.Marshal(setupZeroGasSentinelArgs(deps))
+				s.Require().NoError(err)
+				req = &evm.EthCallRequest{
+					Args:   jsonTxArgs,
+					GasCap: zeroGasSentinelGasLimit,
+				}
+				return req, nil
 			},
+			onTestEnd: func(deps *evmtest.TestDeps, gotResp Out) {
+				s.Require().NotNil(gotResp)
+				s.Require().Greater(gotResp.Gas, uint64(gethparams.TxGas))
+				s.Require().LessOrEqual(gotResp.Gas, zeroGasSentinelGasLimit)
+			},
+			wantErr: "",
 		},
 		{
 			name: "sad: insufficient balance for transfer",
@@ -810,10 +917,10 @@ func (s *Suite) TestEstimateGasForEvmCallType() {
 				return
 			}
 			s.Assert().NoError(err)
-			s.EqualValues(wantResp, gotResp)
-
 			if tc.onTestEnd != nil {
-				tc.onTestEnd(&deps)
+				tc.onTestEnd(&deps, gotResp)
+			} else {
+				s.EqualValues(wantResp, gotResp)
 			}
 		})
 	}
@@ -859,6 +966,24 @@ func (s *Suite) TestTraceTx() {
 				wantResp = TraceResCallTracer_ERC20Transfer(
 					deps.Sender.EthAddr, // fromAddr
 					erc20Addr,           // toAddr
+				)
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: zero-gas trace tx with wallet-managed fee fields",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txMsg := setupZeroGasSentinelTx(deps)
+				s.Require().Equal(uint8(gethcore.DynamicFeeTxType), txMsg.AsTransaction().Type())
+				toAddr := txMsg.AsTransaction().To()
+				s.Require().NotNil(toAddr)
+				req = &evm.QueryTraceTxRequest{
+					Msg: txMsg,
+				}
+				wantResp = TraceResCallTracer_ZeroGasSentinel(
+					deps.Sender.EthAddr,
+					*toAddr,
 				)
 				return req, wantResp
 			},
@@ -1097,6 +1222,17 @@ func (s *Suite) TestTraceCall() {
 				}
 				wantResp = TraceOutputERC20Transfer()
 				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: zero-gas trace call with wallet-managed fee fields",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				txArgs := setupZeroGasSentinelArgs(deps)
+				req = &evm.QueryTraceTxRequest{
+					Msg: txArgs.ToMsgEthTx(),
+				}
+				return req, ""
 			},
 			wantErr: "",
 		},

@@ -117,7 +117,11 @@ func ValidateFunTokenBankMetadata(
 	return out, nil
 }
 
-// Gracefully handles "out of gas"
+// SafeConsumeGas aligns the SDK gas meter with a gas-used value from another
+// source (e.g. the EVM). It consumes the given amount from ctx.GasMeter(), so
+// that Cosmos gas accounting (e.g. ResponseDeliverTx.GasUsed, block gas) can
+// reflect that usage. If the meter would exceed its limit, ConsumeGas panics;
+// SafeConsumeGas catches the panic and returns an error instead.
 func SafeConsumeGas(ctx sdk.Context, amount uint64, descriptor string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {

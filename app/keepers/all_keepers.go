@@ -14,7 +14,7 @@ import (
 
 	// ---------------------------------------------------------------
 	// IBC imports
-
+	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 
 	// ---------------------------------------------------------------
@@ -50,6 +50,10 @@ type PublicKeepers struct {
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
+
+	/* IbcKeeper defines each ICS keeper for IBC. IbcKeeper must be a pointer in
+	   the app, so we can SetRouter on it correctly. */
+	IbcKeeper *ibckeeper.Keeper
 
 	// make IBC modules public for test purposes
 	// these modules are never directly routed to by the IBC Router

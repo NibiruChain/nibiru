@@ -35,6 +35,11 @@ const (
 	// Erc20GasLimitExecute used for transfer, mint and burn.
 	// All must not exceed 200_000
 	Erc20GasLimitExecute uint64 = 200_000
+
+	// Erc20GasLimitQuery is the shared cap for readonly ERC20 calls such as
+	// balanceOf, name, symbol, and decimals. Keep this small because only
+	// malicious contracts should need more.
+	Erc20GasLimitQuery uint64 = 100_000
 )
 
 type contextKey string
@@ -43,6 +48,8 @@ const (
 	CtxKeyEvmSimulation            contextKey = "evm_simulation"
 	CtxKeyGasEstimateZeroTolerance contextKey = "gas_estimate_zero_tolerance"
 	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
+	CtxKeyEvmEventTruncationMark   contextKey = "evm_event_truncation_mark"
+	CtxKeyVMSenderGuard            contextKey = "evm_vm_sender_guard"
 )
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.
@@ -54,6 +61,12 @@ func GetZeroGasMeta(ctx sdk.Context) *ZeroGasMeta {
 // IsZeroGasEthTx returns true if the context has ZeroGasMeta set (i.e., this is a zero-gas EVM tx).
 func IsZeroGasEthTx(ctx sdk.Context) bool {
 	return GetZeroGasMeta(ctx) != nil
+}
+
+// GetEvmEventTruncationMark returns the mark to use for truncating events.
+func GetEvmEventTruncationMark(ctx sdk.Context) (mark int, ok bool) {
+	mark, ok = ctx.Value(CtxKeyEvmEventTruncationMark).(int)
+	return mark, ok
 }
 
 // BASE_FEE_MICRONIBI is the global base fee value for the network. It has a
@@ -71,16 +84,41 @@ var (
 	CodeHashForNilAccount = gethcommon.Hash{}
 )
 
+// WalletZeroBaseFeeWei returns the base fee shown by wallet-facing JSON-RPC fee
+// hints.
+//
+// Nibiru supports allowlisted zero-gas EVM transactions, but browser wallets
+// run transaction-agnostic preflight checks before signing or broadcasting. If
+// RPC fee hints expose the chain's internal base fee, those wallets can reject a
+// valid zero-gas transaction because the sender has no native NIBI for gas. The
+// wallet-facing RPC surface therefore reports a zero base fee so preflight UX
+// matches the zero-cost transactions that the chain already accepts.
+//
+// This value is only for JSON-RPC fee hints and serialization. Consensus, ante
+// handlers, EVM execution, and the BASEFEE opcode continue to use the real chain
+// base fee.
+func WalletZeroBaseFeeWei() *big.Int {
+	return big.NewInt(0)
+}
+
+func IsVMSenderCtx(ctx sdk.Context) bool {
+	isTrue, ok := ctx.Value(CtxKeyVMSenderGuard).(bool)
+	if ok && isTrue {
+		return true
+	}
+	return false
+}
+
 var PRECOMPILE_ADDRS []gethcommon.Address =
 // Using a set cleanly removes potential duplicates
 set.New[gethcommon.Address](
 	append(gethvm.PrecompiledAddressesBerlin, []gethcommon.Address{
 		// FunToken 0x...800
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000800"),
-		// Wasm 0x...802
-		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// Oracle 0x...801
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000801"),
+		// Wasm 0x...802
+		gethcommon.HexToAddress("0x0000000000000000000000000000000000000802"),
 		// P-256 verification precompile 0x...100
 		gethcommon.HexToAddress("0x0000000000000000000000000000000000000100"),
 	}...)...,
@@ -117,6 +155,8 @@ const (
 	KeyPrefixFunTokenIdxBankDenom collections.Namespace = 7
 
 	KeyPrefixNetWeiBlockDelta collections.Namespace = 8
+
+	KeyPrefixWasmPlugins collections.Namespace = 9
 )
 
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only
@@ -126,6 +166,7 @@ const (
 	NamespaceBlockTxIndex collections.Namespace = 2
 	NamespaceBlockLogSize collections.Namespace = 3
 	NamespaceBlockGasUsed collections.Namespace = 4
+
 	// NamespaceBlockZeroGasTxCount: number of zero-gas EVM txs in the current block.
 	NamespaceBlockZeroGasTxCount collections.Namespace = 5
 )
@@ -148,8 +189,14 @@ const (
 )
 
 var (
-	EVM_MODULE_ADDRESS        gethcommon.Address
-	EVM_MODULE_ADDRESS_NIBI   sdk.AccAddress
+	EVM_MODULE_ADDRESS      gethcommon.Address
+	EVM_MODULE_ADDRESS_NIBI sdk.AccAddress
+	// EVM_READONLY_ADDR is a dedicated low-privilege EVM caller identity for
+	// query-style external contract execution (for example ERC20 metadata and
+	// balance wrappers). It avoids borrowing x/evm module authority
+	// (EVM_MODULE_ADDRESS) for read paths while still allowing deterministic EVM
+	// execution with a stable caller address.
+	EVM_READONLY_ADDR         gethcommon.Address
 	FEE_COLLECTOR_ADDR        gethcommon.Address
 	FEE_COLLECTOR_BECH32_ADDR sdk.AccAddress
 )
@@ -157,6 +204,9 @@ var (
 func init() {
 	EVM_MODULE_ADDRESS_NIBI = authtypes.NewModuleAddress(ModuleName)
 	EVM_MODULE_ADDRESS = gethcommon.BytesToAddress(EVM_MODULE_ADDRESS_NIBI)
+	EVM_READONLY_ADDR = gethcommon.BytesToAddress(authtypes.NewModuleAddress(
+		fmt.Sprintf("%v_readonly_caller", ModuleName),
+	))
 	FEE_COLLECTOR_BECH32_ADDR = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	FEE_COLLECTOR_ADDR = gethcommon.BytesToAddress(FEE_COLLECTOR_BECH32_ADDR)
 }

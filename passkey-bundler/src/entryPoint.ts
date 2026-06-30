@@ -5,7 +5,6 @@ const USER_OP_TUPLE =
 
 export const ENTRY_POINT_V06_ABI = [
   `function handleOps(${USER_OP_TUPLE}[] ops, address payable beneficiary)`,
-  "function depositTo(address account) payable",
   "function balanceOf(address account) view returns (uint256)",
   `function simulateValidation(${USER_OP_TUPLE} userOp)`,
   `function simulateHandleOp(${USER_OP_TUPLE} op, address target, bytes targetCallData)`,
@@ -31,4 +30,3 @@ export function extractRevertData(err: unknown): string | undefined {
     undefined
   )
 }
-
