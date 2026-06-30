@@ -4,7 +4,6 @@ package evmante
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"path"
 	"reflect"
@@ -31,6 +30,7 @@ func NewAnteHandlerEvm(
 		EthSigVerification,
 		AnteStepDetectZeroGas, // must run before ValidateBasic, MempoolGasPrice, VerifyEthAcc, CanTransfer, DeductGas
 		AnteStepValidateBasic,
+		AnteStepZeroGasBlockQuota,
 		AnteStepMempoolGasPrice,
 		AnteStepBlockGasMeter,
 		AnteStepVerifyEthAcc,
@@ -124,16 +124,13 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 		handlerGroup.TxConfig(ctx, msgEthTx.AsTransaction().Hash()),
 	)
 
-	log.Printf(
-		"EthState AnteHandle BEGIN:\ntxhash: %s\n{ abci_execution_phase: %s }",
-		msgEthTx.Hash, txABCIPhase(sdb.Ctx()))
 	sdb.SetCtx(
 		sdb.Ctx().
 			WithIsEvmTx(true).
 			WithEvmTxHash(sdb.TxCfg().TxHash),
 	)
 
-	for idx, evmHandler := range handlerGroup.Steps {
+	for _, evmHandler := range handlerGroup.Steps {
 		err = evmHandler(
 			sdb,
 			handlerGroup.EVMKeeper,
@@ -142,16 +139,10 @@ func (handlerGroup AnteHandlerEvm) AnteHandle(
 			handlerGroup.Opts,
 		)
 		if err != nil {
-			log.Printf("AnteHandlerEvm step %v failed: %s",
-				handlerGroup.StepNames[idx], err,
-			)
 			return ctx, err
 		}
 	}
 
-	log.Printf(
-		"EthState AnteHandle END (SUCCESS):\ntxhash: %s\n{ abci_execution_phase: %s }",
-		msgEthTx.Hash, txABCIPhase(sdb.Ctx()))
 	if evmstate.IsDeliverTx(sdb.Ctx()) {
 		sdb.Commit() // Persist
 	}
@@ -189,17 +180,6 @@ func AnteStepTemplate(
 }
 
 type EVMKeeper = evmstate.Keeper
-
-// txABCIPhase returns the ABCI execution phase as a string for logging.
-func txABCIPhase(ctx sdk.Context) string {
-	if ctx.IsReCheckTx() {
-		return "ReCheckTx"
-	}
-	if ctx.IsCheckTx() {
-		return "CheckTx"
-	}
-	return "DeliverTx"
-}
 
 // shortFuncName parses the function name for the given [AnteStep]. This is
 // used for semantically rich logging in the EVM ante handler.

@@ -25,6 +25,7 @@ const (
 	codeErrInvalidBaseFee
 	codeErrInvalidAccount
 	codeErrInactivePrecompile
+	codeErrZeroGasBlockQuotaExceeded
 )
 
 var (
@@ -54,6 +55,9 @@ var (
 
 	// ErrInvalidAccount returns an error if the account is not an EVM compatible account
 	ErrInvalidAccount = sdkioerrors.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
+
+	// ErrZeroGasBlockQuotaExceeded returns an error when the per-block quota for zero-gas EVM txs is exceeded.
+	ErrZeroGasBlockQuotaExceeded = sdkioerrors.Register(ModuleName, codeErrZeroGasBlockQuotaExceeded, "zero-gas block quota exceeded")
 
 	ErrCanonicalWnibi = "canonical WNIBI address in state is a not a smart contract"
 )

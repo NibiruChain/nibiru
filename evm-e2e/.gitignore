@@ -2,3 +2,8 @@ types
 artifacts
 cache
 .env
+
+# local e2e chain data
+.nibid-testnet2/
+.passkey-testnet2-wallet.json
+.passkey-testnet2-privkey.txt
