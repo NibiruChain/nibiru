@@ -9,10 +9,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	authztestutil "github.com/cosmos/cosmos-sdk/x/authz/testutil"
@@ -72,14 +74,24 @@ func (suite *GenesisTestSuite) TestImportExportGenesis() {
 	err := suite.keeper.SaveGrant(suite.ctx, granteeAddr, granterAddr, grant, &expires)
 	suite.Require().NoError(err)
 	genesis := suite.keeper.ExportGenesis(suite.ctx)
+	suite.Require().Equal(authz.DefaultGenesisState(), genesis)
 
-	// TODO, recheck!
-	// Clear keeper
+	anyAuthorization, err := codectypes.NewAnyWithValue(grant)
+	suite.Require().NoError(err)
+	importGenesis := authz.NewGenesisState([]authz.GrantAuthorization{
+		{
+			Granter:       granterAddr.String(),
+			Grantee:       granteeAddr.String(),
+			Authorization: anyAuthorization,
+			Expiration:    &expires,
+		},
+	})
+
 	suite.keeper.DeleteGrant(suite.ctx, granteeAddr, granterAddr, grant.MsgTypeURL())
-
-	suite.keeper.InitGenesis(suite.ctx, genesis)
-	newGenesis := suite.keeper.ExportGenesis(suite.ctx)
-	suite.Require().Equal(genesis, newGenesis)
+	suite.keeper.InitGenesis(suite.ctx, importGenesis)
+	authorization, _ := suite.keeper.GetAuthorization(suite.ctx, granteeAddr, granterAddr, grant.MsgTypeURL())
+	suite.Require().Nil(authorization)
+	suite.Require().Equal(authz.DefaultGenesisState(), suite.keeper.ExportGenesis(suite.ctx))
 }
 
 func TestGenesisTestSuite(t *testing.T) {

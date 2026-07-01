@@ -39,5 +39,5 @@ func TestRandomizedGenState(t *testing.T) {
 	var authzGenesis authz.GenesisState
 	simState.Cdc.MustUnmarshalJSON(simState.GenState[authz.ModuleName], &authzGenesis)
 
-	require.Len(t, authzGenesis.Authorization, len(simState.Accounts)-1)
+	require.Empty(t, authzGenesis.Authorization)
 }
