@@ -19,7 +19,7 @@ require (
 
 require (
 	cosmossdk.io/api v1.0.0
-	cosmossdk.io/errors v1.0.1
+	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
