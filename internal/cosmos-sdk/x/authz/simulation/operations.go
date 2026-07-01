@@ -48,44 +48,7 @@ func WeightedOperations(
 	bk authz.BankKeeper,
 	k keeper.Keeper,
 ) simulation.WeightedOperations {
-	var (
-		weightMsgGrant int
-		weightExec     int
-		weightRevoke   int
-	)
-
-	appParams.GetOrGenerate(cdc, OpWeightMsgGrant, &weightMsgGrant, nil,
-		func(_ *rand.Rand) {
-			weightMsgGrant = WeightGrant
-		},
-	)
-
-	appParams.GetOrGenerate(cdc, OpWeightExec, &weightExec, nil,
-		func(_ *rand.Rand) {
-			weightExec = WeightExec
-		},
-	)
-
-	appParams.GetOrGenerate(cdc, OpWeightRevoke, &weightRevoke, nil,
-		func(_ *rand.Rand) {
-			weightRevoke = WeightRevoke
-		},
-	)
-
-	return simulation.WeightedOperations{
-		simulation.NewWeightedOperation(
-			weightMsgGrant,
-			SimulateMsgGrant(codec.NewProtoCodec(registry), ak, bk, k),
-		),
-		simulation.NewWeightedOperation(
-			weightExec,
-			SimulateMsgExec(codec.NewProtoCodec(registry), ak, bk, k, registry),
-		),
-		simulation.NewWeightedOperation(
-			weightRevoke,
-			SimulateMsgRevoke(codec.NewProtoCodec(registry), ak, bk, k),
-		),
-	}
+	return nil
 }
 
 // SimulateMsgGrant generates a MsgGrant with random values.

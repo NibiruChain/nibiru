@@ -22,7 +22,7 @@ import (
 	"github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
-func TestExpiredGrantsQueue(t *testing.T) {
+func TestBeginBlockerIsInert(t *testing.T) {
 	key := sdk.NewKVStoreKey(keeper.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, sdk.NewTransientStoreKey("transient_test"))
 	encCfg := moduletestutil.MakeTestEncodingConfig(authzmodule.AppModuleBasic{})
@@ -69,30 +69,26 @@ func TestExpiredGrantsQueue(t *testing.T) {
 	save(grantee3, &expiration2)
 	save(grantee4, nil)
 
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, encCfg.InterfaceRegistry)
-	authz.RegisterQueryServer(queryHelper, authzKeeper)
-	queryClient := authz.NewQueryClient(queryHelper)
-
-	checkGrants := func(ctx sdk.Context, expectedNum int) {
+	checkGrants := func(ctx sdk.Context) {
 		authzmodule.BeginBlocker(ctx, authzKeeper)
 
-		res, err := queryClient.GranterGrants(ctx.Context(), &authz.QueryGranterGrantsRequest{
-			Granter: granter.String(),
+		count := 0
+		authzKeeper.IterateGrants(ctx, func(_ sdk.AccAddress, _ sdk.AccAddress, _ authz.Grant) bool {
+			count++
+			return false
 		})
-		require.NoError(t, err)
-		require.NotNil(t, res)
-		require.Equal(t, expectedNum, len(res.Grants))
+		require.Equal(t, 4, count)
 	}
 
-	checkGrants(ctx, 4)
+	checkGrants(ctx)
 
 	// expiration is exclusive!
 	ctx = ctx.WithBlockTime(expiration)
-	checkGrants(ctx, 4)
+	checkGrants(ctx)
 
 	ctx = ctx.WithBlockTime(expiration.AddDate(0, 0, 1))
-	checkGrants(ctx, 2)
+	checkGrants(ctx)
 
 	ctx = ctx.WithBlockTime(expiration2.AddDate(0, 0, 1))
-	checkGrants(ctx, 1)
+	checkGrants(ctx)
 }

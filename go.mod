@@ -19,13 +19,13 @@ require (
 
 require (
 	cosmossdk.io/api v1.0.0
-	cosmossdk.io/errors v1.0.1
+	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/armon/go-metrics v0.4.1
 	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcutil v1.1.6
+	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/gogo/protobuf v1.3.3
@@ -44,7 +44,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tidwall/gjson v1.17.0
+	github.com/tidwall/gjson v1.19.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/tyler-smith/go-bip39 v1.1.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171
@@ -66,7 +66,7 @@ require (
 	github.com/status-im/keycard-go v0.3.3
 	golang.org/x/crypto v0.53.0
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
-	golang.org/x/mod v0.36.0
+	golang.org/x/mod v0.37.0
 	golang.org/x/net v0.56.0
 	golang.org/x/text v0.38.0
 	gotest.tools/v3 v3.5.2
@@ -92,7 +92,7 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.5 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -180,6 +180,7 @@ require (
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
+	github.com/kcalvinalvin/anet v0.0.0-20251112173137-d8ddc1f6dbee // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
