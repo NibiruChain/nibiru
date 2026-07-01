@@ -3,10 +3,13 @@ package wasmext_test
 import (
 	"math/big"
 	"testing"
+	"time"
 
 	wasmvm "github.com/CosmWasm/wasmvm/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/suite"
 
@@ -95,4 +98,95 @@ func (s *Suite) TestEvmFilter() {
 		},
 	)
 	s.Require().NoError(err)
+}
+
+func (s *Suite) TestWasmSdkMessageHandlerRejectsBlockedMessages() {
+	deps := evmtest.NewTestDeps()
+	wasmMsgHandler := wasmext.WasmMessageHandler(deps.App.WasmMsgHandlerArgs)
+	contractAddr := deps.Sender.NibiruAddr
+	granteeAddr := evmtest.NewEthPrivAcc().NibiruAddr
+
+	to := evmtest.NewEthPrivAcc()
+	ethTxMsg, err := evmtest.TxTransferWei{
+		Deps:      &deps,
+		To:        to.EthAddr,
+		AmountWei: evm.NativeToWei(big.NewInt(420)),
+	}.Build()
+	s.Require().NoError(err)
+
+	execMsg := authz.NewMsgExec(
+		contractAddr,
+		[]sdk.Msg{
+			&bank.MsgSend{
+				FromAddress: granteeAddr.String(),
+				ToAddress:   contractAddr.String(),
+				Amount:      sdk.NewCoins(sdk.NewInt64Coin(evm.EVMBankDenom, 1)),
+			},
+		},
+	)
+
+	expiration := time.Now().Add(time.Hour)
+	grantMsg, err := authz.NewMsgGrant(
+		contractAddr,
+		granteeAddr,
+		authz.NewGenericAuthorization(sdk.MsgTypeURL(&bank.MsgSend{})),
+		&expiration,
+	)
+	s.Require().NoError(err)
+
+	revokeMsg := authz.NewMsgRevoke(
+		contractAddr,
+		granteeAddr,
+		sdk.MsgTypeURL(&bank.MsgSend{}),
+	)
+
+	testCases := []struct {
+		name string
+		msg  interface {
+			sdk.Msg
+			codec.ProtoMarshaler
+		}
+		wantErr string
+	}{
+		{
+			name:    "evm ethereum tx",
+			msg:     ethTxMsg,
+			wantErr: "Wasm VM to EVM call pattern is not yet supported",
+		},
+		{
+			name:    "authz exec",
+			msg:     &execMsg,
+			wantErr: "not allowed",
+		},
+		{
+			name:    "authz grant",
+			msg:     grantMsg,
+			wantErr: "not allowed",
+		},
+		{
+			name:    "authz revoke",
+			msg:     &revokeMsg,
+			wantErr: "not allowed",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			protoValueBz, err := deps.App.AppCodec().Marshal(tc.msg)
+			s.Require().NoError(err)
+
+			_, _, err = wasmMsgHandler.DispatchMsg(
+				deps.Ctx(),
+				contractAddr,
+				"ibcport-unused",
+				wasmvm.CosmosMsg{
+					Stargate: &wasmvm.StargateMsg{
+						TypeURL: sdk.MsgTypeURL(tc.msg),
+						Value:   protoValueBz,
+					},
+				},
+			)
+			s.Require().ErrorContains(err, tc.wantErr)
+		})
+	}
 }
