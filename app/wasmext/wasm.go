@@ -12,6 +12,7 @@ import (
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/x/authz"
 )
 
 // NibiruWasmOptions: Wasm Options are extension points to instantiate the Wasm
@@ -50,8 +51,13 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 	}
 
 	msgTypeUrl := sdk.MsgTypeURL(msg)
-	if msgTypeUrl == sdk.MsgTypeURL(new(evm.MsgEthereumTx)) {
+	switch msgTypeUrl {
+	case sdk.MsgTypeURL(new(evm.MsgEthereumTx)):
 		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "Wasm VM to EVM call pattern is not yet supported")
+	case sdk.MsgTypeURL(new(authz.MsgExec)),
+		sdk.MsgTypeURL(new(authz.MsgGrant)),
+		sdk.MsgTypeURL(new(authz.MsgRevoke)):
+		return nil, sdkioerrors.Wrapf(sdkerrors.ErrUnauthorized, "Wasm VM dispatch of %s is not allowed", msgTypeUrl)
 	}
 
 	// find the handler and execute it
