@@ -24,6 +24,7 @@ import (
 type QueryEvmBalanceResp struct {
 	AddrEVM    string `json:"addr_evm"`
 	AddrBech32 string `json:"addr_bech32"`
+	BalanceWei string `json:"balance_wei"`
 
 	Erc20Addr         *string `json:"erc20_addr"`
 	Erc20Symbol       *string `json:"erc20_symbol"`
@@ -154,6 +155,7 @@ Examples:
 			if err != nil {
 				return err
 			}
+			resp.BalanceWei = queryResp.BalanceWei
 			if bank := queryResp.Bank; bank != nil {
 				resp.BankCoinDenom = strPtr(bank.CoinDenom)
 				resp.BankBalanceBase = strPtr(bank.BalanceBase)
