@@ -7,7 +7,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
-func (s *Suite) TestAnteDecoratorPreventEtheruemTxMsgs() {
+func (s *Suite) TestAnteDecPreventEthereumTxMsgs() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps) sdk.Tx
