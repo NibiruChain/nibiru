@@ -95,7 +95,7 @@ func NewEvmState(
 		NetWeiBlockDelta: collections.NewItem(
 			storeKey,
 			evm.KeyPrefixNetWeiBlockDelta,
-			eth.SignedIntValueEncoder,
+			collections.IntValueEncoder,
 		),
 		WasmPlugins: collections.NewMap(
 			storeKey,

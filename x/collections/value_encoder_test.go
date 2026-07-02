@@ -52,7 +52,7 @@ func (s *SuiteValueEncoder) TestUint64ValueEncoder() {
 	})
 }
 
-func (s *SuiteValueEncoder) TestIntEncoder() {
+func (s *SuiteValueEncoder) TestIntKeyEncoder() {
 	// we test our assumptions around int are correct.
 	outOfBounds := new(big.Int).Lsh(big.NewInt(1), 256)       // 2^256
 	maxBigInt := new(big.Int).Sub(outOfBounds, big.NewInt(1)) // 2^256 - 1
@@ -88,15 +88,72 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	s.Panics(func() {
 		IntKeyEncoder.Encode(sdkmath.Int{})
 	})
+}
 
-	// test value encoder
-	value := sdk.NewInt(50_000)
-	valueBytes := IntValueEncoder.Encode(value)
-	gotValue := IntValueEncoder.Decode(valueBytes)
-	s.Equal(value, gotValue)
+func (s *SuiteValueEncoder) TestUintValueEncoder() {
+	maxUint := sdkmath.NewUintFromBigInt(
+		new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), sdkmath.MaxBitLen), big.NewInt(1)),
+	)
 
-	// panics on invalid math.Int
-	s.Panics(func() {
-		IntValueEncoder.Encode(sdkmath.Int{})
+	testCases := []struct {
+		name string
+		u    sdkmath.Uint
+	}{
+		{"zero", sdkmath.ZeroUint()},
+		{"one", sdkmath.OneUint()},
+		{"small", sdkmath.NewUint(100)},
+		{"medium", sdkmath.NewUint(50_000)},
+		{"max", maxUint},
+	}
+
+	for _, tc := range testCases {
+		s.Run("legacy fixed-width round-trip "+tc.name, func() {
+			legacyBytes := IntKeyEncoder.Encode(sdkmath.NewIntFromBigInt(tc.u.BigInt()))
+			got := UintValueEncoder.Decode(legacyBytes)
+			s.Equal(tc.u, got)
+
+			s.Equal(legacyBytes, UintValueEncoder.Encode(tc.u))
+			s.Len(legacyBytes, maxIntKeyLen)
+		})
+	}
+
+	s.Run("bijectivity", func() {
+		assertValueBijective(s.T(), UintValueEncoder, sdkmath.NewUint(50_000))
 	})
+
+	s.Panics(func() {
+		UintValueEncoder.Encode(sdkmath.Uint{})
+	})
+
+	s.Equal("math.Uint (fixed-width BE)", UintValueEncoder.Name())
+}
+
+func (s *SuiteValueEncoder) TestIntValueEncoder() {
+	testCases := []struct {
+		name  string
+		value sdkmath.Int
+	}{
+		{"zero", sdkmath.ZeroInt()},
+		{"positive", sdkmath.NewInt(50_000)},
+		{"negative", sdkmath.NewInt(-1)},
+		{"large negative", sdkmath.NewInt(-1_000_000_000_000)},
+	}
+	for _, tc := range testCases {
+		s.Run("signed round-trip "+tc.name, func() {
+			assertValueBijective(s.T(), IntValueEncoder, tc.value)
+		})
+	}
+
+	s.Run("differs from fixed-width uint encoding for positive values", func() {
+		v := sdkmath.NewInt(50_000)
+		s.NotEqual(IntKeyEncoder.Encode(v), IntValueEncoder.Encode(v))
+	})
+
+	s.Equal("math.Int (signed)", IntValueEncoder.Name())
+}
+
+func (s *SuiteValueEncoder) TestUintToIntConversion() {
+	u := sdkmath.NewUint(12345)
+	i := sdkmath.NewIntFromBigInt(u.BigInt())
+	s.Equal("12345", i.String())
 }
