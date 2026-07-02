@@ -3,6 +3,7 @@ package upgrades
 import (
 	"fmt"
 	"slices"
+	"time"
 
 	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -85,8 +86,41 @@ var (
 		StoreUpgrades: store.StoreUpgrades{},
 	}
 
-	Upgrade2_16_0 = NewVanillaUpgrade("v2.16.0")
+	Upgrade2_16_0 = Upgrade{
+		UpgradeName:   "v2.16.0",
+		Handler:       Handler_v2_16{},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
 )
+
+var _ HandlerImpl = (*Handler_v2_16)(nil)
+
+type Handler_v2_16 struct{}
+
+func (h Handler_v2_16) Handler(
+	mm *module.Manager,
+	cfg module.Configurator,
+	nibiru *keepers.PublicKeepers,
+) upgradetypes.UpgradeHandler {
+
+	return func(
+		ctx sdk.Context,
+		plan upgradetypes.Plan,
+		fromVM module.VersionMap,
+	) (module.VersionMap, error) {
+		if ctx.ChainID() == appconst.SDK_CHAIN_ID_MAINNET {
+			params := nibiru.GovKeeper.GetParams(ctx)
+			*params.VotingPeriod = 24 * time.Hour
+			if err := nibiru.GovKeeper.SetParams(ctx, params); err != nil {
+				ctx.Logger().Error("v2.16.0 upgrade failure", "err", err)
+				ctx.EventManager().EmitEvent(
+					NewEventUpgradeFailure("v2.16.0", err),
+				)
+			}
+		}
+		return mm.RunMigrations(ctx, cfg, fromVM)
+	}
+}
 
 var _ HandlerImpl = (*Handler_v2_1)(nil)
 

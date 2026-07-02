@@ -9,6 +9,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
@@ -287,7 +288,7 @@ func (s *SuiteFunToken) TestCreateFunTokenPermissions_MainnetCoin() {
 
 	s.Run("sad: mainnet unauthorized sender does not pay fee", func() {
 		deps := evmtest.NewTestDeps()
-		deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1"))
+		deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 
 		bankDenom := "mainnet-unauthorized"
 		fee := deps.EvmKeeper.FeeForCreateFunToken(deps.Ctx())
@@ -321,7 +322,7 @@ func (s *SuiteFunToken) TestCreateFunTokenPermissions_MainnetCoin() {
 	s.Run("happy: mainnet sudoer can create funtoken", func() {
 		deps := evmtest.NewTestDeps()
 		deps.SetCtx(deps.Ctx().
-			WithChainID("cataclysm-1").
+			WithChainID(appconst.SDK_CHAIN_ID_MAINNET).
 			WithGasMeter(sdk.NewInfiniteGasMeter()))
 
 		bankDenom := "mainnet-sudoer"

@@ -60,7 +60,7 @@ type Upgrade2_14_AddrCfg struct {
 // upgrade handler. Tests temporarily override contract fields after
 // instantiating real Wasm contracts at fresh test addresses.
 var AddrCfg_v2_14 = Upgrade2_14_AddrCfg{
-	MainnetChainID:  "cataclysm-1",
+	MainnetChainID:  appconst.SDK_CHAIN_ID_MAINNET,
 	Testnet2ChainID: "nibiru-testnet-2",
 
 	TreasuryCW3:      mustAccAddress("nibi1l8dxzwz9d4peazcqjclnkj2mhvtj7mpnkqx85mg0ndrlhwrnh7gskkzg0v"),

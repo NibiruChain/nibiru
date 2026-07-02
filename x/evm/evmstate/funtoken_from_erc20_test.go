@@ -264,7 +264,7 @@ func (s *SuiteFunToken) TestCreateFunTokenPermissions_ERC20() {
 	s.Run("happy: mainnet governance authority can create after unauthorized sender is rejected", func() {
 		deps := evmtest.NewTestDeps()
 		deps.SetCtx(deps.Ctx().
-			WithChainID("cataclysm-1").
+			WithChainID(appconst.SDK_CHAIN_ID_MAINNET).
 			WithGasMeter(sdk.NewInfiniteGasMeter()))
 		erc20Addr := deployERC20(&deps)
 		authority := auth.NewModuleAddress(govtypes.ModuleName)
