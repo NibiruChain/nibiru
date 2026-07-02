@@ -14,7 +14,7 @@ import (
 
 const maxNestedMsgs = 2
 
-// AnteDecAuthzGuard filters autz messages
+// AnteDecAuthzGuard filters authz messages
 type AnteDecAuthzGuard struct{}
 
 // AnteHandle rejects "authz grant generic --msg-type '/eth.evm.v1.MsgEthereumTx'"
