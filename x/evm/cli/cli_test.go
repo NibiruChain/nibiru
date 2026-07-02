@@ -276,6 +276,7 @@ func (s *Suite) TestCmdQueryBalance_LocalnetNibi() {
 	var resp cli.QueryEvmBalanceResp
 	s.Require().NoErrorf(json.Unmarshal(out, &resp), "failed to decode query output: %s", string(out))
 	s.Require().Equal(nutil.LocalnetValAddr.String(), resp.AddrBech32)
+	s.Require().NotEmpty(resp.BalanceWei)
 	s.Require().NotNil(resp.BankCoinDenom)
 	s.Require().Equal("unibi", *resp.BankCoinDenom)
 	s.Require().NotNil(resp.BankBalanceBase)

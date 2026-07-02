@@ -6,19 +6,21 @@
 
 ```bash
 # You can also use wget
-curl -X GET https://lcd.nibiru.fi/nibiru/evm/v1/balances/{address} \
+curl -X GET 'https://lcd.nibiru.fi/nibiru/evm/v1/balances/{address}?token={token}' \
   -H 'Accept: application/json'
 ```
 ##### Summary
 
-Balance queries the balance of a the EVM denomination for a single
-EthAccount.
+Balance queries the native EVM balance for a single account. When `token` is
+provided, the response also includes Bank and/or ERC20 balance details for that
+token when available.
 
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
 | address | path | address is the ethereum hex address to query the balance for. | Yes | string |
+| token | query | token is an ERC20 address or bank denom to query alongside the native EVM balance. Leave empty to query only the native EVM balance. | No | string |
 
 ##### Responses
 
@@ -468,6 +470,31 @@ field. Example (for message [google.protobuf.Duration][]):
 | message | string |  | No |
 | details | [ [protobufAny](#protobufany) ] |  | No |
 
+#### v1BalanceBank
+
+BalanceBank is the Bank module balance view for a token.
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| symbol | string |  | No |
+| balance_human | string |  | No |
+| decimals | integer |  | No |
+| coin_denom | string |  | No |
+| balance_base | string |  | No |
+
+#### v1BalanceERC20
+
+BalanceERC20 is the ERC20 balance view for a token.
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| address | string |  | No |
+| symbol | string |  | No |
+| balance_human | string |  | No |
+| decimals | integer |  | No |
+| name | string |  | No |
+| balance_base | string |  | No |
+
 #### v1EstimateGasResponse
 
 | Name | Type | Description | Required |
@@ -546,8 +573,9 @@ QueryBalanceResponse is the response type for the Query/Balance RPC method.
 
 | Name | Type | Description | Required |
 | ---- | ---- | ----------- | -------- |
-| balance | string |  | No |
 | balance_wei | string | balance is the balance of the EVM denomination in units of wei. | No |
+| bank | [v1BalanceBank](#v1balancebank) | bank is the Bank module token balance details when a bank representation is available for the requested token. | No |
+| erc20 | [v1BalanceERC20](#v1balanceerc20) | erc20 is the ERC20 token balance details when an ERC20 representation is available for the requested token. | No |
 
 #### v1QueryBaseFeeResponse
 
