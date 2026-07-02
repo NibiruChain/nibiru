@@ -286,24 +286,40 @@ func (k Keeper) loadBalanceERC20(
 	var (
 		foundAny  bool
 		amountBig *big.Int
+		// EVM instance for ERC20 query calls.
+		evmObj *vm.EVM
 	)
 
-	queryEVM := k.newBalanceQueryEVM(ctx)
-	if amount, err := k.ERC20().BalanceOf(contract, account, ctx, queryEVM); err == nil && amount != nil {
+	{
+		unusedBigInt := big.NewInt(0)
+		evmMsg := core.Message{
+			From:          evm.EVM_READONLY_ADDR,
+			Value:         unusedBigInt,
+			GasLimit:      evm.Erc20GasLimitQuery,
+			GasPrice:      unusedBigInt,
+			GasFeeCap:     unusedBigInt,
+			GasTipCap:     unusedBigInt,
+			BlobGasFeeCap: unusedBigInt,
+		}
+		txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
+		sdb := NewSDB(ctx, &k, txConfig)
+		evmObj = k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, sdb)
+	}
+	if amount, err := k.ERC20().BalanceOf(contract, account, ctx, evmObj); err == nil && amount != nil {
 		amountBig = amount
 		balance.BalanceBase = amount.String()
 		foundAny = true
 	}
 
-	if name, err := k.ERC20().LoadERC20Name(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
+	if name, err := k.ERC20().LoadERC20Name(ctx, evmObj, k.ERC20().ABI, contract); err == nil {
 		balance.Name = name
 		foundAny = true
 	}
-	if symbol, err := k.ERC20().LoadERC20Symbol(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
+	if symbol, err := k.ERC20().LoadERC20Symbol(ctx, evmObj, k.ERC20().ABI, contract); err == nil {
 		balance.Symbol = symbol
 		foundAny = true
 	}
-	if decimals, err := k.ERC20().LoadERC20Decimals(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
+	if decimals, err := k.ERC20().LoadERC20Decimals(ctx, evmObj, k.ERC20().ABI, contract); err == nil {
 		balance.Decimals = uint32(decimals)
 		foundAny = true
 		if amountBig != nil {
@@ -315,23 +331,6 @@ func (k Keeper) loadBalanceERC20(
 		return nil, nil
 	}
 	return balance, nil
-}
-
-// newBalanceQueryEVM creates a read-only EVM instance for ERC20 query calls.
-func (k Keeper) newBalanceQueryEVM(ctx sdk.Context) *vm.EVM {
-	unusedBigInt := big.NewInt(0)
-	evmMsg := core.Message{
-		From:          evm.EVM_READONLY_ADDR,
-		Value:         unusedBigInt,
-		GasLimit:      evm.Erc20GasLimitQuery,
-		GasPrice:      unusedBigInt,
-		GasFeeCap:     unusedBigInt,
-		GasTipCap:     unusedBigInt,
-		BlobGasFeeCap: unusedBigInt,
-	}
-	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
-	sdb := NewSDB(ctx, &k, txConfig)
-	return k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, sdb)
 }
 
 // bankDecimalsFromMetadata returns the largest exponent in Bank denom metadata.
