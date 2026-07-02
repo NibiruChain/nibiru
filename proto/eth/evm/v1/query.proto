@@ -143,6 +143,9 @@ message QueryBalanceRequest {
 
   // address is the ethereum hex address to query the balance for.
   string address = 1;
+  // token is an ERC20 address or bank denom to query alongside the native EVM
+  // balance. Leave empty to query only the native EVM balance.
+  string token = 2;
 }
 
 // QueryBalanceResponse: Response type for "/eth.evm.v1.Query/Balance"
@@ -152,6 +155,31 @@ message QueryBalanceResponse {
   // balance is the balance of the EVM denomination in units of wei. 1 wei is 1
   // attoNIBI.
   string balance_wei = 2;
+  // bank is the Bank module token balance details when a bank representation is
+  // available for the requested token.
+  eth.evm.v1.BalanceBank bank = 3 [(gogoproto.nullable) = true];
+  // erc20 is the ERC20 token balance details when an ERC20 representation is
+  // available for the requested token.
+  eth.evm.v1.BalanceERC20 erc20 = 4 [(gogoproto.nullable) = true];
+}
+
+// BalanceBank is the Bank module balance view for a token.
+message BalanceBank {
+  string symbol = 1;
+  string balance_human = 2;
+  uint32 decimals = 3;
+  string coin_denom = 4;
+  string balance_base = 5;
+}
+
+// BalanceERC20 is the ERC20 balance view for a token.
+message BalanceERC20 {
+  string address = 1;
+  string symbol = 2;
+  string balance_human = 3;
+  uint32 decimals = 4;
+  string name = 5;
+  string balance_base = 6;
 }
 
 // QueryStorageRequest is the request type for the Query/Storage RPC method.

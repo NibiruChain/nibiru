@@ -17,6 +17,7 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -37,6 +38,10 @@ import (
 
 // Compile-time interface assertion
 var _ evm.QueryServer = &Keeper{}
+
+// mainnetUSDCAddr is the ERC20 contract address for Stargate USDC on Nibiru
+// mainnet. QueryBalanceRequest token input "USDC" resolves to this address.
+const mainnetUSDCAddr = "0x0829F361A05D993d5CEb035cA6DF3446b060970b"
 
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
 // EthAccount retrieves the account  and balance details for an account with the
@@ -117,9 +122,12 @@ func (k Keeper) ValidatorAccount(
 	return &res, nil
 }
 
-// Balance: Implements the gRPC query for "/eth.evm.v1.Query/Balance".
-// Balance retrieves the balance of an Ethereum address in "wei", the smallest
-// unit of "Ether". Ether refers to NIBI tokens on Nibiru EVM.
+// Balance implements the gRPC query "/eth.evm.v1.Query/Balance".
+//
+// The response field "balance_wei" preserves the legacy behavior: it always
+// reports the native EVM NIBI balance in wei. When request field "token" is
+// non-empty, Balance also populates the nullable Bank and ERC20 token balance
+// sections when those representations exist.
 //
 // Parameters:
 //   - goCtx: The context.Context object representing the request context.
@@ -138,9 +146,248 @@ func (k Keeper) Balance(
 		return nil, err
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	return &evm.QueryBalanceResponse{
-		BalanceWei: k.Bank.GetWeiBalance(ctx, addrBech32).String(),
+	balanceWei := k.Bank.GetWeiBalance(ctx, addrBech32).String()
+	resp := &evm.QueryBalanceResponse{
+		BalanceWei: balanceWei,
+	}
+	if req.Token == "" {
+		return resp, nil
+	}
+
+	token := k.resolveBalanceToken(ctx, req.Token)
+	addrEVM := gethcommon.Address{}
+	isEOA := len(addrBech32.Bytes()) == appconst.ADDR_LEN_EOA
+	if isEOA {
+		addrEVM = eth.NibiruAddrToEthAddr(addrBech32)
+	}
+
+	// Only externally owned account addresses have a meaningful EVM address for
+	// ERC20 balanceOf. Wasm contract Bech32 addresses can still hold Bank coins.
+	canonicalWnibi := k.GetParams(ctx).CanonicalWnibi.Address
+	switch {
+	case token == appconst.DENOM_UNIBI || strings.EqualFold(token, canonicalWnibi.Hex()):
+		bank, err := k.loadBalanceBank(ctx, addrBech32, appconst.DENOM_UNIBI)
+		if err != nil {
+			return nil, err
+		}
+		resp.Bank = bank
+		if isEOA {
+			erc20, err := k.loadBalanceERC20(ctx, addrEVM, canonicalWnibi, balanceWei)
+			if err != nil {
+				return nil, err
+			}
+			resp.Erc20 = erc20
+		}
+	default:
+		funToken := k.findFunTokenMapping(ctx, token)
+		if funToken != nil {
+			bank, err := k.loadBalanceBank(ctx, addrBech32, funToken.BankDenom)
+			if err != nil {
+				return nil, err
+			}
+			resp.Bank = bank
+			if isEOA {
+				erc20, err := k.loadBalanceERC20(ctx, addrEVM, funToken.Erc20Addr.Address, "")
+				if err != nil {
+					return nil, err
+				}
+				resp.Erc20 = erc20
+			}
+			return resp, nil
+		}
+
+		if gethcommon.IsHexAddress(token) {
+			if isEOA {
+				erc20, err := k.loadBalanceERC20(ctx, addrEVM, gethcommon.HexToAddress(token), "")
+				if err != nil {
+					return nil, err
+				}
+				resp.Erc20 = erc20
+			}
+			return resp, nil
+		}
+
+		if sdk.ValidateDenom(token) == nil {
+			bank, err := k.loadBalanceBank(ctx, addrBech32, token)
+			if err != nil {
+				return nil, err
+			}
+			resp.Bank = bank
+		}
+	}
+
+	return resp, nil
+}
+
+// resolveBalanceToken maps convenience token aliases to canonical token
+// identifiers accepted by the rest of the Balance resolver.
+func (k Keeper) resolveBalanceToken(ctx sdk.Context, token string) string {
+	switch {
+	case strings.EqualFold(token, "WNIBI"):
+		return k.GetParams(ctx).CanonicalWnibi.Hex()
+	case strings.EqualFold(token, "USDC"):
+		return mainnetUSDCAddr
+	default:
+		return token
+	}
+}
+
+// findFunTokenMapping returns the FunToken mapping for either a Bank denom or an
+// ERC20 contract address. It mirrors the lookup order of the public FunToken
+// query but returns nil instead of a gRPC NotFound error.
+func (k Keeper) findFunTokenMapping(ctx sdk.Context, token string) *evm.FunToken {
+	bankDenomIter := k.FunTokens.Indexes.BankDenom.ExactMatch(ctx, token)
+	funTokenMappings := k.FunTokens.Collect(ctx, bankDenomIter)
+	if len(funTokenMappings) > 0 {
+		return &funTokenMappings[0]
+	}
+
+	erc20AddrIter := k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, gethcommon.HexToAddress(token))
+	funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
+	if len(funTokenMappings) > 0 {
+		return &funTokenMappings[0]
+	}
+
+	return nil
+}
+
+// loadBalanceBank builds the nullable Bank section for QueryBalanceResponse. A
+// missing denom metadata record means the Bank representation is unavailable,
+// even if the account balance itself would be zero.
+func (k Keeper) loadBalanceBank(
+	ctx sdk.Context, addrBech32 sdk.AccAddress, denom string,
+) (*evm.BalanceBank, error) {
+	metadata, found := k.Bank.GetDenomMetaData(ctx, denom)
+	if !found {
+		return nil, nil
+	}
+	decimals := bankDecimalsFromMetadata(metadata)
+	amountBig := k.Bank.GetBalance(ctx, addrBech32, denom).Amount.BigInt()
+	return &evm.BalanceBank{
+		Symbol:       metadata.Symbol,
+		BalanceHuman: formatUnitsBig(amountBig, decimals),
+		Decimals:     decimals,
+		CoinDenom:    denom,
+		BalanceBase:  amountBig.String(),
 	}, nil
+}
+
+// loadBalanceERC20 builds the nullable ERC20 section for QueryBalanceResponse.
+// The ERC20 metadata calls are intentionally best-effort: a token contract can
+// expose balanceOf without exposing every optional metadata method.
+func (k Keeper) loadBalanceERC20(
+	ctx sdk.Context, account gethcommon.Address, contract gethcommon.Address, nativeBalanceWei string,
+) (*evm.BalanceERC20, error) {
+	balance := &evm.BalanceERC20{
+		Address: contract.Hex(),
+	}
+	var (
+		foundAny  bool
+		amountBig *big.Int
+	)
+
+	if nativeBalanceWei != "" {
+		parsed, ok := new(big.Int).SetString(nativeBalanceWei, 10)
+		if !ok {
+			return nil, fmt.Errorf("invalid EVM balance %q", nativeBalanceWei)
+		}
+		amountBig = parsed
+		balance.BalanceBase = amountBig.String()
+		foundAny = true
+	} else if amount, err := k.ERC20().BalanceOf(contract, account, ctx, k.newBalanceQueryEVM(ctx)); err == nil && amount != nil {
+		amountBig = amount
+		balance.BalanceBase = amount.String()
+		foundAny = true
+	}
+
+	if name, err := k.ERC20().LoadERC20Name(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+		balance.Name = name
+		foundAny = true
+	}
+	if symbol, err := k.ERC20().LoadERC20Symbol(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+		balance.Symbol = symbol
+		foundAny = true
+	}
+	if decimals, err := k.ERC20().LoadERC20Decimals(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+		balance.Decimals = uint32(decimals)
+		foundAny = true
+		if amountBig != nil {
+			balance.BalanceHuman = formatUnitsBig(amountBig, uint32(decimals))
+		}
+	}
+
+	if !foundAny {
+		return nil, nil
+	}
+	return balance, nil
+}
+
+// newBalanceQueryEVM creates a read-only EVM instance for one ERC20 query call.
+// Each helper call gets its own StateDB so simulated contract execution cannot
+// leak dirty state into later metadata or balance reads.
+func (k Keeper) newBalanceQueryEVM(ctx sdk.Context) *vm.EVM {
+	unusedBigInt := big.NewInt(0)
+	evmMsg := core.Message{
+		From:          evm.EVM_READONLY_ADDR,
+		Value:         unusedBigInt,
+		GasLimit:      evm.Erc20GasLimitQuery,
+		GasPrice:      unusedBigInt,
+		GasFeeCap:     unusedBigInt,
+		GasTipCap:     unusedBigInt,
+		BlobGasFeeCap: unusedBigInt,
+	}
+	txConfig := NewEmptyTxConfig(gethcommon.BytesToHash(ctx.HeaderHash()))
+	sdb := NewSDB(ctx, &k, txConfig)
+	return k.NewEVM(ctx, evmMsg, k.GetEVMConfig(ctx), nil /*tracer*/, sdb)
+}
+
+// bankDecimalsFromMetadata returns the largest exponent in Bank denom metadata.
+// This matches the previous CLI formatting behavior for human-readable amounts.
+func bankDecimalsFromMetadata(metadata banktypes.Metadata) uint32 {
+	var decimals uint32
+	for _, unit := range metadata.DenomUnits {
+		if unit.Exponent > decimals {
+			decimals = unit.Exponent
+		}
+	}
+	return decimals
+}
+
+// formatUnitsBig renders a base-unit integer using the given decimal exponent,
+// trimming trailing fractional zeros for CLI-friendly balance strings.
+func formatUnitsBig(amount *big.Int, decimals uint32) string {
+	if amount == nil || amount.Sign() == 0 {
+		return "0"
+	}
+
+	sign := ""
+	absAmount := new(big.Int).Set(amount)
+	if absAmount.Sign() < 0 {
+		sign = "-"
+		absAmount.Neg(absAmount)
+	}
+	if decimals == 0 {
+		return sign + absAmount.String()
+	}
+
+	scale := new(big.Int).Exp(big.NewInt(10), new(big.Int).SetUint64(uint64(decimals)), nil)
+	whole := new(big.Int)
+	frac := new(big.Int)
+	whole.QuoRem(absAmount, scale, frac)
+	if frac.Sign() == 0 {
+		return sign + whole.String()
+	}
+
+	fracStr := frac.String()
+	if len(fracStr) < int(decimals) {
+		fracStr = strings.Repeat("0", int(decimals)-len(fracStr)) + fracStr
+	}
+	fracStr = strings.TrimRight(fracStr, "0")
+	if fracStr == "" {
+		return sign + whole.String()
+	}
+
+	return sign + whole.String() + "." + fracStr
 }
 
 // BaseFee implements the Query/BaseFee gRPC method

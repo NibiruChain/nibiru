@@ -8,6 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -673,6 +674,27 @@ func (s *Suite) TestQueryEthCall() {
 func (s *Suite) TestQueryBalance() {
 	type In = *evm.QueryBalanceRequest
 	type Out = *evm.QueryBalanceResponse
+	setBankMetadata := func(deps *evmtest.TestDeps, denom string, decimals uint32, symbol string) {
+		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), banktypes.Metadata{
+			DenomUnits: []*banktypes.DenomUnit{
+				{Denom: denom, Exponent: 0},
+				{Denom: symbol, Exponent: decimals},
+			},
+			Base:    denom,
+			Display: symbol,
+			Name:    symbol,
+			Symbol:  symbol,
+		})
+	}
+	fundBank := func(deps *evmtest.TestDeps, addr sdk.AccAddress, denom string, amount int64) {
+		s.Require().NoError(testapp.FundAccount(
+			deps.App.BankKeeper,
+			deps.Ctx(),
+			addr,
+			sdk.NewCoins(sdk.NewInt64Coin(denom, amount)),
+		))
+	}
+
 	testCases := []TestCase[In, Out]{
 		{
 			name: "sad: msg validation",
@@ -720,6 +742,247 @@ func (s *Suite) TestQueryBalance() {
 				}
 				wantResp = &evm.QueryBalanceResponse{
 					BalanceWei: "420" + strings.Repeat("0", 12),
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: native NIBI token by denom",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, appconst.DENOM_UNIBI, 6, "NIBI")
+				fundBank(deps, deps.Sender.NibiruAddr, appconst.DENOM_UNIBI, 420)
+				deps.DeployWNIBI(&s.Suite)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   appconst.DENOM_UNIBI,
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "420" + strings.Repeat("0", 12),
+					Bank: &evm.BalanceBank{
+						Symbol:       "NIBI",
+						BalanceHuman: "0.00042",
+						Decimals:     6,
+						CoinDenom:    appconst.DENOM_UNIBI,
+						BalanceBase:  "420",
+					},
+					Erc20: &evm.BalanceERC20{
+						Address:      deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi.Hex(),
+						Symbol:       "WNIBI",
+						BalanceHuman: "0.00042",
+						Decimals:     18,
+						Name:         "Wrapped Nibiru",
+						BalanceBase:  "420" + strings.Repeat("0", 12),
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: native NIBI token by WNIBI alias",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, appconst.DENOM_UNIBI, 6, "NIBI")
+				deps.DeployWNIBI(&s.Suite)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   "WNIBI",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "NIBI",
+						BalanceHuman: "0",
+						Decimals:     6,
+						CoinDenom:    appconst.DENOM_UNIBI,
+						BalanceBase:  "0",
+					},
+					Erc20: &evm.BalanceERC20{
+						Address:      deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi.Hex(),
+						Symbol:       "WNIBI",
+						BalanceHuman: "0",
+						Decimals:     18,
+						Name:         "Wrapped Nibiru",
+						BalanceBase:  "0",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: FunToken mapping populates bank and erc20",
+			setup: func(deps *evmtest.TestDeps) {
+				bankDenom := "ufuntoken"
+				funtoken := evmtest.CreateFunTokenForBankCoin(*deps, bankDenom, &s.Suite)
+				fundBank(deps, deps.Sender.NibiruAddr, bankDenom, 123)
+				deps.GenState.FuntokenMappings = []evm.FunToken{funtoken}
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				funtoken := deps.GenState.FuntokenMappings[0]
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   funtoken.BankDenom,
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "TEST",
+						BalanceHuman: "0.000000000000000123",
+						Decimals:     18,
+						CoinDenom:    funtoken.BankDenom,
+						BalanceBase:  "123",
+					},
+					Erc20: &evm.BalanceERC20{
+						Address:      funtoken.Erc20Addr.Hex(),
+						Symbol:       "TEST",
+						BalanceHuman: "0",
+						Decimals:     18,
+						Name:         "Name for ufuntoken",
+						BalanceBase:  "0",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: ERC20 address without FunToken populates erc20 only",
+			setup: func(deps *evmtest.TestDeps) {
+				deployResp, err := evmtest.DeployContract(
+					deps,
+					embeds.SmartContract_ERC20MinterWithMetadataUpdates,
+					"Lonely Token", "LONE", uint8(6),
+				)
+				s.Require().NoError(err)
+				deps.GenState.FuntokenMappings = []evm.FunToken{
+					evm.NewFunToken(deployResp.ContractAddr, "unused", false),
+				}
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				erc20 := deps.GenState.FuntokenMappings[0].Erc20Addr
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   erc20.Hex(),
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Erc20: &evm.BalanceERC20{
+						Address:      erc20.Hex(),
+						Symbol:       "LONE",
+						BalanceHuman: "0",
+						Decimals:     6,
+						Name:         "Lonely Token",
+						BalanceBase:  "0",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: bank denom without FunToken populates bank only",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, "ubankonly", 6, "BANK")
+				fundBank(deps, deps.Sender.NibiruAddr, "ubankonly", 1_234_567)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   "ubankonly",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "BANK",
+						BalanceHuman: "1.234567",
+						Decimals:     6,
+						CoinDenom:    "ubankonly",
+						BalanceBase:  "1234567",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: USDC alias resolves to known mainnet ERC20 before mapping lookup",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, "uusdc", 6, "USDC")
+				fundBank(deps, deps.Sender.NibiruAddr, "uusdc", 7_000_000)
+				s.Require().NoError(deps.EvmKeeper.FunTokens.SafeInsert(
+					deps.Ctx(),
+					gethcommon.HexToAddress("0x0829F361A05D993d5CEb035cA6DF3446b060970b"),
+					"uusdc",
+					false,
+				))
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   "USDC",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "USDC",
+						BalanceHuman: "7",
+						Decimals:     6,
+						CoinDenom:    "uusdc",
+						BalanceBase:  "7000000",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: wasm address can query bank side without erc20 side",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, "uwasmcoin", 6, "WASM")
+				wasmContractAddr, err := sdk.AccAddressFromBech32(
+					"nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m",
+				)
+				s.Require().NoError(err)
+				fundBank(deps, wasmContractAddr, "uwasmcoin", 2_500_000)
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				wasmContractAddr, err := sdk.AccAddressFromBech32(
+					"nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m",
+				)
+				s.Require().NoError(err)
+				s.Equal(appconst.ADDR_LEN_WASM_CONTRACT, len(wasmContractAddr))
+				req = &evm.QueryBalanceRequest{
+					Address: wasmContractAddr.String(),
+					Token:   "uwasmcoin",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "WASM",
+						BalanceHuman: "2.5",
+						Decimals:     6,
+						CoinDenom:    "uwasmcoin",
+						BalanceBase:  "2500000",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: unrecognized token preserves legacy response",
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   "not a denom",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
 				}
 				return req, wantResp
 			},
