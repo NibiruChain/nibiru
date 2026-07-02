@@ -771,10 +771,10 @@ func (s *Suite) TestQueryBalance() {
 					Erc20: &evm.BalanceERC20{
 						Address:      deps.EvmKeeper.GetParams(deps.Ctx()).CanonicalWnibi.Hex(),
 						Symbol:       "WNIBI",
-						BalanceHuman: "0.00042",
+						BalanceHuman: "0",
 						Decimals:     18,
 						Name:         "Wrapped Nibiru",
-						BalanceBase:  "420" + strings.Repeat("0", 12),
+						BalanceBase:  "0",
 					},
 				}
 				return req, wantResp
@@ -902,6 +902,38 @@ func (s *Suite) TestQueryBalance() {
 						BalanceHuman: "1.234567",
 						Decimals:     6,
 						CoinDenom:    "ubankonly",
+						BalanceBase:  "1234567",
+					},
+				}
+				return req, wantResp
+			},
+			wantErr: "",
+		},
+		{
+			name: "happy: bank denom that looks like short hex avoids ERC20 index collision",
+			setup: func(deps *evmtest.TestDeps) {
+				setBankMetadata(deps, "deadbeef", 6, "BANK")
+				setBankMetadata(deps, "ucollision", 6, "COLLIDE")
+				fundBank(deps, deps.Sender.NibiruAddr, "deadbeef", 1_234_567)
+				s.Require().NoError(deps.EvmKeeper.FunTokens.SafeInsert(
+					deps.Ctx(),
+					gethcommon.HexToAddress("deadbeef"),
+					"ucollision",
+					false,
+				))
+			},
+			scenario: func(deps *evmtest.TestDeps) (req In, wantResp Out) {
+				req = &evm.QueryBalanceRequest{
+					Address: deps.Sender.EthAddr.Hex(),
+					Token:   "deadbeef",
+				}
+				wantResp = &evm.QueryBalanceResponse{
+					BalanceWei: "0",
+					Bank: &evm.BalanceBank{
+						Symbol:       "BANK",
+						BalanceHuman: "1.234567",
+						Decimals:     6,
+						CoinDenom:    "deadbeef",
 						BalanceBase:  "1234567",
 					},
 				}

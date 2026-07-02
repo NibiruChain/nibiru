@@ -172,7 +172,7 @@ func (k Keeper) Balance(
 		}
 		resp.Bank = bank
 		if isEOA {
-			erc20, err := k.loadBalanceERC20(ctx, addrEVM, canonicalWnibi, balanceWei)
+			erc20, err := k.loadBalanceERC20(ctx, addrEVM, canonicalWnibi)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +187,7 @@ func (k Keeper) Balance(
 			}
 			resp.Bank = bank
 			if isEOA {
-				erc20, err := k.loadBalanceERC20(ctx, addrEVM, funToken.Erc20Addr.Address, "")
+				erc20, err := k.loadBalanceERC20(ctx, addrEVM, funToken.Erc20Addr.Address)
 				if err != nil {
 					return nil, err
 				}
@@ -198,7 +198,7 @@ func (k Keeper) Balance(
 
 		if gethcommon.IsHexAddress(token) {
 			if isEOA {
-				erc20, err := k.loadBalanceERC20(ctx, addrEVM, gethcommon.HexToAddress(token), "")
+				erc20, err := k.loadBalanceERC20(ctx, addrEVM, gethcommon.HexToAddress(token))
 				if err != nil {
 					return nil, err
 				}
@@ -242,10 +242,12 @@ func (k Keeper) findFunTokenMapping(ctx sdk.Context, token string) *evm.FunToken
 		return &funTokenMappings[0]
 	}
 
-	erc20AddrIter := k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, gethcommon.HexToAddress(token))
-	funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
-	if len(funTokenMappings) > 0 {
-		return &funTokenMappings[0]
+	if gethcommon.IsHexAddress(token) {
+		erc20AddrIter := k.FunTokens.Indexes.ERC20Addr.ExactMatch(ctx, gethcommon.HexToAddress(token))
+		funTokenMappings = k.FunTokens.Collect(ctx, erc20AddrIter)
+		if len(funTokenMappings) > 0 {
+			return &funTokenMappings[0]
+		}
 	}
 
 	return nil
@@ -276,7 +278,7 @@ func (k Keeper) loadBalanceBank(
 // The ERC20 metadata calls are intentionally best-effort: a token contract can
 // expose balanceOf without exposing every optional metadata method.
 func (k Keeper) loadBalanceERC20(
-	ctx sdk.Context, account gethcommon.Address, contract gethcommon.Address, nativeBalanceWei string,
+	ctx sdk.Context, account gethcommon.Address, contract gethcommon.Address,
 ) (*evm.BalanceERC20, error) {
 	balance := &evm.BalanceERC20{
 		Address: contract.Hex(),
@@ -286,29 +288,22 @@ func (k Keeper) loadBalanceERC20(
 		amountBig *big.Int
 	)
 
-	if nativeBalanceWei != "" {
-		parsed, ok := new(big.Int).SetString(nativeBalanceWei, 10)
-		if !ok {
-			return nil, fmt.Errorf("invalid EVM balance %q", nativeBalanceWei)
-		}
-		amountBig = parsed
-		balance.BalanceBase = amountBig.String()
-		foundAny = true
-	} else if amount, err := k.ERC20().BalanceOf(contract, account, ctx, k.newBalanceQueryEVM(ctx)); err == nil && amount != nil {
+	queryEVM := k.newBalanceQueryEVM(ctx)
+	if amount, err := k.ERC20().BalanceOf(contract, account, ctx, queryEVM); err == nil && amount != nil {
 		amountBig = amount
 		balance.BalanceBase = amount.String()
 		foundAny = true
 	}
 
-	if name, err := k.ERC20().LoadERC20Name(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+	if name, err := k.ERC20().LoadERC20Name(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
 		balance.Name = name
 		foundAny = true
 	}
-	if symbol, err := k.ERC20().LoadERC20Symbol(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+	if symbol, err := k.ERC20().LoadERC20Symbol(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
 		balance.Symbol = symbol
 		foundAny = true
 	}
-	if decimals, err := k.ERC20().LoadERC20Decimals(ctx, k.newBalanceQueryEVM(ctx), k.ERC20().ABI, contract); err == nil {
+	if decimals, err := k.ERC20().LoadERC20Decimals(ctx, queryEVM, k.ERC20().ABI, contract); err == nil {
 		balance.Decimals = uint32(decimals)
 		foundAny = true
 		if amountBig != nil {
@@ -322,9 +317,7 @@ func (k Keeper) loadBalanceERC20(
 	return balance, nil
 }
 
-// newBalanceQueryEVM creates a read-only EVM instance for one ERC20 query call.
-// Each helper call gets its own StateDB so simulated contract execution cannot
-// leak dirty state into later metadata or balance reads.
+// newBalanceQueryEVM creates a read-only EVM instance for ERC20 query calls.
 func (k Keeper) newBalanceQueryEVM(ctx sdk.Context) *vm.EVM {
 	unusedBigInt := big.NewInt(0)
 	evmMsg := core.Message{

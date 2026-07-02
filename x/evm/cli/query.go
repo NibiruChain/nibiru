@@ -169,10 +169,8 @@ Examples:
 				if erc20.BalanceHuman != "" {
 					resp.Erc20BalanceHuman = strPtr(erc20.BalanceHuman)
 				}
-				if erc20.Decimals != 0 {
-					decimals := uint8(erc20.Decimals)
-					resp.Erc20Decimals = &decimals
-				}
+				decimals := uint8(erc20.Decimals)
+				resp.Erc20Decimals = &decimals
 				if erc20.Name != "" {
 					resp.Erc20Name = strPtr(erc20.Name)
 				}
