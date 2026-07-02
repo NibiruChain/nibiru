@@ -102,7 +102,6 @@ func (h Handler_v2_16) Handler(
 	cfg module.Configurator,
 	nibiru *keepers.PublicKeepers,
 ) upgradetypes.UpgradeHandler {
-
 	return func(
 		ctx sdk.Context,
 		plan upgradetypes.Plan,
