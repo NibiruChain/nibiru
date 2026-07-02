@@ -286,7 +286,9 @@ func (k Keeper) loadBalanceERC20(
 	var (
 		foundAny  bool
 		amountBig *big.Int
-		// EVM instance for ERC20 query calls.
+		// evmObj is shared across the ERC20 view calls that populate this
+		// single balance response. The calls run with COMMIT_READONLY, so
+		// simulated state changes are not committed to chain state.
 		evmObj *vm.EVM
 	)
 
