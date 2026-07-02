@@ -76,6 +76,9 @@ func RuntimeVersion() string {
 
 // EIP 155 Chain IDs for Nibiru
 const (
+	// SDK_CHAIN_ID_MAINNET is the CometBFT / Cosmos SDK chain ID for Nibiru mainnet.
+	SDK_CHAIN_ID_MAINNET = "cataclysm-1"
+
 	ETH_CHAIN_ID_MAINNET int64 = 6900
 
 	ETH_CHAIN_ID_TESTNET_1 int64 = 7210
@@ -97,7 +100,7 @@ const (
 // knownEthChainIDMap maps `sdk.Context` chain IDs to their corresponding EIP-155
 // Ethereum Chain IDs, which must be positive integers.
 var knownEthChainIDMap = map[string]int64{
-	"cataclysm-1": ETH_CHAIN_ID_MAINNET,
+	SDK_CHAIN_ID_MAINNET: ETH_CHAIN_ID_MAINNET,
 
 	"nibiru-testnet-1": ETH_CHAIN_ID_TESTNET_1,
 	"nibiru-testnet-2": ETH_CHAIN_ID_TESTNET_2,

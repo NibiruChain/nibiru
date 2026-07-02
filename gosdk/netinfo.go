@@ -39,7 +39,7 @@ var (
 		EvmRpc:            "https://evm-rpc.nibiru.fi:443",
 		EvmRpcArchive:     "https://evm-rpc.archive.nibiru.fi:443",
 		EvmWebsocket:      "wss://evm-rpc-ws.nibiru.fi",
-		CmtChainID:        "cataclysm-1",
+		CmtChainID:        appconst.SDK_CHAIN_ID_MAINNET,
 		GrpcEndpoint:      "grpc.nibiru.fi:443",
 		TmRpcEndpoint:     "https://rpc.nibiru.fi:443",
 		WebsocketEndpoint: "",

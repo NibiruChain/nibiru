@@ -13,6 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
@@ -26,8 +27,6 @@ const (
 	artifactDir             = "testdata"
 	artifactCW3FlexMultisig = "cw3_flex_multisig.wasm"
 	artifactCW4Group        = "cw4_group.wasm"
-
-	chainIDMainnet = "cataclysm-1"
 )
 
 var (
@@ -49,7 +48,7 @@ var (
 // supplied by mainnet.
 func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 	ctx := deps.Ctx()
 
 	legacyMultisig := mustAccAddress(addrLegacyMultisig)
@@ -149,7 +148,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 
 func TestUpgrade2_14_0_AddsLayerZeroAdaptersToZeroGasActorsMainnet(t *testing.T) {
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 
 	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
 	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
@@ -172,7 +171,7 @@ func TestUpgrade2_14_0_AddsLayerZeroAdaptersToZeroGasActorsMainnet(t *testing.T)
 
 func TestUpgrade2_14_0_DoesNotDuplicateLayerZeroAdapters(t *testing.T) {
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 
 	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
 	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{

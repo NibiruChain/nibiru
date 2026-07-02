@@ -21,7 +21,7 @@ func (s *TestSuite) TestGetEthChainID() {
 	s.Run("mainnet", func() {
 		s.EqualValues(
 			big.NewInt(appconst.ETH_CHAIN_ID_MAINNET),
-			appconst.GetEthChainID("cataclysm-1"),
+			appconst.GetEthChainID(appconst.SDK_CHAIN_ID_MAINNET),
 		)
 	})
 	s.Run("localnet", func() {

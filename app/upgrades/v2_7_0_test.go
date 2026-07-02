@@ -22,7 +22,7 @@ import (
 func (s *Suite2_7_0) TestMainnet() {
 	deps := evmtest.NewTestDeps()
 
-	deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1")) // Pretend to be mainnet
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET)) // Pretend to be mainnet
 	s.Equal(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),
 		deps.EvmKeeper.EthChainID(deps.Ctx()).String(),
