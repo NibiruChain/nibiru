@@ -28,7 +28,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/bank/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/bank/exported"
 	"github.com/NibiruChain/nibiru/v2/x/bank/keeper"
-	v1bank "github.com/NibiruChain/nibiru/v2/x/bank/migrations/v1"
 	"github.com/NibiruChain/nibiru/v2/x/bank/simulation"
 )
 
@@ -90,9 +89,6 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // RegisterInterfaces registers interfaces and implementations of the bank module.
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
-
-	// Register legacy interfaces for migration scripts.
-	v1bank.RegisterInterfaces(registry)
 }
 
 // AppModule implements an application module for the bank module.
