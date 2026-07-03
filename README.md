@@ -1,8 +1,8 @@
 # Nibiru
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru/v2#section-readme)
-[![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
-[![Release workflow][badge-release]][workflow-release]
+[![Linter][badge-go-linter]][workflow-go-linter]
+[![Latest release][badge-release-latest]][release-latest]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/main/LICENSE.md)
 
 **Nibiru** is a breakthrough Layer 1 blockchain and smart contract ecosystem providing superior throughput, improved security, and a high-performance EVM execution layer. Nibiru aims to be the most developer-friendly and user-friendly smart contract ecosystem, leading the charge toward mainstream Web3 adoption by innovating at each layer of the stack: dApp development, scalable blockchain data indexing, consensus optimizations, a comprehensive developer toolkit, and composability across multiple VMs.
@@ -143,8 +143,8 @@ Unless a file notes otherwise, it will fall under the [BSD-2-Clause License](./L
 [license-badge]: https://img.shields.io/badge/License-BSD--2--Clause-blue
 [badge-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml/badge.svg?query=branch%3Amain
 [workflow-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml?query=branch%3Amain
-[badge-release]: https://github.com/NibiruChain/nibiru/actions/workflows/release.yml/badge.svg?branch=v2.16.0
-[workflow-release]: https://github.com/NibiruChain/nibiru/actions/workflows/release.yml
+[badge-release-latest]: https://img.shields.io/github/v/release/NibiruChain/nibiru
+[release-latest]: https://github.com/NibiruChain/nibiru/releases/latest
 [social-twitter]: https://x.com/NibiruChain
 [social-discord]: https://discord.gg/nibirufi
 [social-telegram]: https://t.me/nibiruchain
