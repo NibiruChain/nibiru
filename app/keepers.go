@@ -57,6 +57,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 )
@@ -128,6 +129,10 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
+	app.EpochsKeeper = epochskeeper.NewKeeper(
+		app.appCodec,
+		app.keys[epochstypes.StoreKey],
+	)
 	app.EpochsKeeper.SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.InflationKeeper.Hooks(),

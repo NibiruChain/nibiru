@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -22,8 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/simulation"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
-
-	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 )
 
 var (
@@ -109,12 +104,6 @@ func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {}
-
-// IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {}
-
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
@@ -178,40 +167,3 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
-
-//
-// App Wiring Setup
-//
-
-func init() {
-	appmodule.Register(&modulev1.Module{},
-		appmodule.Provide(ProvideModule),
-	)
-}
-
-type EpochsInputs struct {
-	depinject.In
-
-	Config *modulev1.Module
-	Key    *store.KVStoreKey
-	Cdc    codec.Codec
-}
-
-type EpochsOutputs struct {
-	depinject.Out
-
-	Keeper *keeper.Keeper
-
-	Module appmodule.AppModule
-}
-
-func ProvideModule(in EpochsInputs) EpochsOutputs {
-	k := keeper.NewKeeper(in.Cdc, in.Key)
-
-	m := NewAppModule(in.Cdc, k)
-
-	return EpochsOutputs{
-		Keeper: k,
-		Module: m,
-	}
-}
