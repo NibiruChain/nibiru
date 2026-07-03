@@ -12,7 +12,7 @@ const DEFAULT_MNEMONIC =
   "guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host"
 const DEFAULT_RPC = process.env.JSON_RPC_ENDPOINT || "http://127.0.0.1:8545"
 
-const ROOT = path.join(__dirname, "..", "..")
+const ROOT = path.join(__dirname, "..", "..", "..")
 const PASSKEY_APP_DIR = path.join(ROOT, "passkey-app")
 const CACHE_DIR = path.join(__dirname, "..", ".cache")
 const OUT_JSON = path.join(CACHE_DIR, "passkey-demo.json")

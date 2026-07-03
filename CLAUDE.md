@@ -12,6 +12,7 @@ Nibiru Chain is a breakthrough L1 blockchain and smart contract ecosystem provid
 
 ### Core Directories
 - `/x/` - Custom blockchain modules (oracle, devgas, epochs, inflation, tokenfactory, sudo)
+- `/evm/` - Ethereum Virtual Machine execution engine, precompiles, E2E tests, and Forge workspace
 - `/app/` - Core blockchain application logic and module integration
 - `/eth/` - Ethereum-specific implementations (accounts, crypto, RPC)
 - `/proto/` - Protocol Buffer definitions for blockchain messages

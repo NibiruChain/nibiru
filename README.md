@@ -1,7 +1,7 @@
 # Nibiru
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru/v2#section-readme)
-[![Linter][badge-go-linter]][workflow-go-linter]
+[![Core Tests][badge-core-tests]][workflow-core-tests]
 [![Latest release][badge-release-latest]][release-latest]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/main/LICENSE.md)
 
@@ -141,8 +141,8 @@ Usage instructions for the `nibid` CLI are available at [nibiru.fi/docs/dev/cli]
 Unless a file notes otherwise, it will fall under the [BSD-2-Clause License](./LICENSE.md).  
 
 [license-badge]: https://img.shields.io/badge/License-BSD--2--Clause-blue
-[badge-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml/badge.svg?query=branch%3Amain
-[workflow-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml?query=branch%3Amain
+[badge-core-tests]: https://github.com/NibiruChain/nibiru/actions/workflows/test-core.yml/badge.svg?query=branch%3Amain
+[workflow-core-tests]: https://github.com/NibiruChain/nibiru/actions/workflows/test-core.yml?query=branch%3Amain
 [badge-release-latest]: https://img.shields.io/github/v/release/NibiruChain/nibiru
 [release-latest]: https://github.com/NibiruChain/nibiru/releases/latest
 [social-twitter]: https://x.com/NibiruChain
