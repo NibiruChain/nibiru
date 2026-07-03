@@ -4,7 +4,7 @@ running Nibiru localnet.
 
 This package does not start or manage an in-process chain. Instead, it assumes a
 local validator has already been bootstrapped, typically by
-"contrib/scripts/localnet.sh", and exposes the fixed localnet contract that the
+"cmd/nibid/localnet.sh", and exposes the fixed localnet contract that the
 test suites in this repository rely on:
 
   - chain ID: "nibiru-localnet-0"

@@ -145,6 +145,7 @@ jobs:
               - "go.sum"
               - "contrib/docker-compose/*"
               - "contrib/scripts/build-nibiru.sh"
+              - "cmd/nibid/localnet.sh"
               - "Dockerfile"
               - "justfile"
               - ".github/workflows/test-core.yml"
@@ -231,7 +232,7 @@ jobs:
         run: |
           just test-chaosnet
 
-      - name: "Run scripts/localnet.sh"
+      - name: "Run cmd/nibid/localnet.sh"
         if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           just localnet --no-build &

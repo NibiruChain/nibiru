@@ -144,7 +144,7 @@ lint:
 
 # Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-  bash contrib/scripts/localnet.sh --run {{PASS_FLAGS}}
+  bash cmd/nibid/localnet.sh --run {{PASS_FLAGS}}
 
 # Clears the logs directory
 log-clear:

@@ -34,7 +34,7 @@ MNEMONIC="guard cream sadness conduct invite crumble clock pudding hole grit lia
 ```
 
 The `MNEMONIC` above is the same BIP-39 phrase used by
-`contrib/scripts/localnet.sh` to create the `validator` key on the
+`cmd/nibid/localnet.sh` to create the `validator` key on the
 `nibiru-localnet-0` chain. The `account` used in tests
 (`test/testdeps.ts`) is the EVM signer for that validator/dev account,
 which is funded in genesis and used to deploy contracts, pay gas, and
