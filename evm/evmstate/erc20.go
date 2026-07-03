@@ -47,7 +47,7 @@ type erc20Calls struct {
 
 /*
 Mint implements "ERC20Minter.mint" from ERC20Minter.sol.
-See [nibiru/x/evm/embeds].
+See [nibiru/evm/embeds].
 
 	```solidity
 	/// @dev Moves `amount` tokens from the caller's account to `to`.
@@ -58,7 +58,7 @@ See [nibiru/x/evm/embeds].
 	}
 	```
 
-[nibiru/x/evm/embeds]: https://github.com/NibiruChain/nibiru/v2/tree/main/x/evm/embeds
+[nibiru/evm/embeds]: https://github.com/NibiruChain/nibiru/v2/tree/main/evm/embeds
 */
 func (e erc20Calls) Mint(
 	erc20Contract, sender, recipient gethcommon.Address, amount *big.Int,

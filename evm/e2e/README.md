@@ -105,6 +105,6 @@ The `bun test` suite now exercises the passkey ERC-4337 flow end-to-end. During 
   `passkey-bundler/` first).
 - Executes the CLI passkey script against that bundler to prove a full user operation.
 
-Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in `evm-e2e/`, `evm-e2e/passkey-sdk/`, and
+Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in `evm/e2e/`, `evm/e2e/passkey-sdk/`, and
 `passkey-bundler/` if using `PASSKEY_BUNDLER_MODE=official`) and that port `14437` is free before running `bun test` or
 `just test-e2e`.

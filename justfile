@@ -173,7 +173,7 @@ test-e2e:
   source contrib/bashlib.sh
   log_info "Make sure the localnet is running! (just localnet)"
 
-  cd evm-e2e
+  cd evm/e2e
   just test
 
 

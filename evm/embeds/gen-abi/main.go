@@ -48,8 +48,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to find repo root path: %s", err)
 	}
-	inputDir := path.Join(rootPath, "x/evm/embeds/artifacts/contracts/")
-	outputDir := path.Join(rootPath, "x/evm/embeds/abi/")
+	inputDir := path.Join(rootPath, "evm/embeds/artifacts/contracts/")
+	outputDir := path.Join(rootPath, "evm/embeds/abi/")
 
 	// Ensure the output directory exists
 	err = os.MkdirAll(outputDir, os.ModePerm)

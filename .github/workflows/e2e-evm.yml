@@ -25,6 +25,7 @@ jobs:
               - "cmd/**/*.go"
               - "eth/**/*.go"
               - "gosdk/**/*.go"
+              - "evm/**/*.go"
               - "x/**/*.go"
               - "**/*.proto"
               - "**go.mod"
@@ -66,12 +67,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "lts/jod"
-          cache-dependency-path: "evm-e2e/package-lock.json"
+          cache-dependency-path: "evm/e2e/package-lock.json"
 
       - name: "just install"
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
         run: just install
-        working-directory: "evm-e2e"
+        working-directory: "evm/e2e"
 
       - name: "Launch localnet"
         if: steps.check_evm_changes.outputs.evm-changes == 'true'
@@ -97,7 +98,7 @@ jobs:
         run: |
           just install
           just test
-        working-directory: "evm-e2e"
+        working-directory: "evm/e2e"
         env:
           JSON_RPC_ENDPOINT: http://127.0.0.1:8545
           MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host

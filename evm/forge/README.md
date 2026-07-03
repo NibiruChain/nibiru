@@ -1,4 +1,4 @@
-# nibiru/evm-forge
+# nibiru/evm/forge
 
 ## What's Inside
 
@@ -253,4 +253,4 @@ bun run test:coverage:report
 
 ## License
 
-The "NibiruChain/Nibiru/evm-forge" project is licensed under MIT.
+The "NibiruChain/Nibiru/evm/forge" project is licensed under MIT.

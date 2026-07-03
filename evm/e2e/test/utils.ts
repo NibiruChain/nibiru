@@ -10,7 +10,7 @@ import {
   type TransactionRequest,
 } from "ethers"
 
-import WNIBI_JSON from "../../x/evm/embeds/artifacts/contracts/WNIBI.sol/WNIBI.json"
+import WNIBI_JSON from "../../embeds/artifacts/contracts/WNIBI.sol/WNIBI.json"
 import {
   EventsEmitter__factory,
   InifiniteLoopGas__factory,

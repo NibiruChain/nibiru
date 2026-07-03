@@ -22,7 +22,7 @@ function getArtifact(relPath) {
   const full = path.join(__dirname, relPath)
   if (!fs.existsSync(full)) {
     throw new Error(
-      `Missing artifact at ${relPath}. Run "npx hardhat compile" in evm-e2e first.`,
+      `Missing artifact at ${relPath}. Run "npx hardhat compile" in evm/e2e first.`,
     )
   }
   return JSON.parse(fs.readFileSync(full, "utf8"))

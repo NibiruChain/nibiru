@@ -1,4 +1,4 @@
-# x/evm/embeds/HACKING.md
+# evm/embeds/HACKING.md
 
 - [Building Outputs](#building-outputs)
 - [Precompile Solidity Documentation](#precompile-solidity-documentation)
@@ -13,7 +13,7 @@ Workhorse command
 just gen-embeds
 ```
 
-From inside the "Nibiru/x/evm/embeds" directory
+From inside the "Nibiru/evm/embeds" directory
 ```bash
 yarn --check-files
 yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"

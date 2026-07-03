@@ -7,7 +7,7 @@
  * accordingly.
  *
  * The methods tested are from the smart contract,
- * "evm-e2e/contracts/SendReceiveNibi.sol".
+ * "evm/e2e/contracts/SendReceiveNibi.sol".
  */
 import { describe, expect, it } from "bun:test"
 import { parseEther, toBigInt, Wallet } from "ethers"

@@ -62,7 +62,7 @@ const waitForEvmJsonRpcReady = async () => {
     if (now - lastPulseAt >= RPC_READY_PULSE_MS) {
       const elapsed = now - startedAt
       console.log(
-        `[evm-e2e setup] waiting for EVM JSON-RPC (${elapsed}ms/${RPC_READY_TIMEOUT_MS}ms) at ${JSON_RPC_ENDPOINT}; last error: ${lastError}`,
+        `[evm/e2e setup] waiting for EVM JSON-RPC (${elapsed}ms/${RPC_READY_TIMEOUT_MS}ms) at ${JSON_RPC_ENDPOINT}; last error: ${lastError}`,
       )
       lastPulseAt = now
     }
@@ -71,7 +71,7 @@ const waitForEvmJsonRpcReady = async () => {
   }
 
   throw new Error(
-    `[evm-e2e setup] timed out after ${RPC_READY_TIMEOUT_MS}ms waiting for EVM JSON-RPC at ${JSON_RPC_ENDPOINT} (attempts=${attempts}, last error=${lastError})`,
+    `[evm/e2e setup] timed out after ${RPC_READY_TIMEOUT_MS}ms waiting for EVM JSON-RPC at ${JSON_RPC_ENDPOINT} (attempts=${attempts}, last error=${lastError})`,
   )
 }
 

@@ -22,7 +22,7 @@ description: >
 ## ChainLink-like Feeds - Nibiru Mainnet
 
 **Smart Contract Implementation**: These feeds are deployments of
-[NibiruOracleChainLinkLike.sol](https://github.com/NibiruChain/nibiru/blob/main/x/evm/embeds/contracts/NibiruOracleChainLinkLike.sol),
+[NibiruOracleChainLinkLike.sol](https://github.com/NibiruChain/nibiru/blob/main/evm/embeds/contracts/NibiruOracleChainLinkLike.sol),
 a contract that sources data from the Nibiru Oracle Mechanism and exposes the
 data in the ChainLink `AggregatorV3Interface` format.
 
