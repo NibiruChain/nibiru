@@ -9369,10 +9369,10 @@ type MsgCreateFunToken struct {
 	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Optional flag to allow the `FunToken` mapping to be created with 0 decimals
 	// in the ERC20 sense. Often times, tokens are meant to behave like money and
-	// be divisible, meaning "decimals = 0" is often a mistake. This field defaults
-	// to false as a safety guard against accidental creation of FunTokens with
-	// missing metadata.
-	// Set this to true if the token is truly intended to have 0 decimals.
+	// be divisible, meaning "decimals = 0" is often a mistake. This field
+	// defaults to false as a safety guard against accidental creation of
+	// FunTokens with missing metadata. Set this to true if the token is truly
+	// intended to have 0 decimals.
 	AllowZeroDecimals bool `protobuf:"varint,4,opt,name=allow_zero_decimals,json=allowZeroDecimals,proto3" json:"allow_zero_decimals,omitempty"`
 }
 
@@ -9541,7 +9541,8 @@ func (*MsgConvertCoinToEvmResponse) Descriptor() ([]byte, []int) {
 	return file_eth_evm_v1_tx_proto_rawDescGZIP(), []int{11}
 }
 
-// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin representation
+// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin
+// representation
 type MsgConvertEvmToCoin struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -9557,9 +9558,9 @@ type MsgConvertEvmToCoin struct {
 	// Recipient address for the bank coins in Ethereum hexadecimal or
 	// nibi-prefixed Bech32 format.
 	//
-	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
-	// because the function that maps between Bech32 and Eth hex addresses is not
-	// bijective for these types of accounts.
+	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20
+	// tokens because the function that maps between Bech32 and Eth hex addresses
+	// is not bijective for these types of accounts.
 	//
 	// See [bug(evm): nibid q evm account is not symmetric for wasm
 	// addresses](https://github.com/NibiruChain/nibiru/issues/2138)

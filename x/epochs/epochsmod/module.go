@@ -28,9 +28,9 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleBasic
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
@@ -82,9 +82,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModule
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModule implements the AppModule interface for the capability module.
 type AppModule struct {
@@ -149,9 +149,9 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	return []abci.ValidatorUpdate{}
 }
 
-// ___________________________________________________________________________
-
+// --------------------------------
 // AppModuleSimulation functions
+// --------------------------------
 
 // GenerateGenesisState creates a randomized GenState of the epochs module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {

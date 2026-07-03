@@ -35,6 +35,7 @@ echo "Generating API module"
 echo "Pruning unused generated code in API directory"
 dirs_to_rm=(
   "api/nibiru/epochs"
+  "api/nibiru/sudo"
 )
 for dir_to_rm in "${dirs_to_rm[@]}"; do
   rm -rf "$dir_to_rm"

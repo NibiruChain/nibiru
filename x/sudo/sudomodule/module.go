@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/depinject"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -22,8 +19,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/simulation"
-
-	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 )
 
 // Ensure the interface is properly implemented at compile time
@@ -33,9 +28,9 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleBasic
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 type AppModuleBasic struct {
 	binaryCodec codec.BinaryCodec
@@ -92,9 +87,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModule
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModule implements the AppModule interface for the module.
 type AppModule struct {
@@ -117,12 +112,6 @@ func NewAppModule(
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
-
-// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {}
-
-// IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {}
 
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
@@ -165,57 +154,20 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 	return []abci.ValidatorUpdate{}
 }
 
-//----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleSimulation functions
-//----------------------------------------------------------------------------
+// --------------------------------
 
-// GenerateGenesisState implements module.AppModuleSimulation.
+// GenerateGenesisState implements [module.AppModuleSimulation].
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
 }
 
-// RegisterStoreDecoder implements module.AppModuleSimulation.
+// RegisterStoreDecoder implements [module.AppModuleSimulation].
 func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 }
 
-// WeightedOperations implements module.AppModuleSimulation.
+// WeightedOperations implements [module.AppModuleSimulation].
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
-}
-
-//
-// App Wiring Setup
-//
-
-func init() {
-	appmodule.Register(&modulev1.Module{},
-		appmodule.Provide(ProvideModule),
-	)
-}
-
-type SudoInputs struct {
-	depinject.In
-
-	Config *modulev1.Module
-	Key    *store.KVStoreKey
-	Cdc    codec.Codec
-}
-
-type SudoOutputs struct {
-	depinject.Out
-
-	Keeper sudokeeper.Keeper
-
-	Module appmodule.AppModule
-}
-
-func ProvideModule(in SudoInputs) SudoOutputs {
-	k := sudokeeper.NewKeeper(in.Cdc, in.Key)
-
-	m := NewAppModule(in.Cdc, k)
-
-	return SudoOutputs{
-		Keeper: k,
-		Module: m,
-	}
 }

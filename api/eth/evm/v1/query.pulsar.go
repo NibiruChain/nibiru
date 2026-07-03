@@ -13566,7 +13566,8 @@ type QueryEthAccountRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// address is the Ethereum hex address or nibi Bech32 address to query the account for.
+	// address is the Ethereum hex address or nibi Bech32 address to query the
+	// account for.
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
@@ -14748,7 +14749,8 @@ func (*QueryBaseFeeRequest) Descriptor() ([]byte, []int) {
 }
 
 // QueryBaseFeeResponse returns the EIP1559 base fee.
-// See https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
+// See
+// https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
 type QueryBaseFeeResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -14799,8 +14801,8 @@ type QueryFunTokenMappingRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Either the hexadecimal-encoded ERC20 contract address or denomination of the
-	// Bank Coin.
+	// Either the hexadecimal-encoded ERC20 contract address or denomination of
+	// the Bank Coin.
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 }
 

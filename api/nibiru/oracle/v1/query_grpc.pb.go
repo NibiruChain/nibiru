@@ -22,8 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QueryClient interface {
-	// ExchangeRate returns exchange rate of a pair along with the block height and
-	// block time that the exchange rate was set by the oracle module.
+	// ExchangeRate returns exchange rate of a pair along with the block height
+	// and block time that the exchange rate was set by the oracle module.
 	ExchangeRate(ctx context.Context, in *QueryExchangeRateRequest, opts ...grpc.CallOption) (*QueryExchangeRateResponse, error)
 	// ExchangeRateTwap returns twap exchange rate of a pair
 	ExchangeRateTwap(ctx context.Context, in *QueryExchangeRateRequest, opts ...grpc.CallOption) (*QueryExchangeRateResponse, error)
@@ -169,8 +169,8 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
 type QueryServer interface {
-	// ExchangeRate returns exchange rate of a pair along with the block height and
-	// block time that the exchange rate was set by the oracle module.
+	// ExchangeRate returns exchange rate of a pair along with the block height
+	// and block time that the exchange rate was set by the oracle module.
 	ExchangeRate(context.Context, *QueryExchangeRateRequest) (*QueryExchangeRateResponse, error)
 	// ExchangeRateTwap returns twap exchange rate of a pair
 	ExchangeRateTwap(context.Context, *QueryExchangeRateRequest) (*QueryExchangeRateResponse, error)

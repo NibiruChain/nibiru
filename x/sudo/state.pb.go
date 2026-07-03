@@ -134,14 +134,14 @@ func (m *GenesisState) GetZeroGasActors() *ZeroGasActors {
 // ZeroGasActors: Actors that can execute zero gas transactions against a set of
 // smart contracts.
 type ZeroGasActors struct {
-	// Senders: Addresses that can sign for zero gas transactions from the contract
-	// set.
+	// Senders: Addresses that can sign for zero gas transactions from the
+	// contract set.
 	Senders []string `protobuf:"bytes,1,rep,name=senders,proto3" json:"senders,omitempty"`
-	// Contracts: contract addresses that can be invoked by "senders" with zero gas
-	// costs.
+	// Contracts: contract addresses that can be invoked by "senders" with zero
+	// gas costs.
 	Contracts []string `protobuf:"bytes,2,rep,name=contracts,proto3" json:"contracts,omitempty"`
-	// AlwaysZeroGasContracts: contract addresses that can be invoked with zero gas
-	// costs for any sender.
+	// AlwaysZeroGasContracts: contract addresses that can be invoked with zero
+	// gas costs for any sender.
 	AlwaysZeroGasContracts []string `protobuf:"bytes,3,rep,name=always_zero_gas_contracts,json=alwaysZeroGasContracts,proto3" json:"always_zero_gas_contracts,omitempty"`
 }
 

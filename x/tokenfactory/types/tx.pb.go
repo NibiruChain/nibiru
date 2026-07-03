@@ -631,9 +631,8 @@ func (m *MsgSetDenomMetadataResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSetDenomMetadataResponse proto.InternalMessageInfo
 
-// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
-// bank metadata.
-// [SUDO] Only callable by sudoers.
+// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to
+// change bank metadata. [SUDO] Only callable by sudoers.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought

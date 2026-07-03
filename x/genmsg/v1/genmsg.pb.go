@@ -23,7 +23,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GenesisState represents the messages to be processed during genesis by the genmsg module.
+// GenesisState represents the messages to be processed during genesis by the
+// genmsg module.
 type GenesisState struct {
 	Messages []*types.Any `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
 }

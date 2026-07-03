@@ -532,8 +532,8 @@ func (m *EventContractExecuted) GetContractAddr() string {
 	return ""
 }
 
-// EventConvertEvmToCoin is an event emitted when converting ERC20 tokens to Bank
-// Coins with the "eth.evm.v1.MsgConvertEvmToCoin" transaction message.
+// EventConvertEvmToCoin is an event emitted when converting ERC20 tokens to
+// Bank Coins with the "eth.evm.v1.MsgConvertEvmToCoin" transaction message.
 type EventConvertEvmToCoin struct {
 	Sender               string     `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	Erc20ContractAddress string     `protobuf:"bytes,2,opt,name=erc20_contract_address,json=erc20ContractAddress,proto3" json:"erc20_contract_address,omitempty"`
@@ -626,9 +626,9 @@ type EventWeiBlockDelta struct {
 	NetWeiBlockDelta cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=net_wei_block_delta,json=netWeiBlockDelta,proto3,customtype=cosmossdk.io/math.Int" json:"net_wei_block_delta"`
 	// WeiBlockDelta is the net sum of all calls of "AddWei" and "SubWei" in the
 	// current block. There is no guarantee in the functional sense that the EVM
-	// State DB will add the same amount it subtracts. It is possible for the total
-	// amount of wei (NIBI) across all accounts to diverge from the initial supply.
-	// "WeiBlockDelta" is a mechanism for recording that if it happens.
+	// State DB will add the same amount it subtracts. It is possible for the
+	// total amount of wei (NIBI) across all accounts to diverge from the initial
+	// supply. "WeiBlockDelta" is a mechanism for recording that if it happens.
 	WeiBlockDelta cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=wei_block_delta,json=weiBlockDelta,proto3,customtype=cosmossdk.io/math.Int" json:"wei_block_delta"`
 	// block_number for which this event is emitted during EVM EndBlock
 	BlockNumber uint64 `protobuf:"varint,3,opt,name=block_number,json=blockNumber,proto3" json:"block_number,omitempty"`

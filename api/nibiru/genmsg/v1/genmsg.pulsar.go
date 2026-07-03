@@ -520,7 +520,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// GenesisState represents the messages to be processed during genesis by the genmsg module.
+// GenesisState represents the messages to be processed during genesis by the
+// genmsg module.
 type GenesisState struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
