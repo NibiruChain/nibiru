@@ -31,11 +31,13 @@ service Msg {
   // ConvertCoinToEvm: Sends a coin with a valid "FunToken" mapping to the
   // given recipient address ("to_eth_addr") in the corresponding ERC20
   // representation.
-  rpc ConvertCoinToEvm(MsgConvertCoinToEvm) returns (MsgConvertCoinToEvmResponse);
+  rpc ConvertCoinToEvm(MsgConvertCoinToEvm)
+      returns (MsgConvertCoinToEvmResponse);
 
-  // ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
-  // given recipient address as a bank coin.
-  rpc ConvertEvmToCoin(MsgConvertEvmToCoin) returns (MsgConvertEvmToCoinResponse);
+  // ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to
+  // the given recipient address as a bank coin.
+  rpc ConvertEvmToCoin(MsgConvertEvmToCoin)
+      returns (MsgConvertEvmToCoinResponse);
 }
 
 // MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
@@ -46,9 +48,9 @@ message MsgEthereumTx {
   google.protobuf.Any data = 1;
 
   // size is the encoded storage size of the transaction (DEPRECATED)
-  double size = 2 [(gogoproto.jsontag) = "-"];
+  double size = 2 [ (gogoproto.jsontag) = "-" ];
   // hash of the transaction in hex format
-  string hash = 3 [(gogoproto.moretags) = "rlp:\"-\""];
+  string hash = 3 [ (gogoproto.moretags) = "rlp:\"-\"" ];
   // from is the ethereum signer address in hex format. This address value is
   // checked against the address derived from the signature (V, R, S) using the
   // secp256k1 elliptic curve
@@ -69,9 +71,9 @@ message LegacyTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 1;
   // gas_price defines the value for each gas unit
-  string gas_price = 2 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_price = 2 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 3 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 3 [ (gogoproto.customname) = "GasLimit" ];
   // to is the hex formatted address of the recipient
   string to = 4;
   // value defines the unsigned integer value of the transaction amount.
@@ -116,9 +118,9 @@ message AccessListTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
   // gas_price defines the value for each gas unit
-  string gas_price = 3 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_price = 3 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 4 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 4 [ (gogoproto.customname) = "GasLimit" ];
   // to is the recipient address in hex format
   string to = 5;
   // value defines the unsigned integer value of the transaction amount.
@@ -169,11 +171,11 @@ message DynamicFeeTx {
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
   // gas_tip_cap defines the max value for the gas tip
-  string gas_tip_cap = 3 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_tip_cap = 3 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas_fee_cap defines the max value for the gas fee
-  string gas_fee_cap = 4 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+  string gas_fee_cap = 4 [ (gogoproto.customtype) = "cosmossdk.io/math.Int" ];
   // gas defines the gas limit defined for the transaction.
-  uint64 gas = 5 [(gogoproto.customname) = "GasLimit"];
+  uint64 gas = 5 [ (gogoproto.customname) = "GasLimit" ];
   // to is the hex formatted address of the recipient
   string to = 6;
   // value defines the the transaction amount.
@@ -222,7 +224,7 @@ message MsgEthereumTxResponse {
   string hash = 1;
   // logs contains the transaction hash and the proto-compatible ethereum
   // logs.
-  repeated Log logs = 2 [(gogoproto.nullable) = false];
+  repeated Log logs = 2 [ (gogoproto.nullable) = false ];
   // ret is the returned data from evm function (result or data supplied with
   // revert opcode)
   bytes ret = 3;
@@ -237,11 +239,11 @@ message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
 
   // authority is the address of the governance account.
-  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // params defines the x/evm parameters to update.
   // NOTE: All parameters must be supplied.
-  eth.evm.v1.Params params = 2 [(gogoproto.nullable) = false];
+  eth.evm.v1.Params params = 2 [ (gogoproto.nullable) = false ];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
@@ -266,16 +268,16 @@ message MsgCreateFunToken {
 
   // Optional flag to allow the `FunToken` mapping to be created with 0 decimals
   // in the ERC20 sense. Often times, tokens are meant to behave like money and
-  // be divisible, meaning "decimals = 0" is often a mistake. This field defaults
-  // to false as a safety guard against accidental creation of FunTokens with
-  // missing metadata.
-  // Set this to true if the token is truly intended to have 0 decimals.
+  // be divisible, meaning "decimals = 0" is often a mistake. This field
+  // defaults to false as a safety guard against accidental creation of
+  // FunTokens with missing metadata. Set this to true if the token is truly
+  // intended to have 0 decimals.
   bool allow_zero_decimals = 4;
 }
 
 message MsgCreateFunTokenResponse {
   // Fungible token mapping corresponding to ERC20 tokens.
-  eth.evm.v1.FunToken funtoken_mapping = 1 [(gogoproto.nullable) = false];
+  eth.evm.v1.FunToken funtoken_mapping = 1 [ (gogoproto.nullable) = false ];
 }
 
 // MsgConvertCoinToEvm: Arguments to send a Bank Coin to ERC-20 representation
@@ -297,7 +299,8 @@ message MsgConvertCoinToEvm {
 }
 message MsgConvertCoinToEvmResponse {}
 
-// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin representation
+// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin
+// representation
 message MsgConvertEvmToCoin {
   // Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
   // This is also the address whose ERC20 balance will be deducted.
@@ -318,9 +321,9 @@ message MsgConvertEvmToCoin {
   // Recipient address for the bank coins in Ethereum hexadecimal or
   // nibi-prefixed Bech32 format.
   //
-  // Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
-  // because the function that maps between Bech32 and Eth hex addresses is not
-  // bijective for these types of accounts.
+  // Currently, accounts corresponding to Wasm contracts cannot hold ERC20
+  // tokens because the function that maps between Bech32 and Eth hex addresses
+  // is not bijective for these types of accounts.
   //
   // See [bug(evm): nibid q evm account is not symmetric for wasm
   // addresses](https://github.com/NibiruChain/nibiru/issues/2138)

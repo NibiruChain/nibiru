@@ -17,22 +17,22 @@ message Sudoers {
 
 // GenesisState: State for migrations and genesis for the x/sudo module.
 message GenesisState {
-  nibiru.sudo.v1.Sudoers sudoers = 1 [(gogoproto.nullable) = false];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
   nibiru.sudo.v1.ZeroGasActors zero_gas_actors = 2;
 }
 
 // ZeroGasActors: Actors that can execute zero gas transactions against a set of
 // smart contracts.
 message ZeroGasActors {
-  // Senders: Addresses that can sign for zero gas transactions from the contract
-  // set.
+  // Senders: Addresses that can sign for zero gas transactions from the
+  // contract set.
   repeated string senders = 1;
 
-  // Contracts: contract addresses that can be invoked by "senders" with zero gas
-  // costs.
+  // Contracts: contract addresses that can be invoked by "senders" with zero
+  // gas costs.
   repeated string contracts = 2;
 
-  // AlwaysZeroGasContracts: contract addresses that can be invoked with zero gas
-  // costs for any sender.
+  // AlwaysZeroGasContracts: contract addresses that can be invoked with zero
+  // gas costs for any sender.
   repeated string always_zero_gas_contracts = 3;
 }

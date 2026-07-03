@@ -78,6 +78,7 @@ proto_gen() {
     sh -lc 'apk add --no-cache bash go git su-exec >/dev/null && export PATH="/go/bin:$PATH" && su-exec "$HOST_UID:$HOST_GID" env PATH="/go/bin:$PATH" bash ./contrib/scripts/protocgen.sh'
 }
 
+# FIXME: TODO https://github.com/NibiruChain/nibiru/issues/2636
 proto_fmt() {
   log_info "Formatting Protobuf files"
   docker_run \
@@ -89,9 +90,9 @@ proto_lint() {
   log_info "Linting Protobuf files"
   run_cmd docker run --rm \
     -v "$(repo_root):/workspace" \
-    --workdir /workspace \
+    --workdir /workspace/proto \
     "${PROTO_IMAGE}" \
-    buf lint --error-format=json
+    buf lint --error-format=json "$@"
 }
 
 proto_all() {
@@ -104,16 +105,16 @@ PRINT_CMD=false
 args=()
 for arg in "$@"; do
   case "${arg}" in
-    --cmd)
-      PRINT_CMD=true
-      ;;
-    --help|-h)
-      usage
-      exit 0
-      ;;
-    *)
-      args+=("${arg}")
-      ;;
+  --cmd)
+    PRINT_CMD=true
+    ;;
+  --help | -h)
+    usage
+    exit 0
+    ;;
+  *)
+    args+=("${arg}")
+    ;;
   esac
 done
 
@@ -122,24 +123,24 @@ cmd="${1:-help}"
 shift || true
 
 case "${cmd}" in
-  all)
-    proto_all "$@"
-    ;;
-  gen)
-    proto_gen "$@"
-    ;;
-  fmt|format)
-    proto_fmt "$@"
-    ;;
-  lint)
-    proto_lint "$@"
-    ;;
-  help|h|"")
-    usage
-    ;;
-  *)
-    log_error "Unknown proto command: ${cmd}"
-    usage >&2
-    exit 1
-    ;;
+all)
+  proto_all "$@"
+  ;;
+gen)
+  proto_gen "$@"
+  ;;
+fmt | format)
+  proto_fmt "$@"
+  ;;
+lint)
+  proto_lint "$@"
+  ;;
+help | h | "")
+  usage
+  ;;
+*)
+  log_error "Unknown proto command: ${cmd}"
+  usage >&2
+  exit 1
+  ;;
 esac

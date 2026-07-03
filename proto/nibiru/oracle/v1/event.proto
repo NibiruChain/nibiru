@@ -13,7 +13,7 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 message EventPriceUpdate {
   string pair = 1;
   string price = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -56,8 +56,7 @@ message EventAggregatePrevote {
   string feeder = 2;
 }
 
-
-message EventValidatorPerformance{
+message EventValidatorPerformance {
   // Validator is the Bech32 address to which the vote will be credited.
   string validator = 1;
 
@@ -69,11 +68,11 @@ message EventValidatorPerformance{
   int64 reward_weight = 3;
 
   // Number of valid votes for which the validator will be rewarded
-  int64 win_count     = 4;
+  int64 win_count = 4;
 
   // Number of abstained votes for which there will be no reward or punishment
   int64 abstain_count = 5;
 
   // Number of invalid/punishable votes
-  int64 miss_count    = 6;
+  int64 miss_count = 6;
 }

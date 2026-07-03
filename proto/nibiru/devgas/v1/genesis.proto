@@ -22,7 +22,7 @@ message ModuleParams {
   // developer_shares defines the proportion of the transaction fees to be
   // distributed to the registered contract owner
   string developer_shares = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];

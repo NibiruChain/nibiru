@@ -38,7 +38,7 @@ message MsgEditInflationParams {
   string sender = 1;
   bool inflation_enabled = 2;
   repeated string polynomial_factors = 3 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
@@ -46,17 +46,17 @@ message MsgEditInflationParams {
       [ (gogoproto.nullable) = true ];
 
   string epochs_per_period = 5 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = true
   ];
   string periods_per_year = 6 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = true
   ];
   string max_period = 7 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
+    (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = true
   ];
