@@ -47,13 +47,12 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
-	epochsmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/epochs/module"
 	inflationmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/inflation/module"
 	oraclemodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 	sudomodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/sudo/module"
 	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
@@ -76,7 +75,7 @@ var (
 		icatypes.ModuleName,
 
 		evmtypes.ModuleName,
-		epochstypes.ModuleName,
+		epochs.ModuleName,
 		sudo.ModuleName,
 		nutil.TreasuryPoolModuleAccount,
 		wasmtypes.ModuleName,
@@ -97,7 +96,7 @@ var (
 		{Account: icatypes.ModuleName},
 
 		{Account: evmtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
-		{Account: epochstypes.ModuleName},
+		{Account: epochs.ModuleName},
 		{Account: sudo.ModuleName},
 		{Account: nutil.TreasuryPoolModuleAccount},
 		{Account: wasmtypes.ModuleName, Permissions: []string{authtypes.Burner}},
@@ -141,7 +140,7 @@ var (
 
 		// --------------------------------------------------------------------
 		// Native x/ Modules
-		epochstypes.ModuleName,
+		epochs.ModuleName,
 		oracletypes.ModuleName,
 		inflationtypes.ModuleName,
 		sudo.ModuleName,
@@ -294,10 +293,6 @@ func init() {
 			{
 				Name:   oracletypes.ModuleName,
 				Config: appconfig.WrapAny(&oraclemodulev1.Module{}),
-			},
-			{
-				Name:   epochstypes.ModuleName,
-				Config: appconfig.WrapAny(&epochsmodulev1.Module{}),
 			},
 			{
 				Name:   inflationtypes.ModuleName,

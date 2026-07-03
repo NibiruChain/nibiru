@@ -1,4 +1,4 @@
-package epochs
+package epochsmod
 
 import (
 	"time"
@@ -6,14 +6,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
 )
 
 // BeginBlocker of epochs module.
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
-	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
+	defer telemetry.ModuleMeasureSince(epochs.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
+	k.IterateEpochInfo(ctx, func(index int64, epochInfo epochs.EpochInfo) (stop bool) {
 		if ctx.BlockTime().Before(epochInfo.StartTime) {
 			return false
 		}
@@ -29,13 +29,13 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			epochInfo.EpochCountingStarted = true
 			epochInfo.CurrentEpoch = 1
 		} else {
-			_ = ctx.EventManager().EmitTypedEvent(&types.EventEpochEnd{EpochNumber: epochInfo.CurrentEpoch})
+			_ = ctx.EventManager().EmitTypedEvent(&epochs.EventEpochEnd{EpochNumber: epochInfo.CurrentEpoch})
 			k.AfterEpochEnd(ctx, epochInfo.Identifier, epochInfo.CurrentEpoch)
 			epochInfo.CurrentEpoch += 1
 		}
 
 		// emit new epoch start event, set epoch info, and run BeforeEpochStart hook
-		_ = ctx.EventManager().EmitTypedEvent(&types.EventEpochStart{
+		_ = ctx.EventManager().EmitTypedEvent(&epochs.EventEpochStart{
 			EpochNumber:    epochInfo.CurrentEpoch,
 			EpochStartTime: epochInfo.CurrentEpochStartTime,
 		})
@@ -51,7 +51,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 // an epoch is ready to start if:
 // - it has not yet been initialized.
 // - the current epoch end time is before the current block time
-func shouldEpochStart(epochInfo types.EpochInfo, ctx sdk.Context) bool {
+func shouldEpochStart(epochInfo epochs.EpochInfo, ctx sdk.Context) bool {
 	// Epoch has not started yet
 	if !epochInfo.EpochCountingStarted {
 		return true

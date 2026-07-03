@@ -24,7 +24,8 @@ service Msg {
   // EditZeroGasActors updates the "ZeroGasActors" state. Zero gas actors are
   // a set of accounts that can execute zero gas transactions against a
   // whitelisted  set of smart contracts.
-  rpc EditZeroGasActors(MsgEditZeroGasActors) returns (MsgEditZeroGasActorsResponse) {
+  rpc EditZeroGasActors(MsgEditZeroGasActors)
+      returns (MsgEditZeroGasActorsResponse) {
     option (google.api.http).post = "/nibiru/sudo/edit_zero_gas_actors";
   }
 }
@@ -68,7 +69,7 @@ message MsgChangeRootResponse {}
 message MsgEditZeroGasActors {
   // Actors that can execute zero gas transactions against a set of
   // smart contracts.
-  nibiru.sudo.v1.ZeroGasActors actors = 1 [(gogoproto.nullable) = false];
+  nibiru.sudo.v1.ZeroGasActors actors = 1 [ (gogoproto.nullable) = false ];
 
   // Sender: Nibiru Bech32 Address for the signer of the transaction.
   string sender = 2;

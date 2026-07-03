@@ -88,7 +88,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/epochsmod"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
@@ -149,7 +149,7 @@ var (
 		// native x/
 		evmmodule.AppModuleBasic{},
 		oraclemodule.AppModuleBasic{},
-		epochs.AppModuleBasic{},
+		epochsmod.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
@@ -172,7 +172,7 @@ var (
 		icatypes.ModuleName:            {},
 
 		evm.ModuleName:                  {authtypes.Minter, authtypes.Burner},
-		epochstypes.ModuleName:          {},
+		epochs.ModuleName:               {},
 		sudo.ModuleName:                 {},
 		nutil.TreasuryPoolModuleAccount: {},
 		wasmtypes.ModuleName:            {authtypes.Burner},
@@ -318,7 +318,6 @@ func NewNibiruApp(
 		&app.ConsensusParamsKeeper,
 		&app.SudoKeeper,
 		&app.OracleKeeper,
-		&app.EpochsKeeper,
 		&app.InflationKeeper,
 		&app.EvmKeeper,
 		&app.TokenFactoryKeeper,
@@ -338,6 +337,7 @@ func NewNibiruApp(
 		ibcwasmtypes.StoreKey,
 
 		// nibiru x/ keys
+		epochs.StoreKey,
 		wasmtypes.StoreKey,
 		devgastypes.StoreKey,
 	)
@@ -352,6 +352,7 @@ func NewNibiruApp(
 	// register non-depinject modules
 	if err := app.RegisterModules(
 		// Nibiru modules
+		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc

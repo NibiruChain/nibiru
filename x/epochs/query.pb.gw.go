@@ -2,11 +2,11 @@
 // source: nibiru/epochs/v1/query.proto
 
 /*
-Package types is a reverse proxy.
+Package epochs is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package types
+package epochs
 
 import (
 	"context"

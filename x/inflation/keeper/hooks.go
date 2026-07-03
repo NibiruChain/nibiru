@@ -7,12 +7,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
-// Hooks implements module-specific calls ([epochstypes.EpochHooks]) that will
+// Hooks implements module-specific calls ([epochs.EpochHooks]) that will
 // occur at the end of every epoch. Hooks is meant for use with
 // `EpochsKeeper.SetHooks`. These functions run outside the normal body of
 // transactions.
@@ -20,7 +20,7 @@ type Hooks struct {
 	K Keeper
 }
 
-var _ epochstypes.EpochHooks = Hooks{}
+var _ epochs.EpochHooks = Hooks{}
 
 // Hooks implements module-speecific calls that will occur in the ABCI
 // BeginBlock logic.
@@ -40,7 +40,7 @@ func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNu
 // If inflation is disabled as a module parameter, the state for
 // "NumSkippedEpochs" increments.
 func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber uint64) {
-	if epochIdentifier != epochstypes.DayEpochID {
+	if epochIdentifier != epochs.DayEpochID {
 		return
 	}
 

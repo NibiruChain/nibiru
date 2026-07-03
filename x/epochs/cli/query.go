@@ -10,15 +10,15 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )
 
 // GetQueryCmd returns the cli query commands for this module.
 func GetQueryCmd() *cobra.Command {
 	// Group epochs queries under a subcommand
 	cmd := &cobra.Command{
-		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
+		Use:                        epochs.ModuleName,
+		Short:                      fmt.Sprintf("Querying commands for the %s module", epochs.ModuleName),
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -52,9 +52,9 @@ $ %s query epochs epoch-infos
 			if err != nil {
 				return err
 			}
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := epochs.NewQueryClient(clientCtx)
 
-			res, err := queryClient.EpochInfos(cmd.Context(), &types.QueryEpochInfosRequest{})
+			res, err := queryClient.EpochInfos(cmd.Context(), &epochs.QueryEpochInfosRequest{})
 			if err != nil {
 				return err
 			}
@@ -88,9 +88,9 @@ $ %s query epochs current-epoch day
 			if err != nil {
 				return err
 			}
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := epochs.NewQueryClient(clientCtx)
 
-			res, err := queryClient.CurrentEpoch(cmd.Context(), &types.QueryCurrentEpochRequest{
+			res, err := queryClient.CurrentEpoch(cmd.Context(), &epochs.QueryCurrentEpochRequest{
 				Identifier: args[0],
 			})
 			if err != nil {

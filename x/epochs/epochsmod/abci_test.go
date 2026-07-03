@@ -1,4 +1,4 @@
-package epochs_test
+package epochsmod_test
 
 import (
 	"testing"
@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	epochs1 "github.com/NibiruChain/nibiru/v2/x/epochs"
+	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/epochsmod"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
@@ -23,7 +23,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 	tests := []struct {
 		name              string
 		when              func()
-		expectedEpochInfo types.EpochInfo
+		expectedEpochInfo epochs1.EpochInfo
 	}{
 		{
 			name: "no increment",
@@ -31,7 +31,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Second))
 				epochs.BeginBlocker(ctx, *app.EpochsKeeper)
 			},
-			expectedEpochInfo: types.EpochInfo{
+			expectedEpochInfo: epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -49,7 +49,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 32))
 				epochs.BeginBlocker(ctx, *app.EpochsKeeper)
 			},
-			expectedEpochInfo: types.EpochInfo{
+			expectedEpochInfo: epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -66,7 +66,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				ctx = ctx.WithBlockHeight(2).WithBlockTime(now.Add(time.Hour * 24 * 31))
 				epochs.BeginBlocker(ctx, *app.EpochsKeeper)
 			},
-			expectedEpochInfo: types.EpochInfo{
+			expectedEpochInfo: epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -84,7 +84,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 				ctx = ctx.WithBlockHeight(3).WithBlockTime(now.Add(time.Hour * 24 * 31 * 2))
 				epochs.BeginBlocker(ctx, *app.EpochsKeeper)
 			},
-			expectedEpochInfo: types.EpochInfo{
+			expectedEpochInfo: epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -109,7 +109,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			}
 
 			// erorr beceause empty identifier
-			err := app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
+			err := app.EpochsKeeper.AddEpochInfo(ctx, epochs1.EpochInfo{
 				Identifier:              "",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -122,7 +122,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 
 			// insert epoch info that's already begun
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
-			err = app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
+			err = app.EpochsKeeper.AddEpochInfo(ctx, epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -133,7 +133,7 @@ func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {
 			})
 			assert.NoError(t, err)
 
-			err = app.EpochsKeeper.AddEpochInfo(ctx, types.EpochInfo{
+			err = app.EpochsKeeper.AddEpochInfo(ctx, epochs1.EpochInfo{
 				Identifier:              "monthly",
 				StartTime:               now,
 				Duration:                time.Hour * 24 * 31,
@@ -184,8 +184,8 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 	initialBlockHeight := int64(1)
 	ctx = ctx.WithBlockHeight(initialBlockHeight).WithBlockTime(now)
 
-	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
-		Epochs: []types.EpochInfo{
+	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, epochs1.GenesisState{
+		Epochs: []epochs1.EpochInfo{
 			{
 				Identifier:              "daily",
 				StartTime:               now.Add(month),
@@ -253,7 +253,7 @@ func TestEpochStartingOneMonthAfterInitGenesis(t *testing.T) {
 // This test ensures legacy EpochInfo messages will not throw errors via InitGenesis and BeginBlocker
 func TestLegacyEpochSerialization(t *testing.T) {
 	// Legacy Epoch Info message - without CurrentEpochStartHeight property
-	legacyEpochInfo := types.EpochInfo{
+	legacyEpochInfo := epochs1.EpochInfo{
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
 		Duration:              time.Hour * 24 * 31,
@@ -275,8 +275,8 @@ func TestLegacyEpochSerialization(t *testing.T) {
 	ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
 
 	// check init genesis
-	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, types.GenesisState{
-		Epochs: []types.EpochInfo{legacyEpochInfo},
+	err := epochs.InitGenesis(ctx, *app.EpochsKeeper, epochs1.GenesisState{
+		Epochs: []epochs1.EpochInfo{legacyEpochInfo},
 	})
 	require.NoError(t, err)
 

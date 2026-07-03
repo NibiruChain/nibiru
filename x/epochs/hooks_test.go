@@ -1,11 +1,11 @@
-package types_test
+package epochs_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -26,7 +26,7 @@ func (h *MockEpochHooks) BeforeEpochStart(ctx sdk.Context, epochIdentifier strin
 func TestAfterEpochEnd(t *testing.T) {
 	hook1 := new(MockEpochHooks)
 	hook2 := new(MockEpochHooks)
-	hooks := types.NewMultiEpochHooks(hook1, hook2)
+	hooks := epochs.NewMultiEpochHooks(hook1, hook2)
 
 	ctx := sdk.Context{}
 	epochIdentifier := "testID"
@@ -44,7 +44,7 @@ func TestAfterEpochEnd(t *testing.T) {
 func TestBeforeEpochStart(t *testing.T) {
 	hook1 := new(MockEpochHooks)
 	hook2 := new(MockEpochHooks)
-	hooks := types.NewMultiEpochHooks(hook1, hook2)
+	hooks := epochs.NewMultiEpochHooks(hook1, hook2)
 
 	ctx := sdk.Context{}
 	epochIdentifier := "testID"
