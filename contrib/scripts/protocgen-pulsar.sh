@@ -34,6 +34,8 @@ echo "Generating API module"
 
 echo "Pruning unused generated code in API directory"
 dirs_to_rm=(
+  "api/eth/evm"
+  "api/eth/types"
   "api/nibiru/epochs"
   "api/nibiru/inflation"
   "api/nibiru/oracle"
