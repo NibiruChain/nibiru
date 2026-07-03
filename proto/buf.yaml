@@ -9,6 +9,12 @@ deps:
 breaking:
   use:
     - FILE
+  ignore:
+    - nibiru/epochs/module/module.proto
+    - nibiru/inflation/module/module.proto
+    - nibiru/oracle/module/module.proto
+    - nibiru/sudo/module/module.proto
+    - nibiru/tokenfactory/module/module.proto
 lint:
   use:
     - DEFAULT
