@@ -26,7 +26,11 @@ clean-cache:
 # Generate protobuf-based types in Golang
 gen-proto: 
   #!/usr/bin/env bash
-  make proto-gen
+  just proto gen
+
+# Protobuf command dispatcher. Ex: `just proto gen`, `just proto fmt`, `just proto lint`, `just proto all`
+proto *ARGS:
+  bash contrib/scripts/proto.sh {{ARGS}}
 
 # Generate Solidity artifacts for x/evm/embeds
 gen-embeds:
@@ -191,7 +195,7 @@ test-chaosnet:
 
 # Alias for "gen-proto"
 proto-gen:
-  just gen-proto
+  just proto gen
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop: 
@@ -209,7 +213,7 @@ fmt:
 tidy: 
   #!/usr/bin/env bash
   go mod tidy
-  just proto-gen
+  just proto gen
   just lint
   just fmt
 
