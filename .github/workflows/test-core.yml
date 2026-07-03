@@ -121,7 +121,7 @@ jobs:
           # Optional: if set to true then the action won't cache or restore ~/.cache/go-build.
           # skip-build-cache: true
 
-  build:
+  check-nibiru-go:
     runs-on: ubuntu-latest
     outputs:
       nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
@@ -144,84 +144,95 @@ jobs:
               - "go.mod"
               - "go.sum"
               - "contrib/docker-compose/*"
+              - "contrib/scripts/build-nibiru.sh"
+              - "Dockerfile"
+              - "justfile"
+              - ".github/workflows/test-core.yml"
 
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
         run: |
+          echo "Nibiru Golang files were not changed."
+
+  build:
+    needs: check-nibiru-go
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-latest]
+    steps:
+      - name: skip-build
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'false'
+        run: |
           echo "job: build was skipped since Nibiru Golang files were not changed."
 
+      - uses: actions/checkout@v7
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+
       - name: "Set up Go"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
 
-      - name: "Install just"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
-        # casey/just: https://just.systems/man/en/chapter_6.html
-        # taiki-e/install-action: https://github.com/taiki-e/install-action
-        uses: taiki-e/install-action@just
-
       - name: "Build the nibid binary"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
-          just install
+          contrib/scripts/build-nibiru.sh --run --just-build
 
-      - name: "Stage nibid artifact"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+      - name: "Verify nibid binary"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
-          mkdir -p dist
-          nibid_path="$(command -v nibid)"
-          cp "$nibid_path" dist/nibid
-          chmod +x dist/nibid
-          dist/nibid version
+          test -x build/nibid
+          build/nibid version
 
       - name: "Upload nibid artifact"
-        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true' && matrix.runner == 'ubuntu-latest'
         uses: actions/upload-artifact@v7
         with:
           name: nibid-linux-amd64
-          path: dist/nibid
+          path: build/nibid
           if-no-files-found: error
 
   localnet-scripts:
-    needs: build
+    needs: [check-nibiru-go, build]
     runs-on: ubuntu-latest
     steps:
       - name: skip-localnet-scripts
-        if: needs.build.outputs.nibiru-go != 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go != 'true'
         run: |
           echo "job: localnet-scripts was skipped since Nibiru Golang files were not changed."
 
       - uses: actions/checkout@v7
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
 
       - name: "Install just"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
       - name: "Download nibid artifact"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         uses: actions/download-artifact@v8
         with:
           name: nibid-linux-amd64
           path: dist
 
       - name: "Install nibid artifact"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           sudo install -m 0755 dist/nibid /usr/local/bin/nibid
           nibid version
 
       - name: "Run scripts/chaosnet.sh (Used in Docker image)"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           just test-chaosnet
 
       - name: "Run scripts/localnet.sh"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           just localnet --no-build &
           pid_localnet=$!
@@ -232,20 +243,20 @@ jobs:
 
   heavy-tests:
     # Job that runs all tests and publishes code coverage reports.
-    needs: build
+    needs: [check-nibiru-go, build]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: skip-heavy-tests
-        if: needs.build.outputs.nibiru-go != 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go != 'true'
         run: |
           echo "job: heavy-tests was skipped since Nibiru Golang files were not changed."
 
       - uses: actions/checkout@v7
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
 
       - name: "Set up Go"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -256,26 +267,26 @@ jobs:
           cache: true
 
       - name: "Install just"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
       - name: "Download nibid artifact"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         uses: actions/download-artifact@v8
         with:
           name: nibid-linux-amd64
           path: dist
 
       - name: "Install nibid artifact"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           sudo install -m 0755 dist/nibid /usr/local/bin/nibid
           nibid version
 
       - name: "Launch localnet"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
           pid_localnet=$!
@@ -294,11 +305,11 @@ jobs:
           sleep 12
 
       - name: "Run all tests."
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         run: just test-cover
 
       - name: "Upload coverage reports to Codecov"
-        if: needs.build.outputs.nibiru-go == 'true'
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
         uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
