@@ -19,4 +19,7 @@ cd ..
 cp -r github.com/NibiruChain/nibiru/v2/* ./
 rm -rf github.com
 
-./contrib/scripts/protocgen-pulsar.sh
+# DEPRECATED: file `protocgen-pulsar.sh` generated local `api/` packages for
+# depinject module config protos. Repo policy is manual module wiring, with no
+# local depinject config protos and no generated directory `api/`.
+# ./contrib/scripts/protocgen-pulsar.sh

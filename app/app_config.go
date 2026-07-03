@@ -46,11 +46,9 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
-	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
@@ -71,7 +69,7 @@ var (
 		ibcfeetypes.ModuleName,
 		icatypes.ModuleName,
 
-		evmtypes.ModuleName,
+		evm.ModuleName,
 		epochs.ModuleName,
 		sudo.ModuleName,
 		nutil.TreasuryPoolModuleAccount,
@@ -92,7 +90,7 @@ var (
 		{Account: ibcfeetypes.ModuleName},
 		{Account: icatypes.ModuleName},
 
-		{Account: evmtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: evm.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: epochs.ModuleName},
 		{Account: sudo.ModuleName},
 		{Account: nutil.TreasuryPoolModuleAccount},
@@ -151,7 +149,7 @@ var (
 		ibcwasmtypes.ModuleName,
 
 		// --------------------------------------------------------------------
-		evmtypes.ModuleName,
+		evm.ModuleName,
 
 		// --------------------------------------------------------------------
 		// CosmWasm
@@ -282,14 +280,6 @@ func init() {
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
-			},
-			{
-				Name:   evmtypes.ModuleName,
-				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
-			},
-			{
-				Name:   tftypes.ModuleName,
-				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
 			},
 		},
 	})

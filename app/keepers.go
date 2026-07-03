@@ -59,11 +59,15 @@ import (
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/evm"
+	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 const wasmVmContractMemoryLimit = 32
@@ -157,6 +161,18 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 			app.InflationKeeper.Hooks(),
 		),
 	)
+	evmKeeper := evmstate.NewKeeper(
+		app.appCodec,
+		app.keys[evm.StoreKey],
+		app.tkeys[evm.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.SudoKeeper,
+		cast.ToString(appOpts.Get("evm.tracer")),
+	)
+	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
@@ -302,6 +318,15 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.WasmKeeper,
 		app.AccountKeeper,
 		authtypes.FeeCollectorName,
+		govModuleAddr,
+	)
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		app.keys[tokenfactorytypes.StoreKey],
+		app.appCodec,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.DistrKeeper,
+		app.SudoKeeper,
 		govModuleAddr,
 	)
 

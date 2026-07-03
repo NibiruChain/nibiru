@@ -187,9 +187,9 @@ var (
 	_ ibctesting.TestingApp   = (*NibiruApp)(nil)
 )
 
-// NibiruApp extends an ABCI application, but with most of its parameters exported.
-// They are exported for convenience in creating helper functions, as object
-// capabilities aren't needed for testing.
+// NibiruApp extends an ABCI application, but with most of its parameters
+// exported. They are exported for convenience in creating helper functions, as
+// object capabilities aren't needed for testing.
 type NibiruApp struct {
 	*runtime.App
 
@@ -199,8 +199,8 @@ type NibiruApp struct {
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
-	// TODO(k-yang): remove once depinject is fully integrated
-	keys map[string]*storetypes.KVStoreKey
+	keys  map[string]*storetypes.KVStoreKey
+	tkeys map[string]*storetypes.TransientStoreKey
 
 	AppKeepers // embed all module keepers
 
@@ -277,8 +277,13 @@ func NewNibiruApp(
 			oracletypes.StoreKey,
 			inflationtypes.StoreKey,
 			sudo.StoreKey,
+			evm.StoreKey,
 			wasmtypes.StoreKey,
 			devgastypes.StoreKey,
+			tokenfactorytypes.StoreKey,
+		),
+		tkeys: sdk.NewTransientStoreKeys(
+			evm.TransientKey,
 		),
 	}
 	var appBuilder *runtime.AppBuilder
@@ -338,8 +343,6 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
-		&app.EvmKeeper,
-		&app.TokenFactoryKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -347,6 +350,11 @@ func NewNibiruApp(
 
 	// register non-depinject keys
 	for _, k := range app.keys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
+	}
+	for _, k := range app.tkeys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
 		}
@@ -361,6 +369,7 @@ func NewNibiruApp(
 		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
 		mintmod.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
 		sudomodule.NewAppModule(app.appCodec, app.SudoKeeper),
+		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
@@ -373,6 +382,7 @@ func NewNibiruApp(
 		// wasm
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 	); err != nil {
 		panic(err)
 	}

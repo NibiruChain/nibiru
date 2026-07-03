@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
-# this script is for generating protobuf files for the new google.golang.org/protobuf API
+# DEPRECATED: Generates local `api/` Go packages with plugin
+# `protoc-gen-go-pulsar`.
+#
+# This script existed for Cosmos SDK depinject app wiring. Depinject module
+# configs need Go types generated from proto files like
+# `proto/nibiru/<module>/module/module.proto`, and those types lived under
+# directory `api/`.
+#
+# Nibiru policy is manual module wiring. Do not add local depinject module
+# config protos, do not import packages under
+# `github.com/NibiruChain/nibiru/v2/api/...`, and do not recreate generated
+# directory `api/`. Command `just proto gen` intentionally does not call this
+# script.
 
 set -Eeuo pipefail
 
@@ -34,9 +46,14 @@ echo "Generating API module"
 
 echo "Pruning unused generated code in API directory"
 dirs_to_rm=(
+  "api/eth/evm"
+  "api/eth/types"
   "api/nibiru/epochs"
+  "api/nibiru/devgas"
+  "api/nibiru/genmsg"
   "api/nibiru/inflation"
   "api/nibiru/oracle"
   "api/nibiru/sudo"
+  "api/nibiru/tokenfactory"
 )
 rm -rf "${dirs_to_rm[@]}"
