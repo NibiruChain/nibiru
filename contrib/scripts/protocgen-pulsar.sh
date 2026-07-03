@@ -37,6 +37,8 @@ dirs_to_rm=(
   "api/eth/evm"
   "api/eth/types"
   "api/nibiru/epochs"
+  "api/nibiru/devgas"
+  "api/nibiru/genmsg"
   "api/nibiru/inflation"
   "api/nibiru/oracle"
   "api/nibiru/sudo"
