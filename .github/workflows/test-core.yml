@@ -1,6 +1,11 @@
 name: "Core Tests"
 
 on:
+  workflow_dispatch: # Runs on manual calls
+  schedule:
+    - cron: "0 0 * * *" # Runs automatically every day
+  push:
+    branches: ["main"]
   pull_request:
 
 # Allow concurrent runs on main/release branches but isolates other branches
@@ -23,6 +28,7 @@ jobs:
               - "app/**/*.go"
               - "cmd/**/*.go"
               - "eth/**/*.go"
+              - "evm/**/*.go"
               - "gosdk/**/*.go"
               - "x/**/*.go"
               - "**/*.proto"
@@ -56,6 +62,65 @@ jobs:
         if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
         run: just test-unit
 
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Check for Go-related changes"
+        id: check_nibiru_go
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            nibiru-go:
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "evm/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker-compose/*"
+
+      - uses: actions/setup-go@v6
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true # Note that golangci-lint action already caches for us (https://github.com/golangci/golangci-lint-action#performance)
+
+      - name: golangci-lint
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: golangci/golangci-lint-action@v9
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: v2.6.1
+
+          # Optional: working directory, useful for monorepos
+          # working-directory: somedir
+
+          # Optional: golangci-lint command line arguments.
+          args: --fix=false
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # only-new-issues: true
+
+          # Optional: if set to true then the all caching functionality will be
+          #   completely disabled. Takes precedence over all other caching options.
+          skip-cache: false
+
+          # Optional: if set to true then the action won't cache or restore ~/go/pkg.
+          # skip-pkg-cache: true
+
+          # Optional: if set to true then the action won't cache or restore ~/.cache/go-build.
+          # skip-build-cache: true
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -70,6 +135,7 @@ jobs:
               - "app/**/*.go"
               - "cmd/**/*.go"
               - "eth/**/*.go"
+              - "evm/**/*.go"
               - "gosdk/**/*.go"
               - "x/**/*.go"
               - "**/*.proto"
@@ -104,6 +170,85 @@ jobs:
         run: |
           just test-localnet
 
+  heavy-tests:
+    # Job that runs all tests and publishes code coverage reports.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Check for Go-related changes"
+        id: check_nibiru_go
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            nibiru-go:
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "evm/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "**/*.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker-compose/*"
+
+      - name: "Set up Go"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Build the nibid binary"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: just install
+
+      - name: "Launch localnet"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run all tests."
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        run: just test-cover
+
+      - name: "Upload coverage reports to Codecov"
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'true'
+        uses: codecov/codecov-action@v7
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # Docs on usable "with" flags for codecov/codecov-action v5:
+        # https://github.com/codecov/codecov-action?tab=readme-ov-file#example-workflowyml-with-codecov-action
+        with:
+          disable_search: true
+          files: coverage.out
+
   # proto-gen-rs: Tests the script that generates protobuf bindings in Rust
   proto-gen-rs:
     runs-on: ubuntu-latest
@@ -119,6 +264,7 @@ jobs:
               - "app/**/*.go"
               - "cmd/**/*.go"
               - "eth/**/*.go"
+              - "evm/**/*.go"
               - "gosdk/**/*.go"
               - "x/**/*.go"
               - "**/*.proto"
