@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -120,7 +121,13 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	_ = InitGenesis(ctx, *am.keeper, genState)
+	if err := InitGenesis(ctx, *am.keeper, genState); err != nil {
+		// Module migrations may replay default genesis against existing epochs.
+		// Other genesis errors should still abort chain initialization.
+		if !strings.Contains(err.Error(), "already exists") {
+			panic(err)
+		}
+	}
 
 	return []abci.ValidatorUpdate{}
 }

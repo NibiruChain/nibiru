@@ -99,7 +99,7 @@ func TestGenesisState_HappyPath(t *testing.T) {
 		genState GenesisState
 	}{
 		{
-			name: "duplicate epochinfo",
+			name: "valid epochinfo",
 			genState: GenesisState{
 				Epochs: []EpochInfo{
 					{
