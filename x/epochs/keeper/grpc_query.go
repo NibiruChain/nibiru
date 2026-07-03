@@ -5,10 +5,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )
 
-var _ types.QueryServer = Querier{}
+var _ epochs.QueryServer = Querier{}
 
 // Querier defines a wrapper around the x/epochs keeper providing gRPC method
 // handlers.
@@ -21,16 +21,16 @@ func NewQuerier(k Keeper) Querier {
 }
 
 // EpochInfos provide running epochInfos.
-func (q Querier) EpochInfos(c context.Context, _ *types.QueryEpochInfosRequest) (*types.QueryEpochInfosResponse, error) {
+func (q Querier) EpochInfos(c context.Context, _ *epochs.QueryEpochInfosRequest) (*epochs.QueryEpochInfosResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	return &types.QueryEpochInfosResponse{
+	return &epochs.QueryEpochInfosResponse{
 		Epochs: q.AllEpochInfos(ctx),
 	}, nil
 }
 
 // CurrentEpoch provides current epoch of specified identifier.
-func (q Querier) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (resp *types.QueryCurrentEpochResponse, err error) {
+func (q Querier) CurrentEpoch(c context.Context, req *epochs.QueryCurrentEpochRequest) (resp *epochs.QueryCurrentEpochResponse, err error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	info, err := q.GetEpochInfo(ctx, req.Identifier)
@@ -38,7 +38,7 @@ func (q Querier) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochReq
 		return
 	}
 
-	return &types.QueryCurrentEpochResponse{
+	return &epochs.QueryCurrentEpochResponse{
 		CurrentEpoch: info.CurrentEpoch,
 	}, nil
 }

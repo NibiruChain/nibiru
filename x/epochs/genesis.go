@@ -1,30 +1,78 @@
 package epochs
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"errors"
+	"time"
 )
 
-// InitGenesis sets epoch info from genesis
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) (err error) {
-	err = genState.Validate()
-	if err != nil {
-		return
-	}
-	for _, epoch := range genState.Epochs {
-		if err = k.AddEpochInfo(ctx, epoch); err != nil {
-			return err
-		}
-	}
-	return
+func NewGenesisState(epochs []EpochInfo) *GenesisState {
+	return &GenesisState{Epochs: epochs}
 }
 
-// ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	genesis := types.DefaultGenesisFromTime(ctx.BlockTime())
-	genesis.Epochs = k.AllEpochInfos(ctx)
+// DefaultGenesis returns the default Capability genesis state.
+func DefaultGenesis() *GenesisState {
+	startTime := time.Time{}
+	return DefaultGenesisFromTime(startTime)
+}
 
-	return genesis
+func DefaultGenesisFromTime(startTime time.Time) *GenesisState {
+	epochs := []EpochInfo{
+		{
+			Identifier:              ThirtyMinuteEpochID,
+			StartTime:               startTime,
+			Duration:                30 * time.Minute,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   startTime,
+			EpochCountingStarted:    false,
+		},
+		{
+			Identifier:              DayEpochID,
+			StartTime:               startTime,
+			Duration:                24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   startTime,
+			EpochCountingStarted:    false,
+		},
+		{
+			Identifier:              WeekEpochID,
+			StartTime:               startTime,
+			Duration:                7 * 24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   startTime,
+			EpochCountingStarted:    false,
+		},
+		{
+			Identifier:              MonthEpochID,
+			StartTime:               startTime,
+			Duration:                30 * 24 * time.Hour,
+			CurrentEpoch:            0,
+			CurrentEpochStartHeight: 0,
+			CurrentEpochStartTime:   startTime,
+			EpochCountingStarted:    false,
+		},
+	}
+
+	return NewGenesisState(epochs)
+}
+
+// Validate performs basic genesis state validation returning an error upon any
+// failure.
+func (gs GenesisState) Validate() error {
+	epochIdentifiers := map[string]bool{}
+	for _, epoch := range gs.Epochs {
+		if epochIdentifiers[epoch.Identifier] {
+			return errors.New("epoch identifier should be unique")
+		}
+
+		if err := epoch.Validate(); err != nil {
+			return err
+		}
+
+		epochIdentifiers[epoch.Identifier] = true
+	}
+
+	return nil
 }

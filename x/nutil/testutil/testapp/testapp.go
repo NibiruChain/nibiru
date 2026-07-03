@@ -28,7 +28,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
@@ -107,8 +107,8 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	gen = app.DefaultGenesis()
 
 	// Set happy genesis: epochs
-	genModEpochs := epochstypes.DefaultGenesisFromTime(time.Now().UTC())
-	gen[epochstypes.ModuleName] = app.AppCodec().MustMarshalJSON(
+	genModEpochs := epochs.DefaultGenesisFromTime(time.Now().UTC())
+	gen[epochs.ModuleName] = app.AppCodec().MustMarshalJSON(
 		genModEpochs,
 	)
 

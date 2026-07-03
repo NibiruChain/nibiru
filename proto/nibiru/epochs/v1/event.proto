@@ -4,15 +4,17 @@ package nibiru.epochs.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/epochs/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/epochs";
 
 message EventEpochStart {
   // Epoch number, starting from 1.
   uint64 epoch_number = 1;
 
   // The start timestamp of the epoch.
-  google.protobuf.Timestamp epoch_start_time = 2
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  google.protobuf.Timestamp epoch_start_time = 2 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 message EventEpochEnd {

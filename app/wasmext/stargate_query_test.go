@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	epochs "github.com/NibiruChain/nibiru/v2/x/epochs"
 	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"

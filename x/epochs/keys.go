@@ -1,4 +1,4 @@
-package types
+package epochs
 
 const (
 	// ModuleName defines the module name.

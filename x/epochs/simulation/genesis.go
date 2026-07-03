@@ -9,12 +9,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )
 
 // RandomizedGenState generates a random GenesisState for mint.
 func RandomizedGenState(simState *module.SimulationState) {
-	epochs := []types.EpochInfo{
+	epochList := []epochs.EpochInfo{
 		{
 			Identifier:              "day",
 			StartTime:               time.Time{},
@@ -43,7 +43,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 			EpochCountingStarted:    false,
 		},
 	}
-	epochGenesis := types.NewGenesisState(epochs)
+	epochGenesis := epochs.NewGenesisState(epochList)
 
 	bz, err := json.MarshalIndent(&epochGenesis, "", " ")
 	if err != nil {
@@ -52,5 +52,5 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	// TODO: Do some randomization later
 	fmt.Printf("Selected deterministically generated epoch parameters:\n%s\n", bz)
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(epochGenesis)
+	simState.GenState[epochs.ModuleName] = simState.Cdc.MustMarshalJSON(epochGenesis)
 }

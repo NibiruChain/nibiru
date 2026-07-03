@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -29,7 +29,7 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	nibiruApp.InflationKeeper.Params.Set(ctx, params)
 
 	feePoolOld := nibiruApp.DistrKeeper.GetFeePool(ctx)
-	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochstypes.DayEpochID, 1)
+	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochs.DayEpochID, 1)
 	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
 
 	require.Greater(t, feePoolNew.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64(),
@@ -56,7 +56,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "SkippedEpoch set DayEpochID disabledInflation",
 			currentPeriod:      0,
 			currentEpochNumber: 20, // so it's within range
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      19,
 			InflationEnabled:   false,
 			periodChanges:      false,
@@ -65,7 +65,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "SkippedEpoch set WeekEpochID disabledInflation ",
 			currentPeriod:      0,
 			currentEpochNumber: 20, // so it's within range
-			epochIdentifier:    epochstypes.WeekEpochID,
+			epochIdentifier:    epochs.WeekEpochID,
 			skippedEpochs:      19,
 			InflationEnabled:   false,
 			periodChanges:      false,
@@ -74,7 +74,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 0] disabledInflation",
 			currentPeriod:      0,
 			currentEpochNumber: 20, // so it's within range
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      19,
 			InflationEnabled:   false,
 			periodChanges:      false,
@@ -83,7 +83,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 0] period stays the same under epochs per period",
 			currentPeriod:      0,
 			currentEpochNumber: 29, // so it's within range
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      0,
 			InflationEnabled:   true,
 			periodChanges:      false,
@@ -92,7 +92,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 0] period changes once enough epochs have passed",
 			currentPeriod:      0,
 			currentEpochNumber: 30,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      0,
 			InflationEnabled:   true,
 			periodChanges:      true,
@@ -101,7 +101,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 1] period stays the same under the epoch per period",
 			currentPeriod:      1,
 			currentEpochNumber: 59, // period change is at the end of epoch 59
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      0,
 			InflationEnabled:   true,
 			periodChanges:      false,
@@ -110,7 +110,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 1] period changes once enough epochs have passed",
 			currentPeriod:      1,
 			currentEpochNumber: 60,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      0,
 			InflationEnabled:   true,
 			periodChanges:      true,
@@ -119,7 +119,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 0] with skipped epochs - period stays the same under epochs per period",
 			currentPeriod:      0,
 			currentEpochNumber: 30,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      1,
 			InflationEnabled:   true,
 			periodChanges:      false,
@@ -128,7 +128,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 0] with skipped epochs - period changes once enough epochs have passed",
 			currentPeriod:      0,
 			currentEpochNumber: 40,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      10,
 			InflationEnabled:   true,
 			periodChanges:      true,
@@ -137,7 +137,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 1] with skipped epochs - period stays the same under epochs per period",
 			currentPeriod:      1,
 			currentEpochNumber: 69,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      10,
 			InflationEnabled:   true,
 			periodChanges:      false,
@@ -146,7 +146,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			name:               "[Period 1] with skipped epochs - period changes once enough epochs have passed",
 			currentPeriod:      1,
 			currentEpochNumber: 70,
-			epochIdentifier:    epochstypes.DayEpochID,
+			epochIdentifier:    epochs.DayEpochID,
 			skippedEpochs:      10,
 			InflationEnabled:   true,
 			periodChanges:      true,
@@ -191,7 +191,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 				require.Equal(t, prevPeriod+1, newPeriod)
 			} else {
 				require.Equal(t, prevPeriod, newPeriod, "period should not change but it did")
-				if !tc.InflationEnabled && tc.epochIdentifier == epochstypes.DayEpochID {
+				if !tc.InflationEnabled && tc.epochIdentifier == epochs.DayEpochID {
 					// Check for epochIdentifier for skippedEpoch increment
 					require.EqualValues(t, prevSkippedEpochs+1, newSkippedEpochs)
 				}
@@ -237,15 +237,15 @@ func TestManual(t *testing.T) {
 	require.Equal(t, sdkmath.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 
 	for range 42069 {
-		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochs.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdkmath.ZeroInt(), GetBalanceStaking(ctx, nibiruApp))
 	require.EqualValues(t, uint64(0), inflationKeeper.CurrentPeriod.Peek(ctx))
 	require.EqualValues(t, uint64(42069), inflationKeeper.NumSkippedEpochs.Peek(ctx))
 
-	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochstypes.DayEpochID, epochstypes.EpochInfo{
-		Identifier:              epochstypes.DayEpochID,
+	nibiruApp.EpochsKeeper.Epochs.Insert(ctx, epochs.DayEpochID, epochs.EpochInfo{
+		Identifier:              epochs.DayEpochID,
 		StartTime:               time.Now(),
 		Duration:                0,
 		CurrentEpoch:            42069,
@@ -259,7 +259,7 @@ func TestManual(t *testing.T) {
 
 	// Period 0 - inflate 3M NIBI over 30 epochs or 100k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochs.DayEpochID, epochNumber)
 		require.Equal(t, sdkmath.NewInt(100_000).Mul(sdkmath.NewInt(int64(i+1))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}
@@ -271,7 +271,7 @@ func TestManual(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 42069; i++ {
-		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochs.DayEpochID, epochNumber)
 		epochNumber++
 	}
 	require.Equal(t, sdkmath.NewInt(3_000_000), GetBalanceStaking(ctx, nibiruApp))
@@ -283,7 +283,7 @@ func TestManual(t *testing.T) {
 
 	// Period 1 - inflate 6M NIBI over 30 epochs or 200k uNIBI per epoch
 	for i := 0; i < 30; i++ {
-		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochstypes.DayEpochID, epochNumber)
+		inflationKeeper.Hooks().AfterEpochEnd(ctx, epochs.DayEpochID, epochNumber)
 		require.Equal(t, sdkmath.NewInt(3_000_000).Add(sdkmath.NewInt(200_000).Mul(sdkmath.NewInt(int64(i+1)))), GetBalanceStaking(ctx, nibiruApp))
 		epochNumber++
 	}

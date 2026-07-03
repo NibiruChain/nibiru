@@ -6,14 +6,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-	epochInfo := types.EpochInfo{
+	epochInfo := epochs.EpochInfo{
 		Identifier:              "bi-monthly",
 		StartTime:               time.Time{},
 		Duration:                time.Hour * 24 * 30 * 2,
@@ -43,7 +43,7 @@ func TestUpsertEpochInfo_HappyPath(t *testing.T) {
 func TestEpochExists(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-	epochInfo := types.EpochInfo{
+	epochInfo := epochs.EpochInfo{
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
 		Duration:              time.Hour * 24 * 30,
@@ -60,7 +60,7 @@ func TestEpochExists(t *testing.T) {
 func TestItFailsAddingEpochThatExists(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
-	epochInfo := types.EpochInfo{
+	epochInfo := epochs.EpochInfo{
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
 		Duration:              time.Hour * 24 * 30,
