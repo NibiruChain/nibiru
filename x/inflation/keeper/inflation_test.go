@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -73,7 +73,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				Contracts: []string{},
 			})
 
-			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, types.DefaultParams())
+			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, inflation.DefaultParams())
 			if tc.rootAccount != "" {
 				require.NoError(t, err)
 			} else {
@@ -96,7 +96,7 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				)
 			} else {
 				// if no root account is specified, then the strategic reserve remains in the x/inflation module account
-				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(types.ModuleName), denoms.NIBI)
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(inflation.ModuleName), denoms.NIBI)
 			}
 
 			balanceStakingRewards := nibiruApp.BankKeeper.GetBalance(
@@ -132,11 +132,11 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 			"no epochs per period",
 			sdk.TokensFromConsensusPower(400_000_000-100_000_001, sdk.DefaultPowerReduction),
 			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
-				nibiruApp.InflationKeeper.Params.Set(ctx, types.Params{
+				nibiruApp.InflationKeeper.Params.Set(ctx, inflation.Params{
 					EpochsPerPeriod:       0,
 					InflationEnabled:      true,
-					PolynomialFactors:     types.DefaultPolynomialFactors,
-					InflationDistribution: types.DefaultInflationDistribution,
+					PolynomialFactors:     inflation.DefaultPolynomialFactors,
+					InflationDistribution: inflation.DefaultInflationDistribution,
 				})
 			},
 			sdkmath.LegacyZeroDec(),

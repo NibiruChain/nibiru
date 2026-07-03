@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
@@ -16,74 +16,74 @@ type querier struct {
 	Keeper
 }
 
-// NewQuerier returns an implementation of the [types.QueryServer] interface
+// NewQuerier returns an implementation of the [inflation.QueryServer] interface
 // for the provided [Keeper].
-func NewQuerier(keeper Keeper) types.QueryServer {
+func NewQuerier(keeper Keeper) inflation.QueryServer {
 	return &querier{Keeper: keeper}
 }
 
-var _ types.QueryServer = querier{}
+var _ inflation.QueryServer = querier{}
 
 // Params is a gRPC query for the module parameters
-func (q querier) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q querier) Params(c context.Context, _ *inflation.QueryParamsRequest) (*inflation.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	params := q.GetParams(ctx)
 
-	return &types.QueryParamsResponse{Params: params}, nil
+	return &inflation.QueryParamsResponse{Params: params}, nil
 }
 
 // Period returns the current period of the inflation module.
 func (k Keeper) Period(
 	c context.Context,
-	_ *types.QueryPeriodRequest,
-) (*types.QueryPeriodResponse, error) {
+	_ *inflation.QueryPeriodRequest,
+) (*inflation.QueryPeriodResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	period := k.CurrentPeriod.Peek(ctx)
-	return &types.QueryPeriodResponse{Period: period}, nil
+	return &inflation.QueryPeriodResponse{Period: period}, nil
 }
 
 // EpochMintProvision returns the EpochMintProvision of the inflation module.
 func (k Keeper) EpochMintProvision(
 	c context.Context,
-	_ *types.QueryEpochMintProvisionRequest,
-) (*types.QueryEpochMintProvisionResponse, error) {
+	_ *inflation.QueryEpochMintProvisionRequest,
+) (*inflation.QueryEpochMintProvisionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	epochMintProvision := k.GetEpochMintProvision(ctx)
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, epochMintProvision)
-	return &types.QueryEpochMintProvisionResponse{EpochMintProvision: coin}, nil
+	return &inflation.QueryEpochMintProvisionResponse{EpochMintProvision: coin}, nil
 }
 
 // SkippedEpochs returns the number of skipped Epochs of the inflation module.
 func (k Keeper) SkippedEpochs(
 	c context.Context,
-	_ *types.QuerySkippedEpochsRequest,
-) (*types.QuerySkippedEpochsResponse, error) {
+	_ *inflation.QuerySkippedEpochsRequest,
+) (*inflation.QuerySkippedEpochsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	skippedEpochs := k.NumSkippedEpochs.Peek(ctx)
-	return &types.QuerySkippedEpochsResponse{SkippedEpochs: skippedEpochs}, nil
+	return &inflation.QuerySkippedEpochsResponse{SkippedEpochs: skippedEpochs}, nil
 }
 
 // InflationRate returns the inflation rate for the current period.
 func (k Keeper) InflationRate(
 	c context.Context,
-	_ *types.QueryInflationRateRequest,
-) (*types.QueryInflationRateResponse, error) {
+	_ *inflation.QueryInflationRateRequest,
+) (*inflation.QueryInflationRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	inflationRate := k.GetInflationRate(ctx, denoms.NIBI)
-	return &types.QueryInflationRateResponse{InflationRate: inflationRate}, nil
+	return &inflation.QueryInflationRateResponse{InflationRate: inflationRate}, nil
 }
 
 // CirculatingSupply returns the total supply in circulation excluding the team
 // allocation in the first year
 func (k Keeper) CirculatingSupply(
 	c context.Context,
-	_ *types.QueryCirculatingSupplyRequest,
-) (*types.QueryCirculatingSupplyResponse, error) {
+	_ *inflation.QueryCirculatingSupplyRequest,
+) (*inflation.QueryCirculatingSupplyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
 	circulatingToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
 	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
 
-	return &types.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
+	return &inflation.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
 }

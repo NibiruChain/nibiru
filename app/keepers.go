@@ -60,6 +60,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 const wasmVmContractMemoryLimit = 32
@@ -129,6 +133,21 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
+	app.OracleKeeper = oraclekeeper.NewKeeper(
+		app.appCodec,
+		app.keys[oracletypes.StoreKey],
+		app.AccountKeeper,
+	)
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		app.appCodec,
+		app.keys[inflationtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		app.StakingKeeper,
+		app.SudoKeeper,
+		authtypes.FeeCollectorName,
+	)
 	app.EpochsKeeper = epochskeeper.NewKeeper(
 		app.appCodec,
 		app.keys[epochs.StoreKey],

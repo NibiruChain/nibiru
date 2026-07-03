@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 // Keeper of the inflation module. Keepers are module-specific "gate keepers"
@@ -19,11 +19,11 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	distrKeeper   types.DistrKeeper
-	stakingKeeper types.StakingKeeper
-	sudoKeeper    types.SudoKeeper
+	accountKeeper inflation.AccountKeeper
+	bankKeeper    inflation.BankKeeper
+	distrKeeper   inflation.DistrKeeper
+	stakingKeeper inflation.StakingKeeper
+	sudoKeeper    inflation.SudoKeeper
 	// feeCollectorName is the name of x/auth module's fee collector module
 	// account, "fee_collector", which collects transaction fees for distribution
 	// to all stakers.
@@ -46,22 +46,22 @@ type Keeper struct {
 	// Params stores module-specific parameters that specify the blockchain token
 	// economics, token release schedule, maximum supply, and whether or not
 	// inflation is enabled on the network.
-	Params collections.Item[types.Params]
+	Params collections.Item[inflation.Params]
 }
 
 // NewKeeper creates a new mint Keeper instance
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
-	distributionKeeper types.DistrKeeper,
-	stakingKeeper types.StakingKeeper,
-	sudoKeeper types.SudoKeeper,
+	accountKeeper inflation.AccountKeeper,
+	bankKeeper inflation.BankKeeper,
+	distributionKeeper inflation.DistrKeeper,
+	stakingKeeper inflation.StakingKeeper,
+	sudoKeeper inflation.SudoKeeper,
 	feeCollectorName string,
 ) Keeper {
 	// ensure mint module account is set
-	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
+	if addr := accountKeeper.GetModuleAddress(inflation.ModuleName); addr == nil {
 		panic("the inflation module account has not been set")
 	}
 
@@ -76,21 +76,21 @@ func NewKeeper(
 		feeCollectorName: feeCollectorName,
 		CurrentPeriod:    collections.NewSequence(storeKey, 0),
 		NumSkippedEpochs: collections.NewSequence(storeKey, 1),
-		Params:           collections.NewItem(storeKey, 2, collections.ProtoValueEncoder[types.Params](cdc)),
+		Params:           collections.NewItem(storeKey, 2, collections.ProtoValueEncoder[inflation.Params](cdc)),
 	}
 }
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", "x/"+types.ModuleName)
+	return ctx.Logger().With("module", "x/"+inflation.ModuleName)
 }
 
 func (k Keeper) Burn(ctx sdk.Context, coins sdk.Coins, sender sdk.AccAddress) error {
 	if err := k.bankKeeper.SendCoinsFromAccountToModule(
-		ctx, sender, types.ModuleName, coins,
+		ctx, sender, inflation.ModuleName, coins,
 	); err != nil {
 		return err
 	}
 
-	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+	return k.bankKeeper.BurnCoins(ctx, inflation.ModuleName, coins)
 }

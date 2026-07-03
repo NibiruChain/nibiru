@@ -10,7 +10,7 @@ import (
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/evm"
-	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflation "github.com/NibiruChain/nibiru/v2/x/inflation"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"

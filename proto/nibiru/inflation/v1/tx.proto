@@ -1,25 +1,24 @@
 syntax = "proto3";
 package nibiru.inflation.v1;
 
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "nibiru/inflation/v1/inflation.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation";
 
 service Msg {
   // ToggleInflation defines a method to enable or disable inflation.
   rpc ToggleInflation(MsgToggleInflation) returns (MsgToggleInflationResponse) {
     option (google.api.http).post = "/nibiru/inflation/v1/toggle";
-  };
+  }
 
   // EditInflationParams defines a method to edit the inflation params.
-  rpc EditInflationParams(MsgEditInflationParams)
-      returns (MsgEditInflationParamsResponse) {
+  rpc EditInflationParams(MsgEditInflationParams) returns (MsgEditInflationParamsResponse) {
     option (google.api.http).post = "/nibiru/inflation/edit-inflation-params";
-  };
+  }
 }
 
 // MsgToggleInflation defines a message to enable or disable inflation.
@@ -28,7 +27,7 @@ message MsgToggleInflation {
   option (gogoproto.goproto_getters) = false;
 
   string sender = 1;
-  bool enable = 2 [ (gogoproto.moretags) = "yaml:\"enable\"" ];
+  bool enable = 2 [(gogoproto.moretags) = "yaml:\"enable\""];
 }
 
 message MsgEditInflationParams {
@@ -42,8 +41,7 @@ message MsgEditInflationParams {
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = true
   ];
-  InflationDistribution inflation_distribution = 4
-      [ (gogoproto.nullable) = true ];
+  InflationDistribution inflation_distribution = 4 [(gogoproto.nullable) = true];
 
   string epochs_per_period = 5 [
     (cosmos_proto.scalar) = "cosmos.Int",
@@ -68,9 +66,11 @@ message MsgEditInflationParamsResponse {}
 
 // MsgBurn: allows burning of any token
 message MsgBurn {
-  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
-  cosmos.base.v1beta1.Coin coin = 2
-      [ (gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false ];
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  cosmos.base.v1beta1.Coin coin = 2 [
+    (gogoproto.moretags) = "yaml:\"coin\"",
+    (gogoproto.nullable) = false
+  ];
 }
 
 message MsgBurnResponse {}

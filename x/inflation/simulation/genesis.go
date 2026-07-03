@@ -9,13 +9,13 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 // RandomizedGenState generates a random GenesisState for distribution
 func RandomizedGenState(simState *module.SimulationState) {
-	inflationGenesis := types.GenesisState{
-		Params: types.Params{
+	inflationGenesis := inflation.GenesisState{
+		Params: inflation.Params{
 			InflationEnabled: true,
 			PolynomialFactors: []sdkmath.LegacyDec{
 				sdkmath.LegacyMustNewDecFromStr("-0.00014851"),
@@ -25,7 +25,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 				sdkmath.LegacyMustNewDecFromStr("-338072.17402939"),
 				sdkmath.LegacyMustNewDecFromStr("17999834.20786474"),
 			},
-			InflationDistribution: types.InflationDistribution{
+			InflationDistribution: inflation.InflationDistribution{
 				CommunityPool:     sdkmath.LegacyNewDecWithPrec(35_142714, 8), // 35.142714%
 				StakingRewards:    sdkmath.LegacyNewDecWithPrec(27_855672, 8), // 27.855672%
 				StrategicReserves: sdkmath.LegacyNewDecWithPrec(37_001614, 8), // 37.001614%
@@ -43,5 +43,5 @@ func RandomizedGenState(simState *module.SimulationState) {
 		panic(err)
 	}
 	fmt.Printf("Selected randomly generated x/inflation parameters:\n%s\n", bz)
-	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&inflationGenesis)
+	simState.GenState[inflation.ModuleName] = simState.Cdc.MustMarshalJSON(&inflationGenesis)
 }

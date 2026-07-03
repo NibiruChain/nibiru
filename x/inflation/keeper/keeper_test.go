@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
@@ -44,10 +44,10 @@ func TestBurn(t *testing.T) {
 			// mint and send money to the sender
 			require.NoError(t,
 				nibiruApp.BankKeeper.MintCoins(
-					ctx, types.ModuleName, sdk.NewCoins(tc.mintCoin)))
+					ctx, inflation.ModuleName, sdk.NewCoins(tc.mintCoin)))
 			require.NoError(t,
 				nibiruApp.BankKeeper.SendCoinsFromModuleToAccount(
-					ctx, types.ModuleName, tc.sender, sdk.NewCoins(tc.mintCoin)),
+					ctx, inflation.ModuleName, tc.sender, sdk.NewCoins(tc.mintCoin)),
 			)
 
 			supply := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")

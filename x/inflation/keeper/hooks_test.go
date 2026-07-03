@@ -12,7 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
@@ -179,7 +179,7 @@ func TestPeriodChangesSkippedEpochsAfterEpochEnd(t *testing.T) {
 			if tc.periodChanges {
 				newProvision := inflationKeeper.GetEpochMintProvision(ctx)
 
-				expectedProvision := types.CalculateEpochMintProvision(
+				expectedProvision := inflation.CalculateEpochMintProvision(
 					inflationKeeper.GetParams(ctx),
 					newPeriod,
 				)
@@ -226,7 +226,7 @@ func TestManual(t *testing.T) {
 
 	// y = 3 * x + 3 -> 3 nibi per epoch for period 0, 6 nibi per epoch for period 1
 	params.PolynomialFactors = []sdkmath.LegacyDec{sdkmath.LegacyNewDec(3), sdkmath.LegacyNewDec(3)}
-	params.InflationDistribution = types.InflationDistribution{
+	params.InflationDistribution = inflation.InflationDistribution{
 		CommunityPool:     sdkmath.LegacyZeroDec(),
 		StakingRewards:    sdkmath.LegacyOneDec(),
 		StrategicReserves: sdkmath.LegacyZeroDec(),

@@ -4,10 +4,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+func (k Keeper) GetParams(ctx sdk.Context) inflation.Params {
 	params, _ := k.Params.Get(ctx)
 	return params
 }
@@ -17,7 +17,7 @@ func (k Keeper) GetPolynomialFactors(ctx sdk.Context) (res []sdkmath.LegacyDec) 
 	return params.PolynomialFactors
 }
 
-func (k Keeper) GetInflationDistribution(ctx sdk.Context) (res types.InflationDistribution) {
+func (k Keeper) GetInflationDistribution(ctx sdk.Context) (res inflation.InflationDistribution) {
 	params, _ := k.Params.Get(ctx)
 	return params.InflationDistribution
 }

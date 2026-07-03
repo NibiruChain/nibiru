@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 // Sudo extends the Keeper with sudo functions. See [x/sudo].
