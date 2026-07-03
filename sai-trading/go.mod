@@ -3,7 +3,7 @@ module github.com/NibiruChain/nibiru/sai-trading
 go 1.25.0
 
 require (
-	github.com/CosmWasm/wasmd v0.44.0 // indirect
+	github.com/CosmWasm/wasmd v0.44.1-nibiru // indirect
 	github.com/CosmWasm/wasmvm v1.10.0 // indirect
 	github.com/NibiruChain/nibiru/v2 v2.8.0
 
@@ -13,7 +13,7 @@ require (
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
-	github.com/cosmos/cosmos-sdk v0.47.13
+	github.com/cosmos/cosmos-sdk v0.47.14-nibiru
 	github.com/cosmos/gogoproto v1.7.2 // indirect
 	github.com/cosmos/ibc-go/v7 v7.10.0 // indirect
 	github.com/ethereum/go-ethereum v1.14.13
@@ -242,10 +242,10 @@ require (
 // TODO: Remove rocksdb dep: https://github.com/NibiruChain/nibiru/issues/2432
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
-	github.com/CosmWasm/wasmd => ../internal/wasmd
+	github.com/CosmWasm/wasmd => ../lib/wasmd
 	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
 	github.com/NibiruChain/nibiru/v2 => ../
-	github.com/cosmos/cosmos-sdk => ../internal/cosmos-sdk
+	github.com/cosmos/cosmos-sdk => ../lib/cosmos-sdk
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
