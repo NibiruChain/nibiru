@@ -370,11 +370,11 @@ jobs:
         with:
           filters: |
             check_changes:
-              - "internal/cosmos-sdk/**/*.go"
-              - "internal/cosmos-sdk/go.mod"
-              - "internal/cosmos-sdk/go.sum"
-              - "internal/cosmos-sdk/**/*.proto"
-              - "internal/cosmos-sdk/justfile"
+              - "lib/cosmos-sdk/**/*.go"
+              - "lib/cosmos-sdk/go.mod"
+              - "lib/cosmos-sdk/go.sum"
+              - "lib/cosmos-sdk/**/*.proto"
+              - "lib/cosmos-sdk/justfile"
 
       - name: skip-tests
         if: steps.check_changes.outputs.check_changes == 'false'
@@ -398,8 +398,8 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: Run tests for internal/cosmos-sdk
+      - name: Run tests for lib/cosmos-sdk
         if: steps.check_changes.outputs.check_changes == 'true'
-        working-directory: "internal/cosmos-sdk"
+        working-directory: "lib/cosmos-sdk"
         run: |
           just test
