@@ -7,6 +7,9 @@ deps:
   - buf.build/cosmos/gogo-proto
   - buf.build/googleapis/googleapis
 breaking:
+  # Breaking config docs:
+  # https://buf.build/docs/breaking/usage/
+  # https://buf.build/docs/configuration/v2/buf-yaml/
   use:
     - FILE
   ignore:
@@ -15,6 +18,10 @@ breaking:
     - nibiru/oracle/module/module.proto
     - nibiru/sudo/module/module.proto
     - nibiru/tokenfactory/module/module.proto
+  # Allow Go generated-code package moves without treating them as proto API breaks.
+  # Rule docs: https://buf.build/docs/breaking/rules/#file_same_go_package
+  except:
+    - FILE_SAME_GO_PACKAGE
 lint:
   use:
     - DEFAULT

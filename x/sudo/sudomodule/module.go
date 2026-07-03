@@ -28,9 +28,9 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleBasic
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 type AppModuleBasic struct {
 	binaryCodec codec.BinaryCodec
@@ -87,9 +87,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModule
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModule implements the AppModule interface for the module.
 type AppModule struct {
@@ -154,20 +154,20 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 	return []abci.ValidatorUpdate{}
 }
 
-//----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleSimulation functions
-//----------------------------------------------------------------------------
+// --------------------------------
 
-// GenerateGenesisState implements module.AppModuleSimulation.
+// GenerateGenesisState implements [module.AppModuleSimulation].
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	simulation.RandomizedGenState(simState)
 }
 
-// RegisterStoreDecoder implements module.AppModuleSimulation.
+// RegisterStoreDecoder implements [module.AppModuleSimulation].
 func (AppModule) RegisterStoreDecoder(sdk.StoreDecoderRegistry) {
 }
 
-// WeightedOperations implements module.AppModuleSimulation.
+// WeightedOperations implements [module.AppModuleSimulation].
 func (AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	return nil
 }

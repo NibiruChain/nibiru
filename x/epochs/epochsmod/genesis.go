@@ -23,8 +23,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState epochs.GenesisState)
 
 // ExportGenesis returns the capability module's exported genesis.
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *epochs.GenesisState {
-	genesis := epochs.DefaultGenesisFromTime(ctx.BlockTime())
-	genesis.Epochs = k.AllEpochInfos(ctx)
-
-	return genesis
+	return &epochs.GenesisState{
+		Epochs: k.AllEpochInfos(ctx),
+	}
 }

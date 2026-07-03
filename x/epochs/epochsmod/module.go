@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -27,9 +28,9 @@ var (
 	_ module.AppModuleSimulation = AppModule{}
 )
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModuleBasic
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
@@ -81,9 +82,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------
 // AppModule
-// ----------------------------------------------------------------------------
+// --------------------------------
 
 // AppModule implements the AppModule interface for the capability module.
 type AppModule struct {
@@ -120,7 +121,13 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	_ = InitGenesis(ctx, *am.keeper, genState)
+	if err := InitGenesis(ctx, *am.keeper, genState); err != nil {
+		// Module migrations may replay default genesis against existing epochs.
+		// Other genesis errors should still abort chain initialization.
+		if !strings.Contains(err.Error(), "already exists") {
+			panic(err)
+		}
+	}
 
 	return []abci.ValidatorUpdate{}
 }
@@ -142,9 +149,9 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	return []abci.ValidatorUpdate{}
 }
 
-// ___________________________________________________________________________
-
+// --------------------------------
 // AppModuleSimulation functions
+// --------------------------------
 
 // GenerateGenesisState creates a randomized GenState of the epochs module.
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {

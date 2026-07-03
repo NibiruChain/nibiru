@@ -282,8 +282,7 @@ func NewNibiruApp(
 	var appBuilder *runtime.AppBuilder
 
 	encodingConfig := MakeEncodingConfig()
-	app.appCodec = encodingConfig.Codec
-	app.SudoKeeper = sudokeeper.NewKeeper(app.appCodec, app.keys[sudo.StoreKey])
+	app.SudoKeeper = sudokeeper.NewKeeper(encodingConfig.Codec, app.keys[sudo.StoreKey])
 
 	appConfig := depinject.Configs(
 		depinject.Supply(
@@ -417,8 +416,9 @@ func NewNibiruApp(
 
 	app.sm.RegisterStoreDecoders()
 
-	// Manual modules are not included in depinject's automatic version map setup,
-	// so the app init chainer writes the full module manager version map.
+	// Register the init chainer after manual modules are added to ModuleManager.
+	// The upgrade module's depinject path only seeds versions for app-wired modules,
+	// so InitChainer writes the full ModuleManager version map before InitGenesis.
 	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
