@@ -38,5 +38,6 @@ dirs_to_rm=(
   "api/nibiru/inflation"
   "api/nibiru/oracle"
   "api/nibiru/sudo"
+  "api/nibiru/tokenfactory"
 )
 rm -rf "${dirs_to_rm[@]}"

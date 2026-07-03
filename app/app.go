@@ -279,6 +279,7 @@ func NewNibiruApp(
 			sudo.StoreKey,
 			wasmtypes.StoreKey,
 			devgastypes.StoreKey,
+			tokenfactorytypes.StoreKey,
 		),
 	}
 	var appBuilder *runtime.AppBuilder
@@ -339,7 +340,6 @@ func NewNibiruApp(
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.EvmKeeper,
-		&app.TokenFactoryKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -373,6 +373,7 @@ func NewNibiruApp(
 		// wasm
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 	); err != nil {
 		panic(err)
 	}

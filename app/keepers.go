@@ -64,6 +64,8 @@ import (
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 const wasmVmContractMemoryLimit = 32
@@ -302,6 +304,15 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.WasmKeeper,
 		app.AccountKeeper,
 		authtypes.FeeCollectorName,
+		govModuleAddr,
+	)
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		app.keys[tokenfactorytypes.StoreKey],
+		app.appCodec,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.DistrKeeper,
+		app.SudoKeeper,
 		govModuleAddr,
 	)
 

@@ -47,7 +47,6 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
 	evmmodulev1 "github.com/NibiruChain/nibiru/v2/api/eth/evm/module"
-	tfmodulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/tokenfactory/module"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
@@ -286,10 +285,6 @@ func init() {
 			{
 				Name:   evmtypes.ModuleName,
 				Config: appconfig.WrapAny(&evmmodulev1.Module{}),
-			},
-			{
-				Name:   tftypes.ModuleName,
-				Config: appconfig.WrapAny(&tfmodulev1.Module{}),
 			},
 		},
 	})
