@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/cli"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/simulation"
 )
