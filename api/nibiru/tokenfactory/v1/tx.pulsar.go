@@ -7647,9 +7647,8 @@ func (*MsgSetDenomMetadataResponse) Descriptor() ([]byte, []int) {
 	return file_nibiru_tokenfactory_v1_tx_proto_rawDescGZIP(), []int{11}
 }
 
-// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
-// bank metadata.
-// [SUDO] Only callable by sudoers.
+// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to
+// change bank metadata. [SUDO] Only callable by sudoers.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought

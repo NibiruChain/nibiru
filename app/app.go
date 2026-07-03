@@ -98,6 +98,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemodule"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -261,39 +262,59 @@ func NewNibiruApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	var (
-		app        = &NibiruApp{}
-		appBuilder *runtime.AppBuilder
-		appConfig  = depinject.Configs(
-			AppConfig,
-			depinject.Supply(
-				// supply the application options
-				appOpts,
+	app := &NibiruApp{
+		keys: sdk.NewKVStoreKeys(
+			// ibc keys
+			ibctransfertypes.StoreKey,
+			ibcfeetypes.StoreKey,
+			ibcexported.StoreKey,
+			icahosttypes.StoreKey,
+			icacontrollertypes.StoreKey,
+			ibcwasmtypes.StoreKey,
 
-				// ADVANCED CONFIGURATION
+			// nibiru x/ keys
+			epochs.StoreKey,
+			sudo.StoreKey,
+			wasmtypes.StoreKey,
+			devgastypes.StoreKey,
+		),
+	}
+	var appBuilder *runtime.AppBuilder
 
-				//
-				// AUTH
-				//
-				// For providing a custom function required in auth to generate custom account types
-				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
-				//
-				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+	encodingConfig := MakeEncodingConfig()
+	app.appCodec = encodingConfig.Codec
+	app.SudoKeeper = sudokeeper.NewKeeper(app.appCodec, app.keys[sudo.StoreKey])
 
-				// For providing a custom a base account type add it below.
-				// By default the auth module uses authtypes.ProtoBaseAccount().
-				//
-				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+	appConfig := depinject.Configs(
+		depinject.Supply(
+			// supply the application options
+			appOpts,
+			app.SudoKeeper,
 
-				//
-				// MINT
-				//
+			// ADVANCED CONFIGURATION
 
-				// For providing a custom inflation function for x/mint add here your
-				// custom function that implements the minttypes.InflationCalculationFn
-				// interface.
-			),
-		)
+			//
+			// AUTH
+			//
+			// For providing a custom function required in auth to generate custom account types
+			// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+			//
+			// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+			// For providing a custom a base account type add it below.
+			// By default the auth module uses authtypes.ProtoBaseAccount().
+			//
+			func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+
+			//
+			// MINT
+			//
+
+			// For providing a custom inflation function for x/mint add here your
+			// custom function that implements the minttypes.InflationCalculationFn
+			// interface.
+		),
+		AppConfig,
 	)
 
 	if err := depinject.Inject(appConfig,
@@ -316,7 +337,6 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
-		&app.SudoKeeper,
 		&app.OracleKeeper,
 		&app.InflationKeeper,
 		&app.EvmKeeper,
@@ -326,21 +346,7 @@ func NewNibiruApp(
 	}
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
-	// init non-depinject keys
-	app.keys = sdk.NewKVStoreKeys(
-		// ibc keys
-		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
-		ibcexported.StoreKey,
-		icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey,
-		ibcwasmtypes.StoreKey,
-
-		// nibiru x/ keys
-		epochs.StoreKey,
-		wasmtypes.StoreKey,
-		devgastypes.StoreKey,
-	)
+	// register non-depinject keys
 	for _, k := range app.keys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
@@ -353,6 +359,7 @@ func NewNibiruApp(
 	if err := app.RegisterModules(
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
+		sudomodule.NewAppModule(app.appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
@@ -410,16 +417,9 @@ func NewNibiruApp(
 
 	app.sm.RegisterStoreDecoders()
 
-	// A custom InitChainer can be set if extra pre-init-genesis logic is required.
-	// By default, when using app wiring enabled module, this is not required.
-	// For instance, the upgrade module will set automatically the module version map in its init genesis thanks to app wiring.
-	// However, when registering a module manually (i.e. that does not support app wiring), the module version map
-	// must be set manually as follow. The upgrade module will de-duplicate the module version map.
-	//
-	// app.SetInitChainer(func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	// 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	// 	return app.App.InitChainer(ctx, req)
-	// })
+	// Manual modules are not included in depinject's automatic version map setup,
+	// so the app init chainer writes the full module manager version map.
+	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
 	app.SetAnteHandler(NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{

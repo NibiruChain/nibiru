@@ -486,10 +486,10 @@ type MsgCreateFunToken struct {
 	Sender string `protobuf:"bytes,3,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Optional flag to allow the `FunToken` mapping to be created with 0 decimals
 	// in the ERC20 sense. Often times, tokens are meant to behave like money and
-	// be divisible, meaning "decimals = 0" is often a mistake. This field defaults
-	// to false as a safety guard against accidental creation of FunTokens with
-	// missing metadata.
-	// Set this to true if the token is truly intended to have 0 decimals.
+	// be divisible, meaning "decimals = 0" is often a mistake. This field
+	// defaults to false as a safety guard against accidental creation of
+	// FunTokens with missing metadata. Set this to true if the token is truly
+	// intended to have 0 decimals.
 	AllowZeroDecimals bool `protobuf:"varint,4,opt,name=allow_zero_decimals,json=allowZeroDecimals,proto3" json:"allow_zero_decimals,omitempty"`
 }
 
@@ -685,7 +685,8 @@ func (m *MsgConvertCoinToEvmResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgConvertCoinToEvmResponse proto.InternalMessageInfo
 
-// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin representation
+// MsgConvertEvmToCoin: Arguments to send an ERC20 token to bank coin
+// representation
 type MsgConvertEvmToCoin struct {
 	// Sender: "nibi"-prefixed Bech32 address for the signer of the transaction.
 	// This is also the address whose ERC20 balance will be deducted.
@@ -697,9 +698,9 @@ type MsgConvertEvmToCoin struct {
 	// Recipient address for the bank coins in Ethereum hexadecimal or
 	// nibi-prefixed Bech32 format.
 	//
-	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20 tokens
-	// because the function that maps between Bech32 and Eth hex addresses is not
-	// bijective for these types of accounts.
+	// Currently, accounts corresponding to Wasm contracts cannot hold ERC20
+	// tokens because the function that maps between Bech32 and Eth hex addresses
+	// is not bijective for these types of accounts.
 	//
 	// See [bug(evm): nibid q evm account is not symmetric for wasm
 	// addresses](https://github.com/NibiruChain/nibiru/issues/2138)
@@ -923,8 +924,8 @@ type MsgClient interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error)
-	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
-	// given recipient address as a bank coin.
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to
+	// the given recipient address as a bank coin.
 	ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error)
 }
 
@@ -997,8 +998,8 @@ type MsgServer interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error)
-	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
-	// given recipient address as a bank coin.
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to
+	// the given recipient address as a bank coin.
 	ConvertEvmToCoin(context.Context, *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error)
 }
 

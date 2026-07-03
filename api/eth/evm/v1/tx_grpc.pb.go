@@ -36,8 +36,8 @@ type MsgClient interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(ctx context.Context, in *MsgConvertCoinToEvm, opts ...grpc.CallOption) (*MsgConvertCoinToEvmResponse, error)
-	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
-	// given recipient address as a bank coin.
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to
+	// the given recipient address as a bank coin.
 	ConvertEvmToCoin(ctx context.Context, in *MsgConvertEvmToCoin, opts ...grpc.CallOption) (*MsgConvertEvmToCoinResponse, error)
 }
 
@@ -112,8 +112,8 @@ type MsgServer interface {
 	// given recipient address ("to_eth_addr") in the corresponding ERC20
 	// representation.
 	ConvertCoinToEvm(context.Context, *MsgConvertCoinToEvm) (*MsgConvertCoinToEvmResponse, error)
-	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to the
-	// given recipient address as a bank coin.
+	// ConvertEvmToCoin: Sends an ERC20 token with a valid "FunToken" mapping to
+	// the given recipient address as a bank coin.
 	ConvertEvmToCoin(context.Context, *MsgConvertEvmToCoin) (*MsgConvertEvmToCoinResponse, error)
 	mustEmbedUnimplementedMsgServer()
 }

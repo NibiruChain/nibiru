@@ -43,7 +43,8 @@ type QueryClient interface {
 	EstimateGas(ctx context.Context, in *EthCallRequest, opts ...grpc.CallOption) (*EstimateGasResponse, error)
 	// TraceTx implements the `debug_traceTransaction` rpc api
 	TraceTx(ctx context.Context, in *QueryTraceTxRequest, opts ...grpc.CallOption) (*QueryTraceTxResponse, error)
-	// TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
+	// TraceBlock implements the `debug_traceBlockByNumber` and
+	// `debug_traceBlockByHash` rpc api
 	TraceBlock(ctx context.Context, in *QueryTraceBlockRequest, opts ...grpc.CallOption) (*QueryTraceBlockResponse, error)
 	// TraceCall implements the `debug_traceCall` rpc api
 	TraceCall(ctx context.Context, in *QueryTraceTxRequest, opts ...grpc.CallOption) (*QueryTraceTxResponse, error)
@@ -203,7 +204,8 @@ type QueryServer interface {
 	EstimateGas(context.Context, *EthCallRequest) (*EstimateGasResponse, error)
 	// TraceTx implements the `debug_traceTransaction` rpc api
 	TraceTx(context.Context, *QueryTraceTxRequest) (*QueryTraceTxResponse, error)
-	// TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
+	// TraceBlock implements the `debug_traceBlockByNumber` and
+	// `debug_traceBlockByHash` rpc api
 	TraceBlock(context.Context, *QueryTraceBlockRequest) (*QueryTraceBlockResponse, error)
 	// TraceCall implements the `debug_traceCall` rpc api
 	TraceCall(context.Context, *QueryTraceTxRequest) (*QueryTraceTxResponse, error)

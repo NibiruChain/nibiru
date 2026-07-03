@@ -38,7 +38,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 type QueryEthAccountRequest struct {
-	// address is the Ethereum hex address or nibi Bech32 address to query the account for.
+	// address is the Ethereum hex address or nibi Bech32 address to query the
+	// account for.
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
@@ -1370,7 +1371,8 @@ func (m *QueryBaseFeeRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryBaseFeeRequest proto.InternalMessageInfo
 
 // QueryBaseFeeResponse returns the EIP1559 base fee.
-// See https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
+// See
+// https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
 type QueryBaseFeeResponse struct {
 	// base_fee is the EIP1559 base fee in units of wei.
 	BaseFee *cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=base_fee,json=baseFee,proto3,customtype=cosmossdk.io/math.Int" json:"base_fee,omitempty"`
@@ -1412,8 +1414,8 @@ func (m *QueryBaseFeeResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryBaseFeeResponse proto.InternalMessageInfo
 
 type QueryFunTokenMappingRequest struct {
-	// Either the hexadecimal-encoded ERC20 contract address or denomination of the
-	// Bank Coin.
+	// Either the hexadecimal-encoded ERC20 contract address or denomination of
+	// the Bank Coin.
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 }
 
@@ -1666,7 +1668,8 @@ type QueryClient interface {
 	EstimateGas(ctx context.Context, in *EthCallRequest, opts ...grpc.CallOption) (*EstimateGasResponse, error)
 	// TraceTx implements the `debug_traceTransaction` rpc api
 	TraceTx(ctx context.Context, in *QueryTraceTxRequest, opts ...grpc.CallOption) (*QueryTraceTxResponse, error)
-	// TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
+	// TraceBlock implements the `debug_traceBlockByNumber` and
+	// `debug_traceBlockByHash` rpc api
 	TraceBlock(ctx context.Context, in *QueryTraceBlockRequest, opts ...grpc.CallOption) (*QueryTraceBlockResponse, error)
 	// TraceCall implements the `debug_traceCall` rpc api
 	TraceCall(ctx context.Context, in *QueryTraceTxRequest, opts ...grpc.CallOption) (*QueryTraceTxResponse, error)
@@ -1824,7 +1827,8 @@ type QueryServer interface {
 	EstimateGas(context.Context, *EthCallRequest) (*EstimateGasResponse, error)
 	// TraceTx implements the `debug_traceTransaction` rpc api
 	TraceTx(context.Context, *QueryTraceTxRequest) (*QueryTraceTxResponse, error)
-	// TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
+	// TraceBlock implements the `debug_traceBlockByNumber` and
+	// `debug_traceBlockByHash` rpc api
 	TraceBlock(context.Context, *QueryTraceBlockRequest) (*QueryTraceBlockResponse, error)
 	// TraceCall implements the `debug_traceCall` rpc api
 	TraceCall(context.Context, *QueryTraceTxRequest) (*QueryTraceTxResponse, error)
