@@ -12,7 +12,7 @@ import (
 	gogoproto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // FilterLogs creates a slice of logs matching the given criteria.

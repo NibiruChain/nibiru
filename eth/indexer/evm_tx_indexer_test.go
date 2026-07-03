@@ -18,8 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 func TestEVMTxIndexer(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	evmtest "github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	evmtest "github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	ethereum "github.com/ethereum/go-ethereum"

@@ -138,5 +138,5 @@ contract WasmQueryContract {
 
 ## Nibiru Codebase References
 
-- [IFunToken.sol](https://github.com/NibiruChain/nibiru/blob/main/x/evm/embeds/contracts/IFunToken.sol)
-- [Wasm.sol](https://github.com/NibiruChain/nibiru/blob/main/x/evm/embeds/contracts/Wasm.sol)
+- [IFunToken.sol](https://github.com/NibiruChain/nibiru/blob/main/evm/embeds/contracts/IFunToken.sol)
+- [Wasm.sol](https://github.com/NibiruChain/nibiru/blob/main/evm/embeds/contracts/Wasm.sol)

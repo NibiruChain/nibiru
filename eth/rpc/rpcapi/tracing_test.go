@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 func traceConfigCallTracer() *evm.TraceConfig {

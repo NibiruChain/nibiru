@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 func TestUpgrade2_16_0_SetsGovVotingPeriodOnMainnet(t *testing.T) {

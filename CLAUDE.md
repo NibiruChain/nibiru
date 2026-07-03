@@ -11,7 +11,8 @@ Nibiru Chain is a breakthrough L1 blockchain and smart contract ecosystem provid
 ## Repository Structure
 
 ### Core Directories
-- `/x/` - Custom blockchain modules (oracle, evm, devgas, epochs, inflation, tokenfactory, sudo)
+- `/x/` - Custom blockchain modules (oracle, devgas, epochs, inflation, tokenfactory, sudo)
+- `/evm/` - Ethereum Virtual Machine execution engine, precompiles, E2E tests, and Forge workspace
 - `/app/` - Core blockchain application logic and module integration
 - `/eth/` - Ethereum-specific implementations (accounts, crypto, RPC)
 - `/proto/` - Protocol Buffer definitions for blockchain messages
@@ -58,7 +59,7 @@ just start
 make test-unit
 
 # Run specific package tests
-go test ./x/evm/...
+go test ./evm/...
 
 # Run with coverage
 make test-coverage
@@ -67,7 +68,7 @@ make test-coverage
 make test-coverage-integration
 
 # Run EVM E2E tests
-cd evm-e2e && npm test
+cd evm/e2e && npm test
 ```
 
 ### Code Quality

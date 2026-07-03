@@ -64,7 +64,7 @@ written in Python.
 
 See the [Nibiru Architecure](../concepts/arch/index.md) for comprehensive documentation.
 
-Nibiru's Cosmos-SDK modules define the core logic for Nibi-Perps, Nibi-Swap, and the decentralized oracle network. Nibiru's modules are defined in the "x/" subfolder of the protocol's Golang code (e.g. the "evm" module is defined in the "x/evm" folder).
+Nibiru's Cosmos-SDK modules define the core logic for Nibi-Perps, Nibi-Swap, and the decentralized oracle network. Nibiru's modules are defined in the "x/" subfolder of the protocol's Golang code (e.g. the "oracle" module is defined in the "x/oracle" folder).
 
 ## Nibiru Discord Server
 

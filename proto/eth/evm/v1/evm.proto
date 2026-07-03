@@ -4,7 +4,7 @@ package eth.evm.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/evm";
 
 // FunToken is a fungible token mapping between a Bank Coin and a corresponding
 // ERC-20 smart contract. Bank Coins here refer to tokens like NIBI, IBC
@@ -50,7 +50,7 @@ message Params {
   // All precompiles present according to the VM are active.
   reserved 7;
   // evm_channels is the list of channel identifiers from EVM compatible chains
-  repeated string evm_channels = 8 [ (gogoproto.customname) = "EVMChannels" ];
+  repeated string evm_channels = 8 [(gogoproto.customname) = "EVMChannels"];
 
   // Fee deducted and burned when calling "CreateFunToken" in units of
   // "evm_denom".
@@ -65,8 +65,7 @@ message Params {
     (gogoproto.nullable) = false
   ];
 
-  repeated eth.evm.v1.WasmPlugin wasm_plugins = 11
-      [ (gogoproto.nullable) = false ];
+  repeated eth.evm.v1.WasmPlugin wasm_plugins = 11 [(gogoproto.nullable) = false];
 }
 
 // WasmPlugin binds a stable plugin name to a Wasm contract address.
@@ -107,15 +106,15 @@ message Log {
   bytes data = 3;
 
   // block_number of the block in which the transaction was included
-  uint64 block_number = 4 [ (gogoproto.jsontag) = "blockNumber" ];
+  uint64 block_number = 4 [(gogoproto.jsontag) = "blockNumber"];
   // tx_hash is the transaction hash
-  string tx_hash = 5 [ (gogoproto.jsontag) = "transactionHash" ];
+  string tx_hash = 5 [(gogoproto.jsontag) = "transactionHash"];
   // tx_index of the transaction in the block
-  uint64 tx_index = 6 [ (gogoproto.jsontag) = "transactionIndex" ];
+  uint64 tx_index = 6 [(gogoproto.jsontag) = "transactionIndex"];
   // block_hash of the block in which the transaction was included
-  string block_hash = 7 [ (gogoproto.jsontag) = "blockHash" ];
+  string block_hash = 7 [(gogoproto.jsontag) = "blockHash"];
   // index of the log in the block
-  uint64 index = 8 [ (gogoproto.jsontag) = "logIndex" ];
+  uint64 index = 8 [(gogoproto.jsontag) = "logIndex"];
 
   // removed is true if this log was reverted due to a chain
   // reorganisation. You must pay attention to this field if you receive logs
@@ -144,13 +143,13 @@ message AccessTuple {
   // address is a hex formatted ethereum address
   string address = 1;
   // storage_keys are hex formatted hashes of the storage keys
-  repeated string storage_keys = 2 [ (gogoproto.jsontag) = "storageKeys" ];
+  repeated string storage_keys = 2 [(gogoproto.jsontag) = "storageKeys"];
 }
 
 // TracerConfig stores additional tracer args. For geth it's only one attr:
 // onlyTopCall
 message TracerConfig {
-  bool only_top_call = 1 [ (gogoproto.jsontag) = "onlyTopCall" ];
+  bool only_top_call = 1 [(gogoproto.jsontag) = "onlyTopCall"];
 }
 
 // TraceConfig holds extra parameters to trace functions.
@@ -168,9 +167,9 @@ message TraceConfig {
   // reexec defines the number of blocks the tracer is willing to go back
   uint64 reexec = 3;
   // disable_stack switches stack capture
-  bool disable_stack = 5 [ (gogoproto.jsontag) = "disableStack" ];
+  bool disable_stack = 5 [(gogoproto.jsontag) = "disableStack"];
   // disable_storage switches storage capture
-  bool disable_storage = 6 [ (gogoproto.jsontag) = "disableStorage" ];
+  bool disable_storage = 6 [(gogoproto.jsontag) = "disableStorage"];
   // debug can be used to print output during capture end
   bool debug = 8;
   // limit defines the maximum length of output, but zero means unlimited
@@ -178,10 +177,9 @@ message TraceConfig {
   // DEPRECATED: chain_config
   reserved 10;
   // enable_memory switches memory capture
-  bool enable_memory = 11 [ (gogoproto.jsontag) = "enableMemory" ];
+  bool enable_memory = 11 [(gogoproto.jsontag) = "enableMemory"];
   // enable_return_data switches the capture of return data
-  bool enable_return_data = 12 [ (gogoproto.jsontag) = "enableReturnData" ];
+  bool enable_return_data = 12 [(gogoproto.jsontag) = "enableReturnData"];
   // tracer_config configures the tracer options
-  eth.evm.v1.TracerConfig tracer_config = 13
-      [ (gogoproto.jsontag) = "tracerConfig" ];
+  eth.evm.v1.TracerConfig tracer_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
 }

@@ -16,10 +16,10 @@ import (
 	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 

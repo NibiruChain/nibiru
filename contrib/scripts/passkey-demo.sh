@@ -14,7 +14,7 @@ BUNDLER_ADDRESS="${BUNDLER_ADDRESS:-}"
 BUNDLER_FUND_AMOUNT_UNIBI="${BUNDLER_FUND_AMOUNT_UNIBI:-10000000000}" # 10,000 NIBI in micro
 BUNDLER_MIN_BALANCE_WEI="${BUNDLER_MIN_BALANCE_WEI:-1000000000000000000}" # 1 NIBI
 
-PASSKEY_CACHE="$ROOT/evm-e2e/.cache/passkey-demo.json"
+PASSKEY_CACHE="$ROOT/evm/e2e/.cache/passkey-demo.json"
 LOCALNET_PID_FILE="$LOG_DIR/passkey-localnet.pid"
 BUNDLER_PID_FILE="$LOG_DIR/passkey-bundler.pid"
 BUNDLER_LOG="$LOG_DIR/passkey-bundler.log"
@@ -34,12 +34,12 @@ if [ -z "$BUNDLER_ADDRESS" ]; then
 fi
 
 if [ -z "$BUNDLER_ADDRESS" ]; then
-  # Try to derive from the private key using ethers in evm-e2e/node_modules
-  BUNDLER_ADDRESS="$(NODE_PATH="$ROOT/evm-e2e/node_modules" node -e "try { const { Wallet } = require('ethers'); console.log(new Wallet(process.env.PK).address) } catch (e) { process.exit(1) }" PK="$BUNDLER_PRIVATE_KEY" 2>/dev/null || true)"
+  # Try to derive from the private key using ethers in evm/e2e/node_modules
+  BUNDLER_ADDRESS="$(NODE_PATH="$ROOT/evm/e2e/node_modules" node -e "try { const { Wallet } = require('ethers'); console.log(new Wallet(process.env.PK).address) } catch (e) { process.exit(1) }" PK="$BUNDLER_PRIVATE_KEY" 2>/dev/null || true)"
 fi
 
 if [ -z "$BUNDLER_ADDRESS" ]; then
-  echo "Failed to derive bundler address from BUNDLER_PRIVATE_KEY. Set BUNDLER_ADDRESS explicitly or install ethers in evm-e2e/node_modules."
+  echo "Failed to derive bundler address from BUNDLER_PRIVATE_KEY. Set BUNDLER_ADDRESS explicitly or install ethers in evm/e2e/node_modules."
   exit 1
 fi
 
@@ -147,10 +147,10 @@ else
 fi
 
 echo "Compiling contracts (hardhat)..."
-(cd "$ROOT/evm-e2e" && npx hardhat compile --show-stack-traces >/dev/null)
+(cd "$ROOT/evm/e2e" && npx hardhat compile --show-stack-traces >/dev/null)
 
 echo "Deploying EntryPoint + PasskeyAccountFactory and writing passkey-app/.env.local"
-(cd "$ROOT/evm-e2e" && node scripts/passkey-demo-setup.js)
+(cd "$ROOT/evm/e2e" && node scripts/passkey-demo-setup.js)
 
 if [ ! -f "$PASSKEY_CACHE" ]; then
   echo "Could not find $PASSKEY_CACHE; skipping bundler start."
@@ -165,7 +165,7 @@ FACTORY_ADDR="$(jq -r .passkeyFactory "$PASSKEY_CACHE")"
 echo "Restarting passkey bundler on $BUNDLER_URL (logs: $BUNDLER_LOG)"
 cleanup_bundler
 (
-  cd "$ROOT/evm-e2e/passkey-sdk"
+  cd "$ROOT/evm/e2e/passkey-sdk"
   if [ ! -d node_modules ]; then
     echo "Installing passkey-sdk dependencies..."
     npm install >/dev/null

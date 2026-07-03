@@ -9,9 +9,9 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
+	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 type AnteHandlerOptions struct {
