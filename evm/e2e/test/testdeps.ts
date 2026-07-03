@@ -112,7 +112,7 @@ const provider: ethers.JsonRpcProvider = await (async () => {
 /**
  * `account` is the primary funded signer for many of the EVM E2E tests.
  * The seed phrase, `process.env.MNEMONIC`, is set by
- * `contrib/scripts/localnet.sh` to create the `validator` key on
+ * `cmd/nibid/localnet.sh` to create the `validator` key on
  * the `nibiru-localnet-0` blockchain. That validator/dev account is
  * funded in genesis and can deploy contracts, pay gas, and fund
  * other test wallets.

@@ -92,7 +92,7 @@ func (s *TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 
-	// `contrib/scripts/localnet.sh` patches genesis so the recovered
+	// `cmd/nibid/localnet.sh` patches genesis so the recovered
 	// `validator` account is the x/sudo root; `nutil.LocalnetValAddr` matches
 	// that fixed localnet account.
 	s.root = nutil.LocalnetValAddr

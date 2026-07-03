@@ -6,7 +6,7 @@ setup:
 # Locally install the `nibid` binary and build if needed.
 install: 
   go mod tidy
-  make install
+  contrib/scripts/build-nibiru.sh --run
 
 alias i := install
 
@@ -18,8 +18,9 @@ install-covtool:
     go install github.com/wa
 
 # Build the `nibid` binary.
-build: 
-  make build
+build:
+  # make build
+  contrib/scripts/build-nibiru.sh --run --just-build
 
 alias b := build
 
@@ -143,7 +144,7 @@ lint:
 
 # Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-  bash contrib/scripts/localnet.sh --run {{PASS_FLAGS}}
+  bash cmd/nibid/localnet.sh --run {{PASS_FLAGS}}
 
 # Clears the logs directory
 log-clear:
