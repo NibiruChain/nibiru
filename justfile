@@ -8,6 +8,8 @@ install:
   go mod tidy
   make install
 
+alias i := install
+
 install-clean:
   rm -rf temp
   just install
@@ -18,6 +20,8 @@ install-covtool:
 # Build the `nibid` binary.
 build: 
   make build
+
+alias b := build
 
 # Cleans the Go cache, modcache, and testcashe
 clean-cache:
