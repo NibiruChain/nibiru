@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationKeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
@@ -22,10 +22,10 @@ type SuiteInflationSudo struct {
 }
 
 func (s *SuiteInflationSudo) TestMergeInflationParams() {
-	currentParams := types.DefaultParams()
+	currentParams := inflation.DefaultParams()
 
 	newEpochsPerPeriod := sdkmath.NewInt(4)
-	paramsChanges := types.MsgEditInflationParams{
+	paramsChanges := inflation.MsgEditInflationParams{
 		EpochsPerPeriod: &newEpochsPerPeriod,
 	}
 
@@ -41,13 +41,13 @@ func (s *SuiteInflationSudo) TestMergeInflationParams() {
 	s.Require().EqualValues(currentParams.InflationDistribution, paramsAfter.InflationDistribution)
 
 	// Test a change to all parameters
-	newInflationDistribution := types.InflationDistribution{
+	newInflationDistribution := inflation.InflationDistribution{
 		CommunityPool:     sdkmath.LegacyMustNewDecFromStr("0.8"),
 		StakingRewards:    sdkmath.LegacyMustNewDecFromStr("0.1"),
 		StrategicReserves: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
 
-	paramsChanges = types.MsgEditInflationParams{
+	paramsChanges = inflation.MsgEditInflationParams{
 		EpochsPerPeriod: &newEpochsPerPeriod,
 		PeriodsPerYear:  &newEpochsPerPeriod,
 		MaxPeriod:       &newEpochsPerPeriod,
@@ -81,12 +81,12 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 		sdkmath.LegacyMustNewDecFromStr("0.1"),
 		sdkmath.LegacyMustNewDecFromStr("0.2"),
 	}
-	inflationDistribution := types.InflationDistribution{
+	inflationDistribution := inflation.InflationDistribution{
 		CommunityPool:     sdkmath.LegacyMustNewDecFromStr("0.8"),
 		StakingRewards:    sdkmath.LegacyMustNewDecFromStr("0.1"),
 		StrategicReserves: sdkmath.LegacyMustNewDecFromStr("0.1"),
 	}
-	msgEditParams := types.MsgEditInflationParams{
+	msgEditParams := inflation.MsgEditInflationParams{
 		EpochsPerPeriod:       &epochsPerPeriod,
 		PeriodsPerYear:        &periodsPerYear,
 		MaxPeriod:             &maxPeriod,
@@ -95,7 +95,7 @@ func (s *SuiteInflationSudo) TestEditInflationParams() {
 	}
 
 	s.T().Log("Params before MUST NOT be equal to default")
-	defaultParams := types.DefaultParams()
+	defaultParams := inflation.DefaultParams()
 	currParams, err := nibiru.InflationKeeper.Params.Get(ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(currParams, defaultParams,

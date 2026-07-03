@@ -16,7 +16,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 var (

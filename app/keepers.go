@@ -60,8 +60,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )

@@ -10,13 +10,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 // GetQueryCmd returns the cli query commands for the inflation module.
 func GetQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                        types.ModuleName,
+		Use:                        inflation.ModuleName,
 		Short:                      "Querying commands for the inflation module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -48,9 +48,9 @@ func GetPeriod() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			params := &types.QueryPeriodRequest{}
+			params := &inflation.QueryPeriodRequest{}
 			res, err := queryClient.Period(context.Background(), params)
 			if err != nil {
 				return err
@@ -78,9 +78,9 @@ func GetEpochMintProvision() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			req := &types.QueryEpochMintProvisionRequest{}
+			req := &inflation.QueryEpochMintProvisionRequest{}
 			res, err := queryClient.EpochMintProvision(context.Background(), req)
 			if err != nil {
 				return err
@@ -108,9 +108,9 @@ func GetSkippedEpochs() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			req := &types.QuerySkippedEpochsRequest{}
+			req := &inflation.QuerySkippedEpochsRequest{}
 			res, err := queryClient.SkippedEpochs(context.Background(), req)
 			if err != nil {
 				return err
@@ -137,9 +137,9 @@ func GetCirculatingSupply() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			req := &types.QueryCirculatingSupplyRequest{}
+			req := &inflation.QueryCirculatingSupplyRequest{}
 			res, err := queryClient.CirculatingSupply(context.Background(), req)
 			if err != nil {
 				return err
@@ -166,9 +166,9 @@ func GetInflationRate() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			req := &types.QueryInflationRateRequest{}
+			req := &inflation.QueryInflationRateRequest{}
 			res, err := queryClient.InflationRate(context.Background(), req)
 			if err != nil {
 				return err
@@ -196,9 +196,9 @@ func GetParams() *cobra.Command {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
+			queryClient := inflation.NewQueryClient(clientCtx)
 
-			req := &types.QueryParamsRequest{}
+			req := &inflation.QueryParamsRequest{}
 			res, err := queryClient.Params(context.Background(), req)
 			if err != nil {
 				return err

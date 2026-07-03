@@ -52,7 +52,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	evmtypes "github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"

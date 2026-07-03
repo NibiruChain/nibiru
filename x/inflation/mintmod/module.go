@@ -1,4 +1,4 @@
-package inflation
+package mintmod
 
 import (
 	"context"
@@ -17,10 +17,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/simulation"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 )
 
 // type check to ensure the interface is properly implemented
@@ -35,12 +35,12 @@ type AppModuleBasic struct{}
 
 // Name returns the inflation module's name.
 func (AppModuleBasic) Name() string {
-	return types.ModuleName
+	return inflation.ModuleName
 }
 
 // RegisterLegacyAminoCodec registers the inflation module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterLegacyAminoCodec(cdc)
+	inflation.RegisterLegacyAminoCodec(cdc)
 }
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
@@ -50,20 +50,20 @@ func (AppModuleBasic) ConsensusVersion() uint64 {
 
 // RegisterInterfaces registers the module's interface types
 func (b AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	types.RegisterInterfaces(registry)
+	inflation.RegisterInterfaces(registry)
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the inflation
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesisState())
+	return cdc.MustMarshalJSON(inflation.DefaultGenesisState())
 }
 
 // ValidateGenesis performs genesis state validation for the inflation module.
 func (b AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-	var genesisState types.GenesisState
+	var genesisState inflation.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genesisState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", inflation.ModuleName, err)
 	}
 
 	return genesisState.Validate()
@@ -71,7 +71,7 @@ func (b AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncoding
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the inflation module.
 func (b AppModuleBasic) RegisterGRPCGatewayRoutes(c client.Context, serveMux *runtime.ServeMux) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(c)); err != nil {
+	if err := inflation.RegisterQueryHandlerClient(context.Background(), serveMux, inflation.NewQueryClient(c)); err != nil {
 		panic(err)
 	}
 }
@@ -110,7 +110,7 @@ func NewAppModule(
 
 // Name returns the inflation module's name.
 func (AppModule) Name() string {
-	return types.ModuleName
+	return inflation.ModuleName
 }
 
 // RegisterInvariants registers the inflation module invariants.
@@ -118,9 +118,9 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	inflation.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	querier := keeper.NewQuerier(am.keeper)
-	types.RegisterQueryServer(cfg.QueryServer(), querier)
+	inflation.RegisterQueryServer(cfg.QueryServer(), querier)
 }
 
 // BeginBlock returns the begin blocker for the inflation module.
@@ -136,7 +136,7 @@ func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.Valid
 // InitGenesis performs genesis initialization for the inflation module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState types.GenesisState
+	var genesisState inflation.GenesisState
 
 	cdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.keeper, am.ak, am.sk, genesisState)

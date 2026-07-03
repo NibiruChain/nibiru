@@ -1,4 +1,4 @@
-package types
+package inflation
 
 import (
 	grpc "google.golang.org/grpc"

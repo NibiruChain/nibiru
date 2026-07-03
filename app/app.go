@@ -92,8 +92,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/evm"
 	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	"github.com/NibiruChain/nibiru/v2/x/inflation/mintmod"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemod"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -151,7 +151,7 @@ var (
 		evmmodule.AppModuleBasic{},
 		oraclemod.AppModuleBasic{},
 		epochsmod.AppModuleBasic{},
-		inflation.AppModuleBasic{},
+		mintmod.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
@@ -359,7 +359,7 @@ func NewNibiruApp(
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
 		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
-		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
+		mintmod.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
 		sudomodule.NewAppModule(app.appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 

@@ -2,11 +2,11 @@
 // source: nibiru/inflation/v1/query.proto
 
 /*
-Package types is a reverse proxy.
+Package inflation is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package types
+package inflation
 
 import (
 	"context"

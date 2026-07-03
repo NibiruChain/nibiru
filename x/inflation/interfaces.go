@@ -1,4 +1,4 @@
-package types // noalias
+package inflation // noalias
 
 import (
 	sdkmath "cosmossdk.io/math"

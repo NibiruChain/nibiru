@@ -6,8 +6,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
@@ -19,7 +19,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	params := app.InflationKeeper.GetParams(ctx)
 	require.False(t, params.InflationEnabled)
 
-	msg := types.MsgToggleInflation{
+	msg := inflation.MsgToggleInflation{
 		Sender: testutil.NewAccAddress().String(),
 		Enable: false,
 	}
@@ -29,7 +29,7 @@ func TestMsgToggleInflation(t *testing.T) {
 	params = app.InflationKeeper.GetParams(ctx)
 	require.False(t, params.InflationEnabled)
 
-	msg = types.MsgToggleInflation{
+	msg = inflation.MsgToggleInflation{
 		Sender: testutil.ADDR_SUDO_ROOT,
 		Enable: true,
 	}
@@ -49,7 +49,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
 	newEpochPerPeriod := sdkmath.NewInt(42)
-	msg := types.MsgEditInflationParams{
+	msg := inflation.MsgEditInflationParams{
 		Sender:          testutil.NewAccAddress().String(),
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}
@@ -59,7 +59,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 	params = app.InflationKeeper.GetParams(ctx)
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)
 
-	msg = types.MsgEditInflationParams{
+	msg = inflation.MsgEditInflationParams{
 		Sender:          testutil.ADDR_SUDO_ROOT,
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}

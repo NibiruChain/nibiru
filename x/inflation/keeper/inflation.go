@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
@@ -28,7 +28,7 @@ import (
 func (k Keeper) MintAndAllocateInflation(
 	ctx sdk.Context,
 	coins sdk.Coin,
-	params types.Params,
+	params inflation.Params,
 ) (
 	staking, strategic, community sdk.Coin,
 	err error,
@@ -50,7 +50,7 @@ func (k Keeper) MintAndAllocateInflation(
 // MintCoins calls the underlying [BankKeeper] mints tokens "coin".
 func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 	coins := sdk.Coins{coin}
-	return k.bankKeeper.MintCoins(ctx, types.ModuleName, coins)
+	return k.bankKeeper.MintCoins(ctx, inflation.ModuleName, coins)
 }
 
 // AllocatePolynomialInflation allocates coins from the inflation to external
@@ -67,19 +67,19 @@ func (k Keeper) MintCoins(ctx sdk.Context, coin sdk.Coin) error {
 func (k Keeper) AllocatePolynomialInflation(
 	ctx sdk.Context,
 	mintedCoin sdk.Coin,
-	params types.Params,
+	params inflation.Params,
 ) (
 	staking, strategic, community sdk.Coin,
 	err error,
 ) {
 	inflationDistribution := params.InflationDistribution
-	inflationModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	inflationModuleAddr := k.accountKeeper.GetModuleAddress(inflation.ModuleName)
 
 	// Allocate staking rewards into fee collector account
 	staking = k.GetProportions(ctx, mintedCoin, inflationDistribution.StakingRewards)
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(
 		ctx,
-		types.ModuleName,
+		inflation.ModuleName,
 		k.feeCollectorName,
 		sdk.NewCoins(staking),
 	); err != nil {
@@ -107,7 +107,7 @@ func (k Keeper) AllocatePolynomialInflation(
 	}
 
 	if err = k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx, types.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic),
+		ctx, inflation.ModuleName, strategicAccountAddr, sdk.NewCoins(strategic),
 	); err != nil {
 		err := fmt.Errorf("inflation error: failed to send coins to sudo root account: %w", err)
 		k.Logger(ctx).Error(err.Error())
@@ -115,7 +115,7 @@ func (k Keeper) AllocatePolynomialInflation(
 	}
 
 	return staking, strategic, community, ctx.EventManager().EmitTypedEvents(
-		&types.EventInflationDistribution{
+		&inflation.EventInflationDistribution{
 			StakingRewards:   staking,
 			StrategicReserve: strategic,
 			CommunityPool:    community,
@@ -167,7 +167,7 @@ func (k Keeper) GetInflationRate(ctx sdk.Context, mintDenom string) sdkmath.Lega
 func (k Keeper) GetEpochMintProvision(ctx sdk.Context) sdkmath.LegacyDec {
 	peek := k.CurrentPeriod.Peek(ctx)
 
-	return types.CalculateEpochMintProvision(
+	return inflation.CalculateEpochMintProvision(
 		k.GetParams(ctx),
 		peek,
 	)

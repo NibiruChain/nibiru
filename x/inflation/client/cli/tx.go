@@ -11,13 +11,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 )
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	inflationTxCmd := &cobra.Command{
-		Use:                        types.ModuleName,
+		Use:                        inflation.ModuleName,
 		Short:                      "Inflation module subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
@@ -50,7 +50,7 @@ $ nibid tx inflation toggle-inflation true
 				return err
 			}
 
-			msg := &types.MsgToggleInflation{
+			msg := &inflation.MsgToggleInflation{
 				Sender: clientCtx.GetFromAddress().String(),
 				Enable: args[0] == "true",
 			}
@@ -95,7 +95,7 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 				return err
 			}
 
-			msg := &types.MsgEditInflationParams{
+			msg := &inflation.MsgEditInflationParams{
 				Sender: clientCtx.GetFromAddress().String(),
 			}
 
@@ -118,7 +118,7 @@ $ nibid tx oracle edit-params --staking-proportion 0.6 --community-pool-proporti
 			}
 
 			if !stakingProportionDec.IsNil() && !communityPoolProportionDec.IsNil() && !strategicReservesProportionDec.IsNil() {
-				msg.InflationDistribution = &types.InflationDistribution{
+				msg.InflationDistribution = &inflation.InflationDistribution{
 					StakingRewards:    stakingProportionDec,
 					CommunityPool:     communityPoolProportionDec,
 					StrategicReserves: strategicReservesProportionDec,

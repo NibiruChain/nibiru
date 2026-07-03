@@ -1,40 +1,37 @@
 package inflation
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
-)
-
-// InitGenesis import module genesis
-func InitGenesis(
-	ctx sdk.Context,
-	k keeper.Keeper,
-	ak types.AccountKeeper,
-	_ types.StakingKeeper,
-	data types.GenesisState,
-) {
-	// Ensure inflation module account is set on genesis
-	if acc := ak.GetModuleAccount(ctx, types.ModuleName); acc == nil {
-		panic("the inflation module account has not been set")
+// NewGenesisState creates a new GenesisState object
+func NewGenesisState(
+	params Params,
+	period uint64,
+	skippedEpochs uint64,
+) GenesisState {
+	return GenesisState{
+		Params:        params,
+		Period:        period,
+		SkippedEpochs: skippedEpochs,
 	}
-
-	// Set genesis state
-	k.Params.Set(ctx, data.Params)
-
-	period := data.Period
-	k.CurrentPeriod.Set(ctx, period)
-
-	skippedEpochs := data.SkippedEpochs
-	k.NumSkippedEpochs.Set(ctx, skippedEpochs)
 }
 
-// ExportGenesis returns a GenesisState for a given context and keeper.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
-	return &types.GenesisState{
-		Params:        k.GetParams(ctx),
-		Period:        k.CurrentPeriod.Peek(ctx),
-		SkippedEpochs: k.NumSkippedEpochs.Peek(ctx),
+// DefaultGenesisState creates a default GenesisState object
+func DefaultGenesisState() *GenesisState {
+	return &GenesisState{
+		Params:        DefaultParams(),
+		Period:        0,
+		SkippedEpochs: 0,
 	}
+}
+
+// Validate performs basic genesis state validation returning an error upon any
+// failure.
+func (gs GenesisState) Validate() error {
+	if err := validateUint64(gs.SkippedEpochs); err != nil {
+		return err
+	}
+
+	if err := validateUint64(gs.Period); err != nil {
+		return err
+	}
+
+	return gs.Params.Validate()
 }

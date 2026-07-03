@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
@@ -72,7 +72,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 	period := h.K.CurrentPeriod.Peek(ctx)
 	epochsPerPeriod := h.K.GetEpochsPerPeriod(ctx)
 
-	epochMintProvision := types.CalculateEpochMintProvision(
+	epochMintProvision := inflation.CalculateEpochMintProvision(
 		params,
 		period,
 	)
@@ -130,28 +130,28 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 
 		if mintedCoin.Amount.IsInt64() {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "allocate", "total"},
+				[]string{inflation.ModuleName, "allocate", "total"},
 				float32(mintedCoin.Amount.Int64()),
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
 		}
 		if stakingAmt.IsInt64() {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "allocate", "staking", "total"},
+				[]string{inflation.ModuleName, "allocate", "staking", "total"},
 				float32(stakingAmt.Int64()),
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
 		}
 		if strategicAmt.IsInt64() {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "allocate", "strategic", "total"},
+				[]string{inflation.ModuleName, "allocate", "strategic", "total"},
 				float32(strategicAmt.Int64()),
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
 		}
 		if cpAmt.IsInt64() {
 			telemetry.IncrCounterWithLabels(
-				[]string{types.ModuleName, "allocate", "community_pool", "total"},
+				[]string{inflation.ModuleName, "allocate", "community_pool", "total"},
 				float32(cpAmt.Int64()),
 				[]metrics.Label{telemetry.NewLabel("denom", mintedCoin.Denom)},
 			)
@@ -160,9 +160,9 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeInflation,
-			sdk.NewAttribute(types.AttributeEpochNumber, fmt.Sprintf("%d", epochNumber-numSkippedEpochs)),
-			sdk.NewAttribute(types.AttributeKeyEpochProvisions, epochMintProvision.String()),
+			inflation.EventTypeInflation,
+			sdk.NewAttribute(inflation.AttributeEpochNumber, fmt.Sprintf("%d", epochNumber-numSkippedEpochs)),
+			sdk.NewAttribute(inflation.AttributeKeyEpochProvisions, epochMintProvision.String()),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
 		),
 	)

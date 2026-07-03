@@ -1,4 +1,4 @@
-package types
+package inflation
 
 import (
 	sdkmath "cosmossdk.io/math"

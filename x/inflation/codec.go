@@ -1,4 +1,4 @@
-package types
+package inflation
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"

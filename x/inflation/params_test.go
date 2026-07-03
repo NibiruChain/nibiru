@@ -1,11 +1,11 @@
-package types_test
+package inflation_test
 
 import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
 
 	"github.com/stretchr/testify/require"
 )

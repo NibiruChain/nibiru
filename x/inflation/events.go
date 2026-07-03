@@ -1,4 +1,4 @@
-package types
+package inflation
 
 // Minting module event types
 const (
