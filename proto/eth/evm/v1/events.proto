@@ -6,7 +6,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "eth/evm/v1/evm.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/evm";
 
 // EventEthereumTx defines the event for an Ethereum transaction
 message EventEthereumTx {
@@ -29,7 +29,7 @@ message EventEthereumTx {
 // EventTxLog defines the event for an Ethereum transaction log
 message EventTxLog {
   // tx_logs is an array of transaction logs
-  repeated Log logs = 1 [ (gogoproto.nullable) = false ];
+  repeated Log logs = 1 [(gogoproto.nullable) = false];
 }
 
 // EventBlockBloom contains the bloom filter for an Ethereum block.
@@ -57,7 +57,7 @@ message EventConvertCoinToEvm {
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
-  repeated eth.evm.v1.LogLite evm_logs = 5 [ (gogoproto.nullable) = false ];
+  repeated eth.evm.v1.LogLite evm_logs = 5 [(gogoproto.nullable) = false];
 }
 
 // EventTransfer defines event for EVM transfer
@@ -90,7 +90,7 @@ message EventConvertEvmToCoin {
     (gogoproto.nullable) = false
   ];
   string sender_eth_addr = 6;
-  repeated eth.evm.v1.LogLite evm_logs = 7 [ (gogoproto.nullable) = false ];
+  repeated eth.evm.v1.LogLite evm_logs = 7 [(gogoproto.nullable) = false];
 }
 
 // EventWeiBlockDelta is an event emitted when there is a non-zero value for

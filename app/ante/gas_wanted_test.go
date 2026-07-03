@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 func (s *Suite) TestGasWantedDecorator() {

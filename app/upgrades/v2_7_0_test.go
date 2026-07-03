@@ -10,9 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 // Prior to v2.7.0 on mainnet, WNIBI.sol is live as a contract, but the EVM

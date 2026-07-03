@@ -32,7 +32,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/pubsub"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 type WebsocketsServer interface {

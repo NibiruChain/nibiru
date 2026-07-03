@@ -36,12 +36,12 @@ gen-proto:
 proto *ARGS:
   bash contrib/scripts/proto.sh {{ARGS}}
 
-# Generate Solidity artifacts for x/evm/embeds
+# Generate Solidity artifacts for evm/embeds
 gen-embeds:
   #!/usr/bin/env bash
   source contrib/bashlib.sh
 
-  embeds_dir="x/evm/embeds"
+  embeds_dir="evm/embeds"
   log_info "Begin to compile Solidity in $embeds_dir"
   which_ok yarn
   log_info "Using system node version: $(yarn exec -- node -v)"
@@ -211,7 +211,7 @@ passkey-demo:
 
 # Runs golang formatter (gofumpt)
 fmt:
-  gofumpt -w x app gosdk eth
+  gofumpt -w evm x app gosdk eth
 
 # Format and lint
 tidy: 

@@ -13,7 +13,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // TraceTransaction returns the structured logs created during the execution of EVM

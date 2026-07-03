@@ -24,10 +24,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/bank/exported"
 	"github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	banktestutil "github.com/NibiruChain/nibiru/v2/x/bank/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
 )
 
 const (

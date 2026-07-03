@@ -7,8 +7,8 @@ import (
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 func (s *BackendSuite) TestChainID() {

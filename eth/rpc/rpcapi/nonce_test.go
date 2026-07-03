@@ -9,7 +9,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // TestNonceIncrementWithMultipleMsgsTx tests that the nonce is incremented

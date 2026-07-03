@@ -10,8 +10,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 func (s *Suite) TestAnteDecoratorAuthzGuard() {

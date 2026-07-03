@@ -1,7 +1,7 @@
 package evmtrader
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 

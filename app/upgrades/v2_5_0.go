@@ -15,9 +15,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
