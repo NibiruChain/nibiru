@@ -1,4 +1,4 @@
-package oraclemodule
+package oraclemod
 
 import (
 	"fmt"

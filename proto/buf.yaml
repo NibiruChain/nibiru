@@ -14,8 +14,6 @@ breaking:
     - FILE
   ignore:
     - nibiru/epochs/module/module.proto
-    - nibiru/inflation/module/module.proto
-    - nibiru/oracle/module/module.proto
     - nibiru/sudo/module/module.proto
     - nibiru/tokenfactory/module/module.proto
   # Allow Go generated-code package moves without treating them as proto API breaks.

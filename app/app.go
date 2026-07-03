@@ -95,7 +95,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemodule"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemod"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
@@ -149,7 +149,7 @@ var (
 		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
-		oraclemodule.AppModuleBasic{},
+		oraclemod.AppModuleBasic{},
 		epochsmod.AppModuleBasic{},
 		inflation.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},
@@ -274,6 +274,8 @@ func NewNibiruApp(
 
 			// nibiru x/ keys
 			epochs.StoreKey,
+			oracletypes.StoreKey,
+			inflationtypes.StoreKey,
 			sudo.StoreKey,
 			wasmtypes.StoreKey,
 			devgastypes.StoreKey,
@@ -336,8 +338,6 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
-		&app.OracleKeeper,
-		&app.InflationKeeper,
 		&app.EvmKeeper,
 		&app.TokenFactoryKeeper,
 	); err != nil {
@@ -358,6 +358,8 @@ func NewNibiruApp(
 	if err := app.RegisterModules(
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
+		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
+		inflation.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
 		sudomodule.NewAppModule(app.appCodec, app.SudoKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 

@@ -1,12 +1,9 @@
-package oraclemodule
+package oraclemod
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/depinject"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -17,16 +14,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
-
-	modulev1 "github.com/NibiruChain/nibiru/v2/api/nibiru/oracle/module"
 )
 
 var (
@@ -113,12 +106,6 @@ func NewAppModule(
 // Name returns the oracle module's name.
 func (AppModule) Name() string { return types.ModuleName }
 
-// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() {}
-
-// IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() {}
-
 // RegisterInvariants performs a no-op.
 func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
@@ -182,43 +169,4 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	_ = am
 	_ = simState
 	return nil
-}
-
-//
-// App Wiring Setup
-//
-
-func init() {
-	appmodule.Register(&modulev1.Module{},
-		appmodule.Provide(ProvideModule),
-	)
-}
-
-type OracleInputs struct {
-	depinject.In
-
-	Config *modulev1.Module
-	Key    *store.KVStoreKey
-	Cdc    codec.Codec
-
-	AccountKeeper authkeeper.AccountKeeper
-}
-
-type OracleOutputs struct {
-	depinject.Out
-
-	Keeper keeper.Keeper
-
-	Module appmodule.AppModule
-}
-
-func ProvideModule(in OracleInputs) OracleOutputs {
-	k := keeper.NewKeeper(in.Cdc, in.Key, in.AccountKeeper)
-
-	m := NewAppModule(in.Cdc, k)
-
-	return OracleOutputs{
-		Keeper: k,
-		Module: m,
-	}
 }
