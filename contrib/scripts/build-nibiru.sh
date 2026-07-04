@@ -81,7 +81,7 @@ Build or install the nibid binary.
 With no arguments, this script prints help and exits. Use --run to execute.
 
 Options:
-  --run         Install nibid to PATH using go install (equivalent to make install).
+  --run         Install nibid to PATH using go install.
   --just-build  Build nibid to ./build/nibid instead of installing (requires --run).
   -h, --help    Show this help message and exit.
 

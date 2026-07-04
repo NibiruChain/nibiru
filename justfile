@@ -19,7 +19,6 @@ install-covtool:
 
 # Build the `nibid` binary.
 build:
-  # make build
   contrib/scripts/build-nibiru.sh --run --just-build
 
 alias b := build

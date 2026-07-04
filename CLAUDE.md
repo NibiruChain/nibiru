@@ -33,14 +33,10 @@ Nibiru Chain is a breakthrough L1 blockchain and smart contract ecosystem provid
 ### Build & Install
 ```bash
 # Install the nibid binary
-make install
+just install
 
 # Build the project
-make build
-
-# Alternative with just
 just build
-just install
 ```
 
 ### Local Development
@@ -114,7 +110,7 @@ make proto-break-check
    ```bash
    git clone https://github.com/NibiruChain/nibiru
    cd nibiru
-   make install
+   just install
    ```
 
 2. **Run Local Network**

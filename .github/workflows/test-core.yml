@@ -161,7 +161,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, macos-latest]
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     steps:
       - name: skip-build
         if: needs.check-nibiru-go.outputs.nibiru-go == 'false'
