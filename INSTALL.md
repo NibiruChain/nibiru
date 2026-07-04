@@ -92,7 +92,6 @@ In addition to the commands available within that folder, `nibid` pulls in cli s
 After updating the code run
 
 ```bash
-just build
 just install
 ```
 
