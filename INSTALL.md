@@ -47,7 +47,6 @@ cd nibiru
 On this fresh clone of the repo, simply run
 
 ```bash
-just build
 just install
 make localnet
 ```
