@@ -11,7 +11,7 @@ This guide will explain how to install the Nibiru binary, `nibid`, onto your sys
 - [Upgrade](#upgrade)
 - [Troubleshooting](#troubleshooting)
   - [Contributing](#contributing)
-  - [Error when running `make install` on MacOS](#error-when-running-make-install-on-macos)
+  - [Error when running `just install` on MacOS](#error-when-running-just-install-on-macos)
 
 ## 1. Update the system
 
@@ -28,7 +28,7 @@ Steps described here: https://go.dev/doc/install
 
 ## 3. Install build requirements
 
-Install make and gcc.
+Install Make, GCC, and common build tools. Install `just` from https://just.systems/man/en/packages.html.
 
 ```bash
 sudo apt install git build-essential ufw curl jq snapd --yes
@@ -47,8 +47,7 @@ cd nibiru
 On this fresh clone of the repo, simply run
 
 ```bash
-make build
-make install
+just install
 make localnet
 ```
 
@@ -82,7 +81,7 @@ A. If after steps 1-4 you don't have the `nibid` command, your go/bin directory 
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-B. New commands you've made on the `nibid` don't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
+B. New commands you've made on the `nibid` don't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `just install` in the root
 
 ### Contributing
 
@@ -93,8 +92,7 @@ In addition to the commands available within that folder, `nibid` pulls in cli s
 After updating the code run
 
 ```bash
-make build
-make install
+just install
 ```
 
 To see all the commands available just add `--help` to the end.
@@ -108,9 +106,9 @@ nibid tx --help
 nibid query oracle --help
 ```
 
-### Error when running `make install` on MacOS
+### Error when running `just install` on MacOS
 
-If you get an error like this when running `make install` on MacOS:
+If you get an error like this when running `just install` on MacOS:
 
 ```
 /bin/sh: wget: command not found

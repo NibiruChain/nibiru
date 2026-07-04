@@ -100,7 +100,7 @@ cd $HOME
 git clone https://github.com/NibiruChain/nibiru
 cd nibiru
 git checkout v1.0.0
-make install
+just install
 ```
 
 ## Post-installation
