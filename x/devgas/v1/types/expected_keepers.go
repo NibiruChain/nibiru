@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	// "github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"

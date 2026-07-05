@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
+	wasmcli "github.com/NibiruChain/nibiru/v2/x/wasm/cli"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 

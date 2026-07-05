@@ -4,9 +4,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm"
 
 	sdkioerrors "cosmossdk.io/errors"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"

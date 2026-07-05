@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/MakeNowJust/heredoc/v2"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 

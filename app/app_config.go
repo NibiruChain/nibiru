@@ -22,7 +22,7 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"

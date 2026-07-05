@@ -1,7 +1,7 @@
 package ante_test
 
 import (
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

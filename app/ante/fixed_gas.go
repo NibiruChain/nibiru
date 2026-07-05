@@ -2,7 +2,7 @@ package ante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"

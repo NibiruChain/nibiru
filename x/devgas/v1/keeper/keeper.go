@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/cometbft/cometbft/libs/log"
 

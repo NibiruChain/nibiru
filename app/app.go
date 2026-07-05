@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 
 	"cosmossdk.io/depinject"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/NibiruChain/nibiru/v2/x/wasm"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -36,6 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -67,6 +68,7 @@ import (
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
@@ -87,6 +89,7 @@ import (
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmmodule"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
@@ -634,6 +637,24 @@ func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
 	return app.IbcKeeper
+}
+
+// These keeper getters satisfy the first-party Wasm IBC test harness interface.
+// Production code should prefer direct field access on NibiruApp.
+func (app *NibiruApp) GetWasmKeeper() wasmkeeper.Keeper {
+	return app.WasmKeeper
+}
+
+func (app *NibiruApp) GetBankKeeper() bankkeeper.Keeper {
+	return app.BankKeeper
+}
+
+func (app *NibiruApp) GetAccountKeeper() authkeeper.AccountKeeper {
+	return app.AccountKeeper
+}
+
+func (app *NibiruApp) GetTransferKeeper() ibctransferkeeper.Keeper {
+	return app.ibcTransferKeeper
 }
 
 func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
