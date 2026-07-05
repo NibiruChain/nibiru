@@ -47,7 +47,10 @@ cd nibiru
 On this fresh clone of the repo, simply run
 
 ```bash
+<<<<<<< HEAD
 just build
+=======
+>>>>>>> main
 just install
 make localnet
 ```
@@ -93,7 +96,6 @@ In addition to the commands available within that folder, `nibid` pulls in cli s
 After updating the code run
 
 ```bash
-just build
 just install
 ```
 
