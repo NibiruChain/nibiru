@@ -27,7 +27,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -37,6 +39,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -75,7 +78,6 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	wasmappparams "github.com/CosmWasm/wasmd/app/params"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
@@ -109,17 +111,30 @@ func MakeTestCodec(tb testing.TB) codec.Codec {
 	return MakeEncodingConfig(tb).Codec
 }
 
-func MakeEncodingConfig(_ testing.TB) wasmappparams.EncodingConfig {
-	encodingConfig := wasmappparams.MakeEncodingConfig()
-	amino := encodingConfig.Amino
-	interfaceRegistry := encodingConfig.InterfaceRegistry
+type EncodingConfig struct {
+	InterfaceRegistry codectypes.InterfaceRegistry
+	Codec             codec.Codec
+	TxConfig          client.TxConfig
+	Amino             *codec.LegacyAmino
+}
 
+func MakeEncodingConfig(_ testing.TB) EncodingConfig {
+	amino := codec.NewLegacyAmino()
+	interfaceRegistry := codectypes.NewInterfaceRegistry()
+	marshaler := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := authtx.NewTxConfig(marshaler, authtx.DefaultSignModes)
+	encodingConfig := EncodingConfig{
+		InterfaceRegistry: interfaceRegistry,
+		Codec:             marshaler,
+		TxConfig:          txCfg,
+		Amino:             amino,
+	}
 	std.RegisterInterfaces(interfaceRegistry)
 	std.RegisterLegacyAminoCodec(amino)
 
 	moduleBasics.RegisterLegacyAminoCodec(amino)
 	moduleBasics.RegisterInterfaces(interfaceRegistry)
-	// add wasmd types
+	// add wasm types
 	types.RegisterInterfaces(interfaceRegistry)
 	types.RegisterLegacyAminoCodec(amino)
 
@@ -193,7 +208,7 @@ type TestKeepers struct {
 	WasmKeeper       *Keeper
 	IBCKeeper        *ibckeeper.Keeper
 	Router           MessageRouter
-	EncodingConfig   wasmappparams.EncodingConfig
+	EncodingConfig   EncodingConfig
 	Faucet           *TestFaucet
 	MultiStore       sdk.CommitMultiStore
 	ScopedWasmKeeper capabilitykeeper.ScopedKeeper

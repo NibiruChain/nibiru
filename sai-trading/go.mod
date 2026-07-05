@@ -3,7 +3,6 @@ module github.com/NibiruChain/nibiru/sai-trading
 go 1.25.0
 
 require (
-	github.com/CosmWasm/wasmd v0.44.1-nibiru // indirect
 	github.com/CosmWasm/wasmvm v1.10.0 // indirect
 	github.com/NibiruChain/nibiru/v2 v2.8.0
 
@@ -242,7 +241,6 @@ require (
 // TODO: Remove rocksdb dep: https://github.com/NibiruChain/nibiru/issues/2432
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
-	github.com/CosmWasm/wasmd => ../lib/wasmd
 	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
 	github.com/NibiruChain/nibiru/v2 => ../
 	github.com/cosmos/cosmos-sdk => ../lib/cosmos-sdk

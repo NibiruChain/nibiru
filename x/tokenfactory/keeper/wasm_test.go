@@ -10,9 +10,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	codec "github.com/cosmos/cosmos-sdk/codec"
@@ -25,6 +22,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	fixture "github.com/NibiruChain/nibiru/v2/x/tokenfactory/testdata"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // Instantiate is a empty struct type with conventience functions for

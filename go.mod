@@ -3,7 +3,6 @@ module github.com/NibiruChain/nibiru/v2
 go 1.25.0
 
 require (
-	github.com/CosmWasm/wasmd v0.44.1-nibiru
 	github.com/CosmWasm/wasmvm v1.10.0
 
 	// Consenus Engine
@@ -260,9 +259,6 @@ require (
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
-	// Replace for Cosmos-SDK using local repo. Uncomment to use.
-	github.com/CosmWasm/wasmd => ./lib/wasmd
-
 	// Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
 	// ARM64 Singlepass relocation panics.
 	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
@@ -270,7 +266,6 @@ replace (
 
 	// Replace statements using GitHub tags prior to use of internal. Left
 	// here intentionally for book keeping:
-	// github.com/CosmWasm/wasmd => github.com/NibiruChain/wasmd v0.44.0-nibiru
 	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
