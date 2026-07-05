@@ -1,7 +1,7 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,28 +9,28 @@ import (
 
 func (s Sequence) ValidateBasic() error {
 	if len(s.IDKey) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "id key")
+		return sdkioerrors.Wrap(ErrEmpty, "id key")
 	}
 	return nil
 }
 
 func (s GenesisState) ValidateBasic() error {
 	if err := s.Params.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "params")
+		return sdkioerrors.Wrap(err, "params")
 	}
 	for i := range s.Codes {
 		if err := s.Codes[i].ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "code: %d", i)
+			return sdkioerrors.Wrapf(err, "code: %d", i)
 		}
 	}
 	for i := range s.Contracts {
 		if err := s.Contracts[i].ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "contract: %d", i)
+			return sdkioerrors.Wrapf(err, "contract: %d", i)
 		}
 	}
 	for i := range s.Sequences {
 		if err := s.Sequences[i].ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "sequence: %d", i)
+			return sdkioerrors.Wrapf(err, "sequence: %d", i)
 		}
 	}
 
@@ -39,31 +39,31 @@ func (s GenesisState) ValidateBasic() error {
 
 func (c Code) ValidateBasic() error {
 	if c.CodeID == 0 {
-		return errorsmod.Wrap(ErrEmpty, "code id")
+		return sdkioerrors.Wrap(ErrEmpty, "code id")
 	}
 	if err := c.CodeInfo.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "code info")
+		return sdkioerrors.Wrap(err, "code info")
 	}
 	if err := validateWasmCode(c.CodeBytes, MaxProposalWasmSize); err != nil {
-		return errorsmod.Wrap(err, "code bytes")
+		return sdkioerrors.Wrap(err, "code bytes")
 	}
 	return nil
 }
 
 func (c Contract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(c.ContractAddress); err != nil {
-		return errorsmod.Wrap(err, "contract address")
+		return sdkioerrors.Wrap(err, "contract address")
 	}
 	if err := c.ContractInfo.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "contract info")
+		return sdkioerrors.Wrap(err, "contract info")
 	}
 
 	if c.ContractInfo.Created == nil {
-		return errorsmod.Wrap(ErrInvalid, "created must not be empty")
+		return sdkioerrors.Wrap(ErrInvalid, "created must not be empty")
 	}
 	for i := range c.ContractState {
 		if err := c.ContractState[i].ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "contract state %d", i)
+			return sdkioerrors.Wrapf(err, "contract state %d", i)
 		}
 	}
 	if len(c.ContractCodeHistory) == 0 {
@@ -71,7 +71,7 @@ func (c Contract) ValidateBasic() error {
 	}
 	for i, v := range c.ContractCodeHistory {
 		if err := v.ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "code history element %d", i)
+			return sdkioerrors.Wrapf(err, "code history element %d", i)
 		}
 	}
 	return nil

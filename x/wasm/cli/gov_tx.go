@@ -9,7 +9,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/docker/distribution/reference"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
@@ -72,7 +72,7 @@ func ProposalStoreCodeCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -165,7 +165,7 @@ func ProposalInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -212,7 +212,7 @@ func ProposalInstantiateContract2Cmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseInstantiateArgs(args[0], args[1], clientCtx.Keyring, authority, cmd.Flags())
@@ -261,7 +261,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())
@@ -292,7 +292,7 @@ func ProposalStoreAndInstantiateContractCmd() *cobra.Command {
 				return fmt.Errorf("label: %s", err)
 			}
 			if label == "" {
-				return errors.New("label is required on all contracts")
+				return pkgerrors.New("label is required on all contracts")
 			}
 			adminStr, err := cmd.Flags().GetString(flagAdmin)
 			if err != nil {
@@ -386,7 +386,7 @@ func ProposalMigrateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseMigrateContractArgs(args, authority)
@@ -428,7 +428,7 @@ func ProposalExecuteContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			contract := args[0]
@@ -485,7 +485,7 @@ func ProposalSudoContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			msg := types.MsgSudoContract{
@@ -528,7 +528,7 @@ func ProposalUpdateContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src := parseUpdateContractAdminArgs(args, authority)
@@ -567,7 +567,7 @@ func ProposalClearContractAdminCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			msg := types.MsgClearAdmin{
@@ -609,7 +609,7 @@ func ProposalPinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -667,7 +667,7 @@ func ProposalUnpinCodesCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			codeIds, err := parsePinCodesArgs(args)
@@ -774,7 +774,7 @@ $ %s tx gov submit-proposal update-instantiate-config 1:nobody 2:everybody 3:%s1
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			updates, err := parseAccessConfigUpdates(args)
@@ -826,7 +826,7 @@ func ProposalAddCodeUploadParamsAddresses() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			msg := types.MsgAddCodeUploadParamsAddresses{
@@ -868,7 +868,7 @@ func ProposalRemoveCodeUploadParamsAddresses() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			msg := types.MsgRemoveCodeUploadParamsAddresses{
@@ -947,7 +947,7 @@ func ProposalStoreAndMigrateContractCmd() *cobra.Command {
 			}
 
 			if len(authority) == 0 {
-				return errors.New("authority address is required")
+				return pkgerrors.New("authority address is required")
 			}
 
 			src, err := parseStoreCodeArgs(args[0], authority, cmd.Flags())

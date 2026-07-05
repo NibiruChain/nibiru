@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -46,7 +46,7 @@ func parseMigrateContractArgs(args []string, sender string) (types.MsgMigrateCon
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
-		return types.MsgMigrateContract{}, errorsmod.Wrap(err, "code id")
+		return types.MsgMigrateContract{}, sdkioerrors.Wrap(err, "code id")
 	}
 
 	migrateMsg := args[2]

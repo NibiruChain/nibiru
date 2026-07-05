@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"math/big"
 
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/evm"

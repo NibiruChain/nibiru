@@ -5,14 +5,15 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
-	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/authz"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // NibiruWasmOptions: Wasm Options are extension points to instantiate the Wasm

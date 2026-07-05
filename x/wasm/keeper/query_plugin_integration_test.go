@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -407,7 +407,7 @@ func TestQueryDenomsIntegration(t *testing.T) {
 	specs := map[string]struct {
 		query  string
 		exp    []byte
-		expErr *errorsmod.Error
+		expErr *sdkioerrors.Error
 	}{
 		"all denoms": {
 			query: `{"denoms":{}}`,
@@ -863,7 +863,7 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	var custom reflectCustomQuery
 	err := json.Unmarshal(request, &custom)
 	if err != nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+		return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 	}
 	if custom.Capitalized != nil {
 		msg := strings.ToUpper(custom.Capitalized.Text)
@@ -872,7 +872,7 @@ func performCustomQuery(_ sdk.Context, request json.RawMessage) ([]byte, error) 
 	if custom.Ping != nil {
 		return json.Marshal(customQueryResponse{Msg: "pong"})
 	}
-	return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
+	return nil, sdkioerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom query variant")
 }
 
 func buildReflectQuery(t *testing.T, query *testdata.ReflectQueryMsg) []byte {

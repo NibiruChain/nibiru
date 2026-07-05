@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/cosmos/gogoproto/jsonpb"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -31,7 +31,7 @@ func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
 			bech32Addrs[i] = v.String()
 		}
 		if err := assertValidAddresses(bech32Addrs); err != nil {
-			panic(errorsmod.Wrap(err, "addresses"))
+			panic(sdkioerrors.Wrap(err, "addresses"))
 		}
 		return AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: bech32Addrs}
 	}
@@ -102,10 +102,10 @@ func (p Params) String() string {
 // ValidateBasic performs basic validation on wasm parameters
 func (p Params) ValidateBasic() error {
 	if err := validateAccessType(p.InstantiateDefaultPermission); err != nil {
-		return errors.Wrap(err, "instantiate default permission")
+		return pkgerrors.Wrap(err, "instantiate default permission")
 	}
 	if err := validateAccessConfig(p.CodeUploadAccess); err != nil {
-		return errors.Wrap(err, "upload access")
+		return pkgerrors.Wrap(err, "upload access")
 	}
 	return nil
 }
@@ -124,27 +124,27 @@ func validateAccessType(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 	if a == AccessTypeUnspecified {
-		return errorsmod.Wrap(ErrEmpty, "type")
+		return sdkioerrors.Wrap(ErrEmpty, "type")
 	}
 	for _, v := range AllAccessTypes {
 		if v == a {
 			return nil
 		}
 	}
-	return errorsmod.Wrapf(ErrInvalid, "unknown type: %q", a)
+	return sdkioerrors.Wrapf(ErrInvalid, "unknown type: %q", a)
 }
 
 // ValidateBasic performs basic validation
 func (a AccessConfig) ValidateBasic() error {
 	switch a.Permission {
 	case AccessTypeUnspecified:
-		return errorsmod.Wrap(ErrEmpty, "type")
+		return sdkioerrors.Wrap(ErrEmpty, "type")
 	case AccessTypeNobody, AccessTypeEverybody:
 		return nil
 	case AccessTypeAnyOfAddresses:
-		return errorsmod.Wrap(assertValidAddresses(a.Addresses), "addresses")
+		return sdkioerrors.Wrap(assertValidAddresses(a.Addresses), "addresses")
 	}
-	return errorsmod.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
+	return sdkioerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
 }
 
 func assertValidAddresses(addrs []string) error {
@@ -154,7 +154,7 @@ func assertValidAddresses(addrs []string) error {
 	idx := make(map[string]struct{}, len(addrs))
 	for _, a := range addrs {
 		if _, err := sdk.AccAddressFromBech32(a); err != nil {
-			return errorsmod.Wrapf(err, "address: %s", a)
+			return sdkioerrors.Wrapf(err, "address: %s", a)
 		}
 		if _, exists := idx[a]; exists {
 			return ErrDuplicate.Wrapf("address: %s", a)

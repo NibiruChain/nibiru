@@ -7,7 +7,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,7 +40,7 @@ func (k Keeper) OnOpenChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelOpen(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return "", errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return "", sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	if res != nil {
 		return res.Version, nil
@@ -73,7 +73,7 @@ func (k Keeper) OnConnectChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelConnect(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
@@ -104,7 +104,7 @@ func (k Keeper) OnCloseChannel(
 	res, gasUsed, execErr := k.wasmVM.IBCChannelClose(codeInfo.CodeHash, params, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
@@ -192,7 +192,7 @@ func (k Keeper) OnAckPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketAck(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)
 }
@@ -219,7 +219,7 @@ func (k Keeper) OnTimeoutPacket(
 	res, gasUsed, execErr := k.wasmVM.IBCPacketTimeout(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, ctx.GasMeter(), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
-		return errorsmod.Wrap(types.ErrExecuteFailed, execErr.Error())
+		return sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 
 	return k.handleIBCBasicContractResponse(ctx, contractAddr, contractInfo.IBCPortID, res)

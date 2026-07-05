@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -353,7 +353,6 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				for _, assertion := range tc.resultAssertions {
 					assertion(t, execCtx, contractAddr.String(), empty.String(), res.Result)
 				}
-
 			}
 		})
 	}
@@ -598,7 +597,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
-		expErr *errorsmod.Error
+		expErr *sdkioerrors.Error
 	}{
 		"default policy - rejected": {
 			policy: DefaultAuthorizationPolicy{},
@@ -677,7 +676,7 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
-		expErr *errorsmod.Error
+		expErr *sdkioerrors.Error
 	}{
 		"default policy - rejected": {
 			policy: DefaultAuthorizationPolicy{},

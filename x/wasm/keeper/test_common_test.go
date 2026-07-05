@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -13,7 +12,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
@@ -24,8 +23,6 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -35,7 +32,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
@@ -507,91 +503,6 @@ func createTestInput(
 	return ctx, keepers
 }
 
-// testHandler returns a wasm handler for tests (to avoid circular imports)
-func testHandler(k types.ContractOpsKeeper) MessageRouter {
-	return MessageRouterFunc(func(ctx sdk.Context, msg sdk.Msg) (*sdk.Result, error) {
-		ctx = ctx.WithEventManager(sdk.NewEventManager())
-		switch msg := msg.(type) {
-		case *types.MsgStoreCode:
-			return handleStoreCode(ctx, k, msg)
-		case *types.MsgInstantiateContract:
-			return handleInstantiate(ctx, k, msg)
-		case *types.MsgExecuteContract:
-			return handleExecute(ctx, k, msg)
-		default:
-			errMsg := fmt.Sprintf("unrecognized wasm message type: %T", msg)
-			return nil, errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-		}
-	})
-}
-
-var _ MessageRouter = MessageRouterFunc(nil)
-
-type MessageRouterFunc func(ctx sdk.Context, req sdk.Msg) (*sdk.Result, error)
-
-func (m MessageRouterFunc) Handler(msg sdk.Msg) baseapp.MsgServiceHandler {
-	return m
-}
-
-func handleStoreCode(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgStoreCode) (*sdk.Result, error) {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
-	}
-	codeID, _, err := k.Create(ctx, senderAddr, msg.WASMByteCode, msg.InstantiatePermission)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sdk.Result{
-		Data:   []byte(fmt.Sprintf("%d", codeID)),
-		Events: ctx.EventManager().ABCIEvents(),
-	}, nil
-}
-
-func handleInstantiate(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgInstantiateContract) (*sdk.Result, error) {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
-	}
-	var adminAddr sdk.AccAddress
-	if msg.Admin != "" {
-		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return nil, errorsmod.Wrap(err, "admin")
-		}
-	}
-
-	contractAddr, _, err := k.Instantiate(ctx, msg.CodeID, senderAddr, adminAddr, msg.Msg, msg.Label, msg.Funds)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sdk.Result{
-		Data:   contractAddr,
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
-}
-
-func handleExecute(ctx sdk.Context, k types.ContractOpsKeeper, msg *types.MsgExecuteContract) (*sdk.Result, error) {
-	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
-	}
-	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "admin")
-	}
-	data, err := k.Execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
-	if err != nil {
-		return nil, err
-	}
-
-	return &sdk.Result{
-		Data:   data,
-		Events: ctx.EventManager().Events().ToABCIEvents(),
-	}, nil
-}
-
 func RandomAccountAddress(_ testing.TB) sdk.AccAddress {
 	_, addr := keyPubAddr()
 	return addr
@@ -698,7 +609,7 @@ func StoreRandomContractWithAccessConfig(
 	creator, creatorAddr := keyPubAddr()
 	fundAccounts(tb, ctx, keepers.AccountKeeper, keepers.BankKeeper, creatorAddr, anyAmount)
 	keepers.WasmKeeper.wasmVM = mock
-	wasmCode := append(wasmIdent, rand.Bytes(10)...)
+	wasmCode := append(wasmIdent, cmtrand.Bytes(10)...)
 	codeID, checksum, err := keepers.ContractKeeper.Create(ctx, creatorAddr, wasmCode, cfg)
 	require.NoError(tb, err)
 	exampleContract := ExampleContract{InitialAmount: anyAmount, Creator: creator, CreatorAddr: creatorAddr, CodeID: codeID, Checksum: checksum}

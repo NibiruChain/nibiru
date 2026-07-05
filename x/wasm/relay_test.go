@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkioerrors "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -39,8 +39,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 		setupContract               func(t *testing.T, contract wasmtesting.IBCContractCallbacks, chain *wasmibctesting.TestChain)
 		expChainAPendingSendPackets int
 		expChainBPendingSendPackets int
-		expChainABalanceDiff        math.Int
-		expChainBBalanceDiff        math.Int
+		expChainABalanceDiff        sdkmath.Int
+		expChainBBalanceDiff        sdkmath.Int
 		expErr                      bool
 	}{
 		"ack": {
@@ -720,7 +720,7 @@ func (c *ackReceiverContract) IBCPacketReceive(_ wasmvm.Checksum, _ wasmvmtypes.
 	ctx := c.chain.GetContext() // HACK: please note that this is not reverted after checkTX
 	err := c.chain.App.(*nibiruapp.NibiruApp).GetTransferKeeper().OnRecvPacket(ctx, ibcPacket, src)
 	if err != nil {
-		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
+		return nil, 0, sdkioerrors.Wrap(err, "within our smart contract")
 	}
 
 	var log []wasmvmtypes.EventAttribute // note: all events are under `wasm` event type
@@ -745,7 +745,7 @@ func (c *ackReceiverContract) IBCPacketAck(_ wasmvm.Checksum, _ wasmvmtypes.Env,
 	ibcPacket := toIBCPacket(msg.OriginalPacket)
 	err := c.chain.App.(*nibiruapp.NibiruApp).GetTransferKeeper().OnAcknowledgementPacket(ctx, ibcPacket, data, ack)
 	if err != nil {
-		return nil, 0, errorsmod.Wrap(err, "within our smart contract")
+		return nil, 0, sdkioerrors.Wrap(err, "within our smart contract")
 	}
 
 	return &wasmvmtypes.IBCBasicResponse{}, 0, nil

@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -30,7 +30,7 @@ func (m msgServer) StoreCode(goCtx context.Context, msg *types.MsgStoreCode) (*t
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
@@ -55,12 +55,12 @@ func (m msgServer) InstantiateContract(goCtx context.Context, msg *types.MsgInst
 
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	var adminAddr sdk.AccAddress
 	if msg.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return nil, errorsmod.Wrap(err, "admin")
+			return nil, sdkioerrors.Wrap(err, "admin")
 		}
 	}
 
@@ -86,12 +86,12 @@ func (m msgServer) InstantiateContract2(goCtx context.Context, msg *types.MsgIns
 
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	var adminAddr sdk.AccAddress
 	if msg.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return nil, errorsmod.Wrap(err, "admin")
+			return nil, sdkioerrors.Wrap(err, "admin")
 		}
 	}
 
@@ -118,11 +118,11 @@ func (m msgServer) ExecuteContract(goCtx context.Context, msg *types.MsgExecuteC
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	data, err := m.keeper.execute(ctx, contractAddr, senderAddr, msg.Msg, msg.Funds)
@@ -143,11 +143,11 @@ func (m msgServer) MigrateContract(goCtx context.Context, msg *types.MsgMigrateC
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
@@ -170,15 +170,15 @@ func (m msgServer) UpdateAdmin(goCtx context.Context, msg *types.MsgUpdateAdmin)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 	newAdminAddr, err := sdk.AccAddressFromBech32(msg.NewAdmin)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "new admin")
+		return nil, sdkioerrors.Wrap(err, "new admin")
 	}
 
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
@@ -198,11 +198,11 @@ func (m msgServer) ClearAdmin(goCtx context.Context, msg *types.MsgClearAdmin) (
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
@@ -222,7 +222,7 @@ func (m msgServer) UpdateInstantiateConfig(goCtx context.Context, msg *types.Msg
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)
 
@@ -240,7 +240,7 @@ func (m msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -259,7 +259,7 @@ func (m msgServer) PinCodes(goCtx context.Context, req *types.MsgPinCodes) (*typ
 
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -280,7 +280,7 @@ func (m msgServer) UnpinCodes(goCtx context.Context, req *types.MsgUnpinCodes) (
 
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -300,12 +300,12 @@ func (m msgServer) SudoContract(goCtx context.Context, req *types.MsgSudoContrac
 	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	contractAddr, err := sdk.AccAddressFromBech32(req.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -325,13 +325,13 @@ func (m msgServer) StoreAndInstantiateContract(goCtx context.Context, req *types
 
 	authorityAddr, err := sdk.AccAddressFromBech32(req.Authority)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "authority")
+		return nil, sdkioerrors.Wrap(err, "authority")
 	}
 
 	var adminAddr sdk.AccAddress
 	if req.Admin != "" {
 		if adminAddr, err = sdk.AccAddressFromBech32(req.Admin); err != nil {
-			return nil, errorsmod.Wrap(err, "admin")
+			return nil, sdkioerrors.Wrap(err, "admin")
 		}
 	}
 
@@ -361,14 +361,14 @@ func (m msgServer) AddCodeUploadParamsAddresses(goCtx context.Context, req *type
 	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	params := m.keeper.GetParams(ctx)
 	if params.CodeUploadAccess.Permission != types.AccessTypeAnyOfAddresses {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "permission")
+		return nil, sdkioerrors.Wrap(types.ErrInvalid, "permission")
 	}
 
 	addresses := params.CodeUploadAccess.Addresses
@@ -393,14 +393,14 @@ func (m msgServer) RemoveCodeUploadParamsAddresses(goCtx context.Context, req *t
 	}
 	authority := m.keeper.GetAuthority()
 	if authority != req.Authority {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "invalid authority; expected %s, got %s", authority, req.Authority)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	params := m.keeper.GetParams(ctx)
 	if params.CodeUploadAccess.Permission != types.AccessTypeAnyOfAddresses {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "permission")
+		return nil, sdkioerrors.Wrap(types.ErrInvalid, "permission")
 	}
 	addresses := params.CodeUploadAccess.Addresses
 	newAddresses := make([]string, 0)
@@ -443,7 +443,7 @@ func (m msgServer) selectAuthorizationPolicy(ctx sdk.Context, actor string) type
 func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.MsgStoreAndMigrateContract) (*types.MsgStoreAndMigrateContractResponse, error) {
 	authorityAddr, err := sdk.AccAddressFromBech32(req.Authority)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "authority")
+		return nil, sdkioerrors.Wrap(err, "authority")
 	}
 
 	if err = req.ValidateBasic(); err != nil {
@@ -460,7 +460,7 @@ func (m msgServer) StoreAndMigrateContract(goCtx context.Context, req *types.Msg
 
 	contractAddr, err := sdk.AccAddressFromBech32(req.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	data, err := m.keeper.migrate(ctx, contractAddr, authorityAddr, codeID, req.Msg, policy)
@@ -483,11 +483,11 @@ func (m msgServer) UpdateContractLabel(goCtx context.Context, msg *types.MsgUpda
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	senderAddr, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "sender")
+		return nil, sdkioerrors.Wrap(err, "sender")
 	}
 	contractAddr, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "contract")
+		return nil, sdkioerrors.Wrap(err, "contract")
 	}
 
 	policy := m.selectAuthorizationPolicy(ctx, msg.Sender)

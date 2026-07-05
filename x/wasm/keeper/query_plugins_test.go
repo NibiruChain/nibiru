@@ -12,14 +12,14 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -71,7 +71,7 @@ func TestIBCQuerier(t *testing.T) {
 		wasmKeeper    *mockWasmQueryKeeper
 		channelKeeper *wasmtesting.MockChannelKeeper
 		expJSONResult string
-		expErr        *errorsmod.Error
+		expErr        *sdkioerrors.Error
 	}{
 		"query port id": {
 			srcQuery: &wasmvmtypes.IBCQuery{
@@ -570,7 +570,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such contract - wrapped": {
-			src:    errorsmod.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
+			src:    sdkioerrors.Wrap(types.ErrNoSuchContractFn("contract-addr"), "my additional data"),
 			expErr: wasmvmtypes.NoSuchContract{Addr: "contract-addr"},
 		},
 		"no such code": {
@@ -578,7 +578,7 @@ func TestQueryErrors(t *testing.T) {
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 		"no such code - wrapped": {
-			src:    errorsmod.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
+			src:    sdkioerrors.Wrap(types.ErrNoSuchCodeFn(123), "my additional data"),
 			expErr: wasmvmtypes.NoSuchCode{CodeID: 123},
 		},
 	}
@@ -664,8 +664,8 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 func TestDistributionQuerier(t *testing.T) {
 	t.Skip("not implemented")
 	ctx := sdk.Context{}
-	var myAddr sdk.AccAddress = rand.Bytes(address.Len)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(address.Len)
+	var myAddr sdk.AccAddress = cmtrand.Bytes(address.Len)
+	var myOtherAddr sdk.AccAddress = cmtrand.Bytes(address.Len)
 	specs := map[string]struct {
 		q       wasmvmtypes.DistributionQuery
 		mockFn  func(ctx sdk.Context, delAddr sdk.AccAddress) sdk.AccAddress

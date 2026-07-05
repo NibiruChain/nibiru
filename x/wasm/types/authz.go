@@ -7,7 +7,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/gogoproto/proto"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -87,7 +87,7 @@ func (a StoreCodeAuthorization) ValidateBasic() error {
 		return ErrEmpty.Wrap("grants")
 	case 1:
 		if err := a.Grants[0].ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "position %d", 0)
+			return sdkioerrors.Wrapf(err, "position %d", 0)
 		}
 	default:
 		uniqueGrants := make(map[string]struct{}, numberOfGrants)
@@ -96,7 +96,7 @@ func (a StoreCodeAuthorization) ValidateBasic() error {
 				return sdkerrors.ErrInvalidRequest.Wrap("cannot have multiple grants when wildcard grant is one of them")
 			}
 			if err := grant.ValidateBasic(); err != nil {
-				return errorsmod.Wrapf(err, "position %d", i)
+				return sdkioerrors.Wrapf(err, "position %d", i)
 			}
 			uniqueGrants[strings.ToLower(string(grant.CodeHash))] = struct{}{}
 		}
@@ -225,7 +225,7 @@ func validateGrants(g []ContractGrant) error {
 	}
 	for i, v := range g {
 		if err := v.ValidateBasic(); err != nil {
-			return errorsmod.Wrapf(err, "position %d", i)
+			return sdkioerrors.Wrapf(err, "position %d", i)
 		}
 	}
 	// allow multiple grants for a contract:
@@ -262,7 +262,7 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 		result, err := g.GetLimit().Accept(ctx, exec)
 		switch {
 		case err != nil:
-			return authztypes.AcceptResponse{}, errorsmod.Wrap(err, "limit")
+			return authztypes.AcceptResponse{}, sdkioerrors.Wrap(err, "limit")
 		case result == nil: // sanity check
 			return authztypes.AcceptResponse{}, sdkerrors.ErrInvalidType.Wrap("limit result must not be nil")
 		case !result.Accepted:
@@ -274,7 +274,7 @@ func AcceptGrantedMessage[T AuthzableWasmMsg](ctx sdk.Context, grants []Contract
 		ok, err := g.GetFilter().Accept(ctx, exec.GetMsg())
 		switch {
 		case err != nil:
-			return authztypes.AcceptResponse{}, errorsmod.Wrap(err, "filter")
+			return authztypes.AcceptResponse{}, sdkioerrors.Wrap(err, "filter")
 		case !ok:
 			// no limit update and continue with next grant
 			continue
@@ -345,7 +345,7 @@ func NewContractGrant(contract sdk.AccAddress, limit ContractAuthzLimitX, filter
 	}
 	anyFilter, err := cdctypes.NewAnyWithValue(pFilter)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "filter")
+		return nil, sdkioerrors.Wrap(err, "filter")
 	}
 	return ContractGrant{
 		Contract: contract.String(),
@@ -361,7 +361,7 @@ func (g ContractGrant) WithNewLimits(limit ContractAuthzLimitX) (*ContractGrant,
 	}
 	anyLimit, err := cdctypes.NewAnyWithValue(pLimit)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "limit")
+		return nil, sdkioerrors.Wrap(err, "limit")
 	}
 
 	return &ContractGrant{
@@ -375,11 +375,11 @@ func (g ContractGrant) WithNewLimits(limit ContractAuthzLimitX) (*ContractGrant,
 func (g ContractGrant) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {
 	var f ContractAuthzFilterX
 	if err := unpacker.UnpackAny(g.Filter, &f); err != nil {
-		return errorsmod.Wrap(err, "filter")
+		return sdkioerrors.Wrap(err, "filter")
 	}
 	var l ContractAuthzLimitX
 	if err := unpacker.UnpackAny(g.Limit, &l); err != nil {
-		return errorsmod.Wrap(err, "limit")
+		return sdkioerrors.Wrap(err, "limit")
 	}
 	return nil
 }
@@ -411,15 +411,15 @@ func (g ContractGrant) GetFilter() ContractAuthzFilterX {
 // ValidateBasic validates the grant
 func (g ContractGrant) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(g.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 	// execution limits
 	if err := g.GetLimit().ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "limit")
+		return sdkioerrors.Wrap(err, "limit")
 	}
 	// filter
 	if err := g.GetFilter().ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "filter")
+		return sdkioerrors.Wrap(err, "filter")
 	}
 	return nil
 }
@@ -644,7 +644,7 @@ func (l CombinedLimit) ValidateBasic() error {
 		return ErrEmpty.Wrap("amounts")
 	}
 	if err := l.Amounts.Validate(); err != nil {
-		return errorsmod.Wrap(err, "amounts")
+		return sdkioerrors.Wrap(err, "amounts")
 	}
 	return nil
 }

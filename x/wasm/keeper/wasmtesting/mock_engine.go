@@ -5,9 +5,9 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -336,7 +336,7 @@ func NewIBCContractMockWasmEngine(c IBCContractCallbacks) *MockWasmEngine {
 
 func HashOnlyStoreCodeFn(code wasmvm.WasmCode) (wasmvm.Checksum, error) {
 	if code == nil {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "wasm code must not be nil")
+		return nil, sdkioerrors.Wrap(types.ErrInvalid, "wasm code must not be nil")
 	}
 	return wasmvm.CreateChecksum(code)
 }
@@ -346,7 +346,7 @@ func NoOpInstantiateFn(wasmvm.Checksum, wasmvmtypes.Env, wasmvmtypes.MessageInfo
 }
 
 func NoOpStoreCodeFn(_ wasmvm.WasmCode) (wasmvm.Checksum, error) {
-	return rand.Bytes(32), nil
+	return cmtrand.Bytes(32), nil
 }
 
 func HasIBCAnalyzeFn(wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error) {

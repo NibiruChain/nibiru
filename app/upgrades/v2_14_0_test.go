@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
-	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"

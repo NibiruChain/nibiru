@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -94,7 +94,7 @@ func (q GrpcQuerier) ContractsByCode(c context.Context, req *types.QueryContract
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
+		return nil, sdkioerrors.Wrap(types.ErrInvalid, "code id")
 	}
 	paginationParams, err := ensurePaginationParams(req.Pagination)
 	if err != nil {
@@ -196,7 +196,7 @@ func (q GrpcQuerier) SmartContractState(c context.Context, req *types.QuerySmart
 		if r := recover(); r != nil {
 			switch rType := r.(type) {
 			case sdk.ErrorOutOfGas:
-				err = errorsmod.Wrapf(sdkerrors.ErrOutOfGas,
+				err = sdkioerrors.Wrapf(sdkerrors.ErrOutOfGas,
 					"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
 					rType.Descriptor, ctx.GasMeter().Limit(), ctx.GasMeter().GasConsumed(),
 				)
@@ -228,7 +228,7 @@ func (q GrpcQuerier) Code(c context.Context, req *types.QueryCodeRequest) (*type
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	if req.CodeId == 0 {
-		return nil, errorsmod.Wrap(types.ErrInvalid, "code id")
+		return nil, sdkioerrors.Wrap(types.ErrInvalid, "code id")
 	}
 	rsp, err := queryCode(sdk.UnwrapSDKContext(c), req.CodeId, q.keeper)
 	switch {
@@ -306,7 +306,7 @@ func queryCode(ctx sdk.Context, codeID uint64, keeper types.ViewKeeper) (*types.
 
 	code, err := keeper.GetByteCode(ctx, codeID)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "loading wasm code")
+		return nil, sdkioerrors.Wrap(err, "loading wasm code")
 	}
 
 	return &types.QueryCodeResponse{CodeInfoResponse: &info, Data: code}, nil

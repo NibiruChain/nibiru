@@ -7,11 +7,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
+
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm"

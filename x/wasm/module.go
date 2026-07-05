@@ -31,9 +31,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-var (
-	_ module.AppModuleBasic = AppModuleBasic{}
-)
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 // Module init related flags
 const (

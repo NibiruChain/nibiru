@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -63,12 +63,12 @@ func (msg MsgStoreCode) ValidateBasic() error {
 	}
 
 	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
 	if msg.InstantiatePermission != nil {
 		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
-			return errorsmod.Wrap(err, "instantiate permission")
+			return sdkioerrors.Wrap(err, "instantiate permission")
 		}
 	}
 	return nil
@@ -96,15 +96,15 @@ func (msg MsgInstantiateContract) Type() string {
 
 func (msg MsgInstantiateContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 
 	if msg.CodeID == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(err, "label")
+		return sdkioerrors.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
@@ -113,11 +113,11 @@ func (msg MsgInstantiateContract) ValidateBasic() error {
 
 	if len(msg.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return errorsmod.Wrap(err, "admin")
+			return sdkioerrors.Wrap(err, "admin")
 		}
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -144,17 +144,17 @@ func (msg MsgExecuteContract) Type() string {
 
 func (msg MsgExecuteContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 
 	if !msg.Funds.IsValid() {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidCoins, "sentFunds")
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -196,17 +196,17 @@ func (msg MsgMigrateContract) Type() string {
 
 func (msg MsgMigrateContract) ValidateBasic() error {
 	if msg.CodeID == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 
 	return nil
@@ -249,16 +249,16 @@ func (msg MsgUpdateAdmin) Type() string {
 
 func (msg MsgUpdateAdmin) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.NewAdmin); err != nil {
-		return errorsmod.Wrap(err, "new admin")
+		return sdkioerrors.Wrap(err, "new admin")
 	}
 	if strings.EqualFold(msg.Sender, msg.NewAdmin) {
-		return errorsmod.Wrap(ErrInvalid, "new admin is the same as the old")
+		return sdkioerrors.Wrap(ErrInvalid, "new admin is the same as the old")
 	}
 	return nil
 }
@@ -285,10 +285,10 @@ func (msg MsgClearAdmin) Type() string {
 
 func (msg MsgClearAdmin) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 	return nil
 }
@@ -357,15 +357,15 @@ func (msg MsgInstantiateContract2) Type() string {
 
 func (msg MsgInstantiateContract2) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 
 	if msg.CodeID == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(err, "label")
+		return sdkioerrors.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
@@ -374,14 +374,14 @@ func (msg MsgInstantiateContract2) ValidateBasic() error {
 
 	if len(msg.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return errorsmod.Wrap(err, "admin")
+			return sdkioerrors.Wrap(err, "admin")
 		}
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 	if err := ValidateSalt(msg.Salt); err != nil {
-		return errorsmod.Wrap(err, "salt")
+		return sdkioerrors.Wrap(err, "salt")
 	}
 	return nil
 }
@@ -408,19 +408,19 @@ func (msg MsgUpdateInstantiateConfig) Type() string {
 
 func (msg MsgUpdateInstantiateConfig) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 
 	if msg.CodeID == 0 {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "code id is required")
 	}
 
 	if msg.NewInstantiatePermission == nil {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "instantiate permission is required")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "instantiate permission is required")
 	}
 
 	if err := msg.NewInstantiatePermission.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "instantiate permission")
+		return sdkioerrors.Wrap(err, "instantiate permission")
 	}
 
 	return nil
@@ -460,7 +460,7 @@ func (msg MsgUpdateParams) GetSignBytes() []byte {
 
 func (msg MsgUpdateParams) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 	return msg.Params.ValidateBasic()
 }
@@ -489,7 +489,7 @@ const maxCodeIDTotal = 50
 
 func (msg MsgPinCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 	return validateCodeIDs(msg.CodeIDs)
 }
@@ -498,12 +498,12 @@ func (msg MsgPinCodes) ValidateBasic() error {
 func validateCodeIDs(codeIDs []uint64) error {
 	switch n := len(codeIDs); {
 	case n == 0:
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "empty code ids")
 	case n > maxCodeIDTotal:
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "total number of code ids is greater than %d", maxCodeIDTotal)
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "total number of code ids is greater than %d", maxCodeIDTotal)
 	}
 	if hasDuplicates(codeIDs) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "duplicate code ids")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidRequest, "duplicate code ids")
 	}
 	return nil
 }
@@ -530,7 +530,7 @@ func (msg MsgUnpinCodes) GetSignBytes() []byte {
 
 func (msg MsgUnpinCodes) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 	return validateCodeIDs(msg.CodeIDs)
 }
@@ -557,13 +557,13 @@ func (msg MsgSudoContract) GetSignBytes() []byte {
 
 func (msg MsgSudoContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 	return nil
 }
@@ -590,11 +590,11 @@ func (msg MsgStoreAndInstantiateContract) GetSignBytes() []byte {
 
 func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 
 	if err := ValidateLabel(msg.Label); err != nil {
-		return errorsmod.Wrap(err, "label")
+		return sdkioerrors.Wrap(err, "label")
 	}
 
 	if !msg.Funds.IsValid() {
@@ -603,25 +603,25 @@ func (msg MsgStoreAndInstantiateContract) ValidateBasic() error {
 
 	if len(msg.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-			return errorsmod.Wrap(err, "admin")
+			return sdkioerrors.Wrap(err, "admin")
 		}
 	}
 
 	if err := ValidateVerificationInfo(msg.Source, msg.Builder, msg.CodeHash); err != nil {
-		return errorsmod.Wrapf(err, "code verification info")
+		return sdkioerrors.Wrapf(err, "code verification info")
 	}
 
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 
 	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
 	if msg.InstantiatePermission != nil {
 		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
-			return errorsmod.Wrap(err, "instantiate permission")
+			return sdkioerrors.Wrap(err, "instantiate permission")
 		}
 	}
 	return nil
@@ -649,11 +649,11 @@ func (msg MsgAddCodeUploadParamsAddresses) GetSignBytes() []byte {
 
 func (msg MsgAddCodeUploadParamsAddresses) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 
 	if len(msg.Addresses) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "addresses")
+		return sdkioerrors.Wrap(ErrEmpty, "addresses")
 	}
 
 	return checkDuplicatedAddresses(msg.Addresses)
@@ -681,11 +681,11 @@ func (msg MsgRemoveCodeUploadParamsAddresses) GetSignBytes() []byte {
 
 func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 
 	if len(msg.Addresses) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "addresses")
+		return sdkioerrors.Wrap(ErrEmpty, "addresses")
 	}
 
 	return checkDuplicatedAddresses(msg.Addresses)
@@ -696,10 +696,10 @@ func checkDuplicatedAddresses(addresses []string) error {
 	for _, addr := range addresses {
 		addr = strings.ToUpper(addr)
 		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
-			return errorsmod.Wrap(err, "addresses")
+			return sdkioerrors.Wrap(err, "addresses")
 		}
 		if _, found := index[addr]; found {
-			return errorsmod.Wrap(ErrInvalid, "duplicate addresses")
+			return sdkioerrors.Wrap(ErrInvalid, "duplicate addresses")
 		}
 		index[addr] = struct{}{}
 	}
@@ -728,24 +728,24 @@ func (msg MsgStoreAndMigrateContract) GetSignBytes() []byte {
 
 func (msg MsgStoreAndMigrateContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
-		return errorsmod.Wrap(err, "authority")
+		return sdkioerrors.Wrap(err, "authority")
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 
 	if err := msg.Msg.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "payload msg")
+		return sdkioerrors.Wrap(err, "payload msg")
 	}
 
 	if err := validateWasmCode(msg.WASMByteCode, MaxWasmSize); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidRequest, "code bytes %s", err.Error())
 	}
 
 	if msg.InstantiatePermission != nil {
 		if err := msg.InstantiatePermission.ValidateBasic(); err != nil {
-			return errorsmod.Wrap(err, "instantiate permission")
+			return sdkioerrors.Wrap(err, "instantiate permission")
 		}
 	}
 	return nil
@@ -773,13 +773,13 @@ func (msg MsgUpdateContractLabel) Type() string {
 
 func (msg MsgUpdateContractLabel) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrap(err, "sender")
+		return sdkioerrors.Wrap(err, "sender")
 	}
 	if err := ValidateLabel(msg.NewLabel); err != nil {
-		return errorsmod.Wrap(err, "label")
+		return sdkioerrors.Wrap(err, "label")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
-		return errorsmod.Wrap(err, "contract")
+		return sdkioerrors.Wrap(err, "contract")
 	}
 	return nil
 }

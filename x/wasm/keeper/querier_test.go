@@ -17,10 +17,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkErrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
@@ -180,19 +180,19 @@ func TestQuerySmartContractPanics(t *testing.T) {
 
 	specs := map[string]struct {
 		doInContract func()
-		expErr       *errorsmod.Error
+		expErr       *sdkioerrors.Error
 	}{
 		"out of gas": {
 			doInContract: func() {
 				ctx.GasMeter().ConsumeGas(ctx.GasMeter().Limit()+1, "test - consume more than limit")
 			},
-			expErr: sdkErrors.ErrOutOfGas,
+			expErr: sdkerrors.ErrOutOfGas,
 		},
 		"other panic": {
 			doInContract: func() {
 				panic("my panic")
 			},
-			expErr: sdkErrors.ErrPanic,
+			expErr: sdkerrors.ErrPanic,
 		},
 	}
 	for msg, spec := range specs {
@@ -328,7 +328,7 @@ func TestQueryContractsByCode(t *testing.T) {
 		},
 		"req.CodeId=0": {
 			req:    &types.QueryContractsByCodeRequest{CodeId: 0},
-			expErr: errorsmod.Wrap(types.ErrInvalid, "code id"),
+			expErr: sdkioerrors.Wrap(types.ErrInvalid, "code id"),
 		},
 		"not exist codeID": {
 			req:     &types.QueryContractsByCodeRequest{CodeId: codeID + 1},

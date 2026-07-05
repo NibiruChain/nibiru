@@ -7,11 +7,12 @@ import (
 	"path"
 	"strings"
 
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
-	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/evm"

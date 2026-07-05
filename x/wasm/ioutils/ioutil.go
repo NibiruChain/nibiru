@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 var errLimit = errors.New("exceeds limit")
@@ -14,7 +14,7 @@ var errLimit = errors.New("exceeds limit")
 // Uncompress expects a valid gzip source to unpack or fails. See IsGzip
 func Uncompress(gzipSrc []byte, limit int64) ([]byte, error) {
 	if int64(len(gzipSrc)) > limit {
-		return nil, errorsmod.Wrapf(errLimit, "max %d bytes", limit)
+		return nil, sdkioerrors.Wrapf(errLimit, "max %d bytes", limit)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(gzipSrc))
 	if err != nil {
@@ -24,7 +24,7 @@ func Uncompress(gzipSrc []byte, limit int64) ([]byte, error) {
 	defer zr.Close()
 	bz, err := io.ReadAll(LimitReader(zr, limit))
 	if errors.Is(err, errLimit) {
-		return nil, errorsmod.Wrapf(errLimit, "max %d bytes", limit)
+		return nil, sdkioerrors.Wrapf(errLimit, "max %d bytes", limit)
 	}
 	return bz, err
 }

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -174,8 +174,8 @@ func TestContractInfoSetExtension(t *testing.T) {
 }
 
 func TestContractInfoMarshalUnmarshal(t *testing.T) {
-	var myAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
-	var myOtherAddr sdk.AccAddress = rand.Bytes(ContractAddrLen)
+	var myAddr sdk.AccAddress = cmtrand.Bytes(ContractAddrLen)
+	var myOtherAddr sdk.AccAddress = cmtrand.Bytes(ContractAddrLen)
 	anyPos := AbsoluteTxPosition{BlockHeight: 1, TxIndex: 2}
 
 	anyTime := time.Now().UTC()

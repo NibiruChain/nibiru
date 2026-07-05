@@ -3,7 +3,7 @@ package types
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -145,7 +145,7 @@ func NewDefaultWasmGasRegister() WasmGasRegister {
 // NewWasmGasRegister constructor
 func NewWasmGasRegister(c WasmGasRegisterConfig) WasmGasRegister {
 	if c.GasMultiplier == 0 {
-		panic(errorsmod.Wrap(sdkerrors.ErrLogic, "GasMultiplier can not be 0"))
+		panic(sdkioerrors.Wrap(sdkerrors.ErrLogic, "GasMultiplier can not be 0"))
 	}
 	return WasmGasRegister{
 		c: c,
@@ -160,7 +160,7 @@ func (g WasmGasRegister) NewContractInstanceCosts(pinned bool, msgLen int) store
 // CompileCosts costs to persist and "compile" a new wasm contract
 func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 	if byteLength < 0 {
-		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
+		panic(sdkioerrors.Wrap(ErrInvalid, "negative length"))
 	}
 	return g.c.CompileCost * uint64(byteLength)
 }
@@ -168,7 +168,7 @@ func (g WasmGasRegister) CompileCosts(byteLength int) storetypes.Gas {
 // UncompressCosts costs to unpack a new wasm contract
 func (g WasmGasRegister) UncompressCosts(byteLength int) sdk.Gas {
 	if byteLength < 0 {
-		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
+		panic(sdkioerrors.Wrap(ErrInvalid, "negative length"))
 	}
 	return g.c.UncompressCost.Mul(uint64(byteLength)).Floor()
 }
@@ -176,7 +176,7 @@ func (g WasmGasRegister) UncompressCosts(byteLength int) sdk.Gas {
 // InstantiateContractCosts costs when interacting with a wasm contract
 func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas {
 	if msgLen < 0 {
-		panic(errorsmod.Wrap(ErrInvalid, "negative length"))
+		panic(sdkioerrors.Wrap(ErrInvalid, "negative length"))
 	}
 	dataCosts := sdk.Gas(msgLen) * g.c.ContractMessageDataCost
 	if pinned {

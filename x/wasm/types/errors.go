@@ -3,7 +3,7 @@ package types
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 // Codes for wasm contract errors
@@ -13,77 +13,77 @@ var (
 	// Note: never use code 1 for any errors - that is reserved for ErrInternal in the core cosmos sdk
 
 	// ErrCreateFailed error for wasm code that has already been uploaded or failed
-	ErrCreateFailed = errorsmod.Register(DefaultCodespace, 2, "create wasm contract failed")
+	ErrCreateFailed = sdkioerrors.Register(DefaultCodespace, 2, "create wasm contract failed")
 
 	// ErrAccountExists error for a contract account that already exists
-	ErrAccountExists = errorsmod.Register(DefaultCodespace, 3, "contract account already exists")
+	ErrAccountExists = sdkioerrors.Register(DefaultCodespace, 3, "contract account already exists")
 
 	// ErrInstantiateFailed error for rust instantiate contract failure
-	ErrInstantiateFailed = errorsmod.Register(DefaultCodespace, 4, "instantiate wasm contract failed")
+	ErrInstantiateFailed = sdkioerrors.Register(DefaultCodespace, 4, "instantiate wasm contract failed")
 
 	// ErrExecuteFailed error for rust execution contract failure
-	ErrExecuteFailed = errorsmod.Register(DefaultCodespace, 5, "execute wasm contract failed")
+	ErrExecuteFailed = sdkioerrors.Register(DefaultCodespace, 5, "execute wasm contract failed")
 
 	// ErrGasLimit error for out of gas
-	ErrGasLimit = errorsmod.Register(DefaultCodespace, 6, "insufficient gas")
+	ErrGasLimit = sdkioerrors.Register(DefaultCodespace, 6, "insufficient gas")
 
 	// ErrInvalidGenesis error for invalid genesis file syntax
-	ErrInvalidGenesis = errorsmod.Register(DefaultCodespace, 7, "invalid genesis")
+	ErrInvalidGenesis = sdkioerrors.Register(DefaultCodespace, 7, "invalid genesis")
 
 	// ErrNotFound error for an entry not found in the store
-	ErrNotFound = errorsmod.Register(DefaultCodespace, 8, "not found")
+	ErrNotFound = sdkioerrors.Register(DefaultCodespace, 8, "not found")
 
 	// ErrQueryFailed error for rust smart query contract failure
-	ErrQueryFailed = errorsmod.Register(DefaultCodespace, 9, "query wasm contract failed")
+	ErrQueryFailed = sdkioerrors.Register(DefaultCodespace, 9, "query wasm contract failed")
 
 	// ErrInvalidMsg error when we cannot process the error returned from the contract
-	ErrInvalidMsg = errorsmod.Register(DefaultCodespace, 10, "invalid CosmosMsg from the contract")
+	ErrInvalidMsg = sdkioerrors.Register(DefaultCodespace, 10, "invalid CosmosMsg from the contract")
 
 	// ErrMigrationFailed error for rust execution contract failure
-	ErrMigrationFailed = errorsmod.Register(DefaultCodespace, 11, "migrate wasm contract failed")
+	ErrMigrationFailed = sdkioerrors.Register(DefaultCodespace, 11, "migrate wasm contract failed")
 
 	// ErrEmpty error for empty content
-	ErrEmpty = errorsmod.Register(DefaultCodespace, 12, "empty")
+	ErrEmpty = sdkioerrors.Register(DefaultCodespace, 12, "empty")
 
 	// ErrLimit error for content that exceeds a limit
-	ErrLimit = errorsmod.Register(DefaultCodespace, 13, "exceeds limit")
+	ErrLimit = sdkioerrors.Register(DefaultCodespace, 13, "exceeds limit")
 
 	// ErrInvalid error for content that is invalid in this context
-	ErrInvalid = errorsmod.Register(DefaultCodespace, 14, "invalid")
+	ErrInvalid = sdkioerrors.Register(DefaultCodespace, 14, "invalid")
 
 	// ErrDuplicate error for content that exists
-	ErrDuplicate = errorsmod.Register(DefaultCodespace, 15, "duplicate")
+	ErrDuplicate = sdkioerrors.Register(DefaultCodespace, 15, "duplicate")
 
 	// ErrMaxIBCChannels error for maximum number of ibc channels reached
-	ErrMaxIBCChannels = errorsmod.Register(DefaultCodespace, 16, "max transfer channels")
+	ErrMaxIBCChannels = sdkioerrors.Register(DefaultCodespace, 16, "max transfer channels")
 
 	// ErrUnsupportedForContract error when a capability is used that is not supported for/ by this contract
-	ErrUnsupportedForContract = errorsmod.Register(DefaultCodespace, 17, "unsupported for this contract")
+	ErrUnsupportedForContract = sdkioerrors.Register(DefaultCodespace, 17, "unsupported for this contract")
 
 	// ErrPinContractFailed error for pinning contract failures
-	ErrPinContractFailed = errorsmod.Register(DefaultCodespace, 18, "pinning contract failed")
+	ErrPinContractFailed = sdkioerrors.Register(DefaultCodespace, 18, "pinning contract failed")
 
 	// ErrUnpinContractFailed error for unpinning contract failures
-	ErrUnpinContractFailed = errorsmod.Register(DefaultCodespace, 19, "unpinning contract failed")
+	ErrUnpinContractFailed = sdkioerrors.Register(DefaultCodespace, 19, "unpinning contract failed")
 
 	// ErrUnknownMsg error by a message handler to show that it is not responsible for this message type
-	ErrUnknownMsg = errorsmod.Register(DefaultCodespace, 20, "unknown message from the contract")
+	ErrUnknownMsg = sdkioerrors.Register(DefaultCodespace, 20, "unknown message from the contract")
 
 	// ErrInvalidEvent error if an attribute/event from the contract is invalid
-	ErrInvalidEvent = errorsmod.Register(DefaultCodespace, 21, "invalid event")
+	ErrInvalidEvent = sdkioerrors.Register(DefaultCodespace, 21, "invalid event")
 
 	// ErrNoSuchContractFn error factory for an error when an address does not belong to a contract
-	ErrNoSuchContractFn = WasmVMFlavouredErrorFactory(errorsmod.Register(DefaultCodespace, 22, "no such contract"),
+	ErrNoSuchContractFn = WasmVMFlavouredErrorFactory(sdkioerrors.Register(DefaultCodespace, 22, "no such contract"),
 		func(addr string) error { return wasmvmtypes.NoSuchContract{Addr: addr} },
 	)
 
 	// code 23 -26 were used for json parser
 
 	// ErrExceedMaxQueryStackSize error if max query stack size is exceeded
-	ErrExceedMaxQueryStackSize = errorsmod.Register(DefaultCodespace, 27, "max query stack size exceeded")
+	ErrExceedMaxQueryStackSize = sdkioerrors.Register(DefaultCodespace, 27, "max query stack size exceeded")
 
 	// ErrNoSuchCodeFn factory for an error when a code id does not belong to a code info
-	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(errorsmod.Register(DefaultCodespace, 28, "no such code"),
+	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(sdkioerrors.Register(DefaultCodespace, 28, "no such code"),
 		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
 	)
 )
@@ -98,17 +98,17 @@ var _ WasmVMErrorable = WasmVMFlavouredError{}
 
 // WasmVMFlavouredError wrapper for sdk error that supports wasmvm error types
 type WasmVMFlavouredError struct {
-	sdkErr    *errorsmod.Error
+	sdkErr    *sdkioerrors.Error
 	wasmVMErr error
 }
 
 // NewWasmVMFlavouredError constructor
-func NewWasmVMFlavouredError(sdkErr *errorsmod.Error, wasmVMErr error) WasmVMFlavouredError {
+func NewWasmVMFlavouredError(sdkErr *sdkioerrors.Error, wasmVMErr error) WasmVMFlavouredError {
 	return WasmVMFlavouredError{sdkErr: sdkErr, wasmVMErr: wasmVMErr}
 }
 
 // WasmVMFlavouredErrorFactory is a factory method to build a WasmVMFlavouredError type
-func WasmVMFlavouredErrorFactory[T any](sdkErr *errorsmod.Error, wasmVMErrBuilder func(T) error) func(T) WasmVMFlavouredError {
+func WasmVMFlavouredErrorFactory[T any](sdkErr *sdkioerrors.Error, wasmVMErrBuilder func(T) error) func(T) WasmVMFlavouredError {
 	if wasmVMErrBuilder == nil {
 		panic("builder function required")
 	}
@@ -142,10 +142,10 @@ func (e WasmVMFlavouredError) Cause() error {
 
 // Wrap extends this error with additional information.
 // It's a handy function to call Wrap with sdk errors.
-func (e WasmVMFlavouredError) Wrap(desc string) error { return errorsmod.Wrap(e, desc) }
+func (e WasmVMFlavouredError) Wrap(desc string) error { return sdkioerrors.Wrap(e, desc) }
 
 // Wrapf extends this error with additional information.
 // It's a handy function to call Wrapf with sdk errors.
 func (e WasmVMFlavouredError) Wrapf(desc string, args ...interface{}) error {
-	return errorsmod.Wrapf(e, desc, args...)
+	return sdkioerrors.Wrapf(e, desc, args...)
 }

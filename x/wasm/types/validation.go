@@ -8,7 +8,7 @@ import (
 
 	"github.com/docker/distribution/reference"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 // MaxSaltSize is the longest salt that can be used when instantiating a contract
@@ -27,10 +27,10 @@ var (
 
 func validateWasmCode(s []byte, maxSize int) error {
 	if len(s) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "is required")
+		return sdkioerrors.Wrap(ErrEmpty, "is required")
 	}
 	if len(s) > maxSize {
-		return errorsmod.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
+		return sdkioerrors.Wrapf(ErrLimit, "cannot be longer than %d bytes", maxSize)
 	}
 	return nil
 }
@@ -38,7 +38,7 @@ func validateWasmCode(s []byte, maxSize int) error {
 // ValidateLabel ensure label constraints
 func ValidateLabel(label string) error {
 	if label == "" {
-		return errorsmod.Wrap(ErrEmpty, "is required")
+		return sdkioerrors.Wrap(ErrEmpty, "is required")
 	}
 	if len(label) > MaxLabelSize {
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxLabelSize)
@@ -62,7 +62,7 @@ func ValidateLabel(label string) error {
 func ValidateSalt(salt []byte) error {
 	switch n := len(salt); {
 	case n == 0:
-		return errorsmod.Wrap(ErrEmpty, "is required")
+		return sdkioerrors.Wrap(ErrEmpty, "is required")
 	case n > MaxSaltSize:
 		return ErrLimit.Wrapf("cannot be longer than %d characters", MaxSaltSize)
 	}

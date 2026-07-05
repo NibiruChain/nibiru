@@ -14,13 +14,13 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -152,7 +152,7 @@ func TestCreateWithParamPermissions(t *testing.T) {
 	specs := map[string]struct {
 		policy      types.AuthorizationPolicy
 		chainUpload types.AccessConfig
-		expError    *errorsmod.Error
+		expError    *sdkioerrors.Error
 	}{
 		"default": {
 			policy:      DefaultAuthorizationPolicy{},
@@ -217,7 +217,7 @@ func TestEnforceValidPermissionsOnCreate(t *testing.T) {
 		// grantedPermission is set iff no error
 		grantedPermission types.AccessConfig
 		// expError is nil iff the request is allowed
-		expError *errorsmod.Error
+		expError *sdkioerrors.Error
 	}{
 		"override everybody": {
 			defaultPermssion:    types.AccessTypeEverybody,
@@ -517,7 +517,7 @@ func TestInstantiateWithPermissions(t *testing.T) {
 	specs := map[string]struct {
 		srcPermission types.AccessConfig
 		srcActor      sdk.AccAddress
-		expError      *errorsmod.Error
+		expError      *sdkioerrors.Error
 	}{
 		"default": {
 			srcPermission: types.DefaultUploadAccess,
@@ -1146,7 +1146,7 @@ func TestMigrate(t *testing.T) {
 		fromCodeID           uint64
 		toCodeID             uint64
 		migrateMsg           []byte
-		expErr               *errorsmod.Error
+		expErr               *sdkioerrors.Error
 		expVerifier          sdk.AccAddress
 		expIBCPort           bool
 		initMsg              []byte
@@ -1619,7 +1619,7 @@ func TestUpdateContractAdmin(t *testing.T) {
 		newAdmin             sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *errorsmod.Error
+		expErr               *sdkioerrors.Error
 	}{
 		"all good with admin set": {
 			instAdmin: fred,
@@ -1688,7 +1688,7 @@ func TestClearContractAdmin(t *testing.T) {
 		instAdmin            sdk.AccAddress
 		overrideContractAddr sdk.AccAddress
 		caller               sdk.AccAddress
-		expErr               *errorsmod.Error
+		expErr               *sdkioerrors.Error
 	}{
 		"all good when called by proper admin": {
 			instAdmin: fred,
@@ -2214,7 +2214,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 	senderAddr := keepers.Faucet.NewFundedRandomAccount(parentCtx, amts...)
 
 	// create vesting account
-	var vestingAddr sdk.AccAddress = rand.Bytes(types.ContractAddrLen)
+	var vestingAddr sdk.AccAddress = cmtrand.Bytes(types.ContractAddrLen)
 	msgCreateVestingAccount := vestingtypes.NewMsgCreateVestingAccount(senderAddr, vestingAddr, amts, time.Now().Add(time.Minute).Unix(), false)
 	_, err := vesting.NewMsgServerImpl(keepers.AccountKeeper, keepers.BankKeeper).CreateVestingAccount(sdk.WrapSDKContext(parentCtx), msgCreateVestingAccount)
 	require.NoError(t, err)
@@ -2225,7 +2225,7 @@ func TestCoinBurnerPruneBalances(t *testing.T) {
 		setupAcc    func(t *testing.T, ctx sdk.Context) authtypes.AccountI
 		expBalances sdk.Coins
 		expHandled  bool
-		expErr      *errorsmod.Error
+		expErr      *sdkioerrors.Error
 	}{
 		"vesting account - all removed": {
 			setupAcc: func(t *testing.T, ctx sdk.Context) authtypes.AccountI {

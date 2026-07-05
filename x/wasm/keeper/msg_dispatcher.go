@@ -8,7 +8,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -66,7 +66,7 @@ func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr
 				panic(r)
 			}
 			ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			err = errorsmod.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
+			err = sdkioerrors.Wrap(sdkerrors.ErrOutOfGas, "SubMsg hit gas limit")
 		}
 	}()
 	events, data, err = d.messenger.DispatchMsg(subCtx, contractAddr, ibcPort, msg)
@@ -86,7 +86,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		switch msg.ReplyOn {
 		case wasmvmtypes.ReplySuccess, wasmvmtypes.ReplyError, wasmvmtypes.ReplyAlways, wasmvmtypes.ReplyNever:
 		default:
-			return nil, errorsmod.Wrap(types.ErrInvalid, "replyOn value")
+			return nil, sdkioerrors.Wrap(types.ErrInvalid, "replyOn value")
 		}
 		// first, we build a sub-context which we can use inside the submessages
 		subCtx, commit := ctx.CacheContext()
@@ -166,7 +166,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		rspData, err := d.keeper.reply(ctx, contractAddr, reply)
 		switch {
 		case err != nil:
-			return nil, errorsmod.Wrap(err, "reply")
+			return nil, sdkioerrors.Wrap(err, "reply")
 		case rspData != nil:
 			rsp = rspData
 		}
@@ -187,7 +187,7 @@ func redactError(err error) error {
 	// sdk/11 is out of gas
 	// sdk/5 is insufficient funds (on bank send)
 	// (we can theoretically redact less in the future, but this is a first step to safety)
-	codespace, code, _ := errorsmod.ABCIInfo(err, false)
+	codespace, code, _ := sdkioerrors.ABCIInfo(err, false)
 	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }
 

@@ -5,7 +5,7 @@ import (
 
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -41,7 +41,7 @@ func PortIDForContract(addr sdk.AccAddress) string {
 
 func ContractFromPortID(portID string) (sdk.AccAddress, error) {
 	if !strings.HasPrefix(portID, portIDPrefix) {
-		return nil, errorsmod.Wrapf(types.ErrInvalid, "without prefix")
+		return nil, sdkioerrors.Wrapf(types.ErrInvalid, "without prefix")
 	}
 	return sdk.AccAddressFromBech32(portID[len(portIDPrefix):])
 }

@@ -1,7 +1,6 @@
 package keepers
 
 import (
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
@@ -11,6 +10,8 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	// ---------------------------------------------------------------
 	// IBC imports

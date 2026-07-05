@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -543,7 +543,7 @@ func TestAcceptGrantedMessage(t *testing.T) {
 		auth      authztypes.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
-		expErr    *errorsmod.Error
+		expErr    *sdkioerrors.Error
 	}{
 		"accepted and updated - contract execution": {
 			auth: NewContractExecutionAuthorization(mustGrant(myContractAddr, NewMaxCallsLimit(2), NewAllowAllMessagesFilter())),
@@ -875,7 +875,7 @@ func TestStoreCodeAuthorizationAccept(t *testing.T) {
 		auth      authztypes.Authorization
 		msg       sdk.Msg
 		expResult authztypes.AcceptResponse
-		expErr    *errorsmod.Error
+		expErr    *sdkioerrors.Error
 	}{
 		"accepted wildcard": {
 			auth: NewStoreCodeAuthorization(*grantWildcard),

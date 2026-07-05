@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
+
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo"

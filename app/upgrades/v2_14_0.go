@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"

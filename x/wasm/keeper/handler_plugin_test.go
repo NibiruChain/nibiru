@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,7 +43,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 	myMsg := wasmvmtypes.CosmosMsg{Custom: []byte(`{}`)}
 	specs := map[string]struct {
 		handlers  []Messenger
-		expErr    *errorsmod.Error
+		expErr    *sdkioerrors.Error
 		expEvents []sdk.Event
 	}{
 		"single handler": {
@@ -123,7 +123,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 	specs := map[string]struct {
 		srcRoute         MessageRouter
 		srcEncoder       CustomEncoder
-		expErr           *errorsmod.Error
+		expErr           *sdkioerrors.Error
 		expMsgDispatched int
 	}{
 		"all good": {
@@ -270,7 +270,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 		chanKeeper    types.ChannelKeeper
 		capKeeper     types.CapabilityKeeper
 		expPacketSent *CapturedPacket
-		expErr        *errorsmod.Error
+		expErr        *sdkioerrors.Error
 	}{
 		"all good": {
 			srcMsg: wasmvmtypes.SendPacketMsg{

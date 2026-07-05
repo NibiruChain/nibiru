@@ -7,7 +7,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,20 +27,20 @@ const (
 
 func (m Model) ValidateBasic() error {
 	if len(m.Key) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "key")
+		return sdkioerrors.Wrap(ErrEmpty, "key")
 	}
 	return nil
 }
 
 func (c CodeInfo) ValidateBasic() error {
 	if len(c.CodeHash) == 0 {
-		return errorsmod.Wrap(ErrEmpty, "code hash")
+		return sdkioerrors.Wrap(ErrEmpty, "code hash")
 	}
 	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
-		return errorsmod.Wrap(err, "creator")
+		return sdkioerrors.Wrap(err, "creator")
 	}
 	if err := c.InstantiateConfig.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "instantiate config")
+		return sdkioerrors.Wrap(err, "instantiate config")
 	}
 	return nil
 }
@@ -81,18 +81,18 @@ type validatable interface {
 // but also in the genesis import process.
 func (c *ContractInfo) ValidateBasic() error {
 	if c.CodeID == 0 {
-		return errorsmod.Wrap(ErrEmpty, "code id")
+		return sdkioerrors.Wrap(ErrEmpty, "code id")
 	}
 	if _, err := sdk.AccAddressFromBech32(c.Creator); err != nil {
-		return errorsmod.Wrap(err, "creator")
+		return sdkioerrors.Wrap(err, "creator")
 	}
 	if len(c.Admin) != 0 {
 		if _, err := sdk.AccAddressFromBech32(c.Admin); err != nil {
-			return errorsmod.Wrap(err, "admin")
+			return sdkioerrors.Wrap(err, "admin")
 		}
 	}
 	if err := ValidateLabel(c.Label); err != nil {
-		return errorsmod.Wrap(err, "label")
+		return sdkioerrors.Wrap(err, "label")
 	}
 	if c.Extension == nil {
 		return nil
@@ -103,7 +103,7 @@ func (c *ContractInfo) ValidateBasic() error {
 		return nil
 	}
 	if err := e.ValidateBasic(); err != nil {
-		return errorsmod.Wrap(err, "extension")
+		return sdkioerrors.Wrap(err, "extension")
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 	}
 	codecAny, err := codectypes.NewAnyWithValue(ext)
 	if err != nil {
-		return errorsmod.Wrap(sdkerrors.ErrPackAny, err.Error())
+		return sdkioerrors.Wrap(sdkerrors.ErrPackAny, err.Error())
 	}
 
 	c.Extension = codecAny
@@ -139,7 +139,7 @@ func (c *ContractInfo) SetExtension(ext ContractInfoExtension) error {
 func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 	rv := reflect.ValueOf(e)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidType, "not a pointer")
+		return sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "not a pointer")
 	}
 	if c.Extension == nil {
 		return nil
@@ -148,7 +148,7 @@ func (c *ContractInfo) ReadExtension(e ContractInfoExtension) error {
 	cached := c.Extension.GetCachedValue()
 	elem := reflect.ValueOf(cached).Elem()
 	if !elem.Type().AssignableTo(rv.Elem().Type()) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "extension is of type %s but argument of %s", elem.Type(), rv.Elem().Type())
+		return sdkioerrors.Wrapf(sdkerrors.ErrInvalidType, "extension is of type %s but argument of %s", elem.Type(), rv.Elem().Type())
 	}
 	rv.Elem().Set(elem)
 	return nil
@@ -264,7 +264,7 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 	if c.Updated == nil {
 		return ErrEmpty.Wrap("updated")
 	}
-	return errorsmod.Wrap(c.Msg.ValidateBasic(), "msg")
+	return sdkioerrors.Wrap(c.Msg.ValidateBasic(), "msg")
 }
 
 // NewEnv initializes the environment for a contract instance

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -259,7 +259,7 @@ func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error
 	}
 	rawBz, err := cdc.MarshalJSON(codecAny)
 	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, errorsmod.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wasmvmtypes.CosmosMsg{}, sdkioerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	customMsg, _ := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
@@ -284,12 +284,12 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 		var custom reflectCustomMsg
 		err := json.Unmarshal(msg, &custom)
 		if err != nil {
-			return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+			return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 		}
 		if custom.Raw != nil {
 			var codecAny codectypes.Any
 			if err := cdc.UnmarshalJSON(custom.Raw, &codecAny); err != nil {
-				return nil, errorsmod.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
+				return nil, sdkioerrors.Wrap(sdkerrors.ErrJSONUnmarshal, err.Error())
 			}
 			var msg sdk.Msg
 			if err := cdc.UnpackAny(&codecAny, &msg); err != nil {
@@ -298,8 +298,8 @@ func fromReflectRawMsg(cdc codec.Codec) CustomEncoder {
 			return []sdk.Msg{msg}, nil
 		}
 		if custom.Debug != "" {
-			return nil, errorsmod.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
+			return nil, sdkioerrors.Wrapf(types.ErrInvalidMsg, "Custom Debug: %s", custom.Debug)
 		}
-		return nil, errorsmod.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
+		return nil, sdkioerrors.Wrap(types.ErrInvalidMsg, "Unknown Custom message variant")
 	}
 }

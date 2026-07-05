@@ -22,7 +22,6 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
-	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -45,6 +44,8 @@ import (
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"

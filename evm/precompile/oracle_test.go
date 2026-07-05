@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
-	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/embeds"
