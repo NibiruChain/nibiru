@@ -50,19 +50,18 @@ jobs:
         uses: taiki-e/install-action@just
 
       - name: Cache Cargo
+        id: rust-cache-wasmvm
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            lib/wasmvm-ffi/libwasmvm/target/debug/.fingerprint
-            lib/wasmvm-ffi/libwasmvm/target/debug/build
-            lib/wasmvm-ffi/libwasmvm/target/debug/deps
-            lib/wasmvm-ffi/libwasmvm/target/release/.fingerprint
-            lib/wasmvm-ffi/libwasmvm/target/release/build
-            lib/wasmvm-ffi/libwasmvm/target/release/deps
-          key: cargo-rust-sanity-stable-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            lib/wasmvm-ffi/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            cargo-rust-sanity-stable-
+            ${{ runner.os }}-cargo-wasmvm-ffi-
 
       - name: Run Rust sanity checks
         run: just wasmvm ci-rust
@@ -85,19 +84,18 @@ jobs:
         uses: taiki-e/install-action@just
 
       - name: Cache Cargo
+        id: rust-cache-wasmvm
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
-            lib/wasmvm-ffi/libwasmvm/target/debug/.fingerprint
-            lib/wasmvm-ffi/libwasmvm/target/debug/build
-            lib/wasmvm-ffi/libwasmvm/target/debug/deps
-            lib/wasmvm-ffi/libwasmvm/target/release/.fingerprint
-            lib/wasmvm-ffi/libwasmvm/target/release/build
-            lib/wasmvm-ffi/libwasmvm/target/release/deps
-          key: cargo-clippy-stable-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            lib/wasmvm-ffi/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            cargo-clippy-stable-
+            ${{ runner.os }}-cargo-wasmvm-ffi-
 
       - name: Run Clippy
         run: just wasmvm clippy
@@ -171,6 +169,20 @@ jobs:
 
       - name: Install just
         uses: taiki-e/install-action@just
+
+      - name: Cache Cargo
+        id: rust-cache-wasmvm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            lib/wasmvm-ffi/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-wasmvm-ffi-
 
       - name: Build Rust shared library
         run: just wasmvm build-rust
