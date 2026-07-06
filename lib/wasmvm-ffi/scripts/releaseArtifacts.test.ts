@@ -147,8 +147,8 @@ describe("findLatestLibwasmvmReleaseTag", () => {
 })
 
 describe("computeNextLibwasmvmReleaseTag", () => {
-  test("starts the Nibiru release line at lib/wasmvm-ffi/v1.6.0", () => {
-    expect(computeNextLibwasmvmReleaseTag([])).toBe("lib/wasmvm-ffi/v1.6.0")
+  test("starts the Nibiru release line at lib/wasmvm-ffi/v1.10.0", () => {
+    expect(computeNextLibwasmvmReleaseTag([])).toBe("lib/wasmvm-ffi/v1.10.0")
   })
 
   test("bumps from the upstream v1.5.9 line to lib/wasmvm-ffi/v1.6.0", () => {

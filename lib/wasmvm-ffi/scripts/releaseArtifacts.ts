@@ -7,7 +7,7 @@ import { Command } from "commander";
 
 const DEFAULT_BUMP_TYPE = "minor";
 const RELEASE_TAG_PREFIX = "lib/wasmvm-ffi/";
-const FIRST_RELEASE_TAG = `${RELEASE_TAG_PREFIX}v1.6.0`;
+const FIRST_RELEASE_TAG = `${RELEASE_TAG_PREFIX}v1.10.0`;
 const RELEASE_VERSION_PATTERN = "v[0-9]+\\.[0-9]+\\.[0-9]+";
 const RELEASE_TAG_PATTERN = `${RELEASE_TAG_PREFIX}${RELEASE_VERSION_PATTERN}`;
 const GITHUB_REPO = "NibiruChain/nibiru";
