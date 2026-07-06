@@ -690,6 +690,7 @@ func setupKeeper(t *testing.T) (*Keeper, sdk.Context) {
 		tempDir,
 		wasmConfig,
 		AvailableCapabilities,
+		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	return &srcKeeper, ctx

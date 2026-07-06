@@ -28,6 +28,7 @@ func NewKeeper(
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
+	wasmBlockHooksContractSource types.WasmBlockHooksContractSource,
 	authority string,
 	opts ...Option,
 ) Keeper {

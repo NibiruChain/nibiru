@@ -298,6 +298,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		wasmDir,
 		wasmConfig,
 		supportedWasmVMFeatures,
+		app.SudoKeeper,
 		govModuleAddr,
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)

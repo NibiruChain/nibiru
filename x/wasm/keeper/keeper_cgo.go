@@ -32,6 +32,7 @@ func NewKeeper(
 	homeDir string,
 	wasmConfig types.WasmConfig,
 	availableCapabilities string,
+	wasmBlockHooksContractSource types.WasmBlockHooksContractSource,
 	authority string,
 	opts ...Option,
 ) Keeper {
@@ -52,7 +53,8 @@ func NewKeeper(
 		propagateGovAuthorization: map[types.AuthorizationPolicyAction]struct{}{
 			types.AuthZActionInstantiate: {},
 		},
-		authority: authority,
+		wasmBlockHooksContractSource: wasmBlockHooksContractSource,
+		authority:                    authority,
 	}
 	keeper.wasmVMQueryHandler = DefaultQueryPlugins(bankKeeper, stakingKeeper, distrKeeper, channelKeeper, keeper)
 	preOpts, postOpts := splitOpts(opts)

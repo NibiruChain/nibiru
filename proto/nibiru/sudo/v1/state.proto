@@ -19,6 +19,7 @@ message Sudoers {
 message GenesisState {
   nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
   nibiru.sudo.v1.ZeroGasActors zero_gas_actors = 2;
+  string wasm_block_hooks_contract = 3;
 }
 
 // ZeroGasActors: Actors that can execute zero gas transactions against a set of

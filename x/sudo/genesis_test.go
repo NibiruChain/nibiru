@@ -1,9 +1,14 @@
 package sudo_test
 
 import (
+	"bytes"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // TestGenesisState_Validate tests the GenesisState.Validate() function with comprehensive test cases.
@@ -16,6 +21,7 @@ func (s *Suite) TestGenesisState_Validate() {
 	for idx, addr := range addrs {
 		addrStrs[idx] = addr.String()
 	}
+	wasmContract := sdk.AccAddress(bytes.Repeat([]byte{1}, wasmtypes.ContractAddrLen)).String()
 
 	testCases := []struct {
 		name     string
@@ -33,6 +39,7 @@ func (s *Suite) TestGenesisState_Validate() {
 					Senders:   []string{addrStrs[3]},
 					Contracts: []string{eth.NibiruAddrToEthAddr(addrs[4]).Hex()},
 				},
+				WasmBlockHooksContract: wasmContract,
 			},
 		},
 		{
@@ -135,6 +142,28 @@ func (s *Suite) TestGenesisState_Validate() {
 					Contracts: []string{},
 				},
 			},
+		},
+		{
+			name: "invalid - wasm block hooks contract bad bech32",
+			genState: &sudo.GenesisState{
+				Sudoers: sudo.Sudoers{
+					Root:      addrStrs[0],
+					Contracts: []string{},
+				},
+				WasmBlockHooksContract: "invalid",
+			},
+			wantErr: "decoding bech32 failed",
+		},
+		{
+			name: "invalid - wasm block hooks contract sdk address length",
+			genState: &sudo.GenesisState{
+				Sudoers: sudo.Sudoers{
+					Root:      addrStrs[0],
+					Contracts: []string{},
+				},
+				WasmBlockHooksContract: addrStrs[1],
+			},
+			wantErr: "wasm block hooks contract address must be 32 bytes",
 		},
 	}
 

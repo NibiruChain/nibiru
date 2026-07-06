@@ -96,7 +96,8 @@ type Keeper struct {
 	acceptedAccountTypes map[reflect.Type]struct{}
 	accountPruner        AccountPruner
 	// propagate gov authZ to sub-messages
-	propagateGovAuthorization map[types.AuthorizationPolicyAction]struct{}
+	propagateGovAuthorization    map[types.AuthorizationPolicyAction]struct{}
+	wasmBlockHooksContractSource types.WasmBlockHooksContractSource
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.

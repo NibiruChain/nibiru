@@ -25,6 +25,16 @@ func (k Keeper) QuerySudoers(
 	}, err
 }
 
+// GetWasmBlockHooksContract returns the configured Wasm block-hooks contract
+// address and whether the address is present.
+func (k Keeper) GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool) {
+	contract := k.WasmBlockHooksContract.GetOr(ctx, "")
+	if contract == "" {
+		return nil, false
+	}
+	return sdk.MustAccAddressFromBech32(contract), true
+}
+
 func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
 	return k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
 }

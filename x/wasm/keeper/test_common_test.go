@@ -450,6 +450,7 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		availableCapabilities,
+		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)

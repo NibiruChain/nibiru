@@ -8,6 +8,7 @@ const (
 )
 
 var (
-	NamespaceSudoers       collections.Namespace = 1
-	NamespaceZeroGasActors collections.Namespace = 2
+	NamespaceSudoers                collections.Namespace = 1
+	NamespaceZeroGasActors          collections.Namespace = 2
+	NamespaceWasmBlockHooksContract collections.Namespace = 3
 )
