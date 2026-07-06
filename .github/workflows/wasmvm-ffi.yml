@@ -29,7 +29,7 @@ jobs:
             wasmvm:
               - "lib/wasmvm-ffi/**"
               - "justfile"
-              - ".github/workflows/wasm-vm-ffi.yml"
+              - ".github/workflows/wasmvm-ffi.yml"
 
   # rust-base-tests (job): Tests the Rust crate `wasmvm`, generated bindings,
   # and Rust docs.
@@ -412,19 +412,25 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: libwasmvm-muslc
-          path: release-artifacts
+          path: dist/libwasmvm
 
       - name: Download tested glibc artifacts
         uses: actions/download-artifact@v4
         with:
           name: libwasmvm-glibc
-          path: release-artifacts
+          path: dist/libwasmvm
 
       - name: Download tested Darwin artifacts
         uses: actions/download-artifact@v4
         with:
           name: libwasmvm-darwin
-          path: release-artifacts
+          path: dist/libwasmvm
+
+      - name: Collect libwasmvm release artifacts
+        run: |
+          mkdir -p dist/libwasmvm
+          find dist/libwasmvm -mindepth 2 -type f -name 'libwasmvm*' \
+            -exec cp -t dist/libwasmvm {} +
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2

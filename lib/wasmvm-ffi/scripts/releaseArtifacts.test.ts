@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises"
+import { mkdir, mkdtemp, rm, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { describe, expect, test } from "bun:test"
@@ -9,6 +9,7 @@ import {
   computeNextLibwasmvmReleaseTag,
   findLatestLibwasmvmReleaseTag,
   findLatestLibwasmvmReleaseTagFromGhOutput,
+  getLatestStableReleaseTag,
   normalizeReleaseTag,
   parseGhReleaseListTags,
   parseLibwasmvmReleaseTag,
@@ -16,6 +17,7 @@ import {
   quoteShellArg,
   REAL_FILTERED_GH_RELEASE_LIST_OUTPUT,
   renderReleaseMetadataMarkdown,
+  resolveDefaultArtifactsDir,
   sortLibwasmvmReleaseTags,
   validateExistingArtifacts,
 } from "./releaseArtifacts"
@@ -226,6 +228,31 @@ describe("quoteShellArg", () => {
   })
 })
 
+describe("resolveDefaultArtifactsDir", () => {
+  test("resolves dist/libwasmvm under the repository root", async () => {
+    const tempRepoRoot = await mkdtemp(join(tmpdir(), "libwasmvm-repo-"))
+    const commands: string[] = []
+
+    try {
+      const artifactsDir = await resolveDefaultArtifactsDir(async (command) => {
+        commands.push(command)
+        if (command === "git rev-parse --show-toplevel") {
+          return `${tempRepoRoot}\n`
+        }
+        throw new Error(`Unexpected command: ${command}`)
+      })
+
+      expect(artifactsDir).toBe(join(tempRepoRoot, "dist", "libwasmvm"))
+      expect(commands).toEqual(["git rev-parse --show-toplevel"])
+      await expect(stat(artifactsDir)).resolves.toMatchObject({
+        isDirectory: () => true,
+      })
+    } finally {
+      await rm(tempRepoRoot, { recursive: true, force: true })
+    }
+  })
+})
+
 describe("validateExistingArtifacts", () => {
   test("requires all release files", async () => {
     const artifactsDir = await mkdtemp(join(tmpdir(), "libwasmvm-artifacts-"))
@@ -285,7 +312,7 @@ describe("buildPublishDryRunPlan", () => {
 describe("renderReleaseMetadataMarkdown", () => {
   test("renders release metadata and release assets", () => {
     const releaseUrl =
-      "https://github.com/NibiruChain/nibiru/releases/tag/lib/wasmvm-ffi/v1.6.0"
+      "https://github.com/NibiruChain/nibiru/releases/tag/lib%2Fwasmvm-ffi%2Fv1.6.0"
     const markdown = renderReleaseMetadataMarkdown({
       tag: "lib/wasmvm-ffi/v1.6.0",
       commitSha: "abc123",
@@ -307,11 +334,32 @@ describe("renderReleaseMetadataMarkdown", () => {
   })
 })
 
+describe("getLatestStableReleaseTag", () => {
+  test("finds the latest prefixed release from local tags without gh release list", async () => {
+    const commands: string[] = []
+    const tag = await getLatestStableReleaseTag(async (command) => {
+      commands.push(command)
+      if (command === `git tag --list "lib/wasmvm-ffi/v*.*.*"`) {
+        return "lib/wasmvm-ffi/v1.5.9\nlib/wasmvm-ffi/v1.6.0\n"
+      }
+      if (command.includes("gh release view 'lib/wasmvm-ffi/v1.6.0'")) {
+        return JSON.stringify({ tagName: "lib/wasmvm-ffi/v1.6.0" })
+      }
+      throw new Error(`Unexpected command: ${command}`)
+    })
+
+    expect(tag).toBe("lib/wasmvm-ffi/v1.6.0")
+    expect(commands.some((command) => command.startsWith("gh release list "))).toBe(
+      false,
+    )
+  })
+})
+
 describe("assertArtifactCommitAfterLatestRelease", () => {
   test("passes when no stable releases exist yet", async () => {
     await assertArtifactCommitAfterLatestRelease("abc123", async (command) => {
-      if (command.startsWith("gh release list ")) {
-        return "[]"
+      if (command === `git tag --list "lib/wasmvm-ffi/v*.*.*"`) {
+        return ""
       }
       throw new Error(`Unexpected command: ${command}`)
     })
@@ -321,8 +369,11 @@ describe("assertArtifactCommitAfterLatestRelease", () => {
     const commands: string[] = []
     await assertArtifactCommitAfterLatestRelease("new123", async (command) => {
       commands.push(command)
-      if (command.startsWith("gh release list ")) {
-        return JSON.stringify([{ tagName: "lib/wasmvm-ffi/v1.6.0" }])
+      if (command === `git tag --list "lib/wasmvm-ffi/v*.*.*"`) {
+        return "lib/wasmvm-ffi/v1.6.0\n"
+      }
+      if (command.includes("gh release view 'lib/wasmvm-ffi/v1.6.0'")) {
+        return JSON.stringify({ tagName: "lib/wasmvm-ffi/v1.6.0" })
       }
       if (command.includes("git rev-parse ")) return "old123\n"
       if (command.includes("git merge-base --is-ancestor")) return ""
@@ -367,8 +418,8 @@ describe("publishArtifacts", () => {
         }
 
         if (command.includes("git tag --points-at 'abc123'")) return ""
-        if (command.startsWith("gh release list ")) {
-          return JSON.stringify([{ tagName: "lib/wasmvm-ffi/v1.5.9" }])
+        if (command.includes("gh release view 'lib/wasmvm-ffi/v1.5.9'")) {
+          return JSON.stringify({ tagName: "lib/wasmvm-ffi/v1.5.9" })
         }
         if (command.includes("git rev-parse ")) return "old123\n"
         if (command.includes("git merge-base --is-ancestor")) return ""
