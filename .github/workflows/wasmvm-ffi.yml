@@ -416,19 +416,19 @@ jobs:
         uses: taiki-e/install-action@just
 
       - name: Download tested musl artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-muslc
           path: dist/libwasmvm
 
       - name: Download tested glibc artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-glibc
           path: dist/libwasmvm
 
       - name: Download tested Darwin artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-darwin
           path: dist/libwasmvm
