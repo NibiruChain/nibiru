@@ -1,3 +1,6 @@
 [submodule "geth"]
 	path = geth
 	url = git@github.com:NibiruChain/go-ethereum.git
+[submodule "nibiru-wasm"]
+	path = nibiru-wasm
+	url = git@github.com:NibiruChain/nibiru-wasm.git
