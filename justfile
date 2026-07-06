@@ -31,11 +31,6 @@ alias b := build
 clean-cache:
   go clean -cache -testcache -modcache
 
-# Generate protobuf-based types in Golang
-gen-proto: 
-  #!/usr/bin/env bash
-  just proto gen
-
 # Protobuf command dispatcher. Ex: `just proto gen`, `just proto fmt`, `just proto lint`, `just proto all`
 proto *ARGS:
   bash contrib/scripts/proto.sh {{ARGS}}
@@ -200,10 +195,6 @@ test-chaosnet:
   source contrib/bashlib.sh
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
-
-# Alias for "gen-proto"
-proto-gen:
-  just proto gen
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop: 

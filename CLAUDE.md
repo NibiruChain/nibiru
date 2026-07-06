@@ -1,187 +1,91 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides practical guidance for working in the `nibi-chain` repository.
 
 ## Project Overview
 
-Nibiru Chain is a breakthrough L1 blockchain and smart contract ecosystem providing superior throughput, reduced latency, and improved security. It operates two virtual machines in parallel:
-- **NibiruEVM**: Ethereum Virtual Machine for Ethereum compatibility
-- **Wasm**: For CosmWasm smart contracts
+Nibiru Chain is an L1 blockchain with parallel VM support:
 
-## Repository Structure
+- **NibiruEVM** for Ethereum-compatible execution
+- **Wasm** for CosmWasm smart contracts
 
-### Core Directories
-- `/x/` - Custom blockchain modules (oracle, devgas, epochs, inflation, tokenfactory, sudo)
-- `/evm/` - Ethereum Virtual Machine execution engine, precompiles, E2E tests, and Forge workspace
-- `/app/` - Core blockchain application logic and module integration
-- `/eth/` - Ethereum-specific implementations (accounts, crypto, RPC)
-- `/proto/` - Protocol Buffer definitions for blockchain messages
-- `/cmd/nibid/` - CLI binary for interacting with the blockchain
-- `/evm-core-ts/` - TypeScript library for EVM interactions
-- `/gosdk/` - Go SDK for programmatic blockchain interactions
+## Important Directories
 
-### Key Modules
-- **evm**: Ethereum Virtual Machine implementation
-- **oracle**: Decentralized price oracle system  
-- **devgas**: Revenue sharing for smart contract developers
-- **epochs**: Time-based hook system for periodic tasks
-- **inflation**: Tokenomics implementation
-- **tokenfactory**: Token creation and management
+- `/app/` - Application wiring and integration
+- `/cmd/nibid/` - Node binary entrypoints and localnet scripts
+- `/evm/` - EVM module, EVM state, ante flow, precompiles, E2E, and Forge workspace
+- `/eth/` - Ethereum RPC/account/encoding helpers
+- `/gosdk/` - Go SDK client package
+- `/proto/` - Protobuf definitions
+- `/x/` - Custom Cosmos SDK modules
 
-## Essential Commands
+## Core Commands
 
-### Build & Install
+Prefer `just` commands at the repository root.
+
+### Build and Run
+
 ```bash
-# Install the nibid binary
-just install
-
-# Build the project
-just build
+just install   # build + install nibid
+just build     # build nibid without install
+just localnet  # start a local chain
 ```
 
-### Local Development
-```bash
-# Run a local blockchain node
-make localnet
+### Test
 
-# Alternative single-node testnet
-just init-local-testnet [moniker]
-just start
+```bash
+just test-fast     # go test with cache
+just test          # go test -count=1 (requires localnet)
+just test-cover    # go test with coverage (requires localnet)
+just test-e2e      # EVM E2E test suite in evm/e2e/
+go test ./evm/...  # target one package tree
 ```
 
-### Testing
+### Lint, Format, and Proto
+
 ```bash
-# Run all unit tests
-make test-unit
-
-# Run specific package tests
-go test ./evm/...
-
-# Run with coverage
-make test-coverage
-
-# Run integration tests
-make test-coverage-integration
-
-# Run EVM E2E tests
-cd evm/e2e && npm test
+just lint
+just fmt
+just tidy          # go mod tidy + proto gen + lint + fmt
+just proto gen
 ```
 
-### Code Quality
-```bash
-# Format code
-make format
+## Environment and Requirements
 
-# Run linter
-make lint
+- Go version: follow `go.mod` (currently `go 1.25.0`)
+- Node.js and npm: required for `evm/e2e/`
+- Docker: required for containerized workflows (for example, some lint/chaosnet flows)
 
-# Fix linting issues
-make lint-fix
+## Common Workflow
 
-# Generate protobuf code
-make proto-gen
-```
+1. Install/update dependencies with command `just install`.
+2. Run a local chain with command `just localnet` when tests require live chain state.
+3. Make code changes in module packages (`/x/`, `/evm/`, `/eth/`, `/app/`).
+4. Run relevant tests (`go test ./<pkg>/...`, command `just test-fast`, and/or command `just test-e2e`).
+5. Run command `just tidy` before opening a PR.
 
-### Development Utilities
-```bash
-# Install development tools
-make tools-clean
+## Notes for EVM Work
 
-# Run simulation tests
-make sim-full
+- E2E tests live in directory `/evm/e2e/` and are run via command `just test-e2e`.
+- Solidity embed artifacts are generated with command `just gen-embeds`.
+- Foundry workspace is in directory `/evm/forge/`.
 
-# Generate documentation
-make docs-generate
+## Local Endpoints
 
-# Check for breaking changes
-make proto-break-check
-```
+- RPC: `http://localhost:26657`
+- gRPC: `localhost:9090`
+- EVM RPC: `http://localhost:8545`
+- API: `http://localhost:1317`
 
-## System Requirements
+## References
 
-- Go version 1.22.2 or higher
-- Node.js 20+ and npm 10+ (for TypeScript/EVM tests)
-- Make and Git
-- For validators: 8-core x64 CPU, 64GB RAM, 1TB+ SSD
-
-## Development Workflow
-
-1. **Setup Environment**
-   ```bash
-   git clone https://github.com/NibiruChain/nibiru
-   cd nibiru
-   just install
-   ```
-
-2. **Run Local Network**
-   ```bash
-   make localnet
-   # or
-   just init-local-testnet test-moniker
-   just start
-   ```
-
-3. **Make Changes**
-   - Core logic: `/x/` modules
-   - Application: `/app/`
-   - Tests: `*_test.go` files
-
-4. **Test Changes**
-   ```bash
-   # Test specific module
-   go test ./x/oracle/...
-   
-   # Run integration tests
-   make test-coverage-integration
-   ```
-
-5. **Lint & Format**
-   ```bash
-   make lint-fix
-   make format
-   ```
-
-## Technical Details
-
-### Build System
-- Primary: Makefile with includes from `/contrib/make/`
-- Alternative: justfile for common tasks
-- Protocol Buffers: buf for proto compilation
-
-### Dependencies
-- Cosmos SDK v0.47.11
-- CometBFT/Tendermint consensus
-- go-ethereum fork for EVM compatibility
-- CosmWasm for WASM smart contracts
-
-### Testing Framework
-- Go: Built-in testing with testify assertions
-- TypeScript: Jest for EVM E2E tests
-- Simulation: Custom simulation framework
-
-## Troubleshooting
-
-### Common Issues
-1. **Import errors**: Run `go mod tidy` and `go mod download`
-2. **Proto errors**: Run `make proto-gen`
-3. **Build failures**: Ensure Go 1.22.2+ is installed
-4. **Test failures**: Check if local node is running for integration tests
-
-### Local Network Ports
-- RPC: http://localhost:26657
-- gRPC: localhost:9090
-- EVM RPC: http://localhost:8545
-- API: http://localhost:1317
-
-## Documentation Resources
-
-- Main docs: https://docs.nibiru.fi
-- Contracts: https://github.com/NibiruChain/contracts
+- Main docs: https://nibiru.fi/docs/
 - TypeScript SDK: https://www.npmjs.com/package/@nibiruchain/ts-sdk
-- Oracle docs: See `/x/oracle/README.md`
+- Solidity package: file `/evm/embeds/README.md`
+- EVM package: file `/evm/README.md`
 
 ## Community
 
-- Discord: https://discord.gg/nibiru
-- Twitter: https://twitter.com/NibiruChain
+- Discord: https://discord.gg/nibirufi
+- X (Twitter): https://twitter.com/NibiruChain
 - Telegram: https://t.me/nibiruchainofficial

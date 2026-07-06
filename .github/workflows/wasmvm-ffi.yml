@@ -247,16 +247,15 @@ jobs:
   #       run: cargo test
   # ```
 
-  # build-static-libs (job): Builds Linux musl static library artifacts for
+  # build-libwasmvm-static-musl (job): Builds Linux musl static library artifacts for
   # `libwasmvm`.
-  build-static-libs:
+  build-libwasmvm-static-musl:
     needs:
       - changes-wasmvm
       - rust-base-tests
       - go-base-tests
       - go-ffi-tests
     if: needs.changes-wasmvm.outputs.wasmvm == 'true'
-    name: static musl libraries
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -288,15 +287,14 @@ jobs:
             artifacts/static-musl/checksums.txt
           if-no-files-found: error
 
-  # alpine-muslc-go-tests (job): Tests Go packages against the musl static
+  # test-go-alpine-musl (job): Tests Go packages against the musl static
   # `libwasmvm` artifacts in Alpine.
   # TODO: Enable this when static musl Go consumer tests are worth the runtime
   # cost. This is stronger than building artifacts because it exercises the Go
   # packages with tag `muslc` inside Alpine.
-  alpine-muslc-go-tests:
+  test-go-alpine-musl:
     needs: changes-wasmvm
     if: vars.ENABLE_ALPINE_MUSLC_GO_TESTS == 'true' && needs.changes-wasmvm.outputs.wasmvm == 'true'
-    name: Alpine muslc Go tests
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -307,16 +305,15 @@ jobs:
         if: ${{ vars.ENABLE_ALPINE_MUSLC_GO_TESTS == 'true' }}
         run: just wasmvm test-alpine
 
-  # build-shared-linux (job): Builds Linux glibc shared library artifacts for
+  # build-libwasmvm-shared-linux (job): Builds Linux glibc shared library artifacts for
   # `libwasmvm`.
-  build-shared-linux:
+  build-libwasmvm-shared-linux:
     needs:
       - changes-wasmvm
       - rust-base-tests
       - go-base-tests
       - go-ffi-tests
     if: needs.changes-wasmvm.outputs.wasmvm == 'true'
-    name: Linux shared libraries
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -348,16 +345,15 @@ jobs:
             artifacts/linux-shared/checksums.txt
           if-no-files-found: error
 
-  # build-macos-artifacts (job): Builds Darwin shared and static library
+  # build-libwasmvm-darwin (job): Builds Darwin shared and static library
   # artifacts for `libwasmvm`.
-  build-macos-artifacts:
+  build-libwasmvm-darwin:
     needs:
       - changes-wasmvm
       - rust-base-tests
       - go-base-tests
       - go-ffi-tests
     if: needs.changes-wasmvm.outputs.wasmvm == 'true'
-    name: Darwin artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -389,20 +385,19 @@ jobs:
             artifacts/darwin/checksums.txt
           if-no-files-found: error
 
-  # publish-wasm-release (job): Publishes tested `libwasmvm` artifacts to a
+  # publish-libwasmvm-release (job): Publishes tested `libwasmvm` artifacts to a
   # GitHub Release.
-  publish-wasm-release:
-    name: publish libwasmvm release
+  publish-libwasmvm-release:
     needs:
-      - build-static-libs
-      - build-shared-linux
-      - build-macos-artifacts
+      - build-libwasmvm-static-musl
+      - build-libwasmvm-shared-linux
+      - build-libwasmvm-darwin
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     concurrency:
-      group: ${{ github.workflow }}-publish-wasm-release-${{ github.ref }}
+      group: ${{ github.workflow }}-publish-libwasmvm-release-${{ github.ref }}
       cancel-in-progress: true
     env:
       GH_TOKEN: ${{ github.token }}
