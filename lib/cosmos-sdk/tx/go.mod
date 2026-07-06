@@ -5,7 +5,7 @@ go 1.19
 require (
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/core v0.3.2
-	cosmossdk.io/math v1.3.0
+	cosmossdk.io/math v1.4.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/protobuf v1.33.0
