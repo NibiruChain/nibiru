@@ -1,0 +1,276 @@
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Install local tools used by formatting and lint checks.
+install:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  rustup component add rustfmt clippy
+  go install mvdan.cc/gofumpt@v0.4.0
+  GO111MODULE=on go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
+  if ! command -v shellcheck >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+      sudo apt-get update
+      sudo apt-get install --no-install-recommends -y shellcheck
+    else
+      echo "shellcheck is required but was not found on PATH" >&2
+      exit 1
+    fi
+  fi
+
+alias i := install
+
+# Build Go and Rust libraries.
+build:
+  make build
+
+alias b := build
+
+# Build the Rust libwasmvm shared library.
+build-rust:
+  make build-rust
+
+# Build Go packages and demo.
+build-go:
+  make build-go
+
+# Format Rust, Go, and shell files.
+fmt:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  (cd libwasmvm && cargo fmt)
+  gofumpt -w -s .
+  shfmt -w .
+
+# Check Rust, Go, and shell formatting.
+fmt-check:
+  just rust-fmt-check
+  just go-fmt-check
+  just scripts-fmt-check
+
+# Check Rust formatting.
+rust-fmt-check:
+  (cd libwasmvm && cargo fmt -- --check)
+
+# Check Go formatting.
+go-fmt-check:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  [ "$(gofmt -l .)" = "" ] || (gofmt -d . && exit 1)
+  [ "$(gofumpt -l .)" = "" ] || (gofumpt -d . && exit 1)
+
+# Check shell formatting.
+scripts-fmt-check:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  shfmt --diff .
+
+# Run Rust clippy.
+lint-rs:
+  (cd libwasmvm && cargo clippy --all-targets -- -D warnings)
+
+alias clippy := lint-rs
+
+# Run Go linting. Local runs default to --fix; CI should pass --fix=false.
+lint-go *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  image_version="v2.6.1"
+  lint_args=({{args}})
+  if [ "${#lint_args[@]}" -eq 0 ]; then
+    lint_args=(--fix)
+  fi
+
+  lint_cmd=(golangci-lint run -v "${lint_args[@]}")
+
+  if command -v golangci-lint >/dev/null 2>&1; then
+    local_version="$(golangci-lint version --short 2>/dev/null || true)"
+    image_major="${image_version#v}"
+    image_major="${image_major%%.*}"
+    local_major="${local_version#v}"
+    local_major="${local_major%%.*}"
+
+    if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
+      echo "warning: running local golangci-lint ${local_version}; repo pins $image_version" >&2
+      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}"
+      exit 0
+    fi
+
+    echo "warning: local golangci-lint version ${local_version:-unknown} does not match $image_version; using Docker" >&2
+  fi
+
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "docker is required when golangci-lint $image_version is not installed locally" >&2
+    exit 1
+  fi
+
+  docker run --rm \
+    -v "$PWD":/app \
+    -v "${GOLANGCI_LINT_CACHE:-$HOME/.cache/golangci-lint/$image_version}":/root/.cache \
+    -w /app \
+    "golangci/golangci-lint:$image_version" \
+    "${lint_cmd[@]}"
+
+# Run Rust and Go linting.
+lint:
+  just lint-rs
+  just lint-go
+
+# Run Rust unit tests.
+test:
+  (cd libwasmvm && cargo test)
+
+alias t := test
+
+# Run Go tests.
+test-go:
+  make test
+
+# Run Go tests with cgo race-safety checks.
+test-go-safety:
+  make test-safety
+
+# Build and test without cgo.
+test-no-cgo:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  CGO_ENABLED=0 go build ./types
+  CGO_ENABLED=0 go build .
+  CGO_ENABLED=0 go test ./types
+  CGO_ENABLED=0 go test .
+
+# Build Rust docs.
+doc:
+  (cd libwasmvm && cargo doc --no-deps)
+
+# Run Rust doc tests without leaving Cargo.toml modified.
+doc-test:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  cd libwasmvm
+  cp Cargo.toml Cargo.toml.bak
+  restore_manifest() {
+    mv Cargo.toml.bak Cargo.toml
+  }
+  trap restore_manifest EXIT
+  sed -i '/^crate-type = \["cdylib"\]/d' Cargo.toml
+  cargo test --doc
+
+# Run cargo audit.
+audit:
+  (cd libwasmvm && cargo audit)
+
+# Run cargo check and fail if libwasmvm/bindings.h changed.
+check:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  (cd libwasmvm && cargo check)
+  changes="$(git status --porcelain libwasmvm/bindings.h)"
+  if [ -n "$changes" ]; then
+    echo "libwasmvm/bindings.h changed. Run 'make update-bindings' and commit the result." >&2
+    git status
+    git --no-pager diff -- libwasmvm/bindings.h
+    exit 1
+  fi
+
+# Check generated bindings copied into internal/api.
+bindings-check:
+  diff libwasmvm/bindings.h internal/api/bindings.h
+
+# Check go.mod/go.sum are tidy.
+go-tidy-check:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  before="$(sha256sum go.mod go.sum)"
+  go mod tidy
+  after="$(sha256sum go.mod go.sum)"
+  if [ "$before" != "$after" ]; then
+    echo "go.mod/go.sum changed after 'go mod tidy'." >&2
+    git --no-pager diff -- go.mod go.sum || true
+    exit 1
+  fi
+
+# Run shellcheck over tracked shell scripts.
+shellcheck:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  git ls-files '*.sh' | xargs -r shellcheck
+
+# Build the static musl Docker builder image.
+docker-image-static:
+  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0018-alpine -f builders/Dockerfile.alpine
+
+# Build the Linux shared Docker builder image.
+docker-image-linux:
+  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0018-debian -f builders/Dockerfile.debian
+
+# Build the Darwin and Windows cross Docker builder image.
+docker-image-cross:
+  docker build --pull --progress=plain builders -t cosmwasm/go-ext-builder:0018-cross -f builders/Dockerfile.cross
+
+# Build static musl release artifacts.
+artifact-static:
+  make release-build-alpine
+
+# Build Linux shared release artifacts.
+artifact-linux:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  rm -rf libwasmvm/target/x86_64-unknown-linux-gnu/release
+  rm -rf libwasmvm/target/aarch64-unknown-linux-gnu/release
+  docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/libwasmvm:/code" cosmwasm/go-ext-builder:0018-debian build_linux.sh
+  cp libwasmvm/artifacts/libwasmvm.x86_64.so internal/api
+  cp libwasmvm/artifacts/libwasmvm.aarch64.so internal/api
+  just update-bindings
+
+# Build Darwin shared and static release artifacts.
+artifact-darwin:
+  make release-build-macos
+  make release-build-macos-static
+
+# Run the libwasmvm release helper. Use this to install deps, test the helper,
+# dry-run publishing, print the next tag, or run a real GitHub Release publish.
+release *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  (cd scripts && bun install --frozen-lockfile)
+  bun run scripts/releaseArtifacts.ts {{args}}
+
+
+# Copy generated Rust bindings into the Go package.
+update-bindings:
+  cp libwasmvm/bindings.h internal/api
+
+# Run Rust PR checks.
+ci-rust:
+  just check
+  just bindings-check
+  just test
+  just doc
+  just doc-test
+
+# Run Go PR checks.
+ci-go:
+  just go-fmt-check
+  just go-tidy-check
+  just test-no-cgo
+
+# Run shell script PR checks.
+ci-scripts:
+  just scripts-fmt-check
+  just shellcheck
+
+# Format, lint, and test.
+tidy:
+  just ci-rust
+  just clippy
+  just ci-go
+  just ci-scripts

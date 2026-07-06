@@ -261,7 +261,7 @@ replace (
 
 	// Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
 	// ARM64 Singlepass relocation panics.
-	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
+	github.com/CosmWasm/wasmvm => ./lib/wasmvm-ffi
 	github.com/cosmos/cosmos-sdk => ./lib/cosmos-sdk
 
 	// Replace statements using GitHub tags prior to use of internal. Left

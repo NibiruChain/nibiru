@@ -1,0 +1,11 @@
+{
+  "name": "go-wasmvm-release-scripts",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  }
+}

@@ -3,6 +3,10 @@ setup:
   #!/usr/bin/env bash
   just -l
 
+# Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
+wasmvm *args:
+  cd lib/wasmvm-ffi && just {{args}}
+
 # Locally install the `nibid` binary and build if needed.
 install: 
   go mod tidy
