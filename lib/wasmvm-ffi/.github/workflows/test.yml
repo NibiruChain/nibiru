@@ -1,0 +1,206 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-sanity:
+    name: Rust sanity
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            libwasmvm/target/debug/.fingerprint
+            libwasmvm/target/debug/build
+            libwasmvm/target/debug/deps
+            libwasmvm/target/release/.fingerprint
+            libwasmvm/target/release/build
+            libwasmvm/target/release/deps
+          key: cargo-rust-sanity-stable-${{ hashFiles('libwasmvm/Cargo.lock') }}
+          restore-keys: |
+            cargo-rust-sanity-stable-
+
+      - name: Run Rust sanity checks
+        run: just ci-rust
+
+  rust-clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            libwasmvm/target/debug/.fingerprint
+            libwasmvm/target/debug/build
+            libwasmvm/target/debug/deps
+            libwasmvm/target/release/.fingerprint
+            libwasmvm/target/release/build
+            libwasmvm/target/release/deps
+          key: cargo-clippy-stable-${{ hashFiles('libwasmvm/Cargo.lock') }}
+          restore-keys: |
+            cargo-clippy-stable-
+
+      - name: Run Clippy
+        run: just clippy
+
+  go-checks:
+    name: Go and script checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.19.7
+          cache: true
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Install Go and shell tools
+        run: |
+          go install mvdan.cc/gofumpt@v0.4.0
+          GO111MODULE=on go install mvdan.cc/sh/v3/cmd/shfmt@v3.7.0
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y shellcheck
+
+      - name: Run Go checks
+        run: just ci-go
+
+      - name: Run script checks
+        run: just ci-scripts
+
+  golangci:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Run golangci-lint
+        run: just lint-go --fix=false
+
+  native-go-tests:
+    name: Native Go tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.19.7
+          cache: true
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Build Rust shared library
+        run: just build-rust
+
+      - name: Run Go tests
+        run: just test-go
+
+      - name: Run Go race-safety tests
+        run: just test-go-safety
+
+      - name: Build Go packages
+        run: just build-go
+
+  # TODO: Enable this as a scheduled or advisory security workflow if dependency
+  # vulnerability visibility becomes useful for this fork.
+  cargo-audit:
+    name: Cargo audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' }}
+
+      - name: Install Rust
+        if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' }}
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' }}
+        run: cargo install --debug cargo-audit --version 0.21.0 --locked
+
+      - name: Run cargo audit
+        if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' }}
+        run: just audit
+
+  # TODO: Enable this if Windows Rust support matters for future artifact or
+  # consumer workflows. The Nibiru release path currently validates Linux only.
+  windows-rust-sanity:
+    name: Windows Rust sanity
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
+
+      - name: Install Rust
+        if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust unit tests
+        if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
+        working-directory: libwasmvm
+        run: cargo test

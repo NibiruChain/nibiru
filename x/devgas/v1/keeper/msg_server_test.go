@@ -7,7 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	_ "embed"
 

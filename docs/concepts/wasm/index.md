@@ -15,6 +15,14 @@ head:
 
 {{ $frontmatter.description }}
 
+| In this Section | Synopsis |
+| --- | --- |
+| [Architecture: CosmWasm](./architecture.md) | Stack layers: wasmd, cosmwasm-std, wasmvm, and how they connect on chain. |
+| [CosmWasm Bindings](./bindings.md) | What CosmWasm bindings are and how Go and Rust communicate across the VM boundary. |
+| [Lifecycle of a Contract](./cw-lifecycle.md) | Code vs instance vs state; store, instantiate, and execute compared to EVM. |
+| [Wasm VM and EVM](./wasm-vs-evm.md) | History and tradeoffs between Wasm VM and EVM on Nibiru. |
+| [Message Types & JSON](./msg-types-json.md) | JSON encoding for cosmwasm-std types used in contract messages. |
+
 ## Why Wasm Stands Out
 
 CosmWasm offers a compelling set of features and advantages for smart contract

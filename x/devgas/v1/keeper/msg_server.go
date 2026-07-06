@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	wasmTypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmTypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

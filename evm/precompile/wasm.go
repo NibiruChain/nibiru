@@ -11,11 +11,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/embeds"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	gethabi "github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 var (

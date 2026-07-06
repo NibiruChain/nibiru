@@ -3,7 +3,7 @@ package ante
 import (
 	"encoding/json"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"

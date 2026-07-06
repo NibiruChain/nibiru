@@ -3,9 +3,10 @@ package ante_test
 import (
 	"testing"
 
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"google.golang.org/grpc"
+
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"

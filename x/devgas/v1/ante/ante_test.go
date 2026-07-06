@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
+
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

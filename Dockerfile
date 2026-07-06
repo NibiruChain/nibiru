@@ -26,7 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
-COPY ["lib/wasmd/", "./lib/wasmd/"]
 COPY ["lib/cosmos-sdk/", "./lib/cosmos-sdk/"]
 RUN go mod download
 

@@ -3,6 +3,10 @@ setup:
   #!/usr/bin/env bash
   just -l
 
+# Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
+wasmvm *args:
+  cd lib/wasmvm-ffi && just {{args}}
+
 # Locally install the `nibid` binary and build if needed.
 install: 
   go mod tidy
@@ -26,11 +30,6 @@ alias b := build
 # Cleans the Go cache, modcache, and testcashe
 clean-cache:
   go clean -cache -testcache -modcache
-
-# Generate protobuf-based types in Golang
-gen-proto: 
-  #!/usr/bin/env bash
-  just proto gen
 
 # Protobuf command dispatcher. Ex: `just proto gen`, `just proto fmt`, `just proto lint`, `just proto all`
 proto *ARGS:
@@ -197,10 +196,6 @@ test-chaosnet:
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
 
-# Alias for "gen-proto"
-proto-gen:
-  just proto gen
-
 # Stops any `nibid` processes, even if they're running in the background.
 stop: 
   kill $(pgrep -x nibid) || true
@@ -230,6 +225,7 @@ release-publish:
 # Run Go tests without cached test results
 test:
   #!/usr/bin/env bash
+  set -euo pipefail
   echo "Running: just test"
   just localnet-check
   GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
@@ -239,6 +235,7 @@ test:
 # Run Go tests and allow cached test results
 test-fast:
   #!/usr/bin/env bash
+  set -euo pipefail
   echo "Running: just test-fast"
   GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
   echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
@@ -247,6 +244,7 @@ test-fast:
 # Run Go tests without cached test results and generate coverage.out
 test-cover:
   #!/usr/bin/env bash
+  set -euo pipefail
   echo "Running: just test-cover"
   just localnet-check
   GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
