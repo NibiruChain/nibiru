@@ -6,9 +6,11 @@ import { join } from "node:path"
 import { Command } from "commander"
 
 const DEFAULT_BUMP_TYPE = "minor"
-const FIRST_RELEASE_TAG = "v1.6.0"
+const RELEASE_TAG_PREFIX = "lib/wasmvm-ffi/"
+const FIRST_RELEASE_TAG = `${RELEASE_TAG_PREFIX}v1.6.0`
 const RELEASE_VERSION_PATTERN = "v[0-9]+\\.[0-9]+\\.[0-9]+"
-const GITHUB_REPO = "NibiruChain/go-wasmvm"
+const RELEASE_TAG_PATTERN = `${RELEASE_TAG_PREFIX}${RELEASE_VERSION_PATTERN}`
+const GITHUB_REPO = "NibiruChain/nibiru"
 const LOCAL_ARTIFACTS_DIR = "release-artifacts"
 const RELEASE_BRANCH = "main"
 const BUMP_TYPES = ["patch", "minor", "major"] as const
@@ -107,26 +109,26 @@ export const normalizeBumpType = (value: string | undefined): BumpType => {
 
 export const normalizeReleaseTag = (value: string): string => {
   const input = value.trim()
-  const versionRegex = new RegExp(`^${RELEASE_VERSION_PATTERN}$`)
+  const releaseTagRegex = new RegExp(`^${RELEASE_TAG_PATTERN}$`)
 
-  if (versionRegex.test(input)) {
+  if (releaseTagRegex.test(input)) {
     return input
   }
 
   try {
     const url = new URL(input)
-    const releasePathPrefix = "/NibiruChain/go-wasmvm/releases/tag/"
+    const releasePathPrefix = `/${GITHUB_REPO}/releases/tag/`
 
     if (url.hostname !== "github.com") {
       throw new Error("URL is not a github.com release URL")
     }
 
     if (!url.pathname.startsWith(releasePathPrefix)) {
-      throw new Error("URL path is not a go-wasmvm release tag path")
+      throw new Error("URL path is not a Nibiru release tag path")
     }
 
     const tag = decodeURIComponent(url.pathname.slice(releasePathPrefix.length))
-    if (versionRegex.test(tag)) {
+    if (releaseTagRegex.test(tag)) {
       return tag
     }
   } catch {
@@ -134,7 +136,7 @@ export const normalizeReleaseTag = (value: string): string => {
   }
 
   throw new Error(
-    `Invalid release target "${value}". Use vX.Y.Z or a go-wasmvm GitHub Release URL.`,
+    `Invalid release target "${value}". Use ${RELEASE_TAG_PREFIX}vX.Y.Z or a Nibiru GitHub Release URL.`,
   )
 }
 
@@ -142,7 +144,7 @@ export const parseLibwasmvmReleaseTag = (
   tag: string,
 ): LibwasmvmReleaseVersion | undefined => {
   const match = tag.match(
-    /^v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$/,
+    /^lib\/wasmvm-ffi\/v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$/,
   )
 
   if (match?.groups === undefined) {
@@ -198,16 +200,18 @@ export const computeNextLibwasmvmReleaseTag = (
   }
 
   if (normalizedBumpType === "patch") {
-    return `v${latestVersion.major}.${latestVersion.minor}.${
+    return `${RELEASE_TAG_PREFIX}v${latestVersion.major}.${latestVersion.minor}.${
       latestVersion.patch + 1
     }`
   }
 
   if (normalizedBumpType === "minor") {
-    return `v${latestVersion.major}.${latestVersion.minor + 1}.0`
+    return `${RELEASE_TAG_PREFIX}v${latestVersion.major}.${
+      latestVersion.minor + 1
+    }.0`
   }
 
-  return `v${latestVersion.major + 1}.0.0`
+  return `${RELEASE_TAG_PREFIX}v${latestVersion.major + 1}.0.0`
 }
 
 export const parseGhReleaseListTags = (output: string): string[] => {
@@ -228,7 +232,7 @@ export const findLatestLibwasmvmReleaseTagFromGhOutput = (
 export const getLocalGitTags = async (
   runner: CommandRunner = runShellCommand,
 ): Promise<string[]> => {
-  const stdout = await runner(`git tag --list "v*.*.*"`)
+  const stdout = await runner(`git tag --list "${RELEASE_TAG_PREFIX}v*.*.*"`)
   return stdout
     .split("\n")
     .map((line) => line.trim())
@@ -290,7 +294,9 @@ export const getLibwasmvmTagsPointingAtCommit = async (
   runner: CommandRunner = runShellCommand,
 ): Promise<string[]> => {
   const stdout = await runner(
-    `git tag --points-at ${quoteShellArg(commit)} --list "v*.*.*"`,
+    `git tag --points-at ${quoteShellArg(
+      commit,
+    )} --list "${RELEASE_TAG_PREFIX}v*.*.*"`,
   )
   return stdout
     .split("\n")
