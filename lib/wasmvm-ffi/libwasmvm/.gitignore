@@ -1,3 +1,4 @@
 # Build results
 target/
-artifacts/
+artifacts/*
+!artifacts/.gitkeep

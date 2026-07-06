@@ -138,6 +138,10 @@ test-go:
 test-go-safety:
   make test-safety
 
+# Run Go tests against the static musl libwasmvm library in Alpine.
+test-alpine:
+  make test-alpine
+
 # Build and test without cgo.
 test-no-cgo:
   #!/usr/bin/env bash
