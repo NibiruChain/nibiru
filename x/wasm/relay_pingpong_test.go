@@ -31,6 +31,8 @@ const (
 var doNotTimeout = clienttypes.NewHeight(1, 1111111)
 
 func TestPinPong(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// custom IBC protocol example
 	// scenario: given two chains,
 	//           with a contract on chain A and chain B

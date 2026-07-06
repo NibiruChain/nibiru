@@ -480,11 +480,11 @@ func TestDistributionQuery(t *testing.T) {
 	keeper := keepers.WasmKeeper
 
 	example := InstantiateReflectExampleContract(t, pCtx, keepers)
-	delegator := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))...)
-	otherAddr := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000))...)
+	delegator := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(TestingStakeParams.BondDenom, 100_000_000))...)
+	otherAddr := keepers.Faucet.NewFundedRandomAccount(pCtx, sdk.NewCoins(sdk.NewInt64Coin(TestingStakeParams.BondDenom, 100_000_000))...)
 
-	val1Addr := addValidator(t, pCtx, keepers.StakingKeeper, keepers.Faucet, sdk.NewInt64Coin(sdk.DefaultBondDenom, 10_000_000))
-	val2Addr := addValidator(t, pCtx, keepers.StakingKeeper, keepers.Faucet, sdk.NewInt64Coin(sdk.DefaultBondDenom, 20_000_000))
+	val1Addr := addValidator(t, pCtx, keepers.StakingKeeper, keepers.Faucet, sdk.NewInt64Coin(TestingStakeParams.BondDenom, 10_000_000))
+	val2Addr := addValidator(t, pCtx, keepers.StakingKeeper, keepers.Faucet, sdk.NewInt64Coin(TestingStakeParams.BondDenom, 20_000_000))
 	_ = val2Addr
 	pCtx = nextBlock(pCtx, keepers.StakingKeeper)
 

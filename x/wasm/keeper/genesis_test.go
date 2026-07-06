@@ -514,10 +514,10 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
       "code_id": "1",
       "code_info": {
         "code_hash": %q,
-        "creator": "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx",
+        "creator": "nibi1qtu5n0cnhfkjj6l2rq97hmky9fd89gwc2qqy24",
         "instantiate_config": {
           "permission": "AnyOfAddresses",
-          "addresses": ["cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"]
+          "addresses": ["nibi1qtu5n0cnhfkjj6l2rq97hmky9fd89gwc2qqy24"]
         }
       },
       "code_bytes": %q
@@ -525,11 +525,11 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
   ],
   "contracts": [
     {
-      "contract_address": "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr",
+      "contract_address": "nibi14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9ssa9gcs",
       "contract_info": {
         "code_id": "1",
-        "creator": "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x",
-        "admin": "cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn",
+        "creator": "nibi13x849jzd03vne42ynpj25hn8npjecxqr9dn5w4",
+        "admin": "nibi1h5t8zxmjr30e9dqghtlpl40f2zz5cgeydu5lzq",
         "label": "ȀĴnZV芢毤",
 		"created": {
 			"block_height" : "100",
@@ -592,7 +592,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	// verify code info
 	gotCodeInfo := keeper.GetCodeInfo(ctx, 1)
 	require.NotNil(t, gotCodeInfo)
-	codeCreatorAddr := "cosmos1qtu5n0cnhfkjj6l2rq97hmky9fd89gwca9yarx"
+	codeCreatorAddr := "nibi1qtu5n0cnhfkjj6l2rq97hmky9fd89gwc2qqy24"
 	expCodeInfo := types.CodeInfo{
 		CodeHash: wasmCodeHash[:],
 		Creator:  codeCreatorAddr,
@@ -604,11 +604,11 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 	assert.Equal(t, expCodeInfo, *gotCodeInfo)
 
 	// verify contract
-	contractAddr, _ := sdk.AccAddressFromBech32("cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr")
+	contractAddr, _ := sdk.AccAddressFromBech32("nibi14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9ssa9gcs")
 	gotContractInfo := keeper.GetContractInfo(ctx, contractAddr)
 	require.NotNil(t, gotContractInfo)
-	contractCreatorAddr := "cosmos13x849jzd03vne42ynpj25hn8npjecxqrjghd8x"
-	adminAddr := "cosmos1h5t8zxmjr30e9dqghtlpl40f2zz5cgey6esxtn"
+	contractCreatorAddr := "nibi13x849jzd03vne42ynpj25hn8npjecxqr9dn5w4"
+	adminAddr := "nibi1h5t8zxmjr30e9dqghtlpl40f2zz5cgeydu5lzq"
 
 	expContractInfo := types.ContractInfo{
 		CodeID:  firstCodeID,

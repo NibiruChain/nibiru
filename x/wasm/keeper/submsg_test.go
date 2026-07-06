@@ -201,6 +201,9 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	assertGasUsed := func(minGas, maxGas uint64) assertion {
 		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
 			t.Helper()
+			if !types.EnableGasVerification {
+				return
+			}
 			gasUsed := ctx.GasMeter().GasConsumed()
 			assert.True(t, gasUsed >= minGas, "Used %d gas (less than expected %d)", gasUsed, minGas)
 			assert.True(t, gasUsed <= maxGas, "Used %d gas (more than expected %d)", gasUsed, maxGas)

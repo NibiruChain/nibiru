@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	_ "embed"
 	"math/rand"
 
@@ -8,6 +9,14 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+func fixtureAddress() string {
+	return sdk.AccAddress(bytes.Repeat([]byte{1}, SDKAddrLen)).String()
+}
+
+func fixtureContractAddress() string {
+	return sdk.AccAddress(bytes.Repeat([]byte{2}, ContractAddrLen)).String()
+}
 
 //go:embed testdata/reflect.wasm
 var reflectWasmCode []byte
@@ -69,10 +78,9 @@ func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
 	if err != nil {
 		panic(err)
 	}
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	fixture := CodeInfo{
 		CodeHash:          codeHash[:],
-		Creator:           anyAddress,
+		Creator:           fixtureAddress(),
 		InstantiateConfig: AllowEverybody,
 	}
 	for _, m := range mutators {
@@ -82,10 +90,8 @@ func CodeInfoFixture(mutators ...func(*CodeInfo)) CodeInfo {
 }
 
 func ContractFixture(mutators ...func(*Contract)) Contract {
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
-
 	fixture := Contract{
-		ContractAddress: anyAddress,
+		ContractAddress: fixtureContractAddress(),
 		ContractInfo:    ContractInfoFixture(RandCreatedFields),
 		ContractState:   []Model{{Key: []byte("anyKey"), Value: []byte("anyValue")}},
 	}
@@ -108,11 +114,9 @@ func RandCreatedFields(info *ContractInfo) {
 }
 
 func ContractInfoFixture(mutators ...func(*ContractInfo)) ContractInfo {
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
-
 	fixture := ContractInfo{
 		CodeID:  1,
-		Creator: anyAddress,
+		Creator: fixtureAddress(),
 		Label:   "any",
 		Created: &AbsoluteTxPosition{BlockHeight: 1, TxIndex: 1},
 	}
@@ -149,9 +153,8 @@ func WithSHA256CodeHash(wasmCode []byte) func(info *CodeInfo) {
 
 func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
 	wasmIdent := []byte("\x00\x61\x73\x6D")
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	r := &MsgStoreCode{
-		Sender:                anyAddress,
+		Sender:                fixtureAddress(),
 		WASMByteCode:          wasmIdent,
 		InstantiatePermission: &AllowEverybody,
 	}
@@ -162,10 +165,9 @@ func MsgStoreCodeFixture(mutators ...func(*MsgStoreCode)) *MsgStoreCode {
 }
 
 func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *MsgInstantiateContract {
-	const anyAddress = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
 	r := &MsgInstantiateContract{
-		Sender: anyAddress,
-		Admin:  anyAddress,
+		Sender: fixtureAddress(),
+		Admin:  fixtureAddress(),
 		CodeID: 1,
 		Label:  "testing",
 		Msg:    []byte(`{"foo":"bar"}`),
@@ -181,13 +183,9 @@ func MsgInstantiateContractFixture(mutators ...func(*MsgInstantiateContract)) *M
 }
 
 func MsgExecuteContractFixture(mutators ...func(*MsgExecuteContract)) *MsgExecuteContract {
-	const (
-		anyAddress           = "cosmos1qyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqszqgpqyqs2m6sx4"
-		firstContractAddress = "cosmos14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
-	)
 	r := &MsgExecuteContract{
-		Sender:   anyAddress,
-		Contract: firstContractAddress,
+		Sender:   fixtureAddress(),
+		Contract: fixtureContractAddress(),
 		Msg:      []byte(`{"do":"something"}`),
 		Funds: sdk.Coins{{
 			Denom:  "stake",

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	wasmtestutil "github.com/NibiruChain/nibiru/v2/x/wasm/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -103,7 +104,7 @@ func TestParseCodeInfoFlags(t *testing.T) {
 	correctSource := "https://github.com/CosmWasm/wasmd/blob/main/x/wasm/keeper/testdata/hackatom.wasm"
 	correctBuilderRef := "cosmwasm/workspace-optimizer:0.12.9"
 
-	wasmBin, err := os.ReadFile("../../keeper/testdata/hackatom.wasm.gzip")
+	wasmBin, err := os.ReadFile(wasmtestutil.FixturePath("keeper", "testdata", "hackatom.wasm.gzip"))
 	require.NoError(t, err)
 
 	checksumStr := strings.ToUpper(testdata.ChecksumHackatom)

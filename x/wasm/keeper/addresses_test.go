@@ -6,31 +6,23 @@ import (
 	"testing"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func prepareCleanup(t *testing.T) {
-	// preserve current Bech32 settings and restore them after test completion
-	x, y := sdk.GetConfig().GetBech32AccountAddrPrefix(), sdk.GetConfig().GetBech32AccountPubPrefix()
-	c := sdk.IsAddrCacheEnabled()
-	t.Cleanup(func() {
-		sdk.GetConfig().SetBech32PrefixForAccount(x, y)
-		sdk.SetAddrCacheEnabled(c)
-	})
-	// set custom Bech32 settings
-	sdk.GetConfig().SetBech32PrefixForAccount("purple", "purple")
-	// disable address cache
-	// AccAddress -> String conversion is then slower, but does not lead to errors like this:
-	//   runtime error: invalid memory address or nil pointer dereference
-	sdk.SetAddrCacheEnabled(false)
+func reencodeAccountAddress(t *testing.T, src string) string {
+	t.Helper()
+	_, addr, err := bech32.DecodeAndConvert(src)
+	require.NoError(t, err)
+	got, err := bech32.ConvertAndEncode(sdk.GetConfig().GetBech32AccountAddrPrefix(), addr)
+	require.NoError(t, err)
+	return got
 }
 
 func TestBuildContractAddressClassic(t *testing.T) {
-	// set cleanup function
-	prepareCleanup(t)
 	// prepare test data
 	specs := []struct {
 		codeId     uint64
@@ -64,25 +56,23 @@ func TestBuildContractAddressClassic(t *testing.T) {
 			// when
 			gotAddr := BuildContractAddressClassic(spec.codeId, spec.instanceId)
 			// then
-			require.Equal(t, spec.expAddress, gotAddr.String())
+			require.Equal(t, reencodeAccountAddress(t, spec.expAddress), gotAddr.String())
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}
 }
 
 func TestBuildContractAddressPredictable(t *testing.T) {
-	// set cleanup function
-	prepareCleanup(t)
 	// test vectors generated via cosmjs: https://github.com/cosmos/cosmjs/pull/1253/files
 	type Spec struct {
 		In struct {
 			Checksum tmbytes.HexBytes `json:"checksum"`
-			Creator  sdk.AccAddress   `json:"creator"`
+			Creator  string           `json:"creator"`
 			Salt     tmbytes.HexBytes `json:"salt"`
 			Msg      string           `json:"msg"`
 		} `json:"in"`
 		Out struct {
-			Address sdk.AccAddress `json:"address"`
+			Address string `json:"address"`
 		} `json:"out"`
 	}
 	var specs []Spec
@@ -90,10 +80,14 @@ func TestBuildContractAddressPredictable(t *testing.T) {
 	require.NotEmpty(t, specs)
 	for i, spec := range specs {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			_, creator, err := bech32.DecodeAndConvert(spec.In.Creator)
+			require.NoError(t, err)
+			_, expAddr, err := bech32.DecodeAndConvert(spec.Out.Address)
+			require.NoError(t, err)
 			// when
-			gotAddr := BuildContractAddressPredictable(spec.In.Checksum, spec.In.Creator, spec.In.Salt.Bytes(), []byte(spec.In.Msg))
+			gotAddr := BuildContractAddressPredictable(spec.In.Checksum, sdk.AccAddress(creator), spec.In.Salt.Bytes(), []byte(spec.In.Msg))
 			// then
-			require.Equal(t, spec.Out.Address.String(), gotAddr.String())
+			require.Equal(t, expAddr, []byte(gotAddr))
 			require.NoError(t, sdk.VerifyAddressFormat(gotAddr))
 		})
 	}

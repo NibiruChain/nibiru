@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -16,6 +17,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	wasmtestutil "github.com/NibiruChain/nibiru/v2/x/wasm/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -35,6 +37,9 @@ func (chain *TestChain) SeedNewContractInstance() sdk.AccAddress {
 }
 
 func (chain *TestChain) StoreCodeFile(filename string) types.MsgStoreCodeResponse {
+	if !filepath.IsAbs(filename) {
+		filename = wasmtestutil.FixturePath(strings.TrimPrefix(filename, "./"))
+	}
 	wasmCode, err := os.ReadFile(filename)
 	require.NoError(chain.t, err)
 	if strings.HasSuffix(filename, "wasm") { // compress for gas limit

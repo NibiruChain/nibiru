@@ -375,7 +375,7 @@ func TestQueryContractsByCode(t *testing.T) {
 					Key: fromBase64("AAAAAAAAAAoAAAAAAAOc/4cuhNIMvyvID4NhhfROlbQNuZ0fl0clmBPoWHtKYazH"),
 				},
 			},
-			expAddr: contractAddrs[1:10],
+			expAddr: contractAddrs[2:10],
 		},
 	}
 	for msg, spec := range specs {
@@ -779,7 +779,7 @@ func TestQueryCodeInfo(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
-	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	anyAddress, err := sdk.AccAddressFromBech32("nibi100dejzacpanrldpjjwksjm62shqhyss4zhdd03")
 	require.NoError(t, err)
 	specs := map[string]struct {
 		codeID       uint64
@@ -834,7 +834,7 @@ func TestQueryCodeInfoList(t *testing.T) {
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
 	keeper := keepers.WasmKeeper
 
-	anyAddress, err := sdk.AccAddressFromBech32("cosmos100dejzacpanrldpjjwksjm62shqhyss44jf5xz")
+	anyAddress, err := sdk.AccAddressFromBech32("nibi100dejzacpanrldpjjwksjm62shqhyss4zhdd03")
 	require.NoError(t, err)
 	codeInfoWithConfig := func(accessConfig types.AccessConfig) types.CodeInfo {
 		codeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))

@@ -28,6 +28,8 @@ import (
 )
 
 func TestFromIBCTransferToContract(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain B
 	//           then the contract can handle the receiving side of an ics20 transfer
@@ -152,6 +154,8 @@ func TestFromIBCTransferToContract(t *testing.T) {
 }
 
 func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can start an ibc transfer via ibctransfertypes.NewMsgTransfer
@@ -223,6 +227,8 @@ func TestContractCanInitiateIBCTransferMsg(t *testing.T) {
 }
 
 func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can emulate the ibc transfer module in the contract to send an ibc packet
@@ -298,6 +304,8 @@ func TestContractCanEmulateIBCTransferMessage(t *testing.T) {
 }
 
 func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains,
 	//           with a contract on chain A
 	//           then the contract can emulate the ibc transfer module in the contract to send an ibc packet
@@ -380,6 +388,8 @@ func TestContractCanEmulateIBCTransferMessageWithTimeout(t *testing.T) {
 }
 
 func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains, A and B
 	//           with 2 contract A1 and A2 on chain A
 	//           then the contract A2 try to send an ibc packet via IBC Channel that create by A1 and B
@@ -444,6 +454,8 @@ func TestContractEmulateIBCTransferMessageOnDiffContractIBCChannel(t *testing.T)
 }
 
 func TestContractHandlesChannelClose(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: a contract is the sending side of an ics20 transfer but the packet was not received
 	// on the destination chain within the timeout boundaries
 	myContractA := &captureCloseContract{}
@@ -487,6 +499,8 @@ func TestContractHandlesChannelClose(t *testing.T) {
 }
 
 func TestContractHandlesChannelCloseNotOwned(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario: given two chains,
 	//           with a contract A1, A2 on chain A, contract B on chain B
 	//           contract A2 try to close ibc channel that create between A1 and B

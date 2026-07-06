@@ -155,6 +155,7 @@ func DefaultWasmAppFactory(t *testing.T, valSet *cmttypes.ValidatorSet, genAccs 
 		t.Fatalf("Nibiru testapp does not yet support custom wasm keeper options")
 	}
 	nibiru, _ := testapp.NewNibiruTestApp(nibiruapp.GenesisState{})
+	baseapp.SetChainID(chainID)(nibiru.BaseApp)
 	ctx := testapp.NewContext(nibiru).WithChainID(chainID)
 	for _, genAcc := range genAccs {
 		nibiru.AccountKeeper.SetAccount(ctx, genAcc)

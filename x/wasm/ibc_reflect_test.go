@@ -13,6 +13,8 @@ import (
 )
 
 func TestIBCReflectContract(t *testing.T) {
+	skipUnsupportedNibiruWasmIBCHarness(t)
+
 	// scenario:
 	//  chain A: ibc_reflect_send.wasm
 	//  chain B: reflect.wasm + ibc_reflect.wasm

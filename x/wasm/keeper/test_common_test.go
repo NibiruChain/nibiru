@@ -433,9 +433,6 @@ func createTestInput(
 	msgRouter := baseapp.NewMsgServiceRouter()
 	msgRouter.SetInterfaceRegistry(encodingConfig.InterfaceRegistry)
 
-	cfg := sdk.GetConfig()
-	cfg.SetAddressVerifier(types.VerifyAddressLen())
-
 	keeper := NewKeeper(
 		appCodec,
 		keys[types.StoreKey],
