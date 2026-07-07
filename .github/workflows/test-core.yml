@@ -149,6 +149,8 @@ jobs:
               - "Dockerfile"
               - "justfile"
               - ".github/workflows/test-core.yml"
+              - "evm/e2e/**"
+              - "sai-trading/**"
 
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
@@ -320,6 +322,77 @@ jobs:
           disable_search: true
           files: coverage.out
 
+  e2e-evm:
+    name: EVM E2E tests
+    needs: [check-nibiru-go, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-e2e-evm
+        if: needs.check-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: e2e-evm was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Install just"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Setup NodeJS with npm caching"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/jod"
+          cache-dependency-path: "evm/e2e/package-lock.json"
+
+      - name: "Install E2E dependencies"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: just install
+        working-directory: "evm/e2e"
+
+      - name: "Launch localnet"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run E2E tests"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: just test
+        working-directory: "evm/e2e"
+        env:
+          JSON_RPC_ENDPOINT: http://127.0.0.1:8545
+          MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+
   # proto-gen-rs: Tests the script that generates protobuf bindings in Rust
   proto-gen-rs:
     runs-on: ubuntu-latest
@@ -415,3 +488,70 @@ jobs:
         working-directory: "lib/cosmos-sdk"
         run: |
           just test
+
+  sai-trading:
+    name: Sai E2E (sai-trading)
+    needs: [check-nibiru-go, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-sai-trading
+        if: needs.check-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: sai-trading was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Install just"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Setup Bun"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.22
+
+      - name: "Install sai-trading dependencies"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        working-directory: "sai-trading"
+        run: bun install
+
+      - name: "Launch localnet"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run sai-trading tests"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        working-directory: "sai-trading"
+        run: just test
