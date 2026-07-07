@@ -88,7 +88,7 @@ func (ak AccountKeeper) Account(c context.Context, req *types.QueryAccountReques
 
 	any, err := codectypes.NewAnyWithValue(account)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &types.QueryAccountResponse{Account: any}, nil
@@ -129,7 +129,7 @@ func (ak AccountKeeper) ModuleAccounts(c context.Context, req *types.QueryModule
 		}
 		any, err := codectypes.NewAnyWithValue(account)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, err.Error())
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 		modAccounts = append(modAccounts, any)
 	}
@@ -156,7 +156,7 @@ func (ak AccountKeeper) ModuleAccountByName(c context.Context, req *types.QueryM
 	}
 	any, err := codectypes.NewAnyWithValue(account)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &types.QueryModuleAccountByNameResponse{Account: any}, nil
@@ -237,7 +237,7 @@ func (ak AccountKeeper) AccountInfo(goCtx context.Context, req *types.QueryAccou
 	if pubKey != nil {
 		pkAny, err = codectypes.NewAnyWithValue(account.GetPubKey())
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, err.Error())
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 

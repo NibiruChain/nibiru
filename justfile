@@ -3,10 +3,6 @@ setup:
   #!/usr/bin/env bash
   just -l
 
-# Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
-wasmvm *args:
-  cd lib/wasmvm-ffi && just {{args}}
-
 # Locally install the `nibid` binary and build if needed.
 install: 
   go mod tidy
@@ -164,11 +160,13 @@ log-localnet:
 # Runs the EVM E2E test with logging (logs/e2e.txt)
 log-e2e:
   #!/usr/bin/env bash
+  set -euo pipefail
   just test-e2e 2>&1 | tee -a logs/e2e.txt
 
 # Runs the EVM E2E tests
 test-e2e:
   #!/usr/bin/env bash
+  set -euo pipefail
   source contrib/bashlib.sh
   log_info "Make sure the localnet is running! (just localnet)"
 
@@ -179,6 +177,7 @@ test-e2e:
 # Test: "localnet.sh" script
 test-localnet:
   #!/usr/bin/env bash
+  set -euo pipefail
   source contrib/bashlib.sh
   log_info "Sleeping for 8 seconds to give network time to spin up and run a few blocks."
   set -x
@@ -192,6 +191,7 @@ test-localnet:
 # Test: "chaosnet.sh" script
 test-chaosnet:
   #!/usr/bin/env bash
+  set -euo pipefail
   source contrib/bashlib.sh
   which_ok nibid
   bash contrib/scripts/chaosnet.sh 
@@ -217,6 +217,8 @@ tidy:
   just fmt
 
 test-release:
+  #!/usr/bin/env bash
+  set -euo pipefail
   make release-snapshot
 
 release-publish:
@@ -259,11 +261,14 @@ test-cover:
 # Alias for "test"
 [private]
 test-unit:
+  #!/usr/bin/env bash
+  set -euo pipefail
   just test-fast
 
 # Report whether localnet-backed tests can reach a running nibid process
 localnet-check:
   #!/usr/bin/env bash
+  set -euo pipefail
   if pgrep -x nibid >/dev/null; then
     echo "✅ Localnet (nibid) is running. Tests with live chain can run"
   else
@@ -271,3 +276,14 @@ localnet-check:
     exit 1
   fi
 
+# Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
+wasmvm *args:
+  cd lib/wasmvm-ffi && just {{args}}
+
+# Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
+sai-trading *args:
+  cd lib/sai-trading && just {{args}}
+
+# Run commands from the lib/cosmos-sdk subtree.
+csdk *args:
+  cd lib/cosmos-sdk && just {{args}}

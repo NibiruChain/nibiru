@@ -1,0 +1,17 @@
+{
+  "base": "tf/nibi1czkddm6xqyfa6ukzxqmf65tl4tudry4kve0n8fs5yfc8g6zv52lqxk5z20/vault_shares",
+  "display": "decimals_denom_for-tf/nibi1czkddm6xqyfa6ukzxqmf65tl4tudry4kve0n8fs5yfc8g6zv52lqxk5z20/vault_shares",
+  "name": "SLP Shares for USDC",
+  "symbol": "SLP-USDC",
+  "description": "Tokens for Sai E2E tests on localnet",
+  "denom_units": [
+    {
+      "denom": "tf/nibi1czkddm6xqyfa6ukzxqmf65tl4tudry4kve0n8fs5yfc8g6zv52lqxk5z20/vault_shares",
+      "exponent": 0
+    },
+    {
+      "denom": "decimals_denom_for-tf/nibi1czkddm6xqyfa6ukzxqmf65tl4tudry4kve0n8fs5yfc8g6zv52lqxk5z20/vault_shares",
+      "exponent": 6
+    }
+  ]
+}

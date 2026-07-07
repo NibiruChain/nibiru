@@ -1,0 +1,1 @@
+{"open_trade":{"market_index":"MarketIndex(0)","leverage":"10","long":true,"collateral_index":"TokenIndex(1)","trade_type":"stop","open_price":"4500","tp":"5000","sl":"4150","slippage_p":"1","client_origin":"sai_cli","collateral_amount":"1000"}}

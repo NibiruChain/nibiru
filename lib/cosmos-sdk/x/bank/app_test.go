@@ -352,11 +352,13 @@ func TestMsgSetSendEnabled(t *testing.T) {
 	require.NoError(t, testutil.FundAccount(s.BankKeeper, ctx, addr1, sdk.NewCoins(sdk.NewInt64Coin("foocoin", 101))))
 	addr1Str := addr1.String()
 	govAddr := s.BankKeeper.GetAuthority()
+	govDeposit := sdk.NewCoins(sdk.NewInt64Coin("stake", 10_000_000))
+	require.NoError(t, testutil.FundAccount(s.BankKeeper, ctx, addr1, govDeposit))
 	goodGovProp, err := govv1.NewMsgSubmitProposal(
 		[]sdk.Msg{
 			types.NewMsgSetSendEnabled(govAddr, nil, nil),
 		},
-		sdk.Coins{{"foocoin", sdk.NewInt(5)}},
+		govDeposit,
 		addr1Str,
 		"set default send enabled to true",
 		"Change send enabled",
@@ -365,9 +367,9 @@ func TestMsgSetSendEnabled(t *testing.T) {
 	require.NoError(t, err, "making goodGovProp")
 	badGovProp, err := govv1.NewMsgSubmitProposal(
 		[]sdk.Msg{
-			types.NewMsgSetSendEnabled(govAddr, []*types.SendEnabled{{"bad coin name!", true}}, nil),
+			types.NewMsgSetSendEnabled(govAddr, []*types.SendEnabled{{Denom: "bad coin name!", Enabled: true}}, nil),
 		},
-		sdk.Coins{{"foocoin", sdk.NewInt(5)}},
+		govDeposit,
 		addr1Str,
 		"set default send enabled to true",
 		"Change send enabled",

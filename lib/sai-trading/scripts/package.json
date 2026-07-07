@@ -1,0 +1,23 @@
+{
+  "name": "sai-perps/scripts",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prettier": "^3.5.2",
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@nibiruchain/evm-core": "^0.0.5",
+    "@nibiruchain/solidity": "^0.0.3",
+    "@openzeppelin/contracts": "^4.9.0",
+    "@uniquedivine/bash": "^0.0.2",
+    "@uniquedivine/jiyuu": "^0.0.2",
+    "bech32-converting": "^1.0.0",
+    "commander": "^14.0.3",
+    "ethers": "6"
+  }
+}
