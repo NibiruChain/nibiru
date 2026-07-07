@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,89 +14,146 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	wasmtestdata "github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 func TestWasmBlockHooksTestApp(t *testing.T) {
-	testCases := []struct {
-		name        string
-		hook        string
-		mode        string
-		configure   bool
-		wantCount   uint64
-		wantFailure bool
-	}{
-		{
-			name:      "no registry configured",
-			hook:      "begin",
-			mode:      "single_valid",
-			wantCount: 0,
-		},
-		{
-			name:      "begin block empty plan",
-			hook:      "begin",
-			mode:      "empty",
-			configure: true,
-			wantCount: 0,
-		},
-		{
-			name:      "begin block single valid dispatch",
-			hook:      "begin",
-			mode:      "single_valid",
-			configure: true,
-			wantCount: 7,
-		},
-		{
-			name:      "end block single valid dispatch",
-			hook:      "end",
-			mode:      "single_valid",
-			configure: true,
-			wantCount: 7,
-		},
-		{
-			name:        "registry query error skips dispatch",
-			hook:        "begin",
-			mode:        "query_error",
-			configure:   true,
-			wantCount:   0,
-			wantFailure: true,
-		},
-		{
-			name:        "malformed registry plan skips all dispatch",
-			hook:        "begin",
-			mode:        "mixed_valid_and_invalid",
-			configure:   true,
-			wantCount:   0,
-			wantFailure: true,
-		},
-	}
+	t.Run("no registry configured", func(t *testing.T) {
+		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
-			_, _, sender := sdktestdata.KeyTestPubAddr()
-			codeID := storeWasmBlockHooksTester(t, wasmApp, ctx, sender)
-			targetAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID, "empty", nil)
-			registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID, tc.mode, &targetAddr)
-			if tc.configure {
-				wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
-			}
+		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
 
-			ctx = ctx.WithEventManager(sdk.NewEventManager())
-			events := runWasmBlockHook(t, wasmApp, ctx, tc.hook)
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("begin_block")))
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.EventTypeWasmBlockHookSummary))
+	})
 
-			state := queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetAddr)
-			require.Equal(t, tc.wantCount, state.Count)
-			require.Equal(t, tc.wantFailure, hasWasmBlockHookFailureEvent(events))
+	t.Run("empty configured calls", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{})
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
+
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("begin_block")))
+		assertWasmBlockHookSummary(t, events, "begin_block", 0, nil)
+	})
+
+	t.Run("single valid begin call", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		targetAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{
+			{ContractAddr: targetAddr.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
 		})
-	}
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
+
+		require.Equal(t, uint64(7), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetAddr).Count)
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("begin_block")))
+		assertWasmBlockHookSummary(t, events, "begin_block", 1, nil)
+	})
+
+	t.Run("single valid end call", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		targetAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{
+			{ContractAddr: targetAddr.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
+		})
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "end")
+
+		require.Equal(t, uint64(7), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetAddr).Count)
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("end_block")))
+		assertWasmBlockHookSummary(t, events, "end_block", 1, nil)
+	})
+
+	t.Run("registry query error skips calls", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(true), nil)
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
+
+		require.NotEmpty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("begin_block")))
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.EventTypeWasmBlockHookSummary))
+	})
+
+	t.Run("invalid calls do not block valid calls", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		targetA := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		targetB := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{
+			{ContractAddr: targetA.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
+			{ContractAddr: "not-a-wasm-contract-address", Msg: json.RawMessage(`{"increment":{"by":99}}`)},
+			{ContractAddr: targetB.String(), Msg: json.RawMessage(`"not-a-sudo-object"`)},
+			{ContractAddr: targetB.String(), Msg: json.RawMessage(`{"increment":{"by":3}}`)},
+		})
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "end")
+
+		require.Equal(t, uint64(7), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetA).Count)
+		require.Equal(t, uint64(3), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetB).Count)
+		assertWasmBlockHookSummary(t, events, "end_block", 4, []keeper.WasmBlockHookDispatchFailure{
+			{Idx: 1, ContractAddr: "not-a-wasm-contract-address"},
+			{Idx: 2, ContractAddr: targetB.String()},
+		})
+	})
+
+	t.Run("target failure rolls back and later call continues", func(t *testing.T) {
+		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
+		targetA := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		targetB := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		targetC := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
+		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{
+			{ContractAddr: targetA.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
+			{ContractAddr: targetB.String(), Msg: json.RawMessage(`{"fail_after_write":{"by":9}}`)},
+			{ContractAddr: targetC.String(), Msg: json.RawMessage(`{"increment":{"by":3}}`)},
+		})
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "end")
+
+		require.Equal(t, uint64(7), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetA).Count)
+		require.Equal(t, uint64(0), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetB).Count)
+		require.Nil(t, queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetB).LastSudo)
+		require.Equal(t, uint64(3), queryWasmBlockHooksTesterState(t, wasmApp, ctx, targetC).Count)
+		require.False(t, hasWasmEventAttribute(events, targetB.String(), "method", "fail_after_write"))
+		assertWasmBlockHookSummary(t, events, "end_block", 3, []keeper.WasmBlockHookDispatchFailure{
+			{Idx: 1, ContractAddr: targetB.String()},
+		})
+	})
 }
 
 type wasmBlockHooksTesterState struct {
 	Count    uint64  `json:"count"`
 	LastSudo *string `json:"last_sudo"`
+}
+
+func setupWasmBlockHooksTester(t *testing.T) (*app.NibiruApp, sdk.Context, sdk.AccAddress, uint64) {
+	t.Helper()
+
+	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	_, _, sender := sdktestdata.KeyTestPubAddr()
+	codeID := storeWasmBlockHooksTester(t, wasmApp, ctx, sender)
+	return wasmApp, ctx, sender, codeID
 }
 
 func storeWasmBlockHooksTester(t *testing.T, wasmApp *app.NibiruApp, ctx sdk.Context, sender sdk.AccAddress) uint64 {
@@ -119,29 +177,14 @@ func instantiateWasmBlockHooksTester(
 	ctx sdk.Context,
 	sender sdk.AccAddress,
 	codeID uint64,
-	registryMode string,
-	targetAddr *sdk.AccAddress,
 ) sdk.AccAddress {
 	t.Helper()
-
-	var targetAddrStr *string
-	if targetAddr != nil {
-		addr := targetAddr.String()
-		targetAddrStr = &addr
-	}
-	initMsg, err := json.Marshal(map[string]any{
-		"count":                   uint64(0),
-		"registry_mode":           map[string]any{registryMode: map[string]any{}},
-		"target_addr":             targetAddrStr,
-		"valid_payload_increment": uint64(7),
-	})
-	require.NoError(t, err)
 
 	msg := &wasmtypes.MsgInstantiateContract{
 		Sender: sender.String(),
 		CodeID: codeID,
 		Label:  "wasm block hooks tester",
-		Msg:    initMsg,
+		Msg:    []byte(`{}`),
 		Funds:  sdk.Coins{},
 	}
 	rsp, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
@@ -150,6 +193,37 @@ func instantiateWasmBlockHooksTester(
 	var instantiateResp wasmtypes.MsgInstantiateContractResponse
 	require.NoError(t, wasmApp.AppCodec().Unmarshal(rsp.Data, &instantiateResp))
 	return sdk.MustAccAddressFromBech32(instantiateResp.Address)
+}
+
+func executeWasmBlockHooksTesterConfig(
+	t *testing.T,
+	wasmApp *app.NibiruApp,
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	contractAddr sdk.AccAddress,
+	count *uint64,
+	queryError *bool,
+	wasmSudoMsgCalls []keeper.WasmSudoMsgCall,
+) {
+	t.Helper()
+
+	configMsg := map[string]any{
+		"config": map[string]any{
+			"count":               count,
+			"query_error":         queryError,
+			"wasm_sudo_msg_calls": wasmSudoMsgCalls,
+		},
+	}
+	msgBz, err := json.Marshal(configMsg)
+	require.NoError(t, err)
+	msg := &wasmtypes.MsgExecuteContract{
+		Sender:   sender.String(),
+		Contract: contractAddr.String(),
+		Msg:      msgBz,
+		Funds:    sdk.Coins{},
+	}
+	_, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+	require.NoError(t, err)
 }
 
 func runWasmBlockHook(t *testing.T, wasmApp *app.NibiruApp, ctx sdk.Context, hook string) []abci.Event {
@@ -182,97 +256,172 @@ func queryWasmBlockHooksTesterState(
 	return state
 }
 
-func hasWasmBlockHookFailureEvent(events []abci.Event) bool {
+func assertWasmBlockHookSummary(
+	t *testing.T,
+	events []abci.Event,
+	hook string,
+	total int,
+	wantFailures []keeper.WasmBlockHookDispatchFailure,
+) {
+	t.Helper()
+
+	summaryEvents := testutil.FindAbciEventsOfType(events, wasmtypes.EventTypeWasmBlockHookSummary)
+	require.Len(t, summaryEvents, 1)
+	attrs := eventAttributes(summaryEvents[0])
+	require.Equal(t, hook, attrs[wasmtypes.AttributeKeyWasmBlockHook])
+	require.Equal(t, strconv.Itoa(total), attrs[wasmtypes.AttributeKeyWasmBlockHookTotal])
+
+	if len(wantFailures) == 0 {
+		_, hasFailures := attrs[wasmtypes.AttributeKeyWasmBlockHookFailures]
+		require.False(t, hasFailures)
+		return
+	}
+
+	failuresJSON, ok := attrs[wasmtypes.AttributeKeyWasmBlockHookFailures]
+	require.True(t, ok, "expected failures attribute on summary event")
+
+	var gotFailures []keeper.WasmBlockHookDispatchFailure
+	require.NoError(t, json.Unmarshal([]byte(failuresJSON), &gotFailures))
+	require.Len(t, gotFailures, len(wantFailures))
+
+	for idx, want := range wantFailures {
+		got := gotFailures[idx]
+		require.Equal(t, want.Idx, got.Idx)
+		require.Equal(t, want.ContractAddr, got.ContractAddr)
+		if want.Reason != "" {
+			require.Equal(t, want.Reason, got.Reason)
+		} else {
+			require.NotEmpty(t, got.Reason)
+		}
+		if want.WasmSudoMsg != "" {
+			require.Equal(t, want.WasmSudoMsg, got.WasmSudoMsg)
+		} else {
+			require.NotEmpty(t, got.WasmSudoMsg)
+			require.True(t, json.Valid([]byte(got.WasmSudoMsg)))
+		}
+	}
+}
+
+func hasWasmEventAttribute(events []abci.Event, contractAddr string, key string, value string) bool {
 	for _, event := range events {
-		if event.Type == wasmtypes.EventTypeWasmBlockHookFailure {
+		if event.Type != wasmtypes.WasmModuleEventType {
+			continue
+		}
+		attrs := eventAttributes(event)
+		if attrs[wasmtypes.AttributeKeyContractAddr] == contractAddr && attrs[key] == value {
 			return true
 		}
 	}
 	return false
 }
 
-func TestValidateWasmBlockHookDispatches(t *testing.T) {
+func eventAttributes(event abci.Event) map[string]string {
+	attrs := map[string]string{}
+	for _, attr := range event.Attributes {
+		attrs[attr.Key] = attr.Value
+	}
+	return attrs
+}
+
+func ptr[T any](v T) *T {
+	return &v
+}
+
+func TestValidateWasmSudoMsgCalls(t *testing.T) {
 	contractAddr := sdk.AccAddress(bytes.Repeat([]byte{1}, wasmtypes.ContractAddrLen)).String()
 	sdkLenAddr := sdk.AccAddress(bytes.Repeat([]byte{2}, 20)).String()
 	validMsg := json.RawMessage(`{"increment":{"by":7}}`)
 
 	testCases := []struct {
-		name       string
-		dispatches []keeper.WasmBlockHookDispatch
+		name        string
+		calls       []keeper.WasmSudoMsgCall
+		wantValid   int
+		wantInvalid int
 		wantErr    string
 	}{
 		{
-			name: "empty plan",
+			name: "empty calls",
 		},
 		{
-			name: "single valid dispatch",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			name: "single valid call",
+			calls: []keeper.WasmSudoMsgCall{
 				{ContractAddr: contractAddr, Msg: validMsg},
 			},
+			wantValid: 1,
 		},
 		{
-			name: "too many dispatches",
-			dispatches: func() []keeper.WasmBlockHookDispatch {
-				dispatches := make([]keeper.WasmBlockHookDispatch, keeper.WasmBlockHookMaxDispatches+1)
-				for idx := range dispatches {
-					dispatches[idx] = keeper.WasmBlockHookDispatch{ContractAddr: contractAddr, Msg: validMsg}
+			name: "too many calls",
+			calls: func() []keeper.WasmSudoMsgCall {
+				calls := make([]keeper.WasmSudoMsgCall, keeper.WasmBlockHookMaxDispatches+1)
+				for idx := range calls {
+					calls[idx] = keeper.WasmSudoMsgCall{ContractAddr: contractAddr, Msg: validMsg}
 				}
-				return dispatches
+				return calls
 			}(),
-			wantErr: "too many wasm block hook dispatches",
+			wantErr: "too many wasm sudo msg calls",
 		},
 		{
 			name: "invalid bech32 target",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			calls: []keeper.WasmSudoMsgCall{
 				{ContractAddr: "not-an-address", Msg: validMsg},
 			},
-			wantErr: "target address",
+			wantInvalid: 1,
+		},
+		{
+			name: "valid and invalid siblings",
+			calls: []keeper.WasmSudoMsgCall{
+				{ContractAddr: contractAddr, Msg: validMsg},
+				{ContractAddr: "not-an-address", Msg: validMsg},
+			},
+			wantValid: 1,
+			wantInvalid: 1,
 		},
 		{
 			name: "sdk length target",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			calls: []keeper.WasmSudoMsgCall{
 				{ContractAddr: sdkLenAddr, Msg: validMsg},
 			},
-			wantErr: "target address must be 32 bytes",
+			wantInvalid: 1,
 		},
 		{
 			name: "empty message",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			calls: []keeper.WasmSudoMsgCall{
 				{ContractAddr: contractAddr},
 			},
-			wantErr: "msg cannot be empty",
+			wantInvalid: 1,
 		},
 		{
 			name: "oversized message",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			calls: []keeper.WasmSudoMsgCall{
 				{
 					ContractAddr: contractAddr,
 					Msg:          json.RawMessage(`{"payload":"` + strings.Repeat("x", keeper.WasmBlockHookMaxPayloadJSONSize) + `"}`),
 				},
 			},
-			wantErr: "msg too large",
+			wantInvalid: 1,
 		},
 		{
 			name: "json string payload",
-			dispatches: []keeper.WasmBlockHookDispatch{
+			calls: []keeper.WasmSudoMsgCall{
 				{ContractAddr: contractAddr, Msg: json.RawMessage(`"not-a-sudo-object"`)},
 			},
-			wantErr: "msg must be a JSON object",
+			wantInvalid: 1,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := keeper.ValidateWasmBlockHookDispatches(tc.dispatches)
+			got, invalid, err := keeper.ValidateWasmSudoMsgCalls(tc.calls)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 				return
 			}
 			require.NoError(t, err)
-			require.Len(t, got, len(tc.dispatches))
-			for idx := range got {
-				require.Equal(t, tc.dispatches[idx].ContractAddr, got[idx].ContractAddr.String())
-				require.JSONEq(t, string(tc.dispatches[idx].Msg), string(got[idx].Msg))
+			require.Len(t, got, tc.wantValid)
+			require.Len(t, invalid, tc.wantInvalid)
+			for _, valid := range got {
+				require.NotEmpty(t, valid.ContractAddr)
+				require.True(t, json.Valid(valid.Msg))
 			}
 		})
 	}

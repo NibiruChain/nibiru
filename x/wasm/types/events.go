@@ -22,13 +22,14 @@ const (
 	EventTypeUnpinCode              = "unpin_code"
 	EventTypeSudo                   = "sudo"
 	EventTypeReply                  = "reply"
-	EventTypeWasmBlockHookFailure   = "wasm_block_hook_failure"
 	EventTypeGovContractResult      = "gov_contract_result"
 	EventTypeUpdateContractAdmin    = "update_contract_admin"
 	EventTypeUpdateContractLabel    = "update_contract_label"
 	EventTypeUpdateCodeAccessConfig = "update_code_access_config"
 	EventTypePacketRecv             = "ibc_packet_received"
 	// add new types to IsAcceptedEventOnRecvPacketErrorAck
+
+	EventTypeWasmBlockHookSummary = "wasm_block_hook/summary"
 )
 
 // EmitAcknowledgementEvent emits an event signaling a successful or failed acknowledgement and including the error
@@ -57,17 +58,25 @@ func EmitAcknowledgementEvent(ctx sdk.Context, contractAddr sdk.AccAddress, ack 
 const (
 	AttributeReservedPrefix = "_"
 
-	AttributeKeyContractAddr        = "_contract_address"
-	AttributeKeyCodeID              = "code_id"
-	AttributeKeyChecksum            = "code_checksum"
-	AttributeKeyResultDataHex       = "result"
-	AttributeKeyRequiredCapability  = "required_capability"
-	AttributeKeyNewAdmin            = "new_admin_address"
-	AttributeKeyNewLabel            = "new_label"
-	AttributeKeyCodePermission      = "code_permission"
-	AttributeKeyAuthorizedAddresses = "authorized_addresses"
-	AttributeKeyAckSuccess          = "success"
-	AttributeKeyAckError            = "error"
-	AttributeKeyWasmBlockHook       = "hook"
-	AttributeKeyWasmBlockHookError  = "error"
+	AttributeKeyContractAddr          = "_contract_address"
+	AttributeKeyCodeID                = "code_id"
+	AttributeKeyChecksum              = "code_checksum"
+	AttributeKeyResultDataHex         = "result"
+	AttributeKeyRequiredCapability    = "required_capability"
+	AttributeKeyNewAdmin              = "new_admin_address"
+	AttributeKeyNewLabel              = "new_label"
+	AttributeKeyCodePermission        = "code_permission"
+	AttributeKeyAuthorizedAddresses   = "authorized_addresses"
+	AttributeKeyAckSuccess            = "success"
+	AttributeKeyAckError              = "error"
+	AttributeKeyWasmBlockHook         = "hook"
+	AttributeKeyWasmBlockHookError    = "error"
+	AttributeKeyWasmBlockHookTotal    = "total"
+	AttributeKeyWasmBlockHookFailures = "failures"
 )
+
+// WasmBlockHookPlanFailedEventType returns the event type emitted when a block
+// hook cannot load its registry dispatch plan.
+func WasmBlockHookPlanFailedEventType(hookKind string) string {
+	return "wasm_block_hook/" + hookKind + "_failed"
+}

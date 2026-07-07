@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -28,96 +29,138 @@ const (
 
 var (
 	// wasmBlockHookBeginBlockQuery is the registry smart query for begin-block
-	// dispatch plans.
+	// wasm_sudo_msg_calls.
 	wasmBlockHookBeginBlockQuery = []byte(`{"begin_block_plan":{}}`)
 	// wasmBlockHookEndBlockQuery is the registry smart query for end-block
-	// dispatch plans.
+	// wasm_sudo_msg_calls.
 	wasmBlockHookEndBlockQuery = []byte(`{"end_block_plan":{}}`)
 )
 
-// WasmBlockHookDispatch is one registry-selected target sudo call.
-type WasmBlockHookDispatch struct {
+// WasmSudoMsgCall is one registry-selected target sudo call.
+type WasmSudoMsgCall struct {
 	ContractAddr string          `json:"contract_addr"`
 	Msg          json.RawMessage `json:"msg"`
 }
 
-// ValidatedWasmBlockHookDispatch is a dispatch item after host-side address and
-// JSON payload validation.
-type ValidatedWasmBlockHookDispatch struct {
+// ValidatedWasmSudoMsgCall is a sudo call after host-side address and JSON
+// payload validation.
+type ValidatedWasmSudoMsgCall struct {
 	ContractAddr sdk.AccAddress
 	Msg          json.RawMessage
 }
 
+// WasmBlockHookDispatchFailure records one failed dispatch attempt from the
+// registry plan for debugging and indexer replay.
+type WasmBlockHookDispatchFailure struct {
+	Idx          int    `json:"idx"`
+	ContractAddr string `json:"contract_addr"`
+	Reason       string `json:"reason"`
+	WasmSudoMsg  string `json:"wasm_sudo_msg"`
+}
+
 // BeginBlockWasmHooks queries the configured registry contract for a begin-block
-// dispatch plan and executes each target sudo call in an isolated cache context.
+// wasm_sudo_msg_calls list and executes each target sudo call in isolation.
 func (k Keeper) BeginBlockWasmHooks(ctx sdk.Context) {
-	k.runWasmBlockHookPlanner(ctx, wasmBlockHookBeginBlock)
+	k.runWasmBlockHook(ctx, wasmBlockHookBeginBlock)
 }
 
 // EndBlockWasmHooks queries the configured registry contract for an end-block
-// dispatch plan and executes each target sudo call in an isolated cache context.
+// wasm_sudo_msg_calls list and executes each target sudo call in isolation.
 func (k Keeper) EndBlockWasmHooks(ctx sdk.Context) {
-	k.runWasmBlockHookPlanner(ctx, wasmBlockHookEndBlock)
+	k.runWasmBlockHook(ctx, wasmBlockHookEndBlock)
 }
 
-// runWasmBlockHookPlanner loads a registry plan for one hook and executes each
-// validated target call behind an isolated cache context. Registry or plan
-// errors skip the whole hook, while target errors discard only that target's
-// writes/events and allow later dispatches to run.
-func (k Keeper) runWasmBlockHookPlanner(ctx sdk.Context, hookKind wasmBlockHookKind) {
-	dispatches, err := k.queryWasmBlockHookPlan(ctx, hookKind)
+// runWasmBlockHook loads wasm_sudo_msg_calls for one hook and executes
+// each valid target call behind an isolated cache context. Registry query errors
+// skip the whole hook, while item validation and target errors are collected in
+// the summary failures payload and do not prevent later calls from running.
+func (k Keeper) runWasmBlockHook(ctx sdk.Context, hookKind wasmBlockHookKind) {
+	wasmSudoMsgCalls, configured, err := k.queryWasmSudoMsgCalls(ctx, hookKind)
 	if err != nil {
-		emitWasmBlockHookFailureEvent(ctx, hookKind, err)
+		// Record a registry query or plan decode failure without aborting block
+		// processing.
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			wasmtypes.WasmBlockHookPlanFailedEventType(string(hookKind)),
+			sdk.NewAttribute(sdk.AttributeKeyModule, wasmtypes.ModuleName),
+			sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHookError, err.Error()),
+		))
+		return
+	}
+	if !configured {
 		return
 	}
 
-	for _, dispatch := range dispatches {
-		cacheCtx, writeCache := ctx.CacheContext()
-		cacheCtx = cacheCtx.WithEventManager(sdk.NewEventManager())
-
-		_, err := k.Sudo(cacheCtx, dispatch.ContractAddr, dispatch.Msg)
+	failures := make([]WasmBlockHookDispatchFailure, 0)
+	for idx, wasmSudoMsg := range wasmSudoMsgCalls {
+		validated, err := wasmSudoMsg.Validate(idx)
 		if err != nil {
-			emitWasmBlockHookFailureEvent(ctx, hookKind, err, dispatch.ContractAddr)
+			failures = appendWasmBlockHookDispatchFailure(failures, idx, wasmSudoMsg, err)
 			continue
 		}
 
-		writeCache()
+		cacheCtx, writeCacheCtx := ctx.CacheContext()
+		cacheCtx = cacheCtx.WithEventManager(sdk.NewEventManager())
+
+		_, err = k.Sudo(cacheCtx, validated.ContractAddr, validated.Msg)
+		if err != nil {
+			failures = appendWasmBlockHookDispatchFailure(failures, idx, wasmSudoMsg, err)
+			continue
+		}
+
+		writeCacheCtx()
 		ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
 	}
+
+	attrs := []sdk.Attribute{
+		sdk.NewAttribute(sdk.AttributeKeyModule, wasmtypes.ModuleName),
+		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHook, string(hookKind)),
+		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHookTotal, strconv.Itoa(len(wasmSudoMsgCalls))),
+	}
+	if len(failures) > 0 {
+		failuresJSON, _ := json.Marshal(failures) // json serde is type safe here
+		attrs = append(attrs, sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHookFailures, string(failuresJSON)))
+	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(wasmtypes.EventTypeWasmBlockHookSummary, attrs...),
+	)
 }
 
-// queryWasmBlockHookPlan asks the configured registry contract for the current
-// hook's dispatch plan. An unset registry is treated as feature-off and returns
-// no dispatches.
-func (k Keeper) queryWasmBlockHookPlan(
+// queryWasmSudoMsgCalls asks the configured registry contract for the current
+// hook's wasm_sudo_msg_calls. An unset registry is treated as feature-off and
+// returns no calls.
+func (k Keeper) queryWasmSudoMsgCalls(
 	ctx sdk.Context,
 	hookKind wasmBlockHookKind,
-) ([]ValidatedWasmBlockHookDispatch, error) {
+) (wasmSudoMsgCalls []WasmSudoMsgCall, enabled bool, err error) {
 	if k.wasmBlockHooksContractSource == nil {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	registryAddr, configured := k.wasmBlockHooksContractSource.GetWasmBlockHooksContract(ctx)
 	if !configured {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	queryMsg, err := wasmBlockHookRegistryQueryMsg(hookKind)
 	if err != nil {
-		return nil, err
+		return nil, true, err
 	}
 
 	queryResp, err := k.QuerySmart(ctx, registryAddr, queryMsg)
 	if err != nil {
-		return nil, fmt.Errorf("query wasm block hook registry: %w", err)
+		return nil, true, fmt.Errorf("query wasm block hook registry: %w", err)
 	}
 
-	var dispatches []WasmBlockHookDispatch
-	if err := json.Unmarshal(queryResp, &dispatches); err != nil {
-		return nil, fmt.Errorf("decode wasm block hook registry response: %w", err)
+	if err := json.Unmarshal(queryResp, &wasmSudoMsgCalls); err != nil {
+		return nil, true, fmt.Errorf("decode wasm block hook registry response: %w", err)
 	}
-
-	return ValidateWasmBlockHookDispatches(dispatches)
+	if len(wasmSudoMsgCalls) > WasmBlockHookMaxDispatches {
+		return nil, true, fmt.Errorf(
+			"too many wasm sudo msg calls: got %d, max %d",
+			len(wasmSudoMsgCalls), WasmBlockHookMaxDispatches,
+		)
+	}
+	return wasmSudoMsgCalls, true, nil
 }
 
 // wasmBlockHookRegistryQueryMsg returns the registry smart query for the
@@ -133,78 +176,91 @@ func wasmBlockHookRegistryQueryMsg(hookKind wasmBlockHookKind) ([]byte, error) {
 	}
 }
 
-// ValidateWasmBlockHookDispatches enforces the fixed v1 host guardrails before
-// any target sudo execution begins. Any invalid item rejects the whole plan for
-// the current block hook.
-func ValidateWasmBlockHookDispatches(
-	dispatches []WasmBlockHookDispatch,
-) ([]ValidatedWasmBlockHookDispatch, error) {
-	if len(dispatches) > WasmBlockHookMaxDispatches {
-		return nil, fmt.Errorf(
-			"too many wasm block hook dispatches: got %d, max %d",
-			len(dispatches), WasmBlockHookMaxDispatches,
+// ValidateWasmSudoMsgCall enforces fixed v1 host guardrails for one registry
+// selected sudo call.
+func (wasmSudoMsg WasmSudoMsgCall) Validate(
+	idx int,
+) (ValidatedWasmSudoMsgCall, error) {
+	contractAddr, err := sdk.AccAddressFromBech32(wasmSudoMsg.ContractAddr)
+	if err != nil {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf("wasm sudo msg %d target address: %w", idx, err)
+	}
+	if len(contractAddr) != wasmtypes.ContractAddrLen {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf(
+			"wasm sudo msg %d target address must be %d bytes, got %d",
+			idx, wasmtypes.ContractAddrLen, len(contractAddr),
 		)
 	}
 
-	validated := make([]ValidatedWasmBlockHookDispatch, 0, len(dispatches))
-	for idx, dispatch := range dispatches {
-		contractAddr, err := sdk.AccAddressFromBech32(dispatch.ContractAddr)
-		if err != nil {
-			return nil, fmt.Errorf("dispatch %d target address: %w", idx, err)
-		}
-		if len(contractAddr) != wasmtypes.ContractAddrLen {
-			return nil, fmt.Errorf(
-				"dispatch %d target address must be %d bytes, got %d",
-				idx, wasmtypes.ContractAddrLen, len(contractAddr),
-			)
-		}
-
-		msg := bytes.TrimSpace(dispatch.Msg)
-		if len(msg) == 0 {
-			return nil, fmt.Errorf("dispatch %d msg cannot be empty", idx)
-		}
-		if len(msg) > WasmBlockHookMaxPayloadJSONSize {
-			return nil, fmt.Errorf(
-				"dispatch %d msg too large: got %d bytes, max %d",
-				idx, len(msg), WasmBlockHookMaxPayloadJSONSize,
-			)
-		}
-		if !json.Valid(msg) {
-			return nil, fmt.Errorf("dispatch %d msg must be valid JSON", idx)
-		}
-		if msg[0] != '{' {
-			return nil, fmt.Errorf("dispatch %d msg must be a JSON object", idx)
-		}
-
-		validated = append(validated, ValidatedWasmBlockHookDispatch{
-			ContractAddr: contractAddr,
-			Msg:          append(json.RawMessage(nil), msg...),
-		})
+	msg := bytes.TrimSpace(wasmSudoMsg.Msg)
+	if len(msg) == 0 {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf("wasm sudo msg %d msg cannot be empty", idx)
+	}
+	if len(msg) > WasmBlockHookMaxPayloadJSONSize {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf(
+			"wasm sudo msg %d msg too large: got %d bytes, max %d",
+			idx, len(msg), WasmBlockHookMaxPayloadJSONSize,
+		)
+	}
+	if !json.Valid(msg) {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf("wasm sudo msg %d msg must be valid JSON", idx)
+	}
+	if msg[0] != '{' {
+		return ValidatedWasmSudoMsgCall{}, fmt.Errorf("wasm sudo msg %d msg must be a JSON object", idx)
 	}
 
-	return validated, nil
+	return ValidatedWasmSudoMsgCall{
+		ContractAddr: contractAddr,
+		Msg:          append(json.RawMessage(nil), msg...),
+	}, nil
 }
 
-// emitWasmBlockHookFailureEvent records registry, plan, or target execution
-// failure without aborting block processing. Target failures include the target
-// contract address when one is available.
-func emitWasmBlockHookFailureEvent(
-	ctx sdk.Context,
-	hookKind wasmBlockHookKind,
-	err error,
-	contractAddr ...sdk.AccAddress,
-) {
-	attrs := []sdk.Attribute{
-		sdk.NewAttribute(sdk.AttributeKeyModule, wasmtypes.ModuleName),
-		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHook, string(hookKind)),
-		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHookError, err.Error()),
-	}
-	if len(contractAddr) > 0 {
-		attrs = append(attrs, sdk.NewAttribute(wasmtypes.AttributeKeyContractAddr, contractAddr[0].String()))
+// ValidateWasmSudoMsgCalls enforces list-level bounds and returns valid calls
+// plus item-level validation errors. Invalid items do not reject valid siblings.
+func ValidateWasmSudoMsgCalls(
+	wasmSudoMsgCalls []WasmSudoMsgCall,
+) ([]ValidatedWasmSudoMsgCall, []error, error) {
+	if len(wasmSudoMsgCalls) > WasmBlockHookMaxDispatches {
+		return nil, nil, fmt.Errorf(
+			"too many wasm sudo msg calls: got %d, max %d",
+			len(wasmSudoMsgCalls), WasmBlockHookMaxDispatches,
+		)
 	}
 
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		wasmtypes.EventTypeWasmBlockHookFailure,
-		attrs...,
-	))
+	validated := make([]ValidatedWasmSudoMsgCall, 0, len(wasmSudoMsgCalls))
+	invalid := make([]error, 0)
+	for idx, wasmSudoMsg := range wasmSudoMsgCalls {
+		validatedWasmSudoMsg, err := wasmSudoMsg.Validate(idx)
+		if err != nil {
+			invalid = append(invalid, err)
+			continue
+		}
+		validated = append(validated, validatedWasmSudoMsg)
+	}
+
+	return validated, invalid, nil
+}
+
+// appendWasmBlockHookDispatchFailure records one failed dispatch with the
+// original registry item for replay debugging.
+func appendWasmBlockHookDispatchFailure(
+	failures []WasmBlockHookDispatchFailure,
+	idx int,
+	wasmSudoMsg WasmSudoMsgCall,
+	reason error,
+) []WasmBlockHookDispatchFailure {
+	wasmSudoMsgJSON, err := json.Marshal(wasmSudoMsg)
+	if err != nil {
+		wasmSudoMsgJSON = []byte(fmt.Sprintf(
+			`{"contract_addr":%q,"msg":%s}`,
+			wasmSudoMsg.ContractAddr,
+			wasmSudoMsg.Msg,
+		))
+	}
+	return append(failures, WasmBlockHookDispatchFailure{
+		Idx:          idx,
+		ContractAddr: wasmSudoMsg.ContractAddr,
+		Reason:       reason.Error(),
+		WasmSudoMsg:  string(wasmSudoMsgJSON),
+	})
 }

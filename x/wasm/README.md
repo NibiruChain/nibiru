@@ -1,35 +1,117 @@
-# Wasm Module
+# Nibiru - /x/wasm
 
-This should be a brief overview of the functionality
+Module `x/wasm` is Nibiru's Cosmos SDK integration for CosmWasm smart contracts. The package wraps `wasmvm`, persists code and contract state, exposes gRPC/CLI interfaces, and handles IBC port callbacks. Most of the core lifecycle (store, instantiate, execute, migrate, sudo) comes from the upstream wasmd fork; Nibiru adds chain-specific behavior such as Wasm block hooks.
+
+```bash
+⚡ NibiruChain/Nibiru/x/wasm
+├── 📂 cli              # `nibid` query and tx commands for the wasm module
+├── 📂 docs-wasmd       # Vendored upstream wasmd docs (integration, upgrading, events)
+├── 📂 exported         # Cross-module interfaces (legacy param subspace)
+├── 📂 ibctesting       # Multi-chain IBC test harness for wasm integration tests
+├── 📂 ioutils          # Gzip and wasm-bytecode detection for code uploads
+├── 📂 keeper           # Core keeper: wasmvm lifecycle, IBC, msg/query servers, ABCI hooks
+│   └── 📂 wasmtesting  # Mock wasm engine and keeper doubles for unit tests
+├── 📂 testdata         # Shared CosmWasm fixture binaries and embed helpers
+├── 📂 testutil         # Path helpers (`FixturePath`) for tests loading fixtures
+├── 📂 types            # Module types, params, codec, genesis, protobuf msgs/queries
+├── ibc.go              # Port-level IBC handler delegating to keeper callbacks
+├── module.go           # AppModule wiring, node flags, ABCI begin/end hooks
+├── alias.go            # Deprecated re-exports of types and keeper symbols
+├── 01-gov-txs.md       # Governance proposal types for the wasm lifecycle
+├── 02-ibc.md           # IBC contract interaction spec
+└── README.md
+```
+
+Related paths outside this directory:
+
+- directory [proto/cosmwasm/wasm/v1/](../../proto/cosmwasm/wasm/v1/) — protobuf definitions for msgs, queries, and genesis
+- directory [app/](../../app/) — module wiring into `NibiruApp`
+- repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) — Rust smart contracts and package `nibiru-std` (contract side, not chain module code)
+
+## Hacking
+
+Install command `just` to run repo-level recipes. From the repository root, run command `just -l` to list them.
+
+### Go tests
+
+Run wasm package tests from the repository root:
+
+```bash
+go test ./x/wasm/...
+go test ./x/wasm/keeper
+```
+
+Some tests require a live localnet or CGO-enabled `wasmvm`. See [CLAUDE.md](../../CLAUDE.md) for `just test`, `just test-fast`, and localnet setup.
+
+### Keeper test file naming
+
+Directory `x/wasm/keeper/` uses two test package conventions:
+
+| Package | Filename pattern | Purpose |
+| --- | --- | --- |
+| `keeper_test` | `X_test.go` | External (black-box) tests against the public keeper API |
+| `keeper` | `X_unit_test.go` | Internal unit tests with access to unexported symbols |
+
+Package `keeper/wasmtesting` holds test doubles (mock wasm engine, mock keepers). It is not a test package itself.
+
+### Test fixtures
+
+- Package `testdata` embeds sample contract bytecode (`HackatomContractWasm`, `ReflectContractWasm`, etc.) via file `contracts.go`
+- Directory `x/wasm/testdata/` holds `.wasm` binaries, gzip fixtures, and the block-hooks tester contract
+- Function `FixturePath` in package `testutil` resolves absolute paths under `x/wasm/` for CLI and IBC tests
+
+## Nibiru-specific behavior: Wasm block hooks
+
+At begin-block and end-block, function `AppModule.BeginBlock` and function `AppModule.EndBlock` in file `module.go` call into keeper methods `BeginBlockWasmHooks` and `EndBlockWasmHooks` (file `keeper/abci_hooks.go`).
+
+```mermaid
+flowchart LR
+  AppModule --> BeginBlockWasmHooks
+  AppModule --> EndBlockWasmHooks
+  BeginBlockWasmHooks --> RegistryQuery
+  EndBlockWasmHooks --> RegistryQuery
+  RegistryQuery --> ValidateCalls
+  ValidateCalls --> SudoDispatch
+```
+
+Flow:
+
+1. Read the registry contract address from `SudoKeeper.WasmBlockHooksContract`. If unset, the hook is a no-op.
+2. Smart-query the registry with `{"begin_block_plan":{}}` or `{"end_block_plan":{}}`.
+3. Decode the response as a list of type `WasmSudoMsgCall` (`contract_addr`, `msg`).
+4. Validate each item (address format, non-empty JSON object payload, size limits). Constants `WasmBlockHookMaxDispatches` and `WasmBlockHookMaxPayloadJSONSize` bound the plan.
+5. Execute each valid target via `Keeper.Sudo` in an isolated cache context. A target failure emits event type `wasm_block_hook_failure` and does not block later targets.
+
+Tests in file `keeper/abci_hooks_test.go` exercise this flow against fixture contract `wasm_block_hooks_tester.wasm` in directory `testdata/`.
 
 ## Configuration
 
-You can add the following section to `config/app.toml`:
+Add the following section to file `config/app.toml`:
 
 ```toml
 [wasm]
-# This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+# Maximum SDK gas (wasm and storage) allowed for x/wasm smart queries
 query_gas_limit = 300000
-# This defines the memory size for Wasm modules that we can keep cached to speed-up instantiation
-# The value is in MiB not bytes
+# Memory cache size for Wasm modules kept in memory to speed up instantiation (MiB, not bytes)
 memory_cache_size = 300
 ```
 
-The values can also be set via CLI flags on with the `start` command:
-```shell script
---wasm.memory_cache_size uint32     Sets the size in MiB (NOT bytes) of an in-memory cache for wasm modules. Set to 0 to disable. (default 100)
---wasm.query_gas_limit uint         Set the max gas that can be spent on executing a query with a Wasm contract (default 3000000)
+The same values can be set via CLI flags on command `start`:
+
+```bash
+--wasm.memory_cache_size uint32   # MiB (NOT bytes); 0 disables cache (default 100)
+--wasm.query_gas_limit uint       # Max gas for smart queries (default 3000000)
 ```
+
+Note: the TOML example above uses `query_gas_limit = 300000`, while the CLI default is `3000000`. Set both explicitly if you need them to match.
 
 ## Events
 
-A number of events are returned to allow good indexing of the transactions from smart contracts.
+Wasm transactions emit several event layers useful for indexers and explorers.
 
-Every call to Instantiate or Execute will be tagged with the info on the contract that was executed and who executed it.
-It should look something like this (with different addresses). The module is always `wasm`, and `code_id` is only present
-when Instantiating a contract, so you can subscribe to new instances, it is omitted on Execute. There is also an `action` tag
-which is auto-added by the Cosmos SDK and has a value of either `store-code`, `instantiate` or `execute` depending on which message
-was sent:
+### Module message events
+
+Every `MsgInstantiateContract` or `MsgExecuteContract` emits a `message` event tagged with the contract and signer. The module attribute is always `wasm`. Attribute `code_id` appears only on instantiate (so you can subscribe to new instances); it is omitted on execute. Attribute `action` is auto-added by the Cosmos SDK with value `store-code`, `instantiate`, or `execute`:
 
 ```json
 {
@@ -59,9 +141,9 @@ was sent:
 }
 ```
 
-If any funds were transferred to the contract as part of the message, or if the contract released funds as part of it's executions,
-it will receive the typical events associated with sending tokens from bank. In this case, we instantiate the contract and
-provide a initial balance in the same `MsgInstantiateContract`. We see the following events in addition to the above one:
+### Bank transfer events
+
+If funds move to or from a contract as part of the message, standard bank `transfer` events appear. For example, instantiating with an initial balance in the same `MsgInstantiateContract` adds:
 
 ```json
 [
@@ -85,11 +167,9 @@ provide a initial balance in the same `MsgInstantiateContract`. We see the follo
 ]
 ```
 
-Finally, the contract itself can emit a "custom event" on Execute only (not on Init).
-There is one event per contract, so if one contract calls a second contract, you may receive
-one event for the original contract and one for the re-invoked contract. All attributes from the contract are passed through verbatim,
-and we add a `_contract_address` attribute that contains the actual contract that emitted that event.
-Here is an example from the escrow contract successfully releasing funds to the destination address:
+### Contract custom events
+
+Contracts can emit custom events on execute (not on init). Each contract gets its own `wasm` event. If one contract calls another, you may see one event per contract. Contract attributes pass through verbatim; the module adds `_contract_address` with the emitting contract. Example from an escrow contract releasing funds:
 
 ```json
 {
@@ -113,16 +193,9 @@ Here is an example from the escrow contract successfully releasing funds to the 
 
 ### Pulling this all together
 
-We will invoke an escrow contract to release to the designated beneficiary.
-The escrow was previously loaded with `100000denom` (from the above example).
-In this transaction, we send `5000denom` along with the `MsgExecuteContract`
-and the contract releases the entire funds (`105000denom`) to the beneficiary.
+Invoke an escrow contract to release to the designated beneficiary. The escrow was previously loaded with `100000denom`. In this transaction, send `5000denom` along with `MsgExecuteContract`; the contract releases the full balance (`105000denom`) to the beneficiary.
 
-We will see all the following events, where you should be able to reconstruct the actions
-(remember there are two events for each transfer). We see (1) the initial transfer of funds
-to the contract, (2) the contract custom event that it released funds (3) the transfer of funds
-from the contract to the beneficiary and (4) the generic x/wasm event stating that the contract
-was executed (which always appears, while 2 is optional and has information as reliable as the contract):
+You should see four event groups: (1) transfer of funds to the contract, (2) contract custom event for the release, (3) transfer from contract to beneficiary, and (4) generic x/wasm execute event (always present; the custom event in (2) is optional and only as reliable as the contract):
 
 ```json
 [
@@ -201,19 +274,15 @@ was executed (which always appears, while 2 is optional and has information as r
 ]
 ```
 
-A note on this format. This is what we return from our module. However, it seems to me that many events with the same `Type`
-get merged together somewhere along the stack, so in this case, you *may* end up with one "transfer" event with the info for
-both transfers. Double check when evaluating the event logs, I will document better with more experience, especially when I
-find out the entire path for the events.
+Events with the same `Type` may be merged somewhere in the stack, so you might see one `transfer` event combining both transfers. Verify against raw transaction logs when indexing.
 
-## Messages
+## Further reading
 
-TODO
-
-## CLI
-
-TODO - working, but not the nicest interface (json + bash = bleh). Use to upload, but I suggest to focus on frontend / js tooling
-
-## Rest
-
-TODO - main supported interface, under rapid change
+| Topic | Location |
+| --- | --- |
+| CLI commands (`nibid query wasm`, `nibid tx wasm`) | directory [x/wasm/cli/](cli/) |
+| REST and gRPC API | directory [proto/cosmwasm/wasm/v1/](../../proto/cosmwasm/wasm/v1/) |
+| IBC contract model (one port per contract, channel handshake) | file [02-ibc.md](02-ibc.md) |
+| Governance proposals for wasm lifecycle | file [01-gov-txs.md](01-gov-txs.md) |
+| Upstream wasmd integration and upgrading notes | directory [docs-wasmd/](docs-wasmd/) |
+| Rust contracts and `nibiru-std` | repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) |
