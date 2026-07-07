@@ -2,12 +2,13 @@ package types
 
 import (
 	"bytes"
-	_ "embed"
 	"math/rand"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	wasmtestdata "github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 )
 
 func fixtureAddress() string {
@@ -18,8 +19,7 @@ func fixtureContractAddress() string {
 	return sdk.AccAddress(bytes.Repeat([]byte{2}, ContractAddrLen)).String()
 }
 
-//go:embed testdata/reflect.wasm
-var reflectWasmCode []byte
+var reflectWasmCode = wasmtestdata.TypesReflectContractWasm
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	const (

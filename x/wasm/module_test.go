@@ -29,7 +29,7 @@ import (
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/exported"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -128,8 +128,8 @@ func mustLoad(path string) []byte {
 var (
 	addrAcc1     = keyPubAddr()
 	addr1        = addrAcc1.String()
-	testContract = mustLoad("./keeper/testdata/hackatom.wasm")
-	maskContract = testdata.ReflectContractWasm()
+	testContract = mustLoad("./testdata/hackatom.wasm")
+	maskContract = testdata.ReflectContractWasm
 	oldContract  = mustLoad("./testdata/escrow_0.7.wasm")
 )
 

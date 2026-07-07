@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/ioutils"
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	wasmtestutil "github.com/NibiruChain/nibiru/v2/x/wasm/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -27,7 +27,7 @@ func TestParseVerificationFlags(t *testing.T) {
 		expCodeHash string
 	}{
 		"gov store zipped": {
-			srcPath: wasmtestutil.FixturePath("keeper", "testdata", "hackatom.wasm.gzip"),
+			srcPath: wasmtestutil.FixturePath("testdata", "hackatom.wasm.gzip"),
 			args: []string{
 				"--instantiate-everybody=true", "--code-hash=" + testdata.ChecksumHackatom,
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
@@ -37,7 +37,7 @@ func TestParseVerificationFlags(t *testing.T) {
 			expCodeHash: testdata.ChecksumHackatom,
 		},
 		"gov store raw": {
-			srcPath: wasmtestutil.FixturePath("keeper", "testdata", "hackatom.wasm"),
+			srcPath: wasmtestutil.FixturePath("testdata", "hackatom.wasm"),
 			args: []string{
 				"--instantiate-everybody=true", "--code-hash=" + testdata.ChecksumHackatom,
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",
@@ -47,7 +47,7 @@ func TestParseVerificationFlags(t *testing.T) {
 			expCodeHash: testdata.ChecksumHackatom,
 		},
 		"gov store checksum mismatch": {
-			srcPath: wasmtestutil.FixturePath("keeper", "testdata", "hackatom.wasm"),
+			srcPath: wasmtestutil.FixturePath("testdata", "hackatom.wasm"),
 			args: []string{
 				"--instantiate-everybody=true", "--code-hash=0000de5e9b93b52e514c74ce87ccddb594b9bcd33b7f1af1bb6da63fc883917b",
 				"--code-source-url=https://example.com", "--builder=cosmwasm/workspace-optimizer:0.12.11",

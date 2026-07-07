@@ -22,6 +22,8 @@ func (k Keeper) EditSudoers(
 		return k.AddContracts(goCtx, msg)
 	case sudo.RemoveContracts:
 		return k.RemoveContracts(goCtx, msg)
+	case sudo.EditWasmBlockHooksContract:
+		return k.EditWasmBlockHooksContract(goCtx, msg)
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
 	}

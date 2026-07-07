@@ -27,13 +27,13 @@ func TestSnapshotter(t *testing.T) {
 		wasmFiles []string
 	}{
 		"single contract": {
-			wasmFiles: []string{"./testdata/reflect.wasm"},
+			wasmFiles: []string{"../testdata/reflect.wasm"},
 		},
 		"multiple contract": {
-			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/burner.wasm", "./testdata/reflect.wasm"},
+			wasmFiles: []string{"../testdata/reflect.wasm", "../testdata/burner.wasm", "../testdata/reflect.wasm"},
 		},
 		"duplicate contracts": {
-			wasmFiles: []string{"./testdata/reflect.wasm", "./testdata/reflect.wasm"},
+			wasmFiles: []string{"../testdata/reflect.wasm", "../testdata/reflect.wasm"},
 		},
 	}
 	for name, spec := range specs {

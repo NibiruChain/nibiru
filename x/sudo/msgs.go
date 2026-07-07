@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 var (
@@ -22,17 +23,22 @@ func (m MsgEditSudoers) ValidateBasic() error {
 		return err
 	}
 
-	for _, contract := range m.Contracts {
-		if _, err := sdk.AccAddressFromBech32(contract); err != nil {
-			return err
-		}
-	}
-
 	if !RootActions.Has(m.RootAction()) {
 		return fmt.Errorf(
 			"invalid action type %s, expected one of %s",
 			m.Action, RootActions.ToSlice(),
 		)
+	}
+
+	if m.RootAction() == EditWasmBlockHooksContract {
+		_, err := WasmBlockHooksContractFromMsgContracts(m.Contracts)
+		return err
+	}
+
+	for _, contract := range m.Contracts {
+		if _, err := sdk.AccAddressFromBech32(contract); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -60,6 +66,44 @@ func (m MsgEditSudoers) GetSignBytes() []byte {
 
 func (m MsgEditSudoers) RootAction() RootAction {
 	return RootAction(m.Action)
+}
+
+// WasmBlockHooksContractFromMsgContracts parses the single-address payload used
+// by MsgEditSudoers with action EditWasmBlockHooksContract. An empty string is
+// accepted as the clear operation.
+func WasmBlockHooksContractFromMsgContracts(contracts []string) (string, error) {
+	if len(contracts) != 1 {
+		return "", fmt.Errorf(
+			"%s action expects exactly one contract argument, got %d",
+			EditWasmBlockHooksContract, len(contracts),
+		)
+	}
+
+	contract := contracts[0]
+	if contract == "" {
+		return "", nil
+	}
+
+	if err := ValidateWasmBlockHooksContract(contract); err != nil {
+		return "", err
+	}
+	return contract, nil
+}
+
+// ValidateWasmBlockHooksContract checks that contract is a Bech32 address with
+// the byte length used by x/wasm contract addresses.
+func ValidateWasmBlockHooksContract(contract string) error {
+	addr, err := sdk.AccAddressFromBech32(contract)
+	if err != nil {
+		return err
+	}
+	if len(addr) != wasmtypes.ContractAddrLen {
+		return fmt.Errorf(
+			"wasm block hooks contract address must be %d bytes, got %d",
+			wasmtypes.ContractAddrLen, len(addr),
+		)
+	}
+	return nil
 }
 
 // ----------------- "nibiru.sudo.v1.MsgChangeRoot" -----------------

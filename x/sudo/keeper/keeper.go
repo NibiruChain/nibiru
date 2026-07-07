@@ -10,13 +10,15 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
+	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 type Keeper struct {
-	Sudoers       collections.Item[sudo.Sudoers]
-	ZeroGasActors collections.Item[sudo.ZeroGasActors]
+	Sudoers                collections.Item[sudo.Sudoers]
+	ZeroGasActors          collections.Item[sudo.ZeroGasActors]
+	WasmBlockHooksContract collections.Item[string]
 }
 
 func NewKeeper(
@@ -33,6 +35,11 @@ func NewKeeper(
 			storeKey,
 			sudo.NamespaceZeroGasActors,
 			collections.ProtoValueEncoder[sudo.ZeroGasActors](cdc),
+		),
+		WasmBlockHooksContract: collections.NewItem(
+			storeKey,
+			sudo.NamespaceWasmBlockHooksContract,
+			nutil.StringValueEncoder,
 		),
 	}
 }
@@ -137,6 +144,44 @@ func (k Keeper) RemoveContracts(
 	})
 }
 
+// EditWasmBlockHooksContract updates the optional Wasm contract address used by
+// x/wasm to discover ABCI block hook dispatch plans.
+func (k Keeper) EditWasmBlockHooksContract(
+	goCtx context.Context, msg *sudo.MsgEditSudoers,
+) (msgResp *sudo.MsgEditSudoersResponse, err error) {
+	if msg.RootAction() != sudo.EditWasmBlockHooksContract {
+		err = fmt.Errorf("invalid action type %s for msg edit wasm block hooks contract", msg.Action)
+		return
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	pbSudoers, err := k.Sudoers.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sudoers := SudoersFromPb(pbSudoers)
+	err = k.senderHasPermission(msg.Sender, sudoers.Root)
+	if err != nil {
+		return nil, err
+	}
+
+	contractAddr, err := sudo.WasmBlockHooksContractFromMsgContracts(msg.Contracts)
+	if err != nil {
+		return nil, err
+	}
+	k.WasmBlockHooksContract.Set(ctx, contractAddr)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		sudo.EventTypeWasmBlockHooksContractUpdate,
+		sdk.NewAttribute(sudo.AttributeKeyWasmBlockHooksContract, contractAddr),
+	))
+
+	msgResp = new(sudo.MsgEditSudoersResponse)
+	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{
+		Sudoers: pbSudoers,
+		Action:  msg.Action,
+	})
+}
+
 // CheckPermissions Checks if a contract is contained within the set of sudo
 // contracts defined in the x/sudo module. These smart contracts are able to
 // execute certain permissioned functions.
@@ -168,6 +213,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState sudo.GenesisState) {
 	if genState.ZeroGasActors != nil {
 		k.ZeroGasActors.Set(ctx, *genState.ZeroGasActors)
 	}
+	k.WasmBlockHooksContract.Set(ctx, genState.WasmBlockHooksContract)
 }
 
 // ExportGenesis returns the module's exported genesis state.
@@ -182,7 +228,8 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *sudo.GenesisState {
 	zeroGasActors := k.ZeroGasActors.GetOr(ctx, sudo.DefaultZeroGasActors())
 
 	return &sudo.GenesisState{
-		Sudoers:       pbSudoers,
-		ZeroGasActors: &zeroGasActors,
+		Sudoers:                pbSudoers,
+		ZeroGasActors:          &zeroGasActors,
+		WasmBlockHooksContract: k.WasmBlockHooksContract.GetOr(ctx, ""),
 	}
 }

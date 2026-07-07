@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,13 +33,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-//go:embed testdata/hackatom.wasm
-var hackatomWasm []byte
+var hackatomWasm = testdata.HackatomContractWasm
 
 const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 
@@ -363,7 +361,7 @@ func TestCreateWithGzippedPayload(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm.gzip")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm.gzip")
 	require.NoError(t, err, "reading gzipped WASM code")
 
 	contractID, _, err := keeper.Create(ctx, creator, wasmCode, nil)
@@ -382,7 +380,7 @@ func TestCreateWithBrokenGzippedPayload(t *testing.T) {
 	deposit := sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
-	wasmCode, err := os.ReadFile("./testdata/broken_crc.gzip")
+	wasmCode, err := os.ReadFile("../testdata/broken_crc.gzip")
 	require.NoError(t, err, "reading gzipped WASM code")
 
 	gm := sdk.NewInfiniteGasMeter()
@@ -1348,7 +1346,7 @@ func TestMigrateWithDispatchedMessage(t *testing.T) {
 	keepers.Faucet.Fund(ctx, creator, deposit.Add(deposit...)...)
 	fred := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewInt64Coin("denom", 5000))
 
-	burnerCode, err := os.ReadFile("./testdata/burner.wasm")
+	burnerCode, err := os.ReadFile("../testdata/burner.wasm")
 	require.NoError(t, err)
 
 	originalContractID, _, err := keeper.Create(ctx, creator, hackatomWasm, nil)

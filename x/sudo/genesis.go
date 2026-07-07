@@ -18,6 +18,12 @@ func (gen *GenesisState) Validate() error {
 			return ErrGenesis(err.Error())
 		}
 	}
+	if gen.WasmBlockHooksContract != "" {
+		err := ValidateWasmBlockHooksContract(gen.WasmBlockHooksContract)
+		if err != nil {
+			return ErrGenesis(err.Error())
+		}
+	}
 	return nil
 }
 

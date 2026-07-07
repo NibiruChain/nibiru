@@ -19,7 +19,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -105,7 +105,7 @@ func TestInitializeStaking(t *testing.T) {
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("../testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, _, err := keeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
@@ -183,7 +183,7 @@ func initializeStaking(t *testing.T) initInfo {
 	creator := k.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload staking derivates code
-	stakingCode, err := os.ReadFile("./testdata/staking.wasm")
+	stakingCode, err := os.ReadFile("../testdata/staking.wasm")
 	require.NoError(t, err)
 	stakingID, _, err := k.ContractKeeper.Create(ctx, creator, stakingCode, nil)
 	require.NoError(t, err)
@@ -441,7 +441,7 @@ func TestQueryStakingInfo(t *testing.T) {
 	creator := initInfo.faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload mask code
-	maskID, _, err := initInfo.contractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	maskID, _, err := initInfo.contractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(2), maskID)
 

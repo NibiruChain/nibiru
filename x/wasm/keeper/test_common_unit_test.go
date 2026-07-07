@@ -74,8 +74,8 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -450,6 +450,7 @@ func createTestInput(
 		tempDir,
 		wasmConfig,
 		availableCapabilities,
+		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		opts...,
 	)
@@ -527,25 +528,25 @@ type ExampleContract struct {
 func StoreHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm)
 }
 
 func StoreBurnerExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm)
 }
 
 func StoreIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm)
 }
 
 func StoreReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm)
 }
 
 func StoreExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {
@@ -624,7 +625,7 @@ type HackatomExampleInstance struct {
 	Deposit         sdk.Coins
 }
 
-// InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
+// InstantiateHackatomExampleContract load and instantiate the "../testdata/hackatom.wasm" contract
 func InstantiateHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
 	tb.Helper()
 
@@ -663,7 +664,7 @@ type ExampleInstance struct {
 	Deposit  sdk.Coins
 }
 
-// InstantiateReflectExampleContract load and instantiate the "./testdata/reflect.wasm" contract
+// InstantiateReflectExampleContract load and instantiate the "../testdata/reflect.wasm" contract
 func InstantiateReflectExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
 	tb.Helper()
 
@@ -701,7 +702,7 @@ type IBCReflectExampleInstance struct {
 	ReflectCodeID uint64
 }
 
-// InstantiateIBCReflectContract load and instantiate the "./testdata/ibc_reflect.wasm" contract
+// InstantiateIBCReflectContract load and instantiate the "../testdata/ibc_reflect.wasm" contract
 func InstantiateIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
 	tb.Helper()
 

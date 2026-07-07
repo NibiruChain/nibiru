@@ -39,13 +39,19 @@ func BuildContractAddressClassic(codeID, instanceID uint64) sdk.AccAddress {
 	return address.Module(types.ModuleName, contractID)[:types.ContractAddrLen]
 }
 
-// BuildContractAddressPredictable generates a contract address for the wasm module with len = types.ContractAddrLen using the
-// Cosmos SDK address.Module function.
+// BuildContractAddressPredictable generates a contract address for the wasm
+// module with len = types.ContractAddrLen using the Cosmos SDK address.Module
+// function.
+//
 // Internally a key is built containing:
 // (len(checksum) | checksum | len(sender_address) | sender_address | len(salt) | salt| len(initMsg) | initMsg).
 //
 // All method parameter values must be valid and not nil.
-func BuildContractAddressPredictable(checksum []byte, creator sdk.AccAddress, salt, initMsg types.RawContractMessage) sdk.AccAddress {
+func BuildContractAddressPredictable(
+	checksum []byte,
+	creator sdk.AccAddress,
+	salt, initMsg types.RawContractMessage,
+) sdk.AccAddress {
 	if len(checksum) != 32 {
 		panic("invalid checksum")
 	}

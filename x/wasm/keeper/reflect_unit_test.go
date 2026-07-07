@@ -19,7 +19,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -44,12 +44,12 @@ func TestReflectContractSend(t *testing.T) {
 	_, bob := keyPubAddr()
 
 	// upload reflect code
-	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
 	// upload hackatom escrow code
-	escrowCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	escrowCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, _, err := keeper.Create(ctx, creator, escrowCode, nil)
 	require.NoError(t, err)
@@ -124,7 +124,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	_, fred := keyPubAddr()
 
 	// upload code
-	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -211,7 +211,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
 
 	// upload code
-	codeID, _, err := keeper.Create(ctx, creator, testdata.CyberpunkContractWasm(), nil)
+	codeID, _, err := keeper.Create(ctx, creator, testdata.CyberpunkContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 

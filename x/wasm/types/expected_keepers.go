@@ -50,6 +50,12 @@ type AccountKeeper interface {
 	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
 }
 
+// WasmBlockHooksContractSource defines the read-only sudo boundary used to
+// discover the optional Wasm block-hooks registry contract.
+type WasmBlockHooksContractSource interface {
+	GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool)
+}
+
 // DistributionKeeper defines a subset of methods implemented by the cosmos-sdk distribution keeper
 type DistributionKeeper interface {
 	DelegatorWithdrawAddress(c context.Context, req *distrtypes.QueryDelegatorWithdrawAddressRequest) (*distrtypes.QueryDelegatorWithdrawAddressResponse, error)

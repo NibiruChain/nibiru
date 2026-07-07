@@ -20,7 +20,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -33,7 +33,7 @@ func TestMaskReflectCustomQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -83,7 +83,7 @@ func TestReflectStargateQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -176,7 +176,7 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, funds...)
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -256,7 +256,7 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -326,7 +326,7 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 
 	// upload reflect code
-	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -367,7 +367,7 @@ func TestQueryDenomsIntegration(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
 
 	// upload code
-	codeID, _, err := ck.Create(ctx, creator, testdata.CyberpunkContractWasm(), nil)
+	codeID, _, err := ck.Create(ctx, creator, testdata.CyberpunkContractWasm, nil)
 	require.NoError(t, err)
 
 	contractAddr, _, err := ck.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "cyberpunk contract", nil)
