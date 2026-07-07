@@ -19,7 +19,7 @@ jobs:
     outputs:
       wasmvm: ${{ steps.filter.outputs.wasmvm }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check for Wasm VM FFI changes
         id: filter
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -51,7 +51,7 @@ jobs:
 
       - name: Cache Cargo
         id: rust-cache-wasmvm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -85,7 +85,7 @@ jobs:
 
       - name: Cache Cargo
         id: rust-cache-wasmvm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -108,10 +108,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.19.7
           cache: true
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install just
         uses: taiki-e/install-action@just
@@ -156,13 +156,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.19.7
           cache: true
@@ -172,7 +172,7 @@ jobs:
 
       - name: Cache Cargo
         id: rust-cache-wasmvm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -206,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' }}
 
       - name: Install Rust
@@ -234,7 +234,7 @@ jobs:
   #     run:
   #       shell: bash
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
   #       if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
   #
   #     - name: Install Rust
@@ -259,7 +259,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install just
         uses: taiki-e/install-action@just
@@ -278,7 +278,7 @@ jobs:
           (cd artifacts/static-musl && sha256sum -- libwasmvm_muslc.x86_64.a libwasmvm_muslc.aarch64.a > checksums.txt && cat checksums.txt)
 
       - name: Upload musl static libraries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-muslc
           path: |
@@ -298,7 +298,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: ${{ vars.ENABLE_ALPINE_MUSLC_GO_TESTS == 'true' }}
 
       - name: Build static musl library and run Alpine Go tests
@@ -317,7 +317,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install just
         uses: taiki-e/install-action@just
@@ -336,7 +336,7 @@ jobs:
           (cd artifacts/linux-shared && sha256sum -- libwasmvm.aarch64.so libwasmvm.x86_64.so > checksums.txt && cat checksums.txt)
 
       - name: Upload Linux shared libraries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-glibc
           path: |
@@ -357,7 +357,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install just
         uses: taiki-e/install-action@just
@@ -376,7 +376,7 @@ jobs:
           (cd artifacts/darwin && sha256sum -- libwasmvm.dylib libwasmvmstatic_darwin.a > checksums.txt && cat checksums.txt)
 
       - name: Upload Darwin libraries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-darwin
           path: |
@@ -404,7 +404,7 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout tested commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
@@ -416,19 +416,19 @@ jobs:
         uses: taiki-e/install-action@just
 
       - name: Download tested musl artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-muslc
           path: dist/libwasmvm
 
       - name: Download tested glibc artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-glibc
           path: dist/libwasmvm
 
       - name: Download tested Darwin artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: libwasmvm-darwin
           path: dist/libwasmvm
