@@ -150,7 +150,7 @@ jobs:
               - "justfile"
               - ".github/workflows/test-core.yml"
               - "evm/e2e/**"
-              - "sai-trading/**"
+              - "lib/sai-trading/**"
 
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
@@ -527,9 +527,15 @@ jobs:
         with:
           bun-version: 1.2.22
 
+      - name: "Setup Go"
+        if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: lib/sai-trading/go.mod
+
       - name: "Install sai-trading dependencies"
         if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
-        working-directory: "sai-trading"
+        working-directory: "lib/sai-trading/scripts"
         run: bun install
 
       - name: "Launch localnet"
@@ -553,5 +559,5 @@ jobs:
 
       - name: "Run sai-trading tests"
         if: needs.check-nibiru-go.outputs.nibiru-go == 'true'
-        working-directory: "sai-trading"
+        working-directory: "lib/sai-trading"
         run: just test

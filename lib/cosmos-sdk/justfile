@@ -16,6 +16,7 @@ gen-proto-go:
 # Run cosmos-sdk tests relevant to Nibiru
 test:
   #!/usr/bin/env bash
+  set -euo pipefail
   printf "\n\nRun tests - cosmos-sdk/types:\n"
   go test ./types/... -tags='ledger test_ledger_mock'
 

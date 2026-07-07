@@ -1,0 +1,22 @@
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+i:
+  (cd scripts && bun install)
+
+test:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  just e2e-deploy
+  go test ./...
+
+e2e-deploy:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  (cd scripts && bun i)
+  bun run scripts/e2e/e2e_deploy.ts
+
+run-trader *args:
+  go run ./cmd/trader {{args}}
