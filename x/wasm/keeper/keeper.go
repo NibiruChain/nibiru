@@ -151,7 +151,13 @@ func (k Keeper) GetGasRegister() types.GasRegister {
 	return k.gasRegister
 }
 
-func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte, instantiateAccess *types.AccessConfig, authZ types.AuthorizationPolicy) (codeID uint64, checksum []byte, err error) {
+func (k Keeper) create(
+	ctx sdk.Context,
+	creator sdk.AccAddress,
+	wasmCode []byte,
+	instantiateAccess *types.AccessConfig,
+	authZ types.AuthorizationPolicy,
+) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
 	}
@@ -163,7 +169,7 @@ func (k Keeper) create(ctx sdk.Context, creator sdk.AccAddress, wasmCode []byte,
 	}
 	chainConfigs := types.ChainAccessConfigs{
 		Instantiate: defaultAccessConfig,
-		Upload:      k.getUploadAccessConfig(ctx),
+		Upload:      k.GetParams(ctx).CodeUploadAccess,
 	}
 
 	if !authZ.CanCreateCode(chainConfigs, creator, *instantiateAccess) {
@@ -211,7 +217,12 @@ func (k Keeper) storeCodeInfo(ctx sdk.Context, codeID uint64, codeInfo types.Cod
 	store.Set(types.GetCodeKey(codeID), k.cdc.MustMarshal(&codeInfo))
 }
 
-func (k Keeper) importCode(ctx sdk.Context, codeID uint64, codeInfo types.CodeInfo, wasmCode []byte) error {
+func (k Keeper) importCode(
+	ctx sdk.Context,
+	codeID uint64,
+	codeInfo types.CodeInfo,
+	wasmCode []byte,
+) error {
 	if ioutils.IsGzip(wasmCode) {
 		var err error
 		wasmCode, err = ioutils.Uncompress(wasmCode, math.MaxInt64)
@@ -367,7 +378,12 @@ func (k Keeper) instantiate(
 }
 
 // Execute executes the contract instance
-func (k Keeper) execute(ctx sdk.Context, contractAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
+func (k Keeper) execute(
+	ctx sdk.Context,
+	contractAddress, caller sdk.AccAddress,
+	msg []byte,
+	coins sdk.Coins,
+) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "execute")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
@@ -534,7 +550,11 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 }
 
 // reply is only called from keeper internal functions (dispatchSubmessages) after processing the submessage
-func (k Keeper) reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error) {
+func (k Keeper) reply(
+	ctx sdk.Context,
+	contractAddress sdk.AccAddress,
+	reply wasmvmtypes.Reply,
+) ([]byte, error) {
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
 		return nil, err
@@ -729,7 +749,17 @@ func (k Keeper) QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []b
 	querier := k.newQueryHandler(ctx, contractAddr)
 
 	env := types.NewEnv(ctx, contractAddr)
-	queryResult, gasUsed, qErr := k.wasmVM.Query(codeInfo.CodeHash, env, req, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), k.runtimeGasForContract(ctx), costJSONDeserialization)
+	queryResult, gasUsed, qErr := k.wasmVM.Query(
+		codeInfo.CodeHash,
+		env,
+		req,
+		prefixStore,
+		cosmwasmAPI,
+		querier,
+		k.gasMeter(ctx),
+		k.runtimeGasForContract(ctx),
+		costJSONDeserialization,
+	)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if qErr != nil {
 		return nil, sdkioerrors.Wrap(types.ErrQueryFailed, qErr.Error())

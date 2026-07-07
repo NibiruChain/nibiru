@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -337,7 +338,7 @@ func TestValidateWasmSudoMsgCalls(t *testing.T) {
 		calls       []keeper.WasmSudoMsgCall
 		wantValid   int
 		wantInvalid int
-		wantErr    string
+		wantErr     string
 	}{
 		{
 			name: "empty calls",
@@ -373,7 +374,7 @@ func TestValidateWasmSudoMsgCalls(t *testing.T) {
 				{ContractAddr: contractAddr, Msg: validMsg},
 				{ContractAddr: "not-an-address", Msg: validMsg},
 			},
-			wantValid: 1,
+			wantValid:   1,
 			wantInvalid: 1,
 		},
 		{
