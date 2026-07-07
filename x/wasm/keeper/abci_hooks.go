@@ -137,7 +137,7 @@ func (k Keeper) queryWasmSudoMsgCalls(
 	}
 
 	registryAddr, configured := k.wasmBlockHooksContractSource.GetWasmBlockHooksContract(ctx)
-	if !configured {
+	if !configured || registryAddr == nil {
 		return nil, false, nil
 	}
 

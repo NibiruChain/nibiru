@@ -32,6 +32,17 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.EventTypeWasmBlockHookSummary))
 	})
 
+	t.Run("invalid stored registry address is treated as unconfigured", func(t *testing.T) {
+		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, "not-a-contract-address")
+		ctx = ctx.WithEventManager(sdk.NewEventManager())
+
+		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
+
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.WasmBlockHookPlanFailedEventType("begin_block")))
+		require.Empty(t, testutil.FindAbciEventsOfType(events, wasmtypes.EventTypeWasmBlockHookSummary))
+	})
+
 	t.Run("empty configured calls", func(t *testing.T) {
 		wasmApp, ctx, sender, codeID := setupWasmBlockHooksTester(t)
 		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)

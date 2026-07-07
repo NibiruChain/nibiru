@@ -297,6 +297,16 @@ func (s *Suite) TestMsgServer_EditWasmBlockHooksContract() {
 			}
 			s.Require().NoError(err)
 			s.Require().Equal(tc.want, k.WasmBlockHooksContract.GetOr(ctx, ""))
+			eventValue, hasEventValue := eventAttributeValue(
+				ctx.EventManager().Events(),
+				sudo.EventTypeWasmBlockHooksContractUpdate,
+				sudo.AttributeKeyWasmBlockHooksContract,
+			)
+			s.Require().True(hasEventValue)
+			s.Require().Equal(
+				tc.want,
+				eventValue,
+			)
 
 			gotAddr, configured := k.GetWasmBlockHooksContract(ctx)
 			s.Require().Equal(tc.want != "", configured)
@@ -307,6 +317,30 @@ func (s *Suite) TestMsgServer_EditWasmBlockHooksContract() {
 			}
 		})
 	}
+}
+
+func (s *Suite) TestGetWasmBlockHooksContract_InvalidStoredAddress() {
+	_, k, ctx := setup()
+	k.WasmBlockHooksContract.Set(ctx, "not-a-contract-address")
+
+	gotAddr, configured := k.GetWasmBlockHooksContract(ctx)
+
+	s.Require().False(configured)
+	s.Require().Nil(gotAddr)
+}
+
+func eventAttributeValue(events sdk.Events, eventType, key string) (string, bool) {
+	for _, event := range events {
+		if event.Type != eventType {
+			continue
+		}
+		for _, attr := range event.Attributes {
+			if attr.Key == key {
+				return attr.Value, true
+			}
+		}
+	}
+	return "", false
 }
 
 func (s *Suite) TestSudo_FromPbSudoers() {

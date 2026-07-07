@@ -170,6 +170,10 @@ func (k Keeper) EditWasmBlockHooksContract(
 		return nil, err
 	}
 	k.WasmBlockHooksContract.Set(ctx, contractAddr)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		sudo.EventTypeWasmBlockHooksContractUpdate,
+		sdk.NewAttribute(sudo.AttributeKeyWasmBlockHooksContract, contractAddr),
+	))
 
 	msgResp = new(sudo.MsgEditSudoersResponse)
 	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{

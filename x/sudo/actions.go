@@ -12,6 +12,11 @@ const (
 	EditWasmBlockHooksContract RootAction = "edit_wasm_block_hooks_contract"
 )
 
+const (
+	EventTypeWasmBlockHooksContractUpdate = "wasm_block_hooks_contract_update"
+	AttributeKeyWasmBlockHooksContract    = "wasm_block_hooks_contract"
+)
+
 // RootActions set[string]: The set of all root actions.
 var RootActions = set.New[RootAction](
 	AddContracts,

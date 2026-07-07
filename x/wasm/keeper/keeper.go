@@ -104,10 +104,6 @@ type Keeper struct {
 	authority string
 }
 
-func (k Keeper) getUploadAccessConfig(ctx sdk.Context) types.AccessConfig {
-	return k.GetParams(ctx).CodeUploadAccess
-}
-
 func (k Keeper) getInstantiateAccessConfig(ctx sdk.Context) types.AccessType {
 	return k.GetParams(ctx).InstantiateDefaultPermission
 }

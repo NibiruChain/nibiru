@@ -32,7 +32,11 @@ func (k Keeper) GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool
 	if contract == "" {
 		return nil, false
 	}
-	return sdk.MustAccAddressFromBech32(contract), true
+	addr, err := sdk.AccAddressFromBech32(contract)
+	if err != nil {
+		return nil, false
+	}
+	return addr, true
 }
 
 func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {
