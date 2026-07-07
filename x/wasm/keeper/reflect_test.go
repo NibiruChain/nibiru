@@ -19,7 +19,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -49,7 +49,7 @@ func TestReflectContractSend(t *testing.T) {
 	require.Equal(t, uint64(1), reflectID)
 
 	// upload hackatom escrow code
-	escrowCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	escrowCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 	escrowID, _, err := keeper.Create(ctx, creator, escrowCode, nil)
 	require.NoError(t, err)

@@ -20,7 +20,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 

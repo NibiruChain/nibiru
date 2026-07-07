@@ -74,7 +74,7 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -625,7 +625,7 @@ type HackatomExampleInstance struct {
 	Deposit         sdk.Coins
 }
 
-// InstantiateHackatomExampleContract load and instantiate the "./testdata/hackatom.wasm" contract
+// InstantiateHackatomExampleContract load and instantiate the "../testdata/hackatom.wasm" contract
 func InstantiateHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) HackatomExampleInstance {
 	tb.Helper()
 
@@ -664,7 +664,7 @@ type ExampleInstance struct {
 	Deposit  sdk.Coins
 }
 
-// InstantiateReflectExampleContract load and instantiate the "./testdata/reflect.wasm" contract
+// InstantiateReflectExampleContract load and instantiate the "../testdata/reflect.wasm" contract
 func InstantiateReflectExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleInstance {
 	tb.Helper()
 
@@ -702,7 +702,7 @@ type IBCReflectExampleInstance struct {
 	ReflectCodeID uint64
 }
 
-// InstantiateIBCReflectContract load and instantiate the "./testdata/ibc_reflect.wasm" contract
+// InstantiateIBCReflectContract load and instantiate the "../testdata/ibc_reflect.wasm" contract
 func InstantiateIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) IBCReflectExampleInstance {
 	tb.Helper()
 

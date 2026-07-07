@@ -73,13 +73,13 @@ func BenchmarkCompilation(b *testing.B) {
 		wasmFile string
 	}{
 		"hackatom": {
-			wasmFile: "./testdata/hackatom.wasm",
+			wasmFile: "../testdata/hackatom.wasm",
 		},
 		"burner": {
-			wasmFile: "./testdata/burner.wasm",
+			wasmFile: "../testdata/burner.wasm",
 		},
 		"ibc_reflect": {
-			wasmFile: "./testdata/ibc_reflect.wasm",
+			wasmFile: "../testdata/ibc_reflect.wasm",
 		},
 	}
 

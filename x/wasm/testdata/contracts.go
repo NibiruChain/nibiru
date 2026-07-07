@@ -16,6 +16,8 @@ var (
 	reflectContract []byte
 	//go:embed reflect_1_1.wasm
 	migrateReflectContract []byte
+	//go:embed types_reflect.wasm
+	typesReflectContract []byte
 	//go:embed cyberpunk.wasm
 	cyberpunkContract []byte
 	//go:embed ibc_reflect.wasm
@@ -32,6 +34,10 @@ func ReflectContractWasm() []byte {
 
 func MigrateReflectContractWasm() []byte {
 	return migrateReflectContract
+}
+
+func TypesReflectContractWasm() []byte {
+	return typesReflectContract
 }
 
 func CyberpunkContractWasm() []byte {

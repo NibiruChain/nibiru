@@ -8,7 +8,7 @@ import (
 )
 
 func GetTestData() ([]byte, []byte, []byte, error) {
-	wasmCode, err := os.ReadFile("../keeper/testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	if err != nil {
 		return nil, nil, nil, err
 	}

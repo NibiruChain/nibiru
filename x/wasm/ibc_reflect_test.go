@@ -30,14 +30,14 @@ func TestIBCReflectContract(t *testing.T) {
 	coordinator.CommitBlock(chainA, chainB)
 
 	initMsg := []byte(`{}`)
-	codeID := chainA.StoreCodeFile("./keeper/testdata/ibc_reflect_send.wasm").CodeID
+	codeID := chainA.StoreCodeFile("./testdata/ibc_reflect_send.wasm").CodeID
 	sendContractAddr := chainA.InstantiateContract(codeID, initMsg)
 
-	reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect.wasm").CodeID
+	reflectID := chainB.StoreCodeFile("./testdata/reflect.wasm").CodeID
 	initMsg = ibcReflectInitMsg{
 		ReflectCodeID: reflectID,
 	}.getBytes(t)
-	codeID = chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID
+	codeID = chainB.StoreCodeFile("./testdata/ibc_reflect.wasm").CodeID
 
 	reflectContractAddr := chainB.InstantiateContract(codeID, initMsg)
 	var (

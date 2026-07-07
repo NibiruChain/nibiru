@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	_ "embed"
 	"encoding/json"
 	"testing"
 	"time"
@@ -17,14 +16,14 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtestdata "github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-//go:embed testdata/reflect.wasm
-var wasmContract []byte
-
-//go:embed testdata/hackatom.wasm
-var hackatomContract []byte
+var (
+	wasmContract     = wasmtestdata.ReflectContractWasm()
+	hackatomContract = wasmtestdata.HackatomContractWasm()
+)
 
 func TestStoreCode(t *testing.T) {
 	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()

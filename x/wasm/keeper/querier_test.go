@@ -279,7 +279,7 @@ func TestQueryContractsByCode(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
 
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)
@@ -537,7 +537,7 @@ func TestQueryContractHistory(t *testing.T) {
 }
 
 func TestQueryCodeList(t *testing.T) {
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -773,7 +773,7 @@ func TestQueryParams(t *testing.T) {
 }
 
 func TestQueryCodeInfo(t *testing.T) {
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -828,7 +828,7 @@ func TestQueryCodeInfo(t *testing.T) {
 }
 
 func TestQueryCodeInfoList(t *testing.T) {
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities)
@@ -899,7 +899,7 @@ func TestQueryContractsByCreatorList(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, deposit...)
 	anyAddr := keepers.Faucet.NewFundedRandomAccount(ctx, topUp...)
 
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, wasmCode, nil)

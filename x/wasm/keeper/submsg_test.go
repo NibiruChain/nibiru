@@ -17,7 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/testdata"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -123,7 +123,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
-	hackatomCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	hackatomCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 	hackatomID, _, err := keepers.ContractKeeper.Create(ctx, uploader, hackatomCode, nil)
 	require.NoError(t, err)

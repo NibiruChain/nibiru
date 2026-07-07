@@ -38,7 +38,7 @@ func TestGenesisExportImport(t *testing.T) {
 	wasmKeeper, srcCtx := setupKeeper(t)
 	contractKeeper := NewGovPermissionKeeper(wasmKeeper)
 
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	// store some test data
@@ -169,7 +169,7 @@ func TestGenesisExportImportWithPredictableAddress(t *testing.T) {
 }
 
 func TestGenesisInit(t *testing.T) {
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	myCodeInfo := types.CodeInfoFixture(types.WithSHA256CodeHash(wasmCode))
@@ -565,7 +565,7 @@ func TestImportContractWithCodeHistoryPreserved(t *testing.T) {
 }`
 	keeper, ctx := setupKeeper(t)
 
-	wasmCode, err := os.ReadFile("./testdata/hackatom.wasm")
+	wasmCode, err := os.ReadFile("../testdata/hackatom.wasm")
 	require.NoError(t, err)
 
 	wasmCodeHash, err := wasmvm.CreateChecksum(wasmCode)

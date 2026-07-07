@@ -179,9 +179,9 @@ func TestOnIBCPacketReceive(t *testing.T) {
 			myMockContractAddr := chainA.SeedNewContractInstance() // setups env but uses mock contract
 
 			// setup chain B contracts
-			reflectID := chainB.StoreCodeFile("./keeper/testdata/reflect.wasm").CodeID
+			reflectID := chainB.StoreCodeFile("./testdata/reflect.wasm").CodeID
 			initMsg := ibcReflectInitMsg{ReflectCodeID: reflectID}.getBytes(t)
-			codeID := chainB.StoreCodeFile("./keeper/testdata/ibc_reflect.wasm").CodeID
+			codeID := chainB.StoreCodeFile("./testdata/ibc_reflect.wasm").CodeID
 			ibcReflectContractAddr := chainB.InstantiateContract(codeID, initMsg)
 
 			// establish IBC channels

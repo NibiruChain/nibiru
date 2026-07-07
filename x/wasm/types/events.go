@@ -22,6 +22,7 @@ const (
 	EventTypeUnpinCode              = "unpin_code"
 	EventTypeSudo                   = "sudo"
 	EventTypeReply                  = "reply"
+	EventTypeWasmBlockHookFailure   = "wasm_block_hook_failure"
 	EventTypeGovContractResult      = "gov_contract_result"
 	EventTypeUpdateContractAdmin    = "update_contract_admin"
 	EventTypeUpdateContractLabel    = "update_contract_label"
@@ -67,4 +68,6 @@ const (
 	AttributeKeyAuthorizedAddresses = "authorized_addresses"
 	AttributeKeyAckSuccess          = "success"
 	AttributeKeyAckError            = "error"
+	AttributeKeyWasmBlockHook       = "hook"
+	AttributeKeyWasmBlockHookError  = "error"
 )
