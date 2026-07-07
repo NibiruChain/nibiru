@@ -17,12 +17,12 @@ var replacesThatMustMatchRoot = []string{
 
 func TestReplaceMatchesRoot(t *testing.T) {
 	rootMod := readGoMod(t, "../go.mod")
-	saiTradingMod := readGoMod(t, "../sai-trading/go.mod")
+	saiTradingMod := readGoMod(t, "../lib/sai-trading/go.mod")
 
 	for _, modulePath := range replacesThatMustMatchRoot {
 		t.Run(modulePath, func(t *testing.T) {
 			rootReplace := findReplace(t, rootMod, "../go.mod", modulePath)
-			saiTradingReplace := findReplace(t, saiTradingMod, "../sai-trading/go.mod", modulePath)
+			saiTradingReplace := findReplace(t, saiTradingMod, "../lib/sai-trading/go.mod", modulePath)
 
 			if rootReplace.New.Path != saiTradingReplace.New.Path ||
 				rootReplace.New.Version != saiTradingReplace.New.Version {

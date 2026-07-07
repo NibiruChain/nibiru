@@ -16,10 +16,14 @@ install:
 
 # Runs the E2E tests
 test *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
   npx bun test {{args}}
 
 # Runs tx receipt tests. Used for testnet quick check.
 test-basic:
+  #!/usr/bin/env bash
+  set -euo pipefail
   npx bun test -- tx_receipt.test.ts
 
 # Format
