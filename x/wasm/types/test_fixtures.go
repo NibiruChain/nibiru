@@ -19,7 +19,7 @@ func fixtureContractAddress() string {
 	return sdk.AccAddress(bytes.Repeat([]byte{2}, ContractAddrLen)).String()
 }
 
-var reflectWasmCode = wasmtestdata.TypesReflectContractWasm()
+var reflectWasmCode = wasmtestdata.TypesReflectContractWasm
 
 func GenesisFixture(mutators ...func(*GenesisState)) GenesisState {
 	const (

@@ -38,7 +38,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-var hackatomWasm = testdata.HackatomContractWasm()
+var hackatomWasm = testdata.HackatomContractWasm
 
 const AvailableCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 

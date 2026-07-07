@@ -528,25 +528,25 @@ type ExampleContract struct {
 func StoreHackatomExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.HackatomContractWasm)
 }
 
 func StoreBurnerExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.BurnerContractWasm)
 }
 
 func StoreIBCReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.IBCReflectContractWasm)
 }
 
 func StoreReflectContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers) ExampleContract {
 	tb.Helper()
 
-	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm())
+	return StoreExampleContractWasm(tb, ctx, keepers, testdata.ReflectContractWasm)
 }
 
 func StoreExampleContract(tb testing.TB, ctx sdk.Context, keepers TestKeepers, wasmFile string) ExampleContract {

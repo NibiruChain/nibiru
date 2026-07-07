@@ -11,10 +11,14 @@ import (
 )
 
 const (
-	wasmBlockHookMaxDispatches      = 32
-	wasmBlockHookMaxPayloadJSONSize = 16 * 1024
+	// WasmBlockHookMaxDispatches bounds the number of target sudo calls a
+	// registry can request for one block lifecycle hook.
+	WasmBlockHookMaxDispatches = 32
+	// WasmBlockHookMaxPayloadJSONSize bounds each registry-provided sudo payload.
+	WasmBlockHookMaxPayloadJSONSize = 16 * 1024
 )
 
+// wasmBlockHookKind identifies which block lifecycle hook is being dispatched.
 type wasmBlockHookKind string
 
 const (
@@ -23,47 +27,72 @@ const (
 )
 
 var (
+	// wasmBlockHookBeginBlockQuery is the registry smart query for begin-block
+	// dispatch plans.
 	wasmBlockHookBeginBlockQuery = []byte(`{"begin_block_plan":{}}`)
-	wasmBlockHookEndBlockQuery   = []byte(`{"end_block_plan":{}}`)
+	// wasmBlockHookEndBlockQuery is the registry smart query for end-block
+	// dispatch plans.
+	wasmBlockHookEndBlockQuery = []byte(`{"end_block_plan":{}}`)
 )
 
-type wasmBlockHookDispatch struct {
+// WasmBlockHookDispatch is one registry-selected target sudo call.
+type WasmBlockHookDispatch struct {
 	ContractAddr string          `json:"contract_addr"`
 	Msg          json.RawMessage `json:"msg"`
 }
 
-type validatedWasmBlockHookDispatch struct {
+// ValidatedWasmBlockHookDispatch is a dispatch item after host-side address and
+// JSON payload validation.
+type ValidatedWasmBlockHookDispatch struct {
 	ContractAddr sdk.AccAddress
 	Msg          json.RawMessage
 }
 
 // BeginBlockWasmHooks queries the configured registry contract for a begin-block
-// dispatch plan. Target sudo execution is intentionally left to a later slice.
+// dispatch plan and executes each target sudo call in an isolated cache context.
 func (k Keeper) BeginBlockWasmHooks(ctx sdk.Context) {
 	k.runWasmBlockHookPlanner(ctx, wasmBlockHookBeginBlock)
 }
 
 // EndBlockWasmHooks queries the configured registry contract for an end-block
-// dispatch plan. Target sudo execution is intentionally left to a later slice.
+// dispatch plan and executes each target sudo call in an isolated cache context.
 func (k Keeper) EndBlockWasmHooks(ctx sdk.Context) {
 	k.runWasmBlockHookPlanner(ctx, wasmBlockHookEndBlock)
 }
 
+// runWasmBlockHookPlanner loads a registry plan for one hook and executes each
+// validated target call behind an isolated cache context. Registry or plan
+// errors skip the whole hook, while target errors discard only that target's
+// writes/events and allow later dispatches to run.
 func (k Keeper) runWasmBlockHookPlanner(ctx sdk.Context, hookKind wasmBlockHookKind) {
-	_, err := k.queryWasmBlockHookPlan(ctx, hookKind)
+	dispatches, err := k.queryWasmBlockHookPlan(ctx, hookKind)
 	if err != nil {
 		emitWasmBlockHookFailureEvent(ctx, hookKind, err)
+		return
 	}
 
-	// TODO: Instantiate the fixture contract in nibi-chain tests once its Wasm
-	// artifact is built, then add target sudo dispatch with per-target cache
-	// rollback in the next implementation slice.
+	for _, dispatch := range dispatches {
+		cacheCtx, writeCache := ctx.CacheContext()
+		cacheCtx = cacheCtx.WithEventManager(sdk.NewEventManager())
+
+		_, err := k.Sudo(cacheCtx, dispatch.ContractAddr, dispatch.Msg)
+		if err != nil {
+			emitWasmBlockHookFailureEvent(ctx, hookKind, err, dispatch.ContractAddr)
+			continue
+		}
+
+		writeCache()
+		ctx.EventManager().EmitEvents(cacheCtx.EventManager().Events())
+	}
 }
 
+// queryWasmBlockHookPlan asks the configured registry contract for the current
+// hook's dispatch plan. An unset registry is treated as feature-off and returns
+// no dispatches.
 func (k Keeper) queryWasmBlockHookPlan(
 	ctx sdk.Context,
 	hookKind wasmBlockHookKind,
-) ([]validatedWasmBlockHookDispatch, error) {
+) ([]ValidatedWasmBlockHookDispatch, error) {
 	if k.wasmBlockHooksContractSource == nil {
 		return nil, nil
 	}
@@ -83,14 +112,16 @@ func (k Keeper) queryWasmBlockHookPlan(
 		return nil, fmt.Errorf("query wasm block hook registry: %w", err)
 	}
 
-	var dispatches []wasmBlockHookDispatch
+	var dispatches []WasmBlockHookDispatch
 	if err := json.Unmarshal(queryResp, &dispatches); err != nil {
 		return nil, fmt.Errorf("decode wasm block hook registry response: %w", err)
 	}
 
-	return validateWasmBlockHookDispatches(dispatches)
+	return ValidateWasmBlockHookDispatches(dispatches)
 }
 
+// wasmBlockHookRegistryQueryMsg returns the registry smart query for the
+// requested block lifecycle hook.
 func wasmBlockHookRegistryQueryMsg(hookKind wasmBlockHookKind) ([]byte, error) {
 	switch hookKind {
 	case wasmBlockHookBeginBlock:
@@ -102,17 +133,20 @@ func wasmBlockHookRegistryQueryMsg(hookKind wasmBlockHookKind) ([]byte, error) {
 	}
 }
 
-func validateWasmBlockHookDispatches(
-	dispatches []wasmBlockHookDispatch,
-) ([]validatedWasmBlockHookDispatch, error) {
-	if len(dispatches) > wasmBlockHookMaxDispatches {
+// ValidateWasmBlockHookDispatches enforces the fixed v1 host guardrails before
+// any target sudo execution begins. Any invalid item rejects the whole plan for
+// the current block hook.
+func ValidateWasmBlockHookDispatches(
+	dispatches []WasmBlockHookDispatch,
+) ([]ValidatedWasmBlockHookDispatch, error) {
+	if len(dispatches) > WasmBlockHookMaxDispatches {
 		return nil, fmt.Errorf(
 			"too many wasm block hook dispatches: got %d, max %d",
-			len(dispatches), wasmBlockHookMaxDispatches,
+			len(dispatches), WasmBlockHookMaxDispatches,
 		)
 	}
 
-	validated := make([]validatedWasmBlockHookDispatch, 0, len(dispatches))
+	validated := make([]ValidatedWasmBlockHookDispatch, 0, len(dispatches))
 	for idx, dispatch := range dispatches {
 		contractAddr, err := sdk.AccAddressFromBech32(dispatch.ContractAddr)
 		if err != nil {
@@ -129,10 +163,10 @@ func validateWasmBlockHookDispatches(
 		if len(msg) == 0 {
 			return nil, fmt.Errorf("dispatch %d msg cannot be empty", idx)
 		}
-		if len(msg) > wasmBlockHookMaxPayloadJSONSize {
+		if len(msg) > WasmBlockHookMaxPayloadJSONSize {
 			return nil, fmt.Errorf(
 				"dispatch %d msg too large: got %d bytes, max %d",
-				idx, len(msg), wasmBlockHookMaxPayloadJSONSize,
+				idx, len(msg), WasmBlockHookMaxPayloadJSONSize,
 			)
 		}
 		if !json.Valid(msg) {
@@ -142,7 +176,7 @@ func validateWasmBlockHookDispatches(
 			return nil, fmt.Errorf("dispatch %d msg must be a JSON object", idx)
 		}
 
-		validated = append(validated, validatedWasmBlockHookDispatch{
+		validated = append(validated, ValidatedWasmBlockHookDispatch{
 			ContractAddr: contractAddr,
 			Msg:          append(json.RawMessage(nil), msg...),
 		})
@@ -151,11 +185,26 @@ func validateWasmBlockHookDispatches(
 	return validated, nil
 }
 
-func emitWasmBlockHookFailureEvent(ctx sdk.Context, hookKind wasmBlockHookKind, err error) {
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		wasmtypes.EventTypeWasmBlockHookFailure,
+// emitWasmBlockHookFailureEvent records registry, plan, or target execution
+// failure without aborting block processing. Target failures include the target
+// contract address when one is available.
+func emitWasmBlockHookFailureEvent(
+	ctx sdk.Context,
+	hookKind wasmBlockHookKind,
+	err error,
+	contractAddr ...sdk.AccAddress,
+) {
+	attrs := []sdk.Attribute{
 		sdk.NewAttribute(sdk.AttributeKeyModule, wasmtypes.ModuleName),
 		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHook, string(hookKind)),
 		sdk.NewAttribute(wasmtypes.AttributeKeyWasmBlockHookError, err.Error()),
+	}
+	if len(contractAddr) > 0 {
+		attrs = append(attrs, sdk.NewAttribute(wasmtypes.AttributeKeyContractAddr, contractAddr[0].String()))
+	}
+
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		wasmtypes.EventTypeWasmBlockHookFailure,
+		attrs...,
 	))
 }

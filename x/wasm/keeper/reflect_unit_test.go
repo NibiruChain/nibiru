@@ -44,7 +44,7 @@ func TestReflectContractSend(t *testing.T) {
 	_, bob := keyPubAddr()
 
 	// upload reflect code
-	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), reflectID)
 
@@ -124,7 +124,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	_, fred := keyPubAddr()
 
 	// upload code
-	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -211,7 +211,7 @@ func TestRustPanicIsHandled(t *testing.T) {
 	creator := keepers.Faucet.NewFundedRandomAccount(ctx, sdk.NewCoins(sdk.NewInt64Coin("denom", 100000))...)
 
 	// upload code
-	codeID, _, err := keeper.Create(ctx, creator, testdata.CyberpunkContractWasm(), nil)
+	codeID, _, err := keeper.Create(ctx, creator, testdata.CyberpunkContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 

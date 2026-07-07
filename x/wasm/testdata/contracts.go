@@ -13,48 +13,20 @@ const (
 
 var (
 	//go:embed reflect.wasm
-	reflectContract []byte
+	ReflectContractWasm []byte
 	//go:embed reflect_1_1.wasm
-	migrateReflectContract []byte
+	MigrateReflectContractWasm []byte
 	//go:embed types_reflect.wasm
-	typesReflectContract []byte
+	TypesReflectContractWasm []byte
 	//go:embed cyberpunk.wasm
-	cyberpunkContract []byte
+	CyberpunkContractWasm []byte
 	//go:embed ibc_reflect.wasm
-	ibcReflectContract []byte
+	IBCReflectContractWasm []byte
 	//go:embed burner.wasm
-	burnerContract []byte
+	BurnerContractWasm []byte
 	//go:embed hackatom.wasm
-	hackatomContract []byte
+	HackatomContractWasm []byte
 )
-
-func ReflectContractWasm() []byte {
-	return reflectContract
-}
-
-func MigrateReflectContractWasm() []byte {
-	return migrateReflectContract
-}
-
-func TypesReflectContractWasm() []byte {
-	return typesReflectContract
-}
-
-func CyberpunkContractWasm() []byte {
-	return cyberpunkContract
-}
-
-func IBCReflectContractWasm() []byte {
-	return ibcReflectContract
-}
-
-func BurnerContractWasm() []byte {
-	return burnerContract
-}
-
-func HackatomContractWasm() []byte {
-	return hackatomContract
-}
 
 // ReflectHandleMsg is used to encode handle messages
 type ReflectHandleMsg struct {

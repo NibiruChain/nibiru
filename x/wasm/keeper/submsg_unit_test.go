@@ -37,7 +37,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	_, fred := keyPubAddr()
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), codeID)
 
@@ -119,7 +119,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	uploader := keepers.Faucet.NewFundedRandomAccount(ctx, contractStart.Add(contractStart...)...)
 
 	// upload code
-	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm(), nil)
+	reflectID, _, err := keepers.ContractKeeper.Create(ctx, uploader, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 
 	// create hackatom contract for testing (for infinite loop)
@@ -382,7 +382,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	_, fred := keyPubAddr()
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
@@ -448,7 +448,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	_, fred := keyPubAddr()
 
 	// upload code
-	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm(), nil)
+	codeID, _, err := keepers.ContractKeeper.Create(ctx, creator, testdata.ReflectContractWasm, nil)
 	require.NoError(t, err)
 
 	// creator instantiates a contract and gives it tokens
