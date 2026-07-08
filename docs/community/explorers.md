@@ -24,22 +24,18 @@ Explore blockchain activity on Nibiru with the following block explorers. **EVM 
 
 | Explorer              | Network   | Link |
 |-----------------------|-----------|------|
-| **NibiScan** *(Official)* | Mainnet   | [🔗 Nibiru EVM Explorer](https://nibiscan.io/) |
-| **NibiScan** *(Official)* | Testnet-2 | [🔗 Testnet-2 EVM Explorer](https://testnet.nibiscan.io/) |
-| **Nibiru Foundation** | Testnet-1 | [🔗 Testnet-1 EVM Explorer](https://evm-explorer.nibiru.fi/) |
+| **NibiScan** *(Official)* | Nibiru | [🔗 Nibiru EVM Explorer](https://nibiscan.io/) |
+| **NibiScan** *(Official)* | Nibiru Testnet | [🔗 Nibiru Testnet EVM Explorer](https://testnet.nibiscan.io/) |
 
 ### **Interchain Block Explorers** (For Cosmos-SDK Transactions)  
 
 | Explorer              | Network   | Link |
 |-----------------------|-----------|------|
-| **Nibiru Foundation** | Mainnet   | [🔗 Explorer](https://explorer.nibiru.fi/cataclysm-1) |
-| **Ping.pub**          | Mainnet   | [🔗 Explorer](https://ping.pub/nibiru) |
-| **Nodes Guru**        | Mainnet   | [🔗 Explorer](https://nibiru.explorers.guru/) |
-| **KJ Nodes**          | Mainnet   | [🔗 Explorer](https://explorer.kjnodes.com/nibiru) |
-| **Nibiru Foundation** | Testnet-1 | [🔗 Explorer](https://explorer.nibiru.fi/nibiru-testnet-1) |
-| **Ping.pub**          | Testnet-1 | [🔗 Explorer](https://testnet.ping.pub/nibiru) |
-| **Nibiru Foundation** | Testnet-2 | [🔗 Explorer](https://explorer.nibiru.fi/nibiru-testnet-2) |
-| **Nodes Guru**        | Testnet-2 | [🔗 Explorer](https://testnet.nibiru.explorers.guru/) |
+| **Nibiru Foundation** | Nibiru | [🔗 Explorer](https://explorer.nibiru.fi/cataclysm-1) |
+| **Ping.pub**          | Nibiru | [🔗 Explorer](https://ping.pub/nibiru) |
+| **Nodes Guru**        | Nibiru | [🔗 Explorer](https://nibiru.explorers.guru/) |
+| **Nibiru Foundation** | Nibiru Testnet | [🔗 Explorer](https://explorer.nibiru.fi/nibiru-testnet-2) |
+| **Nodes Guru**        | Nibiru Testnet | [🔗 Explorer](https://testnet.nibiru.explorers.guru/) |
 
 ### Which Explorer Should I Use?  
 
