@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
 COPY ["lib/cosmos-sdk/", "./lib/cosmos-sdk/"]
+COPY ["lib/ibc-go-08-wasm/", "./lib/ibc-go-08-wasm/"]
 COPY ["lib/ibc-go/", "./lib/ibc-go/"]
 COPY ["lib/wasmvm-ffi/", "./lib/wasmvm-ffi/"]
 RUN go mod download
