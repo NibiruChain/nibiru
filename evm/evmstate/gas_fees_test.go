@@ -16,7 +16,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 // TestVerifyFee asserts that the result of VerifyFee is the effective fee

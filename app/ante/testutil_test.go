@@ -22,7 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	nibiruante "github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 func TestAnte(t *testing.T) {

@@ -19,7 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	fixture "github.com/NibiruChain/nibiru/v2/x/tokenfactory/testdata"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"

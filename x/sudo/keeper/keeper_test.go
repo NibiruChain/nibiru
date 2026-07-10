@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 

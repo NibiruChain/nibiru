@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 // BankKeeper defines the expected interface needed to retrieve account balances.

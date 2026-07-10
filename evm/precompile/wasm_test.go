@@ -22,7 +22,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/evm/precompile/test"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 

@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	epochs1 "github.com/NibiruChain/nibiru/v2/x/epochs"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/epochsmod"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 func TestEpochInfoChangesBeginBlockerAndInitGenesis(t *testing.T) {

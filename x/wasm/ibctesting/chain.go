@@ -47,7 +47,7 @@ import (
 
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 )
 

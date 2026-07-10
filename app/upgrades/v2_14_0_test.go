@@ -20,7 +20,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	nutiltestutil "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 

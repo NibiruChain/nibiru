@@ -34,7 +34,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
