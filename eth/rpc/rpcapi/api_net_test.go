@@ -2,7 +2,7 @@ package rpcapi_test
 
 import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 )
 
 func (s *NodeSuite) TestNetNamespace() {
