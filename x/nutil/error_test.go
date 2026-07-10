@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func newErrors(strs ...string) []error {
@@ -88,14 +88,14 @@ func TestCombineErrorsGeneric(t *testing.T) {
 		{name: "type=[]string | mixed", in: []string{"", "abc", ""}, out: errors.New(": abc: ")},
 
 		// cases: fmt.Stringer
-		{name: "type=fmt.Stringer |", in: asset.NewPair(denoms.USDC, denoms.NUSD), out: errors.New("uusdc:unusd")},
+		{name: "type=fmt.Stringer |", in: oracletypes.NewPair(denoms.USDC, denoms.NUSD), out: errors.New("uusdc:unusd")},
 
 		// cases: []fmt.Stringer
 		{
 			name: "type=[]fmt.Stringer | happy",
 			in: []fmt.Stringer{
-				asset.NewPair(denoms.BTC, denoms.NUSD),
-				asset.NewPair(denoms.ETH, denoms.NUSD),
+				oracletypes.NewPair(denoms.BTC, denoms.NUSD),
+				oracletypes.NewPair(denoms.ETH, denoms.NUSD),
 			},
 			out: errors.New("ubtc:unusd: ueth:unusd"),
 		},

@@ -24,7 +24,7 @@ message GenesisState {
       aggregate_exchange_rate_votes = 6 [ (gogoproto.nullable) = false ];
   repeated string pairs = 7 [
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair",
+        "Pair",
     (gogoproto.nullable) = false
   ];
   repeated nibiru.oracle.v1.Rewards rewards = 8

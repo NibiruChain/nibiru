@@ -4,8 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 func (s *TestSuite) TestEventsUtils() {

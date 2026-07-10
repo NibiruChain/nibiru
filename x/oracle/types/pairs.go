@@ -1,4 +1,4 @@
-package asset
+package types
 
 import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"

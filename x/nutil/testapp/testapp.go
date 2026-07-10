@@ -30,9 +30,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
@@ -43,7 +43,7 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	ctx := NewContext(app)
 
 	// Set defaults for certain modules.
-	app.OracleKeeper.SetPrice(ctx, asset.NewPair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, types.NewPair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
 	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdkmath.LegacyNewDec(20000))
 
 	return app, ctx

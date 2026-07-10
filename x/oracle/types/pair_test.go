@@ -1,4 +1,4 @@
-package asset_test
+package types_test
 
 import (
 	"fmt"
@@ -8,13 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func TestTryNewPair(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name     string
 		tokenStr string
@@ -23,17 +21,17 @@ func TestTryNewPair(t *testing.T) {
 		{
 			"only one token",
 			denoms.NIBI,
-			asset.ErrInvalidTokenPair,
+			types.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
 			fmt.Sprintf("%s:%s:%s", denoms.NIBI, denoms.NUSD, denoms.USDC),
-			asset.ErrInvalidTokenPair,
+			types.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
 			fmt.Sprintf("%s,%s", denoms.NIBI, denoms.NUSD),
-			asset.ErrInvalidTokenPair,
+			types.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
@@ -59,7 +57,7 @@ func TestTryNewPair(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := asset.TryNewPair(tc.tokenStr)
+			_, err := types.TryNewPair(tc.tokenStr)
 			if tc.err != nil {
 				require.ErrorContains(t, err, tc.err.Error())
 			} else {
@@ -70,17 +68,17 @@ func TestTryNewPair(t *testing.T) {
 }
 
 func TestGetDenoms(t *testing.T) {
-	pair := asset.MustNewPair("uatom:unibi")
+	pair := types.MustNewPair("uatom:unibi")
 
 	require.Equal(t, "uatom", pair.BaseDenom())
 	require.Equal(t, "unibi", pair.QuoteDenom())
 }
 
 func TestEquals(t *testing.T) {
-	pair := asset.MustNewPair("abc:xyz")
-	matchingOther := asset.MustNewPair("abc:xyz")
-	mismatchToken1 := asset.MustNewPair("abc:abc")
-	inversePair := asset.MustNewPair("xyz:abc")
+	pair := types.MustNewPair("abc:xyz")
+	matchingOther := types.MustNewPair("abc:xyz")
+	mismatchToken1 := types.MustNewPair("abc:abc")
+	inversePair := types.MustNewPair("xyz:abc")
 
 	require.True(t, pair.Equal(matchingOther))
 	require.False(t, pair.Equal(inversePair))
@@ -89,16 +87,16 @@ func TestEquals(t *testing.T) {
 
 func TestMustNewAssetPair(t *testing.T) {
 	require.Panics(t, func() {
-		asset.MustNewPair("aaa:bbb:ccc")
+		types.MustNewPair("aaa:bbb:ccc")
 	})
 
 	require.NotPanics(t, func() {
-		asset.MustNewPair("aaa:bbb")
+		types.MustNewPair("aaa:bbb")
 	})
 }
 
 func TestInverse(t *testing.T) {
-	pair := asset.MustNewPair("abc:xyz")
+	pair := types.MustNewPair("abc:xyz")
 	inverse := pair.Inverse()
 	require.Equal(t, "xyz", inverse.BaseDenom())
 	require.Equal(t, "abc", inverse.QuoteDenom())
@@ -109,41 +107,36 @@ func TestMarshalJSON(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		input     asset.Pair
+		input     types.Pair
 		strOutput string
 	}{
-		{name: "happy-0", input: asset.Pair("abc:xyz"), strOutput: "\"abc:xyz\""},
-		{name: "happy-1", input: asset.Pair("abc:xyz:foo"), strOutput: "\"abc:xyz:foo\""},
-		{name: "happy-2", input: asset.Pair("abc"), strOutput: "\"abc\""},
-		{name: "empty", input: asset.Pair(""), strOutput: "\"\""},
+		{name: "happy-0", input: types.Pair("abc:xyz"), strOutput: "\"abc:xyz\""},
+		{name: "happy-1", input: types.Pair("abc:xyz:foo"), strOutput: "\"abc:xyz:foo\""},
+		{name: "happy-2", input: types.Pair("abc"), strOutput: "\"abc\""},
+		{name: "empty", input: types.Pair(""), strOutput: "\"\""},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// MarshalJSON with codec.LegacyAmino
 			jsonBz, err := cdc.Amino.MarshalJSON(tc.input)
 			require.NoError(t, err)
 			require.Equal(t, tc.strOutput, string(jsonBz))
 
-			// MarshalJSON on custom type
 			jsonBzCustom, err := tc.input.MarshalJSON()
 			require.NoError(t, err)
 			require.Equal(t, jsonBzCustom, jsonBz)
 
-			// UnmarshalJSON with codec.LegacyAmino
-			newPair := new(asset.Pair)
+			newPair := new(types.Pair)
 			require.NoError(t, cdc.Amino.UnmarshalJSON(jsonBz, newPair))
 			require.Equal(t, tc.input, *newPair)
 
-			// UnmarshalJSON on custom type
-			newNewPair := new(asset.Pair)
+			newNewPair := new(types.Pair)
 			*newNewPair = tc.input
 			require.NoError(t, newNewPair.UnmarshalJSON(jsonBz))
 
-			// Marshal and Unmarshal (to bytes) test
 			bz, err := tc.input.Marshal()
 			require.NoError(t, err)
-			newNewNewPair := new(asset.Pair)
+			newNewNewPair := new(types.Pair)
 			require.NoError(t, newNewNewPair.Unmarshal(bz))
 			require.Equal(t, tc.input, *newNewNewPair)
 		})
@@ -170,8 +163,8 @@ func TestPairsUtils(t *testing.T) {
 				panicTestFn = require.NotPanics
 			}
 			panicTestFn(t, func() {
-				pairs := asset.MustNewPairs(tc.pairStrs...)
-				newPairStrs := asset.PairsToStrings(pairs)
+				pairs := types.MustNewPairs(tc.pairStrs...)
+				newPairStrs := types.PairsToStrings(pairs)
 				require.Equal(t, tc.pairStrs, newPairStrs)
 			})
 		})

@@ -5,7 +5,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 func stringIsLess(a, b string) bool {
@@ -32,23 +32,23 @@ func (sorter stringSorter) Less(a, b string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// SortedMap[asset.Pair, V]
+// SortedMap[types.Pair, V]
 // ---------------------------------------------------------------------------
 
 func SortedMap_Pair[V any](
-	data map[asset.Pair]V,
-) SortedMap[asset.Pair, V] {
-	omap := SortedMap[asset.Pair, V]{}
+	data map[types.Pair]V,
+) SortedMap[types.Pair, V] {
+	omap := SortedMap[types.Pair, V]{}
 	return *omap.BuildFrom(data, pairSorter{})
 }
 
-// pairSorter is a Sorter implementation for keys of type asset.Pair. It uses
+// pairSorter is a Sorter implementation for keys of type types.Pair. It uses
 // the built-in string comparison to determine order.
 type pairSorter struct{}
 
-var _ Sorter[asset.Pair] = (*pairSorter)(nil)
+var _ Sorter[types.Pair] = (*pairSorter)(nil)
 
-func (sorter pairSorter) Less(a, b asset.Pair) bool {
+func (sorter pairSorter) Less(a, b types.Pair) bool {
 	return stringIsLess(a.String(), b.String())
 }
 

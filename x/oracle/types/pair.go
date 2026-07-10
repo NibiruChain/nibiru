@@ -1,69 +1,58 @@
-package asset
+package types
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 )
 
-// paired against USD
-var ErrInvalidTokenPair = sdkioerrors.Register("asset", 1, "invalid token pair")
-
 type Pair string
 
 func NewPair(base string, quote string) Pair {
-	// validate as denom
 	ap := fmt.Sprintf("%s%s%s", base, ":", quote)
 	return Pair(ap)
 }
 
-// TryNewPair New returns a new asset pair instance if the pair is valid.
+// TryNewPair returns a new asset pair instance if the pair is valid.
 // The form, "token0:token1", is expected for 'pair'.
-// Use this function to return an error instead of panicking.
 func TryNewPair(pair string) (Pair, error) {
 	split := strings.Split(pair, ":")
 	splitLen := len(split)
 	if splitLen != 2 {
 		if splitLen == 1 {
-			return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
+			return "", ErrInvalidTokenPair.Wrapf(
 				"pair separator missing for pair name, %v", pair)
-		} else {
-			return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
-				"pair name %v must have exactly two assets, not %v", pair, splitLen)
 		}
+		return "", ErrInvalidTokenPair.Wrapf(
+			"pair name %v must have exactly two assets, not %v", pair, splitLen)
 	}
 
 	if split[0] == "" || split[1] == "" {
-		return "", sdkioerrors.Wrapf(ErrInvalidTokenPair,
+		return "", ErrInvalidTokenPair.Wrapf(
 			"empty token identifiers are not allowed. token0: %v, token1: %v.",
 			split[0], split[1])
 	}
 
-	// validate as denom
-	Pair := NewPair(split[0], split[1])
-	return Pair, Pair.Validate()
+	p := NewPair(split[0], split[1])
+	return p, p.Validate()
 }
 
 // MustNewPair returns a new asset pair. It will panic if 'pair' is invalid.
-// The form, "token0:token1", is expected for 'pair'.
 func MustNewPair(pair string) Pair {
-	Pair, err := TryNewPair(pair)
+	p, err := TryNewPair(pair)
 	if err != nil {
 		panic(err)
 	}
-	return Pair
+	return p
 }
 
-/*
-String returns the string representation of the asset pair.
-
-Note that this differs from the output of the proto-generated 'String' method.
-*/
+// String returns the string representation of the asset pair.
+//
+// Note that this differs from the output of the proto-generated 'String' method.
 func (pair Pair) String() string {
 	return string(pair)
 }

@@ -20,8 +20,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/evm/precompile"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
 func (s *SuiteFunToken) TestCreateFunTokenFromERC20() {

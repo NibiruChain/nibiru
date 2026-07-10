@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 

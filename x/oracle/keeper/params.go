@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -47,7 +46,7 @@ func (k Keeper) RewardBand(ctx sdk.Context) (res sdkmath.LegacyDec) {
 }
 
 // Whitelist returns the pair list that can be activated
-func (k Keeper) Whitelist(ctx sdk.Context) (res []asset.Pair) {
+func (k Keeper) Whitelist(ctx sdk.Context) (res []types.Pair) {
 	params, _ := k.ModuleParams.Get(ctx)
 	return params.Whitelist
 }

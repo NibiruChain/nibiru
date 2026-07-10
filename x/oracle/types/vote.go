@@ -6,7 +6,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +36,7 @@ func NewAggregateExchangeRateVote(exchangeRateTuples ExchangeRateTuples, voter s
 }
 
 // NewExchangeRateTuple creates a ExchangeRateTuple instance
-func NewExchangeRateTuple(pair asset.Pair, exchangeRate sdkmath.LegacyDec) ExchangeRateTuple {
+func NewExchangeRateTuple(pair Pair, exchangeRate sdkmath.LegacyDec) ExchangeRateTuple {
 	return ExchangeRateTuple{
 		pair,
 		exchangeRate,
@@ -78,7 +77,7 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid ExchangeRateTuple format")
 	}
 
-	pair, err := asset.TryNewPair(split[0])
+	pair, err := TryNewPair(split[0])
 	if err != nil {
 		return ExchangeRateTuple{}, fmt.Errorf("invalid pair definition %s: %w", split[0], err)
 	}
@@ -97,8 +96,8 @@ func NewExchangeRateTupleFromString(s string) (ExchangeRateTuple, error) {
 // ExchangeRateTuples - array of ExchangeRateTuple
 type ExchangeRateTuples []ExchangeRateTuple
 
-func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[asset.Pair]sdkmath.LegacyDec) {
-	exchangeRateMap = make(map[asset.Pair]sdkmath.LegacyDec)
+func (tuples ExchangeRateTuples) ToMap() (exchangeRateMap map[Pair]sdkmath.LegacyDec) {
+	exchangeRateMap = make(map[Pair]sdkmath.LegacyDec)
 	for _, tuple := range tuples {
 		exchangeRateMap[tuple.Pair] = tuple.ExchangeRate
 	}
@@ -110,7 +109,7 @@ func NewExchangeRateTuplesFromString(s string) (ExchangeRateTuples, error) {
 
 	tuples := make(ExchangeRateTuples, len(stringTuples))
 
-	duplicates := make(set.Set[asset.Pair], len(stringTuples))
+	duplicates := make(set.Set[Pair], len(stringTuples))
 
 	for i, stringTuple := range stringTuples {
 		exchangeRate, err := NewExchangeRateTupleFromString(stringTuple)

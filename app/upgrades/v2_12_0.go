@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/collections"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 // - Deprecate the x/oracle module and wipe  its state.
@@ -21,20 +21,20 @@ func runUpgrade2_12_0(nibiru *keepers.PublicKeepers, ctx sdk.Context) error {
 		return fmt.Errorf("get oracle params: %w", err)
 	}
 
-	params.Whitelist = []asset.Pair{}
+	params.Whitelist = []types.Pair{}
 	nibiru.OracleKeeper.ModuleParams.Set(ctx, params)
 
-	for _, pair := range nibiru.OracleKeeper.WhitelistedPairs.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
+	for _, pair := range nibiru.OracleKeeper.WhitelistedPairs.Iterate(ctx, collections.Range[types.Pair]{}).Keys() {
 		nibiru.OracleKeeper.WhitelistedPairs.Delete(ctx, pair)
 	}
 
-	for _, pair := range nibiru.OracleKeeper.ExchangeRateMap.Iterate(ctx, collections.Range[asset.Pair]{}).Keys() {
+	for _, pair := range nibiru.OracleKeeper.ExchangeRateMap.Iterate(ctx, collections.Range[types.Pair]{}).Keys() {
 		_ = nibiru.OracleKeeper.ExchangeRateMap.Delete(ctx, pair)
 	}
 
 	for _, key := range nibiru.OracleKeeper.PriceSnapshots.Iterate(
 		ctx,
-		collections.PairRange[asset.Pair, time.Time]{},
+		collections.PairRange[types.Pair, time.Time]{},
 	).Keys() {
 		_ = nibiru.OracleKeeper.PriceSnapshots.Delete(ctx, key)
 	}

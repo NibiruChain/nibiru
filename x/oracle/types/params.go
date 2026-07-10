@@ -5,8 +5,6 @@ import (
 	time "time"
 
 	sdkmath "cosmossdk.io/math"
-
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 )
 
 // Default parameter values
@@ -25,13 +23,13 @@ const (
 var (
 	DefaultVoteThreshold = sdkmath.LegacyOneDec().Quo(sdkmath.LegacyNewDec(3)) // 33.33%
 	DefaultRewardBand    = sdkmath.LegacyNewDecWithPrec(2, 2)                  // 2% (-1, 1)
-	DefaultWhitelist     = []asset.Pair{
+	DefaultWhitelist     = []Pair{
 		// paired against the US fiat dollar
-		asset.PAIR_BTC,
-		asset.PAIR_ETH,
-		asset.PAIR_ATOM,
-		asset.PAIR_USDC,
-		asset.PAIR_USDT,
+		PAIR_BTC,
+		PAIR_ETH,
+		PAIR_ATOM,
+		PAIR_USDC,
+		PAIR_USDT,
 	}
 	DefaultSlashFraction      = sdkmath.LegacyNewDecWithPrec(5, 3)  // 0.5%
 	DefaultMinValidPerWindow  = sdkmath.LegacyNewDecWithPrec(69, 2) // 69%
