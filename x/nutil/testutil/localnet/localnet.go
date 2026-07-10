@@ -372,8 +372,11 @@ func setTxFlag(args []string, flagName string, flagValue string) []string {
 
 func resetCmdContexts(cmd *cobra.Command) {
 	// Clear stale contexts so subcommands inherit the real client context that
-	// clitestutil.ExecTestCLICmd sets on the root command before execution.
-	cmd.SetContext(nil) //nolint:staticcheck // Cobra treats nil as "inherit parent context"; context.TODO would block inheritance.
+	// [clitestutil.ExecTestCLICmd] sets on the root command before execution.
+	//
+	// Cobra treats nil as "inherit parent context". Using [context.TODO] here
+	// would block inheritance.
+	cmd.SetContext(nil) //nolint:staticcheck
 	for _, child := range cmd.Commands() {
 		resetCmdContexts(child)
 	}
