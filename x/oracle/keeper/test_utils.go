@@ -6,9 +6,9 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/bank"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
@@ -113,7 +113,7 @@ var (
 	}
 
 	InitTokens = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction)
-	InitCoins  = sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens))
+	InitCoins  = sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, InitTokens))
 
 	OracleDecPrecision = 8
 )
@@ -193,7 +193,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	totalSupply := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, InitTokens.MulRaw(int64(len(Addrs)*10))))
 	bankKeeper.MintCoins(ctx, faucetAccountName, totalSupply)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
@@ -204,7 +204,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	stakingParams := stakingtypes.DefaultParams()
-	stakingParams.BondDenom = denoms.NIBI
+	stakingParams.BondDenom = appconst.DENOM_UNIBI
 	stakingKeeper.SetParams(ctx, stakingParams)
 
 	distrKeeper := distrkeeper.NewKeeper(
@@ -227,7 +227,7 @@ func CreateTestFixture(t *testing.T) TestFixture {
 	distrAcc := authtypes.NewEmptyModuleAccount(distrtypes.ModuleName)
 	oracleAcc := authtypes.NewEmptyModuleAccount(types.ModuleName, authtypes.Minter)
 
-	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(denoms.NIBI, InitTokens.MulRaw(int64(len(Addrs))))))
+	bankKeeper.SendCoinsFromModuleToModule(ctx, faucetAccountName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, InitTokens.MulRaw(int64(len(Addrs))))))
 
 	sudoKeeper := sudokeeper.NewKeeper(appCodec, keySudo)
 	sudoAcc := authtypes.NewEmptyModuleAccount(sudo.ModuleName)
@@ -274,7 +274,7 @@ func NewTestMsgCreateValidator(
 ) *stakingtypes.MsgCreateValidator {
 	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	msg, _ := stakingtypes.NewMsgCreateValidator(
-		address, pubKey, sdk.NewCoin(denoms.NIBI, amt),
+		address, pubKey, sdk.NewCoin(appconst.DENOM_UNIBI, amt),
 		stakingtypes.Description{}, commission, sdkmath.OneInt(),
 	)
 

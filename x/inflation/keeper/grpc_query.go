@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 // querier implements the module's gRPC "QueryServer" interface
@@ -49,7 +49,7 @@ func (k Keeper) EpochMintProvision(
 ) (*inflation.QueryEpochMintProvisionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	epochMintProvision := k.GetEpochMintProvision(ctx)
-	coin := sdk.NewDecCoinFromDec(denoms.NIBI, epochMintProvision)
+	coin := sdk.NewDecCoinFromDec(appconst.DENOM_UNIBI, epochMintProvision)
 	return &inflation.QueryEpochMintProvisionResponse{EpochMintProvision: coin}, nil
 }
 
@@ -69,7 +69,7 @@ func (k Keeper) InflationRate(
 	_ *inflation.QueryInflationRateRequest,
 ) (*inflation.QueryInflationRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	inflationRate := k.GetInflationRate(ctx, denoms.NIBI)
+	inflationRate := k.GetInflationRate(ctx, appconst.DENOM_UNIBI)
 	return &inflation.QueryInflationRateResponse{InflationRate: inflationRate}, nil
 }
 
@@ -81,9 +81,9 @@ func (k Keeper) CirculatingSupply(
 ) (*inflation.QueryCirculatingSupplyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	circulatingSupply := k.GetCirculatingSupply(ctx, denoms.NIBI)
+	circulatingSupply := k.GetCirculatingSupply(ctx, appconst.DENOM_UNIBI)
 	circulatingToDec := sdkmath.LegacyNewDecFromInt(circulatingSupply)
-	coin := sdk.NewDecCoinFromDec(denoms.NIBI, circulatingToDec)
+	coin := sdk.NewDecCoinFromDec(appconst.DENOM_UNIBI, circulatingToDec)
 
 	return &inflation.QueryCirculatingSupplyResponse{CirculatingSupply: coin}, nil
 }

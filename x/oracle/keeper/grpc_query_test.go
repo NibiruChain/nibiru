@@ -14,6 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	testutilevents "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -358,7 +359,7 @@ func TestQueryActives(t *testing.T) {
 
 	rate := sdkmath.LegacyNewDec(1700)
 	targetPairs := set.New[types.Pair]()
-	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, denoms.NIBI} {
+	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, appconst.DENOM_UNIBI} {
 		pair := types.NewPair(bankDenom, denoms.NUSD)
 		targetPairs.Add(pair)
 		input.OracleKeeper.ExchangeRateMap.Insert(

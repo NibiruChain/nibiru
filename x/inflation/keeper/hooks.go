@@ -9,7 +9,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 // Hooks implements module-specific calls ([epochs.EpochHooks]) that will
@@ -86,7 +86,7 @@ func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumbe
 	}
 
 	mintedCoin := sdk.Coin{
-		Denom:  denoms.NIBI,
+		Denom:  appconst.DENOM_UNIBI,
 		Amount: epochMintProvision.TruncateInt(),
 	}
 

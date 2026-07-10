@@ -12,7 +12,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
@@ -31,35 +31,35 @@ func TestMintAndAllocateInflation(t *testing.T) {
 	}{
 		{
 			name:                             "pass",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(281_250)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(363_925)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(354_825)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(281_250)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(363_925)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdkmath.NewInt(354_825))),
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825))),
 			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
 			name:                             "pass - no coins minted ",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdkmath.ZeroInt()),
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
 			expectedStakingAmt:               sdk.Coin{},
 			expectedStrategicAmt:             sdk.Coin{},
 			expectedCommunityAmt:             sdk.Coin{},
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdkmath.ZeroInt()),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdkmath.ZeroInt()),
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
 			expectedCommunityPoolBalance:     nil,
 			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
 		},
 		{
 			name:                             "pass - no root account",
-			coinsToMint:                      sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(1_000_000)),
-			expectedStakingAmt:               sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(281_250)),
-			expectedStrategicAmt:             sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(363_925)),
-			expectedCommunityAmt:             sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(354_825)),
-			expectedStakingRewardsBalance:    sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(281_250)),
-			expectedStrategicReservesBalance: sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(363_925)),
-			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(denoms.NIBI, sdkmath.NewInt(354_825))),
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825))),
 			rootAccount:                      "",
 		},
 	}
@@ -92,17 +92,17 @@ func TestMintAndAllocateInflation(t *testing.T) {
 				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(
 					ctx,
 					strategicAccount,
-					denoms.NIBI,
+					appconst.DENOM_UNIBI,
 				)
 			} else {
 				// if no root account is specified, then the strategic reserve remains in the x/inflation module account
-				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(inflation.ModuleName), denoms.NIBI)
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(inflation.ModuleName), appconst.DENOM_UNIBI)
 			}
 
 			balanceStakingRewards := nibiruApp.BankKeeper.GetBalance(
 				ctx,
 				nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName),
-				denoms.NIBI,
+				appconst.DENOM_UNIBI,
 			)
 
 			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
@@ -170,16 +170,16 @@ func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
 
 			// Mint coins to increase supply
 			coin := sdk.NewCoin(
-				denoms.NIBI,
+				appconst.DENOM_UNIBI,
 				tc.supply,
 			)
 			err := nibiruApp.InflationKeeper.MintCoins(ctx, coin)
 			require.NoError(t, err)
 
-			circulatingSupply := nibiruApp.InflationKeeper.GetCirculatingSupply(ctx, denoms.NIBI)
+			circulatingSupply := nibiruApp.InflationKeeper.GetCirculatingSupply(ctx, appconst.DENOM_UNIBI)
 			require.EqualValues(t, tc.supply.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), circulatingSupply)
 
-			inflationRate := nibiruApp.InflationKeeper.GetInflationRate(ctx, denoms.NIBI)
+			inflationRate := nibiruApp.InflationKeeper.GetInflationRate(ctx, appconst.DENOM_UNIBI)
 			require.Equal(t, tc.expInflationRate, inflationRate)
 		})
 	}

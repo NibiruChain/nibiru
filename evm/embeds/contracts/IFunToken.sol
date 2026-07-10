@@ -25,7 +25,7 @@ interface IFunToken is INibiruEvm {
 
     /// @notice Retrieves the ERC20 contract address associated with a given bank denomination.
     /// @param bankDenom The bank denomination string (e.g., "unibi", "erc20/0x...", "ibc/...").
-    /// @return erc20Address The corresponding ERC20 contract address, or address(0) if no mapping exists.
+    /// @return erc20Address The corresponding ERC20 contract address. Reverts if no FunToken mapping exists for bankDenom.
     function getErc20Address(
         string memory bankDenom
     ) external view returns (address erc20Address);

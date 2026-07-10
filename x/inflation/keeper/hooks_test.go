@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
@@ -32,8 +32,8 @@ func TestEpochIdentifierAfterEpochEnd(t *testing.T) {
 	nibiruApp.EpochsKeeper.AfterEpochEnd(ctx, epochs.DayEpochID, 1)
 	feePoolNew := nibiruApp.DistrKeeper.GetFeePool(ctx)
 
-	require.Greater(t, feePoolNew.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64(),
-		feePoolOld.CommunityPool.AmountOf(denoms.NIBI).BigInt().Uint64())
+	require.Greater(t, feePoolNew.CommunityPool.AmountOf(appconst.DENOM_UNIBI).BigInt().Uint64(),
+		feePoolOld.CommunityPool.AmountOf(appconst.DENOM_UNIBI).BigInt().Uint64())
 }
 
 // TestPeriodChangesSkippedEpochsAfterEpochEnd: Tests whether current period and
@@ -204,7 +204,7 @@ func GetBalanceStaking(ctx sdk.Context, nibiruApp *app.NibiruApp) sdkmath.Int {
 	return nibiruApp.BankKeeper.GetBalance(
 		ctx,
 		nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName),
-		denoms.NIBI,
+		appconst.DENOM_UNIBI,
 	).Amount
 }
 

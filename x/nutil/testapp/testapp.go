@@ -126,7 +126,7 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	var govGenesis govtypesv1.GenesisState
 	app.AppCodec().MustUnmarshalJSON(gen[govtypes.ModuleName], &govGenesis)
 	*govGenesis.Params.VotingPeriod = 20 * time.Second
-	govGenesis.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 1e6)) // min deposit of 1 NIBI
+	govGenesis.Params.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 1e6)) // min deposit of 1 NIBI
 	gen[govtypes.ModuleName] = app.AppCodec().MustMarshalJSON(&govGenesis)
 
 	maps.Copy(gen, customGenesisOverride)

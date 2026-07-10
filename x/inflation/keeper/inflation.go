@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )
 
 // MintAndAllocateInflation mints and allocates tokens based on the polynomial
@@ -98,7 +98,7 @@ func (k Keeper) AllocatePolynomialInflation(
 
 	// Remaining balance is strategic reserve allocation to the root account
 	// of the x/sudo module
-	strategic = k.bankKeeper.GetBalance(ctx, inflationModuleAddr, denoms.NIBI)
+	strategic = k.bankKeeper.GetBalance(ctx, inflationModuleAddr, appconst.DENOM_UNIBI)
 	strategicAccountAddr, err := k.sudoKeeper.GetRootAddr(ctx)
 	if err != nil {
 		err := fmt.Errorf("inflation error: failed to get sudo root account: %w", err)

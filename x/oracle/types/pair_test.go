@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -20,22 +21,22 @@ func TestTryNewPair(t *testing.T) {
 	}{
 		{
 			"only one token",
-			denoms.NIBI,
+			appconst.DENOM_UNIBI,
 			types.ErrInvalidTokenPair,
 		},
 		{
 			"more than 2 tokens",
-			fmt.Sprintf("%s:%s:%s", denoms.NIBI, denoms.NUSD, denoms.USDC),
+			fmt.Sprintf("%s:%s:%s", appconst.DENOM_UNIBI, denoms.NUSD, denoms.USDC),
 			types.ErrInvalidTokenPair,
 		},
 		{
 			"different separator",
-			fmt.Sprintf("%s,%s", denoms.NIBI, denoms.NUSD),
+			fmt.Sprintf("%s,%s", appconst.DENOM_UNIBI, denoms.NUSD),
 			types.ErrInvalidTokenPair,
 		},
 		{
 			"correct pair",
-			fmt.Sprintf("%s:%s", denoms.NIBI, denoms.NUSD),
+			fmt.Sprintf("%s:%s", appconst.DENOM_UNIBI, denoms.NUSD),
 			nil,
 		},
 		{
