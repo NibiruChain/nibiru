@@ -269,6 +269,8 @@ replace (
 	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm => ./lib/ibc-go/modules/light-clients/08-wasm
+	github.com/cosmos/ibc-go/v7 => ./lib/ibc-go/v7
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4
 	// github.com/ethereum/go-ethereum => ../nibi-geth
