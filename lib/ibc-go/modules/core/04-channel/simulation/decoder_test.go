@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/simulation"
-	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
 )
 
 func TestDecodeStore(t *testing.T) {

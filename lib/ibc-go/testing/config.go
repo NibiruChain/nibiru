@@ -3,11 +3,11 @@ package ibctesting
 import (
 	"time"
 
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	"github.com/cosmos/ibc-go/v7/testing/mock"
+	connectiontypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 )
 
 type ClientConfig interface {

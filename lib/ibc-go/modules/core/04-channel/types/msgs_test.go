@@ -13,10 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	commitmenttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
 )
 
 const (

@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 func (suite *KeeperTestSuite) TestRegisterInterchainAccount() {

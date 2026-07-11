@@ -12,7 +12,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

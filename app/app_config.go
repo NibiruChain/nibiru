@@ -39,11 +39,11 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	ibcfeetypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
+	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 

@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	solomachine "github.com/cosmos/ibc-go/v7/modules/light-clients/06-solomachine"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	solomachine "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/06-solomachine"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 )
 
 // Localhost is the client type for a localhost client. It is also used as the clientID

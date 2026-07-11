@@ -12,10 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 )
 
 // GetCmdParams returns the command handler for the host submodule parameter querying.

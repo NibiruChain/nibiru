@@ -3,7 +3,7 @@ package errors
 import (
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 const codespace = exported.ModuleName

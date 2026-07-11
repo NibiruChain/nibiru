@@ -4,12 +4,12 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
+	transfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 func (suite *KeeperTestSuite) TestIncentivizePacketEvent() {

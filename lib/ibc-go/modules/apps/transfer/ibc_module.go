@@ -12,13 +12,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcerrors "github.com/cosmos/ibc-go/v7/modules/core/errors"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibcerrors "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/errors"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 var (

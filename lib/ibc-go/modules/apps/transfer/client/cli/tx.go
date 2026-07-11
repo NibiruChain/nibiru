@@ -13,11 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clientutils "github.com/cosmos/ibc-go/v7/modules/core/02-client/client/utils"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channelutils "github.com/cosmos/ibc-go/v7/modules/core/04-channel/client/utils"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	clientutils "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/client/utils"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	channelutils "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/client/utils"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 const (

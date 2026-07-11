@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	ibctmmigrations "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint/migrations"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 type MigrationsTestSuite struct {

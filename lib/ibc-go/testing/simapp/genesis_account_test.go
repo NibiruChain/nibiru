@@ -10,7 +10,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
 )
 
 func TestSimGenesisAccountValidate(t *testing.T) {

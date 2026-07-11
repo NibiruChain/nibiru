@@ -7,9 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	commitmenttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 // QueryTendermintProof performs an ABCI query with the given key and returns

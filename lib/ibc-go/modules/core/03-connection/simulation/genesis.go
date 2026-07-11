@@ -5,7 +5,7 @@ import (
 
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/types"
 )
 
 // GenConnectionGenesis returns the default connection genesis state.

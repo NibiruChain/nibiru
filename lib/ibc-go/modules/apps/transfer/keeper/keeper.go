@@ -13,10 +13,10 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 // Keeper defines the IBC fungible transfer keeper

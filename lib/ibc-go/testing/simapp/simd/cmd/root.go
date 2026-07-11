@@ -36,8 +36,8 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	"github.com/cosmos/ibc-go/v7/testing/simapp/params"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp/params"
 )
 
 // NewRootCmd creates a new root command for simd. It is called once in the

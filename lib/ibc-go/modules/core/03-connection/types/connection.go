@@ -3,9 +3,9 @@ package types
 import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	commitmenttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 var _ exported.ConnectionI = (*ConnectionEnd)(nil)

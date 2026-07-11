@@ -6,12 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
-	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
-	v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibcclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
+	v7 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/migrations/v7"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 func (suite *MigrationsV7TestSuite) TestMigrateGenesisSolomachine() {

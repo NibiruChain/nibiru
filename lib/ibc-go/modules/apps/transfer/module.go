@@ -15,11 +15,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/client/cli"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/simulation"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
 )
 
 var (

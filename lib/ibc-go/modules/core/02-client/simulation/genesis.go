@@ -5,7 +5,7 @@ import (
 
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 )
 
 // GenClientGenesis returns the default client genesis state.

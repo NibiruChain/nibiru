@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	ics23 "github.com/cosmos/ics23/go"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 // var representing the proofspecs for a SDK chain

@@ -26,9 +26,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
+	ibctestingtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/types"
 )
 
 var DefaultTestingAppInit = SetupTestingApp

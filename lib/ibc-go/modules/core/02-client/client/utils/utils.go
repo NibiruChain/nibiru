@@ -8,12 +8,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/client"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	commitmenttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibcclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/client"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 )
 
 // QueryClientState returns a client state. If prove is true, it performs an ABCI store query

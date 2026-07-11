@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 )
 
 // GetSendEnabled retrieves the send enabled boolean from the paramstore

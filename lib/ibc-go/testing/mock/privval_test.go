@@ -7,7 +7,7 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/v7/testing/mock"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 )
 
 const chainID = "testChain"

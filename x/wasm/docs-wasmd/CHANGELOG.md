@@ -47,7 +47,7 @@
 - Remove legacy gov proposal dependencies [\#1587](https://github.com/CosmWasm/wasmd/pull/1587)
 - Upgrade to wasmvm 1.4 [\#1586](https://github.com/CosmWasm/wasmd/issues/1586)
 - Custom StoreCode Authorization for authz module [\#1584](https://github.com/CosmWasm/wasmd/issues/1584)
-- Bump github.com/cosmos/ibc-go/v7 from 7.2.0 to 7.3.0 [\#1594](https://github.com/CosmWasm/wasmd/pull/1594)
+- Bump github.com/NibiruChain/nibiru/v2/lib/ibc-go from 7.2.0 to 7.3.0 [\#1594](https://github.com/CosmWasm/wasmd/pull/1594)
 - Log query error before redacting [\#1593](https://github.com/CosmWasm/wasmd/issues/1593)
 - Restrict pagination on all-state-query [\#1619](https://github.com/CosmWasm/wasmd/pull/1619)
 - Bug in IbcQuery::ListChannels implementation when port is unset [\#1597](https://github.com/CosmWasm/wasmd/issues/1597)

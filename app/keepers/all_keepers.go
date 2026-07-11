@@ -9,14 +9,14 @@ import (
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	// ---------------------------------------------------------------
 	// IBC imports
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	ibcmock "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules

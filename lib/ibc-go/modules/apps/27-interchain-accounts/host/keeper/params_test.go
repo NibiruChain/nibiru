@@ -1,6 +1,6 @@
 package keeper_test
 
-import "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
+import "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
 
 func (suite *KeeperTestSuite) TestParams() {
 	expParams := types.DefaultParams()

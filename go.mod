@@ -12,7 +12,6 @@ require (
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.47.14-nibiru
-	github.com/cosmos/ibc-go/v7 v7.10.0
 	github.com/ethereum/go-ethereum v1.14.13
 )
 
@@ -58,7 +57,7 @@ require (
 	cosmossdk.io/depinject v1.2.1
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cosmos/iavl v0.21.0-beta.1
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.3.2-0.20240730185603-13c071f0b34d
+	github.com/cosmos/ics23/go v0.10.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/gorilla/websocket v1.5.3
@@ -112,7 +111,6 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/cosmos-db v1.1.3 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
@@ -269,8 +267,6 @@ replace (
 	// github.com/cosmos/cosmos-sdk => github.com/NibiruChain/nibiru-cosmos v0.47.11-nibiru.6
 
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm => ./lib/ibc-go-08-wasm
-	github.com/cosmos/ibc-go/v7 => ./lib/ibc-go
 
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4
 	// github.com/ethereum/go-ethereum => ../nibi-geth

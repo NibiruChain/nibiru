@@ -6,12 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	"github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	solomachine "github.com/cosmos/ibc-go/v7/modules/light-clients/06-solomachine"
-	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	solomachine "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/06-solomachine"
+	tendermint "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 )
 
 type RedundantRelayDecorator struct {
@@ -119,7 +119,7 @@ func (rrd RedundantRelayDecorator) updateClientCheckTx(ctx sdk.Context, msg *cli
 
 	clientState, found := rrd.k.ClientKeeper.GetClientState(ctx, msg.ClientId)
 	if !found {
-		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, msg.ClientId)
+		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, "%s", msg.ClientId)
 	}
 
 	if status := rrd.k.ClientKeeper.GetClientStatus(ctx, clientState, msg.ClientId); status != exported.Active {

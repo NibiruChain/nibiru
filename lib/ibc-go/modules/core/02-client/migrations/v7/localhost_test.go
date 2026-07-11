@@ -1,9 +1,9 @@
 package v7_test
 
 import (
-	v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
+	v7 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/migrations/v7"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
 
 func (suite *MigrationsV7TestSuite) TestMigrateLocalhostClient() {

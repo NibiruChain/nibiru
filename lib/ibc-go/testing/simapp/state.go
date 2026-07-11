@@ -20,7 +20,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	simappparams "github.com/cosmos/ibc-go/v7/testing/simapp/params"
+	simappparams "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp/params"
 )
 
 // AppStateFn returns the initial application state using a genesis or the simulation parameters.

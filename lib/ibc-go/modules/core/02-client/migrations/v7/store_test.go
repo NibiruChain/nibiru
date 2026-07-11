@@ -7,11 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/suite"
 
-	v7 "github.com/cosmos/ibc-go/v7/modules/core/02-client/migrations/v7"
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	v7 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/migrations/v7"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 // numCreations is the number of clients/consensus states created for

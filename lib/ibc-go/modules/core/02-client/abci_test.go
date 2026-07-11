@@ -10,10 +10,10 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/suite"
 
-	client "github.com/cosmos/ibc-go/v7/modules/core/02-client"
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	client "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
 type ClientTestSuite struct {

@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	"github.com/cosmos/ibc-go/v7/modules/core/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/types"
 )
 
 func TestConvertToErrorEvents(t *testing.T) {

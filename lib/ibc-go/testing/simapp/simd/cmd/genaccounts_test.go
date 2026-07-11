@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	simcmd "github.com/cosmos/ibc-go/v7/testing/simapp/simd/cmd"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
+	simcmd "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp/simd/cmd"
 )
 
 var testMbm = module.NewBasicManager(genutil.AppModuleBasic{})

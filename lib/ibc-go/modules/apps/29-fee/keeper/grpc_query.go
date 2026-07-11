@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -105,6 +105,7 @@ func (k Keeper) TotalRecvFees(goCtx context.Context, req *types.QueryTotalRecvFe
 	if !found {
 		return nil, status.Errorf(
 			codes.NotFound,
+			"%s",
 			sdkerrors.Wrapf(types.ErrFeeNotFound, "channel: %s, port: %s, sequence: %d", req.PacketId.ChannelId, req.PacketId.PortId, req.PacketId.Sequence).Error(),
 		)
 	}
@@ -131,6 +132,7 @@ func (k Keeper) TotalAckFees(goCtx context.Context, req *types.QueryTotalAckFees
 	if !found {
 		return nil, status.Errorf(
 			codes.NotFound,
+			"%s",
 			sdkerrors.Wrapf(types.ErrFeeNotFound, "channel: %s, port: %s, sequence: %d", req.PacketId.ChannelId, req.PacketId.PortId, req.PacketId.Sequence).Error(),
 		)
 	}
@@ -157,6 +159,7 @@ func (k Keeper) TotalTimeoutFees(goCtx context.Context, req *types.QueryTotalTim
 	if !found {
 		return nil, status.Errorf(
 			codes.NotFound,
+			"%s",
 			sdkerrors.Wrapf(types.ErrFeeNotFound, "channel: %s, port: %s, sequence: %d", req.PacketId.ChannelId, req.PacketId.PortId, req.PacketId.Sequence).Error(),
 		)
 	}

@@ -8,12 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
-	"github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
+	channelkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/keeper"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
+	ibcmock "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 )
 
 var (
