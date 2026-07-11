@@ -23,12 +23,12 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
-	ibctestingtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/types"
 )
 
 var DefaultTestingAppInit = SetupTestingApp
@@ -38,7 +38,7 @@ type TestingApp interface {
 
 	// ibc-go additions
 	GetBaseApp() *baseapp.BaseApp
-	GetStakingKeeper() ibctestingtypes.StakingKeeper
+	GetStakingKeeper() *stakingkeeper.Keeper
 	GetIBCKeeper() *keeper.Keeper
 	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
 	GetTxConfig() client.TxConfig

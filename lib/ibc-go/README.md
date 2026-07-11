@@ -98,10 +98,6 @@ If you are interested in working on an issue, please comment on it; then we will
 
 If you have any general questions or feedback, please reach out to us in the [IBC Gang Discord server](https://discord.com/channels/955868717269516318/955883113484013578).
 
-## Request for maintainership
-
-We have a document that describes the process for [submitting a feature for maintainership](./MAINTAINERSHIP.md) in the ibc-go codebase.
-
 ## Security
 
 To report a security vulnerability, see our [bug bounty program](https://hackerone.com/cosmos).
@@ -134,17 +130,13 @@ The following audits have been performed on the `ibc-go` source code:
 
     2.2 [ICS 27 Interchain Accounts](https://github.com/cosmos/ibc-go/tree/main/modules/apps/27-interchain-accounts)
 
-3. **Middleware**
+3. **Light Clients**
 
-    3.1 [ICS 29 Fee Middleware](https://github.com/cosmos/ibc-go/tree/main/modules/apps/29-fee)
+    3.1 [ICS 07 Tendermint](https://github.com/cosmos/ibc-go/tree/main/modules/light-clients/07-tendermint)
 
-4. **Light Clients**
+    3.2 [ICS 06 Solo Machine](https://github.com/cosmos/ibc-go/tree/main/modules/light-clients/06-solomachine)
 
-    4.1 [ICS 07 Tendermint](https://github.com/cosmos/ibc-go/tree/main/modules/light-clients/07-tendermint)
-
-    4.2 [ICS 06 Solo Machine](https://github.com/cosmos/ibc-go/tree/main/modules/light-clients/06-solomachine)
-
-5. **[E2E Integration Tests](https://github.com/cosmos/ibc-go/tree/main/e2e)**
+4. **[E2E Integration Tests](https://github.com/cosmos/ibc-go/tree/main/e2e)**
 
 ## Documentation and Resources
 

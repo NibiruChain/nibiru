@@ -13,7 +13,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
-	feetypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
@@ -620,17 +619,6 @@ func (suite *InterchainAccountsTestSuite) fundICAWallet(ctx sdk.Context, portID 
 // A new channel will be opened for the controller portID. The interchain account address should remain unchanged.
 func (suite *InterchainAccountsTestSuite) TestControlAccountAfterChannelClose() {
 	path := NewICAPath(suite.chainA, suite.chainB)
-
-	// use a fee enabled version to cover unwrapping channel version code paths
-	feeMetadata := feetypes.Metadata{
-		FeeVersion: feetypes.Version,
-		AppVersion: TestVersion,
-	}
-
-	feeICAVersion := string(feetypes.ModuleCdc.MustMarshalJSON(&feeMetadata))
-
-	path.EndpointA.ChannelConfig.Version = feeICAVersion
-	path.EndpointB.ChannelConfig.Version = feeICAVersion
 
 	suite.coordinator.SetupConnections(path)
 

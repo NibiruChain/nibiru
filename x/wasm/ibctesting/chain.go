@@ -6,12 +6,6 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	cmttypes "github.com/cometbft/cometbft/types"
-	tmversion "github.com/cometbft/cometbft/version"
 	ibctransferkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
@@ -23,7 +17,12 @@ import (
 	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
-	ibctestingtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	cmttypes "github.com/cometbft/cometbft/types"
+	tmversion "github.com/cometbft/cometbft/version"
 	"github.com/stretchr/testify/require"
 
 	sdkioerrors "cosmossdk.io/errors"
@@ -42,6 +41,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -71,7 +71,7 @@ type ChainApp interface {
 	GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper
 	GetIBCKeeper() *ibckeeper.Keeper
 	GetBankKeeper() bankkeeper.Keeper
-	GetStakingKeeper() ibctestingtypes.StakingKeeper
+	GetStakingKeeper() *stakingkeeper.Keeper
 	GetAccountKeeper() authkeeper.AccountKeeper
 	GetWasmKeeper() wasmkeeper.Keeper
 	GetTransferKeeper() ibctransferkeeper.Keeper

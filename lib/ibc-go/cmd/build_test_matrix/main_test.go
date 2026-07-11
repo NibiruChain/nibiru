@@ -25,7 +25,7 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 
 	t.Run("only test functions are picked up", func(t *testing.T) {
 		testingDir := t.TempDir()
-		createFileWithTestSuiteAndTests(t, "FeeMiddlewareTestSuite", "TestA", "TestB", testingDir, goTestFileNameOne)
+		createFileWithTestSuiteAndTests(t, "ChannelTestSuite", "TestA", "TestB", testingDir, goTestFileNameOne)
 
 		gh, err := getGithubActionMatrixForTests(testingDir, "", nil)
 		assert.NoError(t, err)
@@ -33,11 +33,11 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 		expected := GithubActionTestMatrix{
 			Include: []TestSuitePair{
 				{
-					EntryPoint: "TestFeeMiddlewareTestSuite",
+					EntryPoint: "TestChannelTestSuite",
 					Test:       "TestA",
 				},
 				{
-					EntryPoint: "TestFeeMiddlewareTestSuite",
+					EntryPoint: "TestChannelTestSuite",
 					Test:       "TestB",
 				},
 			},
@@ -47,7 +47,7 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 
 	t.Run("all files are picked up", func(t *testing.T) {
 		testingDir := t.TempDir()
-		createFileWithTestSuiteAndTests(t, "FeeMiddlewareTestSuite", "TestA", "TestB", testingDir, goTestFileNameOne)
+		createFileWithTestSuiteAndTests(t, "ChannelTestSuite", "TestA", "TestB", testingDir, goTestFileNameOne)
 		createFileWithTestSuiteAndTests(t, "TransferTestSuite", "TestC", "TestD", testingDir, goTestFileNameTwo)
 
 		gh, err := getGithubActionMatrixForTests(testingDir, "", nil)
@@ -60,11 +60,11 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 					Test:       "TestC",
 				},
 				{
-					EntryPoint: "TestFeeMiddlewareTestSuite",
+					EntryPoint: "TestChannelTestSuite",
 					Test:       "TestA",
 				},
 				{
-					EntryPoint: "TestFeeMiddlewareTestSuite",
+					EntryPoint: "TestChannelTestSuite",
 					Test:       "TestB",
 				},
 				{
@@ -79,7 +79,7 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 
 	t.Run("non test files are not picked up", func(t *testing.T) {
 		testingDir := t.TempDir()
-		createFileWithTestSuiteAndTests(t, "FeeMiddlewareTestSuite", "TestA", "TestB", testingDir, nonTestFile)
+		createFileWithTestSuiteAndTests(t, "ChannelTestSuite", "TestA", "TestB", testingDir, nonTestFile)
 
 		gh, err := getGithubActionMatrixForTests(testingDir, "", nil)
 		assert.NoError(t, err)
@@ -88,18 +88,18 @@ func TestGetGithubActionMatrixForTests(t *testing.T) {
 
 	t.Run("fails when there are multiple suite runs", func(t *testing.T) {
 		testingDir := t.TempDir()
-		createFileWithTestSuiteAndTests(t, "FeeMiddlewareTestSuite", "TestA", "TestB", testingDir, nonTestFile)
+		createFileWithTestSuiteAndTests(t, "ChannelTestSuite", "TestA", "TestB", testingDir, nonTestFile)
 
 		fileWithTwoSuites := `package foo
 func SuiteOne(t *testing.T) {
-	suite.Run(t, new(FeeMiddlewareTestSuite))
+	suite.Run(t, new(ChannelTestSuite))
 }
 
 func SuiteTwo(t *testing.T) {
-	suite.Run(t, new(FeeMiddlewareTestSuite))
+	suite.Run(t, new(ChannelTestSuite))
 }
 
-type FeeMiddlewareTestSuite struct {}
+type ChannelTestSuite struct {}
 `
 
 		err := os.WriteFile(path.Join(testingDir, goTestFileNameOne), []byte(fileWithTwoSuites), os.FileMode(0o777))

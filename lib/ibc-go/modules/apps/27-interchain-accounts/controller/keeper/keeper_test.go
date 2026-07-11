@@ -260,13 +260,11 @@ func (suite *KeeperTestSuite) TestSetInterchainAccountAddress() {
 func (suite *KeeperTestSuite) TestWithICS4Wrapper() {
 	suite.SetupTest()
 
-	// test if the ics4 wrapper is the channel keeper initially
 	ics4Wrapper := suite.chainA.GetSimApp().ICAControllerKeeper.GetICS4Wrapper()
 
 	_, isChannelKeeper := ics4Wrapper.(channelkeeper.Keeper)
-	suite.Require().False(isChannelKeeper)
+	suite.Require().True(isChannelKeeper)
 
-	// set the ics4 wrapper to the channel keeper
 	suite.chainA.GetSimApp().ICAControllerKeeper.WithICS4Wrapper(suite.chainA.GetSimApp().IBCKeeper.ChannelKeeper)
 	ics4Wrapper = suite.chainA.GetSimApp().ICAControllerKeeper.GetICS4Wrapper()
 

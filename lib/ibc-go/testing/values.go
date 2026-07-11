@@ -14,7 +14,6 @@ import (
 	commitmenttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
 	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
 )
 
 const (
@@ -34,7 +33,6 @@ const (
 	// Application Ports
 	TransferPort = ibctransfertypes.ModuleName
 	MockPort     = mock.ModuleName
-	MockFeePort  = simapp.MockFeePort
 
 	// used for testing proposals
 	Title       = "title"

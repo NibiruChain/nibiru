@@ -10,7 +10,6 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
-	feetypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
 )
@@ -32,19 +31,6 @@ func TestMsgRegisterInterchainAccountValidateBasic(t *testing.T) {
 			"success: with empty channel version",
 			func() {
 				msg.Version = ""
-			},
-			true,
-		},
-		{
-			"success: with fee enabled channel version",
-			func() {
-				feeMetadata := feetypes.Metadata{
-					FeeVersion: feetypes.Version,
-					AppVersion: icatypes.NewDefaultMetadataString(ibctesting.FirstConnectionID, ibctesting.FirstConnectionID),
-				}
-
-				bz := feetypes.ModuleCdc.MustMarshalJSON(&feeMetadata)
-				msg.Version = string(bz)
 			},
 			true,
 		},

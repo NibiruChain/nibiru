@@ -160,7 +160,7 @@ func extractSuiteAndTestNames(file *ast.File) (string, []string, error) {
 }
 
 // isTestSuiteMethod returns true if the function is a test suite function.
-// e.g. func TestFeeMiddlewareTestSuite(t *testing.T) { ... }
+// e.g. func TestTransferTestSuite(t *testing.T) { ... }
 func isTestSuiteMethod(f *ast.FuncDecl) bool {
 	return strings.HasPrefix(f.Name.Name, testNamePrefix) && len(f.Type.Params.List) == 1
 }

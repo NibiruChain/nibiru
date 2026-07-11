@@ -7,6 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 	"github.com/stretchr/testify/suite"
 
@@ -43,6 +44,13 @@ type IBCTestSuite struct {
 // TestIBCTestSuite runs all the tests within this package.
 func TestIBCTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTestSuite))
+}
+
+func TestIBCFeeModuleRemoved(t *testing.T) {
+	_, registered := app.ModuleBasics["feeibc"]
+	if registered {
+		t.Fatal("feeibc module must not be registered")
+	}
 }
 
 /*
@@ -190,4 +198,121 @@ func (suite *IBCTestSuite) TestHandleMsgTransfer() {
 	// check that balance on chain B is empty
 	balance = chainCApp.BankKeeper.GetBalance(suite.chainC.GetContext(), suite.chainC.SenderAccount.GetAddress(), voucherDenomTrace.IBCDenom())
 	suite.Require().Zero(balance.Amount.Int64())
+}
+
+func (suite *IBCTestSuite) TestPermissionlessPacketRelay() {
+	path := NewIBCTestingTransferPath(suite.chainA, suite.chainB)
+	suite.coordinator.Setup(path)
+
+	sender := suite.chainA.SenderAccount.GetAddress()
+	receiver := suite.chainB.SenderAccount.GetAddress()
+	coin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1_000_000))
+
+	msg := transfertypes.NewMsgTransfer(
+		path.EndpointA.ChannelConfig.PortID,
+		path.EndpointA.ChannelID,
+		coin,
+		sender.String(),
+		receiver.String(),
+		suite.chainB.GetTimeoutHeight(),
+		0,
+		"",
+	)
+	res, err := suite.chainA.SendMsgs(msg)
+	suite.Require().NoError(err)
+
+	packet, err := ibctesting.ParsePacketFromEvents(res.GetEvents())
+	suite.Require().NoError(err)
+
+	// Relay receive and acknowledgement transactions with accounts unrelated to
+	// the packet sender or receiver.
+	relayA := suite.chainA.SenderAccounts[1]
+	suite.chainA.SenderAccount = relayA.SenderAccount
+	suite.chainA.SenderPrivKey = relayA.SenderPrivKey
+	relayB := suite.chainB.SenderAccounts[1]
+	suite.chainB.SenderAccount = relayB.SenderAccount
+	suite.chainB.SenderPrivKey = relayB.SenderPrivKey
+
+	suite.Require().NoError(path.RelayPacket(packet))
+
+	commitment := suite.chainA.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(
+		suite.chainA.GetContext(),
+		packet.GetSourcePort(),
+		packet.GetSourceChannel(),
+		packet.GetSequence(),
+	)
+	suite.Require().Empty(commitment)
+
+	denomTrace := transfertypes.ParseDenomTrace(
+		transfertypes.GetPrefixedDenom(
+			packet.GetDestPort(),
+			packet.GetDestChannel(),
+			sdk.DefaultBondDenom,
+		),
+	)
+	chainBApp, ok := suite.chainB.App.(*app.NibiruApp)
+	suite.Require().True(ok)
+	suite.Require().Equal(
+		coin.Amount,
+		chainBApp.BankKeeper.GetBalance(
+			suite.chainB.GetContext(),
+			receiver,
+			denomTrace.IBCDenom(),
+		).Amount,
+	)
+}
+
+func (suite *IBCTestSuite) TestPermissionlessTimeoutRelay() {
+	path := NewIBCTestingTransferPath(suite.chainA, suite.chainB)
+	suite.coordinator.Setup(path)
+
+	sender := suite.chainA.SenderAccount.GetAddress()
+	coin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1_000_000))
+	timeoutHeight := clienttypes.GetSelfHeight(suite.chainB.GetContext())
+	chainAApp, ok := suite.chainA.App.(*app.NibiruApp)
+	suite.Require().True(ok)
+	startingBalance := chainAApp.BankKeeper.GetBalance(
+		suite.chainA.GetContext(),
+		sender,
+		sdk.DefaultBondDenom,
+	)
+
+	msg := transfertypes.NewMsgTransfer(
+		path.EndpointA.ChannelConfig.PortID,
+		path.EndpointA.ChannelID,
+		coin,
+		sender.String(),
+		suite.chainB.SenderAccount.GetAddress().String(),
+		timeoutHeight,
+		0,
+		"",
+	)
+	res, err := suite.chainA.SendMsgs(msg)
+	suite.Require().NoError(err)
+
+	packet, err := ibctesting.ParsePacketFromEvents(res.GetEvents())
+	suite.Require().NoError(err)
+	suite.Require().NoError(path.EndpointA.UpdateClient())
+
+	relayer := suite.chainA.SenderAccounts[1]
+	suite.chainA.SenderAccount = relayer.SenderAccount
+	suite.chainA.SenderPrivKey = relayer.SenderPrivKey
+	suite.Require().NoError(path.EndpointA.TimeoutPacket(packet))
+
+	commitment := suite.chainA.App.GetIBCKeeper().ChannelKeeper.GetPacketCommitment(
+		suite.chainA.GetContext(),
+		packet.GetSourcePort(),
+		packet.GetSourceChannel(),
+		packet.GetSequence(),
+	)
+	suite.Require().Empty(commitment)
+
+	suite.Require().Equal(
+		startingBalance,
+		chainAApp.BankKeeper.GetBalance(
+			suite.chainA.GetContext(),
+			sender,
+			sdk.DefaultBondDenom,
+		),
+	)
 }

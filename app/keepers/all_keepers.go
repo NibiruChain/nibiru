@@ -16,7 +16,6 @@ import (
 	// ---------------------------------------------------------------
 	// IBC imports
 	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
-	ibcmock "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
@@ -55,10 +54,6 @@ type PublicKeepers struct {
 	/* IbcKeeper defines each ICS keeper for IBC. IbcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
 	IbcKeeper *ibckeeper.Keeper
-
-	// make IBC modules public for test purposes
-	// these modules are never directly routed to by the IBC Router
-	FeeMockModule ibcmock.IBCModule
 
 	// ---------------
 	// Nibiru keepers

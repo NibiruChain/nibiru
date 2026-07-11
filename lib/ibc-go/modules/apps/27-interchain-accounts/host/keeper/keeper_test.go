@@ -12,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
-	ibcfeekeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/29-fee/keeper"
 	channelkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/keeper"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	ibcerrors "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/errors"
@@ -352,20 +351,13 @@ func (suite *KeeperTestSuite) TestMetadataNotFound() {
 func (suite *KeeperTestSuite) TestWithICS4Wrapper() {
 	suite.SetupTest()
 
-	// test if the ics4 wrapper is the fee keeper initially
 	ics4Wrapper := suite.chainA.GetSimApp().ICAHostKeeper.GetICS4Wrapper()
-
-	_, isFeeKeeper := ics4Wrapper.(ibcfeekeeper.Keeper)
-	suite.Require().True(isFeeKeeper)
 	_, isChannelKeeper := ics4Wrapper.(channelkeeper.Keeper)
-	suite.Require().False(isChannelKeeper)
+	suite.Require().True(isChannelKeeper)
 
-	// set the ics4 wrapper to the channel keeper
 	suite.chainA.GetSimApp().ICAHostKeeper.WithICS4Wrapper(suite.chainA.GetSimApp().IBCKeeper.ChannelKeeper)
 	ics4Wrapper = suite.chainA.GetSimApp().ICAHostKeeper.GetICS4Wrapper()
 
 	_, isChannelKeeper = ics4Wrapper.(channelkeeper.Keeper)
 	suite.Require().True(isChannelKeeper)
-	_, isFeeKeeper = ics4Wrapper.(ibcfeekeeper.Keeper)
-	suite.Require().False(isFeeKeeper)
 }

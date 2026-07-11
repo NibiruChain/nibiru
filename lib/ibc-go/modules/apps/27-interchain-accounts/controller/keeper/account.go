@@ -14,7 +14,7 @@ import (
 // RegisterInterchainAccount is the entry point to registering an interchain account:
 // - It generates a new port identifier using the provided owner string, binds to the port identifier and claims the associated capability.
 // - Callers are expected to provide the appropriate application version string.
-// - For example, this could be an ICS27 encoded metadata type or an ICS29 encoded metadata type with a nested application version.
+// - For example, this could be an ICS27 encoded metadata type or another middleware's metadata with a nested application version.
 // - A new MsgChannelOpenInit is routed through the MsgServiceRouter, executing the OnOpenChanInit callback stack as configured.
 // - An error is returned if the port identifier is already in use. Gaining access to interchain accounts whose channels
 // have closed cannot be done with this function. A regular MsgChannelOpenInit must be used.
@@ -50,7 +50,7 @@ func (k Keeper) RegisterInterchainAccount(ctx sdk.Context, connectionID, owner, 
 // RegisterInterchainAccountWithOrdering is the entry point to registering an interchain account:
 // - It generates a new port identifier using the provided owner string, binds to the port identifier and claims the associated capability.
 // - Callers are expected to provide the appropriate application version string.
-// - For example, this could be an ICS27 encoded metadata type or an ICS29 encoded metadata type with a nested application version.
+// - For example, this could be an ICS27 encoded metadata type or another middleware's metadata with a nested application version.
 // - A new MsgChannelOpenInit is routed through the MsgServiceRouter, executing the OnOpenChanInit callback stack as configured.
 // - An error is returned if the port identifier is already in use. Gaining access to interchain accounts whose channels
 // have closed cannot be done with this function. A regular MsgChannelOpenInit must be used.
