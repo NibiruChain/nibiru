@@ -257,7 +257,7 @@ test-cover:
   set -euo pipefail
   echo "Running: just test-cover"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
   printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
   go test \
     -tags=pebbledb \

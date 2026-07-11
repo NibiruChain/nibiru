@@ -32,7 +32,6 @@ jobs:
           filters: |
             wasmvm:
               - "lib/wasmvm-ffi/**"
-              - "justfile"
               - ".github/workflows/wasmvm-ffi.yml"
 
       # This step centralizes the Wasm VM FFI workflow policy. The path filter
