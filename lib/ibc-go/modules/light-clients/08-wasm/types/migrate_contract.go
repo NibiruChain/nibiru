@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +23,7 @@ func (cs ClientState) MigrateContract(
 	}
 
 	if bytes.Equal(cs.Checksum, newChecksum) {
-		return errorsmod.Wrapf(ErrWasmCodeExists, "new checksum (%s) is the same as current checksum (%s)", hex.EncodeToString(newChecksum), hex.EncodeToString(cs.Checksum))
+		return sdkioerrors.Wrapf(ErrWasmCodeExists, "new checksum (%s) is the same as current checksum (%s)", hex.EncodeToString(newChecksum), hex.EncodeToString(cs.Checksum))
 	}
 
 	// update the checksum, this needs to be done before the contract migration

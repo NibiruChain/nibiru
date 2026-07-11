@@ -11,7 +11,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	storeprefix "github.com/cosmos/cosmos-sdk/store/prefix"
@@ -350,7 +350,7 @@ func getClientID(clientStore storetypes.KVStore) (string, error) {
 
 	store, ok := clientStore.(storeprefix.Store)
 	if !ok {
-		return "", errorsmod.Wrap(ErrRetrieveClientID, "clientStore is not a prefix store")
+		return "", sdkioerrors.Wrap(ErrRetrieveClientID, "clientStore is not a prefix store")
 	}
 
 	// using reflect to retrieve the private prefix field
@@ -358,21 +358,21 @@ func getClientID(clientStore storetypes.KVStore) (string, error) {
 
 	f := r.FieldByName("prefix")
 	if !f.IsValid() {
-		return "", errorsmod.Wrap(ErrRetrieveClientID, "prefix field not found")
+		return "", sdkioerrors.Wrap(ErrRetrieveClientID, "prefix field not found")
 	}
 
 	prefix := string(f.Bytes())
 
 	split := strings.Split(prefix, "/")
 	if len(split) < 3 {
-		return "", errorsmod.Wrap(ErrRetrieveClientID, "prefix is not of the expected form")
+		return "", sdkioerrors.Wrap(ErrRetrieveClientID, "prefix is not of the expected form")
 	}
 
 	// the clientID is the second to last element of the prefix
 	// the prefix is expected to be of the form "<placeholder>/{clientID}/"
 	clientID := split[len(split)-2]
 	if err := ValidateClientID(clientID); err != nil {
-		return "", errorsmod.Wrapf(ErrRetrieveClientID, "prefix does not contain a valid clientID: %s", err.Error())
+		return "", sdkioerrors.Wrapf(ErrRetrieveClientID, "prefix does not contain a valid clientID: %s", err.Error())
 	}
 
 	return clientID, nil

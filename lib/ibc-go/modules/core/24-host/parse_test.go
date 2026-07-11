@@ -37,7 +37,6 @@ func TestParseIdentifier(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		seq, err := host.ParseIdentifier(tc.identifier, tc.prefix)
 		require.Equal(t, tc.expSeq, seq)
 

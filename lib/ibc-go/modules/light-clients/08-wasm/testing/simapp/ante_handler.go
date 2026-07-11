@@ -1,7 +1,7 @@
 package simapp
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -21,13 +21,13 @@ type HandlerOptions struct {
 // NewAnteHandler creates a new ante handler
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.AccountKeeper == nil {
-		return nil, errorsmod.Wrap(ibcerrors.ErrLogic, "account keeper is required for AnteHandler")
+		return nil, sdkioerrors.Wrap(ibcerrors.ErrLogic, "account keeper is required for AnteHandler")
 	}
 	if options.BankKeeper == nil {
-		return nil, errorsmod.Wrap(ibcerrors.ErrLogic, "bank keeper is required for AnteHandler")
+		return nil, sdkioerrors.Wrap(ibcerrors.ErrLogic, "bank keeper is required for AnteHandler")
 	}
 	if options.SignModeHandler == nil {
-		return nil, errorsmod.Wrap(ibcerrors.ErrLogic, "sign mode handler is required for AnteHandler")
+		return nil, sdkioerrors.Wrap(ibcerrors.ErrLogic, "sign mode handler is required for AnteHandler")
 	}
 
 	anteDecorators := []sdk.AnteDecorator{

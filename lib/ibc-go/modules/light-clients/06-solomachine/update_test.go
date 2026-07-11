@@ -20,7 +20,6 @@ func (suite *SoloMachineTestSuite) TestVerifyClientMessageHeader() {
 
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		testCases := []struct {
 			name    string
 			setup   func()
@@ -174,7 +173,6 @@ func (suite *SoloMachineTestSuite) TestVerifyClientMessageMisbehaviour() {
 
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		testCases := []struct {
 			name    string
 			setup   func()
@@ -405,7 +403,6 @@ func (suite *SoloMachineTestSuite) TestUpdateState() {
 
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		testCases := []struct {
 			name    string
 			setup   func()

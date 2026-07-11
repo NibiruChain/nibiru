@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	ibcante "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/ante"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"

@@ -1,7 +1,7 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,11 +22,11 @@ func NewMsgModuleQuerySafe(signer string, requests []*QueryRequest) *MsgModuleQu
 func (msg MsgModuleQuerySafe) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 
 	if len(msg.Requests) == 0 {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidRequest, "no queries provided")
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidRequest, "no queries provided")
 	}
 
 	return nil

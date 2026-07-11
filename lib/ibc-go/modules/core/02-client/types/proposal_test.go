@@ -55,7 +55,6 @@ func (suite *TypesTestSuite) TestValidateBasic() {
 	}
 
 	for _, tc := range testCases {
-
 		err := tc.proposal.ValidateBasic()
 
 		if tc.expPass {
@@ -162,7 +161,6 @@ func (suite *TypesTestSuite) TestUpgradeProposalValidateBasic() {
 	}
 
 	for _, tc := range testCases {
-
 		tc.malleate()
 
 		err := proposal.ValidateBasic()

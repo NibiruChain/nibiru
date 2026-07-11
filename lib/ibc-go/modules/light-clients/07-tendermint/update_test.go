@@ -3,7 +3,7 @@ package tendermint_test
 import (
 	"time"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
@@ -29,9 +29,9 @@ func (suite *TendermintTestSuite) TestVerifyHeader() {
 	revisionHeight := int64(height.RevisionHeight)
 
 	// create modified heights to use for test-cases
-	altVal := tmtypes.NewValidator(altPubKey, 100)
+	altVal := cmttypes.NewValidator(altPubKey, 100)
 	// Create alternative validator set with only altVal, invalid update (too much change in valSet)
-	altValSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{altVal})
+	altValSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{altVal})
 	altSigners := getAltSigners(altVal, altPrivVal)
 
 	testCases := []struct {
@@ -72,7 +72,7 @@ func (suite *TendermintTestSuite) TestVerifyHeader() {
 				suite.Require().True(found)
 
 				// Create bothValSet with both suite validator and altVal
-				bothValSet := tmtypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
+				bothValSet := cmttypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
 				bothSigners := suite.chainB.Signers
 				bothSigners[altVal.Address.String()] = altPrivVal
 
@@ -89,7 +89,7 @@ func (suite *TendermintTestSuite) TestVerifyHeader() {
 				suite.Require().True(found)
 
 				// Create bothValSet with both suite validator and altVal
-				bothValSet := tmtypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
+				bothValSet := cmttypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
 				bothSigners := suite.chainB.Signers
 				bothSigners[altVal.Address.String()] = altPrivVal
 
@@ -103,7 +103,7 @@ func (suite *TendermintTestSuite) TestVerifyHeader() {
 				trustedHeight := path.EndpointA.GetClientState().GetLatestHeight().(clienttypes.Height)
 
 				// Create bothValSet with both suite validator and altVal
-				bothValSet := tmtypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
+				bothValSet := cmttypes.NewValidatorSet(append(suite.chainB.Vals.Validators, altVal))
 				bothSigners := suite.chainB.Signers
 				bothSigners[altVal.Address.String()] = altPrivVal
 
@@ -166,7 +166,7 @@ func (suite *TendermintTestSuite) TestVerifyHeader() {
 			name: "unsuccessful verify header: header basic validation failed",
 			malleate: func() {
 				// cause header to fail validatebasic by changing commit height to mismatch header height
-				header.SignedHeader.Commit.Height = revisionHeight - 1
+				header.Commit.Height = revisionHeight - 1
 			},
 			expPass: false,
 		},
@@ -504,7 +504,6 @@ func (suite *TendermintTestSuite) TestUpdateState() {
 				updatedConsensusState := clienttypes.MustUnmarshalConsensusState(suite.chainA.App.AppCodec(), bz)
 
 				suite.Require().Equal(expConsensusState, updatedConsensusState)
-
 			} else {
 				consensusHeights = clientState.UpdateState(suite.chainA.GetContext(), suite.chainA.App.AppCodec(), clientStore, clientMessage)
 				suite.Require().Empty(consensusHeights)

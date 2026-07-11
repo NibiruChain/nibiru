@@ -1,7 +1,7 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -30,7 +30,7 @@ func (m MsgStoreCode) ValidateBasic() error {
 
 	_, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 
 	return nil
@@ -57,7 +57,7 @@ func NewMsgRemoveChecksum(signer string, checksum []byte) *MsgRemoveChecksum {
 func (m MsgRemoveChecksum) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 
 	if err := ValidateWasmChecksum(m.Checksum); err != nil { //revive:disable:if-return
@@ -90,7 +90,7 @@ func NewMsgMigrateContract(signer, clientID string, checksum, migrateMsg []byte)
 func (m MsgMigrateContract) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidAddress, "string could not be parsed as address: %v", err)
 	}
 
 	if err := ValidateWasmChecksum(m.Checksum); err != nil {
@@ -102,7 +102,7 @@ func (m MsgMigrateContract) ValidateBasic() error {
 	}
 
 	if len(m.Msg) == 0 {
-		return errorsmod.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty")
+		return sdkioerrors.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty")
 	}
 
 	return nil

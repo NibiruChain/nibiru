@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/stretchr/testify/require"
+
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	connectiontypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
@@ -12,7 +14,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
-	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"

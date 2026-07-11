@@ -3,8 +3,8 @@ package testing
 import (
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 

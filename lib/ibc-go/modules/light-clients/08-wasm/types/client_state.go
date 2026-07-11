@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/hex"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,7 +40,7 @@ func (cs ClientState) GetLatestHeight() exported.Height {
 // Validate performs a basic validation of the client state fields.
 func (cs ClientState) Validate() error {
 	if len(cs.Data) == 0 {
-		return errorsmod.Wrap(ErrInvalidData, "data cannot be empty")
+		return sdkioerrors.Wrap(ErrInvalidData, "data cannot be empty")
 	}
 
 	if err := ValidateWasmChecksum(cs.Checksum); err != nil { //revive:disable:if-return
@@ -89,7 +89,7 @@ func (cs ClientState) GetTimestampAtHeight(
 ) (uint64, error) {
 	timestampHeight, ok := height.(clienttypes.Height)
 	if !ok {
-		return 0, errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
+		return 0, sdkioerrors.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
 	}
 
 	payload := QueryMsg{
@@ -100,7 +100,7 @@ func (cs ClientState) GetTimestampAtHeight(
 
 	result, err := wasmQuery[TimestampAtHeightResult](ctx, clientStore, &cs, payload)
 	if err != nil {
-		return 0, errorsmod.Wrapf(err, "height (%s)", height)
+		return 0, sdkioerrors.Wrapf(err, "height (%s)", height)
 	}
 
 	return result.Timestamp, nil
@@ -112,13 +112,13 @@ func (cs ClientState) GetTimestampAtHeight(
 func (cs ClientState) Initialize(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, state exported.ConsensusState) error {
 	consensusState, ok := state.(*ConsensusState)
 	if !ok {
-		return errorsmod.Wrapf(clienttypes.ErrInvalidConsensus, "invalid initial consensus state. expected type: %T, got: %T",
+		return sdkioerrors.Wrapf(clienttypes.ErrInvalidConsensus, "invalid initial consensus state. expected type: %T, got: %T",
 			&ConsensusState{}, state)
 	}
 
 	// Do not allow initialization of a client with a checksum that hasn't been previously stored via storeWasmCode.
 	if !HasChecksum(ctx, cdc, cs.Checksum) {
-		return errorsmod.Wrapf(ErrInvalidChecksum, "checksum (%s) has not been previously stored", hex.EncodeToString(cs.Checksum))
+		return sdkioerrors.Wrapf(ErrInvalidChecksum, "checksum (%s) has not been previously stored", hex.EncodeToString(cs.Checksum))
 	}
 
 	payload := InstantiateMessage{
@@ -146,11 +146,11 @@ func (cs ClientState) VerifyMembership(
 ) error {
 	proofHeight, ok := height.(clienttypes.Height)
 	if !ok {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
 	}
 
 	if cs.GetLatestHeight().LT(height) {
-		return errorsmod.Wrapf(
+		return sdkioerrors.Wrapf(
 			ibcerrors.ErrInvalidHeight,
 			"client state height < proof height (%d < %d), please ensure the client has been updated", cs.GetLatestHeight(), height,
 		)
@@ -158,7 +158,7 @@ func (cs ClientState) VerifyMembership(
 
 	merklePath, ok := path.(commitmenttypes.MerklePath)
 	if !ok {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", commitmenttypes.MerklePath{}, path)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", commitmenttypes.MerklePath{}, path)
 	}
 
 	payload := SudoMsg{
@@ -190,11 +190,11 @@ func (cs ClientState) VerifyNonMembership(
 ) error {
 	proofHeight, ok := height.(clienttypes.Height)
 	if !ok {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", clienttypes.Height{}, height)
 	}
 
 	if cs.GetLatestHeight().LT(height) {
-		return errorsmod.Wrapf(
+		return sdkioerrors.Wrapf(
 			ibcerrors.ErrInvalidHeight,
 			"client state height < proof height (%d < %d), please ensure the client has been updated", cs.GetLatestHeight(), height,
 		)
@@ -202,7 +202,7 @@ func (cs ClientState) VerifyNonMembership(
 
 	merklePath, ok := path.(commitmenttypes.MerklePath)
 	if !ok {
-		return errorsmod.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", commitmenttypes.MerklePath{}, path)
+		return sdkioerrors.Wrapf(ibcerrors.ErrInvalidType, "expected %T, got %T", commitmenttypes.MerklePath{}, path)
 	}
 
 	payload := SudoMsg{

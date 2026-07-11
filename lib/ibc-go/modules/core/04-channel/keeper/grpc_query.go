@@ -496,7 +496,6 @@ func (q Keeper) UnreceivedAcks(c context.Context, req *types.QueryUnreceivedAcks
 		if commitment := q.GetPacketCommitment(ctx, req.PortId, req.ChannelId, seq); len(commitment) != 0 {
 			unreceivedSequences = append(unreceivedSequences, seq)
 		}
-
 	}
 
 	selfHeight := clienttypes.GetSelfHeight(ctx)

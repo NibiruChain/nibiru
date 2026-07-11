@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,7 +22,7 @@ func NewGenesisState(contracts []Contract) *GenesisState {
 func (gs GenesisState) Validate() error {
 	for _, contract := range gs.Contracts {
 		if err := ValidateWasmCode(contract.CodeBytes); err != nil {
-			return errorsmod.Wrap(err, "wasm bytecode validation failed")
+			return sdkioerrors.Wrap(err, "wasm bytecode validation failed")
 		}
 	}
 

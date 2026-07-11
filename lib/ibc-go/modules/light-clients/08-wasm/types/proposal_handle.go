@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +18,7 @@ import (
 func (cs ClientState) CheckSubstituteAndUpdateState(ctx sdk.Context, cdc codec.BinaryCodec, subjectClientStore, substituteClientStore sdk.KVStore, substituteClient exported.ClientState) error {
 	substituteClientState, ok := substituteClient.(*ClientState)
 	if !ok {
-		return errorsmod.Wrapf(
+		return sdkioerrors.Wrapf(
 			clienttypes.ErrInvalidClient,
 			"invalid substitute client state: expected type %T, got %T", &ClientState{}, substituteClient,
 		)
@@ -27,7 +27,7 @@ func (cs ClientState) CheckSubstituteAndUpdateState(ctx sdk.Context, cdc codec.B
 	// check that checksums of subject client state and substitute client state match
 	// changing the checksum is only allowed through the migrate contract RPC endpoint
 	if !bytes.Equal(cs.Checksum, substituteClientState.Checksum) {
-		return errorsmod.Wrapf(clienttypes.ErrInvalidClient, "expected checksums to be equal: expected %s, got %s", hex.EncodeToString(cs.Checksum), hex.EncodeToString(substituteClientState.Checksum))
+		return sdkioerrors.Wrapf(clienttypes.ErrInvalidClient, "expected checksums to be equal: expected %s, got %s", hex.EncodeToString(cs.Checksum), hex.EncodeToString(substituteClientState.Checksum))
 	}
 
 	store := newMigrateClientWrappedStore(subjectClientStore, substituteClientStore)

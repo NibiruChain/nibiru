@@ -263,7 +263,6 @@ func (suite *KeeperTestSuite) TestHandleUpgradeProposal() {
 				// check that client state was not set
 				_, found = suite.chainA.GetSimApp().UpgradeKeeper.GetUpgradedClient(suite.chainA.GetContext(), plan.Height)
 				suite.Require().False(found)
-
 			}
 		})
 	}

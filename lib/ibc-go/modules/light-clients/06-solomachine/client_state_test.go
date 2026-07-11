@@ -38,7 +38,6 @@ func (suite *SoloMachineTestSuite) TestStatus() {
 func (suite *SoloMachineTestSuite) TestClientStateValidateBasic() {
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		testCases := []struct {
 			name        string
 			clientState *solomachine.ClientState
@@ -148,7 +147,6 @@ func (suite *SoloMachineTestSuite) TestInitialize() {
 func (suite *SoloMachineTestSuite) TestVerifyMembership() {
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		var (
 			clientState *solomachine.ClientState
 			path        exported.Path
@@ -636,7 +634,6 @@ func (suite *SoloMachineTestSuite) TestSignBytesMarshalling() {
 func (suite *SoloMachineTestSuite) TestVerifyNonMembership() {
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		var (
 			clientState *solomachine.ClientState
 			path        exported.Path

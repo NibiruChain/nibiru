@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -36,7 +36,7 @@ func (k Keeper) OnChanOpenTry(
 		// Propose the default metadata if the counterparty version is invalid
 		connection, err := k.channelKeeper.GetConnection(ctx, connectionHops[0])
 		if err != nil {
-			return "", errorsmod.Wrapf(err, "failed to retrieve connection %s", connectionHops[0])
+			return "", sdkioerrors.Wrapf(err, "failed to retrieve connection %s", connectionHops[0])
 		}
 
 		k.Logger(ctx).Debug("counterparty version is invalid, proposing default metadata")
@@ -55,7 +55,7 @@ func (k Keeper) OnChanOpenTry(
 		}
 
 		if channel.State != channeltypes.CLOSED {
-			return "", errorsmod.Wrapf(icatypes.ErrActiveChannelAlreadySet, "existing active channel %s for portID %s must be %s", activeChannelID, portID, channeltypes.CLOSED)
+			return "", sdkioerrors.Wrapf(icatypes.ErrActiveChannelAlreadySet, "existing active channel %s for portID %s must be %s", activeChannelID, portID, channeltypes.CLOSED)
 		}
 
 		// if a channel is being reopened, we allow the controller to propose new fields
@@ -82,7 +82,6 @@ func (k Keeper) OnChanOpenTry(
 		if _, ok := k.accountKeeper.GetAccount(ctx, accAddress).(*icatypes.InterchainAccount); !ok {
 			return "", sdkerrors.Wrapf(icatypes.ErrInvalidAccountReopening, "existing account address %s, does not have interchain account type", accAddress)
 		}
-
 	} else {
 		accAddress, err = k.createInterchainAccount(ctx, metadata.HostConnectionId, counterparty.PortId)
 		if err != nil {

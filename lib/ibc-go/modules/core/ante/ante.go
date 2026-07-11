@@ -1,7 +1,7 @@
 package ante
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -119,11 +119,11 @@ func (rrd RedundantRelayDecorator) updateClientCheckTx(ctx sdk.Context, msg *cli
 
 	clientState, found := rrd.k.ClientKeeper.GetClientState(ctx, msg.ClientId)
 	if !found {
-		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, "%s", msg.ClientId)
+		return sdkioerrors.Wrapf(clienttypes.ErrClientNotFound, "%s", msg.ClientId)
 	}
 
 	if status := rrd.k.ClientKeeper.GetClientStatus(ctx, clientState, msg.ClientId); status != exported.Active {
-		return errorsmod.Wrapf(clienttypes.ErrClientNotActive, "cannot update client (%s) with status %s", msg.ClientId, status)
+		return sdkioerrors.Wrapf(clienttypes.ErrClientNotActive, "cannot update client (%s) with status %s", msg.ClientId, status)
 	}
 
 	clientStore := rrd.k.ClientKeeper.ClientStore(ctx, msg.ClientId)

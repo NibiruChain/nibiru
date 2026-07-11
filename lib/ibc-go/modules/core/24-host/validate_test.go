@@ -34,7 +34,6 @@ func TestDefaultIdentifierValidator(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		err := ClientIdentifierValidator(tc.id)
 		err1 := ConnectionIdentifierValidator(tc.id)
 		err2 := ChannelIdentifierValidator(tc.id)
@@ -70,7 +69,6 @@ func TestPortIdentifierValidator(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		err := PortIdentifierValidator(tc.id)
 		if tc.expPass {
 			require.NoError(t, err, tc.msg)

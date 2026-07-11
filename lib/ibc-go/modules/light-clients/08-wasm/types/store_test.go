@@ -2,12 +2,12 @@ package types_test
 
 import (
 	prefixstore "github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/internal/ibcwasm"
 	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
-	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 )
 
 var invalidPrefix = []byte("invalid/")
@@ -134,7 +134,7 @@ func (suite *TypesTestSuite) TestMigrateClientWrappedStoreGetStore() {
 	testCases := []struct {
 		name     string
 		prefix   []byte
-		expStore storetypes.KVStore
+		expStore sdk.KVStore
 	}{
 		{
 			"success: subject store",
@@ -228,7 +228,7 @@ func (suite *TypesTestSuite) TestMigrateClientWrappedStoreGet() {
 		name     string
 		prefix   []byte
 		key      []byte
-		expStore storetypes.KVStore
+		expStore sdk.KVStore
 	}{
 		{
 			"success: subject store Get",
@@ -563,7 +563,7 @@ func (suite *TypesTestSuite) TestGetClientID() {
 }
 
 // GetSubjectAndSubstituteStore returns a subject and substitute store for testing.
-func (suite *TypesTestSuite) GetSubjectAndSubstituteStore() (storetypes.KVStore, storetypes.KVStore) {
+func (suite *TypesTestSuite) GetSubjectAndSubstituteStore() (sdk.KVStore, sdk.KVStore) {
 	suite.SetupWasmWithMockVM()
 
 	endpointA := wasmtesting.NewWasmEndpoint(suite.chainA)

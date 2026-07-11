@@ -33,7 +33,6 @@ func TestParseConnectionSequence(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		seq, err := types.ParseConnectionSequence(tc.connectionID)
 		valid := types.IsValidConnectionID(tc.connectionID)
 		require.Equal(t, tc.expSeq, seq)

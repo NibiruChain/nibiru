@@ -266,7 +266,6 @@ func (suite *TransferTestSuite) TestOnRecvPacket() {
 			"failure: invalid packet data bytes",
 			func() {
 				packet.Data = []byte("invalid data")
-
 			},
 			channeltypes.NewErrorAcknowledgement(sdkerrors.ErrInvalidType),
 		},

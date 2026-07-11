@@ -4,6 +4,7 @@ import (
 	"math"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"

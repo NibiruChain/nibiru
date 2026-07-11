@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"io"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -98,26 +98,26 @@ func (ws *WasmSnapshotter) RestoreExtension(height uint64, format uint32, payloa
 		return ws.processAllItems(height, payloadReader, restoreV1)
 	}
 
-	return errorsmod.Wrapf(snapshot.ErrUnknownFormat, "expected %d, got %d", ws.SnapshotFormat(), format)
+	return sdkioerrors.Wrapf(snapshot.ErrUnknownFormat, "expected %d, got %d", ws.SnapshotFormat(), format)
 }
 
 func restoreV1(_ sdk.Context, _ *Keeper, compressedCode []byte) error {
 	if !types.IsGzip(compressedCode) {
-		return errorsmod.Wrap(types.ErrInvalidData, "expected wasm code is not gzip format")
+		return sdkioerrors.Wrap(types.ErrInvalidData, "expected wasm code is not gzip format")
 	}
 
 	wasmCode, err := types.Uncompress(compressedCode, types.MaxWasmByteSize())
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to uncompress wasm code")
+		return sdkioerrors.Wrap(err, "failed to uncompress wasm code")
 	}
 
 	checksum, err := ibcwasm.GetVM().StoreCodeUnchecked(wasmCode)
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to store wasm code")
+		return sdkioerrors.Wrap(err, "failed to store wasm code")
 	}
 
 	if err := ibcwasm.GetVM().Pin(checksum); err != nil {
-		return errorsmod.Wrapf(err, "failed to pin checksum: %s to in-memory cache", hex.EncodeToString(checksum))
+		return sdkioerrors.Wrapf(err, "failed to pin checksum: %s to in-memory cache", hex.EncodeToString(checksum))
 	}
 
 	return nil
@@ -138,7 +138,7 @@ func (ws *WasmSnapshotter) processAllItems(
 		}
 
 		if err := cb(ctx, ws.keeper, payload); err != nil {
-			return errorsmod.Wrap(err, "failure processing snapshot item")
+			return sdkioerrors.Wrap(err, "failure processing snapshot item")
 		}
 	}
 

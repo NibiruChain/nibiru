@@ -3,7 +3,7 @@ package types
 import (
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
@@ -33,10 +33,10 @@ func MaxWasmByteSize() uint64 {
 func ValidateWasmChecksum(checksum Checksum) error {
 	lenChecksum := len(checksum)
 	if lenChecksum == 0 {
-		return errorsmod.Wrap(ErrInvalidChecksum, "checksum cannot be empty")
+		return sdkioerrors.Wrap(ErrInvalidChecksum, "checksum cannot be empty")
 	}
 	if lenChecksum != 32 { // sha256 output is 256 bits long
-		return errorsmod.Wrapf(ErrInvalidChecksum, "expected length of 32 bytes, got %d", lenChecksum)
+		return sdkioerrors.Wrapf(ErrInvalidChecksum, "expected length of 32 bytes, got %d", lenChecksum)
 	}
 
 	return nil
@@ -46,11 +46,11 @@ func ValidateWasmChecksum(checksum Checksum) error {
 // to the 02-client identifier format and that it is a 08-wasm clientID.
 func ValidateClientID(clientID string) error {
 	if !clienttypes.IsValidClientID(clientID) {
-		return errorsmod.Wrapf(host.ErrInvalidID, "invalid client identifier %s", clientID)
+		return sdkioerrors.Wrapf(host.ErrInvalidID, "invalid client identifier %s", clientID)
 	}
 
 	if !strings.HasPrefix(clientID, Wasm) {
-		return errorsmod.Wrapf(host.ErrInvalidID, "client identifier %s does not contain %s prefix", clientID, Wasm)
+		return sdkioerrors.Wrapf(host.ErrInvalidID, "client identifier %s does not contain %s prefix", clientID, Wasm)
 	}
 
 	return nil

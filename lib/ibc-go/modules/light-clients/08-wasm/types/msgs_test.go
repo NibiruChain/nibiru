@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	ibcerrors "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/errors"
+	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
@@ -117,27 +117,27 @@ func TestMsgMigrateContractValidateBasic(t *testing.T) {
 		{
 			"failure: checksum is nil",
 			types.NewMsgMigrateContract(signer, defaultWasmClientID, nil, validMigrateMsg),
-			errorsmod.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
+			sdkioerrors.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
 		},
 		{
 			"failure: checksum is empty",
 			types.NewMsgMigrateContract(signer, defaultWasmClientID, []byte{}, validMigrateMsg),
-			errorsmod.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
+			sdkioerrors.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
 		},
 		{
 			"failure: checksum is not 32 bytes",
 			types.NewMsgMigrateContract(signer, defaultWasmClientID, []byte{1}, validMigrateMsg),
-			errorsmod.Wrapf(types.ErrInvalidChecksum, "expected length of 32 bytes, got %d", 1),
+			sdkioerrors.Wrapf(types.ErrInvalidChecksum, "expected length of 32 bytes, got %d", 1),
 		},
 		{
 			"failure: migrateMsg is nil",
 			types.NewMsgMigrateContract(signer, defaultWasmClientID, validChecksum, nil),
-			errorsmod.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty"),
+			sdkioerrors.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty"),
 		},
 		{
 			"failure: migrateMsg is empty",
 			types.NewMsgMigrateContract(signer, defaultWasmClientID, validChecksum, []byte("")),
-			errorsmod.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty"),
+			sdkioerrors.Wrap(ibcerrors.ErrInvalidRequest, "migrate message cannot be empty"),
 		},
 	}
 

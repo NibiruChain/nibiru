@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 

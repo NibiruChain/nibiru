@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	_ "cosmossdk.io/api/cosmos/bank/v1beta1"    // workaround to successfully retrieve bank module safe queries
 	_ "cosmossdk.io/api/cosmos/staking/v1beta1" // workaround to successfully retrieve staking module safe queries
@@ -45,12 +45,12 @@ func (m msgServer) ModuleQuerySafe(goCtx context.Context, msg *types.MsgModuleQu
 			}
 		}
 		if !isModuleQuerySafe {
-			return nil, errorsmod.Wrapf(ibcerrors.ErrInvalidRequest, "not module query safe: %s", query.Path)
+			return nil, sdkioerrors.Wrapf(ibcerrors.ErrInvalidRequest, "not module query safe: %s", query.Path)
 		}
 
 		route := m.queryRouter.Route(query.Path)
 		if route == nil {
-			return nil, errorsmod.Wrapf(ibcerrors.ErrInvalidRequest, "no route to query: %s", query.Path)
+			return nil, sdkioerrors.Wrapf(ibcerrors.ErrInvalidRequest, "no route to query: %s", query.Path)
 		}
 
 		res, err := route(ctx, abci.RequestQuery{
@@ -62,7 +62,7 @@ func (m msgServer) ModuleQuerySafe(goCtx context.Context, msg *types.MsgModuleQu
 			return nil, err
 		}
 		if res.Value == nil {
-			return nil, errorsmod.Wrapf(ibcerrors.ErrInvalidRequest, "no response for query: %s", query.Path)
+			return nil, sdkioerrors.Wrapf(ibcerrors.ErrInvalidRequest, "no response for query: %s", query.Path)
 		}
 
 		responses[i] = res.Value

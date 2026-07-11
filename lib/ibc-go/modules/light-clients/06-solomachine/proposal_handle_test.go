@@ -17,7 +17,6 @@ func (suite *SoloMachineTestSuite) TestCheckSubstituteAndUpdateState() {
 
 	// test singlesig and multisig public keys
 	for _, sm := range []*ibctesting.Solomachine{suite.solomachine, suite.solomachineMulti} {
-
 		testCases := []struct {
 			name     string
 			malleate func()
@@ -73,7 +72,6 @@ func (suite *SoloMachineTestSuite) TestCheckSubstituteAndUpdateState() {
 					suite.Require().Equal(substituteClientState.(*solomachine.ClientState).ConsensusState, updatedClient.ConsensusState)
 					suite.Require().Equal(substituteClientState.(*solomachine.ClientState).Sequence, updatedClient.Sequence)
 					suite.Require().Equal(false, updatedClient.IsFrozen)
-
 				} else {
 					suite.Require().Error(err)
 				}

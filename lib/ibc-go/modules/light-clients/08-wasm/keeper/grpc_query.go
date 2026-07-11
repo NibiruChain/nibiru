@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -30,12 +30,12 @@ func (k Keeper) Code(goCtx context.Context, req *types.QueryCodeRequest) (*types
 
 	// Only return checksums we previously stored, not arbitrary checksums that might be stored via e.g Wasmd.
 	if !types.HasChecksum(sdk.UnwrapSDKContext(goCtx), k.cdc, checksum) {
-		return nil, status.Error(codes.NotFound, errorsmod.Wrap(types.ErrWasmChecksumNotFound, req.Checksum).Error())
+		return nil, status.Error(codes.NotFound, sdkioerrors.Wrap(types.ErrWasmChecksumNotFound, req.Checksum).Error())
 	}
 
 	code, err := ibcwasm.GetVM().GetCode(checksum)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, errorsmod.Wrap(types.ErrWasmChecksumNotFound, req.Checksum).Error())
+		return nil, status.Error(codes.NotFound, sdkioerrors.Wrap(types.ErrWasmChecksumNotFound, req.Checksum).Error())
 	}
 
 	return &types.QueryCodeResponse{

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
@@ -261,7 +261,7 @@ func (suite *KeeperTestSuite) TestRecvPacket() {
 		path       *ibctesting.Path
 		packet     exported.PacketI
 		channelCap *capabilitytypes.Capability
-		expError   *sdkerrors.Error
+		expError   *sdkioerrors.Error
 	)
 
 	testCases := []testCase{
@@ -622,7 +622,7 @@ func (suite *KeeperTestSuite) TestAcknowledgePacket() {
 		ack    []byte
 
 		channelCap *capabilitytypes.Capability
-		expError   *sdkerrors.Error
+		expError   *sdkioerrors.Error
 	)
 
 	testCases := []testCase{
@@ -721,7 +721,8 @@ func (suite *KeeperTestSuite) TestAcknowledgePacket() {
 				path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeper.SetPacketAcknowledgement(path.EndpointB.Chain.GetContext(), path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sequence, types.CommitAcknowledgement(ack))
 
 				path.EndpointB.Chain.NextBlock()
-				path.EndpointA.UpdateClient()
+				err = path.EndpointA.UpdateClient()
+				suite.Require().NoError(err)
 			},
 			false,
 		},
@@ -743,7 +744,8 @@ func (suite *KeeperTestSuite) TestAcknowledgePacket() {
 				path.EndpointB.Chain.App.GetIBCKeeper().ChannelKeeper.SetPacketAcknowledgement(path.EndpointB.Chain.GetContext(), path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID, sequence, types.CommitAcknowledgement(ack))
 
 				path.EndpointB.Chain.NextBlock()
-				path.EndpointA.UpdateClient()
+				err = path.EndpointA.UpdateClient()
+				suite.Require().NoError(err)
 			},
 			true,
 		},

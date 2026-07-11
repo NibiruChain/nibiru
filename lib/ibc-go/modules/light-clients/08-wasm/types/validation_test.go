@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 
 	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
@@ -85,21 +85,21 @@ func TestValidateWasmChecksum(t *testing.T) {
 			func() {
 				checksum = nil
 			},
-			errorsmod.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
+			sdkioerrors.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
 		},
 		{
 			"failure: empty byte slice",
 			func() {
 				checksum = []byte{}
 			},
-			errorsmod.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
+			sdkioerrors.Wrap(types.ErrInvalidChecksum, "checksum cannot be empty"),
 		},
 		{
 			"failure: byte slice size is not 32",
 			func() {
 				checksum = []byte{1}
 			},
-			errorsmod.Wrapf(types.ErrInvalidChecksum, "expected length of 32 bytes, got %d", 1),
+			sdkioerrors.Wrapf(types.ErrInvalidChecksum, "expected length of 32 bytes, got %d", 1),
 		},
 	}
 
@@ -136,14 +136,14 @@ func TestValidateClientID(t *testing.T) {
 			func() {
 				clientID = ""
 			},
-			errorsmod.Wrapf(host.ErrInvalidID, "invalid client identifier %s", clientID),
+			sdkioerrors.Wrapf(host.ErrInvalidID, "invalid client identifier %s", clientID),
 		},
 		{
 			"failure: clientID is not a wasm client identifier",
 			func() {
 				clientID = ibctesting.FirstClientID
 			},
-			errorsmod.Wrapf(host.ErrInvalidID, "client identifier %s does not contain %s prefix", ibctesting.FirstClientID, types.Wasm),
+			sdkioerrors.Wrapf(host.ErrInvalidID, "client identifier %s does not contain %s prefix", ibctesting.FirstClientID, types.Wasm),
 		},
 	}
 

@@ -181,7 +181,6 @@ func (gs GenesisState) Validate() error {
 			if clientType != cs.ClientType() {
 				return fmt.Errorf("consensus state client type %s does not equal client state client type %s", cs.ClientType(), clientType)
 			}
-
 		}
 	}
 
@@ -197,7 +196,6 @@ func (gs GenesisState) Validate() error {
 				return fmt.Errorf("invalid client metadata %v clientID %s index %d: %w", gm, clientMetadata.ClientId, i, err)
 			}
 		}
-
 	}
 
 	if maxSequence != 0 && maxSequence >= gs.NextClientSequence {

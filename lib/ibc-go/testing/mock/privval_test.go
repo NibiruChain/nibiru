@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
@@ -27,7 +27,7 @@ func TestSignVote(t *testing.T) {
 	err := pv.SignVote(chainID, vote)
 	require.NoError(t, err)
 
-	msg := tmtypes.VoteSignBytes(chainID, vote)
+	msg := cmttypes.VoteSignBytes(chainID, vote)
 	ok := pk.VerifySignature(msg, vote.Signature)
 	require.True(t, ok)
 }
@@ -40,7 +40,7 @@ func TestSignProposal(t *testing.T) {
 	err := pv.SignProposal(chainID, proposal)
 	require.NoError(t, err)
 
-	msg := tmtypes.ProposalSignBytes(chainID, proposal)
+	msg := cmttypes.ProposalSignBytes(chainID, proposal)
 	ok := pk.VerifySignature(msg, proposal.Signature)
 	require.True(t, ok)
 }

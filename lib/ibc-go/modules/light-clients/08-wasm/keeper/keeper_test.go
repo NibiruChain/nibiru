@@ -11,21 +11,21 @@ import (
 	testifysuite "github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/libs/log"
-	storetypes "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/internal/ibcwasm"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
 	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing/simapp"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
-	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
-	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
@@ -122,7 +122,7 @@ func (suite *KeeperTestSuite) setupWasmWithMockVM() (ibctesting.TestingApp, map[
 
 // storeWasmCode stores the wasm code on chain and returns the checksum.
 func storeWasmCode(suite *KeeperTestSuite, wasmCode []byte) []byte {
-	ctx := suite.chainA.GetContext().WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+	ctx := suite.chainA.GetContext().WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 
 	msg := types.NewMsgStoreCode(authtypes.NewModuleAddress(govtypes.ModuleName).String(), wasmCode)
 	response, err := GetSimApp(suite.chainA).WasmClientKeeper.StoreCode(ctx, msg)

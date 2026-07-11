@@ -33,7 +33,7 @@ func (a TransferAuthorization) Accept(ctx sdk.Context, msg sdk.Msg) (authz.Accep
 	}
 
 	for index, allocation := range a.Allocations {
-		if !(allocation.SourceChannel == msgTransfer.SourceChannel && allocation.SourcePort == msgTransfer.SourcePort) {
+		if allocation.SourceChannel != msgTransfer.SourceChannel || allocation.SourcePort != msgTransfer.SourcePort {
 			continue
 		}
 

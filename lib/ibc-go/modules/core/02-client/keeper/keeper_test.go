@@ -7,7 +7,7 @@ import (
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -60,14 +60,14 @@ type KeeperTestSuite struct {
 	keeper         *keeper.Keeper
 	consensusState *ibctm.ConsensusState
 	header         *ibctm.Header
-	valSet         *tmtypes.ValidatorSet
+	valSet         *cmttypes.ValidatorSet
 	valSetHash     tmbytes.HexBytes
-	privVal        tmtypes.PrivValidator
+	privVal        cmttypes.PrivValidator
 	now            time.Time
 	past           time.Time
 	solomachine    *ibctesting.Solomachine
 
-	signers map[string]tmtypes.PrivValidator
+	signers map[string]cmttypes.PrivValidator
 
 	// TODO: deprecate
 	queryClient types.QueryClient
@@ -86,7 +86,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	app := simapp.Setup(isCheckTx)
 
 	suite.cdc = app.AppCodec()
-	suite.ctx = app.BaseApp.NewContext(isCheckTx, tmproto.Header{Height: height, ChainID: testClientID, Time: now2})
+	suite.ctx = app.NewContext(isCheckTx, tmproto.Header{Height: height, ChainID: testClientID, Time: now2})
 	suite.keeper = &app.IBCKeeper.ClientKeeper
 	suite.privVal = ibctestingmock.NewPV()
 
@@ -95,11 +95,11 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	testClientHeightMinus1 := types.NewHeight(0, height-1)
 
-	validator := tmtypes.NewValidator(pubKey, 1)
-	suite.valSet = tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	suite.valSet = cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 	suite.valSetHash = suite.valSet.Hash()
 
-	suite.signers = make(map[string]tmtypes.PrivValidator, 1)
+	suite.signers = make(map[string]cmttypes.PrivValidator, 1)
 	suite.signers[validator.Address.String()] = suite.privVal
 
 	suite.header = suite.chainA.CreateTMClientHeader(testChainID, int64(testClientHeight.RevisionHeight), testClientHeightMinus1, now2, suite.valSet, suite.valSet, suite.valSet, suite.signers)

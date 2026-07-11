@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/gogoproto/proto"
@@ -542,6 +542,15 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 	}
 }
 
+// jsonByteArray encodes bytes as the numeric JSON array produced by CosmWasm.
+func jsonByteArray(bz []byte) string {
+	values := make([]string, len(bz))
+	for i, value := range bz {
+		values[i] = strconv.Itoa(int(value))
+	}
+	return "[" + strings.Join(values, ",") + "]"
+}
+
 func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 	var (
 		path       *ibctesting.Path
@@ -584,7 +593,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 				}`)
 				// this is the way cosmwasm encodes byte arrays by default
 				// golang doesn't use this encoding by default, but it can still deserialize:
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -609,7 +618,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -638,7 +647,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -678,7 +687,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -719,7 +728,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -756,7 +765,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -772,7 +781,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 			"unregistered sdk.Msg",
 			func(icaAddress string) {
 				msgBytes := []byte(`{"messages":[{}]}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -797,7 +806,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,
@@ -822,7 +831,7 @@ func (suite *KeeperTestSuite) TestJSONOnRecvPacket() {
 						}
 					]
 				}`)
-				byteArrayString := strings.Join(strings.Fields(fmt.Sprint(msgBytes)), ",")
+				byteArrayString := jsonByteArray(msgBytes)
 
 				packetData = []byte(`{
 					"type": 1,

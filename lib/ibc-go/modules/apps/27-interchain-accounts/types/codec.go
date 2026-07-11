@@ -1,7 +1,7 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -46,7 +46,7 @@ func DeserializeCosmosTx(cdc codec.BinaryCodec, data []byte) ([]sdk.Msg, error) 
 func SerializeCosmosTxWithEncoding(cdc codec.BinaryCodec, msgs []proto.Message, encoding string) ([]byte, error) {
 	// this is a defensive check to ensure only the ProtoCodec is used for message serialization
 	if _, ok := cdc.(*codec.ProtoCodec); !ok {
-		return nil, errorsmod.Wrap(ErrInvalidCodec, "only the ProtoCodec may be used for receiving messages on the host chain")
+		return nil, sdkioerrors.Wrap(ErrInvalidCodec, "only the ProtoCodec may be used for receiving messages on the host chain")
 	}
 
 	var bz []byte
@@ -69,15 +69,15 @@ func SerializeCosmosTxWithEncoding(cdc codec.BinaryCodec, msgs []proto.Message, 
 	case EncodingProtobuf:
 		bz, err = cdc.Marshal(cosmosTx)
 		if err != nil {
-			return nil, errorsmod.Wrapf(err, "cannot marshal CosmosTx with protobuf")
+			return nil, sdkioerrors.Wrapf(err, "cannot marshal CosmosTx with protobuf")
 		}
 	case EncodingProto3JSON:
 		bz, err = cdc.(*codec.ProtoCodec).MarshalJSON(cosmosTx)
 		if err != nil {
-			return nil, errorsmod.Wrapf(ErrUnknownDataType, "cannot marshal CosmosTx with proto3 json")
+			return nil, sdkioerrors.Wrapf(ErrUnknownDataType, "cannot marshal CosmosTx with proto3 json")
 		}
 	default:
-		return nil, errorsmod.Wrapf(ErrInvalidCodec, "unsupported encoding format %s", encoding)
+		return nil, sdkioerrors.Wrapf(ErrInvalidCodec, "unsupported encoding format %s", encoding)
 	}
 
 	return bz, nil
@@ -90,7 +90,7 @@ func SerializeCosmosTxWithEncoding(cdc codec.BinaryCodec, msgs []proto.Message, 
 func DeserializeCosmosTxWithEncoding(cdc codec.BinaryCodec, data []byte, encoding string) ([]sdk.Msg, error) {
 	// this is a defensive check to ensure only the ProtoCodec is used for message deserialization
 	if _, ok := cdc.(*codec.ProtoCodec); !ok {
-		return nil, errorsmod.Wrap(ErrInvalidCodec, "only the ProtoCodec may be used for receiving messages on the host chain")
+		return nil, sdkioerrors.Wrap(ErrInvalidCodec, "only the ProtoCodec may be used for receiving messages on the host chain")
 	}
 
 	var cosmosTx CosmosTx
@@ -98,14 +98,14 @@ func DeserializeCosmosTxWithEncoding(cdc codec.BinaryCodec, data []byte, encodin
 	switch encoding {
 	case EncodingProtobuf:
 		if err := cdc.Unmarshal(data, &cosmosTx); err != nil {
-			return nil, errorsmod.Wrapf(err, "cannot unmarshal CosmosTx with protobuf")
+			return nil, sdkioerrors.Wrapf(err, "cannot unmarshal CosmosTx with protobuf")
 		}
 	case EncodingProto3JSON:
 		if err := cdc.(*codec.ProtoCodec).UnmarshalJSON(data, &cosmosTx); err != nil {
-			return nil, errorsmod.Wrapf(ErrUnknownDataType, "cannot unmarshal CosmosTx with proto3 json")
+			return nil, sdkioerrors.Wrapf(ErrUnknownDataType, "cannot unmarshal CosmosTx with proto3 json")
 		}
 	default:
-		return nil, errorsmod.Wrapf(ErrInvalidCodec, "unsupported encoding format %s", encoding)
+		return nil, sdkioerrors.Wrapf(ErrInvalidCodec, "unsupported encoding format %s", encoding)
 	}
 
 	msgs := make([]sdk.Msg, len(cosmosTx.Messages))

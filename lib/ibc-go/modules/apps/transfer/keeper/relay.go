@@ -110,7 +110,6 @@ func (k Keeper) sendTransfer(
 		if err := k.escrowToken(ctx, sender, escrowAddress, token); err != nil {
 			return 0, err
 		}
-
 	} else {
 		labels = append(labels, telemetry.NewLabel(coretypes.LabelSource, "false"))
 

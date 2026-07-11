@@ -3,7 +3,7 @@ package utils
 import (
 	"context"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -150,8 +150,8 @@ func QueryTendermintHeader(clientCtx client.Context) (ibctm.Header, int64, error
 		return ibctm.Header{}, 0, err
 	}
 
-	protoCommit := commit.SignedHeader.ToProto()
-	protoValset, err := tmtypes.NewValidatorSet(validators.Validators).ToProto()
+	protoCommit := commit.ToProto()
+	protoValset, err := cmttypes.NewValidatorSet(validators.Validators).ToProto()
 	if err != nil {
 		return ibctm.Header{}, 0, err
 	}
@@ -201,7 +201,7 @@ func QuerySelfConsensusState(clientCtx client.Context) (*ibctm.ConsensusState, i
 	state := &ibctm.ConsensusState{
 		Timestamp:          commit.Time,
 		Root:               commitmenttypes.NewMerkleRoot(commit.AppHash),
-		NextValidatorsHash: tmtypes.NewValidatorSet(nextVals.Validators).Hash(),
+		NextValidatorsHash: cmttypes.NewValidatorSet(nextVals.Validators).Hash(),
 	}
 
 	return state, height, nil

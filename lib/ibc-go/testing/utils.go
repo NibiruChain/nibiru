@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 )
 
 // ApplyValSetChanges takes in tmtypes.ValidatorSet and []abci.ValidatorUpdate and will return a new tmtypes.ValidatorSet which has the
 // provided validator updates applied to the provided validator set.
-func ApplyValSetChanges(t *testing.T, valSet *tmtypes.ValidatorSet, valUpdates []abci.ValidatorUpdate) *tmtypes.ValidatorSet {
-	updates, err := tmtypes.PB2TM.ValidatorUpdates(valUpdates)
+func ApplyValSetChanges(t *testing.T, valSet *cmttypes.ValidatorSet, valUpdates []abci.ValidatorUpdate) *cmttypes.ValidatorSet {
+	updates, err := cmttypes.PB2TM.ValidatorUpdates(valUpdates)
 	require.NoError(t, err)
 
 	// must copy since validator set will mutate with UpdateWithChangeSet

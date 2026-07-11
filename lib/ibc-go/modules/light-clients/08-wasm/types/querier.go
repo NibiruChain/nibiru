@@ -7,7 +7,7 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -173,6 +173,6 @@ func redactError(err error) error {
 		return err
 	}
 
-	codespace, code, _ := errorsmod.ABCIInfo(err, false)
+	codespace, code, _ := sdkioerrors.ABCIInfo(err, false)
 	return fmt.Errorf("codespace: %s, code: %d", codespace, code)
 }

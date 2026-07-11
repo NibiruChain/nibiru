@@ -9,7 +9,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +39,7 @@ func instantiateContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Chec
 
 	clientID, err := getClientID(clientStore)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "failed to retrieve clientID for wasm contract instantiation")
+		return nil, sdkioerrors.Wrap(err, "failed to retrieve clientID for wasm contract instantiation")
 	}
 	env := getEnv(ctx, clientID)
 
@@ -62,7 +62,7 @@ func callContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, m
 
 	clientID, err := getClientID(clientStore)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "failed to retrieve clientID for wasm contract call")
+		return nil, sdkioerrors.Wrap(err, "failed to retrieve clientID for wasm contract call")
 	}
 	env := getEnv(ctx, clientID)
 
@@ -94,7 +94,7 @@ func queryContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, 
 
 	clientID, err := getClientID(clientStore)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "failed to retrieve clientID for wasm contract query")
+		return nil, sdkioerrors.Wrap(err, "failed to retrieve clientID for wasm contract query")
 	}
 	env := getEnv(ctx, clientID)
 
@@ -108,17 +108,17 @@ func queryContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, 
 func wasmInstantiate(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, cs *ClientState, payload InstantiateMessage) error {
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal payload for wasm contract instantiation")
+		return sdkioerrors.Wrap(err, "failed to marshal payload for wasm contract instantiation")
 	}
 
 	checksum := cs.Checksum
 	resp, err := instantiateContract(ctx, clientStore, checksum, encodedData)
 	if err != nil {
-		return errorsmod.Wrap(ErrWasmContractCallFailed, err.Error())
+		return sdkioerrors.Wrap(ErrWasmContractCallFailed, err.Error())
 	}
 
 	if err = checkResponse(resp); err != nil {
-		return errorsmod.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
+		return sdkioerrors.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
 	}
 
 	newClientState, err := validatePostExecutionClientState(clientStore, cdc)
@@ -128,7 +128,7 @@ func wasmInstantiate(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVS
 
 	// Checksum should only be able to be modified during migration.
 	if !bytes.Equal(checksum, newClientState.Checksum) {
-		return errorsmod.Wrapf(ErrWasmInvalidContractModification, "expected checksum %s, got %s", hex.EncodeToString(checksum), hex.EncodeToString(newClientState.Checksum))
+		return sdkioerrors.Wrapf(ErrWasmInvalidContractModification, "expected checksum %s, got %s", hex.EncodeToString(checksum), hex.EncodeToString(newClientState.Checksum))
 	}
 
 	return nil
@@ -147,21 +147,21 @@ func wasmSudo[T ContractResult](ctx sdk.Context, cdc codec.BinaryCodec, clientSt
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to marshal payload for wasm execution")
+		return result, sdkioerrors.Wrap(err, "failed to marshal payload for wasm execution")
 	}
 
 	checksum := cs.Checksum
 	resp, err := callContract(ctx, clientStore, checksum, encodedData)
 	if err != nil {
-		return result, errorsmod.Wrap(ErrWasmContractCallFailed, err.Error())
+		return result, sdkioerrors.Wrap(ErrWasmContractCallFailed, err.Error())
 	}
 
 	if err = checkResponse(resp); err != nil {
-		return result, errorsmod.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
+		return result, sdkioerrors.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
 	}
 
 	if err := json.Unmarshal(resp.Data, &result); err != nil {
-		return result, errorsmod.Wrap(ErrWasmInvalidResponseData, err.Error())
+		return result, sdkioerrors.Wrap(ErrWasmInvalidResponseData, err.Error())
 	}
 
 	newClientState, err := validatePostExecutionClientState(clientStore, cdc)
@@ -171,7 +171,7 @@ func wasmSudo[T ContractResult](ctx sdk.Context, cdc codec.BinaryCodec, clientSt
 
 	// Checksum should only be able to be modified during migration.
 	if !bytes.Equal(checksum, newClientState.Checksum) {
-		return result, errorsmod.Wrapf(ErrWasmInvalidContractModification, "expected checksum %s, got %s", hex.EncodeToString(checksum), hex.EncodeToString(newClientState.Checksum))
+		return result, sdkioerrors.Wrapf(ErrWasmInvalidContractModification, "expected checksum %s, got %s", hex.EncodeToString(checksum), hex.EncodeToString(newClientState.Checksum))
 	}
 
 	return result, nil
@@ -183,11 +183,11 @@ func wasmSudo[T ContractResult](ctx sdk.Context, cdc codec.BinaryCodec, clientSt
 func wasmMigrate(ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore, cs *ClientState, clientID string, payload []byte) error {
 	resp, err := migrateContract(ctx, clientID, clientStore, cs.Checksum, payload)
 	if err != nil {
-		return errorsmod.Wrapf(ErrWasmContractCallFailed, "%s", err.Error())
+		return sdkioerrors.Wrapf(ErrWasmContractCallFailed, "%s", err.Error())
 	}
 
 	if err = checkResponse(resp); err != nil {
-		return errorsmod.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
+		return sdkioerrors.Wrapf(err, "checksum (%s)", hex.EncodeToString(cs.Checksum))
 	}
 
 	_, err = validatePostExecutionClientState(clientStore, cdc)
@@ -204,16 +204,16 @@ func wasmQuery[T ContractResult](ctx sdk.Context, clientStore sdk.KVStore, cs *C
 
 	encodedData, err := json.Marshal(payload)
 	if err != nil {
-		return result, errorsmod.Wrap(err, "failed to marshal payload for wasm query")
+		return result, sdkioerrors.Wrap(err, "failed to marshal payload for wasm query")
 	}
 
 	resp, err := queryContract(ctx, clientStore, cs.Checksum, encodedData)
 	if err != nil {
-		return result, errorsmod.Wrap(ErrWasmContractCallFailed, err.Error())
+		return result, sdkioerrors.Wrap(ErrWasmContractCallFailed, err.Error())
 	}
 
 	if err := json.Unmarshal(resp, &result); err != nil {
-		return result, errorsmod.Wrapf(ErrWasmInvalidResponseData, "failed to unmarshal result of wasm query: %v", err)
+		return result, sdkioerrors.Wrapf(ErrWasmInvalidResponseData, "failed to unmarshal result of wasm query: %v", err)
 	}
 
 	return result, nil
@@ -233,17 +233,17 @@ func validatePostExecutionClientState(clientStore sdk.KVStore, cdc codec.BinaryC
 
 	bz := clientStore.Get(key)
 	if len(bz) == 0 {
-		return nil, errorsmod.Wrap(ErrWasmInvalidContractModification, types.ErrClientNotFound.Error())
+		return nil, sdkioerrors.Wrap(ErrWasmInvalidContractModification, types.ErrClientNotFound.Error())
 	}
 
 	clientState, err := unmarshalClientState(cdc, bz)
 	if err != nil {
-		return nil, errorsmod.Wrap(ErrWasmInvalidContractModification, err.Error())
+		return nil, sdkioerrors.Wrap(ErrWasmInvalidContractModification, err.Error())
 	}
 
 	cs, ok := clientState.(*ClientState)
 	if !ok {
-		return nil, errorsmod.Wrapf(ErrWasmInvalidContractModification, "expected client state type %T, got %T", (*ClientState)(nil), clientState)
+		return nil, sdkioerrors.Wrapf(ErrWasmInvalidContractModification, "expected client state type %T, got %T", (*ClientState)(nil), clientState)
 	}
 
 	return cs, nil

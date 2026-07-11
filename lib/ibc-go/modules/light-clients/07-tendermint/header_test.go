@@ -35,11 +35,11 @@ func (suite *TendermintTestSuite) TestHeaderValidateBasic() {
 			header.SignedHeader = nil
 		}, false},
 		{"SignedHeaderFromProto failed", func() {
-			header.SignedHeader.Commit.Height = -1
+			header.Commit.Height = -1
 		}, false},
 		{"signed header failed tendermint ValidateBasic", func() {
 			header = suite.chainA.LastHeader
-			header.SignedHeader.Commit = nil
+			header.Commit = nil
 		}, false},
 		{"trusted height is equal to header height", func() {
 			header.TrustedHeight = header.GetHeight().(clienttypes.Height)

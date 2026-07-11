@@ -8,7 +8,7 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -36,9 +36,9 @@ type chainCheckpoint struct {
 	chainID            string
 	lastHeader         *ibctm.Header
 	currentHeader      tmproto.Header
-	vals               *tmtypes.ValidatorSet
-	nextVals           *tmtypes.ValidatorSet
-	signers            map[string]tmtypes.PrivValidator
+	vals               *cmttypes.ValidatorSet
+	nextVals           *cmttypes.ValidatorSet
+	signers            map[string]cmttypes.PrivValidator
 	senderPrivKeys     []cryptotypes.PrivKey
 	senderAccountIndex int
 }
@@ -184,8 +184,8 @@ func cloneDB(t *testing.T, src dbm.DB) dbm.DB {
 	return dst
 }
 
-func copySigners(signers map[string]tmtypes.PrivValidator) map[string]tmtypes.PrivValidator {
-	out := make(map[string]tmtypes.PrivValidator, len(signers))
+func copySigners(signers map[string]cmttypes.PrivValidator) map[string]cmttypes.PrivValidator {
+	out := make(map[string]cmttypes.PrivValidator, len(signers))
 	for addr, signer := range signers {
 		out[addr] = signer
 	}

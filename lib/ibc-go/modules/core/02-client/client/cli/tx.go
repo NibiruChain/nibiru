@@ -41,7 +41,6 @@ func NewCreateClientCmd() *cobra.Command {
 			var clientState exported.ClientState
 			clientContentOrFileName := args[0]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(clientContentOrFileName), &clientState); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(clientContentOrFileName)
 				if err != nil {
@@ -57,7 +56,6 @@ func NewCreateClientCmd() *cobra.Command {
 			var consensusState exported.ConsensusState
 			consensusContentOrFileName := args[1]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(consensusContentOrFileName), &consensusState); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(consensusContentOrFileName)
 				if err != nil {
@@ -102,7 +100,6 @@ func NewUpdateClientCmd() *cobra.Command {
 			var clientMsg exported.ClientMessage
 			clientMsgContentOrFileName := args[1]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(clientMsgContentOrFileName), &clientMsg); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(clientMsgContentOrFileName)
 				if err != nil {
@@ -149,7 +146,6 @@ func NewSubmitMisbehaviourCmd() *cobra.Command {
 			clientID := args[0]
 			misbehaviourContentOrFileName := args[1]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(misbehaviourContentOrFileName), &misbehaviour); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(misbehaviourContentOrFileName)
 				if err != nil {
@@ -196,7 +192,6 @@ func NewUpgradeClientCmd() *cobra.Command {
 			var clientState exported.ClientState
 			clientContentOrFileName := args[1]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(clientContentOrFileName), &clientState); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(clientContentOrFileName)
 				if err != nil {
@@ -212,7 +207,6 @@ func NewUpgradeClientCmd() *cobra.Command {
 			var consensusState exported.ConsensusState
 			consensusContentOrFileName := args[2]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(consensusContentOrFileName), &consensusState); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(consensusContentOrFileName)
 				if err != nil {
@@ -352,7 +346,6 @@ func NewCmdSubmitUpgradeProposal() *cobra.Command {
 			var clientState exported.ClientState
 			clientContentOrFileName := args[2]
 			if err := cdc.UnmarshalInterfaceJSON([]byte(clientContentOrFileName), &clientState); err != nil {
-
 				// check for file path if JSON input is not provided
 				contents, err := os.ReadFile(clientContentOrFileName)
 				if err != nil {

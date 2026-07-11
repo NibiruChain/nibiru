@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -243,7 +243,7 @@ func ParseHexHash(hexHash string) (tmbytes.HexBytes, error) {
 		return nil, err
 	}
 
-	if err := tmtypes.ValidateHash(hash); err != nil {
+	if err := cmttypes.ValidateHash(hash); err != nil {
 		return nil, err
 	}
 

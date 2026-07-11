@@ -199,7 +199,6 @@ func (suite *KeeperTestSuite) TestHandleRecvPacket() {
 				if tc.async {
 					suite.Require().Nil(ack)
 					suite.Require().False(found)
-
 				} else {
 					suite.Require().NotNil(ack)
 					suite.Require().True(found)
@@ -518,7 +517,6 @@ func (suite *KeeperTestSuite) TestHandleTimeoutPacket() {
 					// context should contain application events
 					suite.Require().Contains(events, ibcmock.NewMockTimeoutPacketEvent())
 				}
-
 			} else {
 				suite.Require().Error(err)
 			}
@@ -686,7 +684,6 @@ func (suite *KeeperTestSuite) TestHandleTimeoutOnClosePacket() {
 				// verify packet commitment was deleted on source chain
 				has := suite.chainA.App.GetIBCKeeper().ChannelKeeper.HasPacketCommitment(suite.chainA.GetContext(), packet.GetSourcePort(), packet.GetSourceChannel(), packet.GetSequence())
 				suite.Require().False(has)
-
 			} else {
 				suite.Require().Error(err)
 			}

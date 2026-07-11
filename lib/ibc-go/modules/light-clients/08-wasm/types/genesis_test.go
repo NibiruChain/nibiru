@@ -6,12 +6,12 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
-	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 )
 
 func (suite *TypesTestSuite) TestValidateGenesis() {
@@ -89,7 +89,7 @@ func (suite *TypesTestSuite) TestExportMetatada() {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
-			errorsmod.Wrapf(types.ErrWasmContractCallFailed, "%s", wasmtesting.ErrMockContract.Error()),
+			sdkioerrors.Wrapf(types.ErrWasmContractCallFailed, "%s", wasmtesting.ErrMockContract.Error()),
 			nil,
 		},
 	}

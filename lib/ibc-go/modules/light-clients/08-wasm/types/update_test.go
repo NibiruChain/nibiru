@@ -7,15 +7,15 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	errorsmod "cosmossdk.io/errors"
-	storetypes "github.com/cosmos/cosmos-sdk/types"
+	sdkioerrors "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
-	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )
 
@@ -24,7 +24,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 
 	var (
 		clientMsg             exported.ClientMessage
-		clientStore           storetypes.KVStore
+		clientStore           sdk.KVStore
 		expectedClientStateBz []byte
 	)
 
@@ -106,7 +106,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 			func() {
 				clientStore = suite.chainA.App.GetIBCKeeper().ClientKeeper.ClientStore(suite.chainA.GetContext(), ibctesting.InvalidID)
 			},
-			errorsmod.Wrap(types.ErrWasmContractCallFailed, errorsmod.Wrap(errorsmod.Wrapf(types.ErrRetrieveClientID, "prefix does not contain a valid clientID: %s", errorsmod.Wrapf(host.ErrInvalidID, "invalid client identifier %s", ibctesting.InvalidID)), "failed to retrieve clientID for wasm contract call").Error()),
+			sdkioerrors.Wrap(types.ErrWasmContractCallFailed, sdkioerrors.Wrap(sdkioerrors.Wrapf(types.ErrRetrieveClientID, "prefix does not contain a valid clientID: %s", sdkioerrors.Wrapf(host.ErrInvalidID, "invalid client identifier %s", ibctesting.InvalidID)), "failed to retrieve clientID for wasm contract call").Error()),
 			nil,
 		},
 		{
@@ -125,7 +125,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
-			errorsmod.Wrap(types.ErrWasmContractCallFailed, wasmtesting.ErrMockContract.Error()),
+			sdkioerrors.Wrap(types.ErrWasmContractCallFailed, wasmtesting.ErrMockContract.Error()),
 			nil,
 		},
 	}
@@ -254,7 +254,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
-			errorsmod.Wrap(types.ErrWasmContractCallFailed, wasmtesting.ErrMockContract.Error()),
+			sdkioerrors.Wrap(types.ErrWasmContractCallFailed, wasmtesting.ErrMockContract.Error()),
 			nil,
 		},
 	}

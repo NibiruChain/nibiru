@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
@@ -24,7 +24,7 @@ func (suite *KeeperTestSuite) TestTimeoutPacket() {
 		packet      types.Packet
 		nextSeqRecv uint64
 		ordered     bool
-		expError    *sdkerrors.Error
+		expError    *sdkioerrors.Error
 	)
 
 	testCases := []testCase{

@@ -19,11 +19,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/cosmos/go-bip39"
-	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
-	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
-	ibctypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/types"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibctypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/types"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 )

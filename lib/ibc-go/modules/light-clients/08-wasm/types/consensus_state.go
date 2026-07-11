@@ -1,7 +1,7 @@
 package types
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )
@@ -28,7 +28,7 @@ func (ConsensusState) GetTimestamp() uint64 {
 // ValidateBasic defines a basic validation for the wasm client consensus state.
 func (cs ConsensusState) ValidateBasic() error {
 	if len(cs.Data) == 0 {
-		return errorsmod.Wrap(ErrInvalidData, "data cannot be empty")
+		return sdkioerrors.Wrap(ErrInvalidData, "data cannot be empty")
 	}
 
 	return nil

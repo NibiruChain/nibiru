@@ -58,7 +58,6 @@ func TestMsgRegisterInterchainAccountValidateBasic(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-
 		msg = types.NewMsgRegisterInterchainAccount(
 			ibctesting.FirstConnectionID,
 			ibctesting.TestAccAddress,
@@ -135,7 +134,6 @@ func TestMsgSendTxValidateBasic(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-
 		msgBankSend := &banktypes.MsgSend{
 			FromAddress: ibctesting.TestAccAddress,
 			ToAddress:   ibctesting.TestAccAddress,
