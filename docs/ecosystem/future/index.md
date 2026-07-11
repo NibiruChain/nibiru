@@ -74,8 +74,7 @@ packet flow.
 
 #### IBC Middleware Use Cases
 
-1. Fee middleware: Create economies around IBC infra by including fees for packet processing.
-2. Packet-Forwarding Middleware (PMF): Add custom logic on processing of IBC packets.
+1. Packet-Forwarding Middleware (PMF): Add custom logic on processing of IBC packets.
 
 #### Related Reading
 

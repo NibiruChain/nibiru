@@ -39,11 +39,11 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
 
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
@@ -67,7 +67,7 @@ var (
 		stakingtypes.NotBondedPoolName,
 		oracletypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		ibcfeetypes.ModuleName,
+		deprecatedIBCFeeStoreKey,
 		icatypes.ModuleName,
 
 		evm.ModuleName,
@@ -88,7 +88,6 @@ var (
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
 		{Account: oracletypes.ModuleName},
 		{Account: ibctransfertypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
-		{Account: ibcfeetypes.ModuleName},
 		{Account: icatypes.ModuleName},
 
 		{Account: evm.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
@@ -145,7 +144,6 @@ var (
 		// IBC modules
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
-		ibcfeetypes.ModuleName,
 		icatypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 

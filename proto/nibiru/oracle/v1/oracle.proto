@@ -42,7 +42,7 @@ message Params {
   repeated string whitelist = 4 [
     (gogoproto.moretags) = "yaml:\"whitelist\"",
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair"
+        "Pair"
   ];
   // SlashFraction returns the proportion of an oracle's stake that gets
   // slashed in the event of slashing. `SlashFraction` specifies the exact
@@ -126,7 +126,7 @@ message ExchangeRateTuple {
   string pair = 1 [
     (gogoproto.moretags) = "yaml:\"pair\"",
     (gogoproto.customtype) =
-        "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair",
+        "Pair",
     (gogoproto.nullable) = false
   ];
 

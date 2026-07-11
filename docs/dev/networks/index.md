@@ -13,16 +13,16 @@ description: >
 
 Table of Contents:
 
-- [Mainnet (Real Funds)](#mainnet-real-funds)
-- [Permanent Testnet](#permanent-testnet)
+- [Nibiru](#nibiru)
+- [Nibiru Testnet](#nibiru-testnet)
 - [Localnet: Local Test Network](#localnet-local-test-network)
 - [Related Pages](#related-pages)
 
-## Mainnet (Real Funds)
+## Nibiru
 
-Nibiru's mainnet network, Cataclysm-1, is the blockchain where real economic activities take place.
+Nibiru is the production network where real economic activity takes place.
 
-| Blockchain Network | Nibiru (Mainnet) |
+| Blockchain Network | Nibiru |
 | --- | --- |
 | EVM RPC | https://evm-rpc.nibiru.fi |
 | EIP-155 Chain ID | 6900 |
@@ -30,7 +30,7 @@ Nibiru's mainnet network, Cataclysm-1, is the blockchain where real economic act
 | CSDK Chain-ID | cataclysm-1 |
 | CometBFT RPC | https://rpc.nibiru.fi:443 |
 
-Nibiru CLI Config: Mainnet
+Nibiru CLI Config: Nibiru
 
 ```bash
 RPC_URL="https://rpc.nibiru.fi:443"
@@ -40,10 +40,10 @@ nibid config broadcast-mode sync
 nibid config # Prints your new config to verify correctness
 ```
 
-## Permanent Testnet
+## Nibiru Testnet
 
-Nibiru testnets are public networks that upgraded in advance of Nibiru's mainnet
-as beta-testing environments.
+Nibiru Testnet is the official public testnet. It upgraded in advance of Nibiru
+as a beta-testing environment for developers and node operators.
 
 Tokens on the testnet do not hold real monetary value. Please be careful not to
 bridge or IBC transfer real tokens to testnet by mistake.
@@ -64,12 +64,12 @@ const chain = Testnet(2) // corresponds to "nibiru-testnet-2"
 const queryClient = await NibiruQuerier.connect(chain.endptTm)
 ```
 
-Nibiru CLI Config: Testnet
+Nibiru CLI Config: Nibiru Testnet
 
 ```bash
-RPC_URL="https://rpc.testnet-1.nibiru.fi:443"
+RPC_URL="https://rpc.testnet-2.nibiru.fi:443"
 nibid config node $RPC_URL
-nibid config chain-id nibiru-testnet-1
+nibid config chain-id nibiru-testnet-2
 nibid config broadcast-mode sync
 nibid config # Prints your new config to verify correctness
 ```
@@ -114,8 +114,8 @@ nibid config # Prints your new config to verify correctness
 
 | Display Name     | Chain Namespace | Chain ID | RPC Target                             |
 |------------------|-----------------|----------|----------------------------------------|
-| Nibiru Mainnet   | 420             | 0x1AF4   | `https://evm-rpc.nibiru.fi/`           |
-| Nibiru Testnet 1 | 500             | 0x1C2A   | `https://evm-rpc.testnet-1.nibiru.fi/` |
+| Nibiru           | 420             | 0x1AF4   | `https://evm-rpc.nibiru.fi/`           |
+| Nibiru Testnet   | 500             | 0x1AFF   | `https://evm-rpc.testnet-2.nibiru.fi/` |
 | Nibiru Devnet 1  | 500             | 0x1C34   | `https://evm-rpc.devnet-1.nibiru.fi/`  |
 | Nibiru Devnet 3  | 500             | 0x1C36   | `https://evm-rpc.devnet-3.nibiru.fi/`  |
 

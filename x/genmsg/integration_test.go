@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
 	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 func TestGenmsgInGenesis(t *testing.T) {

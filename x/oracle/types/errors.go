@@ -36,4 +36,5 @@ var (
 	ErrUnknownPair            = registerError("unknown pair")
 	ErrNoValidTWAP            = registerError("TWA price not found")
 	ErrOracleDeprecated       = registerError("module x/oracle is deprecated as of v2.12; transaction messages are disabled")
+	ErrInvalidTokenPair       = registerError("invalid token pair")
 )

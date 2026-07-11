@@ -3,18 +3,18 @@ order: 1
 description: Instructions for running a validator node for Nibiru Testnet
 ---
 
-# Become a Validator (Testnet)
+# Become a Validator (Nibiru Testnet)
 
 {{ $frontmatter.description }}
 
-First, please follow the [instructions to join the testnet as a full node](../full-nodes/index.md).
+First, please follow the [instructions to join Nibiru Testnet as a full node](../full-nodes/index.md).
 
 ::: tip
 We recommend saving the `chain-id` into your `client.toml`.
 This prevents you from having to pass the `chain-id` flag with every CLI command.
 
 ```bash
-NETWORK=nibiru-testnet-1
+NETWORK=nibiru-testnet-2
 
 nibid config chain-id $NETWORK
 ```
@@ -51,7 +51,7 @@ After a validator is created, NIBI holders can delegate NIBI to the validator, e
 Of all of the validators that send a `staking create-validator` transaction, those with the highest total stake are designated members of the validator set. If a validator's total stake falls too low, that validator loses its validator privileges and becomes unable to participate in consensus or generate rewards. Over time, the maximum number of validators may be increased via on-chain governance proposals.
 
 ```bash
-NETWORK=nibiru-testnet-1
+NETWORK=nibiru-testnet-2
 
 nibid tx staking create-validator \
 --amount 10000000unibi \
@@ -67,7 +67,7 @@ nibid tx staking create-validator \
 --from <key-name>
 ```
 
-You can verify your node is in the validator set status by viewing the [block explorer](https://explorer.nibiru.fi/nibiru-testnet-1/staking)
+You can verify your node is in the validator set status by viewing the [block explorer](https://explorer.nibiru.fi/nibiru-testnet-2/staking)
 
 ### Editing the public description
 

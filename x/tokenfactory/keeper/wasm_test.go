@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	fixture "github.com/NibiruChain/nibiru/v2/x/tokenfactory/testdata"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
@@ -67,7 +67,7 @@ func SetupContracts(
 ) map[string]LiveContract {
 	wasmName := fixture.WASM_NIBI_STARGATE
 	codeId := StoreContract(t, wasmName, ctx, nibiru, sender)
-	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.OneInt()))
+	deposit := sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.OneInt()))
 	contract := Instantiate.ContractNibiStargate(t, ctx, nibiru, codeId, sender, deposit)
 	LiveContracts[wasmName] = LiveContract{
 		CodeId:   codeId,

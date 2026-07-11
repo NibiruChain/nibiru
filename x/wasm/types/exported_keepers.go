@@ -2,7 +2,8 @@ package types
 
 import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"

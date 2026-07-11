@@ -230,7 +230,7 @@ test:
   set -euo pipefail
   echo "Running: just test"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
   echo "RUN: go test -count=1 \$GO_TEST_PKGS"
   go test -count=1 $GO_TEST_PKGS
 
@@ -239,9 +239,17 @@ test-fast:
   #!/usr/bin/env bash
   set -euo pipefail
   echo "Running: just test-fast"
-  GO_TEST_PKGS="$(go list ./... | grep -v '^github.com/NibiruChain/nibiru/v2/api/')"
+  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
   echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
   go test $GO_TEST_PKGS
+
+# Run the explicit IBC test suite and allow cached test results
+test-ibc:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  echo "Running: just test-ibc"
+  echo "RUN: go test ./lib/ibc-go/... # includes cache, skips localnet"
+  go test ./lib/ibc-go/...
 
 # Run Go tests without cached test results and generate coverage.out
 test-cover:

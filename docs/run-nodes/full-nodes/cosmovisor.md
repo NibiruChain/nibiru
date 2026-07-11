@@ -56,7 +56,7 @@ When using Cosmovisor, make sure that you do not have auto download of binaries 
     mkdir -p $DAEMON_HOME/cosmovisor/upgrades
     ```
 
-4. Add the genesis version of the binary (currently it is `v1.0.0` both for `nibiru-testnet-1` and `cataclysm-1` networks) to the `cosmovisor` directory. You can verify your binary location with `which nibid` command. For example:
+4. Add the genesis version of the binary for your network to the `cosmovisor` directory. Use the genesis version listed in the [Available Networks](../full-nodes/index.md#available-networks) table—for example, `v2.0.0` for chain ID `nibiru-testnet-2` on Nibiru Testnet. You can verify your binary location with the `which nibid` command. For example:
 
     ```bash
     cp $(which nibid) $DAEMON_HOME/cosmovisor/genesis/bin

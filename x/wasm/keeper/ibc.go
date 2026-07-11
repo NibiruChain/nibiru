@@ -3,7 +3,7 @@ package keeper
 import (
 	"strings"
 
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 
 	sdkioerrors "cosmossdk.io/errors"
 

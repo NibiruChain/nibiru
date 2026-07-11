@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/gosdk"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -122,7 +122,7 @@ func (s *Suite) AssertTxResponseSuccess(txResp *sdk.TxResponse) (txHashHex strin
 func (s *Suite) msgSendVars() (from, to sdk.AccAddress, amt sdk.Coins, msgSend sdk.Msg) {
 	from = s.from
 	to = testutil.NewAccAddress()
-	amt = sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 420))
+	amt = sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 420))
 	msgSend = banktypes.NewMsgSend(from, to, amt)
 	return from, to, amt, msgSend
 }

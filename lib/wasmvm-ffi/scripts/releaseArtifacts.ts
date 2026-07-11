@@ -422,7 +422,7 @@ export const buildPublishDryRunPlan = (
       `test -d ${artifactsDir}`,
       `git tag --no-sign -a ${nextTag} ${commitSha} -m "libwasmvm ${nextTag}"`,
       `git push origin ${nextTag}`,
-      `gh release create ${nextTag} ${artifactArgs} --repo ${GITHUB_REPO} --title "libwasmvm ${nextTag}" --notes-file <release-body.md>`,
+      `gh release create ${nextTag} ${artifactArgs} --repo ${GITHUB_REPO} --title "${nextTag}" --notes-file <release-body.md>`,
     ],
   };
 };
@@ -506,7 +506,7 @@ export const createGitTagAndRelease = async (
     `gh release create ${quoteShellArg(
       tag,
     )} ${artifactArgs} --repo ${GITHUB_REPO} --title ${quoteShellArg(
-      `libwasmvm ${tag}`,
+      tag,
     )} --notes-file ${quoteShellArg(releaseBodyPath)}`,
   );
 };

@@ -7,7 +7,8 @@ import (
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 
 	sdkioerrors "cosmossdk.io/errors"
 

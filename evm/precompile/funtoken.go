@@ -819,7 +819,7 @@ func (p precompileFunToken) getErc20Address(
 	iterator := p.evmKeeper.FunTokens.Indexes.BankDenom.ExactMatch(ctx, bankDenom)
 	mappings := p.evmKeeper.FunTokens.Collect(ctx, iterator)
 
-	var erc20ResultAddress gethcommon.Address // Default to address(0)
+	var erc20ResultAddress gethcommon.Address
 
 	if len(mappings) == 1 {
 		erc20ResultAddress = mappings[0].Erc20Addr.Address
@@ -830,14 +830,13 @@ func (p precompileFunToken) getErc20Address(
 		)
 		return
 	} else {
-		// No mapping found, erc20ResultAddress remains address(0)
+		// No mapping found: revert rather than returning address(0).
 		err = fmt.Errorf(
 			"no FunToken mapping found for bank denom \"%s\"", bankDenom,
 		)
 		return
 	}
 
-	// Pack the result (either the found address or address(0))
 	return method.Outputs.Pack(erc20ResultAddress)
 }
 

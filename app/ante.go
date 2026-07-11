@@ -2,7 +2,8 @@ package app
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
+
+	ibcante "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/ante"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 

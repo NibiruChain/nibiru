@@ -18,9 +18,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	nutiltestutil "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
@@ -102,7 +101,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	)
 	executeCW4UpdateAdmin(t, deps, hotWalletCW4, kevinNanoS, hotWalletCW3)
 
-	hotWalletBalance := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(34_508_752_254)))
+	hotWalletBalance := sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(34_508_752_254)))
 	require.NoError(t, testapp.FundAccount(deps.App.BankKeeper, ctx, hotWalletCW3, hotWalletBalance))
 	require.True(t, deps.App.BankKeeper.GetAllBalances(ctx, treasuryCW3).IsZero())
 

@@ -3,10 +3,10 @@ package types
 import (
 	"context"
 
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	connectiontypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/types"
+	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -93,12 +93,7 @@ type ChannelKeeper interface {
 }
 
 // ICS4Wrapper defines the method for an IBC data package to be submitted.
-// The interface is implemented by the channel keeper on the lowest level in ibc-go. Middlewares or other abstractions
-// can add functionality on top of it. See ics4Wrapper in ibc-go.
-// It is important to choose the right implementation that is configured for any middleware used in the ibc-stack of wasm.
-//
-// For example, when ics-29 fee middleware is set up for the wasm ibc-stack, then the IBCFeeKeeper should be used, so
-// that they are in sync.
+// The channel keeper implements this interface and submits packets to IBC core.
 type ICS4Wrapper interface {
 	// SendPacket is called by a module in order to send an IBC packet on a channel.
 	// The packet sequence generated for the packet to be sent is returned. An error

@@ -14,7 +14,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	testutilevents "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -41,7 +41,7 @@ func TestQueryExchangeRate(t *testing.T) {
 	rate := sdkmath.LegacyNewDec(1700)
 	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
-		asset.NewPair(denoms.ETH, denoms.NUSD),
+		types.NewPair(denoms.ETH, denoms.NUSD),
 		types.ExchangeRateAtBlock{
 			ExchangeRate:     rate,
 			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
@@ -55,7 +55,7 @@ func TestQueryExchangeRate(t *testing.T) {
 
 	// Query to grpc
 	res, err := querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{
-		Pair: asset.NewPair(denoms.ETH, denoms.NUSD),
+		Pair: types.NewPair(denoms.ETH, denoms.NUSD),
 	})
 	require.NoError(t, err)
 	require.Equal(t, rate, res.ExchangeRate)
@@ -89,7 +89,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	rate := sdkmath.LegacyNewDec(1700)
 	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
-		asset.NewPair(denoms.BTC, denoms.NUSD),
+		types.NewPair(denoms.BTC, denoms.NUSD),
 		types.ExchangeRateAtBlock{
 			ExchangeRate:     rate,
 			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
@@ -98,7 +98,7 @@ func TestQueryExchangeRates(t *testing.T) {
 	)
 	input.OracleKeeper.ExchangeRateMap.Insert(
 		input.Ctx,
-		asset.NewPair(denoms.ETH, denoms.NUSD),
+		types.NewPair(denoms.ETH, denoms.NUSD),
 		types.ExchangeRateAtBlock{
 			ExchangeRate:     rate,
 			CreatedBlock:     uint64(input.Ctx.BlockHeight()),
@@ -110,8 +110,8 @@ func TestQueryExchangeRates(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, types.ExchangeRateTuples{
-		{Pair: asset.NewPair(denoms.BTC, denoms.NUSD), ExchangeRate: rate},
-		{Pair: asset.NewPair(denoms.ETH, denoms.NUSD), ExchangeRate: rate},
+		{Pair: types.NewPair(denoms.BTC, denoms.NUSD), ExchangeRate: rate},
+		{Pair: types.NewPair(denoms.ETH, denoms.NUSD), ExchangeRate: rate},
 	}, res.ExchangeRates)
 }
 
@@ -120,12 +120,12 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 	querier := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
-	input.OracleKeeper.SetPrice(input.Ctx, asset.NewPair(denoms.BTC, denoms.NUSD), rate)
+	input.OracleKeeper.SetPrice(input.Ctx, types.NewPair(denoms.BTC, denoms.NUSD), rate)
 	testutilevents.RequireContainsTypedEvent(
 		t,
 		input.Ctx,
 		&types.EventPriceUpdate{
-			Pair:        asset.NewPair(denoms.BTC, denoms.NUSD).String(),
+			Pair:        types.NewPair(denoms.BTC, denoms.NUSD).String(),
 			Price:       rate,
 			TimestampMs: input.Ctx.BlockTime().UnixMilli(),
 		},
@@ -136,10 +136,10 @@ func TestQueryExchangeRateTwap(t *testing.T) {
 		WithBlockHeight(input.Ctx.BlockHeight() + 1),
 	)
 
-	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.ETH, denoms.NUSD)})
+	_, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: types.NewPair(denoms.ETH, denoms.NUSD)})
 	require.Error(t, err)
 
-	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
+	res, err := querier.ExchangeRateTwap(ctx, &types.QueryExchangeRateRequest{Pair: types.NewPair(denoms.BTC, denoms.NUSD)})
 	require.NoError(t, err)
 	require.Equal(t, sdkmath.LegacyMustNewDecFromStr("1700"), res.ExchangeRate)
 }
@@ -156,12 +156,12 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	)
 
 	// Pair 1: BTC/NUSD
-	pairBTC := asset.NewPair(denoms.BTC, denoms.NUSD)
+	pairBTC := types.NewPair(denoms.BTC, denoms.NUSD)
 	rateBTC1 := sdkmath.LegacyNewDec(1700)
 	rateBTC2 := sdkmath.LegacyNewDec(1800)
 
 	// Pair 2: ETH/NUSD
-	pairETH := asset.NewPair(denoms.ETH, denoms.NUSD)
+	pairETH := types.NewPair(denoms.ETH, denoms.NUSD)
 	rateETH1 := sdkmath.LegacyNewDec(100)
 	rateETH2 := sdkmath.LegacyNewDec(110)
 
@@ -264,7 +264,7 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 	require.Equal(t, uint64(initialHeight+3), res.BlockHeight)
 
 	t.Run("Query a pair with no snapshots (should return an error)", func(t *testing.T) {
-		pairATOM := asset.NewPair(denoms.ATOM, denoms.NUSD)
+		pairATOM := types.NewPair(denoms.ATOM, denoms.NUSD)
 		_, err = querier.ExchangeRate(ctx, &types.QueryExchangeRateRequest{Pair: pairATOM})
 		require.Error(t, err)
 	})
@@ -273,7 +273,7 @@ func TestQueryDatedExchangeRate(t *testing.T) {
 func TestCalcTwap(t *testing.T) {
 	tests := []struct {
 		name               string
-		pair               asset.Pair
+		pair               types.Pair
 		priceSnapshots     []types.PriceSnapshot
 		currentBlockTime   time.Time
 		currentBlockHeight int64
@@ -285,25 +285,25 @@ func TestCalcTwap(t *testing.T) {
 		// expected price: (9.5 * (35 - 30) + 8.5 * (30 - 20) + 9.0 * (20 - 5)) / 30 = 8.916666
 		{
 			name: "spot price twap calc, t=(5,35]",
-			pair: asset.NewPair(denoms.BTC, denoms.NUSD),
+			pair: types.NewPair(denoms.BTC, denoms.NUSD),
 			priceSnapshots: []types.PriceSnapshot{
 				{
-					Pair:        asset.NewPair(denoms.BTC, denoms.NUSD),
+					Pair:        types.NewPair(denoms.BTC, denoms.NUSD),
 					Price:       sdkmath.LegacyMustNewDecFromStr("90000.0"),
 					TimestampMs: time.UnixMilli(1).UnixMilli(),
 				},
 				{
-					Pair:        asset.NewPair(denoms.BTC, denoms.NUSD),
+					Pair:        types.NewPair(denoms.BTC, denoms.NUSD),
 					Price:       sdkmath.LegacyMustNewDecFromStr("9.0"),
 					TimestampMs: time.UnixMilli(10).UnixMilli(),
 				},
 				{
-					Pair:        asset.NewPair(denoms.BTC, denoms.NUSD),
+					Pair:        types.NewPair(denoms.BTC, denoms.NUSD),
 					Price:       sdkmath.LegacyMustNewDecFromStr("8.5"),
 					TimestampMs: time.UnixMilli(20).UnixMilli(),
 				},
 				{
-					Pair:        asset.NewPair(denoms.BTC, denoms.NUSD),
+					Pair:        types.NewPair(denoms.BTC, denoms.NUSD),
 					Price:       sdkmath.LegacyMustNewDecFromStr("9.5"),
 					TimestampMs: time.UnixMilli(30).UnixMilli(),
 				},
@@ -338,12 +338,12 @@ func TestCalcTwap(t *testing.T) {
 			ctx = ctx.WithBlockTime(time.UnixMilli(0))
 			for _, reserve := range tc.priceSnapshots {
 				ctx = ctx.WithBlockTime(time.UnixMilli(reserve.TimestampMs))
-				input.OracleKeeper.SetPrice(ctx, asset.NewPair(denoms.BTC, denoms.NUSD), reserve.Price)
+				input.OracleKeeper.SetPrice(ctx, types.NewPair(denoms.BTC, denoms.NUSD), reserve.Price)
 			}
 
 			ctx = ctx.WithBlockTime(tc.currentBlockTime).WithBlockHeight(tc.currentBlockHeight)
 
-			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: asset.NewPair(denoms.BTC, denoms.NUSD)})
+			price, err := querier.ExchangeRateTwap(sdk.WrapSDKContext(ctx), &types.QueryExchangeRateRequest{Pair: types.NewPair(denoms.BTC, denoms.NUSD)})
 			require.NoError(t, err)
 
 			require.EqualValuesf(t, tc.expectedPrice, price.ExchangeRate,
@@ -358,9 +358,9 @@ func TestQueryActives(t *testing.T) {
 	queryClient := input.OracleKeeper
 
 	rate := sdkmath.LegacyNewDec(1700)
-	targetPairs := set.New[asset.Pair]()
-	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, denoms.NIBI} {
-		pair := asset.NewPair(bankDenom, denoms.NUSD)
+	targetPairs := set.New[types.Pair]()
+	for _, bankDenom := range []string{denoms.BTC, denoms.ETH, appconst.DENOM_UNIBI} {
+		pair := types.NewPair(bankDenom, denoms.NUSD)
 		targetPairs.Add(pair)
 		input.OracleKeeper.ExchangeRateMap.Insert(
 			input.Ctx,
@@ -507,11 +507,11 @@ func TestQueryVoteTargets(t *testing.T) {
 	querier := input.OracleKeeper
 
 	// clear pairs
-	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[asset.Pair]{}).Keys() {
+	for _, p := range input.OracleKeeper.WhitelistedPairs.Iterate(input.Ctx, collections.Range[types.Pair]{}).Keys() {
 		input.OracleKeeper.WhitelistedPairs.Delete(input.Ctx, p)
 	}
 
-	voteTargets := []asset.Pair{"denom1:denom2", "denom3:denom4", "denom5:denom6"}
+	voteTargets := []types.Pair{"denom1:denom2", "denom3:denom4", "denom5:denom6"}
 	for _, target := range voteTargets {
 		input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, target)
 	}

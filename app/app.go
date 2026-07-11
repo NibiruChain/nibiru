@@ -52,32 +52,31 @@ import (
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
-	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
+	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	ibctransfer "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer"
+	ibctransferkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	ibc "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core"
+	ibcclientclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/client"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	ibcwasm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
@@ -112,8 +111,9 @@ import (
 )
 
 const (
-	appName      = "Nibiru"
-	DisplayDenom = "NIBI"
+	appName                  = "Nibiru"
+	DisplayDenom             = "NIBI"
+	deprecatedIBCFeeStoreKey = "feeibc"
 )
 
 var (
@@ -150,7 +150,6 @@ var (
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
 		oraclemod.AppModuleBasic{},
@@ -173,7 +172,6 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		oracletypes.ModuleName:         {},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         {},
 		icatypes.ModuleName:            {},
 
 		evm.ModuleName:                  {authtypes.Minter, authtypes.Burner},
@@ -270,7 +268,8 @@ func NewNibiruApp(
 		keys: sdk.NewKVStoreKeys(
 			// ibc keys
 			ibctransfertypes.StoreKey,
-			ibcfeetypes.StoreKey,
+			// Retain the empty historical ICS-29 store as an inert tombstone.
+			deprecatedIBCFeeStoreKey,
 			ibcexported.StoreKey,
 			icahosttypes.StoreKey,
 			icacontrollertypes.StoreKey,
@@ -379,7 +378,6 @@ func NewNibiruApp(
 		// ibc
 		ibc.NewAppModule(app.IbcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
-		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
 
@@ -632,7 +630,7 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
-func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
+func (app *NibiruApp) GetStakingKeeper() *stakingkeeper.Keeper {
 	return app.StakingKeeper
 }
 

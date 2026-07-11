@@ -302,7 +302,7 @@ describe("buildPublishDryRunPlan", () => {
           "tmp-artifacts/libwasmvm.aarch64.so " +
           "tmp-artifacts/libwasmvm.dylib " +
           "tmp-artifacts/libwasmvmstatic_darwin.a " +
-          '--repo NibiruChain/nibiru --title "libwasmvm lib/wasmvm-ffi/v1.6.0" ' +
+          '--repo NibiruChain/nibiru --title "lib/wasmvm-ffi/v1.6.0" ' +
           "--notes-file <release-body.md>",
       ],
     })

@@ -6,7 +6,7 @@ description: >-
   to use its corresponding version of the binary to run a full node.
 ---
 
-# Run a Full Node (Testnet)
+# Run a Full Node (Nibiru Testnet)
 
 {{ $frontmatter.description }}
 
@@ -35,8 +35,7 @@ See [Nibiru Networks](../../dev/networks/index.md) for RPC information.
 
 | Chain ID | Description | Genesis Version | Upgrade History | Status |
 | -------- | ----------- | --------------- | --------------- | ------ |
-| nibiru-testnet-2 | Nibiru Chain Second Permanent Testnet. Hard Fork of nibiru-testnet-1. Has IBC channels and [web faucet](https://app.nibiru.fi/faucet) | [v2.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0) | block 305570 - [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0)<br> block 1213333 - [v2.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.3.0)<br> block 1324767 - [v2.4.0-rc1](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0-rc1)<br> block 1927435 - [v2.5.0-rc1](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0-rc1) | ⚡ Active |
-| nibiru-testnet-1 | Nibiru Chain First Permanent Testnet | [v1.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.0.0) | block 48759 - [v1.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.1.0)<br> block 3067771 - [v1.2.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.2.0)<br> block 3095130 - [v1.3.0-rc1](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0-rc1)<br> block 3537069 - [v1.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.3.0)<br> block 4566080 - [v1.4.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.4.0)<br> block 5117602 - [v1.5.0](https://github.com/NibiruChain/nibiru/releases/tag/v1.5.0)<br> block 7280214 - [v2.0.0-rc.1](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-rc.1)<br> block 8825300 - [v2.0.0-rc.9](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-rc.9)<br> block 10354077 - [v2.0.0-rc.14](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-rc.14)<br> block 11253562 - [v2.0.0-rc.18](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-rc.18)<br> block 11353204 - [v2.0.0-rc.19](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0-rc.19) | 🚫 Deprecated |
+| nibiru-testnet-2 | Nibiru Testnet. Official public testnet with IBC channels and a [web faucet](https://app.nibiru.fi/faucet) | [v2.0.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.0.0) | block 305570 - [v2.1.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.1.0)<br> block 1213333 - [v2.3.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.3.0)<br> block 1324767 - [v2.4.0-rc1](https://github.com/NibiruChain/nibiru/releases/tag/v2.4.0-rc1)<br> block 1927435 - [v2.5.0-rc1](https://github.com/NibiruChain/nibiru/releases/tag/v2.5.0-rc1) | ⚡ Active |
 
 ## Running a node in a network that underwent upgrade(s)
 
@@ -105,14 +104,13 @@ data.
 
 - [Nibiru Explorer | NodesGuru](https://nibiru.explorers.guru/)
 - [Nibiru Explorer | NodeStake](https://explorer.nodestake.top/nibiru)
-- [Nibiru Explorer | Kjnodes](https://explorer.kjnodes.com/nibiru)
 - [Nibiru Explorer | Nibiru Chain Team](https://explorer.nibiru.fi/).
 
 <!-- ## Blockchain Parameters -->
 <!---->
 <!-- | Chain ID     | Block Time  | Staking Unbonding Time | Governance Voting Period | -->
 <!-- | ------------ | ----------- | ---------------------- | ------------------------ | -->
-<!-- | nibiru-testnet-1 | 1.5 seconds | 21 days                | 2 hours                  | -->
+<!-- | nibiru-testnet-2 | 1.5 seconds | 21 days                | 2 hours                  | -->
 <!-- | nibiru-itn-2 | 1.5 seconds | 21 days                | 4 days                   | -->
 <!-- | nibiru-itn-1 | 1.5 seconds | 24 hours               | 2 hours                  | -->
 
@@ -172,7 +170,7 @@ nibid version
     curl -s https://storage.googleapis.com/$NETWORK-snapshots/$NETWORK.json > $HOME/.nibid/config/genesis.json
     ```
 
-    **Note:** `nibiru-testnet-2` originates from a hard fork of `nibiru-testnet-1`, which means its genesis file includes the full state snapshot and is therefore quite large (~1.3 GB).
+    **Note:** Nibiru Testnet (chain ID `nibiru-testnet-2`) includes a full state snapshot in its genesis file, so the download is large (~1.3 GB).
 
     **(Optional) Verify Genesis File Checksum**
 
@@ -242,20 +240,13 @@ nibid version
     nibid start
     ```
 
-7. Request tokens from the [Web Faucet for nibiru-testnet-2](https://app.nibiru.fi/faucet) if required.
+7. Request tokens from the [Nibiru Testnet web faucet](https://app.nibiru.fi/faucet) if required.
 
     To create a local key pair, you may use the following command:
 
     ```bash
     nibid keys add <key-name>
     ```
-    <!-- ```bash
-    FAUCET_URL="https://faucet.testnet-1.nibiru.fi/"
-    ADDR="..." # your address
-    curl -X POST -d '{"address": "'"$ADDR"'", "coins": ["11000000unibi","100000000unusd","100000000uusdt"]}' $FAUCET_URL
-    ``` -->
-
-    <!-- Please note, that current daily limit for the Web Faucet is 11NIBI (`11000000unibi`) and 100 NUSD (`100000000unusd`). -->
 
 ---
 

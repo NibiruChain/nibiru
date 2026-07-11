@@ -9,14 +9,14 @@ import (
 	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+
+	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	// ---------------------------------------------------------------
 	// IBC imports
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
 
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
@@ -55,10 +55,6 @@ type PublicKeepers struct {
 	/* IbcKeeper defines each ICS keeper for IBC. IbcKeeper must be a pointer in
 	   the app, so we can SetRouter on it correctly. */
 	IbcKeeper *ibckeeper.Keeper
-
-	// make IBC modules public for test purposes
-	// these modules are never directly routed to by the IBC Router
-	FeeMockModule ibcmock.IBCModule
 
 	// ---------------
 	// Nibiru keepers

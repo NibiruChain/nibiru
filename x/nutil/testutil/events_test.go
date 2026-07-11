@@ -3,9 +3,9 @@ package testutil_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 func (s *TestSuite) TestEventsUtils() {
@@ -22,7 +22,7 @@ func (s *TestSuite) TestEventsUtils() {
 		return out
 	}
 
-	funds := sdk.NewCoins(sdk.NewInt64Coin(denoms.NIBI, 5_000_000))
+	funds := sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 5_000_000))
 	_, addrs := testutil.PrivKeyAddressPairs(2)
 	senderAddr, otherAddr := addrs[0], addrs[1]
 	err := testapp.FundAccount(bapp.BankKeeper, ctx, senderAddr, funds)

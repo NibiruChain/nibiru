@@ -17,8 +17,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
