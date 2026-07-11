@@ -295,7 +295,7 @@ func (suite *KeeperTestSuite) TestModelBasedRelay() {
 			panic(fmt.Errorf("Failed to parse JSON test fixture: %w", err))
 		}
 
-		suite.SetupTest()
+		suite.setupCoordinator(3)
 		pathAtoB := NewTransferPath(suite.chainA, suite.chainB)
 		pathBtoC := NewTransferPath(suite.chainB, suite.chainC)
 		suite.coordinator.Setup(pathAtoB)

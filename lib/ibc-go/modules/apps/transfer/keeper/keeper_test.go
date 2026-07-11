@@ -30,12 +30,23 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 3)
+	suite.setupCoordinator(2)
+}
+
+func (suite *KeeperTestSuite) setupCoordinator(n int) {
+	suite.coordinator = ibctesting.NewCoordinator(suite.T(), n)
 	suite.chainA = suite.coordinator.GetChain(ibctesting.GetChainID(1))
 	suite.chainB = suite.coordinator.GetChain(ibctesting.GetChainID(2))
-	suite.chainC = suite.coordinator.GetChain(ibctesting.GetChainID(3))
 
-	queryHelper := baseapp.NewQueryServerTestHelper(suite.chainA.GetContext(), suite.chainA.GetSimApp().InterfaceRegistry())
+	suite.chainC = nil
+	if n >= 3 {
+		suite.chainC = suite.coordinator.GetChain(ibctesting.GetChainID(3))
+	}
+
+	queryHelper := baseapp.NewQueryServerTestHelper(
+		suite.chainA.GetContext(),
+		suite.chainA.GetSimApp().InterfaceRegistry(),
+	)
 	types.RegisterQueryServer(queryHelper, suite.chainA.GetSimApp().TransferKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
 }
