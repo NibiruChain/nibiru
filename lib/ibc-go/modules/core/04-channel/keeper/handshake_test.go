@@ -33,7 +33,6 @@ func (suite *KeeperTestSuite) TestChanOpenInit() {
 
 	testCases := []testCase{
 		{"success", func() {
-			suite.coordinator.SetupConnections(path)
 			features = []string{"ORDER_ORDERED", "ORDER_UNORDERED"}
 			suite.chainA.CreatePortCapability(suite.chainA.GetSimApp().ScopedIBCMockKeeper, ibctesting.MockPort)
 			portCap = suite.chainA.GetPortCapability(ibctesting.MockPort)
@@ -47,13 +46,10 @@ func (suite *KeeperTestSuite) TestChanOpenInit() {
 			path.EndpointB.ConnectionID = "connection-0"
 		}, false},
 		{"capability is incorrect", func() {
-			suite.coordinator.SetupConnections(path)
 			features = []string{"ORDER_ORDERED", "ORDER_UNORDERED"}
 			portCap = capabilitytypes.NewCapability(3)
 		}, false},
 		{"connection version not negotiated", func() {
-			suite.coordinator.SetupConnections(path)
-
 			// modify connA versions
 			conn := path.EndpointA.GetConnection()
 
@@ -69,8 +65,6 @@ func (suite *KeeperTestSuite) TestChanOpenInit() {
 			portCap = suite.chainA.GetPortCapability(ibctesting.MockPort)
 		}, false},
 		{"connection does not support ORDERED channels", func() {
-			suite.coordinator.SetupConnections(path)
-
 			// modify connA versions to only support UNORDERED channels
 			conn := path.EndpointA.GetConnection()
 
@@ -91,7 +85,6 @@ func (suite *KeeperTestSuite) TestChanOpenInit() {
 			expPass: false,
 			malleate: func() {
 				expErrorMsgSubstring = "status is Unauthorized"
-				suite.coordinator.SetupConnections(path)
 
 				// remove client from allowed list
 				params := suite.chainA.App.GetIBCKeeper().ClientKeeper.GetParams(suite.chainA.GetContext())
@@ -103,14 +96,25 @@ func (suite *KeeperTestSuite) TestChanOpenInit() {
 			},
 		},
 	}
+	connectionCheckpointCases := map[string]bool{
+		"success":                                      true,
+		"capability is incorrect":                      true,
+		"connection version not negotiated":            true,
+		"connection does not support ORDERED channels": true,
+		"unauthorized client":                          true,
+	}
 
 	for _, tc := range testCases {
 		tc := tc
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
 			// run test for all types of ordering
 			for _, order := range []types.Order{types.UNORDERED, types.ORDERED} {
-				suite.SetupTest() // reset
-				path = ibctesting.NewPath(suite.chainA, suite.chainB)
+				if connectionCheckpointCases[tc.msg] {
+					path = suite.RestoreConnectionCheckpoint()
+				} else {
+					suite.SetupTest() // reset
+					path = ibctesting.NewPath(suite.chainA, suite.chainB)
+				}
 				path.EndpointA.ChannelConfig.Order = order
 				path.EndpointB.ChannelConfig.Order = order
 				expErrorMsgSubstring = ""
@@ -169,7 +173,6 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 
 	testCases := []testCase{
 		{"success", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -195,7 +198,6 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 			suite.Require().NoError(err)
 		}, false},
 		{"consensus state not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -207,11 +209,9 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 		}, false},
 		{"channel verification failed", func() {
 			// not creating a channel on chainA will result in an invalid proof of existence
-			suite.coordinator.SetupConnections(path)
 			portCap = suite.chainB.GetPortCapability(ibctesting.MockPort)
 		}, false},
 		{"port capability not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -219,7 +219,6 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 			portCap = capabilitytypes.NewCapability(3)
 		}, false},
 		{"connection version not negotiated", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -238,7 +237,6 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 			portCap = suite.chainB.GetPortCapability(ibctesting.MockPort)
 		}, false},
 		{"connection does not support ORDERED channels", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -257,13 +255,25 @@ func (suite *KeeperTestSuite) TestChanOpenTry() {
 			portCap = suite.chainA.GetPortCapability(ibctesting.MockPort)
 		}, false},
 	}
+	connectionCheckpointCases := map[string]bool{
+		"success":                                      true,
+		"consensus state not found":                    true,
+		"channel verification failed":                  true,
+		"port capability not found":                    true,
+		"connection version not negotiated":            true,
+		"connection does not support ORDERED channels": true,
+	}
 
 	for _, tc := range testCases {
 		tc := tc
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			suite.SetupTest() // reset
-			heightDiff = 0    // must be explicitly changed in malleate
-			path = ibctesting.NewPath(suite.chainA, suite.chainB)
+			if connectionCheckpointCases[tc.msg] {
+				path = suite.RestoreConnectionCheckpoint()
+			} else {
+				suite.SetupTest() // reset
+				path = ibctesting.NewPath(suite.chainA, suite.chainB)
+			}
+			heightDiff = 0 // must be explicitly changed in malleate
 
 			tc.malleate()
 
@@ -314,7 +324,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 
 	testCases := []testCase{
 		{"success", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -325,7 +334,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			channelCap = suite.chainA.GetChannelCapability(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		}, true},
 		{"success with empty stored counterparty channel ID", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -352,7 +360,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			channelCap = suite.chainA.GetChannelCapability(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		}, false},
 		{"connection not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -383,7 +390,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			channelCap = suite.chainA.GetChannelCapability(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		}, false},
 		{"consensus state not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -397,7 +403,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			heightDiff = 3 // consensus state doesn't exist at this height
 		}, false},
 		{"invalid counterparty channel identifier", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -412,7 +417,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 		}, false},
 		{"channel verification failed", func() {
 			// chainB is INIT, chainA in TRYOPEN
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointB.ChanOpenInit()
@@ -424,7 +428,6 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			channelCap = suite.chainA.GetChannelCapability(path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		}, false},
 		{"channel capability not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 			err := path.EndpointA.ChanOpenInit()
 			suite.Require().NoError(err)
@@ -435,14 +438,27 @@ func (suite *KeeperTestSuite) TestChanOpenAck() {
 			channelCap = capabilitytypes.NewCapability(6)
 		}, false},
 	}
+	connectionCheckpointCases := map[string]bool{
+		"success": true,
+		"success with empty stored counterparty channel ID": true,
+		"connection not found":                              true,
+		"consensus state not found":                         true,
+		"invalid counterparty channel identifier":           true,
+		"channel verification failed":                       true,
+		"channel capability not found":                      true,
+	}
 
 	for _, tc := range testCases {
 		tc := tc
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			suite.SetupTest()          // reset
+			if connectionCheckpointCases[tc.msg] {
+				path = suite.RestoreConnectionCheckpoint()
+			} else {
+				suite.SetupTest() // reset
+				path = ibctesting.NewPath(suite.chainA, suite.chainB)
+			}
 			counterpartyChannelID = "" // must be explicitly changed in malleate
 			heightDiff = 0             // must be explicitly changed
-			path = ibctesting.NewPath(suite.chainA, suite.chainB)
 
 			tc.malleate()
 
@@ -484,7 +500,6 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 	)
 	testCases := []testCase{
 		{"success", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -505,7 +520,6 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 			channelCap = suite.chainB.GetChannelCapability(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID)
 		}, false},
 		{"connection not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -534,7 +548,6 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 			channelCap = suite.chainB.GetChannelCapability(path.EndpointB.ChannelConfig.PortID, ibctesting.FirstChannelID)
 		}, false},
 		{"consensus state not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -552,7 +565,6 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 		}, false},
 		{"channel verification failed", func() {
 			// chainA is INIT, chainB in TRYOPEN
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -564,7 +576,6 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 			channelCap = suite.chainB.GetChannelCapability(path.EndpointB.ChannelConfig.PortID, path.EndpointB.ChannelID)
 		}, false},
 		{"channel capability not found", func() {
-			suite.coordinator.SetupConnections(path)
 			path.SetChannelOrdered()
 
 			err := path.EndpointA.ChanOpenInit()
@@ -579,13 +590,24 @@ func (suite *KeeperTestSuite) TestChanOpenConfirm() {
 			channelCap = capabilitytypes.NewCapability(6)
 		}, false},
 	}
+	connectionCheckpointCases := map[string]bool{
+		"success":                      true,
+		"connection not found":         true,
+		"consensus state not found":    true,
+		"channel verification failed":  true,
+		"channel capability not found": true,
+	}
 
 	for _, tc := range testCases {
 		tc := tc
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			suite.SetupTest() // reset
-			heightDiff = 0    // must be explicitly changed
-			path = ibctesting.NewPath(suite.chainA, suite.chainB)
+			if connectionCheckpointCases[tc.msg] {
+				path = suite.RestoreConnectionCheckpoint()
+			} else {
+				suite.SetupTest() // reset
+				path = ibctesting.NewPath(suite.chainA, suite.chainB)
+			}
+			heightDiff = 0 // must be explicitly changed
 
 			tc.malleate()
 

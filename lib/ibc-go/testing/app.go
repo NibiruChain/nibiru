@@ -58,6 +58,15 @@ func SetupTestingApp() (TestingApp, map[string]json.RawMessage) {
 	return app, simapp.NewDefaultGenesisState(encCdc.Marshaler)
 }
 
+func setupTestingAppFromDB(db dbm.DB, chainID string) TestingApp {
+	encCdc := simapp.MakeTestEncodingConfig()
+	return simapp.NewSimApp(
+		log.NewNopLogger(), db, nil, true, map[int64]bool{},
+		simapp.DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{},
+		baseapp.SetChainID(chainID),
+	)
+}
+
 // SetupWithGenesisValSet initializes a new SimApp with a validator set and genesis accounts
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the simapp from first genesis
