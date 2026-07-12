@@ -75,7 +75,7 @@ proto_gen() {
     -v "$(repo_root):/workspace" \
     --workdir /workspace \
     "${PROTO_IMAGE}" \
-    sh -lc 'apk add --no-cache bash go git su-exec >/dev/null && export PATH="/go/bin:$PATH" && su-exec "$HOST_UID:$HOST_GID" env PATH="/go/bin:$PATH" bash ./contrib/scripts/protocgen.sh'
+    sh -lc 'apk add --no-cache bash go git su-exec >/dev/null && export PATH="/go/bin:$PATH" && su-exec "$HOST_UID:$HOST_GID" env HOME=/tmp PATH="/go/bin:$PATH" bash ./contrib/scripts/protocgen.sh'
 }
 
 # FIXME: TODO https://github.com/NibiruChain/nibiru/issues/2636

@@ -100,7 +100,6 @@ test:
 
     echo "::group::$title"
     for pkg in "$@"; do
-      printf "\nRun tests - %s:\n" "$pkg"
       if ! go test "$pkg" -tags="$tags"; then
         failed=1
       fi
@@ -109,7 +108,7 @@ test:
   }
 
   run_group "Cosmos SDK: Baseapp + types" "${baseapp_types[@]}"
-  run_group "Cosmos SDK: X modules" "${x_modules[@]}"
+  run_group "Cosmos SDK: x modules" "${x_modules[@]}"
   run_group "Cosmos SDK: Everything else" "${everything_else[@]}"
 
   exit "$failed"
