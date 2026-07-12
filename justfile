@@ -101,7 +101,10 @@ lint:
   source contrib/bashlib.sh
 
   image_version="v2.6.1"
-  lint_cmd=(golangci-lint run -v --fix)
+  # Cap golangci-lint parallelism so lint stays responsive on developer machines.
+  # On a 12-CPU WSL host, -j 4 benchmarked faster than -j 6 while using much
+  # less CPU, and was materially faster than -j 2 or -j 3.
+  lint_cmd=(golangci-lint run -v --fix -j 4)
 
   if which_ok golangci-lint >/dev/null 2>&1; then
     local_version="$(golangci-lint version --short 2>/dev/null || true)"
@@ -224,13 +227,19 @@ test-release:
 release-publish:
   make release
 
+[private]
+_go-test-pkgs:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib)/'
+
 # Run Go tests without cached test results
 test:
   #!/usr/bin/env bash
   set -euo pipefail
   echo "Running: just test"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
+  GO_TEST_PKGS="$(just _go-test-pkgs)"
   echo "RUN: go test -count=1 \$GO_TEST_PKGS"
   go test -count=1 $GO_TEST_PKGS
 
@@ -239,7 +248,7 @@ test-fast:
   #!/usr/bin/env bash
   set -euo pipefail
   echo "Running: just test-fast"
-  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
+  GO_TEST_PKGS="$(just _go-test-pkgs)"
   echo "RUN: go test \$GO_TEST_PKGS # includes cache, skips localnet"
   go test $GO_TEST_PKGS
 
@@ -257,7 +266,7 @@ test-cover:
   set -euo pipefail
   echo "Running: just test-cover"
   just localnet-check
-  GO_TEST_PKGS="$(go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib/ibc-go)/')"
+  GO_TEST_PKGS="$(just _go-test-pkgs)"
   printf '%s\n' 'RUN: go test -tags=pebbledb -coverprofile=coverage.out -count=1 $GO_TEST_PKGS'
   go test \
     -tags=pebbledb \
