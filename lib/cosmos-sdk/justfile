@@ -59,16 +59,57 @@ gen-mocks:
 
   echo "✅ SUCCESS: just gen-mocks"
 
-# Run cosmos-sdk tests relevant to Nibiru
+# Run the complete cosmos-sdk test suite in readable sections.
 test:
   #!/usr/bin/env bash
   set -euo pipefail
+
   tags='ledger test_ledger_mock'
-  printf "\n\nRun tests - cosmos-sdk/types:\n"
-  go test ./types/... -tags="$tags"
+  module_path="$(go list -m)"
+  package_prefix="$module_path/lib/cosmos-sdk/"
+  package_list="$(go list ./...)"
+  failed=0
 
-  printf "\n\nRun tests - cosmos-sdk/x:\n"
-  go test ./x/... -tags="$tags"
+  baseapp_types=()
+  x_modules=()
+  everything_else=()
 
-  printf "\n\nRun tests - cosmos-sdk/baseapp:\n"
-  go test ./baseapp/... -tags="$tags"
+  while IFS= read -r pkg; do
+    if [[ "$pkg" == "${package_prefix%/}" ]]; then
+      baseapp_types+=("$pkg")
+      continue
+    fi
+
+    relative="${pkg#"$package_prefix"}"
+    case "$relative" in
+      baseapp|baseapp/*|types|types/*)
+        baseapp_types+=("$pkg")
+        ;;
+      x|x/*)
+        x_modules+=("$pkg")
+        ;;
+      *)
+        everything_else+=("$pkg")
+        ;;
+    esac
+  done <<< "$package_list"
+
+  run_group() {
+    local title="$1"
+    shift
+
+    echo "::group::$title"
+    for pkg in "$@"; do
+      printf "\nRun tests - %s:\n" "$pkg"
+      if ! go test "$pkg" -tags="$tags"; then
+        failed=1
+      fi
+    done
+    echo "::endgroup::"
+  }
+
+  run_group "Cosmos SDK: Baseapp + types" "${baseapp_types[@]}"
+  run_group "Cosmos SDK: X modules" "${x_modules[@]}"
+  run_group "Cosmos SDK: Everything else" "${everything_else[@]}"
+
+  exit "$failed"

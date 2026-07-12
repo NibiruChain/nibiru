@@ -46,7 +46,7 @@ jobs:
           input: "proto"
           against: "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},subdir=proto"
 
-  generation:
+  proto-gen-go:
     name: Verify generated Go output
     runs-on: ubuntu-latest
     steps:

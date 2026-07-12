@@ -185,7 +185,9 @@ func TestDeriveHDPathRange(t *testing.T) {
 	}
 }
 
-func ExampleStringifyPathParams() { //nolint:govet
+// ExampleBIP44Params_String documents the canonical formatting of BIP44 paths.
+// Its Output block makes the documentation example an executable regression test.
+func ExampleBIP44Params_String() {
 	path := hd.NewParams(44, 0, 0, false, 0)
 	fmt.Println(path.String())
 	path = hd.NewParams(44, 33, 7, true, 9)
@@ -195,7 +197,9 @@ func ExampleStringifyPathParams() { //nolint:govet
 	// m/44'/33'/7'/1/9
 }
 
-func ExampleSomeBIP32TestVecs() { //nolint:govet
+// Example_bip32TestVectors verifies the documented BIP32 derivation vectors.
+// This package-level example covers several derivation APIs rather than one symbol.
+func Example_bip32TestVectors() {
 	seed := mnemonicToSeed("barrel original fuel morning among eternal " +
 		"filter ball stove pluck matrix mechanic")
 	master, ch := hd.ComputeMastersFromSeed(seed)

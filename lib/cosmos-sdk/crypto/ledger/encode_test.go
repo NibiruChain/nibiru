@@ -28,8 +28,9 @@ func checkAminoJSON(t *testing.T, src interface{}, dst interface{}, isNil bool) 
 	require.Nil(t, err, "%+v", err)
 }
 
-// nolint: govet
-func ExamplePrintRegisteredTypes() {
+// Example_registeredTypes documents the Amino registrations provided by the
+// ledger package and keeps the generated registration table stable.
+func Example_registeredTypes() {
 	_ = cdc.PrintTypes(os.Stdout)
 	// | Type | Name | Prefix | Length | Notes |
 	// | ---- | ---- | ------ | ----- | ------ |

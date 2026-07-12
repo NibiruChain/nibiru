@@ -15,7 +15,7 @@ install-clean:
     just install
 
 install-covtool:
-    go install github.com/wa
+    go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
 
 # Build the `nibid` binary.
 build:
