@@ -2,10 +2,11 @@
 package evm
 
 import (
-	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"

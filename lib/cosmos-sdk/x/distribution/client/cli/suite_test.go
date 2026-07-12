@@ -17,15 +17,12 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/network"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/client/cli"
 	distrclitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/client/testutil"
-	distrtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
-	minttypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types"
 )
 
 type CLITestSuite struct {
@@ -62,23 +59,6 @@ func (s *CLITestSuite) SetupSuite() {
 		return s.baseCtx.WithClient(c)
 	}
 	s.clientCtx = ctxGen().WithOutput(&outBuf)
-
-	cfg, err := network.DefaultConfigWithAppConfig(distrtestutil.AppConfig)
-	s.Require().NoError(err)
-
-	genesisState := cfg.GenesisState
-	var mintData minttypes.GenesisState
-	s.Require().NoError(cfg.Codec.UnmarshalJSON(genesisState[minttypes.ModuleName], &mintData))
-
-	inflation := sdk.MustNewDecFromStr("1.0")
-	mintData.Minter.Inflation = inflation
-	mintData.Params.InflationMin = inflation
-	mintData.Params.InflationMax = inflation
-
-	mintDataBz, err := cfg.Codec.MarshalJSON(&mintData)
-	s.Require().NoError(err)
-	genesisState[minttypes.ModuleName] = mintDataBz
-	cfg.GenesisState = genesisState
 }
 
 func (s *CLITestSuite) TestGetCmdQueryParams() {

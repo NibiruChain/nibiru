@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
@@ -17,8 +17,8 @@ const (
 
 var (
 	DefaultMinSignedPerWindow      = sdk.NewDecWithPrec(5, 1)
-	DefaultSlashFractionDoubleSign = math.LegacyNewDec(1).Quo(math.LegacyNewDec(20))
-	DefaultSlashFractionDowntime   = math.LegacyNewDec(1).Quo(math.LegacyNewDec(100))
+	DefaultSlashFractionDoubleSign = sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20))
+	DefaultSlashFractionDowntime   = sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(100))
 )
 
 // NewParams creates a new Params object
@@ -91,7 +91,7 @@ func validateMinSignedPerWindow(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("min signed per window cannot be negative: %s", v)
 	}
-	if v.GT(math.LegacyOneDec()) {
+	if v.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("min signed per window too large: %s", v)
 	}
 
@@ -123,7 +123,7 @@ func validateSlashFractionDoubleSign(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("double sign slash fraction cannot be negative: %s", v)
 	}
-	if v.GT(math.LegacyOneDec()) {
+	if v.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("double sign slash fraction too large: %s", v)
 	}
 
@@ -142,7 +142,7 @@ func validateSlashFractionDowntime(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("downtime slash fraction cannot be negative: %s", v)
 	}
-	if v.GT(math.LegacyOneDec()) {
+	if v.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("downtime slash fraction too large: %s", v)
 	}
 

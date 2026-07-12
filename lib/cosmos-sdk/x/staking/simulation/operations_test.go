@@ -6,16 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/simulation"
@@ -28,13 +29,11 @@ import (
 	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
-	minttypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 
 	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
-	mintkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/keeper"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 )
 
@@ -70,29 +69,25 @@ func (s *SimTestSuite) SetupTest() {
 	account := accounts[0]
 	tmPk, err := cryptocodec.ToTmPubKeyInterface(account.PubKey)
 	require.NoError(s.T(), err)
-	validator := tmtypes.NewValidator(tmPk, 1)
+	validator := cmttypes.NewValidator(tmPk, 1)
 
 	startupCfg := simtestutil.DefaultStartUpConfig()
 	startupCfg.GenesisAccounts = accs
-	startupCfg.ValidatorSet = func() (*tmtypes.ValidatorSet, error) {
-		return tmtypes.NewValidatorSet([]*tmtypes.Validator{validator}), nil
+	startupCfg.ValidatorSet = func() (*cmttypes.ValidatorSet, error) {
+		return cmttypes.NewValidatorSet([]*cmttypes.Validator{validator}), nil
 	}
 
 	var (
 		accountKeeper authkeeper.AccountKeeper
-		mintKeeper    mintkeeper.Keeper
 		bankKeeper    bankkeeper.Keeper
 		distrKeeper   distrkeeper.Keeper
 		stakingKeeper *stakingkeeper.Keeper
 	)
 
-	app, err := simtestutil.SetupWithConfiguration(testutil.AppConfig, startupCfg, &bankKeeper, &accountKeeper, &mintKeeper, &distrKeeper, &stakingKeeper)
+	app, err := simtestutil.SetupWithConfiguration(testutil.AppConfig, startupCfg, &bankKeeper, &accountKeeper, &distrKeeper, &stakingKeeper)
 	require.NoError(s.T(), err)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-	mintKeeper.SetParams(ctx, minttypes.DefaultParams())
-	mintKeeper.SetMinter(ctx, minttypes.DefaultInitialMinter())
-
+	ctx := app.NewContext(false, tmproto.Header{})
 	initAmt := stakingKeeper.TokensFromConsensusPower(ctx, 200)
 	initCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, initAmt))
 
@@ -164,7 +159,8 @@ func (s *SimTestSuite) TestSimulateMsgCreateValidator() {
 	operationMsg, futureOperations, err := op(s.r, s.app.BaseApp, s.ctx, s.accounts[1:], "")
 	require.NoError(err)
 
-	var msg types.MsgCreateValidator
+	var msg types.MsgCreateValidator //nolint:errcheck
+	//nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -190,7 +186,7 @@ func (s *SimTestSuite) TestSimulateMsgCancelUnbondingDelegation() {
 	delegator := s.accounts[2]
 	delegation := types.NewDelegation(delegator.Address, validator0.GetOperator(), issuedShares)
 	s.stakingKeeper.SetDelegation(ctx, delegation)
-	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, math.LegacyOneDec(), 200))
+	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, sdkmath.LegacyOneDec(), 200))
 
 	s.setupValidatorRewards(ctx, validator0.GetOperator())
 
@@ -208,7 +204,7 @@ func (s *SimTestSuite) TestSimulateMsgCancelUnbondingDelegation() {
 	operationMsg, futureOperations, err := op(s.r, s.app.BaseApp, ctx, accounts, "")
 	require.NoError(err)
 
-	var msg types.MsgCancelUnbondingDelegation
+	var msg types.MsgCancelUnbondingDelegation //nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -236,7 +232,8 @@ func (s *SimTestSuite) TestSimulateMsgEditValidator() {
 	operationMsg, futureOperations, err := op(s.r, s.app.BaseApp, ctx, s.accounts, "")
 	require.NoError(err)
 
-	var msg types.MsgEditValidator
+	var msg types.MsgEditValidator //nolint:errcheck
+	//nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -257,7 +254,8 @@ func (s *SimTestSuite) TestSimulateMsgDelegate() {
 	operationMsg, futureOperations, err := op(s.r, s.app.BaseApp, ctx, s.accounts[1:], "")
 	require.NoError(err)
 
-	var msg types.MsgDelegate
+	var msg types.MsgDelegate //nolint:errcheck
+	//nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -284,7 +282,7 @@ func (s *SimTestSuite) TestSimulateMsgUndelegate() {
 	delegator := s.accounts[2]
 	delegation := types.NewDelegation(delegator.Address, validator0.GetOperator(), issuedShares)
 	s.stakingKeeper.SetDelegation(ctx, delegation)
-	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, math.LegacyOneDec(), 200))
+	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, sdkmath.LegacyOneDec(), 200))
 
 	s.setupValidatorRewards(ctx, validator0.GetOperator())
 
@@ -296,7 +294,8 @@ func (s *SimTestSuite) TestSimulateMsgUndelegate() {
 	operationMsg, futureOperations, err := op(s.r, s.app.BaseApp, ctx, s.accounts, "")
 	require.NoError(err)
 
-	var msg types.MsgUndelegate
+	var msg types.MsgUndelegate //nolint:errcheck
+	//nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -326,7 +325,7 @@ func (s *SimTestSuite) TestSimulateMsgBeginRedelegate() {
 	delegator := s.accounts[3]
 	delegation := types.NewDelegation(delegator.Address, validator0.GetOperator(), issuedShares)
 	s.stakingKeeper.SetDelegation(ctx, delegation)
-	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, math.LegacyOneDec(), 200))
+	s.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), delegator.Address, distrtypes.NewDelegatorStartingInfo(2, sdkmath.LegacyOneDec(), 200))
 
 	s.setupValidatorRewards(ctx, validator0.GetOperator())
 	s.setupValidatorRewards(ctx, validator1.GetOperator())
@@ -340,7 +339,8 @@ func (s *SimTestSuite) TestSimulateMsgBeginRedelegate() {
 	s.T().Logf("operation message: %v", operationMsg)
 	require.NoError(err)
 
-	var msg types.MsgBeginRedelegate
+	var msg types.MsgBeginRedelegate //nolint:errcheck
+	//nolint:errcheck
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -353,12 +353,12 @@ func (s *SimTestSuite) TestSimulateMsgBeginRedelegate() {
 }
 
 func (s *SimTestSuite) getTestingValidator0(ctx sdk.Context) types.Validator {
-	commission0 := types.NewCommission(math.LegacyZeroDec(), math.LegacyOneDec(), math.LegacyOneDec())
+	commission0 := types.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec())
 	return s.getTestingValidator(ctx, commission0, 1)
 }
 
 func (s *SimTestSuite) getTestingValidator1(ctx sdk.Context) types.Validator {
-	commission1 := types.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
+	commission1 := types.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 	return s.getTestingValidator(ctx, commission1, 2)
 }
 
@@ -370,7 +370,7 @@ func (s *SimTestSuite) getTestingValidator(ctx sdk.Context, commission types.Com
 	validator, err := validator.SetInitialCommission(commission)
 	s.Require().NoError(err)
 
-	validator.DelegatorShares = math.LegacyNewDec(100)
+	validator.DelegatorShares = sdkmath.LegacyNewDec(100)
 	validator.Tokens = s.stakingKeeper.TokensFromConsensusPower(ctx, 100)
 
 	s.stakingKeeper.SetValidator(ctx, validator)
@@ -379,7 +379,7 @@ func (s *SimTestSuite) getTestingValidator(ctx sdk.Context, commission types.Com
 }
 
 func (s *SimTestSuite) setupValidatorRewards(ctx sdk.Context, valAddress sdk.ValAddress) {
-	decCoins := sdk.DecCoins{sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, math.LegacyOneDec())}
+	decCoins := sdk.DecCoins{sdk.NewDecCoinFromDec(sdk.DefaultBondDenom, sdkmath.LegacyOneDec())}
 	historicalRewards := distrtypes.NewValidatorHistoricalRewards(decCoins, 2)
 	s.distrKeeper.SetValidatorHistoricalRewards(ctx, valAddress, 2, historicalRewards)
 	// setup current revards

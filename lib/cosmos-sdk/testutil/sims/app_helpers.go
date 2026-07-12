@@ -10,10 +10,10 @@ import (
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"cosmossdk.io/depinject"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -45,13 +45,13 @@ var DefaultConsensusParams = &tmproto.ConsensusParams{
 	},
 	Validator: &tmproto.ValidatorParams{
 		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
+			cmttypes.ABCIPubKeyTypeEd25519,
 		},
 	},
 }
 
 // CreateRandomValidatorSet creates a validator set with one random validator
-func CreateRandomValidatorSet() (*tmtypes.ValidatorSet, error) {
+func CreateRandomValidatorSet() (*cmttypes.ValidatorSet, error) {
 	privVal := mock.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	if err != nil {
@@ -59,9 +59,9 @@ func CreateRandomValidatorSet() (*tmtypes.ValidatorSet, error) {
 	}
 
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
+	validator := cmttypes.NewValidator(pubKey, 1)
 
-	return tmtypes.NewValidatorSet([]*tmtypes.Validator{validator}), nil
+	return cmttypes.NewValidatorSet([]*cmttypes.Validator{validator}), nil
 }
 
 type GenesisAccount struct {
@@ -75,7 +75,7 @@ type GenesisAccount struct {
 // BaseAppOption defines the additional operations that must be run on baseapp before app start.
 // AtGenesis defines if the app started should already have produced block or not.
 type StartupConfig struct {
-	ValidatorSet    func() (*tmtypes.ValidatorSet, error)
+	ValidatorSet    func() (*cmttypes.ValidatorSet, error)
 	BaseAppOption   runtime.BaseAppOption
 	AtGenesis       bool
 	GenesisAccounts []GenesisAccount
@@ -201,7 +201,7 @@ func SetupWithConfiguration(appConfig depinject.Config, startupConfig StartupCon
 func GenesisStateWithValSet(
 	codec codec.Codec,
 	genesisState map[string]json.RawMessage,
-	valSet *tmtypes.ValidatorSet,
+	valSet *cmttypes.ValidatorSet,
 	genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) (map[string]json.RawMessage, error) {
@@ -231,16 +231,15 @@ func GenesisStateWithValSet(
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            bondAmt,
-			DelegatorShares:   math.LegacyOneDec(),
+			DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-			MinSelfDelegation: math.ZeroInt(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
+			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), math.LegacyOneDec()))
-
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdkmath.LegacyOneDec()))
 	}
 
 	// set validators and delegations

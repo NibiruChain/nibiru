@@ -5,13 +5,14 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	"github.com/stretchr/testify/require"
+
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSetupDecorator_BlockMaxGas(t *testing.T) {

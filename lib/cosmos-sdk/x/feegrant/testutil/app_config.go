@@ -8,20 +8,20 @@ import (
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
-	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 
 	"cosmossdk.io/core/appconfig"
+
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
-	minttypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types"
 	paramstypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
@@ -80,7 +80,7 @@ var AppConfig = appconfig.Compose(&appv1alpha1.Config{
 				Bech32Prefix: "cosmos",
 				ModuleAccountPermissions: []*authmodulev1.ModuleAccountPermission{
 					{Account: authtypes.FeeCollectorName},
-					{Account: minttypes.ModuleName, Permissions: []string{authtypes.Minter}},
+					{Account: mint.ModuleName, Permissions: []string{authtypes.Minter}},
 					{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 					{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 				},

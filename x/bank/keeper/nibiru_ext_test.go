@@ -3,10 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/evm"

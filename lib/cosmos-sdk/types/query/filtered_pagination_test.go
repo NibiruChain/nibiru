@@ -3,7 +3,8 @@ package query_test
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -56,7 +57,7 @@ func (s *paginationTestSuite) TestFilteredPaginations() {
 	s.Require().NotNil(res)
 	s.Require().Equal(2, len(balances))
 	s.Require().NotNil(res.NextKey)
-	s.Require().Equal(string(res.NextKey), fmt.Sprintf("test2denom"))
+	s.Require().Equal(string(res.NextKey), "test2denom")
 	s.Require().Equal(uint64(4), res.Total)
 
 	s.T().Log("verify both key and offset can't be given")
@@ -152,7 +153,7 @@ func (s *paginationTestSuite) TestReverseFilteredPaginations() {
 	s.Require().NotNil(res)
 	s.Require().Equal(2, len(balns))
 	s.Require().NotNil(res.NextKey)
-	s.Require().Equal(string(res.NextKey), fmt.Sprintf("test5denom"))
+	s.Require().Equal(string(res.NextKey), "test5denom")
 
 	s.T().Log("verify last page records, nextKey for query and reverse true")
 	pageReq = &query.PageRequest{Key: res.NextKey, Reverse: true}
@@ -194,7 +195,7 @@ func (s *paginationTestSuite) TestFilteredPaginate() {
 
 	var balResult sdk.Coins
 	pageRes, err := query.FilteredPaginate(accountStore, pageReq, func(key []byte, value []byte, accumulate bool) (bool, error) {
-		var amount math.Int
+		var amount sdkmath.Int
 		err := amount.Unmarshal(value)
 		if err != nil {
 			return false, err
@@ -225,7 +226,7 @@ func execFilterPaginate(store sdk.KVStore, pageReq *query.PageRequest, appCodec 
 
 	var balResult sdk.Coins
 	res, err = query.FilteredPaginate(accountStore, pageReq, func(key []byte, value []byte, accumulate bool) (bool, error) {
-		var amount math.Int
+		var amount sdkmath.Int
 		err := amount.Unmarshal(value)
 		if err != nil {
 			return false, err
@@ -267,7 +268,7 @@ func (s *paginationTestSuite) TestFilteredPaginationsNextKey() {
 
 		var balResult sdk.Coins
 		res, err = query.FilteredPaginate(accountStore, pageReq, func(key []byte, value []byte, accumulate bool) (bool, error) {
-			var amount math.Int
+			var amount sdkmath.Int
 			err := amount.Unmarshal(value)
 			if err != nil {
 				return false, err

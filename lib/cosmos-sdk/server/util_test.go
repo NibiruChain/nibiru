@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	db "github.com/cometbft/cometbft-db"
-	tmcfg "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -27,12 +27,12 @@ import (
 	genutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/cli"
 )
 
-var cancelledInPreRun = errors.New("Cancelled in prerun")
+var cancelledInPreRun = errors.New("Cancelled in prerun") //nolint:staticcheck
 
 // Used in each test to run the function under test via Cobra
 // but to always halt the command
 func preRunETestImpl(cmd *cobra.Command, args []string) error {
-	err := server.InterceptConfigsPreRunHandler(cmd, "", nil, tmcfg.DefaultConfig())
+	err := server.InterceptConfigsPreRunHandler(cmd, "", nil, cmtcfg.DefaultConfig())
 	if err != nil {
 		return err
 	}
@@ -393,7 +393,7 @@ func TestInterceptConfigsPreRunHandlerPrecedenceConfigDefault(t *testing.T) {
 		t.Fatalf("function failed with [%T] %v", err, err)
 	}
 
-	if "tcp://127.0.0.1:26657" != serverCtx.Config.RPC.ListenAddress {
+	if serverCtx.Config.RPC.ListenAddress != "tcp://127.0.0.1:26657" {
 		t.Error("RPCListenAddress is not using default")
 	}
 }
@@ -440,13 +440,13 @@ func TestEmptyMinGasPrices(t *testing.T) {
 	// Modify app.toml.
 	appCfgTempFilePath := filepath.Join(tempDir, "config", "app.toml")
 	appConf := config.DefaultConfig()
-	appConf.BaseConfig.MinGasPrices = ""
+	appConf.MinGasPrices = ""
 	config.WriteConfigFile(appCfgTempFilePath, appConf)
 
 	// Run StartCmd.
 	cmd = server.StartCmd(nil, tempDir)
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
-		return server.InterceptConfigsPreRunHandler(cmd, "", nil, tmcfg.DefaultConfig())
+		return server.InterceptConfigsPreRunHandler(cmd, "", nil, cmtcfg.DefaultConfig())
 	}
 	err = cmd.ExecuteContext(ctx)
 	require.Errorf(t, err, sdkerrors.ErrAppConfig.Error())

@@ -181,7 +181,6 @@ func NewMsgCreatePeriodicVestingAccountCmd() *cobra.Command {
 			var periods []types.Period
 
 			for i, p := range vestingData.Periods {
-
 				amount, err := sdk.ParseCoinsNormalized(p.Coins)
 				if err != nil {
 					return err

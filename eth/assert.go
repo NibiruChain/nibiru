@@ -5,8 +5,9 @@ import (
 	"bytes"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // IsEmptyHash returns true if the hash corresponds to an empty ethereum hex hash.

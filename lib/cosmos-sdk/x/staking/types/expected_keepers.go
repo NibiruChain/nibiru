@@ -1,7 +1,7 @@
 package types
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
@@ -57,12 +57,12 @@ type ValidatorSet interface {
 
 	Validator(sdk.Context, sdk.ValAddress) ValidatorI            // get a particular validator by operator address
 	ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) ValidatorI // get a particular validator by consensus address
-	TotalBondedTokens(sdk.Context) math.Int                      // total bonded tokens within the validator set
-	StakingTokenSupply(sdk.Context) math.Int                     // total staking token supply
+	TotalBondedTokens(sdk.Context) sdkmath.Int                   // total bonded tokens within the validator set
+	StakingTokenSupply(sdk.Context) sdkmath.Int                  // total staking token supply
 
 	// slash the validator and delegators of the validator, specifying offence height, offence power, and slash fraction
-	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) math.Int
-	SlashWithInfractionReason(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec, Infraction) math.Int
+	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) sdkmath.Int
+	SlashWithInfractionReason(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec, Infraction) sdkmath.Int
 	Jail(sdk.Context, sdk.ConsAddress)   // jail a validator
 	Unjail(sdk.Context, sdk.ConsAddress) // unjail a validator
 

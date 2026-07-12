@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
 	ibc "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

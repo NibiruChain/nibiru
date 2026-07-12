@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
-	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
+
+	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/core"

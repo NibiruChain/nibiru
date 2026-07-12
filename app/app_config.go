@@ -22,6 +22,7 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
+
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"

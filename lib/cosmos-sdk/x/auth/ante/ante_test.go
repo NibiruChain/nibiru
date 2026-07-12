@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -1135,7 +1135,7 @@ func TestAnteHandlerSetPubKey(t *testing.T) {
 
 				privs, accNums, accSeqs := []cryptotypes.PrivKey{accs[1].priv}, []uint64{1}, []uint64{0}
 				msgs := []sdk.Msg{testdata.NewTestMsg(accs[1].acc.GetAddress())}
-				suite.txBuilder.SetMsgs(msgs...)
+				suite.txBuilder.SetMsgs(msgs...) //nolint:errcheck
 				suite.txBuilder.SetFeeAmount(feeAmount)
 				suite.txBuilder.SetGasLimit(gasLimit)
 
@@ -1181,7 +1181,7 @@ func TestAnteHandlerSetPubKey(t *testing.T) {
 
 				privs, accNums, accSeqs := []cryptotypes.PrivKey{accs[1].priv}, []uint64{1}, []uint64{0}
 				msgs := []sdk.Msg{testdata.NewTestMsg(accs[1].acc.GetAddress())}
-				suite.txBuilder.SetMsgs(msgs...)
+				suite.txBuilder.SetMsgs(msgs...) //nolint:errcheck
 				suite.txBuilder.SetFeeAmount(feeAmount)
 				suite.txBuilder.SetGasLimit(gasLimit)
 
@@ -1463,7 +1463,6 @@ func TestAnteHandlerReCheck(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		// set testcase parameters
 		err := suite.accountKeeper.SetParams(suite.ctx, tc.params)
 		require.NoError(t, err)
@@ -1482,7 +1481,7 @@ func TestAnteHandlerReCheck(t *testing.T) {
 	// create new minimum gas price so antehandler fails on recheck
 	suite.ctx = suite.ctx.WithMinGasPrices([]sdk.DecCoin{{
 		Denom:  "dnecoin", // fee does not have this denom
-		Amount: math.LegacyNewDec(5),
+		Amount: sdkmath.LegacyNewDec(5),
 	}})
 	_, err = suite.anteHandler(suite.ctx, tx, false)
 	require.NotNil(t, err, "antehandler on recheck did not fail when mingasPrice was changed")

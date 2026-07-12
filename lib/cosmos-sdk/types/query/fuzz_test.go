@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	fuzz "github.com/google/gofuzz"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
@@ -85,7 +85,7 @@ func FuzzPagination(f *testing.F) {
 		balancesStore := prefix.NewStore(authStore, types.BalancesPrefix)
 		accountStore := prefix.NewStore(balancesStore, address.MustLengthPrefix(addr1))
 		_, _ = query.Paginate(accountStore, req.Pagination, func(key []byte, value []byte) error {
-			var amount math.Int
+			var amount sdkmath.Int
 			err := amount.Unmarshal(value)
 			if err != nil {
 				return err

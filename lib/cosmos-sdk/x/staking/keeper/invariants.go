@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
@@ -47,8 +48,8 @@ func AllInvariants(k *Keeper) sdk.Invariant {
 // reflects the tokens actively bonded and not bonded
 func ModuleAccountInvariants(k *Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		bonded := math.ZeroInt()
-		notBonded := math.ZeroInt()
+		bonded := sdkmath.ZeroInt()
+		notBonded := sdkmath.ZeroInt()
 		bondedPool := k.GetBondedPool(ctx)
 		notBondedPool := k.GetNotBondedPool(ctx)
 		bondDenom := k.BondDenom(ctx)
@@ -169,7 +170,7 @@ func DelegatorSharesInvariant(k *Keeper) sdk.Invariant {
 
 		// initialize a map: validator -> its delegation shares
 		for _, validator := range validators {
-			validatorsDelegationShares[validator.GetOperator().String()] = math.LegacyZeroDec()
+			validatorsDelegationShares[validator.GetOperator().String()] = sdkmath.LegacyZeroDec()
 		}
 
 		// iterate through all the delegations to calculate the total delegation shares for each validator

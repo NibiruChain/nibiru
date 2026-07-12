@@ -5,9 +5,10 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
+	"github.com/ethereum/go-ethereum/core"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
-	"github.com/ethereum/go-ethereum/core"
 )
 
 // DefaultZeroGasTxPriority is the fixed mempool priority for classified

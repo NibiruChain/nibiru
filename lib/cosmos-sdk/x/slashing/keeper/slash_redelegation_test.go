@@ -6,20 +6,22 @@ import (
 
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
 	banktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
 	slashingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/testutil"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	distributionkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 )
@@ -38,7 +40,7 @@ func TestSlashRedelegation(t *testing.T) {
 	require.NoError(t, err)
 
 	// get sdk context, staking msg server and bond denom
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
+	ctx := app.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
 	stakingMsgServer := stakingkeeper.NewMsgServerImpl(stakingKeeper)
 	bondDenom := stakingKeeper.BondDenom(ctx)
 	require.NoError(t, err)
@@ -53,9 +55,11 @@ func TestSlashRedelegation(t *testing.T) {
 	testAcc1 := sdk.AccAddress([]byte("addr1_______________"))
 	testAcc2 := sdk.AccAddress([]byte("addr2_______________"))
 
-	// fund acc 1 and acc 2
-	testCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, stakingKeeper.TokensFromConsensusPower(ctx, 10)))
+	// fund acc 1 and acc 2 //nolint:errcheck
+	testCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, stakingKeeper.TokensFromConsensusPower(ctx, 10))) //nolint:errcheck
+	//nolint:errcheck
 	banktestutil.FundAccount(bankKeeper, ctx, testAcc1, testCoins)
+	//nolint:errcheck
 	banktestutil.FundAccount(bankKeeper, ctx, testAcc2, testCoins)
 
 	balance1Before := bankKeeper.GetBalance(ctx, testAcc1, bondDenom)
@@ -65,19 +69,21 @@ func TestSlashRedelegation(t *testing.T) {
 	require.Equal(t, balance1Before.Amount.String(), testCoins[0].Amount.String())
 	require.Equal(t, balance2Before.Amount.String(), testCoins[0].Amount.String())
 
-	// creating evil val
+	// creating evil val //nolint:errcheck
 	evilValAddr := sdk.ValAddress(evilValPubKey.Address())
+	//nolint:errcheck
 	banktestutil.FundAccount(bankKeeper, ctx, sdk.AccAddress(evilValAddr), testCoins)
 	createValMsg1, _ := stakingtypes.NewMsgCreateValidator(
-		evilValAddr, evilValPubKey, testCoins[0], stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+		evilValAddr, evilValPubKey, testCoins[0], stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(sdkmath.LegacyNewDecWithPrec(5, 1), sdkmath.LegacyNewDecWithPrec(5, 1), sdkmath.LegacyNewDec(0)), sdkmath.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg1)
 	require.NoError(t, err)
 
-	// creating good val
+	// creating good val //nolint:errcheck
 	goodValAddr := sdk.ValAddress(goodValPubKey.Address())
+	//nolint:errcheck
 	banktestutil.FundAccount(bankKeeper, ctx, sdk.AccAddress(goodValAddr), testCoins)
 	createValMsg2, _ := stakingtypes.NewMsgCreateValidator(
-		goodValAddr, goodValPubKey, testCoins[0], stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDecWithPrec(5, 1), math.LegacyNewDec(0)), math.OneInt())
+		goodValAddr, goodValPubKey, testCoins[0], stakingtypes.Description{Details: "test"}, stakingtypes.NewCommissionRates(sdkmath.LegacyNewDecWithPrec(5, 1), sdkmath.LegacyNewDecWithPrec(5, 1), sdkmath.LegacyNewDec(0)), sdkmath.OneInt())
 	_, err = stakingMsgServer.CreateValidator(ctx, createValMsg2)
 	require.NoError(t, err)
 
@@ -134,7 +140,7 @@ func TestSlashRedelegation(t *testing.T) {
 	evilValConsAddr, err := evilVal.GetConsAddr()
 	require.NoError(t, err)
 
-	slashKeeper.Slash(ctx, evilValConsAddr, math.LegacyMustNewDecFromStr("0.9"), evilPower, 4)
+	slashKeeper.Slash(ctx, evilValConsAddr, sdkmath.LegacyMustNewDecFromStr("0.9"), evilPower, 4)
 
 	// assert invariant to make sure we conduct slashing correctly
 	_, stop := stakingkeeper.AllInvariants(stakingKeeper)(ctx)
@@ -154,6 +160,6 @@ func TestSlashRedelegation(t *testing.T) {
 	balance1AfterSlashing := bankKeeper.GetBalance(ctx, testAcc1, bondDenom)
 	balance2AfterSlashing := bankKeeper.GetBalance(ctx, testAcc2, bondDenom)
 
-	require.Equal(t, balance1AfterSlashing.Amount.Mul(math.NewIntFromUint64(10)).String(), balance1Before.Amount.String())
-	require.Equal(t, balance2AfterSlashing.Amount.Mul(math.NewIntFromUint64(10)).String(), balance2Before.Amount.String())
+	require.Equal(t, balance1AfterSlashing.Amount.Mul(sdkmath.NewIntFromUint64(10)).String(), balance1Before.Amount.String())
+	require.Equal(t, balance2AfterSlashing.Amount.Mul(sdkmath.NewIntFromUint64(10)).String(), balance2Before.Amount.String())
 }

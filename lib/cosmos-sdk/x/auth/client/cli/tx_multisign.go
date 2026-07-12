@@ -15,7 +15,7 @@ import (
 	kmultisig "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	signingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 	authclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client"
@@ -181,7 +181,6 @@ func makeMultiSignCmd() func(cmd *cobra.Command, args []string) (err error) {
 			}
 
 			json, _ = clientCtx.LegacyAmino.MarshalJSON(req)
-
 		} else {
 			json, err = marshalSignatureJSON(txCfg, txBuilder, sigOnly)
 			if err != nil {
@@ -357,7 +356,6 @@ func makeBatchMultisignCmd() func(cmd *cobra.Command, args []string) error {
 				}
 
 				json, _ = clientCtx.LegacyAmino.MarshalJSON(req)
-
 			} else {
 				json, err = marshalSignatureJSON(txCfg, txBldr, sigOnly)
 				if err != nil {
@@ -413,7 +411,7 @@ func getMultisigRecord(clientCtx client.Context, name string) (*keyring.Record, 
 	kb := clientCtx.Keyring
 	multisigRecord, err := kb.Key(name)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting keybase multisig account")
+		return nil, sdkerrors.Wrap(err, "error getting keybase multisig account")
 	}
 
 	return multisigRecord, nil

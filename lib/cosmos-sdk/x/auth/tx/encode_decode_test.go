@@ -170,7 +170,8 @@ func TestRejectNonADR027(t *testing.T) {
 	bodyBz, err := body.Marshal()
 	require.NoError(t, err)
 	authInfo := &testdata.TestUpdatedAuthInfo{Fee: &tx.Fee{GasLimit: 127}} // Look for "127" when debugging the bytes stream.
-	authInfoBz, err := authInfo.Marshal()
+	//nolint:staticcheck
+	authInfoBz, err := authInfo.Marshal() //nolint:ineffassign
 	txRaw := &tx.TxRaw{
 		BodyBytes:     bodyBz,
 		AuthInfoBytes: authInfoBz,

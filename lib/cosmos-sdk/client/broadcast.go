@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/cometbft/cometbft/mempool"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -43,7 +43,7 @@ func (ctx Context) BroadcastTx(txBytes []byte) (res *sdk.TxResponse, err error) 
 // TODO: Avoid brittle string matching in favor of error matching. This requires
 // a change to Tendermint's RPCError type to allow retrieval or matching against
 // a concrete error type.
-func CheckTendermintError(err error, tx tmtypes.Tx) *sdk.TxResponse {
+func CheckTendermintError(err error, tx cmttypes.Tx) *sdk.TxResponse {
 	if err == nil {
 		return nil
 	}

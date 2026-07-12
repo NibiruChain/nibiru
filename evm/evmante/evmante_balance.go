@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/holiman/uint256"
+
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"

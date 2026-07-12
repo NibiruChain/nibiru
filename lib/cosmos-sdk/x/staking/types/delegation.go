@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	"sigs.k8s.io/yaml"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"sigs.k8s.io/yaml"
 )
 
 // Implements Delegation interface
@@ -73,7 +74,7 @@ func (d Delegation) GetValidatorAddr() sdk.ValAddress {
 	}
 	return addr
 }
-func (d Delegation) GetShares() math.LegacyDec { return d.Shares }
+func (d Delegation) GetShares() sdkmath.LegacyDec { return d.Shares }
 
 // String returns a human readable string representation of a Delegation.
 func (d Delegation) String() string {
@@ -92,7 +93,7 @@ func (d Delegations) String() (out string) {
 	return strings.TrimSpace(out)
 }
 
-func NewUnbondingDelegationEntry(creationHeight int64, completionTime time.Time, balance math.Int, unbondingID uint64) UnbondingDelegationEntry {
+func NewUnbondingDelegationEntry(creationHeight int64, completionTime time.Time, balance sdkmath.Int, unbondingID uint64) UnbondingDelegationEntry {
 	return UnbondingDelegationEntry{
 		CreationHeight:          creationHeight,
 		CompletionTime:          completionTime,
@@ -145,7 +146,7 @@ func UnmarshalUBDE(cdc codec.BinaryCodec, value []byte) (ubd UnbondingDelegation
 //nolint:interfacer
 func NewUnbondingDelegation(
 	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
-	creationHeight int64, minTime time.Time, balance math.Int, id uint64,
+	creationHeight int64, minTime time.Time, balance sdkmath.Int, id uint64,
 ) UnbondingDelegation {
 	return UnbondingDelegation{
 		DelegatorAddress: delegatorAddr.String(),
@@ -157,7 +158,7 @@ func NewUnbondingDelegation(
 }
 
 // AddEntry - append entry to the unbonding delegation
-func (ubd *UnbondingDelegation) AddEntry(creationHeight int64, minTime time.Time, balance math.Int, unbondingID uint64) {
+func (ubd *UnbondingDelegation) AddEntry(creationHeight int64, minTime time.Time, balance sdkmath.Int, unbondingID uint64) {
 	// Check the entries exists with creation_height and complete_time
 	entryIndex := -1
 	for index, ubdEntry := range ubd.Entries {
@@ -235,7 +236,7 @@ func (ubds UnbondingDelegations) String() (out string) {
 	return strings.TrimSpace(out)
 }
 
-func NewRedelegationEntry(creationHeight int64, completionTime time.Time, balance math.Int, sharesDst sdk.Dec, id uint64) RedelegationEntry {
+func NewRedelegationEntry(creationHeight int64, completionTime time.Time, balance sdkmath.Int, sharesDst sdk.Dec, id uint64) RedelegationEntry {
 	return RedelegationEntry{
 		CreationHeight:          creationHeight,
 		CompletionTime:          completionTime,
@@ -265,7 +266,7 @@ func (e RedelegationEntry) OnHold() bool {
 //nolint:interfacer
 func NewRedelegation(
 	delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.ValAddress,
-	creationHeight int64, minTime time.Time, balance math.Int, sharesDst sdk.Dec, id uint64,
+	creationHeight int64, minTime time.Time, balance sdkmath.Int, sharesDst sdk.Dec, id uint64,
 ) Redelegation {
 	return Redelegation{
 		DelegatorAddress:    delegatorAddr.String(),
@@ -278,7 +279,7 @@ func NewRedelegation(
 }
 
 // AddEntry - append entry to the unbonding delegation
-func (red *Redelegation) AddEntry(creationHeight int64, minTime time.Time, balance math.Int, sharesDst sdk.Dec, id uint64) {
+func (red *Redelegation) AddEntry(creationHeight int64, minTime time.Time, balance sdkmath.Int, sharesDst sdk.Dec, id uint64) {
 	entry := NewRedelegationEntry(creationHeight, minTime, balance, sharesDst, id)
 	red.Entries = append(red.Entries, entry)
 }
@@ -408,7 +409,7 @@ func NewRedelegationResponse(
 
 // NewRedelegationEntryResponse creates a new RedelegationEntryResponse instance.
 func NewRedelegationEntryResponse(
-	creationHeight int64, completionTime time.Time, sharesDst sdk.Dec, initialBalance, balance math.Int, unbondingID uint64,
+	creationHeight int64, completionTime time.Time, sharesDst sdk.Dec, initialBalance, balance sdkmath.Int, unbondingID uint64,
 ) RedelegationEntryResponse {
 	return RedelegationEntryResponse{
 		RedelegationEntry: NewRedelegationEntry(creationHeight, completionTime, initialBalance, sharesDst, unbondingID),

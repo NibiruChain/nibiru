@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
@@ -20,7 +21,7 @@ const (
 )
 
 // GenCommunityTax randomized CommunityTax
-func GenCommunityTax(r *rand.Rand) math.LegacyDec {
+func GenCommunityTax(r *rand.Rand) sdkmath.LegacyDec {
 	return sdk.NewDecWithPrec(1, 2).Add(sdk.NewDecWithPrec(int64(r.Intn(30)), 2))
 }
 

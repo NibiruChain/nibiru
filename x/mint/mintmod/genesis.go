@@ -3,8 +3,8 @@ package mintmod
 import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/mint/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/mint"
+	"github.com/NibiruChain/nibiru/v2/x/mint/keeper"
 )
 
 // InitGenesis import module genesis

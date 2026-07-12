@@ -7,6 +7,7 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -19,7 +20,8 @@ func DoBenchmarkDeepContextStack(b *testing.B, depth int) {
 
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db)
-	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
+	cms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db) //nolint:errcheck
+	//nolint:errcheck
 	cms.LoadLatestVersion()
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())
 

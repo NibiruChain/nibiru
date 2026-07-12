@@ -8,7 +8,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"
@@ -69,10 +70,10 @@ func TestSlashingMsgs(t *testing.T) {
 	require.NoError(t, err)
 
 	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
-	commission := stakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
+	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 
 	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr1), valKey.PubKey(), bondCoin, description, commission, math.OneInt(),
+		sdk.ValAddress(addr1), valKey.PubKey(), bondCoin, description, commission, sdkmath.OneInt(),
 	)
 	require.NoError(t, err)
 
@@ -90,10 +91,10 @@ func TestSlashingMsgs(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, sdk.ValAddress(addr1).String(), validator.OperatorAddress)
 	require.Equal(t, stakingtypes.Bonded, validator.Status)
-	require.True(math.IntEq(t, bondTokens, validator.BondedTokens()))
+	require.True(sdkmath.IntEq(t, bondTokens, validator.BondedTokens()))
 	unjailMsg := &types.MsgUnjail{ValidatorAddr: sdk.ValAddress(addr1).String()}
 
-	ctxCheck = app.BaseApp.NewContext(true, tmproto.Header{})
+	ctxCheck = app.NewContext(true, tmproto.Header{})
 	_, found = slashingKeeper.GetValidatorSigningInfo(ctxCheck, sdk.ConsAddress(valAddr))
 	require.True(t, found)
 
@@ -101,6 +102,7 @@ func TestSlashingMsgs(t *testing.T) {
 	header = tmproto.Header{Height: app.LastBlockHeight() + 1}
 	_, res, err := sims.SignCheckDeliver(t, txConfig, app.BaseApp, header, []sdk.Msg{unjailMsg}, "", []uint64{0}, []uint64{1}, false, false, priv1)
 	require.Error(t, err)
-	require.Nil(t, res)
+	require.Nil(t, res) //nolint:staticcheck
+	//nolint:staticcheck
 	require.True(t, errors.Is(types.ErrValidatorNotJailed, err))
 }

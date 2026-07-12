@@ -8,14 +8,15 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 
 	"github.com/cometbft/cometbft/libs/log"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	genutiltest "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_TestnetCmd(t *testing.T) {

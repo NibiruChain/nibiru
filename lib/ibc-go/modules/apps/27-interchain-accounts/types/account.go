@@ -5,12 +5,13 @@ import (
 	"regexp"
 	"strings"
 
+	yaml "gopkg.in/yaml.v2"
+
 	crypto "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkaddress "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var (

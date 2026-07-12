@@ -11,6 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cometbft/cometbft/abci/types"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
+	cmtlog "github.com/cometbft/cometbft/libs/log"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	"github.com/ethereum/go-ethereum/ethclient"
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -20,13 +28,6 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client/cli"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	"github.com/cometbft/cometbft/abci/types"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
-	cmtlog "github.com/cometbft/cometbft/libs/log"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	"github.com/ethereum/go-ethereum/ethclient"
-	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"

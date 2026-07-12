@@ -46,7 +46,7 @@ func (suite *CapabilityTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 
 	suite.app = app
-	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+	suite.ctx = app.NewContext(false, tmproto.Header{Height: 1})
 }
 
 // The following test case mocks a specific bug discovered in https://github.com/cosmos/cosmos-sdk/issues/9800
@@ -63,7 +63,7 @@ func (suite *CapabilityTestSuite) TestInitializeMemStore() {
 	newSk1 := newKeeper.ScopeToModule(banktypes.ModuleName)
 
 	// Mock App startup
-	ctx := suite.app.BaseApp.NewUncachedContext(false, tmproto.Header{})
+	ctx := suite.app.NewUncachedContext(false, tmproto.Header{})
 	newKeeper.Seal()
 	suite.Require().False(newKeeper.IsInitialized(ctx), "memstore initialized flag set before BeginBlock")
 
@@ -84,7 +84,7 @@ func (suite *CapabilityTestSuite) TestInitializeMemStore() {
 	suite.Require().True(ok)
 
 	// Ensure that the second transaction can still receive capability even if first tx fails.
-	ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx = suite.app.NewContext(false, tmproto.Header{})
 
 	cap1, ok = newSk1.GetCapability(ctx, "transfer")
 	suite.Require().True(ok)

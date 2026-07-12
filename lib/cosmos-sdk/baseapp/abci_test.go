@@ -729,7 +729,7 @@ func TestABCI_DeliverTx_MultiMsg(t *testing.T) {
 	msgs = append(msgs, &baseapptestutil.MsgCounter2{Counter: 0})
 	msgs = append(msgs, &baseapptestutil.MsgCounter2{Counter: 1})
 
-	builder.SetMsgs(msgs...)
+	builder.SetMsgs(msgs...) //nolint:errcheck
 	builder.SetMemo(tx.GetMemo())
 	setTxSignature(t, builder, 0)
 
@@ -878,7 +878,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 	// transaction with no known route
 	{
 		txBuilder := suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&baseapptestutil.MsgCounter2{})
+		txBuilder.SetMsgs(&baseapptestutil.MsgCounter2{}) //nolint:errcheck
 		setTxSignature(t, txBuilder, 0)
 		unknownRouteTx := txBuilder.GetTx()
 
@@ -891,7 +891,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 		require.EqualValues(t, sdkerrors.ErrUnknownRequest.ABCICode(), code, err)
 
 		txBuilder = suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&baseapptestutil.MsgCounter{}, &baseapptestutil.MsgCounter2{})
+		txBuilder.SetMsgs(&baseapptestutil.MsgCounter{}, &baseapptestutil.MsgCounter2{}) //nolint:errcheck
 		setTxSignature(t, txBuilder, 0)
 		unknownRouteTx = txBuilder.GetTx()
 
@@ -907,7 +907,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 	// Transaction with an unregistered message
 	{
 		txBuilder := suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&testdata.MsgCreateDog{})
+		txBuilder.SetMsgs(&testdata.MsgCreateDog{}) //nolint:errcheck
 		tx := txBuilder.GetTx()
 
 		txBytes, err := suite.txConfig.TxEncoder()(tx)
@@ -1537,7 +1537,7 @@ func TestABCI_PrepareProposal_MaxGas(t *testing.T) {
 		msgs := []sdk.Msg{msg}
 
 		builder := suite.txConfig.NewTxBuilder()
-		builder.SetMsgs(msgs...)
+		builder.SetMsgs(msgs...) //nolint:errcheck
 		builder.SetMemo("counter=" + strconv.FormatInt(i, 10) + "&failOnAnte=false")
 		builder.SetGasLimit(10)
 		setTxSignature(t, builder, uint64(i))

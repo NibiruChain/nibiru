@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	"google.golang.org/grpc/metadata"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"

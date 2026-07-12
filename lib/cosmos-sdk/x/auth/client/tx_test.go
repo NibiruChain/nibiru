@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
@@ -38,7 +39,7 @@ func TestParseQueryResponse(t *testing.T) {
 
 	res, err := authclient.ParseQueryResponse(bz)
 	require.NoError(t, err)
-	require.Equal(t, 10, int(res.GasInfo.GasUsed))
+	require.Equal(t, 10, int(res.GasUsed))
 	require.NotNil(t, res.Result)
 
 	res, err = authclient.ParseQueryResponse([]byte("fuzzy"))

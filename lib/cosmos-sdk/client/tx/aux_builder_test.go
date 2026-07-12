@@ -7,6 +7,7 @@ import (
 
 	_ "cosmossdk.io/api/cosmos/bank/v1beta1"
 	"cosmossdk.io/depinject"
+
 	clienttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

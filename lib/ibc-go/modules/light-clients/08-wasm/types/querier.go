@@ -8,6 +8,7 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"math/big"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"

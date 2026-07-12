@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

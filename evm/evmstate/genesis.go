@@ -5,10 +5,11 @@ package evmstate
 import (
 	"fmt"
 
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 

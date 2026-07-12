@@ -424,7 +424,7 @@ func TestMultiStoreQuery(t *testing.T) {
 	k2, v2 := []byte("water"), []byte("flows")
 	// v3 := []byte("is cold")
 
-	cid := multi.Commit()
+	cid := multi.Commit() //nolint:ineffassign
 
 	// Make sure we can get by name.
 	garbage := multi.GetStoreByName("bad-name")
@@ -656,7 +656,7 @@ func TestSetInitialVersion(t *testing.T) {
 
 	require.NoError(t, multi.LoadLatestVersion())
 
-	multi.SetInitialVersion(5)
+	multi.SetInitialVersion(5) //nolint:errcheck
 	require.Equal(t, int64(5), multi.initialVersion)
 
 	multi.Commit()
@@ -702,7 +702,7 @@ func TestGetListenWrappedKVStore(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var db dbm.DB = dbm.NewMemDB()
 	ms := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))
-	ms.LoadLatestVersion()
+	ms.LoadLatestVersion() //nolint:errcheck
 	mockListeners := []types.WriteListener{types.NewStoreKVPairWriteListener(buf, testMarshaller)}
 	ms.AddListeners(testStoreKey1, mockListeners)
 	ms.AddListeners(testStoreKey2, mockListeners)
@@ -1026,7 +1026,7 @@ func prepareStoreMap() map[types.StoreKey]types.CommitKVStore {
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl1"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl2"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewTransientStoreKey("trans1"), types.StoreTypeTransient, nil)
-	store.LoadLatestVersion()
+	store.LoadLatestVersion() //nolint:errcheck
 	return map[types.StoreKey]types.CommitKVStore{
 		testStoreKey1: &commitKVStoreStub{
 			CommitKVStore: store.GetStoreByName("iavl1").(types.CommitKVStore),

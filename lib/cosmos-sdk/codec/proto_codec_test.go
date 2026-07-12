@@ -103,7 +103,8 @@ func TestProtoCodecMarshal(t *testing.T) {
 	err = cdc.UnmarshalInterface(bz, &animal)
 	require.NoError(t, err)
 
-	bz, err = cdc.MarshalInterface(bird)
+	//nolint:staticcheck
+	bz, err = cdc.MarshalInterface(bird) //nolint:ineffassign
 	require.ErrorContains(t, err, "does not have a registered interface")
 
 	bz, err = cartoonCdc.MarshalInterface(bird)

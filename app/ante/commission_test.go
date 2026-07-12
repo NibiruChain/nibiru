@@ -2,6 +2,7 @@ package ante_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+
 	sdkclienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"

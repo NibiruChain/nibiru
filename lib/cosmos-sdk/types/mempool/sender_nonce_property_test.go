@@ -5,13 +5,14 @@ import (
 
 	"pgregory.net/rapid"
 
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/stretchr/testify/require"
+
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	mempool "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
 )
 
 var (

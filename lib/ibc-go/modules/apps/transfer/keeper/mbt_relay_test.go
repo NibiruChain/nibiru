@@ -12,9 +12,10 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
-	"github.com/cometbft/cometbft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

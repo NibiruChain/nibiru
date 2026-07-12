@@ -12,7 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func (suite *TestSuite) createAccounts(accs int) []sdk.AccAddress {
+func (suite *TestSuite) createAccounts(accs int) []sdk.AccAddress { //nolint:unused
 	addrs := simtestutil.CreateIncrementalAccounts(2)
 	suite.accountKeeper.EXPECT().GetAccount(gomock.Any(), suite.addrs[0]).Return(authtypes.NewBaseAccountWithAddress(suite.addrs[0])).AnyTimes()
 	suite.accountKeeper.EXPECT().GetAccount(gomock.Any(), suite.addrs[1]).Return(authtypes.NewBaseAccountWithAddress(suite.addrs[1])).AnyTimes()

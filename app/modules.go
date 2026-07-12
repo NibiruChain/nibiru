@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

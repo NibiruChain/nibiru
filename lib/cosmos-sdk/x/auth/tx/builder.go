@@ -195,7 +195,6 @@ func (w *wrapper) GetSignaturesV2() ([]signing.SignatureV2, error) {
 				Data:     sigData,
 				Sequence: nonce,
 			}
-
 		}
 	}
 
@@ -447,8 +446,9 @@ func (w *wrapper) AddAuxSignerData(data tx.AuxSignerData) error {
 	for i, msgAny := range body.Messages {
 		msgs[i] = msgAny.GetCachedValue().(sdk.Msg)
 	}
+	//nolint:errcheck
 	w.SetMsgs(msgs...)
-	w.SetTip(data.GetSignDoc().GetTip())
+	w.SetTip(data.GetSignDoc().GetTip()) //nolint:errcheck
 
 	// Get the aux signer's index in GetSigners.
 	signerIndex := -1

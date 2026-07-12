@@ -7,6 +7,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
@@ -20,7 +22,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/simulation"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/testutil"
-	"github.com/stretchr/testify/suite"
 )
 
 type SimTestSuite struct {
@@ -48,7 +49,7 @@ func (suite *SimTestSuite) SetupTest() {
 	)
 	suite.Require().NoError(err)
 
-	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+	suite.ctx = suite.app.NewContext(false, tmproto.Header{Time: time.Now()})
 }
 
 func (suite *SimTestSuite) getTestingAccounts(r *rand.Rand, n int) []simtypes.Account {
@@ -128,7 +129,8 @@ func (suite *SimTestSuite) TestSimulateMsgGrantAllowance() {
 	operationMsg, futureOperations, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(err)
 
-	var msg feegrant.MsgGrantAllowance
+	var msg feegrant.MsgGrantAllowance //nolint:errcheck
+	//nolint:errcheck
 	suite.legacyAmino.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)
@@ -170,7 +172,8 @@ func (suite *SimTestSuite) TestSimulateMsgRevokeAllowance() {
 	operationMsg, futureOperations, err := op(r, app.BaseApp, ctx, accounts, "")
 	require.NoError(err)
 
-	var msg feegrant.MsgRevokeAllowance
+	var msg feegrant.MsgRevokeAllowance //nolint:errcheck
+	//nolint:errcheck
 	suite.legacyAmino.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	require.True(operationMsg.OK)

@@ -9,6 +9,7 @@ import (
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
 )

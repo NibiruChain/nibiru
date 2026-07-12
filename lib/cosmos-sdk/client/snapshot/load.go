@@ -10,8 +10,9 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
 )

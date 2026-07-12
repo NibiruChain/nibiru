@@ -3,7 +3,8 @@ package keeper_test
 import (
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
@@ -149,7 +150,7 @@ func (s *KeeperTestSuite) TestRedelegationByUnbondingIDAccessors() {
 				0,
 				time.Unix(5, 0).UTC(),
 				sdk.NewInt(10),
-				math.LegacyNewDec(10),
+				sdkmath.LegacyNewDec(10),
 				0,
 			),
 		},
@@ -163,7 +164,7 @@ func (s *KeeperTestSuite) TestRedelegationByUnbondingIDAccessors() {
 				0,
 				time.Unix(5, 0).UTC(),
 				sdk.NewInt(10),
-				math.LegacyNewDec(10),
+				sdkmath.LegacyNewDec(10),
 				0,
 			),
 		},
@@ -177,7 +178,7 @@ func (s *KeeperTestSuite) TestRedelegationByUnbondingIDAccessors() {
 				0,
 				time.Unix(5, 0).UTC(),
 				sdk.NewInt(10),
-				math.LegacyNewDec(10),
+				sdkmath.LegacyNewDec(10),
 				0,
 			),
 		},
@@ -300,7 +301,7 @@ func (s *KeeperTestSuite) TestUnbondingCanComplete() {
 		0,
 		time.Unix(5, 0).UTC(),
 		sdk.NewInt(10),
-		math.LegacyNewDec(10),
+		sdkmath.LegacyNewDec(10),
 		unbondingID,
 	)
 	s.stakingKeeper.SetRedelegation(s.ctx, red)

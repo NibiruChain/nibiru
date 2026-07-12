@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	sdktestdata "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	sdktestdata "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 

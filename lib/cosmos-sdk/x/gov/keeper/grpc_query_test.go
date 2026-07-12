@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -309,7 +309,6 @@ func (suite *KeeperTestSuite) TestGRPCQueryProposals() {
 
 					suite.Require().Equal(expJSON, actualJSON)
 				}
-
 			} else {
 				suite.Require().Error(err)
 				suite.Require().Nil(proposals)
@@ -887,9 +886,9 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryParams() {
 	)
 
 	defaultTallyParams := v1beta1.TallyParams{
-		Quorum:        math.LegacyNewDec(0),
-		Threshold:     math.LegacyNewDec(0),
-		VetoThreshold: math.LegacyNewDec(0),
+		Quorum:        sdkmath.LegacyNewDec(0),
+		Threshold:     sdkmath.LegacyNewDec(0),
+		VetoThreshold: sdkmath.LegacyNewDec(0),
 	}
 
 	testCases := []struct {
@@ -1587,10 +1586,10 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryTallyResult() {
 				req = &v1beta1.QueryTallyResultRequest{ProposalId: proposal.Id}
 
 				expTally = &v1beta1.TallyResult{
-					Yes:        math.NewInt(4),
-					Abstain:    math.NewInt(1),
-					No:         math.NewInt(0),
-					NoWithVeto: math.NewInt(0),
+					Yes:        sdkmath.NewInt(4),
+					Abstain:    sdkmath.NewInt(1),
+					No:         sdkmath.NewInt(0),
+					NoWithVeto: sdkmath.NewInt(0),
 				}
 			},
 			true,
@@ -1612,10 +1611,10 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryTallyResult() {
 				req = &v1beta1.QueryTallyResultRequest{ProposalId: proposal.Id}
 
 				expTally = &v1beta1.TallyResult{
-					Yes:        math.NewInt(0),
-					Abstain:    math.NewInt(0),
-					No:         math.NewInt(0),
-					NoWithVeto: math.NewInt(0),
+					Yes:        sdkmath.NewInt(0),
+					Abstain:    sdkmath.NewInt(0),
+					No:         sdkmath.NewInt(0),
+					NoWithVeto: sdkmath.NewInt(0),
 				}
 			},
 			true,
@@ -1637,10 +1636,10 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryTallyResult() {
 				req = &v1beta1.QueryTallyResultRequest{ProposalId: proposal.Id}
 
 				expTally = &v1beta1.TallyResult{
-					Yes:        math.NewInt(0),
-					Abstain:    math.NewInt(0),
-					No:         math.NewInt(0),
-					NoWithVeto: math.NewInt(0),
+					Yes:        sdkmath.NewInt(0),
+					Abstain:    sdkmath.NewInt(0),
+					No:         sdkmath.NewInt(0),
+					NoWithVeto: sdkmath.NewInt(0),
 				}
 			},
 			true,
@@ -1668,10 +1667,10 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryTallyResult() {
 				req = &v1beta1.QueryTallyResultRequest{ProposalId: proposal.Id}
 
 				expTally = &v1beta1.TallyResult{
-					Yes:        math.NewInt(4),
-					Abstain:    math.NewInt(1),
-					No:         math.NewInt(0),
-					NoWithVeto: math.NewInt(0),
+					Yes:        sdkmath.NewInt(4),
+					Abstain:    sdkmath.NewInt(1),
+					No:         sdkmath.NewInt(0),
+					NoWithVeto: sdkmath.NewInt(0),
 				}
 			},
 			true,

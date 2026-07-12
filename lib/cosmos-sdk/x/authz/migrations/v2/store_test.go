@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"cosmossdk.io/depinject"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -15,11 +17,11 @@ import (
 	authztestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/testutil"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMigration(t *testing.T) {
-	var cdc codec.Codec
+	var cdc codec.Codec //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(authztestutil.AppConfig, &cdc)
 
 	authzKey := sdk.NewKVStoreKey("authz")

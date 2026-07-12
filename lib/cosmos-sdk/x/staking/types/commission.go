@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -55,7 +55,7 @@ func (cr CommissionRates) Validate() error {
 		// max rate cannot be negative
 		return ErrCommissionNegative
 
-	case cr.MaxRate.GT(math.LegacyOneDec()):
+	case cr.MaxRate.GT(sdkmath.LegacyOneDec()):
 		// max rate cannot be greater than 1
 		return ErrCommissionHuge
 

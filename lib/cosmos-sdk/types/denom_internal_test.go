@@ -179,7 +179,8 @@ func (s *internalDenomTestSuite) TestDecOperationOrder() {
 	dec, err := NewDecFromStr("11")
 	s.Require().NoError(err)
 	s.Require().NoError(RegisterDenom("unit1", dec))
-	dec, err = NewDecFromStr("100000011")
+	//nolint:staticcheck
+	dec, err = NewDecFromStr("100000011") //nolint:ineffassign
 	s.Require().NoError(RegisterDenom("unit2", dec))
 
 	coin, err := ConvertCoin(NewCoin("unit1", NewInt(100000011)), "unit2")

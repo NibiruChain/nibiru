@@ -8,12 +8,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 type TestAccount struct {
 	Name    string
-	Address types.AccAddress
+	Address sdk.AccAddress
 }
 
 func CreateKeyringAccounts(t *testing.T, kr keyring.Keyring, num int) []TestAccount {
@@ -22,7 +22,7 @@ func CreateKeyringAccounts(t *testing.T, kr keyring.Keyring, num int) []TestAcco
 		record, _, err := kr.NewMnemonic(
 			fmt.Sprintf("key-%d", i),
 			keyring.English,
-			types.FullFundraiserPath,
+			sdk.FullFundraiserPath,
 			keyring.DefaultBIP39Passphrase,
 			hd.Secp256k1)
 		assert.NoError(t, err)

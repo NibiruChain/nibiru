@@ -1,12 +1,13 @@
 package types
 
 import (
+	proto "github.com/cosmos/gogoproto/proto"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )

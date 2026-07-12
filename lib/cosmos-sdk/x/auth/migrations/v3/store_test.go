@@ -60,7 +60,7 @@ func TestMigrateMapAccAddressToAccNumberKey(t *testing.T) {
 	randAccNumber := uint64(rand.Intn(100000-10000) + 10000)
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), randAccNumber, 0)
 
-	ctx = app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+	ctx = app.NewContext(false, tmproto.Header{Time: time.Now()})
 
 	// migrator
 	m := keeper.NewMigrator(accountKeeper, app.GRPCQueryRouter(), legacySubspace)

@@ -11,6 +11,7 @@ import (
 	testifysuite "github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/libs/log"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"

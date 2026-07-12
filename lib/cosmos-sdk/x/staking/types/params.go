@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -33,7 +33,7 @@ const (
 )
 
 // DefaultMinCommissionRate is set to 0%
-var DefaultMinCommissionRate = math.LegacyZeroDec()
+var DefaultMinCommissionRate = sdkmath.LegacyZeroDec()
 
 // NewParams creates a new Params instance
 func NewParams(unbondingTime time.Duration, maxValidators, maxEntries, historicalEntries uint32, bondDenom string, minCommissionRate sdk.Dec) Params {
@@ -180,7 +180,7 @@ func validateBondDenom(i interface{}) error {
 }
 
 func ValidatePowerReduction(i interface{}) error {
-	v, ok := i.(math.Int)
+	v, ok := i.(sdkmath.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -204,7 +204,7 @@ func validateMinCommissionRate(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("minimum commission rate cannot be negative: %s", v)
 	}
-	if v.GT(math.LegacyOneDec()) {
+	if v.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("minimum commission rate cannot be greater than 100%%: %s", v)
 	}
 

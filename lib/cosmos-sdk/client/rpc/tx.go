@@ -9,13 +9,13 @@ import (
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 func newTxResponseCheckTx(res *coretypes.ResultBroadcastTxCommit) *sdk.TxResponse {
@@ -109,7 +109,7 @@ func QueryEventForTxCmd() *cobra.Command {
 			defer cancel()
 
 			hash := args[0]
-			query := fmt.Sprintf("%s='%s' AND %s='%s'", tmtypes.EventTypeKey, tmtypes.EventTx, tmtypes.TxHashKey, hash)
+			query := fmt.Sprintf("%s='%s' AND %s='%s'", cmttypes.EventTypeKey, cmttypes.EventTx, cmttypes.TxHashKey, hash)
 			const subscriber = "subscriber"
 			eventCh, err := c.Subscribe(ctx, subscriber, query)
 			if err != nil {
@@ -119,16 +119,16 @@ func QueryEventForTxCmd() *cobra.Command {
 
 			select {
 			case evt := <-eventCh:
-				if txe, ok := evt.Data.(tmtypes.EventDataTx); ok {
+				if txe, ok := evt.Data.(cmttypes.EventDataTx); ok {
 					res := &coretypes.ResultBroadcastTxCommit{
 						DeliverTx: txe.Result,
-						Hash:      tmtypes.Tx(txe.Tx).Hash(),
+						Hash:      cmttypes.Tx(txe.Tx).Hash(),
 						Height:    txe.Height,
 					}
 					return clientCtx.PrintProto(newResponseFormatBroadcastTxCommit(res))
 				}
 			case <-ctx.Done():
-				return errors.ErrLogic.Wrapf("timed out waiting for event, the transaction could have already been included or wasn't yet included")
+				return sdkerrors.ErrLogic.Wrapf("timed out waiting for event, the transaction could have already been included or wasn't yet included")
 			}
 			return nil
 		},

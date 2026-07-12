@@ -3,11 +3,12 @@ package v4_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/x/bank"
 	"github.com/NibiruChain/nibiru/v2/x/bank/exported"

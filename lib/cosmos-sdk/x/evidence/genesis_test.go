@@ -32,7 +32,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 	app, err := simtestutil.Setup(testutil.AppConfig, &evidenceKeeper)
 	require.NoError(suite.T(), err)
 
-	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+	suite.ctx = app.NewContext(false, tmproto.Header{Height: 1})
 	suite.keeper = evidenceKeeper
 }
 

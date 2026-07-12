@@ -14,7 +14,9 @@ import (
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types" //nolint:staticcheck
+
+	//nolint:staticcheck
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"

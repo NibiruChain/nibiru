@@ -3,7 +3,7 @@ package v1
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -223,7 +223,7 @@ func (msg MsgVoteWeighted) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, WeightedVoteOptions(msg.Options).String())
 	}
 
-	totalWeight := math.LegacyNewDec(0)
+	totalWeight := sdkmath.LegacyNewDec(0)
 	usedOptions := make(map[VoteOption]bool)
 	for _, option := range msg.Options {
 		if !option.IsValid() {
@@ -240,11 +240,11 @@ func (msg MsgVoteWeighted) ValidateBasic() error {
 		usedOptions[option.Option] = true
 	}
 
-	if totalWeight.GT(math.LegacyNewDec(1)) {
+	if totalWeight.GT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(types.ErrInvalidVote, "Total weight overflow 1.00")
 	}
 
-	if totalWeight.LT(math.LegacyNewDec(1)) {
+	if totalWeight.LT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(types.ErrInvalidVote, "Total weight lower than 1.00")
 	}
 

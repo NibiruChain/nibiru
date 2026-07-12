@@ -2,6 +2,7 @@ package ante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	sdkante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"

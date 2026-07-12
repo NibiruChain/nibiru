@@ -15,7 +15,7 @@ import (
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/mock"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 type contextTestSuite struct {
@@ -27,13 +27,13 @@ func TestContextTestSuite(t *testing.T) {
 }
 
 func (s *contextTestSuite) TestCacheContext() {
-	key := types.NewKVStoreKey(s.T().Name() + "_TestCacheContext")
+	key := sdk.NewKVStoreKey(s.T().Name() + "_TestCacheContext")
 	k1 := []byte("hello")
 	v1 := []byte("world")
 	k2 := []byte("key")
 	v2 := []byte("value")
 
-	ctx := testutil.DefaultContext(key, types.NewTransientStoreKey("transient_"+s.T().Name()))
+	ctx := testutil.DefaultContext(key, sdk.NewTransientStoreKey("transient_"+s.T().Name()))
 	store := ctx.KVStore(key)
 	store.Set(k1, v1)
 	s.Require().Equal(v1, store.Get(k1))
@@ -45,8 +45,8 @@ func (s *contextTestSuite) TestCacheContext() {
 	s.Require().Nil(cstore.Get(k2))
 
 	// emit some events
-	cctx.EventManager().EmitEvent(types.NewEvent("foo", types.NewAttribute("key", "value")))
-	cctx.EventManager().EmitEvent(types.NewEvent("bar", types.NewAttribute("key", "value")))
+	cctx.EventManager().EmitEvent(sdk.NewEvent("foo", sdk.NewAttribute("key", "value")))
+	cctx.EventManager().EmitEvent(sdk.NewEvent("bar", sdk.NewAttribute("key", "value")))
 
 	cstore.Set(k2, v2)
 	s.Require().Equal(v2, cstore.Get(k2))
@@ -59,8 +59,8 @@ func (s *contextTestSuite) TestCacheContext() {
 }
 
 func (s *contextTestSuite) TestLogContext() {
-	key := types.NewKVStoreKey(s.T().Name())
-	ctx := testutil.DefaultContext(key, types.NewTransientStoreKey("transient_"+s.T().Name()))
+	key := sdk.NewKVStoreKey(s.T().Name())
+	ctx := testutil.DefaultContext(key, sdk.NewTransientStoreKey("transient_"+s.T().Name()))
 	ctrl := gomock.NewController(s.T())
 	s.T().Cleanup(ctrl.Finish)
 
@@ -77,7 +77,7 @@ func (s *contextTestSuite) TestLogContext() {
 
 // Testing saving/loading sdk type values to/from the context
 func (s *contextTestSuite) TestContextWithCustom() {
-	var ctx types.Context
+	var ctx sdk.Context
 	s.Require().True(ctx.IsZero())
 
 	ctrl := gomock.NewController(s.T())
@@ -90,13 +90,13 @@ func (s *contextTestSuite) TestContextWithCustom() {
 	txbytes := []byte("txbytes")
 	logger := mock.NewMockLogger(ctrl)
 	voteinfos := []abci.VoteInfo{{}}
-	meter := types.NewGasMeter(10000)
-	blockGasMeter := types.NewGasMeter(20000)
-	minGasPrices := types.DecCoins{types.NewInt64DecCoin("feetoken", 1)}
+	meter := sdk.NewGasMeter(10000)
+	blockGasMeter := sdk.NewGasMeter(20000)
+	minGasPrices := sdk.DecCoins{sdk.NewInt64DecCoin("feetoken", 1)}
 	headerHash := []byte("headerHash")
 	zeroGasCfg := storetypes.GasConfig{}
 
-	ctx = types.NewContext(nil, header, ischeck, logger)
+	ctx = sdk.NewContext(nil, header, ischeck, logger)
 	s.Require().Equal(header, ctx.BlockHeader())
 
 	ctx = ctx.
@@ -144,14 +144,14 @@ func (s *contextTestSuite) TestContextWithCustom() {
 
 // Testing saving/loading of header fields to/from the context
 func (s *contextTestSuite) TestContextHeader() {
-	var ctx types.Context
+	var ctx sdk.Context
 
 	height := int64(5)
 	time := time.Now()
 	addr := secp256k1.GenPrivKey().PubKey().Address()
-	proposer := types.ConsAddress(addr)
+	proposer := sdk.ConsAddress(addr)
 
-	ctx = types.NewContext(nil, tmproto.Header{}, false, nil)
+	ctx = sdk.NewContext(nil, tmproto.Header{}, false, nil)
 
 	ctx = ctx.
 		WithBlockHeight(height).
@@ -165,7 +165,7 @@ func (s *contextTestSuite) TestContextHeader() {
 
 func (s *contextTestSuite) TestWithBlockTime() {
 	now := time.Now()
-	ctx := types.NewContext(nil, tmproto.Header{}, false, nil)
+	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
 	ctx = ctx.WithBlockTime(now)
 	tmtime2 := tmtime.Canonical(now)
 	s.Require().Equal(ctx.BlockTime(), tmtime2)
@@ -214,7 +214,7 @@ func (s *contextTestSuite) TestContextHeaderClone() {
 	for name, tc := range cases {
 		tc := tc
 		s.T().Run(name, func(t *testing.T) {
-			ctx := types.NewContext(nil, tc.h, false, nil)
+			ctx := sdk.NewContext(nil, tc.h, false, nil)
 			s.Require().Equal(tc.h.Height, ctx.BlockHeight())
 			s.Require().Equal(tc.h.Time.UTC(), ctx.BlockTime())
 
@@ -228,16 +228,16 @@ func (s *contextTestSuite) TestContextHeaderClone() {
 }
 
 func (s *contextTestSuite) TestUnwrapSDKContext() {
-	sdkCtx := types.NewContext(nil, tmproto.Header{}, false, nil)
-	ctx := types.WrapSDKContext(sdkCtx)
-	sdkCtx2 := types.UnwrapSDKContext(ctx)
+	sdkCtx := sdk.NewContext(nil, tmproto.Header{}, false, nil)
+	ctx := sdk.WrapSDKContext(sdkCtx)
+	sdkCtx2 := sdk.UnwrapSDKContext(ctx)
 	s.Require().Equal(sdkCtx, sdkCtx2)
 
 	ctx = context.Background()
-	s.Require().Panics(func() { types.UnwrapSDKContext(ctx) })
+	s.Require().Panics(func() { sdk.UnwrapSDKContext(ctx) })
 
 	// test unwrapping when we've used context.WithValue
-	ctx = context.WithValue(sdkCtx, "foo", "bar")
-	sdkCtx2 = types.UnwrapSDKContext(ctx)
+	ctx = context.WithValue(sdkCtx, "foo", "bar") //nolint:staticcheck
+	sdkCtx2 = sdk.UnwrapSDKContext(ctx)
 	s.Require().Equal(sdkCtx, sdkCtx2)
 }

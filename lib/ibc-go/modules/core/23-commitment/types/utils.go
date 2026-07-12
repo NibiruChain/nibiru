@@ -2,8 +2,9 @@ package types
 
 import (
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	ics23 "github.com/cosmos/ics23/go"
+
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // ConvertProofs converts crypto.ProofOps into MerkleProof

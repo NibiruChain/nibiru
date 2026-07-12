@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"time"
 
+	"github.com/golang/mock/gomock"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
-	"github.com/golang/mock/gomock"
 )
 
 func (suite *KeeperTestSuite) TestGrantAllowance() {
@@ -53,7 +54,7 @@ func (suite *KeeperTestSuite) TestGrantAllowance() {
 			"valid: grantee account doesn't exist",
 			func() *feegrant.MsgGrantAllowance {
 				grantee := "cosmos139f7kncmglres2nf3h4hc4tade85ekfr8sulz5"
-				granteeAccAddr := types.MustAccAddressFromBech32(grantee)
+				granteeAccAddr := sdk.MustAccAddressFromBech32(grantee)
 				any, err := codectypes.NewAnyWithValue(&feegrant.BasicAllowance{
 					SpendLimit: suite.atom,
 					Expiration: &oneYear,
@@ -62,7 +63,7 @@ func (suite *KeeperTestSuite) TestGrantAllowance() {
 				suite.accountKeeper.EXPECT().GetAccount(gomock.Any(), granteeAccAddr).Return(nil).AnyTimes()
 
 				acc := authtypes.NewBaseAccountWithAddress(granteeAccAddr)
-				suite.accountKeeper.EXPECT().NewAccountWithAddress(gomock.Any(), types.MustAccAddressFromBech32(grantee)).Return(acc).AnyTimes()
+				suite.accountKeeper.EXPECT().NewAccountWithAddress(gomock.Any(), sdk.MustAccAddressFromBech32(grantee)).Return(acc).AnyTimes()
 				suite.accountKeeper.EXPECT().SetAccount(gomock.Any(), acc).Return()
 
 				suite.Require().NoError(err)
@@ -223,7 +224,8 @@ func (suite *KeeperTestSuite) TestRevokeAllowance() {
 				Grantee: suite.addrs[1].String(),
 			},
 			func() {
-				// removing fee allowance from previous tests if exists
+				// removing fee allowance from previous tests if exists //nolint:errcheck
+				//nolint:errcheck
 				suite.msgSrvr.RevokeAllowance(suite.ctx, &feegrant.MsgRevokeAllowance{
 					Granter: suite.addrs[0].String(),
 					Grantee: suite.addrs[1].String(),

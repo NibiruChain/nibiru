@@ -11,6 +11,7 @@ import (
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 
 	"cosmossdk.io/core/appconfig"
+
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"

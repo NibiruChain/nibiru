@@ -3,18 +3,19 @@ package testutil
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
-func CreateValidator(pk cryptotypes.PubKey, stake math.Int) (stakingtypes.Validator, error) {
+func CreateValidator(pk cryptotypes.PubKey, stake sdkmath.Int) (stakingtypes.Validator, error) {
 	valConsAddr := sdk.GetConsAddress(pk)
 	val, err := stakingtypes.NewValidator(sdk.ValAddress(valConsAddr), pk, stakingtypes.Description{})
 	val.Tokens = stake
-	val.DelegatorShares = math.LegacyNewDecFromInt(val.Tokens)
+	val.DelegatorShares = sdkmath.LegacyNewDecFromInt(val.Tokens)
 	return val, err
 }
 
@@ -48,7 +49,7 @@ func SlashValidator(
 	slashFactor sdk.Dec,
 	validator *stakingtypes.Validator,
 	distrKeeper *keeper.Keeper,
-) math.Int {
+) sdkmath.Int {
 	if slashFactor.IsNegative() {
 		panic(fmt.Errorf("attempted to slash with a negative slash factor: %v", slashFactor))
 	}
@@ -72,16 +73,17 @@ func SlashValidator(
 
 	// cannot decrease balance below zero
 	tokensToBurn := sdk.MinInt(slashAmount, validator.Tokens)
-	tokensToBurn = sdk.MaxInt(tokensToBurn, math.ZeroInt()) // defensive.
+	tokensToBurn = sdk.MaxInt(tokensToBurn, sdkmath.ZeroInt()) // defensive.
 
 	// we need to calculate the *effective* slash fraction for distribution
 	if validator.Tokens.IsPositive() {
 		effectiveFraction := sdk.NewDecFromInt(tokensToBurn).QuoRoundUp(sdk.NewDecFromInt(validator.Tokens))
 		// possible if power has changed
-		if effectiveFraction.GT(math.LegacyOneDec()) {
-			effectiveFraction = math.LegacyOneDec()
+		if effectiveFraction.GT(sdkmath.LegacyOneDec()) {
+			effectiveFraction = sdkmath.LegacyOneDec()
 		}
-		// call the before-slashed hook
+		// call the before-slashed hook //nolint:errcheck
+		//nolint:errcheck
 		distrKeeper.Hooks().BeforeValidatorSlashed(ctx, validator.GetOperator(), effectiveFraction)
 	}
 	// Deduct from validator's bonded tokens and update the validator.
@@ -99,7 +101,7 @@ func Delegate(
 	distrKeeper keeper.Keeper,
 	delegator sdk.AccAddress,
 	validator *stakingtypes.Validator,
-	amount math.Int,
+	amount sdkmath.Int,
 	delegation *stakingtypes.Delegation,
 ) (
 	newShares sdk.Dec,
@@ -110,12 +112,12 @@ func Delegate(
 		err = distrKeeper.Hooks().BeforeDelegationSharesModified(ctx, delegator, validator.GetOperator())
 	} else {
 		err = distrKeeper.Hooks().BeforeDelegationCreated(ctx, delegator, validator.GetOperator())
-		del := stakingtypes.NewDelegation(delegator, validator.GetOperator(), math.LegacyZeroDec())
+		del := stakingtypes.NewDelegation(delegator, validator.GetOperator(), sdkmath.LegacyZeroDec())
 		delegation = &del
 	}
 
 	if err != nil {
-		return math.LegacyZeroDec(), stakingtypes.Delegation{}, err
+		return sdkmath.LegacyZeroDec(), stakingtypes.Delegation{}, err
 	}
 
 	// Add tokens from delegation to validator

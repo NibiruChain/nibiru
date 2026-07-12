@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
@@ -143,7 +143,7 @@ func GetModuleVersionsCmd() *cobra.Command {
 			}
 
 			if res.ModuleVersions == nil {
-				return errors.ErrNotFound
+				return sdkerrors.ErrNotFound
 			}
 
 			return clientCtx.PrintProto(res)

@@ -132,7 +132,7 @@ func TestFileStreamingService(t *testing.T) {
 
 	wg := new(sync.WaitGroup)
 
-	testStreamingService.Stream(wg)
+	testStreamingService.Stream(wg) //nolint:errcheck
 	testListenBlock(t)
 	testStreamingService.Close()
 	wg.Wait()
@@ -145,9 +145,9 @@ func testListenBlock(t *testing.T) {
 	)
 
 	// write state changes
-	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false)
-	testListener2.OnWrite(mockStoreKey2, mockKey2, mockValue2, false)
-	testListener1.OnWrite(mockStoreKey1, mockKey3, mockValue3, false)
+	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false) //nolint:errcheck
+	testListener2.OnWrite(mockStoreKey2, mockKey2, mockValue2, false) //nolint:errcheck
+	testListener1.OnWrite(mockStoreKey1, mockKey3, mockValue3, false) //nolint:errcheck
 
 	// expected KV pairs
 	expectedKVPair1, err := testMarshaller.Marshal(&types.StoreKVPair{
@@ -182,9 +182,9 @@ func testListenBlock(t *testing.T) {
 	require.Nil(t, err)
 
 	// write state changes
-	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false)
-	testListener2.OnWrite(mockStoreKey2, mockKey2, mockValue2, false)
-	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false)
+	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false) //nolint:errcheck
+	testListener2.OnWrite(mockStoreKey2, mockKey2, mockValue2, false) //nolint:errcheck
+	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false) //nolint:errcheck
 
 	// expected KV pairs
 	expectedKVPair1, err = testMarshaller.Marshal(&types.StoreKVPair{
@@ -219,9 +219,9 @@ func testListenBlock(t *testing.T) {
 	require.Nil(t, err)
 
 	// write state changes
-	testListener2.OnWrite(mockStoreKey2, mockKey1, mockValue1, false)
-	testListener1.OnWrite(mockStoreKey1, mockKey2, mockValue2, false)
-	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false)
+	testListener2.OnWrite(mockStoreKey2, mockKey1, mockValue1, false) //nolint:errcheck
+	testListener1.OnWrite(mockStoreKey1, mockKey2, mockValue2, false) //nolint:errcheck
+	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false) //nolint:errcheck
 
 	// expected KV pairs
 	expectedKVPair1, err = testMarshaller.Marshal(&types.StoreKVPair{
@@ -256,9 +256,9 @@ func testListenBlock(t *testing.T) {
 	require.Nil(t, err)
 
 	// write state changes
-	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false)
-	testListener1.OnWrite(mockStoreKey1, mockKey2, mockValue2, false)
-	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false)
+	testListener1.OnWrite(mockStoreKey1, mockKey1, mockValue1, false) //nolint:errcheck
+	testListener1.OnWrite(mockStoreKey1, mockKey2, mockValue2, false) //nolint:errcheck
+	testListener2.OnWrite(mockStoreKey2, mockKey3, mockValue3, false) //nolint:errcheck
 
 	// expected KV pairs
 	expectedKVPair1, err = testMarshaller.Marshal(&types.StoreKVPair{

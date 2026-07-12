@@ -11,9 +11,10 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	sdkioerrors "cosmossdk.io/errors"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 

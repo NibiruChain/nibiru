@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 
 	sdkmath "cosmossdk.io/math"
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 )

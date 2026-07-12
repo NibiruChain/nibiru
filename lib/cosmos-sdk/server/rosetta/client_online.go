@@ -31,7 +31,8 @@ import (
 	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
-	tmrpc "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 )
 
@@ -51,7 +52,7 @@ type Client struct {
 
 	auth  auth.QueryClient
 	bank  bank.QueryClient
-	tmRPC tmrpc.Client
+	tmRPC cmtrpcclient.Client
 
 	version string
 
@@ -249,7 +250,7 @@ func (c *Client) coins(ctx context.Context) (sdk.Coins, error) {
 		// get next key
 		page := supply.GetPagination()
 		if page == nil {
-			return nil, crgerrs.WrapError(crgerrs.ErrCodec, fmt.Sprintf("error pagination"))
+			return nil, crgerrs.WrapError(crgerrs.ErrCodec, "error pagination")
 		}
 		nextKey := page.GetNextKey()
 

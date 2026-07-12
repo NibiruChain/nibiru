@@ -10,6 +10,7 @@ import (
 
 	"cosmossdk.io/depinject"
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -23,7 +24,8 @@ import (
 // TestRandomizedGenState tests the normal scenario of applying RandomizedGenState.
 // Abonormal scenarios are not tested here.
 func TestRandomizedGenState(t *testing.T) {
-	var interfaceRegistry codectypes.InterfaceRegistry
+	var interfaceRegistry codectypes.InterfaceRegistry //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &interfaceRegistry)
 	cdc := codec.NewProtoCodec(interfaceRegistry)
 
@@ -60,7 +62,8 @@ func TestRandomizedGenState(t *testing.T) {
 
 // TestRandomizedGenState tests abnormal scenarios of applying RandomizedGenState.
 func TestRandomizedGenState1(t *testing.T) {
-	var interfaceRegistry codectypes.InterfaceRegistry
+	var interfaceRegistry codectypes.InterfaceRegistry //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &interfaceRegistry)
 	cdc := codec.NewProtoCodec(interfaceRegistry)
 

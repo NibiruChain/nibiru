@@ -72,7 +72,6 @@ func CreateNonMembershipProof(data map[string][]byte, key []byte) (*ics23.Commit
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	proof := &ics23.CommitmentProof{

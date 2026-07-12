@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
@@ -98,8 +98,8 @@ func doParseKey(cmd *cobra.Command, config *sdk.Config, args []string) error {
 		return errors.New("couldn't parse empty input")
 	}
 
-	output, _ := cmd.Flags().GetString(cli.OutputFlag)
-	if !(runFromBech32(outstream, addr, output) || runFromHex(config, outstream, addr, output)) {
+	output, _ := cmd.Flags().GetString(cmtcli.OutputFlag)
+	if !runFromBech32(outstream, addr, output) && !runFromHex(config, outstream, addr, output) {
 		return errors.New("couldn't find valid bech32 nor hex data")
 	}
 

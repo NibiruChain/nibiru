@@ -25,7 +25,8 @@ func TestStoreMigration(t *testing.T) {
 	_, pk1, addr1 := testdata.KeyTestPubAddr()
 	valAddr1 := sdk.ValAddress(addr1)
 	val := testutil.NewValidator(t, valAddr1, pk1)
-	_, pk1, addr2 := testdata.KeyTestPubAddr()
+	//nolint:staticcheck
+	_, pk1, addr2 := testdata.KeyTestPubAddr() //nolint:ineffassign
 	valAddr2 := sdk.ValAddress(addr2)
 	_, _, addr3 := testdata.KeyTestPubAddr()
 	consAddr := sdk.ConsAddress(addr3.String())

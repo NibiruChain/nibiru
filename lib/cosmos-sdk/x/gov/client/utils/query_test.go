@@ -6,7 +6,7 @@ import (
 
 	"github.com/cometbft/cometbft/rpc/client/mock"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
@@ -20,7 +20,7 @@ import (
 type TxSearchMock struct {
 	txConfig client.TxConfig
 	mock.Client
-	txs []tmtypes.Tx
+	txs []cmttypes.Tx
 }
 
 func (mock TxSearchMock) TxSearch(ctx context.Context, query string, prove bool, page, perPage *int, orderBy string) (*coretypes.ResultTxSearch, error) {
@@ -48,7 +48,7 @@ func (mock TxSearchMock) TxSearch(ctx context.Context, query string, prove bool,
 
 func (mock TxSearchMock) Block(ctx context.Context, height *int64) (*coretypes.ResultBlock, error) {
 	// any non nil Block needs to be returned. used to get time value
-	return &coretypes.ResultBlock{Block: &tmtypes.Block{}}, nil
+	return &coretypes.ResultBlock{Block: &cmttypes.Block{}}, nil
 }
 
 func TestGetPaginatedVotes(t *testing.T) {
@@ -141,7 +141,7 @@ func TestGetPaginatedVotes(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.description, func(t *testing.T) {
-			marshalled := make([]tmtypes.Tx, len(tc.msgs))
+			marshalled := make([]cmttypes.Tx, len(tc.msgs))
 			cli := TxSearchMock{txs: marshalled, txConfig: encCfg.TxConfig}
 			clientCtx := client.Context{}.
 				WithLegacyAmino(encCfg.Amino).

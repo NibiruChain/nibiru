@@ -5,7 +5,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
@@ -17,8 +17,8 @@ import (
 // data. Finally, it updates the bonded validators.
 // Returns final validator set after applying all declaration and delegations
 func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []abci.ValidatorUpdate) {
-	bondedTokens := math.ZeroInt()
-	notBondedTokens := math.ZeroInt()
+	bondedTokens := sdkmath.ZeroInt()
+	notBondedTokens := sdkmath.ZeroInt()
 
 	// We need to pretend to be "n blocks before genesis", where "n" is the
 	// validator update delay, so that e.g. slashing periods are correctly
@@ -36,7 +36,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		k.SetValidator(ctx, validator)
 
 		// Manually set indices for the first time
-		k.SetValidatorByConsAddr(ctx, validator)
+		k.SetValidatorByConsAddr(ctx, validator) //nolint:errcheck
 		k.SetValidatorByPowerIndex(ctx, validator)
 
 		// Call the creation hook if not exported

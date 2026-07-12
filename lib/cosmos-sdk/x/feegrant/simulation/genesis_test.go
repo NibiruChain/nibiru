@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+
 	moduletypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"

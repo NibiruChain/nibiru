@@ -6,6 +6,7 @@ import (
 	"time"
 
 	cmttypes "github.com/cometbft/cometbft/types"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

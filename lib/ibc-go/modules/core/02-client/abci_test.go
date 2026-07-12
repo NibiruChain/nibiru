@@ -6,9 +6,10 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/stretchr/testify/suite"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
-	"github.com/stretchr/testify/suite"
 
 	client "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

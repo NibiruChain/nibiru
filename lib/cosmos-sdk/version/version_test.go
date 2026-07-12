@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -45,7 +45,7 @@ func Test_runVersionCmd(t *testing.T) {
 	_, mockOut := testutil.ApplyMockIO(cmd)
 
 	cmd.SetArgs([]string{
-		fmt.Sprintf("--%s=''", cli.OutputFlag),
+		fmt.Sprintf("--%s=''", cmtcli.OutputFlag),
 		"--long=false",
 	})
 
@@ -54,7 +54,7 @@ func Test_runVersionCmd(t *testing.T) {
 	mockOut.Reset()
 
 	cmd.SetArgs([]string{
-		fmt.Sprintf("--%s=json", cli.OutputFlag), "--long=true",
+		fmt.Sprintf("--%s=json", cmtcli.OutputFlag), "--long=true",
 	})
 
 	info := version.NewInfo()

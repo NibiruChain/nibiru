@@ -36,8 +36,8 @@ var (
 	}
 
 	// The default power validators are initialized to have within tests
-	initAmt   = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction)
-	initCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, initAmt))
+	initAmt   = sdk.TokensFromConsensusPower(200, sdk.DefaultPowerReduction) //nolint:unused
+	initCoins = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, initAmt))     //nolint:unused
 )
 
 func newPubKey(pk string) (res cryptotypes.PubKey) {

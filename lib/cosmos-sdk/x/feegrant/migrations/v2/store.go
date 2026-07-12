@@ -4,11 +4,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
 )
 
-func addAllowancesByExpTimeQueue(ctx types.Context, store storetypes.KVStore, cdc codec.BinaryCodec) error {
+func addAllowancesByExpTimeQueue(ctx sdk.Context, store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	prefixStore := prefix.NewStore(store, FeeAllowanceKeyPrefix)
 	iterator := prefixStore.Iterator(nil, nil)
 	defer iterator.Close()
@@ -45,7 +45,7 @@ func addAllowancesByExpTimeQueue(ctx types.Context, store storetypes.KVStore, cd
 	return nil
 }
 
-func MigrateStore(ctx types.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
+func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, cdc codec.BinaryCodec) error {
 	store := ctx.KVStore(storeKey)
 	return addAllowancesByExpTimeQueue(ctx, store, cdc)
 }

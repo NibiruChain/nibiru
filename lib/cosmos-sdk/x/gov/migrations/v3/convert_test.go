@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
@@ -12,7 +14,6 @@ import (
 	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConvertToLegacyProposal(t *testing.T) {
@@ -192,7 +193,7 @@ func TestConvertToLegacyVote(t *testing.T) {
 				require.Equal(t, v1beta1Vote.ProposalId, vote.ProposalId)
 				require.Equal(t, v1beta1Vote.Voter, vote.Voter)
 				require.Equal(t, v1beta1Vote.Options[0].Option, v1beta1.OptionYes)
-				require.Equal(t, v1beta1Vote.Options[0].Weight, math.LegacyNewDec(1))
+				require.Equal(t, v1beta1Vote.Options[0].Weight, sdkmath.LegacyNewDec(1))
 			}
 		})
 	}

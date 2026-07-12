@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto"
@@ -23,7 +24,7 @@ import (
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 func TestArmorUnarmorPrivKey(t *testing.T) {
@@ -38,7 +39,8 @@ func TestArmorUnarmorPrivKey(t *testing.T) {
 
 	// empty string
 	decrypted, algo, err = crypto.UnarmorDecryptPrivKey("", "passphrase")
-	require.Error(t, err)
+	require.Error(t, err) //nolint:staticcheck
+	//nolint:staticcheck
 	require.True(t, errors.Is(io.EOF, err))
 	require.Nil(t, decrypted)
 	require.Empty(t, algo)
@@ -81,7 +83,7 @@ func TestArmorUnarmorPubKey(t *testing.T) {
 	cstore := keyring.NewInMemory(cdc)
 
 	// Add keys and see they return in alphabetical order
-	k, _, err := cstore.NewMnemonic("Bob", keyring.English, types.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+	k, _, err := cstore.NewMnemonic("Bob", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 	require.NoError(t, err)
 	key, err := k.GetPubKey()
 	require.NoError(t, err)
@@ -152,7 +154,8 @@ func TestArmorInfoBytes(t *testing.T) {
 
 func TestUnarmorInfoBytesErrors(t *testing.T) {
 	unarmoredBytes, err := crypto.UnarmorInfoBytes("")
-	require.Error(t, err)
+	require.Error(t, err) //nolint:staticcheck
+	//nolint:staticcheck
 	require.True(t, errors.Is(io.EOF, err))
 	require.Nil(t, unarmoredBytes)
 

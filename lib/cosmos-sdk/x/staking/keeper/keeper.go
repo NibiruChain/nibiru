@@ -6,7 +6,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
@@ -88,12 +88,12 @@ func (k *Keeper) SetHooks(sh types.StakingHooks) {
 }
 
 // GetLastTotalPower Load the last total validator power.
-func (k Keeper) GetLastTotalPower(ctx sdk.Context) math.Int {
+func (k Keeper) GetLastTotalPower(ctx sdk.Context) sdkmath.Int {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.LastTotalPowerKey)
 
 	if bz == nil {
-		return math.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
 	ip := sdk.IntProto{}
@@ -103,7 +103,7 @@ func (k Keeper) GetLastTotalPower(ctx sdk.Context) math.Int {
 }
 
 // SetLastTotalPower Set the last total validator power.
-func (k Keeper) SetLastTotalPower(ctx sdk.Context, power math.Int) {
+func (k Keeper) SetLastTotalPower(ctx sdk.Context, power sdkmath.Int) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: power})
 	store.Set(types.LastTotalPowerKey, bz)

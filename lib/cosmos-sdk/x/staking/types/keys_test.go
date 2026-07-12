@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -27,7 +27,7 @@ var (
 func TestGetValidatorPowerRank(t *testing.T) {
 	valAddr1 := sdk.ValAddress(keysAddr1)
 	val1 := newValidator(t, valAddr1, keysPK1)
-	val1.Tokens = math.ZeroInt()
+	val1.Tokens = sdkmath.ZeroInt()
 	val2, val3, val4 := val1, val1, val1
 	val2.Tokens = sdk.TokensFromConsensusPower(1, sdk.DefaultPowerReduction)
 	val3.Tokens = sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)

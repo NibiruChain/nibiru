@@ -3,9 +3,10 @@ package v1_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
-	"github.com/stretchr/testify/require"
 )
 
 func TestEmptyGenesis(t *testing.T) {

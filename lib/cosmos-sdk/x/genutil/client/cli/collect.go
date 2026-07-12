@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/pkg/errors"
+	cmttypes "github.com/cometbft/cometbft/types"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
@@ -33,12 +33,12 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 
 			nodeID, valPubKey, err := genutil.InitializeNodeValidatorFiles(config)
 			if err != nil {
-				return errors.Wrap(err, "failed to initialize node validator files")
+				return pkgerrors.Wrap(err, "failed to initialize node validator files")
 			}
 
-			genDoc, err := tmtypes.GenesisDocFromFile(config.GenesisFile())
+			genDoc, err := cmttypes.GenesisDocFromFile(config.GenesisFile())
 			if err != nil {
-				return errors.Wrap(err, "failed to read genesis doc from file")
+				return pkgerrors.Wrap(err, "failed to read genesis doc from file")
 			}
 
 			genTxDir, _ := cmd.Flags().GetString(flagGenTxDir)
@@ -54,7 +54,7 @@ func CollectGenTxsCmd(genBalIterator types.GenesisBalancesIterator, defaultNodeH
 				clientCtx.TxConfig,
 				config, initCfg, *genDoc, genBalIterator, validator)
 			if err != nil {
-				return errors.Wrap(err, "failed to get genesis app state from config")
+				return pkgerrors.Wrap(err, "failed to get genesis app state from config")
 			}
 
 			toPrint.AppMessage = appMessage

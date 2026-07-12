@@ -7,8 +7,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-	"github.com/pkg/errors"
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	pkgerrors "github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -21,7 +21,7 @@ import (
 // error is returned.
 func (ctx Context) GetNode() (TendermintRPC, error) {
 	if ctx.Client == nil {
-		return nil, errors.New("no RPC client is defined in offline mode")
+		return nil, pkgerrors.New("no RPC client is defined in offline mode")
 	}
 
 	return ctx.Client, nil
@@ -90,7 +90,7 @@ func (ctx Context) queryABCI(req abci.RequestQuery) (abci.ResponseQuery, error) 
 		queryHeight = ctx.Height
 	}
 
-	opts := rpcclient.ABCIQueryOptions{
+	opts := cmtrpcclient.ABCIQueryOptions{
 		Height: queryHeight,
 		Prove:  req.Prove,
 	}

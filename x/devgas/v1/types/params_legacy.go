@@ -4,6 +4,7 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
+
 	paramtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
 )
 

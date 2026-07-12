@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -24,7 +24,7 @@ var (
 	valAddr1 = sdk.ValAddress(delPk1.Address())
 )
 
-func makeTestCodec() (cdc *codec.LegacyAmino) {
+func makeTestCodec() (cdc *codec.LegacyAmino) { //nolint:unused
 	cdc = codec.NewLegacyAmino()
 	sdk.RegisterLegacyAminoCodec(cdc)
 	cryptocodec.RegisterCrypto(cdc)
@@ -39,13 +39,13 @@ func TestDecodeStore(t *testing.T) {
 
 	val, err := types.NewValidator(valAddr1, delPk1, types.NewDescription("test", "test", "test", "test", "test"))
 	require.NoError(t, err)
-	del := types.NewDelegation(delAddr1, valAddr1, math.LegacyOneDec())
-	ubd := types.NewUnbondingDelegation(delAddr1, valAddr1, 15, bondTime, math.OneInt(), 1)
-	red := types.NewRedelegation(delAddr1, valAddr1, valAddr1, 12, bondTime, math.OneInt(), math.LegacyOneDec(), 0)
+	del := types.NewDelegation(delAddr1, valAddr1, sdkmath.LegacyOneDec())
+	ubd := types.NewUnbondingDelegation(delAddr1, valAddr1, 15, bondTime, sdkmath.OneInt(), 1)
+	red := types.NewRedelegation(delAddr1, valAddr1, valAddr1, 12, bondTime, sdkmath.OneInt(), sdkmath.LegacyOneDec(), 0)
 
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
-			{Key: types.LastTotalPowerKey, Value: cdc.MustMarshal(&sdk.IntProto{Int: math.OneInt()})},
+			{Key: types.LastTotalPowerKey, Value: cdc.MustMarshal(&sdk.IntProto{Int: sdkmath.OneInt()})},
 			{Key: types.GetValidatorKey(valAddr1), Value: cdc.MustMarshal(&val)},
 			{Key: types.LastValidatorPowerKey, Value: valAddr1.Bytes()},
 			{Key: types.GetDelegationKey(delAddr1, valAddr1), Value: cdc.MustMarshal(&del)},
@@ -59,7 +59,7 @@ func TestDecodeStore(t *testing.T) {
 		name        string
 		expectedLog string
 	}{
-		{"LastTotalPower", fmt.Sprintf("%v\n%v", math.OneInt(), math.OneInt())},
+		{"LastTotalPower", fmt.Sprintf("%v\n%v", sdkmath.OneInt(), sdkmath.OneInt())},
 		{"Validator", fmt.Sprintf("%v\n%v", val, val)},
 		{"LastValidatorPower/ValidatorsByConsAddr/ValidatorsByPowerIndex", fmt.Sprintf("%v\n%v", valAddr1, valAddr1)},
 		{"Delegation", fmt.Sprintf("%v\n%v", del, del)},

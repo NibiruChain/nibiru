@@ -8,6 +8,8 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/config"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/debug"
@@ -21,7 +23,6 @@ import (
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
 	genutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/cli"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"

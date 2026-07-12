@@ -93,7 +93,7 @@ func GrantQueueTimePrefix(expiration time.Time) []byte {
 }
 
 // firstAddressFromGrantStoreKey parses the first address only
-func firstAddressFromGrantStoreKey(key []byte) sdk.AccAddress {
+func firstAddressFromGrantStoreKey(key []byte) sdk.AccAddress { //nolint:unused
 	addrLen := key[0]
 	return sdk.AccAddress(key[1 : 1+addrLen])
 }

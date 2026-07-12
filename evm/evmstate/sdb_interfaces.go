@@ -3,8 +3,9 @@ package evmstate
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 )

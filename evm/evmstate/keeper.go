@@ -12,10 +12,11 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 

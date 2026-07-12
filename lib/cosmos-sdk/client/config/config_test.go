@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/config"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -14,7 +16,6 @@ import (
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/client/cli"
-	"github.com/stretchr/testify/require"
 )
 
 const (

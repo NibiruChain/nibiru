@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"fmt"
 
+	"github.com/holiman/uint256"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-	minttypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types"
-	"github.com/holiman/uint256"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 func (suite *KeeperTestSuite) TestExportGenesis() {
@@ -31,11 +32,11 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 		suite.mockMintCoins(mintAcc)
 		suite.
 			Require().
-			NoError(suite.bankKeeper.MintCoins(ctx, minttypes.ModuleName, expectedBalances[i].Coins))
+			NoError(suite.bankKeeper.MintCoins(ctx, mint.ModuleName, expectedBalances[i].Coins))
 		suite.mockSendCoinsFromModuleToAccount(mintAcc, accAddr)
 		suite.
 			Require().
-			NoError(suite.bankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, accAddr, expectedBalances[i].Coins))
+			NoError(suite.bankKeeper.SendCoinsFromModuleToAccount(ctx, mint.ModuleName, accAddr, expectedBalances[i].Coins))
 	}
 
 	suite.Require().NoError(suite.bankKeeper.SetParams(ctx, types.DefaultParams()))

@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
+
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 )

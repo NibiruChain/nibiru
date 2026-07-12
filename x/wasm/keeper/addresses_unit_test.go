@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
 
 	"github.com/stretchr/testify/require"
 

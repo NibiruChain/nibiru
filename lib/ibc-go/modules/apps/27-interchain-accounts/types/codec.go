@@ -5,10 +5,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/gogoproto/proto"
 )
 
 // ModuleCdc references the global interchain accounts module codec. Note, the codec

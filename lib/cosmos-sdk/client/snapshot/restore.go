@@ -6,9 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	dbm "github.com/cometbft/cometbft-db"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
-	dbm "github.com/cometbft/cometbft-db"
 )
 
 // RestoreSnapshotCmd returns a command to restore a snapshot

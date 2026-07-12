@@ -17,10 +17,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
+	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/telemetry"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 
 	"github.com/spf13/cobra"
 
@@ -43,6 +44,7 @@ import (
 	ethmetricsexp "github.com/ethereum/go-ethereum/metrics/exp"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	sdkserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"

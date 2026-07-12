@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
 
@@ -75,7 +75,7 @@ func (s *paginationTestSuite) SetupTest() {
 
 	s.NoError(err)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+	ctx := app.NewContext(false, tmproto.Header{Height: 1})
 
 	s.ctx, s.bankKeeper, s.accountKeeper, s.cdc, s.app, s.interfaceReg = ctx, bankKeeper, accountKeeper, cdc, app, reg
 }
@@ -194,7 +194,7 @@ func (s *paginationTestSuite) TestPagination() {
 	s.T().Log("verify paginate with offset and key - error")
 	pageReq = &query.PageRequest{Key: res.Pagination.NextKey, Offset: 100, Limit: defaultLimit, CountTotal: false}
 	request = types.NewQueryAllBalancesRequest(addr1, pageReq)
-	res, err = queryClient.AllBalances(gocontext.Background(), request)
+	res, err = queryClient.AllBalances(gocontext.Background(), request) //nolint:staticcheck
 	s.Require().Error(err)
 	s.Require().Equal("rpc error: code = InvalidArgument desc = paginate: invalid request, either offset or key is expected, got both", err.Error())
 
@@ -317,7 +317,7 @@ func (s *paginationTestSuite) TestReversePagination() {
 	s.T().Log("verify paginate with offset and key - error")
 	pageReq = &query.PageRequest{Key: res1.Pagination.NextKey, Offset: 100, Limit: defaultLimit, CountTotal: false}
 	request = types.NewQueryAllBalancesRequest(addr1, pageReq)
-	res, err = queryClient.AllBalances(gocontext.Background(), request)
+	res, err = queryClient.AllBalances(gocontext.Background(), request) //nolint:staticcheck
 	s.Require().Error(err)
 	s.Require().Equal("rpc error: code = InvalidArgument desc = paginate: invalid request, either offset or key is expected, got both", err.Error())
 
@@ -354,7 +354,7 @@ func (s *paginationTestSuite) TestPaginate() {
 	balancesStore := prefix.NewStore(authStore, types.BalancesPrefix)
 	accountStore := prefix.NewStore(balancesStore, address.MustLengthPrefix(addr1))
 	pageRes, err := query.Paginate(accountStore, request.Pagination, func(key []byte, value []byte) error {
-		var amount math.Int
+		var amount sdkmath.Int
 		err := amount.Unmarshal(value)
 		if err != nil {
 			return err

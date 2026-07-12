@@ -4,6 +4,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 

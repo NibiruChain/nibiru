@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"

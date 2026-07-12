@@ -3,8 +3,9 @@ package snapshot
 import (
 	"strconv"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 )
 
 func DeleteSnapshotCmd() *cobra.Command {

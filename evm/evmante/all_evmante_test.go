@@ -3,12 +3,13 @@ package evmante_test
 import (
 	"math/big"
 
-	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/eth"

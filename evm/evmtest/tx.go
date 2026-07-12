@@ -9,7 +9,6 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	core "github.com/ethereum/go-ethereum/core"
@@ -17,6 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	gethparams "github.com/ethereum/go-ethereum/params"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 

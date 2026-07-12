@@ -2,7 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
 )
 
@@ -20,7 +20,7 @@ func (k *Keeper) GetConstantFee(ctx sdk.Context) (constantFee sdk.Coin) {
 // GetConstantFee set's the constant fee in the store
 func (k *Keeper) SetConstantFee(ctx sdk.Context, constantFee sdk.Coin) error {
 	if !constantFee.IsValid() || constantFee.IsNegative() {
-		return errors.Wrapf(errors.ErrInvalidCoins, "negative or invalid constant fee: %s", constantFee)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "negative or invalid constant fee: %s", constantFee)
 	}
 
 	store := ctx.KVStore(k.storeKey)

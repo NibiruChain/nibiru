@@ -5,6 +5,7 @@ import (
 	"io"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	snapshot "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

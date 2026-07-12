@@ -10,9 +10,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // FilterNewEvents returns only the new events from afterEvents that were not present in beforeEvents

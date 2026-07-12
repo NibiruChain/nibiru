@@ -6,6 +6,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sdkmath "cosmossdk.io/math"
+
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"

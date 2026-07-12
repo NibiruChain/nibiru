@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -50,7 +50,7 @@ func TestBalanceValidate(t *testing.T) {
 			bank.Balance{
 				Address: "cosmos1yq8lgssgxlx9smjhes6ryjasmqmd3ts2559g0t",
 				Coins: sdk.Coins{
-					sdk.Coin{Denom: "", Amount: math.OneInt()},
+					sdk.Coin{Denom: "", Amount: sdkmath.OneInt()},
 				},
 			},
 			true,

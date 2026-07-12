@@ -10,6 +10,7 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"

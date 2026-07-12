@@ -2,6 +2,7 @@ package simapp
 
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

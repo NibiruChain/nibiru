@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
@@ -54,7 +55,8 @@ func (suite *SubspaceTestSuite) TestKeyTable() {
 		suite.ss.WithKeyTable(paramKeyTable())
 	})
 	suite.Require().NotPanics(func() {
-		ss := types.NewSubspace(suite.cdc, suite.amino, key, tkey, "testsubspace2")
+		ss := types.NewSubspace(suite.cdc, suite.amino, key, tkey, "testsubspace2") //nolint:staticcheck
+		//nolint:staticcheck
 		ss = ss.WithKeyTable(paramKeyTable())
 	})
 }

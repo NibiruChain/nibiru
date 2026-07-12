@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
@@ -40,12 +40,12 @@ func (k Keeper) BondDenom(ctx sdk.Context) string {
 // Currently, this returns a global variable that the app developer can tweak.
 // TODO: we might turn this into an on-chain param:
 // https://github.com/cosmos/cosmos-sdk/issues/8365
-func (k Keeper) PowerReduction(ctx sdk.Context) math.Int {
+func (k Keeper) PowerReduction(ctx sdk.Context) sdkmath.Int {
 	return sdk.DefaultPowerReduction
 }
 
 // MinCommissionRate - Minimum validator commission rate
-func (k Keeper) MinCommissionRate(ctx sdk.Context) math.LegacyDec {
+func (k Keeper) MinCommissionRate(ctx sdk.Context) sdkmath.LegacyDec {
 	return k.GetParams(ctx).MinCommissionRate
 }
 

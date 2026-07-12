@@ -8,12 +8,12 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	bankexported "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/exported"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	gtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
@@ -49,7 +49,7 @@ func TestCollectTxsHandlesDirectories(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	txDecoder := types.TxDecoder(func(txBytes []byte) (types.Tx, error) {
+	txDecoder := sdk.TxDecoder(func(txBytes []byte) (sdk.Tx, error) {
 		return nil, nil
 	})
 
@@ -57,7 +57,7 @@ func TestCollectTxsHandlesDirectories(t *testing.T) {
 	srvCtx := server.NewDefaultContext()
 	_ = srvCtx
 	cdc := codec.NewProtoCodec(cdctypes.NewInterfaceRegistry())
-	gdoc := tmtypes.GenesisDoc{AppState: []byte("{}")}
+	gdoc := cmttypes.GenesisDoc{AppState: []byte("{}")}
 	balItr := new(doNothingIterator)
 
 	dnc := &doNothingUnmarshalJSON{cdc}

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
@@ -32,7 +32,7 @@ func TestMigrateStore(t *testing.T) {
 	// Use real values for votes, as we're testing weighted votes.
 	oldVote := v1beta1.Vote{ProposalId: 1, Voter: "foobar", Option: v1beta1.OptionNoWithVeto}
 	oldVoteValue := cdc.MustMarshal(&oldVote)
-	newVote := v1beta1.Vote{ProposalId: 1, Voter: "foobar", Options: v1beta1.WeightedVoteOptions{{Option: v1beta1.OptionNoWithVeto, Weight: math.LegacyNewDec(1)}}}
+	newVote := v1beta1.Vote{ProposalId: 1, Voter: "foobar", Options: v1beta1.WeightedVoteOptions{{Option: v1beta1.OptionNoWithVeto, Weight: sdkmath.LegacyNewDec(1)}}}
 	newVoteValue := cdc.MustMarshal(&newVote)
 
 	testCases := []struct {

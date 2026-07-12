@@ -9,7 +9,7 @@ import (
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 )
 
-type byter interface {
+type byter interface { //nolint:unused
 	Bytes() []byte
 }
 

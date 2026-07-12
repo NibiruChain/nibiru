@@ -4,6 +4,7 @@ import (
 	"time"
 
 	cmttypes "github.com/cometbft/cometbft/types"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

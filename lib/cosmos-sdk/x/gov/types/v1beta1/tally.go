@@ -1,7 +1,7 @@
 package v1beta1
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -10,14 +10,14 @@ import (
 // ValidatorGovInfo used for tallying
 type ValidatorGovInfo struct {
 	Address             sdk.ValAddress      // address of the validator operator
-	BondedTokens        math.Int            // Power of a Validator
-	DelegatorShares     math.LegacyDec      // Total outstanding delegator shares
-	DelegatorDeductions math.LegacyDec      // Delegator deductions from validator's delegators voting independently
+	BondedTokens        sdkmath.Int         // Power of a Validator
+	DelegatorShares     sdkmath.LegacyDec   // Total outstanding delegator shares
+	DelegatorDeductions sdkmath.LegacyDec   // Delegator deductions from validator's delegators voting independently
 	Vote                WeightedVoteOptions // Vote of the validator
 }
 
 // NewValidatorGovInfo creates a ValidatorGovInfo instance
-func NewValidatorGovInfo(address sdk.ValAddress, bondedTokens math.Int, delegatorShares,
+func NewValidatorGovInfo(address sdk.ValAddress, bondedTokens sdkmath.Int, delegatorShares,
 	delegatorDeductions sdk.Dec, options WeightedVoteOptions,
 ) ValidatorGovInfo {
 	return ValidatorGovInfo{
@@ -30,7 +30,7 @@ func NewValidatorGovInfo(address sdk.ValAddress, bondedTokens math.Int, delegato
 }
 
 // NewTallyResult creates a new TallyResult instance
-func NewTallyResult(yes, abstain, no, noWithVeto math.Int) TallyResult {
+func NewTallyResult(yes, abstain, no, noWithVeto sdkmath.Int) TallyResult {
 	return TallyResult{
 		Yes:        yes,
 		Abstain:    abstain,
@@ -51,7 +51,7 @@ func NewTallyResultFromMap(results map[VoteOption]sdk.Dec) TallyResult {
 
 // EmptyTallyResult returns an empty TallyResult.
 func EmptyTallyResult() TallyResult {
-	return NewTallyResult(math.ZeroInt(), math.ZeroInt(), math.ZeroInt(), math.ZeroInt())
+	return NewTallyResult(sdkmath.ZeroInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt())
 }
 
 // Equals returns if two proposals are equal.

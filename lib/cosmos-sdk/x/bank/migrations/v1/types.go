@@ -1,12 +1,13 @@
 package v1
 
 import (
+	"github.com/golang/protobuf/proto"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 	v1auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/v1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-	"github.com/golang/protobuf/proto"
 )
 
 const (

@@ -5,6 +5,7 @@ import (
 	"log"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	slashingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"

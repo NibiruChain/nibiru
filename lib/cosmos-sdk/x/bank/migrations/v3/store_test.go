@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
@@ -43,7 +43,7 @@ func TestMigrateStore(t *testing.T) {
 	for _, b := range balances {
 		addrPrefixStore := prefix.NewStore(store, types.CreateAccountBalancesPrefix(addr))
 		bz := addrPrefixStore.Get([]byte(b.Denom))
-		var expected math.Int
+		var expected sdkmath.Int
 		require.NoError(t, expected.Unmarshal(bz))
 		require.Equal(t, expected, b.Amount)
 	}

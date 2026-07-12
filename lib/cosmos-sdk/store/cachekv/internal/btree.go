@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	"github.com/tidwall/btree"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 const (

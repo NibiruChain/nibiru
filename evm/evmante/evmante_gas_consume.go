@@ -9,10 +9,11 @@ import (
 	"math"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm"

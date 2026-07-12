@@ -58,7 +58,6 @@ func newSplitAndApply(
 	// split messages into slices of length chunkSize
 	totalMessages := len(msgs)
 	for i := 0; i < len(msgs); i += chunkSize {
-
 		sliceEnd := i + chunkSize
 		if sliceEnd > totalMessages {
 			sliceEnd = totalMessages

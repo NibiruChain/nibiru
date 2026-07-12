@@ -5,11 +5,12 @@ import (
 	"math/big"
 	"testing"
 
-	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/metadata"
+
+	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"
 )
 
 type BlockSuite struct {

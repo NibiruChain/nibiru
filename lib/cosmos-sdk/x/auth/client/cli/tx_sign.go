@@ -60,7 +60,7 @@ account key. It implies --signature-only.
 
 	flags.AddTxFlagsToCmd(cmd)
 
-	cmd.MarkFlagRequired(flags.FlagFrom)
+	cmd.MarkFlagRequired(flags.FlagFrom) //nolint:errcheck
 
 	return cmd
 }
@@ -139,7 +139,7 @@ func makeSignBatchCmd() func(cmd *cobra.Command, args []string) error {
 				msgs = append(msgs, unsignedStdTx.GetMsgs()...)
 			}
 			// set the new appened msgs into builder
-			txBuilder.SetMsgs(msgs...)
+			txBuilder.SetMsgs(msgs...) //nolint:errcheck
 
 			// set the memo,fees,feeGranter,feePayer from cmd flags
 			txBuilder.SetMemo(txFactory.Memo())
@@ -287,7 +287,7 @@ be generated via the 'multisign' command.
 	cmd.Flags().Bool(flagAmino, false, "Generate Amino encoded JSON suitable for submiting to the txs REST endpoint")
 	flags.AddTxFlagsToCmd(cmd)
 
-	cmd.MarkFlagRequired(flags.FlagFrom)
+	cmd.MarkFlagRequired(flags.FlagFrom) //nolint:errcheck
 
 	return cmd
 }
@@ -296,8 +296,8 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 	// Conditionally mark the account and sequence numbers required as no RPC
 	// query will be done.
 	if offline, _ := cmd.Flags().GetBool(flags.FlagOffline); offline {
-		cmd.MarkFlagRequired(flags.FlagAccountNumber)
-		cmd.MarkFlagRequired(flags.FlagSequence)
+		cmd.MarkFlagRequired(flags.FlagAccountNumber) //nolint:errcheck
+		cmd.MarkFlagRequired(flags.FlagSequence)      //nolint:errcheck
 	}
 }
 

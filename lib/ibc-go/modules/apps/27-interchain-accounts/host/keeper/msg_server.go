@@ -7,6 +7,7 @@ import (
 
 	_ "cosmossdk.io/api/cosmos/bank/v1beta1"    // workaround to successfully retrieve bank module safe queries
 	_ "cosmossdk.io/api/cosmos/staking/v1beta1" // workaround to successfully retrieve staking module safe queries
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"

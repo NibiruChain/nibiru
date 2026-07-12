@@ -10,7 +10,7 @@ import (
 
 	"github.com/99designs/keyring"
 	"github.com/cosmos/go-bip39"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -21,7 +21,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types" //nolint:staticcheck
+
+	//nolint:staticcheck
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
@@ -160,9 +162,11 @@ func TestKeyManagementKeyRing(t *testing.T) {
 	// all files other than *.info
 	newPath := filepath.Join(tempDir, "random")
 	require.NoError(t, os.Mkdir(newPath, 0o755))
-	items, err := os.ReadDir(tempDir)
+	//nolint:staticcheck
+	items, err := os.ReadDir(tempDir) //nolint:ineffassign
 	require.GreaterOrEqual(t, len(items), 2)
-	keyS, err = kb.List()
+	//nolint:staticcheck
+	keyS, err = kb.List() //nolint:ineffassign
 	require.NoError(t, err)
 
 	// addr cache gets nuked - and test skip flag
@@ -462,7 +466,8 @@ func TestInMemoryWithKeyring(t *testing.T) {
 	pub := priv.PubKey()
 
 	cdc := getCodec()
-	_, err := NewLocalRecord("test record", priv, pub)
+	//nolint:staticcheck
+	_, err := NewLocalRecord("test record", priv, pub) //nolint:ineffassign
 
 	multi := multisig.NewLegacyAminoPubKey(
 		1, []cryptotypes.PubKey{
@@ -1407,7 +1412,7 @@ func TestRenameKey(t *testing.T) {
 				newRecord, err := kr.Key(newKeyUID) // new key should be in keyring
 				require.NoError(t, err)
 				requireEqualRenamedKey(t, newRecord, oldKeyRecord, false) // oldKeyRecord and newRecord should be the same except name
-				oldKeyRecord, err = kr.Key(oldKeyUID)                     // old key should be gone from keyring
+				_, err = kr.Key(oldKeyUID)                                // old key should be gone from keyring
 				require.Error(t, err)
 			},
 		},
@@ -1490,7 +1495,7 @@ func TestImportPrivKeyHex(t *testing.T) {
 			backend:     BackendTest,
 			hexKey:      "0xa3e57952e835ed30eea86a2993ac2a61c03e74f2085b3635bd94aa4d7ae0cfdf",
 			algo:        "notSupportedAlgo",
-			expectedErr: errors.New("provided algorithm \"notSupportedAlgo\" is not supported"),
+			expectedErr: pkgerrors.New("provided algorithm \"notSupportedAlgo\" is not supported"),
 		},
 	}
 	for _, tt := range tests {

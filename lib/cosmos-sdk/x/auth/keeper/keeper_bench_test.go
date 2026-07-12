@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/stretchr/testify/require"
+
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func BenchmarkAccountMapperGetAccountFound(b *testing.B) {
@@ -17,7 +18,7 @@ func BenchmarkAccountMapperGetAccountFound(b *testing.B) {
 	app, err := simtestutil.Setup(testutil.AppConfig, &accountKeeper)
 	require.NoError(b, err)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.NewContext(false, tmproto.Header{})
 
 	// assumes b.N < 2**24
 	for i := 0; i < b.N; i++ {
@@ -40,7 +41,7 @@ func BenchmarkAccountMapperSetAccount(b *testing.B) {
 	app, err := simtestutil.Setup(testutil.AppConfig, &accountKeeper)
 	require.NoError(b, err)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.NewContext(false, tmproto.Header{})
 
 	b.ResetTimer()
 

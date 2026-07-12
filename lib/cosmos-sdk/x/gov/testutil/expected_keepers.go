@@ -3,7 +3,7 @@
 package testutil
 
 import (
-	math "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
@@ -31,5 +31,5 @@ type StakingKeeper interface {
 	types.StakingKeeper
 
 	BondDenom(ctx sdk.Context) string
-	TokensFromConsensusPower(ctx sdk.Context, power int64) math.Int
+	TokensFromConsensusPower(ctx sdk.Context, power int64) sdkmath.Int
 }

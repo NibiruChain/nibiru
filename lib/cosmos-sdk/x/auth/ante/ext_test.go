@@ -3,12 +3,13 @@ package ante_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRejectExtensionOptionsDecorator(t *testing.T) {

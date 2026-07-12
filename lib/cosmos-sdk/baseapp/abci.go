@@ -360,11 +360,11 @@ func (app *BaseApp) ProcessProposal(req abci.RequestProcessProposal) (resp abci.
 func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 	var mode runTxMode
 
-	switch {
-	case req.Type == abci.CheckTxType_New:
+	switch req.Type {
+	case abci.CheckTxType_New:
 		mode = runTxModeCheck
 
-	case req.Type == abci.CheckTxType_Recheck:
+	case abci.CheckTxType_Recheck:
 		mode = runTxModeReCheck
 
 	default:

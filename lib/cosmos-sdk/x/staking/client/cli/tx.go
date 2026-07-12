@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
@@ -126,7 +126,7 @@ func NewEditValidatorCmd() *cobra.Command {
 				newRate = &rate
 			}
 
-			var newMinSelfDelegation *math.Int
+			var newMinSelfDelegation *sdkmath.Int
 
 			minSelfDelegationString, _ := cmd.Flags().GetString(FlagMinSelfDelegation)
 			if minSelfDelegationString != "" {

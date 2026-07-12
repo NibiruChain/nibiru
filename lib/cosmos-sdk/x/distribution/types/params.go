@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -26,7 +26,7 @@ func (p Params) String() string {
 
 // ValidateBasic performs basic validation on distribution parameters.
 func (p Params) ValidateBasic() error {
-	if p.CommunityTax.IsNegative() || p.CommunityTax.GT(math.LegacyOneDec()) {
+	if p.CommunityTax.IsNegative() || p.CommunityTax.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf(
 			"community tax should be non-negative and less than one: %s", p.CommunityTax,
 		)
@@ -47,7 +47,7 @@ func validateCommunityTax(i interface{}) error {
 	if v.IsNegative() {
 		return fmt.Errorf("community tax must be positive: %s", v)
 	}
-	if v.GT(math.LegacyOneDec()) {
+	if v.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("community tax too large: %s", v)
 	}
 

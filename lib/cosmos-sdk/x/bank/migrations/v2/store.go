@@ -1,8 +1,9 @@
 package v2
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
@@ -120,7 +121,7 @@ func pruneZeroSupply(store sdk.KVStore) error {
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		var amount math.Int
+		var amount sdkmath.Int
 		if err := amount.Unmarshal(iterator.Value()); err != nil {
 			return err
 		}

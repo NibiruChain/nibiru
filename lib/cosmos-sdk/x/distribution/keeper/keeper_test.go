@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -83,8 +83,8 @@ func TestWithdrawValidatorCommission(t *testing.T) {
 	accountKeeper.EXPECT().GetModuleAddress("distribution").Return(distrAcc.GetAddress())
 
 	valCommission := sdk.DecCoins{
-		sdk.NewDecCoinFromDec("mytoken", math.LegacyNewDec(5).Quo(math.LegacyNewDec(4))),
-		sdk.NewDecCoinFromDec("stake", math.LegacyNewDec(3).Quo(math.LegacyNewDec(2))),
+		sdk.NewDecCoinFromDec("mytoken", sdkmath.LegacyNewDec(5).Quo(sdkmath.LegacyNewDec(4))),
+		sdk.NewDecCoinFromDec("stake", sdkmath.LegacyNewDec(3).Quo(sdkmath.LegacyNewDec(2))),
 	}
 
 	distrKeeper := keeper.NewKeeper(
@@ -114,8 +114,8 @@ func TestWithdrawValidatorCommission(t *testing.T) {
 	// check remainder
 	remainder := distrKeeper.GetValidatorAccumulatedCommission(ctx, valAddr).Commission
 	require.Equal(t, sdk.DecCoins{
-		sdk.NewDecCoinFromDec("mytoken", math.LegacyNewDec(1).Quo(math.LegacyNewDec(4))),
-		sdk.NewDecCoinFromDec("stake", math.LegacyNewDec(1).Quo(math.LegacyNewDec(2))),
+		sdk.NewDecCoinFromDec("mytoken", sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(4))),
+		sdk.NewDecCoinFromDec("stake", sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2))),
 	}, remainder)
 
 	require.True(t, true)
@@ -149,14 +149,14 @@ func TestGetTotalRewards(t *testing.T) {
 	)
 
 	valCommission := sdk.DecCoins{
-		sdk.NewDecCoinFromDec("mytoken", math.LegacyNewDec(5).Quo(math.LegacyNewDec(4))),
-		sdk.NewDecCoinFromDec("stake", math.LegacyNewDec(3).Quo(math.LegacyNewDec(2))),
+		sdk.NewDecCoinFromDec("mytoken", sdkmath.LegacyNewDec(5).Quo(sdkmath.LegacyNewDec(4))),
+		sdk.NewDecCoinFromDec("stake", sdkmath.LegacyNewDec(3).Quo(sdkmath.LegacyNewDec(2))),
 	}
 
 	distrKeeper.SetValidatorOutstandingRewards(ctx, valAddr0, types.ValidatorOutstandingRewards{Rewards: valCommission})
 	distrKeeper.SetValidatorOutstandingRewards(ctx, valAddr1, types.ValidatorOutstandingRewards{Rewards: valCommission})
 
-	expectedRewards := valCommission.MulDec(math.LegacyNewDec(2))
+	expectedRewards := valCommission.MulDec(sdkmath.LegacyNewDec(2))
 	totalRewards := distrKeeper.GetTotalRewards(ctx)
 
 	require.Equal(t, expectedRewards, totalRewards)

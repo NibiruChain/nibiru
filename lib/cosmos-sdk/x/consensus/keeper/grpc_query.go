@@ -26,7 +26,7 @@ func NewQuerier(keeper Keeper) Querier {
 func (k Querier) Params(ctx context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	params, err := k.Keeper.Get(sdkCtx)
+	params, err := k.Get(sdkCtx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

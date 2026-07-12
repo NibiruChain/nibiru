@@ -6,21 +6,21 @@ import (
 	"fmt"
 	"reflect"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	rosettatypes "github.com/coinbase/rosetta-sdk-go/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto"
 	tmcoretypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
-	crgerrs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/errors"
-	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	crgerrs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/errors"
+	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
@@ -68,9 +68,9 @@ type ToRosettaConverter interface {
 	// SigningComponents returns rosetta's components required to build a signable transaction
 	SigningComponents(tx authsigning.Tx, metadata *ConstructionMetadata, rosPubKeys []*rosettatypes.PublicKey) (txBytes []byte, payloadsToSign []*rosettatypes.SigningPayload, err error)
 	// Tx converts a tendermint transaction and tx result if provided to a rosetta tx
-	Tx(rawTx tmtypes.Tx, txResult *abci.ResponseDeliverTx) (*rosettatypes.Transaction, error)
+	Tx(rawTx cmttypes.Tx, txResult *abci.ResponseDeliverTx) (*rosettatypes.Transaction, error)
 	// TxIdentifiers converts a tendermint tx to transaction identifiers
-	TxIdentifiers(txs []tmtypes.Tx) []*rosettatypes.TransactionIdentifier
+	TxIdentifiers(txs []cmttypes.Tx) []*rosettatypes.TransactionIdentifier
 	// BalanceOps converts events to balance operations
 	BalanceOps(status string, events []abci.Event) []*rosettatypes.Operation
 	// SyncStatus converts a tendermint status to sync status
@@ -259,7 +259,7 @@ func (c converter) Ops(status string, msg sdk.Msg) ([]*rosettatypes.Operation, e
 }
 
 // Tx converts a tendermint raw transaction and its result (if provided) to a rosetta transaction
-func (c converter) Tx(rawTx tmtypes.Tx, txResult *abci.ResponseDeliverTx) (*rosettatypes.Transaction, error) {
+func (c converter) Tx(rawTx cmttypes.Tx, txResult *abci.ResponseDeliverTx) (*rosettatypes.Transaction, error) {
 	// decode tx
 	tx, err := c.txDecode(rawTx)
 	if err != nil {
@@ -374,7 +374,6 @@ func sdkEventToBalanceOperations(status string, event abci.Event) (operations []
 	operations = make([]*rosettatypes.Operation, len(coinChange))
 
 	for i, coin := range coinChange {
-
 		value := coin.Amount.String()
 		// in case the event is a subtract balance one the rewrite value with
 		// the negative coin identifier
@@ -403,7 +402,7 @@ func sdkEventToBalanceOperations(status string, event abci.Event) (operations []
 // Amounts converts []sdk.Coin to rosetta amounts
 func (c converter) Amounts(ownedCoins []sdk.Coin, availableCoins sdk.Coins) []*rosettatypes.Amount {
 	amounts := make([]*rosettatypes.Amount, len(availableCoins))
-	ownedCoinsMap := make(map[string]math.Int, len(availableCoins))
+	ownedCoinsMap := make(map[string]sdkmath.Int, len(availableCoins))
 
 	for _, ownedCoin := range ownedCoins {
 		ownedCoinsMap[ownedCoin.Denom] = ownedCoin.Amount
@@ -516,7 +515,7 @@ func (c converter) SyncStatus(status *tmcoretypes.ResultStatus) *rosettatypes.Sy
 }
 
 // TxIdentifiers converts a tendermint raw transactions into an array of rosetta tx identifiers
-func (c converter) TxIdentifiers(txs []tmtypes.Tx) []*rosettatypes.TransactionIdentifier {
+func (c converter) TxIdentifiers(txs []cmttypes.Tx) []*rosettatypes.TransactionIdentifier {
 	converted := make([]*rosettatypes.TransactionIdentifier, len(txs))
 	for i, tx := range txs {
 		converted[i] = &rosettatypes.TransactionIdentifier{Hash: fmt.Sprintf("%X", tx.Hash())}
@@ -733,7 +732,6 @@ func (c converter) SigningComponents(tx authsigning.Tx, metadata *ConstructionMe
 			Data:     &signing.SingleSignatureData{}, // needs to be set to empty otherwise the codec will cry
 			Sequence: metadata.SignersData[i].Sequence,
 		}
-
 	}
 
 	// now we set the partial signatures in the tx

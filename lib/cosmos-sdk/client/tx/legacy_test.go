@@ -7,13 +7,14 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	clienttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/testutil"
 	tx2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	typestx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 	signing2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
@@ -28,7 +29,7 @@ const (
 )
 
 var (
-	fee            = types.NewCoins(types.NewInt64Coin("bam", 100))
+	fee            = sdk.NewCoins(sdk.NewInt64Coin("bam", 100))
 	_, pub1, addr1 = testdata.KeyTestPubAddr()
 	_, _, addr2    = testdata.KeyTestPubAddr()
 	rawSig         = []byte("dummy")
@@ -39,8 +40,8 @@ var (
 			Signature: rawSig,
 		},
 	}
-	msg0 = banktypes.NewMsgSend(addr1, addr2, types.NewCoins(types.NewInt64Coin("wack", 1)))
-	msg1 = banktypes.NewMsgSend(addr1, addr2, types.NewCoins(types.NewInt64Coin("wack", 2)))
+	msg0 = banktypes.NewMsgSend(addr1, addr2, sdk.NewCoins(sdk.NewInt64Coin("wack", 1)))
+	msg1 = banktypes.NewMsgSend(addr1, addr2, sdk.NewCoins(sdk.NewInt64Coin("wack", 2)))
 
 	chainID = "test-chain"
 	tip     = &typestx.Tip{Tipper: addr1.String(), Amount: testdata.NewTestFeeAmount()}
@@ -58,11 +59,11 @@ func buildTestTx(t *testing.T, builder client.TxBuilder) {
 }
 
 type TestSuite struct {
-	suite.Suite
-	codec    codec.Codec
-	amino    *codec.LegacyAmino
-	protoCfg client.TxConfig
-	aminoCfg client.TxConfig
+	suite.Suite //nolint:unused
+	codec       codec.Codec
+	amino       *codec.LegacyAmino
+	protoCfg    client.TxConfig
+	aminoCfg    client.TxConfig
 }
 
 func (s *TestSuite) SetupSuite() {

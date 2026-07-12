@@ -3,6 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
@@ -11,9 +15,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
 	distrtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParams(t *testing.T) {

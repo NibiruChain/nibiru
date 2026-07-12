@@ -14,9 +14,9 @@ var (
 	pk1Any   *codectypes.Any
 	pk2      = ed25519.GenPrivKey().PubKey()
 	pk3      = ed25519.GenPrivKey().PubKey()
-	addr1, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk1.Address().Bytes())
-	addr2, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk2.Address().Bytes())
-	addr3, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk3.Address().Bytes())
+	addr1, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk1.Address().Bytes()) //nolint:unused
+	addr2, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk2.Address().Bytes()) //nolint:unused
+	addr3, _ = sdk.Bech32ifyAddressBytes(sdk.Bech32PrefixAccAddr, pk3.Address().Bytes()) //nolint:unused
 	valAddr1 = sdk.ValAddress(pk1.Address())
 	valAddr2 = sdk.ValAddress(pk2.Address())
 	valAddr3 = sdk.ValAddress(pk3.Address())

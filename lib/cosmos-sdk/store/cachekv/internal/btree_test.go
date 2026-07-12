@@ -3,9 +3,10 @@ package internal
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetSetDelete(t *testing.T) {

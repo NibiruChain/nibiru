@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -21,6 +20,8 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"

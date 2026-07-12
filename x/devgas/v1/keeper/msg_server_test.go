@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"

@@ -11,6 +11,10 @@ import (
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/go-bip39"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdkflags "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/input"
@@ -18,9 +22,6 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
-	"github.com/cosmos/go-bip39"
-	pkgerrors "github.com/pkg/errors"
-	"github.com/spf13/cobra"
 
 	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	ibctypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/types"

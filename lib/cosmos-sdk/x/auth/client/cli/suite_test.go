@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	"github.com/stretchr/testify/suite"
@@ -903,7 +903,7 @@ func (s *CLITestSuite) TestSignWithMultiSignersAminoJSON() {
 	// because DIRECT doesn't support multi signers via the CLI.
 	// Since we use amino, we don't need to pre-populate signer_infos.
 	txBuilder := s.clientCtx.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(
+	txBuilder.SetMsgs( //nolint:errcheck
 		banktypes.NewMsgSend(val0, addr1, sdk.NewCoins(val0Coin)),
 		banktypes.NewMsgSend(val1, addr1, sdk.NewCoins(val1Coin)),
 	)
@@ -1261,7 +1261,7 @@ func (s *CLITestSuite) TestAuxToFeeWithTips() {
 	}
 }
 
-func (s *CLITestSuite) getBalances(clientCtx client.Context, addr sdk.AccAddress, denom string) math.Int {
+func (s *CLITestSuite) getBalances(clientCtx client.Context, addr sdk.AccAddress, denom string) sdkmath.Int {
 	resp, err := clitestutil.QueryBalancesExec(clientCtx, addr)
 	s.Require().NoError(err)
 

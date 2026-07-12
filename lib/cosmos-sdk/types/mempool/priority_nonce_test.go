@@ -417,7 +417,6 @@ func validateOrder(mtxs []sdk.Tx) error {
 					if !found {
 						return fmt.Errorf("different sender tx have wrong order\n%v\n%v", b, a)
 					}
-
 				}
 			}
 		}

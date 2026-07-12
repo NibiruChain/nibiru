@@ -3,6 +3,9 @@ package module_test
 import (
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
@@ -13,8 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
 	feegranttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/testutil"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestFeegrantPruning(t *testing.T) {
@@ -39,7 +40,7 @@ func TestFeegrantPruning(t *testing.T) {
 	accountKeeper.EXPECT().GetAccount(gomock.Any(), granter3).Return(authtypes.NewBaseAccountWithAddress(granter3)).AnyTimes()
 
 	feegrantKeeper := keeper.NewKeeper(encCfg.Codec, key, accountKeeper)
-
+	//nolint:errcheck
 	feegrantKeeper.GrantAllowance(
 		testCtx.Ctx,
 		granter1,
@@ -47,7 +48,8 @@ func TestFeegrantPruning(t *testing.T) {
 		&feegrant.BasicAllowance{
 			Expiration: &now,
 		},
-	)
+	) //nolint:errcheck
+	//nolint:errcheck
 	feegrantKeeper.GrantAllowance(
 		testCtx.Ctx,
 		granter2,
@@ -55,7 +57,8 @@ func TestFeegrantPruning(t *testing.T) {
 		&feegrant.BasicAllowance{
 			SpendLimit: spendLimit,
 		},
-	)
+	) //nolint:errcheck
+	//nolint:errcheck
 	feegrantKeeper.GrantAllowance(
 		testCtx.Ctx,
 		granter3,

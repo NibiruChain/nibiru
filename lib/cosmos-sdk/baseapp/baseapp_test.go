@@ -122,7 +122,7 @@ func NewBaseAppSuiteWithSnapshots(t *testing.T, cfg SnapshotsConfig, opts ...fun
 			}
 
 			builder := suite.txConfig.NewTxBuilder()
-			builder.SetMsgs(msgs...)
+			builder.SetMsgs(msgs...) //nolint:errcheck
 			setTxSignature(t, builder, 0)
 
 			txBytes, err := suite.txConfig.TxEncoder()(builder.GetTx())
@@ -494,7 +494,7 @@ func TestCustomRunTxPanicHandler(t *testing.T) {
 		tx := newTxCounter(t, suite.txConfig, 0, 0)
 
 		require.PanicsWithValue(t, customPanicMsg, func() {
-			suite.baseApp.SimDeliver(suite.txConfig.TxEncoder(), tx)
+			suite.baseApp.SimDeliver(suite.txConfig.TxEncoder(), tx) //nolint:errcheck
 		})
 	}
 }

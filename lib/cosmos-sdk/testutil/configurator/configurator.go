@@ -12,7 +12,6 @@ import (
 	feegrantmodulev1 "cosmossdk.io/api/cosmos/feegrant/module/v1"
 	genutilmodulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
 	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
-	mintmodulev1 "cosmossdk.io/api/cosmos/mint/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	slashingmodulev1 "cosmossdk.io/api/cosmos/slashing/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
@@ -20,6 +19,8 @@ import (
 	vestingmodulev1 "cosmossdk.io/api/cosmos/vesting/module/v1"
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
+
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 // Config should never need to be instantiated manually and is solely used for ModuleOption.
@@ -36,7 +37,6 @@ func defaultConfig() *Config {
 		ModuleConfigs: make(map[string]*appv1alpha1.ModuleConfig),
 		BeginBlockersOrder: []string{
 			"upgrade",
-			"mint",
 			"distribution",
 			"slashing",
 			"evidence",
@@ -60,7 +60,6 @@ func defaultConfig() *Config {
 			"bank",
 			"distribution",
 			"slashing",
-			"mint",
 			"genutil",
 			"evidence",
 			"authz",
@@ -77,7 +76,6 @@ func defaultConfig() *Config {
 			"staking",
 			"slashing",
 			"gov",
-			"mint",
 			"crisis",
 			"genutil",
 			"evidence",
@@ -130,7 +128,7 @@ func AuthModule() ModuleOption {
 				ModuleAccountPermissions: []*authmodulev1.ModuleAccountPermission{
 					{Account: "fee_collector"},
 					{Account: "distribution"},
-					{Account: "mint", Permissions: []string{"minter"}},
+					{Account: mint.ModuleName, Permissions: []string{"minter"}},
 					{Account: "bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
 					{Account: "not_bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
 					{Account: "gov", Permissions: []string{"burner"}},
@@ -226,21 +224,6 @@ func ConsensusModule() ModuleOption {
 		config.ModuleConfigs["consensus"] = &appv1alpha1.ModuleConfig{
 			Name:   "consensus",
 			Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
-		}
-	}
-}
-
-func MintModule() ModuleOption {
-	return func(config *Config) {
-		config.ModuleConfigs["mint"] = &appv1alpha1.ModuleConfig{
-			Name:   "mint",
-			Config: appconfig.WrapAny(&mintmodulev1.Module{}),
-			GolangBindings: []*appv1alpha1.GolangBinding{
-				{
-					InterfaceType:  "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types/types.StakingKeeper",
-					Implementation: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper/*keeper.Keeper",
-				},
-			},
 		}
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -17,19 +17,19 @@ func TestCommissionValidate(t *testing.T) {
 		expectErr bool
 	}{
 		// invalid commission; max rate < 0%
-		{types.NewCommission(math.LegacyZeroDec(), sdk.MustNewDecFromStr("-1.00"), math.LegacyZeroDec()), true},
+		{types.NewCommission(sdkmath.LegacyZeroDec(), sdk.MustNewDecFromStr("-1.00"), sdkmath.LegacyZeroDec()), true},
 		// invalid commission; max rate > 100%
-		{types.NewCommission(math.LegacyZeroDec(), sdk.MustNewDecFromStr("2.00"), math.LegacyZeroDec()), true},
+		{types.NewCommission(sdkmath.LegacyZeroDec(), sdk.MustNewDecFromStr("2.00"), sdkmath.LegacyZeroDec()), true},
 		// invalid commission; rate < 0%
-		{types.NewCommission(sdk.MustNewDecFromStr("-1.00"), math.LegacyZeroDec(), math.LegacyZeroDec()), true},
+		{types.NewCommission(sdk.MustNewDecFromStr("-1.00"), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()), true},
 		// invalid commission; rate > max rate
-		{types.NewCommission(sdk.MustNewDecFromStr("0.75"), sdk.MustNewDecFromStr("0.50"), math.LegacyZeroDec()), true},
+		{types.NewCommission(sdk.MustNewDecFromStr("0.75"), sdk.MustNewDecFromStr("0.50"), sdkmath.LegacyZeroDec()), true},
 		// invalid commission; max change rate < 0%
-		{types.NewCommission(math.LegacyOneDec(), math.LegacyOneDec(), sdk.MustNewDecFromStr("-1.00")), true},
+		{types.NewCommission(sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec(), sdk.MustNewDecFromStr("-1.00")), true},
 		// invalid commission; max change rate > max rate
-		{types.NewCommission(math.LegacyOneDec(), sdk.MustNewDecFromStr("0.75"), sdk.MustNewDecFromStr("0.90")), true},
+		{types.NewCommission(sdkmath.LegacyOneDec(), sdk.MustNewDecFromStr("0.75"), sdk.MustNewDecFromStr("0.90")), true},
 		// valid commission
-		{types.NewCommission(sdk.MustNewDecFromStr("0.20"), math.LegacyOneDec(), sdk.MustNewDecFromStr("0.10")), false},
+		{types.NewCommission(sdk.MustNewDecFromStr("0.20"), sdkmath.LegacyOneDec(), sdk.MustNewDecFromStr("0.10")), false},
 	}
 
 	for i, tc := range testCases {

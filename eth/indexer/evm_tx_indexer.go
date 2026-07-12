@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"

@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	paramtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
 )
@@ -54,7 +55,7 @@ func validateTallyParams(i interface{}) error {
 	if quorum.IsNegative() {
 		return fmt.Errorf("quorom cannot be negative: %s", quorum)
 	}
-	if quorum.GT(math.LegacyOneDec()) {
+	if quorum.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("quorom too large: %s", v)
 	}
 
@@ -65,7 +66,7 @@ func validateTallyParams(i interface{}) error {
 	if !threshold.IsPositive() {
 		return fmt.Errorf("vote threshold must be positive: %s", threshold)
 	}
-	if threshold.GT(math.LegacyOneDec()) {
+	if threshold.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("vote threshold too large: %s", v)
 	}
 
@@ -76,7 +77,7 @@ func validateTallyParams(i interface{}) error {
 	if !vetoThreshold.IsPositive() {
 		return fmt.Errorf("veto threshold must be positive: %s", vetoThreshold)
 	}
-	if vetoThreshold.GT(math.LegacyOneDec()) {
+	if vetoThreshold.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("veto threshold too large: %s", v)
 	}
 

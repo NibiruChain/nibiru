@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"cosmossdk.io/depinject"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -54,7 +55,8 @@ func TestValidateGenesisDuplicateAccounts(t *testing.T) {
 }
 
 func TestGenesisAccountIterator(t *testing.T) {
-	var cdc codec.Codec
+	var cdc codec.Codec //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &cdc)
 
 	acc1 := types.NewBaseAccountWithAddress(sdk.AccAddress(addr1))

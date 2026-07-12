@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/client/utils"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"

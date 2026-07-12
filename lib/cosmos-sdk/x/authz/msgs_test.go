@@ -157,7 +157,7 @@ func TestMsgGrantGetAuthorization(t *testing.T) {
 	require.Equal(a, &g)
 
 	g = authz.GenericAuthorization{Msg: "some_type2"}
-	m.SetAuthorization(&g)
+	m.SetAuthorization(&g) //nolint:errcheck
 	a, err = m.GetAuthorization()
 	require.NoError(err)
 	require.Equal(a, &g)

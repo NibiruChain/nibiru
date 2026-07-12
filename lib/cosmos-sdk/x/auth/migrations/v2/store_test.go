@@ -64,8 +64,8 @@ func TestMigrateVestingAccounts(t *testing.T) {
 	legacySubspace := newMockSubspace(authtypes.DefaultParams())
 	require.NoError(t, v4.Migrate(ctx, store, legacySubspace, cdc))
 
-	ctx = app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
-	stakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	ctx = app.NewContext(false, tmproto.Header{Time: time.Now()})
+	stakingKeeper.SetParams(ctx, stakingtypes.DefaultParams()) //nolint:errcheck
 
 	testCases := []struct {
 		name        string

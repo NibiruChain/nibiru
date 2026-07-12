@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cometbft/cometbft/libs/log"
+
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

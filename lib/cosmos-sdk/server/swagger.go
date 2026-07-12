@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 )

@@ -3,9 +3,10 @@ package types
 import (
 	"bytes"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/cosmos/gogoproto/proto"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

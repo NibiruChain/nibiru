@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
@@ -61,9 +62,9 @@ func TestRandomizedGenState(t *testing.T) {
 	require.Equal(t, "BOND_STATUS_UNBONDED", stakingGenesis.Validators[2].Status.String())
 	require.Equal(t, "1000", stakingGenesis.Validators[2].Tokens.String())
 	require.Equal(t, "1000.000000000000000000", stakingGenesis.Validators[2].DelegatorShares.String())
-	require.Equal(t, "0.292059246265731326", stakingGenesis.Validators[2].Commission.CommissionRates.Rate.String())
-	require.Equal(t, "0.330000000000000000", stakingGenesis.Validators[2].Commission.CommissionRates.MaxRate.String())
-	require.Equal(t, "0.038337453731274481", stakingGenesis.Validators[2].Commission.CommissionRates.MaxChangeRate.String())
+	require.Equal(t, "0.292059246265731326", stakingGenesis.Validators[2].Commission.Rate.String())
+	require.Equal(t, "0.330000000000000000", stakingGenesis.Validators[2].Commission.MaxRate.String())
+	require.Equal(t, "0.038337453731274481", stakingGenesis.Validators[2].Commission.MaxChangeRate.String())
 	require.Equal(t, "1", stakingGenesis.Validators[2].MinSelfDelegation.String())
 }
 

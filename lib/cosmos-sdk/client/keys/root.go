@@ -1,7 +1,7 @@
 package keys
 
 import (
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -53,7 +53,7 @@ The pass backend requires GnuPG: https://gnupg.org/
 	)
 
 	cmd.PersistentFlags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
-	cmd.PersistentFlags().String(cli.OutputFlag, "text", "Output format (text|json)")
+	cmd.PersistentFlags().String(cmtcli.OutputFlag, "text", "Output format (text|json)")
 	flags.AddKeyringFlags(cmd.PersistentFlags())
 
 	return cmd

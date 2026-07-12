@@ -35,10 +35,10 @@ func buildTx(t *testing.T, bldr *wrapper) {
 
 func TestLegacyAminoJSONHandler_GetSignBytes(t *testing.T) {
 	var (
-		chainId         = "test-chain"
-		accNum  uint64  = 7
-		seqNum  uint64  = 7
-		tip     *tx.Tip = &tx.Tip{Tipper: addr1.String(), Amount: coins}
+		chainId        = "test-chain"
+		accNum  uint64 = 7
+		seqNum  uint64 = 7
+		tip            = &tx.Tip{Tipper: addr1.String(), Amount: coins}
 	)
 
 	testcases := []struct {

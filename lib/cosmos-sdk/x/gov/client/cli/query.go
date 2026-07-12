@@ -292,7 +292,7 @@ $ %[1]s query gov votes 1 --page=2 --limit=100
 			}
 
 			propStatus := proposalRes.GetProposal().Status
-			if !(propStatus == v1.StatusVotingPeriod || propStatus == v1.StatusDepositPeriod) {
+			if propStatus != v1.StatusVotingPeriod && propStatus != v1.StatusDepositPeriod {
 				page, _ := cmd.Flags().GetInt(flags.FlagPage)
 				limit, _ := cmd.Flags().GetInt(flags.FlagLimit)
 
@@ -307,7 +307,6 @@ $ %[1]s query gov votes 1 --page=2 --limit=100
 				// or wrap lists of proto.Message in some other message)
 				clientCtx.LegacyAmino.MustUnmarshalJSON(resByTxQuery, &votes)
 				return clientCtx.PrintObjectLegacy(votes)
-
 			}
 
 			pageReq, err := client.ReadPageRequest(cmd.Flags())

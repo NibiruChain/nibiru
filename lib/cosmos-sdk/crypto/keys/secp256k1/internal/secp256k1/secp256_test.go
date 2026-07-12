@@ -225,7 +225,7 @@ func BenchmarkSign(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Sign(msg, seckey)
+		Sign(msg, seckey) //nolint:errcheck
 	}
 }
 
@@ -236,6 +236,6 @@ func BenchmarkRecover(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		RecoverPubkey(msg, sig)
+		RecoverPubkey(msg, sig) //nolint:errcheck
 	}
 }

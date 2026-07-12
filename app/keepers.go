@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	wasmvm "github.com/CosmWasm/wasmvm"
+	"github.com/spf13/cast"
+
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
@@ -28,7 +30,6 @@ import (
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
-	"github.com/spf13/cast"
 
 	icacontroller "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/keeper"

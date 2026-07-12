@@ -1,7 +1,8 @@
 package types
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
@@ -20,7 +21,7 @@ type StakingKeeper interface {
 		sdk.Context, func(index int64, validator stakingtypes.ValidatorI) (stop bool),
 	)
 
-	TotalBondedTokens(sdk.Context) math.Int // total bonded tokens within the validator set
+	TotalBondedTokens(sdk.Context) sdkmath.Int // total bonded tokens within the validator set
 	IterateDelegations(
 		ctx sdk.Context, delegator sdk.AccAddress,
 		fn func(index int64, delegation stakingtypes.DelegationI) (stop bool),

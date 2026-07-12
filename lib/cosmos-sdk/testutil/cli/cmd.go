@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	cli2 "github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
@@ -37,7 +37,7 @@ func MsgSendExec(clientCtx client.Context, from, to, amount fmt.Stringer, extraA
 }
 
 func QueryBalancesExec(clientCtx client.Context, address fmt.Stringer, extraArgs ...string) (testutil.BufferWriter, error) {
-	args := []string{address.String(), fmt.Sprintf("--%s=json", cli2.OutputFlag)}
+	args := []string{address.String(), fmt.Sprintf("--%s=json", cmtcli.OutputFlag)}
 	args = append(args, extraArgs...)
 
 	return ExecTestCLICmd(clientCtx, cli.GetBalancesCmd(), args)

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"

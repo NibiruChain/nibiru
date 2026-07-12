@@ -3,7 +3,7 @@ package staking_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -17,8 +17,8 @@ func TestValidateGenesis(t *testing.T) {
 	genValidators1 := make([]types.Validator, 1, 5)
 	pk := ed25519.GenPrivKey().PubKey()
 	genValidators1[0] = testutil.NewValidator(t, sdk.ValAddress(pk.Address()), pk)
-	genValidators1[0].Tokens = math.OneInt()
-	genValidators1[0].DelegatorShares = math.LegacyOneDec()
+	genValidators1[0].Tokens = sdkmath.OneInt()
+	genValidators1[0].DelegatorShares = sdkmath.LegacyOneDec()
 
 	tests := []struct {
 		name    string
@@ -33,7 +33,7 @@ func TestValidateGenesis(t *testing.T) {
 		}, true},
 		{"no delegator shares", func(data *types.GenesisState) {
 			data.Validators = genValidators1
-			data.Validators[0].DelegatorShares = math.LegacyZeroDec()
+			data.Validators[0].DelegatorShares = sdkmath.LegacyZeroDec()
 		}, true},
 		{"jailed and bonded validator", func(data *types.GenesisState) {
 			data.Validators = genValidators1

@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	chainID = "chain-id"
+	chainID = "chain-id" //nolint:unused
 )
 
 type testValidator struct {
@@ -55,7 +55,7 @@ func newTestValidator() testValidator {
 	}
 }
 
-func (t testValidator) toValidator(power int64) abci.Validator {
+func (t testValidator) toValidator(power int64) abci.Validator { //nolint:unused
 	return abci.Validator{
 		Address: t.consAddr.Bytes(),
 		Power:   power,
@@ -220,7 +220,7 @@ func (s *ABCIUtilsTestSuite) TestDefaultProposalHandler_PriorityNonceMempoolTxSe
 	}
 }
 
-func marshalDelimitedFn(msg proto.Message) ([]byte, error) {
+func marshalDelimitedFn(msg proto.Message) ([]byte, error) { //nolint:unused
 	var buf bytes.Buffer
 	if err := protoio.NewDelimitedWriter(&buf).WriteMsg(msg); err != nil {
 		return nil, err

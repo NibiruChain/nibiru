@@ -7,15 +7,17 @@ import (
 	"io"
 	"testing"
 
-	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/suite"
+
+	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+
+	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdktestutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"

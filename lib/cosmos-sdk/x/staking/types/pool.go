@@ -1,7 +1,7 @@
 package types
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 )
 
 // names used as root for pool module accounts:
@@ -15,7 +15,7 @@ const (
 )
 
 // NewPool creates a new Pool instance used for queries
-func NewPool(notBonded, bonded math.Int) Pool {
+func NewPool(notBonded, bonded sdkmath.Int) Pool {
 	return Pool{
 		NotBondedTokens: notBonded,
 		BondedTokens:    bonded,

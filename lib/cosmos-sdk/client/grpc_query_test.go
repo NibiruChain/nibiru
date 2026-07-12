@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"cosmossdk.io/depinject"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
@@ -24,8 +25,11 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/testutil"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper" //nolint:staticcheck
+
+	//nolint:staticcheck
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	//nolint:staticcheck
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
@@ -95,7 +99,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// end of app init
 
-	s.ctx = app.BaseApp.NewContext(false, tmproto.Header{})
+	s.ctx = app.NewContext(false, tmproto.Header{})
 	queryHelper := baseapp.NewQueryServerTestHelper(s.ctx, interfaceRegistry)
 	types.RegisterQueryServer(queryHelper, bankKeeper)
 	testdata.RegisterQueryServer(queryHelper, testdata.QueryImpl{})

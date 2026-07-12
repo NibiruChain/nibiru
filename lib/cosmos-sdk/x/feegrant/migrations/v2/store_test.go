@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"cosmossdk.io/depinject"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
@@ -12,11 +14,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
 	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/migrations/v2"
 	feegranttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMigration(t *testing.T) {
-	var cdc codec.Codec
+	var cdc codec.Codec //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(feegranttestutil.AppConfig, &cdc)
 
 	feegrantKey := sdk.NewKVStoreKey(v2.ModuleName)

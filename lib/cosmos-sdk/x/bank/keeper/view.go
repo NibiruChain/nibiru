@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -256,7 +256,7 @@ func UnmarshalBalanceCompat(cdc codec.BinaryCodec, bz []byte, denom string) (sdk
 		return sdk.Coin{}, err
 	}
 
-	amount := math.ZeroInt()
+	amount := sdkmath.ZeroInt()
 	if bz == nil {
 		return sdk.NewCoin(denom, amount), nil
 	}

@@ -179,7 +179,6 @@ func (q Keeper) Params(c context.Context, req *v1.QueryParamsRequest) (*v1.Query
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
 			"%s is not a valid parameter type", req.ParamsType)
-
 	}
 	response.Params = &params
 
@@ -266,11 +265,11 @@ func (q Keeper) TallyResult(c context.Context, req *v1.QueryTallyResultRequest) 
 
 	var tallyResult v1.TallyResult
 
-	switch {
-	case proposal.Status == v1.StatusDepositPeriod:
+	switch proposal.Status {
+	case v1.StatusDepositPeriod:
 		tallyResult = v1.EmptyTallyResult()
 
-	case proposal.Status == v1.StatusPassed || proposal.Status == v1.StatusRejected || proposal.Status == v1.StatusFailed:
+	case v1.StatusPassed, v1.StatusRejected, v1.StatusFailed:
 		tallyResult = *proposal.FinalTallyResult
 
 	default:

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 )
@@ -29,7 +29,7 @@ func NewVersionCommand() *cobra.Command {
 				err error
 			)
 
-			output, _ := cmd.Flags().GetString(cli.OutputFlag)
+			output, _ := cmd.Flags().GetString(cmtcli.OutputFlag)
 			switch strings.ToLower(output) {
 			case "json":
 				bz, err = json.Marshal(verInfo)
@@ -48,7 +48,7 @@ func NewVersionCommand() *cobra.Command {
 	}
 
 	cmd.Flags().Bool(flagLong, false, "Print long version information")
-	cmd.Flags().StringP(cli.OutputFlag, "o", "text", "Output format (text|json)")
+	cmd.Flags().StringP(cmtcli.OutputFlag, "o", "text", "Output format (text|json)")
 
 	return cmd
 }

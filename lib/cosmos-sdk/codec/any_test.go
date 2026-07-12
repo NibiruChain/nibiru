@@ -6,7 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types" //nolint:staticcheck
+
+	//nolint:staticcheck
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
@@ -65,7 +67,7 @@ func TestMarshalAny(t *testing.T) {
 	require.Equal(t, kitty, animal)
 
 	// nil should fail
-	registry = NewTestInterfaceRegistry()
+	registry = NewTestInterfaceRegistry() //nolint:staticcheck
 	err = cdc.UnmarshalInterface(catBz, nil)
 	require.Error(t, err)
 }

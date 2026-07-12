@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"

@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestScheduleUpgrade() {
 				Height: 123450000,
 			},
 			setup: func() {
-				s.upgradeKeeper.ScheduleUpgrade(s.ctx, types.Plan{
+				s.upgradeKeeper.ScheduleUpgrade(s.ctx, types.Plan{ //nolint:errcheck
 					Name:   "alt-good",
 					Info:   "new text here",
 					Height: 543210000,
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) TestSetUpgradedClient() {
 			name:   "success",
 			height: 10,
 			setup: func() {
-				s.upgradeKeeper.SetUpgradedClient(s.ctx, 10, cs)
+				s.upgradeKeeper.SetUpgradedClient(s.ctx, 10, cs) //nolint:errcheck
 			},
 			exists: true,
 		},

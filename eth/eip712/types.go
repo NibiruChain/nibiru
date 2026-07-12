@@ -11,6 +11,7 @@ import (
 	"golang.org/x/text/language"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"

@@ -13,13 +13,14 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 func TestVerifySignature(t *testing.T) {

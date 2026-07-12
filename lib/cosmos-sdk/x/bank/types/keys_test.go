@@ -45,7 +45,7 @@ func TestAddressFromBalancesStore(t *testing.T) {
 			addr, denom, err := types.AddressAndDenomFromBalancesStore(tc.key)
 			if tc.wantErr {
 				assert.Error(t, err)
-				assert.True(t, errors.Is(types.ErrInvalidKey, err))
+				assert.True(t, errors.Is(types.ErrInvalidKey, err)) //nolint:staticcheck
 			} else {
 				assert.NoError(t, err)
 			}

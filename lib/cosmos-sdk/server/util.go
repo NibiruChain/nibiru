@@ -23,11 +23,11 @@ import (
 	"cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	tmcfg "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/node"
 	tmstore "github.com/cometbft/cometbft/store"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -51,7 +51,7 @@ const ServerContextKey = sdk.ContextKey("server.context")
 // server context
 type Context struct {
 	Viper  *viper.Viper
-	Config *tmcfg.Config
+	Config *cmtcfg.Config
 	Logger tmlog.Logger
 }
 
@@ -67,12 +67,12 @@ func (e ErrorCode) Error() string {
 func NewDefaultContext() *Context {
 	return NewContext(
 		viper.New(),
-		tmcfg.DefaultConfig(),
+		cmtcfg.DefaultConfig(),
 		tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stdout)),
 	)
 }
 
-func NewContext(v *viper.Viper, config *tmcfg.Config, logger tmlog.Logger) *Context {
+func NewContext(v *viper.Viper, config *cmtcfg.Config, logger tmlog.Logger) *Context {
 	return &Context{v, config, logger}
 }
 
@@ -120,7 +120,7 @@ func bindFlags(basename string, cmd *cobra.Command, v *viper.Viper) (err error) 
 // is used to read and parse the application configuration. Command handlers can
 // fetch the server Context to get the Tendermint configuration or to get access
 // to Viper.
-func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig interface{}, tmConfig *tmcfg.Config) error {
+func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig interface{}, tmConfig *cmtcfg.Config) error {
 	serverCtx := NewDefaultContext()
 
 	// Get the executable name and configure the viper instance so that environmental
@@ -158,7 +158,7 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	}
 
 	var opts []log.Option
-	if serverCtx.Viper.GetString(flags.FlagLogFormat) == tmcfg.LogFormatJSON {
+	if serverCtx.Viper.GetString(flags.FlagLogFormat) == cmtcfg.LogFormatJSON {
 		opts = append(opts, log.OutputJSONOption())
 	}
 
@@ -220,7 +220,7 @@ func SetCmdServerContext(cmd *cobra.Command, serverCtx *Context) error {
 // configuration file. The Tendermint configuration file is parsed given a root
 // Viper object, whereas the application is parsed with the private package-aware
 // viperCfg object.
-func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customConfig interface{}, tmConfig *tmcfg.Config) (*tmcfg.Config, error) {
+func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customConfig interface{}, tmConfig *cmtcfg.Config) (*cmtcfg.Config, error) {
 	rootDir := rootViper.GetString(flags.FlagHome)
 	configPath := filepath.Join(rootDir, "config")
 	tmCfgFile := filepath.Join(configPath, "config.toml")
@@ -229,13 +229,13 @@ func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customCo
 
 	switch _, err := os.Stat(tmCfgFile); {
 	case os.IsNotExist(err):
-		tmcfg.EnsureRoot(rootDir)
+		cmtcfg.EnsureRoot(rootDir)
 
 		if err = conf.ValidateBasic(); err != nil {
 			return nil, fmt.Errorf("error in config file: %w", err)
 		}
 
-		defaultCometCfg := tmcfg.DefaultConfig()
+		defaultCometCfg := cmtcfg.DefaultConfig()
 		// The SDK is opinionated about those comet values, so we set them here.
 		// We verify first that the user has not changed them for not overriding them.
 		if conf.Consensus.TimeoutCommit == defaultCometCfg.Consensus.TimeoutCommit {
@@ -244,7 +244,7 @@ func interceptConfigs(rootViper *viper.Viper, customAppTemplate string, customCo
 		if conf.RPC.PprofListenAddress == defaultCometCfg.RPC.PprofListenAddress {
 			conf.RPC.PprofListenAddress = "localhost:6060"
 		}
-		tmcfg.WriteConfigFile(tmCfgFile, conf)
+		cmtcfg.WriteConfigFile(tmCfgFile, conf)
 	case err != nil:
 		return nil, err
 
@@ -508,9 +508,9 @@ func DefaultBaseappOptions(appOpts types.AppOptions) []func(*baseapp.BaseApp) {
 
 // readChainIdFromHome reads chain id from home directory.
 func readChainIdFromHome(homeDir string, dbBackend string) (string, error) {
-	cfg := tmcfg.DefaultConfig()
+	cfg := cmtcfg.DefaultConfig()
 	cfg.SetRoot(homeDir)
-	cfg.BaseConfig.DBBackend = dbBackend
+	cfg.DBBackend = dbBackend
 
 	// if the node's current height is not zero then try to read the chainID from comet db.
 	db, err := node.DefaultDBProvider(&node.DBContext{ID: "blockstore", Config: cfg})
@@ -531,7 +531,7 @@ func readChainIdFromHome(homeDir string, dbBackend string) (string, error) {
 		return baseMeta.Header.ChainID, nil
 	}
 
-	appGenesis, err := tmtypes.GenesisDocFromFile(filepath.Join(homeDir, "config", "genesis.json"))
+	appGenesis, err := cmttypes.GenesisDocFromFile(filepath.Join(homeDir, "config", "genesis.json"))
 	if err != nil {
 		return "", err
 	}

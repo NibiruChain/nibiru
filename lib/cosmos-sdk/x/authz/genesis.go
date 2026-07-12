@@ -22,7 +22,6 @@ func ValidateGenesis(data GenesisState) error {
 		if a.Granter == "" {
 			return fmt.Errorf("authorization: %d,missing granter", i)
 		}
-
 	}
 	return nil
 }

@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	epochs1 "github.com/NibiruChain/nibiru/v2/x/epochs"

@@ -2,14 +2,14 @@ package keeper_test
 
 import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 )
 
 func (s *KeeperTestSuite) TestGRPCQueryConsensusParams() {
-	defaultConsensusParams := tmtypes.DefaultConsensusParams().ToProto()
+	defaultConsensusParams := cmttypes.DefaultConsensusParams().ToProto()
 
 	testCases := []struct {
 		msg      string
@@ -28,7 +28,7 @@ func (s *KeeperTestSuite) TestGRPCQueryConsensusParams() {
 					Validator: defaultConsensusParams.Validator,
 					Evidence:  defaultConsensusParams.Evidence,
 				}
-				s.msgServer.UpdateParams(s.ctx, input)
+				s.msgServer.UpdateParams(s.ctx, input) //nolint:errcheck
 			},
 			types.QueryParamsResponse{
 				Params: &tmproto.ConsensusParams{

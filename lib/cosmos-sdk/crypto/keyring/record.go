@@ -6,7 +6,7 @@ import (
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // ErrPrivKeyExtr is used to output an error if extraction of a private key from Local item fails
@@ -70,7 +70,7 @@ func (k *Record) GetPubKey() (cryptotypes.PubKey, error) {
 }
 
 // GetAddress fetches an address of the record
-func (k Record) GetAddress() (types.AccAddress, error) {
+func (k Record) GetAddress() (sdk.AccAddress, error) {
 	pk, err := k.GetPubKey()
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ codec.go file as follows:
 		// ...
 
 		RegisterLegacyAminoCodec(govcodec.Amino)
-	
+
 
 	}
 

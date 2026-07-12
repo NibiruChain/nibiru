@@ -3,8 +3,9 @@ package nutil_test
 import (
 	"testing"
 
-	sdkquery "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/suite"
+
+	sdkquery "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )

@@ -12,6 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"

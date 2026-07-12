@@ -10,11 +10,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth/indexer"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	tmnode "github.com/cometbft/cometbft/node"
 	sm "github.com/cometbft/cometbft/state"
 	tmstore "github.com/cometbft/cometbft/store"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 )
 
 func NewEVMTxIndexCmd() *cobra.Command {

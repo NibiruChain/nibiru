@@ -1,8 +1,9 @@
 package cli
 
 import (
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
 	ibcclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
 	connection "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection"

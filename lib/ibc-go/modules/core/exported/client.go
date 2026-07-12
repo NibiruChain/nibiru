@@ -1,9 +1,10 @@
 package exported
 
 import (
+	proto "github.com/cosmos/gogoproto/proto"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Status represents the status of a client

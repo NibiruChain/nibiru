@@ -6,13 +6,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/coinbase/rosetta-sdk-go/types"
 	assert "github.com/cosmos/rosetta-sdk-go/asserter"
 	"github.com/cosmos/rosetta-sdk-go/server"
-	"github.com/coinbase/rosetta-sdk-go/types"
+
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/internal/service"
 	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"
-	"github.com/cometbft/cometbft/libs/log"
 )
 
 const (

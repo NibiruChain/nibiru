@@ -8,6 +8,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
@@ -19,7 +21,6 @@ import (
 	authzmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/module"
 	authztestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/testutil"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-	"github.com/golang/mock/gomock"
 )
 
 type GenesisTestSuite struct {
@@ -86,7 +87,7 @@ func (suite *GenesisTestSuite) TestImportExportGenesis() {
 			Expiration:    &expires,
 		},
 	})
-
+	//nolint:errcheck
 	suite.keeper.DeleteGrant(suite.ctx, granteeAddr, granterAddr, grant.MsgTypeURL())
 	suite.keeper.InitGenesis(suite.ctx, importGenesis)
 	authorization, _ := suite.keeper.GetAuthorization(suite.ctx, granteeAddr, granterAddr, grant.MsgTypeURL())

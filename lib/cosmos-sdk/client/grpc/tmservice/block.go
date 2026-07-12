@@ -3,9 +3,10 @@ package tmservice
 import (
 	"context"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 )
 
 func getBlock(ctx context.Context, clientCtx client.Context, height *int64) (*coretypes.ResultBlock, error) {

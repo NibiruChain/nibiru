@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/libs/log"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
@@ -140,8 +141,9 @@ func (s *TestSuite) TestKeeperIter() {
 	granter2Addr := addrs[2]
 	e := ctx.BlockTime().AddDate(1, 0, 0)
 	sendAuthz := banktypes.NewSendAuthorization(coins100, nil)
-
-	s.authzKeeper.SaveGrant(ctx, granteeAddr, granterAddr, sendAuthz, &e)
+	//nolint:errcheck
+	s.authzKeeper.SaveGrant(ctx, granteeAddr, granterAddr, sendAuthz, &e) //nolint:errcheck
+	//nolint:errcheck
 	s.authzKeeper.SaveGrant(ctx, granteeAddr, granter2Addr, sendAuthz, &e)
 
 	s.authzKeeper.IterateGrants(ctx, func(granter, grantee sdk.AccAddress, grant authz.Grant) bool {
@@ -181,7 +183,8 @@ func (s *TestSuite) TestDispatchAction() {
 			true,
 			"authorization not found",
 			func() sdk.Context {
-				// remove any existing authorizations
+				// remove any existing authorizations //nolint:errcheck
+				//nolint:errcheck
 				s.authzKeeper.DeleteGrant(s.ctx, granteeAddr, granterAddr, bankSendAuthMsgType)
 				return s.ctx
 			},

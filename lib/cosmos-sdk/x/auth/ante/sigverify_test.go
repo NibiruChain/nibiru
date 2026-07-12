@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
@@ -18,7 +20,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSetPubKey(t *testing.T) {
@@ -187,7 +188,8 @@ func TestSigVerification(t *testing.T) {
 					Signature: badSig,
 				},
 				Sequence: tc.accSeqs[0],
-			}
+			} //nolint:errcheck
+			//nolint:errcheck
 			suite.txBuilder.SetSignatures(txSigs...)
 			tx = suite.txBuilder.GetTx()
 		}

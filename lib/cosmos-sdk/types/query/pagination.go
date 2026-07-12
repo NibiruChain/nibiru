@@ -84,7 +84,6 @@ func Paginate(
 		var nextKey []byte
 
 		for ; iterator.Valid(); iterator.Next() {
-
 			if count == limit {
 				nextKey = iterator.Key()
 				break

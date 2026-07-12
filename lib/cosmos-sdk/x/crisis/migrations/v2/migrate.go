@@ -4,7 +4,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/exported"
 )
 
@@ -27,7 +27,7 @@ func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace 
 	legacySubspace.Get(ctx, ConstantFee, &currConstantFee)
 
 	if !currConstantFee.IsValid() {
-		return errors.ErrInvalidCoins.Wrap("constant fee")
+		return sdkerrors.ErrInvalidCoins.Wrap("constant fee")
 	}
 
 	bz, err := cdc.Marshal(&currConstantFee)

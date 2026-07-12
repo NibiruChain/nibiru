@@ -3,15 +3,16 @@ package ante_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDeductFeeDecorator_ZeroGas(t *testing.T) {
@@ -71,7 +72,7 @@ func TestEnsureMempoolFees(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set high gas price so standard test fee fails
-	atomPrice := sdk.NewDecCoinFromDec("atom", math.LegacyNewDec(20))
+	atomPrice := sdk.NewDecCoinFromDec("atom", sdkmath.LegacyNewDec(20))
 	highGasPrice := []sdk.DecCoin{atomPrice}
 	s.ctx = s.ctx.WithMinGasPrices(highGasPrice)
 
@@ -97,7 +98,7 @@ func TestEnsureMempoolFees(t *testing.T) {
 	// Set IsCheckTx back to true for testing sufficient mempool fee
 	s.ctx = s.ctx.WithIsCheckTx(true)
 
-	atomPrice = sdk.NewDecCoinFromDec("atom", math.LegacyNewDec(0).Quo(math.LegacyNewDec(100000)))
+	atomPrice = sdk.NewDecCoinFromDec("atom", sdkmath.LegacyNewDec(0).Quo(sdkmath.LegacyNewDec(100000)))
 	lowGasPrice := []sdk.DecCoin{atomPrice}
 	s.ctx = s.ctx.WithMinGasPrices(lowGasPrice)
 

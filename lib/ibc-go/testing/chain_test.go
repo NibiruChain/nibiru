@@ -3,9 +3,10 @@ package ibctesting_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
 
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 )

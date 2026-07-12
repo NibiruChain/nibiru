@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -60,7 +60,7 @@ func (v Votes) String() string {
 
 // NewNonSplitVoteOption creates a single option vote with weight 1
 func NewNonSplitVoteOption(option VoteOption) WeightedVoteOptions {
-	return WeightedVoteOptions{{option, math.LegacyNewDec(1)}}
+	return WeightedVoteOptions{{option, sdkmath.LegacyNewDec(1)}}
 }
 
 func (v WeightedVoteOption) String() string {
@@ -81,7 +81,7 @@ func (v WeightedVoteOptions) String() (out string) {
 
 // ValidWeightedVoteOption returns true if the sub vote is valid and false otherwise.
 func ValidWeightedVoteOption(option WeightedVoteOption) bool {
-	if !option.Weight.IsPositive() || option.Weight.GT(math.LegacyNewDec(1)) {
+	if !option.Weight.IsPositive() || option.Weight.GT(sdkmath.LegacyNewDec(1)) {
 		return false
 	}
 	return ValidVoteOption(option.Option)
@@ -134,8 +134,8 @@ func ValidVoteOption(option VoteOption) bool {
 func (vo VoteOption) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(vo.String()))
+		s.Write([]byte(vo.String())) //nolint:errcheck
 	default:
-		s.Write([]byte(fmt.Sprintf("%v", byte(vo))))
+		fmt.Fprintf(s, "%v", byte(vo)) //nolint:errcheck
 	}
 }
