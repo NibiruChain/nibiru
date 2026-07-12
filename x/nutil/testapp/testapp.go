@@ -29,7 +29,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -156,11 +156,11 @@ func FundAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context, addr sdk.AccAddress,
 	amounts sdk.Coins,
 ) error {
-	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+	if err := bankKeeper.MintCoins(ctx, mint.ModuleName, amounts); err != nil {
 		return err
 	}
 
-	return bankKeeper.SendCoinsFromModuleToAccount(ctx, inflationtypes.ModuleName, addr, amounts)
+	return bankKeeper.SendCoinsFromModuleToAccount(ctx, mint.ModuleName, addr, amounts)
 }
 
 // FundModuleAccount is a utility function that funds a module account by
@@ -170,11 +170,11 @@ func FundModuleAccount(
 	bankKeeper bankkeeper.Keeper, ctx sdk.Context,
 	recipientMod string, amounts sdk.Coins,
 ) error {
-	if err := bankKeeper.MintCoins(ctx, inflationtypes.ModuleName, amounts); err != nil {
+	if err := bankKeeper.MintCoins(ctx, mint.ModuleName, amounts); err != nil {
 		return err
 	}
 
-	return bankKeeper.SendCoinsFromModuleToModule(ctx, inflationtypes.ModuleName, recipientMod, amounts)
+	return bankKeeper.SendCoinsFromModuleToModule(ctx, mint.ModuleName, recipientMod, amounts)
 }
 
 // FundFeeCollector funds the module account that collects gas fees with some

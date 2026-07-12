@@ -51,7 +51,7 @@ import (
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -62,7 +62,7 @@ var (
 	blockAccAddrs = []string{
 		authtypes.FeeCollectorName,
 		distrtypes.ModuleName,
-		inflationtypes.ModuleName,
+		mint.ModuleName,
 		stakingtypes.BondedPoolName,
 		stakingtypes.NotBondedPoolName,
 		oracletypes.ModuleName,
@@ -82,7 +82,7 @@ var (
 	moduleAccPerms = []*authmodulev1.ModuleAccountPermission{
 		{Account: authtypes.FeeCollectorName},
 		{Account: distrtypes.ModuleName},
-		{Account: inflationtypes.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
+		{Account: mint.ModuleName, Permissions: []string{authtypes.Minter, authtypes.Burner}},
 		{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
@@ -137,7 +137,7 @@ var (
 		// Native x/ Modules
 		epochs.ModuleName,
 		oracletypes.ModuleName,
-		inflationtypes.ModuleName,
+		mint.ModuleName,
 		sudo.ModuleName,
 
 		// --------------------------------------------------------------------

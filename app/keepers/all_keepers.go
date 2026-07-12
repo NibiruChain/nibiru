@@ -27,7 +27,7 @@ import (
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/mint/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"

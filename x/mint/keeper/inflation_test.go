@@ -1,0 +1,198 @@
+package keeper_test
+
+import (
+	"fmt"
+	"testing"
+
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+)
+
+func TestMintAndAllocateInflation(t *testing.T) {
+	testCases := []struct {
+		name                             string
+		coinsToMint                      sdk.Coin
+		expectedStakingAmt               sdk.Coin
+		expectedStrategicAmt             sdk.Coin
+		expectedCommunityAmt             sdk.Coin
+		expectedStakingRewardsBalance    sdk.Coin
+		expectedStrategicReservesBalance sdk.Coin
+		expectedCommunityPoolBalance     sdk.DecCoins
+		rootAccount                      string
+	}{
+		{
+			name:                             "pass",
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825))),
+			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
+		},
+		{
+			name:                             "pass - no coins minted ",
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
+			expectedStakingAmt:               sdk.Coin{},
+			expectedStrategicAmt:             sdk.Coin{},
+			expectedCommunityAmt:             sdk.Coin{},
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.ZeroInt()),
+			expectedCommunityPoolBalance:     nil,
+			rootAccount:                      "nibi1qyqf35fkhn73hjr70442fctpq8prpqr9ysj9sn",
+		},
+		{
+			name:                             "pass - no root account",
+			coinsToMint:                      sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(1_000_000)),
+			expectedStakingAmt:               sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityAmt:             sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825)),
+			expectedStakingRewardsBalance:    sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(281_250)),
+			expectedStrategicReservesBalance: sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(363_925)),
+			expectedCommunityPoolBalance:     sdk.NewDecCoins(sdk.NewDecCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(354_825))),
+			rootAccount:                      "",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+			t.Logf("setting root account to %s", tc.rootAccount)
+			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
+				Root:      tc.rootAccount,
+				Contracts: []string{},
+			})
+
+			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, mint.DefaultParams())
+			if tc.rootAccount != "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				return
+			}
+			assert.Equal(t, tc.expectedStakingAmt, staking)
+			assert.Equal(t, tc.expectedStrategicAmt, strategic)
+			assert.Equal(t, tc.expectedCommunityAmt, community)
+
+			// Get balances
+			var balanceStrategicReserve sdk.Coin
+			if tc.rootAccount != "" {
+				strategicAccount, err := nibiruApp.SudoKeeper.GetRootAddr(ctx)
+				require.NoError(t, err)
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(
+					ctx,
+					strategicAccount,
+					appconst.DENOM_UNIBI,
+				)
+			} else {
+				// if no root account is specified, then the strategic reserve remains in the x/inflation module account
+				balanceStrategicReserve = nibiruApp.BankKeeper.GetBalance(ctx, nibiruApp.AccountKeeper.GetModuleAddress(mint.ModuleName), appconst.DENOM_UNIBI)
+			}
+
+			balanceStakingRewards := nibiruApp.BankKeeper.GetBalance(
+				ctx,
+				nibiruApp.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName),
+				appconst.DENOM_UNIBI,
+			)
+
+			balanceCommunityPool := nibiruApp.DistrKeeper.GetFeePoolCommunityCoins(ctx)
+
+			require.NoError(t, err, tc.name)
+			assert.Equal(t,
+				tc.expectedStakingRewardsBalance.String(),
+				balanceStakingRewards.String())
+			assert.Equal(t,
+				tc.expectedStrategicReservesBalance.String(),
+				balanceStrategicReserve.String())
+			assert.Equal(t,
+				tc.expectedCommunityPoolBalance.String(),
+				balanceCommunityPool.String())
+		})
+	}
+}
+
+func TestGetCirculatingSupplyAndInflationRate(t *testing.T) {
+	testCases := []struct {
+		name             string
+		supply           sdkmath.Int
+		malleate         func(nibiruApp *app.NibiruApp, ctx sdk.Context)
+		expInflationRate sdkmath.LegacyDec
+	}{
+		{
+			"no epochs per period",
+			sdk.TokensFromConsensusPower(400_000_000-100_000_001, sdk.DefaultPowerReduction),
+			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
+				nibiruApp.InflationKeeper.Params.Set(ctx, mint.Params{
+					EpochsPerPeriod:       0,
+					InflationEnabled:      true,
+					PolynomialFactors:     mint.DefaultPolynomialFactors,
+					InflationDistribution: mint.DefaultInflationDistribution,
+				})
+			},
+			sdkmath.LegacyZeroDec(),
+		},
+		{
+			"high supply",
+			sdk.TokensFromConsensusPower(800_000_000-100_000_001, sdk.DefaultPowerReduction),
+			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
+				params := nibiruApp.InflationKeeper.GetParams(ctx)
+				params.InflationEnabled = true
+				nibiruApp.InflationKeeper.Params.Set(ctx, params)
+			},
+			sdkmath.LegacyMustNewDecFromStr("26.741197359810099000"),
+		},
+		{
+			"low supply",
+			sdk.TokensFromConsensusPower(400_000_000-100_000_001, sdk.DefaultPowerReduction),
+			func(nibiruApp *app.NibiruApp, ctx sdk.Context) {
+				params := nibiruApp.InflationKeeper.GetParams(ctx)
+				params.InflationEnabled = true
+				nibiruApp.InflationKeeper.Params.Set(ctx, params)
+			},
+			sdkmath.LegacyMustNewDecFromStr("53.482394719620198000"),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+			tc.malleate(nibiruApp, ctx)
+
+			// Mint coins to increase supply
+			coin := sdk.NewCoin(
+				appconst.DENOM_UNIBI,
+				tc.supply,
+			)
+			err := nibiruApp.InflationKeeper.MintCoins(ctx, coin)
+			require.NoError(t, err)
+
+			circulatingSupply := nibiruApp.InflationKeeper.GetCirculatingSupply(ctx, appconst.DENOM_UNIBI)
+			require.EqualValues(t, tc.supply.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), circulatingSupply)
+
+			inflationRate := nibiruApp.InflationKeeper.GetInflationRate(ctx, appconst.DENOM_UNIBI)
+			require.Equal(t, tc.expInflationRate, inflationRate)
+		})
+	}
+}
+
+func TestGetters(t *testing.T) {
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	k := nibiruApp.InflationKeeper
+	require.NotPanics(t, func() {
+		_ = k.GetPolynomialFactors(ctx)
+		_ = k.GetPeriodsPerYear(ctx)
+		_ = k.GetInflationDistribution(ctx)
+		_ = k.GetInflationEnabled(ctx)
+		_ = k.GetEpochsPerPeriod(ctx)
+	})
+}

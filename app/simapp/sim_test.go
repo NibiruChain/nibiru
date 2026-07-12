@@ -39,7 +39,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -293,7 +293,7 @@ func TestAppImportExport(t *testing.T) {
 		{oldApp.GetKey(authzkeeper.StoreKey), newApp.GetKey(authzkeeper.StoreKey), [][]byte{authzkeeper.GrantKey, authzkeeper.GrantQueuePrefix}},
 		{oldApp.GetKey(devgastypes.StoreKey), newApp.GetKey(devgastypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(epochs.StoreKey), newApp.GetKey(epochs.StoreKey), [][]byte{}},
-		{oldApp.GetKey(inflationtypes.StoreKey), newApp.GetKey(inflationtypes.StoreKey), [][]byte{}},
+		{oldApp.GetKey(mint.StoreKey), newApp.GetKey(mint.StoreKey), [][]byte{}},
 		{oldApp.GetKey(oracletypes.StoreKey), newApp.GetKey(oracletypes.StoreKey), [][]byte{}},
 		{oldApp.GetKey(sudo.StoreKey), newApp.GetKey(sudo.StoreKey), [][]byte{}},
 		{oldApp.GetKey(tokenfactorytypes.StoreKey), newApp.GetKey(tokenfactorytypes.StoreKey), [][]byte{}},

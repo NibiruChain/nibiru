@@ -7,7 +7,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "nibiru/inflation/v1/genesis.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/mint";
 
 // Query provides defines the gRPC querier service.
 service Query {

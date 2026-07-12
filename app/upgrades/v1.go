@@ -17,7 +17,7 @@ import (
 	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 		UpgradeName: "v1.1.0",
 		Handler:     DefaultUpgradeHandler{},
 		StoreUpgrades: store.StoreUpgrades{
-			Added: []string{inflationtypes.ModuleName},
+			Added: []string{mint.ModuleName},
 		},
 	}
 

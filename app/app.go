@@ -95,8 +95,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/epochs/epochsmod"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation"
-	"github.com/NibiruChain/nibiru/v2/x/inflation/mintmod"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
+	"github.com/NibiruChain/nibiru/v2/x/mint/mintmod"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemod"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -166,7 +166,7 @@ var (
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil,
 		distrtypes.ModuleName:          nil,
-		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+		mint.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
@@ -278,7 +278,7 @@ func NewNibiruApp(
 			// nibiru x/ keys
 			epochs.StoreKey,
 			oracletypes.StoreKey,
-			inflationtypes.StoreKey,
+			mint.StoreKey,
 			sudo.StoreKey,
 			evm.StoreKey,
 			wasmtypes.StoreKey,

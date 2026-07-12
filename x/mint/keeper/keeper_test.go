@@ -1,0 +1,68 @@
+package keeper_test
+
+import (
+	"fmt"
+	"testing"
+
+	sdkmath "cosmossdk.io/math"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/x/mint"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+)
+
+func TestBurn(t *testing.T) {
+	testCases := []struct {
+		name        string
+		sender      sdk.AccAddress
+		mintCoin    sdk.Coin
+		burnCoin    sdk.Coin
+		expectedErr error
+	}{
+		{
+			name:        "pass",
+			sender:      testutil.NewAccAddress(),
+			mintCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
+			expectedErr: nil,
+		},
+		{
+			name:        "not enough coins",
+			sender:      testutil.NewAccAddress(),
+			mintCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(100)),
+			burnCoin:    sdk.NewCoin("unibi", sdkmath.NewInt(101)),
+			expectedErr: fmt.Errorf("spendable balance 100unibi is smaller than 101unibi: insufficient funds"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("Case %s", tc.name), func(t *testing.T) {
+			nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+
+			// mint and send money to the sender
+			require.NoError(t,
+				nibiruApp.BankKeeper.MintCoins(
+					ctx, mint.ModuleName, sdk.NewCoins(tc.mintCoin)))
+			require.NoError(t,
+				nibiruApp.BankKeeper.SendCoinsFromModuleToAccount(
+					ctx, mint.ModuleName, tc.sender, sdk.NewCoins(tc.mintCoin)),
+			)
+
+			supply := nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
+			require.Equal(t, tc.mintCoin.Amount.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), supply.Amount)
+
+			// Burn coins
+			err := nibiruApp.InflationKeeper.Burn(ctx, sdk.NewCoins(tc.burnCoin), tc.sender)
+			supply = nibiruApp.BankKeeper.GetSupply(ctx, "unibi")
+			if tc.expectedErr != nil {
+				require.EqualError(t, err, tc.expectedErr.Error())
+				require.Equal(t, tc.mintCoin.Amount.Add(sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction)), supply.Amount)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, sdk.TokensFromConsensusPower(100_000_001, sdk.DefaultPowerReduction), supply.Amount)
+			}
+		})
+	}
+}
