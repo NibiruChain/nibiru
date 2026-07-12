@@ -10,7 +10,6 @@ import (
 	authzcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence/exported"
 	govcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/codec"
-	groupcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group/codec"
 )
 
 // RegisterLegacyAminoCodec registers all the necessary types and interfaces for the
@@ -47,5 +46,4 @@ func init() {
 	// used to properly serialize MsgGrant, MsgExec and MsgSubmitProposal instances
 	RegisterLegacyAminoCodec(authzcodec.Amino)
 	RegisterLegacyAminoCodec(govcodec.Amino)
-	RegisterLegacyAminoCodec(groupcodec.Amino)
 }

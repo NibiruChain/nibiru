@@ -12,7 +12,6 @@ import (
 	feegrantmodulev1 "cosmossdk.io/api/cosmos/feegrant/module/v1"
 	genutilmodulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
 	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
-	groupmodulev1 "cosmossdk.io/api/cosmos/group/module/v1"
 	mintmodulev1 "cosmossdk.io/api/cosmos/mint/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	slashingmodulev1 "cosmossdk.io/api/cosmos/slashing/module/v1"
@@ -49,7 +48,6 @@ func defaultConfig() *Config {
 			"genutil",
 			"authz",
 			"feegrant",
-			"group",
 			"params",
 			"consensus",
 			"vesting",
@@ -67,7 +65,6 @@ func defaultConfig() *Config {
 			"evidence",
 			"authz",
 			"feegrant",
-			"group",
 			"params",
 			"consensus",
 			"upgrade",
@@ -86,7 +83,6 @@ func defaultConfig() *Config {
 			"evidence",
 			"authz",
 			"feegrant",
-			"group",
 			"params",
 			"consensus",
 			"upgrade",
@@ -263,15 +259,6 @@ func AuthzModule() ModuleOption {
 		config.ModuleConfigs["authz"] = &appv1alpha1.ModuleConfig{
 			Name:   "authz",
 			Config: appconfig.WrapAny(&authzmodulev1.Module{}),
-		}
-	}
-}
-
-func GroupModule() ModuleOption {
-	return func(config *Config) {
-		config.ModuleConfigs["group"] = &appv1alpha1.ModuleConfig{
-			Name:   "group",
-			Config: appconfig.WrapAny(&groupmodulev1.Module{}),
 		}
 	}
 }
