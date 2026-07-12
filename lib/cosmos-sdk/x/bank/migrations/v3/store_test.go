@@ -7,14 +7,14 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	v2 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v2"
-	v3 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v2"
+	v3 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v3"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 func TestMigrateStore(t *testing.T) {

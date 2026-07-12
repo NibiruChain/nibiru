@@ -6,7 +6,7 @@ import (
 
 	wasmvm "github.com/CosmWasm/wasmvm"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	wasmtestdata "github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 )

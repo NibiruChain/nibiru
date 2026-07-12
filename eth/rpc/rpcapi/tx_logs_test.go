@@ -6,8 +6,8 @@ import (
 	"math/big"
 	"strings"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

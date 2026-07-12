@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	clienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	authclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client"
 )
 
 func GetAuxToFeeCommand() *cobra.Command {

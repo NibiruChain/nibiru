@@ -1,7 +1,7 @@
 package v4
 
 import (
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 )
 
 // MigrateJSON accepts exported v3 (v0.46) x/gov genesis state and migrates it to

@@ -5,8 +5,8 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/holiman/uint256"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"

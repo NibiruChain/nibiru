@@ -1,16 +1,16 @@
 package types
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/msgservice"
-	authzcodec "github.com/cosmos/cosmos-sdk/x/authz/codec"
-	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	groupcodec "github.com/cosmos/cosmos-sdk/x/group/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
+	authzcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/codec"
+	govcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/codec"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	groupcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group/codec"
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/distribution interfaces

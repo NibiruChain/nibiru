@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"encoding/hex"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 
 	wasmtesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/testing"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"

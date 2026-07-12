@@ -1,14 +1,14 @@
 syntax = "proto3";
 package cosmos.slashing.v1beta1;
 
+import "amino/amino.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
 import "cosmos/slashing/v1beta1/slashing.proto";
 import "cosmos_proto/cosmos.proto";
-import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/slashing/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types";
 
 // Query provides defines the gRPC querier service
 service Query {
@@ -33,7 +33,10 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is the response type for the Query/Params RPC method
 message QueryParamsResponse {
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QuerySigningInfoRequest is the request type for the Query/SigningInfo RPC
@@ -47,7 +50,10 @@ message QuerySigningInfoRequest {
 // method
 message QuerySigningInfoResponse {
   // val_signing_info is the signing info of requested val cons address
-  ValidatorSigningInfo val_signing_info = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  ValidatorSigningInfo val_signing_info = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QuerySigningInfosRequest is the request type for the Query/SigningInfos RPC
@@ -60,7 +66,9 @@ message QuerySigningInfosRequest {
 // method
 message QuerySigningInfosResponse {
   // info is the signing info of all validators
-  repeated cosmos.slashing.v1beta1.ValidatorSigningInfo info = 1
-      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  repeated cosmos.slashing.v1beta1.ValidatorSigningInfo info = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

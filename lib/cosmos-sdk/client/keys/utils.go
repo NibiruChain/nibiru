@@ -7,7 +7,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	cryptokeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cryptokeyring "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 )
 
 // available output formats.

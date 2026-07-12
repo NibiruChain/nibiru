@@ -3,7 +3,7 @@ package orm
 import (
 	"pgregory.net/rapid"
 
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 )
 
 // genTableModel generates a new table model. At the moment it doesn't

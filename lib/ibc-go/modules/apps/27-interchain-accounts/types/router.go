@@ -1,8 +1,8 @@
 package types
 
 import (
-	baseapp "github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	baseapp "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // MessageRouter ADR 031 request type routing

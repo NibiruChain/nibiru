@@ -7,12 +7,12 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/group"
-	"github.com/cosmos/cosmos-sdk/x/group/errors"
-	groupmath "github.com/cosmos/cosmos-sdk/x/group/internal/math"
-	"github.com/cosmos/cosmos-sdk/x/group/internal/orm"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group/errors"
+	groupmath "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group/internal/math"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group/internal/orm"
 )
 
 const weightInvariant = "Group-TotalWeight"

@@ -8,7 +8,7 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )

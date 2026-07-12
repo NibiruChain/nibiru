@@ -1,11 +1,11 @@
 package examples
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	crypto "github.com/cosmos/cosmos-sdk/crypto/types"
-	storagetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	crypto "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	storagetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 )

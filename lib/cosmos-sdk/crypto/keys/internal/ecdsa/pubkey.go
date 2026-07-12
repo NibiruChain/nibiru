@@ -9,8 +9,8 @@ import (
 
 	tmcrypto "github.com/cometbft/cometbft/crypto"
 
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // signatureFromBytes function roughly copied from secp256k1_nocgo.go

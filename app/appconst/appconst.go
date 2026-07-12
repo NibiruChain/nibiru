@@ -12,8 +12,8 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 	db "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/version"
 
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )

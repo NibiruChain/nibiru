@@ -6,8 +6,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcoretypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"

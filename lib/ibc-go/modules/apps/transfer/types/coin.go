@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // maxUint256 is the maximum value for a 256 bit unsigned integer.

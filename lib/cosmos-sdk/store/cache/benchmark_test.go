@@ -3,7 +3,7 @@ package cache
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 func freshMgr() *CommitKVStoreCacheManager {

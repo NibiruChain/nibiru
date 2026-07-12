@@ -1,14 +1,13 @@
-
 // Since: cosmos-sdk 0.46
 syntax = "proto3";
 package cosmos.gov.v1;
 
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "google/api/annotations.proto";
 import "cosmos/gov/v1/gov.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/gov/types/v1";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1";
 
 // Query defines the gRPC querier service for gov module
 service Query {

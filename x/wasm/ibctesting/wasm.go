@@ -16,7 +16,7 @@ import (
 
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	wasmtestutil "github.com/NibiruChain/nibiru/v2/x/wasm/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"

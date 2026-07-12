@@ -8,7 +8,7 @@ import (
 	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid"
 
 	// Cosmos-SDK
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
 
 	// Tendermint
 	"github.com/stretchr/testify/require"

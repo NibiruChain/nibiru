@@ -1,8 +1,8 @@
 package testutil
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	minttypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 )

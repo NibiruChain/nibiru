@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

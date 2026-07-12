@@ -1,10 +1,10 @@
 package authz
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	"github.com/cosmos/cosmos-sdk/x/authz/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/client/cli"
 )
 
 func CreateGrant(clientCtx client.Context, args []string) (testutil.BufferWriter, error) {

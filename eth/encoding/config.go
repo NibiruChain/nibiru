@@ -2,12 +2,12 @@
 package encoding
 
 import (
-	"cosmossdk.io/simapp/params"
-	amino "github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/std"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+	"github.com/NibiruChain/nibiru/v2/eth/eip712"
+	amino "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/std"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth"
@@ -15,11 +15,11 @@ import (
 )
 
 // MakeConfig creates an EncodingConfig for testing
-func MakeConfig() params.EncodingConfig {
+func MakeConfig() eip712.EncodingConfig {
 	interfaceRegistry := types.NewInterfaceRegistry()
 	protoCodec := amino.NewProtoCodec(interfaceRegistry)
 
-	encodingConfig := params.EncodingConfig{
+	encodingConfig := eip712.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             protoCodec,
 		Amino:             amino.NewLegacyAmino(),

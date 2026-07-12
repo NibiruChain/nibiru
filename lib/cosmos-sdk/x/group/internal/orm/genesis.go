@@ -1,7 +1,7 @@
 package orm
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // TableExportable defines the methods to import and export a table.

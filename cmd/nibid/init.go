@@ -11,13 +11,13 @@ import (
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	cmttypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	sdkflags "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/input"
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdkflags "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/input"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	"github.com/cosmos/go-bip39"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ and the respective application.
 Intended usage:
 
 	```go
-	import  genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	import  genutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/cli"
 	import "github.com/spf13/cobra"
 
 	func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {

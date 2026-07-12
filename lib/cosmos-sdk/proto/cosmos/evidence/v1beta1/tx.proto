@@ -1,14 +1,14 @@
 syntax = "proto3";
 package cosmos.evidence.v1beta1;
 
-option go_package            = "github.com/cosmos/cosmos-sdk/x/evidence/types";
-option (gogoproto.equal_all) = true;
-
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
-import "cosmos_proto/cosmos.proto";
-import "cosmos/msg/v1/msg.proto";
-import "amino/amino.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence/types";
+option (gogoproto.equal_all) = true;
 
 // Msg defines the evidence Msg service.
 service Msg {
@@ -23,9 +23,9 @@ service Msg {
 // Evidence of misbehavior such as equivocation or counterfactual signing.
 message MsgSubmitEvidence {
   option (cosmos.msg.v1.signer) = "submitter";
-  option (amino.name)           = "cosmos-sdk/MsgSubmitEvidence";
+  option (amino.name) = "cosmos-sdk/MsgSubmitEvidence";
 
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // submitter is the signer account address of evidence.

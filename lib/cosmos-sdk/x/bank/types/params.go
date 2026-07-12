@@ -6,7 +6,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // DefaultDefaultSendEnabled is the value that DefaultSendEnabled will have from DefaultParams().

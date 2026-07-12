@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )

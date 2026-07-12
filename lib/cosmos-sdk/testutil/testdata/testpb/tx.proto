@@ -4,7 +4,7 @@ package testpb;
 import "gogoproto/gogo.proto";
 import "testpb/testdata.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/testutil/testdata";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata";
 
 // Msg tests the Protobuf message service as defined in
 // https://github.com/cosmos/cosmos-sdk/issues/7500.
@@ -24,5 +24,5 @@ message MsgCreateDogResponse {
 // https://github.com/cosmos/cosmos-sdk/issues/6213.
 message TestMsg {
   option (gogoproto.goproto_getters) = false;
-  repeated string signers            = 1;
+  repeated string signers = 1;
 }

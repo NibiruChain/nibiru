@@ -6,9 +6,7 @@ import "cosmos/app/v1alpha1/module.proto";
 
 // Module is the config object of the crisis module.
 message Module {
-  option (cosmos.app.v1alpha1.module) = {
-    go_import: "github.com/cosmos/cosmos-sdk/x/crisis"
-  };
+  option (cosmos.app.v1alpha1.module) = {go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"};
 
   // fee_collector_name is the name of the FeeCollector ModuleAccount.
   string fee_collector_name = 1;
@@ -16,3 +14,4 @@ message Module {
   // authority defines the custom module authority. If not set, defaults to the governance module.
   string authority = 2;
 }
+

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 )
 
 // RegisterSwaggerAPI provides a common function which registers swagger route with API Server

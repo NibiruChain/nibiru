@@ -6,7 +6,7 @@ package evm
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"

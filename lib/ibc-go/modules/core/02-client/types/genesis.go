@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"

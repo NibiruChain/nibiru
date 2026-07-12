@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // groupCodespace is the codespace for all errors defined in group package

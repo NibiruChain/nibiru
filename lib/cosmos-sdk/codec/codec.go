@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/encoding"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 type (

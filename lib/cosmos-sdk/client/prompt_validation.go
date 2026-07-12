@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"unicode"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // ValidatePromptNotEmpty validates that the input is not empty.

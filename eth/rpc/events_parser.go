@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/eth"

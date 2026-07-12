@@ -241,8 +241,8 @@ func MintModule() ModuleOption {
 			Config: appconfig.WrapAny(&mintmodulev1.Module{}),
 			GolangBindings: []*appv1alpha1.GolangBinding{
 				{
-					InterfaceType:  "github.com/cosmos/cosmos-sdk/x/mint/types/types.StakingKeeper",
-					Implementation: "github.com/cosmos/cosmos-sdk/x/staking/keeper/*keeper.Keeper",
+					InterfaceType:  "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types/types.StakingKeeper",
+					Implementation: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper/*keeper.Keeper",
 				},
 			},
 		}

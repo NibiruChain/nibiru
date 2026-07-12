@@ -11,14 +11,14 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	v043 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v043"
-	v046 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v046"
-	v047 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v047"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+	v043 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v043"
+	v046 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v046"
+	v047 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v047"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
 )
 
 const flagGenesisTime = "genesis-time"

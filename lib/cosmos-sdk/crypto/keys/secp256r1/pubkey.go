@@ -6,8 +6,8 @@ import (
 	tmcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 
-	ecdsa "github.com/cosmos/cosmos-sdk/crypto/keys/internal/ecdsa"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	ecdsa "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/internal/ecdsa"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 )
 
 // customProtobufType is here to make sure that ecdsaPK and ecdsaSK implement the

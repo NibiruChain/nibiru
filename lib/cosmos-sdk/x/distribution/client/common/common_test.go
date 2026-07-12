@@ -3,11 +3,11 @@ package common
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 )
 
 func TestQueryDelegationRewardsAddrValidation(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
 )
 
 func TestEncodeAndDecode(t *testing.T) {

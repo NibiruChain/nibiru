@@ -3,77 +3,76 @@ syntax = "proto3";
 
 package cosmos.group.v1;
 
+import "amino/amino.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/group/v1/types.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/group/v1/types.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "cosmos_proto/cosmos.proto";
-import "amino/amino.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/group";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group";
 
 // Query is the cosmos.group.v1 Query service.
 service Query {
-
   // GroupInfo queries group info based on group id.
   rpc GroupInfo(QueryGroupInfoRequest) returns (QueryGroupInfoResponse) {
     option (google.api.http).get = "/cosmos/group/v1/group_info/{group_id}";
-  };
+  }
 
   // GroupPolicyInfo queries group policy info based on account address of group policy.
   rpc GroupPolicyInfo(QueryGroupPolicyInfoRequest) returns (QueryGroupPolicyInfoResponse) {
     option (google.api.http).get = "/cosmos/group/v1/group_policy_info/{address}";
-  };
+  }
 
   // GroupMembers queries members of a group by group id.
   rpc GroupMembers(QueryGroupMembersRequest) returns (QueryGroupMembersResponse) {
     option (google.api.http).get = "/cosmos/group/v1/group_members/{group_id}";
-  };
+  }
 
   // GroupsByAdmin queries groups by admin address.
   rpc GroupsByAdmin(QueryGroupsByAdminRequest) returns (QueryGroupsByAdminResponse) {
     option (google.api.http).get = "/cosmos/group/v1/groups_by_admin/{admin}";
-  };
+  }
 
   // GroupPoliciesByGroup queries group policies by group id.
   rpc GroupPoliciesByGroup(QueryGroupPoliciesByGroupRequest) returns (QueryGroupPoliciesByGroupResponse) {
     option (google.api.http).get = "/cosmos/group/v1/group_policies_by_group/{group_id}";
-  };
+  }
 
   // GroupPoliciesByAdmin queries group policies by admin address.
   rpc GroupPoliciesByAdmin(QueryGroupPoliciesByAdminRequest) returns (QueryGroupPoliciesByAdminResponse) {
     option (google.api.http).get = "/cosmos/group/v1/group_policies_by_admin/{admin}";
-  };
+  }
 
   // Proposal queries a proposal based on proposal id.
   rpc Proposal(QueryProposalRequest) returns (QueryProposalResponse) {
     option (google.api.http).get = "/cosmos/group/v1/proposal/{proposal_id}";
-  };
+  }
 
   // ProposalsByGroupPolicy queries proposals based on account address of group policy.
   rpc ProposalsByGroupPolicy(QueryProposalsByGroupPolicyRequest) returns (QueryProposalsByGroupPolicyResponse) {
     option (google.api.http).get = "/cosmos/group/v1/proposals_by_group_policy/{address}";
-  };
+  }
 
   // VoteByProposalVoter queries a vote by proposal id and voter.
   rpc VoteByProposalVoter(QueryVoteByProposalVoterRequest) returns (QueryVoteByProposalVoterResponse) {
     option (google.api.http).get = "/cosmos/group/v1/vote_by_proposal_voter/{proposal_id}/{voter}";
-  };
+  }
 
   // VotesByProposal queries a vote by proposal id.
   rpc VotesByProposal(QueryVotesByProposalRequest) returns (QueryVotesByProposalResponse) {
     option (google.api.http).get = "/cosmos/group/v1/votes_by_proposal/{proposal_id}";
-  };
+  }
 
   // VotesByVoter queries a vote by voter.
   rpc VotesByVoter(QueryVotesByVoterRequest) returns (QueryVotesByVoterResponse) {
     option (google.api.http).get = "/cosmos/group/v1/votes_by_voter/{voter}";
-  };
+  }
 
   // GroupsByMember queries groups by member address.
   rpc GroupsByMember(QueryGroupsByMemberRequest) returns (QueryGroupsByMemberResponse) {
     option (google.api.http).get = "/cosmos/group/v1/groups_by_member/{address}";
-  };
+  }
 
   // TallyResult returns the tally result of a proposal. If the proposal is
   // still in voting period, then this query computes the current tally state,
@@ -82,14 +81,14 @@ service Query {
   // proposal itself.
   rpc TallyResult(QueryTallyResultRequest) returns (QueryTallyResultResponse) {
     option (google.api.http).get = "/cosmos/group/v1/proposals/{proposal_id}/tally";
-  };
+  }
 
   // Groups queries all groups in state.
   //
   // Since: cosmos-sdk 0.47.1
   rpc Groups(QueryGroupsRequest) returns (QueryGroupsResponse) {
     option (google.api.http).get = "/cosmos/group/v1/groups";
-  };
+  }
 }
 
 // QueryGroupInfoRequest is the Query/GroupInfo request type.
@@ -296,14 +295,16 @@ message QueryTallyResultRequest {
 // QueryTallyResultResponse is the Query/TallyResult response type.
 message QueryTallyResultResponse {
   // tally defines the requested tally.
-  TallyResult tally = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  TallyResult tally = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryGroupsRequest is the Query/Groups request type.
 //
 // Since: cosmos-sdk 0.47.1
 message QueryGroupsRequest {
-
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }

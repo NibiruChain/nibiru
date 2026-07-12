@@ -9,8 +9,8 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 )
 
 // EvmTxArgs encapsulates all possible params to create all EVM txs types.

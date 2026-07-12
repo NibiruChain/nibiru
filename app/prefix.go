@@ -1,6 +1,6 @@
 package app
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 func SetPrefixes(accountAddressPrefix string) {
 	// Set prefixes

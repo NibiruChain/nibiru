@@ -8,7 +8,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 type UnitSuite struct {

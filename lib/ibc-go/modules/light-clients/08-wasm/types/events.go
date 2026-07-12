@@ -3,7 +3,7 @@ package types
 import (
 	"github.com/cometbft/cometbft/libs/log"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 )

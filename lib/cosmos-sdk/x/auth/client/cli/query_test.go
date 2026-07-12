@@ -3,7 +3,7 @@ package cli_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client/cli"
 	"github.com/stretchr/testify/require"
 )
 

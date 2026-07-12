@@ -1,7 +1,7 @@
 package posthandler
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // HandlerOptions are the options required for constructing a default SDK PostHandler.

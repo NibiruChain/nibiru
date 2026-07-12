@@ -7,7 +7,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	store "github.com/cosmos/cosmos-sdk/store/types"
+	store "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 // ABCIListener interface used to hook into the ABCI message processing of the BaseApp.

@@ -1,14 +1,14 @@
 package v043
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
-	v1bank "github.com/cosmos/cosmos-sdk/x/bank/migrations/v1"
-	v2bank "github.com/cosmos/cosmos-sdk/x/bank/migrations/v2"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	v1gov "github.com/cosmos/cosmos-sdk/x/gov/migrations/v1"
-	v2gov "github.com/cosmos/cosmos-sdk/x/gov/migrations/v2"
-	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	v1bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v1"
+	v2bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v2"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	v1gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/migrations/v1"
+	v2gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/migrations/v2"
+	gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // Migrate migrates exported state from v0.40 to a v0.43 genesis state.

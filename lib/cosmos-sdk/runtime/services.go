@@ -5,7 +5,7 @@ import (
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 
-	"github.com/cosmos/cosmos-sdk/runtime/services"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime/services"
 )
 
 func (a *App) registerRuntimeServices() error {

@@ -1,9 +1,9 @@
 package simapp
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 
 	ibcante "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/ante"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"

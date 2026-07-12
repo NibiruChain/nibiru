@@ -1,12 +1,12 @@
 syntax = "proto3";
 package cosmos.mint.v1beta1;
 
+import "amino/amino.proto";
+import "cosmos/mint/v1beta1/mint.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/mint/v1beta1/mint.proto";
-import "amino/amino.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/mint/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/mint/types";
 
 // Query provides defines the gRPC querier service.
 service Query {
@@ -32,7 +32,10 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryInflationRequest is the request type for the Query/Inflation RPC method.
@@ -43,8 +46,8 @@ message QueryInflationRequest {}
 message QueryInflationResponse {
   // inflation is the current minting inflation value.
   bytes inflation = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
 }
@@ -58,8 +61,8 @@ message QueryAnnualProvisionsRequest {}
 message QueryAnnualProvisionsResponse {
   // annual_provisions is the current minting annual provisions value.
   bytes annual_provisions = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
 }

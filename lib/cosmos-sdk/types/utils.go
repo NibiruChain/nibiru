@@ -8,7 +8,7 @@ import (
 
 	log "github.com/cometbft/cometbft/libs/log"
 
-	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 )
 
 // SortedJSON takes any JSON and returns it sorted by keys. Also, all white-spaces

@@ -3,7 +3,7 @@ package simulation
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 
 	clientsim "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/simulation"
 	connectionsim "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/simulation"

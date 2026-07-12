@@ -7,7 +7,7 @@ import (
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"golang.org/x/exp/maps"
 
-	sdkmaps "github.com/cosmos/cosmos-sdk/store/internal/maps"
+	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"
 )
 
 // SimpleResult contains a merkle.SimpleProof along with all data needed to build the confio/proof

@@ -3,7 +3,7 @@ package sim
 import (
 	"flag"
 
-	"github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
 )
 
 // List of available flags for the simulator

@@ -1,7 +1,7 @@
 package v4
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 // MigrateGenState accepts exported v0.43 x/bank genesis state and migrates it to

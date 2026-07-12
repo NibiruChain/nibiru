@@ -3,7 +3,7 @@ package ibcwasm
 import (
 	"errors"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 var (

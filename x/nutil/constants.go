@@ -1,6 +1,6 @@
 package nutil
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 const (
 	TreasuryPoolModuleAccount = "treasury_pool"

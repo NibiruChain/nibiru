@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 // ----------------------------------------------------

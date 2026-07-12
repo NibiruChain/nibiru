@@ -1,6 +1,6 @@
 package mock
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 const (
 	MockEventTypeRecvPacket    = "mock-recv-packet"

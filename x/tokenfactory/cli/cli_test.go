@@ -17,16 +17,16 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
+	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
+	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdktestutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
+	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
-	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
-	testutilmod "github.com/cosmos/cosmos-sdk/types/module/testutil"
 )
 
 var (

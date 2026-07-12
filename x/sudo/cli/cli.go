@@ -12,9 +12,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 

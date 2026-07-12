@@ -3,13 +3,12 @@ syntax = "proto3";
 
 package cosmos.group.v1;
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/group";
-
 import "cosmos/group/v1/types.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/group";
 
 // GenesisState defines the group module's genesis state.
 message GenesisState {
-
   // group_seq is the group table orm.Sequence,
   // it is used to get the next group ID.
   uint64 group_seq = 1;
@@ -37,3 +36,4 @@ message GenesisState {
   // votes is the list of votes.
   repeated Vote votes = 8;
 }
+

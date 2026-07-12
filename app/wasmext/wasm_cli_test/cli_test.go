@@ -7,7 +7,7 @@ import (
 
 	wasmcli "github.com/NibiruChain/nibiru/v2/x/wasm/cli"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"

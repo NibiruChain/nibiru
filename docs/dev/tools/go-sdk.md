@@ -64,9 +64,9 @@ import (
   "time"
 
   wasm "github.com/CosmWasm/wasmd/x/wasm/types"
-  gosdk "github.com/NibiruChain/nibiru/gosdk"
+  gosdk "github.com/NibiruChain/nibiru/v2/gosdk"
   tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
-  sdk "github.com/cosmos/cosmos-sdk/types" // Import cosmos SDK types
+  sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types" // Import cosmos SDK types
 )
 ```
 

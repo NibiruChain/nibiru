@@ -1,11 +1,11 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/exported"
-	v2 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v2"
-	v3 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v3"
-	v4 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v4"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/exported"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/migrations/v2"
+	v3 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/migrations/v3"
+	v4 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/migrations/v4"
 )
 
 // Migrator is a struct for handling in-place store migrations.

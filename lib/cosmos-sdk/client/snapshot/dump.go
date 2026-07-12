@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 )
 

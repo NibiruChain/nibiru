@@ -3,7 +3,7 @@ package hd
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

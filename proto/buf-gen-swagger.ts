@@ -188,9 +188,11 @@ const goGetCosmosProto = async (sdkInfo: CosmosSdkInfo): Promise<void> => {
 		)
 	}
 
+	// TODO: Ingest cosmos-sdk protobufs another way.
+	// https://github.com/NibiruChain/nibiru/issues/2687
 	clog("get protos for: cosmos-sdk, cosmos-proto")
 	const cmds = [
-		`go get "github.com/cosmos/cosmos-sdk@${sdkInfo.nibiruCosmosSdkVersion}"`,
+		`go get "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk@${sdkInfo.nibiruCosmosSdkVersion}"`,
 		`go get github.com/cosmos/cosmos-proto`,
 	]
 	for (const cmd of cmds) {

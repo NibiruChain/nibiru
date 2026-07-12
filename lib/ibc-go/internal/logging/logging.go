@@ -3,7 +3,7 @@ package logging
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // SdkEventsToLogArguments converts a given sdk.Events and returns a slice of strings that provide human
