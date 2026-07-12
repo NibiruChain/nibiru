@@ -2,7 +2,12 @@ package nibiru_test
 
 import (
 	"bufio"
+	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -73,5 +78,38 @@ func TestGoSum_NoBannedDependencies(t *testing.T) {
 	}
 	if err := scanner.Err(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestGeneratedProtoImports_NoUpstreamModules(t *testing.T) {
+	for _, root := range []string{"eth", "evm", "x"} {
+		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".pb.go") {
+				return nil
+			}
+
+			file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
+			if err != nil {
+				return err
+			}
+			for _, importSpec := range file.Imports {
+				importPath, err := strconv.Unquote(importSpec.Path.Value)
+				if err != nil {
+					return err
+				}
+				for _, banned := range bannedUpstream {
+					if importPath == banned || strings.HasPrefix(importPath, banned+"/") {
+						return fmt.Errorf("%s imports upstream module %s", path, importPath)
+					}
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }

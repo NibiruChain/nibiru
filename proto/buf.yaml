@@ -12,15 +12,6 @@ breaking:
   # https://buf.build/docs/configuration/v2/buf-yaml/
   use:
     - FILE
-  # Depinject module config protos only. Keep all ignore lines; add one per module
-  # when deleting nibiru/<module>/module/module.proto in depinject removal PRs.
-  ignore:
-    - nibiru/epochs/module/module.proto
-    - nibiru/inflation/module/module.proto
-    - nibiru/oracle/module/module.proto
-    - nibiru/sudo/module/module.proto
-    - nibiru/tokenfactory/module/module.proto
-    - eth/evm/module/module.proto
   # Allow Go generated-code package moves without treating them as proto API breaks.
   # Rule docs: https://buf.build/docs/breaking/rules/#file_same_go_package
   except:

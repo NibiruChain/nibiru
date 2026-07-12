@@ -2,7 +2,7 @@
 // source: nibiru/inflation/v1/tx.proto
 
 /*
-Package inflation is a reverse proxy.
+Package mint is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */

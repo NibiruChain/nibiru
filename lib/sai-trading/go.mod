@@ -12,9 +12,7 @@ require (
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
-	github.com/cosmos/cosmos-sdk v0.47.14-nibiru
 	github.com/cosmos/gogoproto v1.7.2 // indirect
-	github.com/cosmos/ibc-go/v7 v7.10.0 // indirect
 	github.com/ethereum/go-ethereum v1.14.13
 )
 
@@ -38,8 +36,6 @@ require (
 	cosmossdk.io/log v1.3.1 // indirect
 	cosmossdk.io/math v1.5.3 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
-	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d // indirect
-	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -64,7 +60,6 @@ require (
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
-	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
 	github.com/cockroachdb/errors v1.12.0 // indirect
 	github.com/cockroachdb/fifo v0.0.0-20240816210425-c5d0cb0b6fc0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506 // indirect
@@ -79,7 +74,6 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v0.21.0-beta.1 // indirect
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.3.2-0.20240730185603-13c071f0b34d // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
@@ -243,7 +237,6 @@ replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 	github.com/CosmWasm/wasmvm => github.com/NibiruChain/go-wasmvm v1.10.0
 	github.com/NibiruChain/nibiru/v2 => ../../
-	github.com/cosmos/cosmos-sdk => ../../lib/cosmos-sdk
 	github.com/cosmos/iavl => github.com/cosmos/iavl v0.20.0
 	github.com/ethereum/go-ethereum => github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
