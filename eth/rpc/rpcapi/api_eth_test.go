@@ -474,21 +474,16 @@ func (s *NodeSuite) Test_SmartContract() {
 		s.Require().NoError(err)
 		s.Require().Equal(tx.Hash(), txHash)
 
-		s.T().Log("Wait one block so the tx won't be pending")
-		s.Require().NoError(s.cli.WaitForNextBlock())
+		txReceipt, err := s.waitForEthReceipt(txHash)
+		s.Require().NoErrorf(err, "receipt for txHash: %s", txHash.Hex())
+		s.Equal(txHash, txReceipt.TxHash)
 
-		s.T().Log("Assert: tx NOT pending")
-
-		var pendingTxs []*rpc.EthTxJsonRPC
-		pendingTxs, err = s.ethAPI.GetPendingTransactions()
+		s.T().Log("Assert: confirmed tx is not pending")
+		pendingTxs, err := s.ethAPI.GetPendingTransactions()
 		s.NoError(err)
 		for _, pendingTx := range pendingTxs {
 			s.Require().NotEqual(txHash, pendingTx.Hash)
 		}
-
-		txReceipt, err := s.waitForEthReceipt(txHash)
-		s.Require().NoErrorf(err, "receipt for txHash: %s", txHash.Hex())
-		s.Equal(txHash, txReceipt.TxHash)
 
 		rpcTx, err := s.ethAPI.GetTransactionByHash(txHash)
 		s.NoError(err)
@@ -526,7 +521,6 @@ func (s *NodeSuite) Test_SmartContract() {
 
 		resTxHash, err := s.ethAPI.SendRawTransaction(txBz)
 		s.Require().NoError(err)
-		s.Require().NoError(s.cli.WaitForNextBlock())
 		s.Equal(tx.Hash().Hex(), resTxHash.Hex())
 
 		txReceipt, err := s.waitForEthReceipt(resTxHash)
