@@ -1,7 +1,7 @@
 package client
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"

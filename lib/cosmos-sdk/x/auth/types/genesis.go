@@ -7,9 +7,9 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 )
 
 var _ types.UnpackInterfacesMessage = GenesisState{}

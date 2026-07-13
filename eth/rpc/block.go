@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
+	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

@@ -3,16 +3,16 @@ package tx
 import (
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	authsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 )
 
 // wrapper is a wrapper around the tx.Tx proto.Message which retain the raw
@@ -195,7 +195,6 @@ func (w *wrapper) GetSignaturesV2() ([]signing.SignatureV2, error) {
 				Data:     sigData,
 				Sequence: nonce,
 			}
-
 		}
 	}
 
@@ -447,8 +446,9 @@ func (w *wrapper) AddAuxSignerData(data tx.AuxSignerData) error {
 	for i, msgAny := range body.Messages {
 		msgs[i] = msgAny.GetCachedValue().(sdk.Msg)
 	}
+	//nolint:errcheck
 	w.SetMsgs(msgs...)
-	w.SetTip(data.GetSignDoc().GetTip())
+	w.SetTip(data.GetSignDoc().GetTip()) //nolint:errcheck
 
 	// Get the aux signer's index in GetSigners.
 	signerIndex := -1

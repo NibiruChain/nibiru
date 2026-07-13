@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 var (
@@ -41,11 +41,11 @@ func TestValidateGenesisMultipleMessages(t *testing.T) {
 	comm := stakingtypes.CommissionRates{}
 
 	msg1, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(pk1.Address()), pk1,
-		sdk.NewInt64Coin(sdk.DefaultBondDenom, 50), desc, comm, math.OneInt())
+		sdk.NewInt64Coin(sdk.DefaultBondDenom, 50), desc, comm, sdkmath.OneInt())
 	require.NoError(t, err)
 
 	msg2, err := stakingtypes.NewMsgCreateValidator(sdk.ValAddress(pk2.Address()), pk2,
-		sdk.NewInt64Coin(sdk.DefaultBondDenom, 50), desc, comm, math.OneInt())
+		sdk.NewInt64Coin(sdk.DefaultBondDenom, 50), desc, comm, sdkmath.OneInt())
 	require.NoError(t, err)
 
 	txConfig := moduletestutil.MakeTestEncodingConfig(staking.AppModuleBasic{}, genutil.AppModuleBasic{}).TxConfig

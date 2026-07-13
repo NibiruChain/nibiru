@@ -6,21 +6,21 @@ import (
 	"os"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/pflag"
 
 	"github.com/cosmos/go-bip39"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
 )
 
 // Factory defines a client transaction factory that facilitates generating and
@@ -332,7 +332,7 @@ func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
 			return nil, errors.New("cannot provide both fees and gas prices")
 		}
 
-		glDec := math.LegacyNewDec(int64(f.gas))
+		glDec := sdkmath.LegacyNewDec(int64(f.gas))
 
 		// Derive the fees based on the provided gas prices, where
 		// fee = ceil(gasPrice * gasLimit).

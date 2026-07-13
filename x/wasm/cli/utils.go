@@ -7,7 +7,7 @@ import (
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 )
 
 // ExtendUnsafeResetAllCmd - also clear wasm dir

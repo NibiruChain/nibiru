@@ -8,12 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	authtestutil "github.com/cosmos/cosmos-sdk/x/auth/testutil"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client/cli"
+	authtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/testutil"
 )
 
 func TestGetCommandEncode(t *testing.T) {

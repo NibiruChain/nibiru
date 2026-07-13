@@ -1,8 +1,8 @@
 package types_test
 
 import (
-	prefixstore "github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	prefixstore "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/internal/ibcwasm"

@@ -1,7 +1,7 @@
 package tx
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // TipTx defines the interface to be implemented by Txs that handle Tips.

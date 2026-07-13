@@ -5,14 +5,14 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 var header = tmproto.Header{

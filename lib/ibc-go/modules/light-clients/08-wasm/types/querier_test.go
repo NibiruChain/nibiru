@@ -9,7 +9,7 @@ import (
 	wasmvm "github.com/CosmWasm/wasmvm"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/internal/ibcwasm"

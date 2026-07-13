@@ -1,11 +1,12 @@
 package types
 
 import (
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	paramtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // AccountKeeper expected account keeper
@@ -41,8 +42,8 @@ type StakingKeeper interface {
 	ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) stakingtypes.ValidatorI // get a particular validator by consensus address
 
 	// slash the validator and delegators of the validator, specifying offence height, offence power, and slash fraction
-	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) math.Int
-	SlashWithInfractionReason(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec, stakingtypes.Infraction) math.Int
+	Slash(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec) sdkmath.Int
+	SlashWithInfractionReason(sdk.Context, sdk.ConsAddress, int64, int64, sdk.Dec, stakingtypes.Infraction) sdkmath.Int
 	Jail(sdk.Context, sdk.ConsAddress)   // jail a validator
 	Unjail(sdk.Context, sdk.ConsAddress) // unjail a validator
 

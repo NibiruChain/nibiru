@@ -3,9 +3,9 @@ package genmsg
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	v1 "github.com/NibiruChain/nibiru/v2/x/genmsg/v1"
 )

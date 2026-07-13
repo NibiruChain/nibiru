@@ -6,19 +6,19 @@ import (
 	"strconv"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // default values
@@ -126,7 +126,7 @@ func NewEditValidatorCmd() *cobra.Command {
 				newRate = &rate
 			}
 
-			var newMinSelfDelegation *math.Int
+			var newMinSelfDelegation *sdkmath.Int
 
 			minSelfDelegationString, _ := cmd.Flags().GetString(FlagMinSelfDelegation)
 			if minSelfDelegationString != "" {

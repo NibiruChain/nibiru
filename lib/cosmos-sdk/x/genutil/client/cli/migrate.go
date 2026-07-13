@@ -7,18 +7,18 @@ import (
 	"time"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	v043 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v043"
-	v046 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v046"
-	v047 "github.com/cosmos/cosmos-sdk/x/genutil/migrations/v047"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+	v043 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v043"
+	v046 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v046"
+	v047 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/migrations/v047"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
 )
 
 const flagGenesisTime = "genesis-time"
@@ -92,7 +92,7 @@ func MigrateHandler(cmd *cobra.Command, args []string, migrations types.Migratio
 
 	var initialState types.AppMap
 	if err := json.Unmarshal(genDoc.AppState, &initialState); err != nil {
-		return errors.Wrap(err, "failed to JSON unmarshal initial genesis state")
+		return pkgerrors.Wrap(err, "failed to JSON unmarshal initial genesis state")
 	}
 
 	migrationFunc := migrations[target]
@@ -105,7 +105,7 @@ func MigrateHandler(cmd *cobra.Command, args []string, migrations types.Migratio
 
 	genDoc.AppState, err = json.Marshal(newGenState)
 	if err != nil {
-		return errors.Wrap(err, "failed to JSON marshal migrated genesis state")
+		return pkgerrors.Wrap(err, "failed to JSON marshal migrated genesis state")
 	}
 
 	genesisTime, _ := cmd.Flags().GetString(flagGenesisTime)
@@ -114,7 +114,7 @@ func MigrateHandler(cmd *cobra.Command, args []string, migrations types.Migratio
 
 		err := t.UnmarshalText([]byte(genesisTime))
 		if err != nil {
-			return errors.Wrap(err, "failed to unmarshal genesis time")
+			return pkgerrors.Wrap(err, "failed to unmarshal genesis time")
 		}
 
 		genDoc.GenesisTime = t
@@ -127,12 +127,12 @@ func MigrateHandler(cmd *cobra.Command, args []string, migrations types.Migratio
 
 	bz, err := tmjson.Marshal(genDoc)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal genesis doc")
+		return pkgerrors.Wrap(err, "failed to marshal genesis doc")
 	}
 
 	sortedBz, err := sdk.SortJSON(bz)
 	if err != nil {
-		return errors.Wrap(err, "failed to sort JSON genesis doc")
+		return pkgerrors.Wrap(err, "failed to sort JSON genesis doc")
 	}
 
 	cmd.Println(string(sortedBz))

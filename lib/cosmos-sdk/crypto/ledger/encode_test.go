@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 )
 
-type byter interface {
+type byter interface { //nolint:unused
 	Bytes() []byte
 }
 
@@ -28,8 +28,9 @@ func checkAminoJSON(t *testing.T, src interface{}, dst interface{}, isNil bool) 
 	require.Nil(t, err, "%+v", err)
 }
 
-// nolint: govet
-func ExamplePrintRegisteredTypes() {
+// Example_registeredTypes documents the Amino registrations provided by the
+// ledger package and keeps the generated registration table stable.
+func Example_registeredTypes() {
 	_ = cdc.PrintTypes(os.Stdout)
 	// | Type | Name | Prefix | Length | Notes |
 	// | ---- | ---- | ------ | ----- | ------ |

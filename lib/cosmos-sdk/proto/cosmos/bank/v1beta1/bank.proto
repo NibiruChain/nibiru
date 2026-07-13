@@ -1,61 +1,61 @@
 syntax = "proto3";
 package cosmos.bank.v1beta1;
 
-import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
-import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/bank/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types";
 
 // Params defines the parameters for the bank module.
 message Params {
-  option (amino.name)                 = "cosmos-sdk/x/bank/Params";
+  option (amino.name) = "cosmos-sdk/x/bank/Params";
   option (gogoproto.goproto_stringer) = false;
   // Deprecated: Use of SendEnabled in params is deprecated.
   // For genesis, use the newly added send_enabled field in the genesis object.
   // Storage, lookup, and manipulation of this information is now in the keeper.
   //
   // As of cosmos-sdk 0.47, this only exists for backwards compatibility of genesis files.
-  repeated SendEnabled send_enabled         = 1 [deprecated = true];
-  bool                 default_send_enabled = 2;
+  repeated SendEnabled send_enabled = 1 [deprecated = true];
+  bool default_send_enabled = 2;
 }
 
 // SendEnabled maps coin denom to a send_enabled status (whether a denom is
 // sendable).
 message SendEnabled {
-  option (gogoproto.equal)            = true;
+  option (gogoproto.equal) = true;
   option (gogoproto.goproto_stringer) = false;
-  string denom                        = 1;
-  bool   enabled                      = 2;
+  string denom = 1;
+  bool enabled = 2;
 }
 
 // Input models transaction input.
 message Input {
   option (cosmos.msg.v1.signer) = "address";
 
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  string   address                        = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   repeated cosmos.base.v1beta1.Coin coins = 2 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
 
 // Output models transaction outputs.
 message Output {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  string   address                        = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   repeated cosmos.base.v1beta1.Coin coins = 2 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
 
@@ -65,15 +65,15 @@ message Output {
 message Supply {
   option deprecated = true;
 
-  option (gogoproto.equal)           = true;
+  option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;
 
   option (cosmos_proto.implements_interface) = "cosmos.bank.v1beta1.SupplyI";
 
   repeated cosmos.base.v1beta1.Coin total = 1 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
 

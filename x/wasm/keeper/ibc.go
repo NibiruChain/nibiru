@@ -7,8 +7,8 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )

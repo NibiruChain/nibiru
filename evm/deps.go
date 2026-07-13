@@ -3,10 +3,11 @@ package evm
 // Copyright (c) 2023-2024 Nibi, Inc.
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // AccountKeeper defines the expected account keeper interface

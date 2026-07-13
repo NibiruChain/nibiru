@@ -7,16 +7,16 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codecTypes "github.com/cosmos/cosmos-sdk/codec/types"
-	serverTypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/streaming"
-	"github.com/cosmos/cosmos-sdk/store/streaming/file"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codecTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	serverTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/streaming"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/streaming/file"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 )
 
 type fakeOptions struct{}
@@ -24,7 +24,6 @@ type fakeOptions struct{}
 func (f *fakeOptions) Get(key string) interface{} {
 	if key == "streamers.file.write_dir" {
 		return "data/file_streamer"
-
 	}
 	return nil
 }

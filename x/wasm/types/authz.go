@@ -9,10 +9,10 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
+	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	authztypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/ioutils"
 )

@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256r1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	kmultisig "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256r1"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 )
 
 func TestSetPubKey(t *testing.T) {
@@ -187,7 +188,8 @@ func TestSigVerification(t *testing.T) {
 					Signature: badSig,
 				},
 				Sequence: tc.accSeqs[0],
-			}
+			} //nolint:errcheck
+			//nolint:errcheck
 			suite.txBuilder.SetSignatures(txSigs...)
 			tx = suite.txBuilder.GetTx()
 		}

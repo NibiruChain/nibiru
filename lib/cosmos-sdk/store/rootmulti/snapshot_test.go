@@ -15,11 +15,12 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	"github.com/cosmos/cosmos-sdk/store/iavl"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	"github.com/cosmos/cosmos-sdk/store/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/iavl"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 func newMultiStoreWithGeneratedData(db dbm.DB, stores uint8, storeKeys uint64) *rootmulti.Store {
@@ -31,7 +32,8 @@ func newMultiStoreWithGeneratedData(db dbm.DB, stores uint8, storeKeys uint64) *
 		key := types.NewKVStoreKey(fmt.Sprintf("store%v", i))
 		multiStore.MountStoreWithDB(key, types.StoreTypeIAVL, nil)
 		keys = append(keys, key)
-	}
+	} //nolint:errcheck
+	//nolint:errcheck
 	multiStore.LoadLatestVersion()
 
 	for _, key := range keys {
@@ -48,7 +50,8 @@ func newMultiStoreWithGeneratedData(db dbm.DB, stores uint8, storeKeys uint64) *
 		}
 	}
 
-	multiStore.Commit()
+	multiStore.Commit() //nolint:errcheck
+	//nolint:errcheck
 	multiStore.LoadLatestVersion()
 
 	return multiStore
@@ -59,7 +62,8 @@ func newMultiStoreWithMixedMounts(db dbm.DB) *rootmulti.Store {
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl1"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl2"), types.StoreTypeIAVL, nil)
 	store.MountStoreWithDB(types.NewKVStoreKey("iavl3"), types.StoreTypeIAVL, nil)
-	store.MountStoreWithDB(types.NewTransientStoreKey("trans1"), types.StoreTypeTransient, nil)
+	store.MountStoreWithDB(types.NewTransientStoreKey("trans1"), types.StoreTypeTransient, nil) //nolint:errcheck
+	//nolint:errcheck
 	store.LoadLatestVersion()
 
 	return store

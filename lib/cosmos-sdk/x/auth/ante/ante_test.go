@@ -7,20 +7,20 @@ import (
 	"strings"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	kmultisig "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 )
 
 // Test that simulate transaction accurately estimates gas cost
@@ -1135,7 +1135,7 @@ func TestAnteHandlerSetPubKey(t *testing.T) {
 
 				privs, accNums, accSeqs := []cryptotypes.PrivKey{accs[1].priv}, []uint64{1}, []uint64{0}
 				msgs := []sdk.Msg{testdata.NewTestMsg(accs[1].acc.GetAddress())}
-				suite.txBuilder.SetMsgs(msgs...)
+				require.NoError(t, suite.txBuilder.SetMsgs(msgs...))
 				suite.txBuilder.SetFeeAmount(feeAmount)
 				suite.txBuilder.SetGasLimit(gasLimit)
 
@@ -1181,7 +1181,7 @@ func TestAnteHandlerSetPubKey(t *testing.T) {
 
 				privs, accNums, accSeqs := []cryptotypes.PrivKey{accs[1].priv}, []uint64{1}, []uint64{0}
 				msgs := []sdk.Msg{testdata.NewTestMsg(accs[1].acc.GetAddress())}
-				suite.txBuilder.SetMsgs(msgs...)
+				require.NoError(t, suite.txBuilder.SetMsgs(msgs...))
 				suite.txBuilder.SetFeeAmount(feeAmount)
 				suite.txBuilder.SetGasLimit(gasLimit)
 
@@ -1463,7 +1463,6 @@ func TestAnteHandlerReCheck(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		// set testcase parameters
 		err := suite.accountKeeper.SetParams(suite.ctx, tc.params)
 		require.NoError(t, err)
@@ -1482,7 +1481,7 @@ func TestAnteHandlerReCheck(t *testing.T) {
 	// create new minimum gas price so antehandler fails on recheck
 	suite.ctx = suite.ctx.WithMinGasPrices([]sdk.DecCoin{{
 		Denom:  "dnecoin", // fee does not have this denom
-		Amount: math.LegacyNewDec(5),
+		Amount: sdkmath.LegacyNewDec(5),
 	}})
 	_, err = suite.anteHandler(suite.ctx, tx, false)
 	require.NotNil(t, err, "antehandler on recheck did not fail when mingasPrice was changed")

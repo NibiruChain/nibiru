@@ -3,12 +3,12 @@ package v3
 import (
 	"fmt"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // ConvertToLegacyProposal takes a new proposal and attempts to convert it to the
@@ -20,7 +20,7 @@ func ConvertToLegacyProposal(proposal v1.Proposal) (v1beta1.Proposal, error) {
 	legacyProposal := v1beta1.Proposal{
 		ProposalId:   proposal.Id,
 		Status:       v1beta1.ProposalStatus(proposal.Status),
-		TotalDeposit: types.NewCoins(proposal.TotalDeposit...),
+		TotalDeposit: sdk.NewCoins(proposal.TotalDeposit...),
 	}
 
 	legacyProposal.FinalTallyResult, err = ConvertToLegacyTallyResult(proposal.FinalTallyResult)
@@ -70,19 +70,19 @@ func ConvertToLegacyProposal(proposal v1.Proposal) (v1beta1.Proposal, error) {
 }
 
 func ConvertToLegacyTallyResult(tally *v1.TallyResult) (v1beta1.TallyResult, error) {
-	yes, ok := types.NewIntFromString(tally.YesCount)
+	yes, ok := sdk.NewIntFromString(tally.YesCount)
 	if !ok {
 		return v1beta1.TallyResult{}, fmt.Errorf("unable to convert yes tally string (%s) to int", tally.YesCount)
 	}
-	no, ok := types.NewIntFromString(tally.NoCount)
+	no, ok := sdk.NewIntFromString(tally.NoCount)
 	if !ok {
 		return v1beta1.TallyResult{}, fmt.Errorf("unable to convert no tally string (%s) to int", tally.NoCount)
 	}
-	veto, ok := types.NewIntFromString(tally.NoWithVetoCount)
+	veto, ok := sdk.NewIntFromString(tally.NoWithVetoCount)
 	if !ok {
 		return v1beta1.TallyResult{}, fmt.Errorf("unable to convert no with veto tally string (%s) to int", tally.NoWithVetoCount)
 	}
-	abstain, ok := types.NewIntFromString(tally.AbstainCount)
+	abstain, ok := sdk.NewIntFromString(tally.AbstainCount)
 	if !ok {
 		return v1beta1.TallyResult{}, fmt.Errorf("unable to convert abstain tally string (%s) to int", tally.AbstainCount)
 	}
@@ -110,7 +110,7 @@ func ConvertToLegacyVote(vote v1.Vote) (v1beta1.Vote, error) {
 func ConvertToLegacyVoteOptions(voteOptions []*v1.WeightedVoteOption) ([]v1beta1.WeightedVoteOption, error) {
 	options := make([]v1beta1.WeightedVoteOption, len(voteOptions))
 	for i, option := range voteOptions {
-		weight, err := types.NewDecFromStr(option.Weight)
+		weight, err := sdk.NewDecFromStr(option.Weight)
 		if err != nil {
 			return options, err
 		}
@@ -126,7 +126,7 @@ func ConvertToLegacyDeposit(deposit *v1.Deposit) v1beta1.Deposit {
 	return v1beta1.Deposit{
 		ProposalId: deposit.ProposalId,
 		Depositor:  deposit.Depositor,
-		Amount:     types.NewCoins(deposit.Amount...),
+		Amount:     sdk.NewCoins(deposit.Amount...),
 	}
 }
 

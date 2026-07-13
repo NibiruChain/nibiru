@@ -9,9 +9,10 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 const (

@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/cometbft/cometbft/mempool"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 )
 
 // BroadcastTx broadcasts a transactions either synchronously or asynchronously
@@ -43,7 +43,7 @@ func (ctx Context) BroadcastTx(txBytes []byte) (res *sdk.TxResponse, err error) 
 // TODO: Avoid brittle string matching in favor of error matching. This requires
 // a change to Tendermint's RPCError type to allow retrieval or matching against
 // a concrete error type.
-func CheckTendermintError(err error, tx tmtypes.Tx) *sdk.TxResponse {
+func CheckTendermintError(err error, tx cmttypes.Tx) *sdk.TxResponse {
 	if err == nil {
 		return nil
 	}

@@ -6,10 +6,11 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	auth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethparams "github.com/ethereum/go-ethereum/params"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	sdkmath "cosmossdk.io/math"
 

@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
+
+	sdkclienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"

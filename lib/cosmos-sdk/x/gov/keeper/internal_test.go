@@ -1,6 +1,6 @@
 package keeper
 
-import "github.com/cosmos/cosmos-sdk/x/gov/types"
+import "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 
 // UnsafeSetHooks updates the gov keeper's hooks, overriding any potential
 // pre-existing hooks.

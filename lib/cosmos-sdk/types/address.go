@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/golang-lru/simplelru"
 	"sigs.k8s.io/yaml"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/internal/conv"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/internal/conv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (
@@ -318,11 +318,11 @@ func (aa AccAddress) String() string {
 func (aa AccAddress) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(aa.String()))
+		s.Write([]byte(aa.String())) //nolint:errcheck
 	case 'p':
-		s.Write([]byte(fmt.Sprintf("%p", aa)))
+		fmt.Fprintf(s, "%p", aa) //nolint:errcheck
 	default:
-		s.Write([]byte(fmt.Sprintf("%X", []byte(aa))))
+		fmt.Fprintf(s, "%X", []byte(aa)) //nolint:errcheck
 	}
 }
 
@@ -472,11 +472,11 @@ func (va ValAddress) String() string {
 func (va ValAddress) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(va.String()))
+		s.Write([]byte(va.String())) //nolint:errcheck
 	case 'p':
-		s.Write([]byte(fmt.Sprintf("%p", va)))
+		fmt.Fprintf(s, "%p", va) //nolint:errcheck
 	default:
-		s.Write([]byte(fmt.Sprintf("%X", []byte(va))))
+		fmt.Fprintf(s, "%X", []byte(va)) //nolint:errcheck
 	}
 }
 
@@ -655,11 +655,11 @@ func MustBech32ifyAddressBytes(prefix string, bs []byte) string {
 func (ca ConsAddress) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(ca.String()))
+		s.Write([]byte(ca.String())) //nolint:errcheck
 	case 'p':
-		s.Write([]byte(fmt.Sprintf("%p", ca)))
+		fmt.Fprintf(s, "%p", ca) //nolint:errcheck
 	default:
-		s.Write([]byte(fmt.Sprintf("%X", []byte(ca))))
+		fmt.Fprintf(s, "%X", []byte(ca)) //nolint:errcheck
 	}
 }
 

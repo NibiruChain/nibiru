@@ -1,13 +1,13 @@
 package app
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	ibcante "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/ante"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
+	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"

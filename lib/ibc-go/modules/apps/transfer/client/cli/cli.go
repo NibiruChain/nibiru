@@ -1,8 +1,9 @@
 package cli
 
 import (
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 )
 
 // GetQueryCmd returns the query commands for IBC connections

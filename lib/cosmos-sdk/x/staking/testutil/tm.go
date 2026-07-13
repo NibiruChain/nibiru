@@ -1,12 +1,12 @@
 package testutil
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmcrypto "github.com/cometbft/cometbft/crypto"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // GetTmConsPubKey gets the validator's public key as a tmcrypto.PubKey.
@@ -20,18 +20,18 @@ func GetTmConsPubKey(v types.Validator) (tmcrypto.PubKey, error) {
 }
 
 // ToTmValidator casts an SDK validator to a tendermint type Validator.
-func ToTmValidator(v types.Validator, r math.Int) (*tmtypes.Validator, error) {
+func ToTmValidator(v types.Validator, r sdkmath.Int) (*cmttypes.Validator, error) {
 	tmPk, err := GetTmConsPubKey(v)
 	if err != nil {
 		return nil, err
 	}
 
-	return tmtypes.NewValidator(tmPk, v.ConsensusPower(r)), nil
+	return cmttypes.NewValidator(tmPk, v.ConsensusPower(r)), nil
 }
 
 // ToTmValidators casts all validators to the corresponding tendermint type.
-func ToTmValidators(v types.Validators, r math.Int) ([]*tmtypes.Validator, error) {
-	validators := make([]*tmtypes.Validator, len(v))
+func ToTmValidators(v types.Validators, r sdkmath.Int) ([]*cmttypes.Validator, error) {
+	validators := make([]*cmttypes.Validator, len(v))
 	var err error
 	for i, val := range v {
 		validators[i], err = ToTmValidator(val, r)

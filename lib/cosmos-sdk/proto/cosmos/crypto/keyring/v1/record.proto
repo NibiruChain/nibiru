@@ -2,13 +2,13 @@
 syntax = "proto3";
 package cosmos.crypto.keyring.v1;
 
+import "cosmos/crypto/hd/v1/hd.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
-import "cosmos/crypto/hd/v1/hd.proto";
 
-option go_package                      = "github.com/cosmos/cosmos-sdk/crypto/keyring";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring";
+option (gogoproto.gogoproto_import) = false;
 option (gogoproto.goproto_getters_all) = false;
-option (gogoproto.gogoproto_import)    = false;
 
 // Record is used for representing a key in the keyring.
 message Record {

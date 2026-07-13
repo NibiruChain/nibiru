@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	v3 "github.com/cosmos/cosmos-sdk/x/distribution/migrations/v3"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution"
+	v3 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/migrations/v3"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 )
 
 func TestMigrateJSON(t *testing.T) {

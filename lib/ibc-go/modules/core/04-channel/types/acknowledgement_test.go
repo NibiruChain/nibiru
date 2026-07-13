@@ -6,7 +6,8 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	tmprotostate "github.com/cometbft/cometbft/proto/tendermint/state"
 	tmstate "github.com/cometbft/cometbft/state"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 )

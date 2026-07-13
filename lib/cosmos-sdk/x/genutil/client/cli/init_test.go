@@ -10,26 +10,26 @@ import (
 	"time"
 
 	abci_server "github.com/cometbft/cometbft/abci/server"
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/mock"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/mock"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
+	genutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/cli"
+	genutiltest "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 )
 
 var testMbm = module.NewBasicManager(
@@ -144,7 +144,7 @@ func TestInitDefaultBondDenom(t *testing.T) {
 
 	cmd.SetArgs([]string{
 		"appnode-test",
-		fmt.Sprintf("--%s=%s", cli.HomeFlag, home),
+		fmt.Sprintf("--%s=%s", cmtcli.HomeFlag, home),
 		fmt.Sprintf("--%s=testtoken", genutilcli.FlagDefaultBondDenom),
 	})
 	require.NoError(t, cmd.ExecuteContext(ctx))
@@ -169,7 +169,7 @@ func TestEmptyState(t *testing.T) {
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
 	cmd := genutilcli.InitCmd(testMbm, home)
-	cmd.SetArgs([]string{"appnode-test", fmt.Sprintf("--%s=%s", cli.HomeFlag, home)})
+	cmd.SetArgs([]string{"appnode-test", fmt.Sprintf("--%s=%s", cmtcli.HomeFlag, home)})
 
 	require.NoError(t, cmd.ExecuteContext(ctx))
 
@@ -178,13 +178,13 @@ func TestEmptyState(t *testing.T) {
 	os.Stdout = w
 
 	cmd = server.ExportCmd(nil, home)
-	cmd.SetArgs([]string{fmt.Sprintf("--%s=%s", cli.HomeFlag, home)})
+	cmd.SetArgs([]string{fmt.Sprintf("--%s=%s", cmtcli.HomeFlag, home)})
 	require.NoError(t, cmd.ExecuteContext(ctx))
 
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		io.Copy(&buf, r) //nolint:errcheck
 		outC <- buf.String()
 	}()
 
@@ -274,7 +274,7 @@ func TestInitConfig(t *testing.T) {
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		io.Copy(&buf, r) //nolint:errcheck
 		outC <- buf.String()
 	}()
 
@@ -311,7 +311,7 @@ func TestInitWithHeight(t *testing.T) {
 
 	require.NoError(t, cmd.ExecuteContext(ctx))
 
-	appGenesis, importErr := tmtypes.GenesisDocFromFile(cfg.GenesisFile())
+	appGenesis, importErr := cmttypes.GenesisDocFromFile(cfg.GenesisFile())
 	require.NoError(t, importErr)
 
 	require.Equal(t, testInitialHeight, appGenesis.InitialHeight)
@@ -343,7 +343,7 @@ func TestInitWithNegativeHeight(t *testing.T) {
 
 	require.NoError(t, cmd.ExecuteContext(ctx))
 
-	appGenesis, importErr := tmtypes.GenesisDocFromFile(cfg.GenesisFile())
+	appGenesis, importErr := cmttypes.GenesisDocFromFile(cfg.GenesisFile())
 	require.NoError(t, importErr)
 
 	require.Equal(t, int64(1), appGenesis.InitialHeight)

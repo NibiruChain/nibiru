@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	signingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 )
 
 var (
@@ -35,10 +35,10 @@ func buildTx(t *testing.T, bldr *wrapper) {
 
 func TestLegacyAminoJSONHandler_GetSignBytes(t *testing.T) {
 	var (
-		chainId         = "test-chain"
-		accNum  uint64  = 7
-		seqNum  uint64  = 7
-		tip     *tx.Tip = &tx.Tip{Tipper: addr1.String(), Amount: coins}
+		chainId        = "test-chain"
+		accNum  uint64 = 7
+		seqNum  uint64 = 7
+		tip            = &tx.Tip{Tipper: addr1.String(), Amount: coins}
 	)
 
 	testcases := []struct {

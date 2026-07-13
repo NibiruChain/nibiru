@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"sigs.k8s.io/yaml"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32/legacybech32"
 )
 
 type addressTestSuite struct {
@@ -35,12 +35,12 @@ var invalidStrs = []string{
 	"hello, world!",
 	"0xAA",
 	"AAA",
-	types.Bech32PrefixAccAddr + "AB0C",
-	types.Bech32PrefixAccPub + "1234",
-	types.Bech32PrefixValAddr + "5678",
-	types.Bech32PrefixValPub + "BBAB",
-	types.Bech32PrefixConsAddr + "FF04",
-	types.Bech32PrefixConsPub + "6789",
+	sdk.Bech32PrefixAccAddr + "AB0C",
+	sdk.Bech32PrefixAccPub + "1234",
+	sdk.Bech32PrefixValAddr + "5678",
+	sdk.Bech32PrefixValPub + "BBAB",
+	sdk.Bech32PrefixConsAddr + "FF04",
+	sdk.Bech32PrefixConsPub + "6789",
 }
 
 func (s *addressTestSuite) testMarshal(original interface{}, res interface{}, marshal func() ([]byte, error), unmarshal func([]byte) error) {
@@ -52,19 +52,19 @@ func (s *addressTestSuite) testMarshal(original interface{}, res interface{}, ma
 
 func (s *addressTestSuite) TestEmptyAddresses() {
 	s.T().Parallel()
-	s.Require().Equal((types.AccAddress{}).String(), "")
-	s.Require().Equal((types.ValAddress{}).String(), "")
-	s.Require().Equal((types.ConsAddress{}).String(), "")
+	s.Require().Equal((sdk.AccAddress{}).String(), "")
+	s.Require().Equal((sdk.ValAddress{}).String(), "")
+	s.Require().Equal((sdk.ConsAddress{}).String(), "")
 
-	accAddr, err := types.AccAddressFromBech32("")
+	accAddr, err := sdk.AccAddressFromBech32("")
 	s.Require().True(accAddr.Empty())
 	s.Require().Error(err)
 
-	valAddr, err := types.ValAddressFromBech32("")
+	valAddr, err := sdk.ValAddressFromBech32("")
 	s.Require().True(valAddr.Empty())
 	s.Require().Error(err)
 
-	consAddr, err := types.ConsAddressFromBech32("")
+	consAddr, err := sdk.ConsAddressFromBech32("")
 	s.Require().True(consAddr.Empty())
 	s.Require().Error(err)
 }
@@ -72,9 +72,9 @@ func (s *addressTestSuite) TestEmptyAddresses() {
 func (s *addressTestSuite) TestYAMLMarshalers() {
 	addr := secp256k1.GenPrivKey().PubKey().Address()
 
-	acc := types.AccAddress(addr)
-	val := types.ValAddress(addr)
-	cons := types.ConsAddress(addr)
+	acc := sdk.AccAddress(addr)
+	val := sdk.ValAddress(addr)
+	cons := sdk.ConsAddress(addr)
 
 	got, _ := yaml.Marshal(&acc)
 	s.Require().Equal(acc.String()+"\n", string(got))
@@ -93,36 +93,36 @@ func (s *addressTestSuite) TestRandBech32AccAddrConsistency() {
 	for i := 0; i < 1000; i++ {
 		rand.Read(pub.Key)
 
-		acc := types.AccAddress(pub.Address())
-		res := types.AccAddress{}
+		acc := sdk.AccAddress(pub.Address())
+		res := sdk.AccAddress{}
 
 		s.testMarshal(&acc, &res, acc.MarshalJSON, (&res).UnmarshalJSON)
 		s.testMarshal(&acc, &res, acc.Marshal, (&res).Unmarshal)
 
 		str := acc.String()
-		res, err := types.AccAddressFromBech32(str)
+		res, err := sdk.AccAddressFromBech32(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
 
 		str = hex.EncodeToString(acc)
-		res, err = types.AccAddressFromHexUnsafe(str)
+		res, err = sdk.AccAddressFromHexUnsafe(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
 	}
 
 	for _, str := range invalidStrs {
-		_, err := types.AccAddressFromHexUnsafe(str)
+		_, err := sdk.AccAddressFromHexUnsafe(str)
 		s.Require().NotNil(err)
 
-		_, err = types.AccAddressFromBech32(str)
+		_, err = sdk.AccAddressFromBech32(str)
 		s.Require().NotNil(err)
 
-		err = (*types.AccAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
+		err = (*sdk.AccAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
 		s.Require().NotNil(err)
 	}
 
-	_, err := types.AccAddressFromHexUnsafe("")
-	s.Require().Equal(types.ErrEmptyHexAddress, err)
+	_, err := sdk.AccAddressFromHexUnsafe("")
+	s.Require().Equal(sdk.ErrEmptyHexAddress, err)
 }
 
 // Test that the account address cache ignores the bech32 prefix setting, retrieving bech32 addresses from the cache.
@@ -136,12 +136,12 @@ func (s *addressTestSuite) TestAddrCache() {
 
 	// Set SDK bech32 prefixes to 'osmo'
 	prefix := "osmo"
-	conf := types.GetConfig()
+	conf := sdk.GetConfig()
 	conf.SetBech32PrefixForAccount(prefix, prefix+"pub")
 	conf.SetBech32PrefixForValidator(prefix+"valoper", prefix+"valoperpub")
 	conf.SetBech32PrefixForConsensusNode(prefix+"valcons", prefix+"valconspub")
 
-	acc := types.AccAddress(pub.Address())
+	acc := sdk.AccAddress(pub.Address())
 	osmoAddrBech32 := acc.String()
 
 	// Set SDK bech32 to 'cosmos'
@@ -151,7 +151,7 @@ func (s *addressTestSuite) TestAddrCache() {
 	conf.SetBech32PrefixForConsensusNode(prefix+"valcons", prefix+"valconspub")
 
 	// We name this 'addrCosmos' to prove a point, but the bech32 address will still begin with 'osmo' due to the cache behavior.
-	addrCosmos := types.AccAddress(pub.Address())
+	addrCosmos := sdk.AccAddress(pub.Address())
 	cosmosAddrBech32 := addrCosmos.String()
 
 	// The default behavior will retrieve the bech32 address from the cache, ignoring the bech32 prefix change.
@@ -164,7 +164,7 @@ func (s *addressTestSuite) TestAddrCache() {
 // This causes AccAddress.String() to print out the expected prefixes if the config is changed between bech32 lookups.
 // See https://github.com/cosmos/cosmos-sdk/issues/15317.
 func (s *addressTestSuite) TestAddrCacheDisabled() {
-	types.SetAddrCacheEnabled(false)
+	sdk.SetAddrCacheEnabled(false)
 
 	// Use a random key
 	pubBz := make([]byte, ed25519.PubKeySize)
@@ -173,12 +173,12 @@ func (s *addressTestSuite) TestAddrCacheDisabled() {
 
 	// Set SDK bech32 prefixes to 'osmo'
 	prefix := "osmo"
-	conf := types.GetConfig()
+	conf := sdk.GetConfig()
 	conf.SetBech32PrefixForAccount(prefix, prefix+"pub")
 	conf.SetBech32PrefixForValidator(prefix+"valoper", prefix+"valoperpub")
 	conf.SetBech32PrefixForConsensusNode(prefix+"valcons", prefix+"valconspub")
 
-	acc := types.AccAddress(pub.Address())
+	acc := sdk.AccAddress(pub.Address())
 	osmoAddrBech32 := acc.String()
 
 	// Set SDK bech32 to 'cosmos'
@@ -187,7 +187,7 @@ func (s *addressTestSuite) TestAddrCacheDisabled() {
 	conf.SetBech32PrefixForValidator(prefix+"valoper", prefix+"valoperpub")
 	conf.SetBech32PrefixForConsensusNode(prefix+"valcons", prefix+"valconspub")
 
-	addrCosmos := types.AccAddress(pub.Address())
+	addrCosmos := sdk.AccAddress(pub.Address())
 	cosmosAddrBech32 := addrCosmos.String()
 
 	// retrieve the bech32 address from the cache, respecting the bech32 prefix change.
@@ -203,38 +203,37 @@ func (s *addressTestSuite) TestValAddr() {
 	for i := 0; i < 20; i++ {
 		rand.Read(pub.Key)
 
-		acc := types.ValAddress(pub.Address())
-		res := types.ValAddress{}
+		acc := sdk.ValAddress(pub.Address())
+		res := sdk.ValAddress{}
 
 		s.testMarshal(&acc, &res, acc.MarshalJSON, (&res).UnmarshalJSON)
 		s.testMarshal(&acc, &res, acc.Marshal, (&res).Unmarshal)
 
 		str := acc.String()
-		res, err := types.ValAddressFromBech32(str)
+		res, err := sdk.ValAddressFromBech32(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
 
 		str = hex.EncodeToString(acc)
-		res, err = types.ValAddressFromHex(str)
+		res, err = sdk.ValAddressFromHex(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
-
 	}
 
 	for _, str := range invalidStrs {
-		_, err := types.ValAddressFromHex(str)
+		_, err := sdk.ValAddressFromHex(str)
 		s.Require().NotNil(err)
 
-		_, err = types.ValAddressFromBech32(str)
+		_, err = sdk.ValAddressFromBech32(str)
 		s.Require().NotNil(err)
 
-		err = (*types.ValAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
+		err = (*sdk.ValAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
 		s.Require().NotNil(err)
 	}
 
 	// test empty string
-	_, err := types.ValAddressFromHex("")
-	s.Require().Equal(types.ErrEmptyHexAddress, err)
+	_, err := sdk.ValAddressFromHex("")
+	s.Require().Equal(sdk.ErrEmptyHexAddress, err)
 }
 
 func (s *addressTestSuite) TestConsAddress() {
@@ -244,37 +243,37 @@ func (s *addressTestSuite) TestConsAddress() {
 	for i := 0; i < 20; i++ {
 		rand.Read(pub.Key[:])
 
-		acc := types.ConsAddress(pub.Address())
-		res := types.ConsAddress{}
+		acc := sdk.ConsAddress(pub.Address())
+		res := sdk.ConsAddress{}
 
 		s.testMarshal(&acc, &res, acc.MarshalJSON, (&res).UnmarshalJSON)
 		s.testMarshal(&acc, &res, acc.Marshal, (&res).Unmarshal)
 
 		str := acc.String()
-		res, err := types.ConsAddressFromBech32(str)
+		res, err := sdk.ConsAddressFromBech32(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
 
 		str = hex.EncodeToString(acc)
-		res, err = types.ConsAddressFromHex(str)
+		res, err = sdk.ConsAddressFromHex(str)
 		s.Require().Nil(err)
 		s.Require().Equal(acc, res)
 	}
 
 	for _, str := range invalidStrs {
-		_, err := types.ConsAddressFromHex(str)
+		_, err := sdk.ConsAddressFromHex(str)
 		s.Require().NotNil(err)
 
-		_, err = types.ConsAddressFromBech32(str)
+		_, err = sdk.ConsAddressFromBech32(str)
 		s.Require().NotNil(err)
 
-		err = (*types.ConsAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
+		err = (*sdk.ConsAddress)(nil).UnmarshalJSON([]byte("\"" + str + "\""))
 		s.Require().NotNil(err)
 	}
 
 	// test empty string
-	_, err := types.ConsAddressFromHex("")
-	s.Require().Equal(types.ErrEmptyHexAddress, err)
+	_, err := sdk.ConsAddressFromHex("")
+	s.Require().Equal(sdk.ErrEmptyHexAddress, err)
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz"
@@ -297,48 +296,48 @@ func (s *addressTestSuite) TestConfiguredPrefix() {
 			prefix := RandString(length)
 
 			// Assuming that GetConfig is not sealed.
-			config := types.GetConfig()
+			config := sdk.GetConfig()
 			config.SetBech32PrefixForAccount(
-				prefix+types.PrefixAccount,
-				prefix+types.PrefixPublic)
+				prefix+sdk.PrefixAccount,
+				prefix+sdk.PrefixPublic)
 
-			acc := types.AccAddress(pub.Address())
+			acc := sdk.AccAddress(pub.Address())
 			s.Require().True(strings.HasPrefix(
 				acc.String(),
-				prefix+types.PrefixAccount), acc.String())
+				prefix+sdk.PrefixAccount), acc.String())
 
 			bech32Pub := legacybech32.MustMarshalPubKey(legacybech32.AccPK, pub)
 			s.Require().True(strings.HasPrefix(
 				bech32Pub,
-				prefix+types.PrefixPublic))
+				prefix+sdk.PrefixPublic))
 
 			config.SetBech32PrefixForValidator(
-				prefix+types.PrefixValidator+types.PrefixAddress,
-				prefix+types.PrefixValidator+types.PrefixPublic)
+				prefix+sdk.PrefixValidator+sdk.PrefixAddress,
+				prefix+sdk.PrefixValidator+sdk.PrefixPublic)
 
-			val := types.ValAddress(pub.Address())
+			val := sdk.ValAddress(pub.Address())
 			s.Require().True(strings.HasPrefix(
 				val.String(),
-				prefix+types.PrefixValidator+types.PrefixAddress))
+				prefix+sdk.PrefixValidator+sdk.PrefixAddress))
 
 			bech32ValPub := legacybech32.MustMarshalPubKey(legacybech32.ValPK, pub)
 			s.Require().True(strings.HasPrefix(
 				bech32ValPub,
-				prefix+types.PrefixValidator+types.PrefixPublic))
+				prefix+sdk.PrefixValidator+sdk.PrefixPublic))
 
 			config.SetBech32PrefixForConsensusNode(
-				prefix+types.PrefixConsensus+types.PrefixAddress,
-				prefix+types.PrefixConsensus+types.PrefixPublic)
+				prefix+sdk.PrefixConsensus+sdk.PrefixAddress,
+				prefix+sdk.PrefixConsensus+sdk.PrefixPublic)
 
-			cons := types.ConsAddress(pub.Address())
+			cons := sdk.ConsAddress(pub.Address())
 			s.Require().True(strings.HasPrefix(
 				cons.String(),
-				prefix+types.PrefixConsensus+types.PrefixAddress))
+				prefix+sdk.PrefixConsensus+sdk.PrefixAddress))
 
 			bech32ConsPub := legacybech32.MustMarshalPubKey(legacybech32.ConsPK, pub)
 			s.Require().True(strings.HasPrefix(
 				bech32ConsPub,
-				prefix+types.PrefixConsensus+types.PrefixPublic))
+				prefix+sdk.PrefixConsensus+sdk.PrefixPublic))
 		}
 	}
 }
@@ -348,22 +347,22 @@ func (s *addressTestSuite) TestAddressInterface() {
 	pub := &ed25519.PubKey{Key: pubBz}
 	rand.Read(pub.Key)
 
-	addrs := []types.Address{
-		types.ConsAddress(pub.Address()),
-		types.ValAddress(pub.Address()),
-		types.AccAddress(pub.Address()),
+	addrs := []sdk.Address{
+		sdk.ConsAddress(pub.Address()),
+		sdk.ValAddress(pub.Address()),
+		sdk.AccAddress(pub.Address()),
 	}
 
 	for _, addr := range addrs {
 		switch addr := addr.(type) {
-		case types.AccAddress:
-			_, err := types.AccAddressFromBech32(addr.String())
+		case sdk.AccAddress:
+			_, err := sdk.AccAddressFromBech32(addr.String())
 			s.Require().Nil(err)
-		case types.ValAddress:
-			_, err := types.ValAddressFromBech32(addr.String())
+		case sdk.ValAddress:
+			_, err := sdk.ValAddressFromBech32(addr.String())
 			s.Require().Nil(err)
-		case types.ConsAddress:
-			_, err := types.ConsAddressFromBech32(addr.String())
+		case sdk.ConsAddress:
+			_, err := sdk.ConsAddressFromBech32(addr.String())
 			s.Require().Nil(err)
 		default:
 			s.T().Fail()
@@ -378,38 +377,38 @@ func (s *addressTestSuite) TestVerifyAddressFormat() {
 	addr32 := make([]byte, 32)
 	addr256 := make([]byte, 256)
 
-	err := types.VerifyAddressFormat(addr0)
+	err := sdk.VerifyAddressFormat(addr0)
 	s.Require().EqualError(err, "addresses cannot be empty: unknown address")
-	err = types.VerifyAddressFormat(addr5)
+	err = sdk.VerifyAddressFormat(addr5)
 	s.Require().NoError(err)
-	err = types.VerifyAddressFormat(addr20)
+	err = sdk.VerifyAddressFormat(addr20)
 	s.Require().NoError(err)
-	err = types.VerifyAddressFormat(addr32)
+	err = sdk.VerifyAddressFormat(addr32)
 	s.Require().NoError(err)
-	err = types.VerifyAddressFormat(addr256)
+	err = sdk.VerifyAddressFormat(addr256)
 	s.Require().EqualError(err, "address max length is 255, got 256: unknown address")
 }
 
 func (s *addressTestSuite) TestCustomAddressVerifier() {
 	// Create a 10 byte address
 	addr := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	accBech := types.AccAddress(addr).String()
-	valBech := types.ValAddress(addr).String()
-	consBech := types.ConsAddress(addr).String()
+	accBech := sdk.AccAddress(addr).String()
+	valBech := sdk.ValAddress(addr).String()
+	consBech := sdk.ConsAddress(addr).String()
 	// Verify that the default logic doesn't reject this 10 byte address
 	// The default verifier is nil, we're only checking address length is
 	// between 1-255 bytes.
-	err := types.VerifyAddressFormat(addr)
+	err := sdk.VerifyAddressFormat(addr)
 	s.Require().Nil(err)
-	_, err = types.AccAddressFromBech32(accBech)
+	_, err = sdk.AccAddressFromBech32(accBech)
 	s.Require().Nil(err)
-	_, err = types.ValAddressFromBech32(valBech)
+	_, err = sdk.ValAddressFromBech32(valBech)
 	s.Require().Nil(err)
-	_, err = types.ConsAddressFromBech32(consBech)
+	_, err = sdk.ConsAddressFromBech32(consBech)
 	s.Require().Nil(err)
 
 	// Set a custom address verifier only accepts 20 byte addresses
-	types.GetConfig().SetAddressVerifier(func(bz []byte) error {
+	sdk.GetConfig().SetAddressVerifier(func(bz []byte) error {
 		n := len(bz)
 		if n == 20 {
 			return nil
@@ -418,17 +417,17 @@ func (s *addressTestSuite) TestCustomAddressVerifier() {
 	})
 
 	// Verifiy that the custom logic rejects this 10 byte address
-	err = types.VerifyAddressFormat(addr)
+	err = sdk.VerifyAddressFormat(addr)
 	s.Require().NotNil(err)
-	_, err = types.AccAddressFromBech32(accBech)
+	_, err = sdk.AccAddressFromBech32(accBech)
 	s.Require().NotNil(err)
-	_, err = types.ValAddressFromBech32(valBech)
+	_, err = sdk.ValAddressFromBech32(valBech)
 	s.Require().NotNil(err)
-	_, err = types.ConsAddressFromBech32(consBech)
+	_, err = sdk.ConsAddressFromBech32(consBech)
 	s.Require().NotNil(err)
 
 	// Reinitialize the global config to default address verifier (nil)
-	types.GetConfig().SetAddressVerifier(nil)
+	sdk.GetConfig().SetAddressVerifier(nil)
 }
 
 func (s *addressTestSuite) TestBech32ifyAddressBytes() {
@@ -454,7 +453,7 @@ func (s *addressTestSuite) TestBech32ifyAddressBytes() {
 	for _, tt := range tests {
 		tt := tt
 		s.T().Run(tt.name, func(t *testing.T) {
-			got, err := types.Bech32ifyAddressBytes(tt.args.prefix, tt.args.bs)
+			got, err := sdk.Bech32ifyAddressBytes(tt.args.prefix, tt.args.bs)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Bech32ifyBytes() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -488,24 +487,24 @@ func (s *addressTestSuite) TestMustBech32ifyAddressBytes() {
 		tt := tt
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.wantPanic {
-				require.Panics(t, func() { types.MustBech32ifyAddressBytes(tt.args.prefix, tt.args.bs) })
+				require.Panics(t, func() { sdk.MustBech32ifyAddressBytes(tt.args.prefix, tt.args.bs) })
 				return
 			}
-			require.Equal(t, tt.want, types.MustBech32ifyAddressBytes(tt.args.prefix, tt.args.bs))
+			require.Equal(t, tt.want, sdk.MustBech32ifyAddressBytes(tt.args.prefix, tt.args.bs))
 		})
 	}
 }
 
 func (s *addressTestSuite) TestAddressTypesEquals() {
 	addr1 := secp256k1.GenPrivKey().PubKey().Address()
-	accAddr1 := types.AccAddress(addr1)
-	consAddr1 := types.ConsAddress(addr1)
-	valAddr1 := types.ValAddress(addr1)
+	accAddr1 := sdk.AccAddress(addr1)
+	consAddr1 := sdk.ConsAddress(addr1)
+	valAddr1 := sdk.ValAddress(addr1)
 
 	addr2 := secp256k1.GenPrivKey().PubKey().Address()
-	accAddr2 := types.AccAddress(addr2)
-	consAddr2 := types.ConsAddress(addr2)
-	valAddr2 := types.ValAddress(addr2)
+	accAddr2 := sdk.AccAddress(addr2)
+	consAddr2 := sdk.ConsAddress(addr2)
+	valAddr2 := sdk.ValAddress(addr2)
 
 	// equality
 	s.Require().True(accAddr1.Equals(accAddr1))
@@ -513,20 +512,20 @@ func (s *addressTestSuite) TestAddressTypesEquals() {
 	s.Require().True(valAddr1.Equals(valAddr1))
 
 	// emptiness
-	s.Require().True(types.AccAddress{}.Equals(types.AccAddress{}))
-	s.Require().True(types.AccAddress{}.Equals(types.AccAddress(nil)))
-	s.Require().True(types.AccAddress(nil).Equals(types.AccAddress{}))
-	s.Require().True(types.AccAddress(nil).Equals(types.AccAddress(nil)))
+	s.Require().True(sdk.AccAddress{}.Equals(sdk.AccAddress{}))
+	s.Require().True(sdk.AccAddress{}.Equals(sdk.AccAddress(nil)))
+	s.Require().True(sdk.AccAddress(nil).Equals(sdk.AccAddress{}))
+	s.Require().True(sdk.AccAddress(nil).Equals(sdk.AccAddress(nil)))
 
-	s.Require().True(types.ConsAddress{}.Equals(types.ConsAddress{}))
-	s.Require().True(types.ConsAddress{}.Equals(types.ConsAddress(nil)))
-	s.Require().True(types.ConsAddress(nil).Equals(types.ConsAddress{}))
-	s.Require().True(types.ConsAddress(nil).Equals(types.ConsAddress(nil)))
+	s.Require().True(sdk.ConsAddress{}.Equals(sdk.ConsAddress{}))
+	s.Require().True(sdk.ConsAddress{}.Equals(sdk.ConsAddress(nil)))
+	s.Require().True(sdk.ConsAddress(nil).Equals(sdk.ConsAddress{}))
+	s.Require().True(sdk.ConsAddress(nil).Equals(sdk.ConsAddress(nil)))
 
-	s.Require().True(types.ValAddress{}.Equals(types.ValAddress{}))
-	s.Require().True(types.ValAddress{}.Equals(types.ValAddress(nil)))
-	s.Require().True(types.ValAddress(nil).Equals(types.ValAddress{}))
-	s.Require().True(types.ValAddress(nil).Equals(types.ValAddress(nil)))
+	s.Require().True(sdk.ValAddress{}.Equals(sdk.ValAddress{}))
+	s.Require().True(sdk.ValAddress{}.Equals(sdk.ValAddress(nil)))
+	s.Require().True(sdk.ValAddress(nil).Equals(sdk.ValAddress{}))
+	s.Require().True(sdk.ValAddress(nil).Equals(sdk.ValAddress(nil)))
 
 	s.Require().False(accAddr1.Equals(accAddr2))
 	s.Require().Equal(accAddr1.Equals(accAddr2), accAddr2.Equals(accAddr1))
@@ -537,23 +536,23 @@ func (s *addressTestSuite) TestAddressTypesEquals() {
 }
 
 func (s *addressTestSuite) TestNilAddressTypesEmpty() {
-	s.Require().True(types.AccAddress(nil).Empty())
-	s.Require().True(types.ConsAddress(nil).Empty())
-	s.Require().True(types.ValAddress(nil).Empty())
+	s.Require().True(sdk.AccAddress(nil).Empty())
+	s.Require().True(sdk.ConsAddress(nil).Empty())
+	s.Require().True(sdk.ValAddress(nil).Empty())
 }
 
 func (s *addressTestSuite) TestGetConsAddress() {
 	pk := secp256k1.GenPrivKey().PubKey()
-	s.Require().NotEqual(types.GetConsAddress(pk), pk.Address())
-	s.Require().True(bytes.Equal(types.GetConsAddress(pk).Bytes(), pk.Address().Bytes()))
-	s.Require().Panics(func() { types.GetConsAddress(cryptotypes.PubKey(nil)) })
+	s.Require().NotEqual(sdk.GetConsAddress(pk), pk.Address())
+	s.Require().True(bytes.Equal(sdk.GetConsAddress(pk).Bytes(), pk.Address().Bytes()))
+	s.Require().Panics(func() { sdk.GetConsAddress(cryptotypes.PubKey(nil)) })
 }
 
 func (s *addressTestSuite) TestGetFromBech32() {
-	_, err := types.GetFromBech32("", "prefix")
+	_, err := sdk.GetFromBech32("", "prefix")
 	s.Require().Error(err)
 	s.Require().Equal("decoding Bech32 address failed: must provide a non empty address", err.Error())
-	_, err = types.GetFromBech32("cosmos1qqqsyqcyq5rqwzqfys8f67", "x")
+	_, err = sdk.GetFromBech32("cosmos1qqqsyqcyq5rqwzqfys8f67", "x")
 	s.Require().Error(err)
 	s.Require().Equal("invalid Bech32 prefix; expected x, got cosmos", err.Error())
 }

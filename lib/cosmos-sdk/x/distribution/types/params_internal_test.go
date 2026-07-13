@@ -3,10 +3,10 @@ package types
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 func Test_validateAuxFuncs(t *testing.T) {
@@ -20,9 +20,9 @@ func Test_validateAuxFuncs(t *testing.T) {
 	}{
 		{"wrong type", args{10.5}, true},
 		{"empty sdk.Dec", args{sdk.Dec{}}, true},
-		{"negative", args{math.LegacyNewDec(-1)}, true},
-		{"one dec", args{math.LegacyNewDec(1)}, false},
-		{"two dec", args{math.LegacyNewDec(2)}, true},
+		{"negative", args{sdkmath.LegacyNewDec(-1)}, true},
+		{"one dec", args{sdkmath.LegacyNewDec(1)}, false},
+		{"two dec", args{sdkmath.LegacyNewDec(2)}, true},
 	}
 	for _, tt := range tests {
 		tt := tt

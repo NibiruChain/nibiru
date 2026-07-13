@@ -7,9 +7,10 @@ import (
 	"path"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/stretchr/testify/suite"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"

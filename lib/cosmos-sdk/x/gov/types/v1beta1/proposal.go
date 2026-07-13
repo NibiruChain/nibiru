@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"sigs.k8s.io/yaml"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 )
 
 // DefaultStartingProposalID is 1
@@ -145,10 +145,10 @@ func ProposalStatusFromString(str string) (ProposalStatus, error) {
 func (status ProposalStatus) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(status.String()))
+		s.Write([]byte(status.String())) //nolint:errcheck
 	default:
 		// TODO: Do this conversion more directly
-		s.Write([]byte(fmt.Sprintf("%v", byte(status))))
+		fmt.Fprintf(s, "%v", byte(status)) //nolint:errcheck
 	}
 }
 

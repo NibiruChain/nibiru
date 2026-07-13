@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 func (suite *KeeperTestSuite) TestMsgUpdateParams() {
@@ -97,7 +97,7 @@ func (suite *KeeperTestSuite) TestMsgSend() {
 		tc := tc
 		suite.Run(tc.name, func() {
 			suite.mockMintCoins(minterAcc)
-			suite.bankKeeper.MintCoins(suite.ctx, minterAcc.Name, origCoins)
+			suite.bankKeeper.MintCoins(suite.ctx, minterAcc.Name, origCoins) //nolint:errcheck
 			if !tc.expErr {
 				suite.mockSendCoins(suite.ctx, minterAcc, baseAcc.GetAddress())
 			}
@@ -157,7 +157,7 @@ func (suite *KeeperTestSuite) TestMsgMultiSend() {
 		tc := tc
 		suite.Run(tc.name, func() {
 			suite.mockMintCoins(minterAcc)
-			suite.bankKeeper.MintCoins(suite.ctx, minterAcc.Name, origCoins)
+			suite.bankKeeper.MintCoins(suite.ctx, minterAcc.Name, origCoins) //nolint:errcheck
 			if !tc.expErr {
 				suite.mockInputOutputCoins([]authtypes.AccountI{minterAcc}, accAddrs[:2])
 			}

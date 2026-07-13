@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 var defaultBIP39Passphrase = ""
@@ -20,10 +20,10 @@ func mnemonicToSeed(mnemonic string) []byte {
 }
 
 func TestStringifyFundraiserPathParams(t *testing.T) {
-	path := hd.NewFundraiserParams(4, types.CoinType, 22)
+	path := hd.NewFundraiserParams(4, sdk.CoinType, 22)
 	require.Equal(t, "m/44'/118'/4'/0/22", path.String())
 
-	path = hd.NewFundraiserParams(4, types.CoinType, 57)
+	path = hd.NewFundraiserParams(4, sdk.CoinType, 57)
 	require.Equal(t, "m/44'/118'/4'/0/57", path.String())
 
 	path = hd.NewFundraiserParams(4, 12345, 57)
@@ -185,7 +185,9 @@ func TestDeriveHDPathRange(t *testing.T) {
 	}
 }
 
-func ExampleStringifyPathParams() {
+// ExampleBIP44Params_String documents the canonical formatting of BIP44 paths.
+// Its Output block makes the documentation example an executable regression test.
+func ExampleBIP44Params_String() {
 	path := hd.NewParams(44, 0, 0, false, 0)
 	fmt.Println(path.String())
 	path = hd.NewParams(44, 33, 7, true, 9)
@@ -195,14 +197,16 @@ func ExampleStringifyPathParams() {
 	// m/44'/33'/7'/1/9
 }
 
-func ExampleSomeBIP32TestVecs() {
+// Example_bip32TestVectors verifies the documented BIP32 derivation vectors.
+// This package-level example covers several derivation APIs rather than one symbol.
+func Example_bip32TestVectors() {
 	seed := mnemonicToSeed("barrel original fuel morning among eternal " +
 		"filter ball stove pluck matrix mechanic")
 	master, ch := hd.ComputeMastersFromSeed(seed)
 	fmt.Println("keys from fundraiser test-vector (cosmos, bitcoin, ether)")
 	fmt.Println()
 	// cosmos
-	priv, err := hd.DerivePrivateKeyForPath(master, ch, types.FullFundraiserPath)
+	priv, err := hd.DerivePrivateKeyForPath(master, ch, sdk.FullFundraiserPath)
 	if err != nil {
 		fmt.Println("INVALID")
 	} else {

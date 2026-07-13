@@ -5,9 +5,10 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 var (

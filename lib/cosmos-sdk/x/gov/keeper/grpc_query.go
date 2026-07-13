@@ -6,13 +6,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	v3 "github.com/cosmos/cosmos-sdk/x/gov/migrations/v3"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	v3 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/migrations/v3"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 var _ v1.QueryServer = Keeper{}
@@ -179,7 +179,6 @@ func (q Keeper) Params(c context.Context, req *v1.QueryParamsRequest) (*v1.Query
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
 			"%s is not a valid parameter type", req.ParamsType)
-
 	}
 	response.Params = &params
 
@@ -266,11 +265,11 @@ func (q Keeper) TallyResult(c context.Context, req *v1.QueryTallyResultRequest) 
 
 	var tallyResult v1.TallyResult
 
-	switch {
-	case proposal.Status == v1.StatusDepositPeriod:
+	switch proposal.Status {
+	case v1.StatusDepositPeriod:
 		tallyResult = v1.EmptyTallyResult()
 
-	case proposal.Status == v1.StatusPassed || proposal.Status == v1.StatusRejected || proposal.Status == v1.StatusFailed:
+	case v1.StatusPassed, v1.StatusRejected, v1.StatusFailed:
 		tallyResult = *proposal.FinalTallyResult
 
 	default:

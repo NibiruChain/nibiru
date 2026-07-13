@@ -3,17 +3,17 @@ package v2_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	v1bank "github.com/cosmos/cosmos-sdk/x/bank/migrations/v1"
-	v2bank "github.com/cosmos/cosmos-sdk/x/bank/migrations/v2"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	v1bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v1"
+	v2bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v2"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 func TestSupplyMigration(t *testing.T) {
@@ -29,8 +29,7 @@ func TestSupplyMigration(t *testing.T) {
 	oldFooBarCoin := sdk.NewCoin("foobar", sdk.NewInt(0)) // to ensure the zero denom coins pruned.
 
 	// Old supply was stored as a single blob under the `SupplyKey`.
-	var oldSupply v1bank.SupplyI
-	oldSupply = &types.Supply{Total: sdk.Coins{oldFooCoin, oldBarCoin, oldFooBarCoin}}
+	var oldSupply v1bank.SupplyI = &types.Supply{Total: sdk.Coins{oldFooCoin, oldBarCoin, oldFooBarCoin}}
 	oldSupplyBz, err := encCfg.Codec.MarshalInterface(oldSupply)
 	require.NoError(t, err)
 	store.Set(v1bank.SupplyKey, oldSupplyBz)
@@ -42,7 +41,7 @@ func TestSupplyMigration(t *testing.T) {
 	// New supply is indexed by denom.
 	supplyStore := prefix.NewStore(store, types.SupplyKey)
 	bz := supplyStore.Get([]byte("foo"))
-	var amount math.Int
+	var amount sdkmath.Int
 	err = amount.Unmarshal(bz)
 	require.NoError(t, err)
 

@@ -1,11 +1,11 @@
 package v3
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution/exported"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 )
 
 const (

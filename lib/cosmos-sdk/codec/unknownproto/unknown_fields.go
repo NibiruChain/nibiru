@@ -15,7 +15,7 @@ import (
 	"github.com/cosmos/gogoproto/protoc-gen-gogo/descriptor"
 	"google.golang.org/protobuf/encoding/protowire"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 const bit11NonCritical = 1 << 10

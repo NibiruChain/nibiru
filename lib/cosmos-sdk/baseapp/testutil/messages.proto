@@ -3,23 +3,23 @@ syntax = "proto3";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/baseapp/testutil";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp/testutil";
 
 message MsgCounter {
-  int64 counter         = 1;
-  bool  fail_on_handler = 2;
+  int64 counter = 1;
+  bool fail_on_handler = 2;
 }
 
 message MsgCounter2 {
-  int64 counter         = 1;
-  bool  fail_on_handler = 2;
+  int64 counter = 1;
+  bool fail_on_handler = 2;
 }
 
 message MsgCreateCounterResponse {}
 
 message MsgKeyValue {
-  bytes  key    = 1;
-  bytes  value  = 2;
+  bytes key = 1;
+  bytes value = 2;
   string signer = 3;
 }
 
@@ -36,3 +36,4 @@ service Counter2 {
 service KeyValue {
   rpc Set(MsgKeyValue) returns (MsgCreateKeyValueResponse);
 }
+

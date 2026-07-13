@@ -1,15 +1,15 @@
 syntax = "proto3";
 package cosmos.distribution.v1beta1;
 
+import "amino/amino.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/distribution/v1beta1/distribution.proto";
 import "cosmos_proto/cosmos.proto";
-import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/distribution/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types";
 
 // Query defines the gRPC querier service for distribution module.
 service Query {
@@ -19,22 +19,22 @@ service Query {
   }
 
   // ValidatorDistributionInfo queries validator commission and self-delegation rewards for validator
-  rpc ValidatorDistributionInfo(QueryValidatorDistributionInfoRequest)
-      returns (QueryValidatorDistributionInfoResponse) {
+  rpc ValidatorDistributionInfo(QueryValidatorDistributionInfoRequest) returns (QueryValidatorDistributionInfoResponse) {
     option (google.api.http).get = "/cosmos/distribution/v1beta1/validators/{validator_address}";
   }
 
   // ValidatorOutstandingRewards queries rewards of a validator address.
-  rpc ValidatorOutstandingRewards(QueryValidatorOutstandingRewardsRequest)
-      returns (QueryValidatorOutstandingRewardsResponse) {
-    option (google.api.http).get = "/cosmos/distribution/v1beta1/validators/"
-                                   "{validator_address}/outstanding_rewards";
+  rpc ValidatorOutstandingRewards(QueryValidatorOutstandingRewardsRequest) returns (QueryValidatorOutstandingRewardsResponse) {
+    option (google.api.http).get =
+      "/cosmos/distribution/v1beta1/validators/"
+      "{validator_address}/outstanding_rewards";
   }
 
   // ValidatorCommission queries accumulated commission for a validator.
   rpc ValidatorCommission(QueryValidatorCommissionRequest) returns (QueryValidatorCommissionResponse) {
-    option (google.api.http).get = "/cosmos/distribution/v1beta1/validators/"
-                                   "{validator_address}/commission";
+    option (google.api.http).get =
+      "/cosmos/distribution/v1beta1/validators/"
+      "{validator_address}/commission";
   }
 
   // ValidatorSlashes queries slash events of a validator.
@@ -44,8 +44,9 @@ service Query {
 
   // DelegationRewards queries the total rewards accrued by a delegation.
   rpc DelegationRewards(QueryDelegationRewardsRequest) returns (QueryDelegationRewardsResponse) {
-    option (google.api.http).get = "/cosmos/distribution/v1beta1/delegators/{delegator_address}/rewards/"
-                                   "{validator_address}";
+    option (google.api.http).get =
+      "/cosmos/distribution/v1beta1/delegators/{delegator_address}/rewards/"
+      "{validator_address}";
   }
 
   // DelegationTotalRewards queries the total rewards accrued by a each
@@ -56,14 +57,16 @@ service Query {
 
   // DelegatorValidators queries the validators of a delegator.
   rpc DelegatorValidators(QueryDelegatorValidatorsRequest) returns (QueryDelegatorValidatorsResponse) {
-    option (google.api.http).get = "/cosmos/distribution/v1beta1/delegators/"
-                                   "{delegator_address}/validators";
+    option (google.api.http).get =
+      "/cosmos/distribution/v1beta1/delegators/"
+      "{delegator_address}/validators";
   }
 
   // DelegatorWithdrawAddress queries withdraw address of a delegator.
   rpc DelegatorWithdrawAddress(QueryDelegatorWithdrawAddressRequest) returns (QueryDelegatorWithdrawAddressResponse) {
-    option (google.api.http).get = "/cosmos/distribution/v1beta1/delegators/"
-                                   "{delegator_address}/withdraw_address";
+    option (google.api.http).get =
+      "/cosmos/distribution/v1beta1/delegators/"
+      "{delegator_address}/withdraw_address";
   }
 
   // CommunityPool queries the community pool coins.
@@ -78,7 +81,10 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Params params = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryValidatorDistributionInfoRequest is the request type for the Query/ValidatorDistributionInfo RPC method.
@@ -93,13 +99,15 @@ message QueryValidatorDistributionInfoResponse {
   string operator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // self_bond_rewards defines the self delegations rewards.
   repeated cosmos.base.v1beta1.DecCoin self_bond_rewards = 2 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
   // commission defines the commission the validator received.
-  repeated cosmos.base.v1beta1.DecCoin commission = 3
-      [(gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins", (gogoproto.nullable) = false];
+  repeated cosmos.base.v1beta1.DecCoin commission = 3 [
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryValidatorOutstandingRewardsRequest is the request type for the
@@ -112,7 +120,10 @@ message QueryValidatorOutstandingRewardsRequest {
 // QueryValidatorOutstandingRewardsResponse is the response type for the
 // Query/ValidatorOutstandingRewards RPC method.
 message QueryValidatorOutstandingRewardsResponse {
-  ValidatorOutstandingRewards rewards = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  ValidatorOutstandingRewards rewards = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryValidatorCommissionRequest is the request type for the
@@ -126,13 +137,16 @@ message QueryValidatorCommissionRequest {
 // Query/ValidatorCommission RPC method
 message QueryValidatorCommissionResponse {
   // commission defines the commission the validator received.
-  ValidatorAccumulatedCommission commission = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  ValidatorAccumulatedCommission commission = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // QueryValidatorSlashesRequest is the request type for the
 // Query/ValidatorSlashes RPC method
 message QueryValidatorSlashesRequest {
-  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = true;
 
   // validator_address defines the validator address to query for.
@@ -149,7 +163,10 @@ message QueryValidatorSlashesRequest {
 // Query/ValidatorSlashes RPC method.
 message QueryValidatorSlashesResponse {
   // slashes defines the slashes the validator received.
-  repeated ValidatorSlashEvent slashes = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  repeated ValidatorSlashEvent slashes = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -158,7 +175,7 @@ message QueryValidatorSlashesResponse {
 // QueryDelegationRewardsRequest is the request type for the
 // Query/DelegationRewards RPC method.
 message QueryDelegationRewardsRequest {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // delegator_address defines the delegator address to query for.
@@ -172,16 +189,16 @@ message QueryDelegationRewardsRequest {
 message QueryDelegationRewardsResponse {
   // rewards defines the rewards accrued by a delegation.
   repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
 
 // QueryDelegationTotalRewardsRequest is the request type for the
 // Query/DelegationTotalRewards RPC method.
 message QueryDelegationTotalRewardsRequest {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
   // delegator_address defines the delegator address to query for.
   string delegator_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
@@ -191,19 +208,22 @@ message QueryDelegationTotalRewardsRequest {
 // Query/DelegationTotalRewards RPC method.
 message QueryDelegationTotalRewardsResponse {
   // rewards defines all the rewards accrued by a delegator.
-  repeated DelegationDelegatorReward rewards = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  repeated DelegationDelegatorReward rewards = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
   // total defines the sum of all the rewards.
   repeated cosmos.base.v1beta1.DecCoin total = 2 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
 
 // QueryDelegatorValidatorsRequest is the request type for the
 // Query/DelegatorValidators RPC method.
 message QueryDelegatorValidatorsRequest {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // delegator_address defines the delegator address to query for.
@@ -213,7 +233,7 @@ message QueryDelegatorValidatorsRequest {
 // QueryDelegatorValidatorsResponse is the response type for the
 // Query/DelegatorValidators RPC method.
 message QueryDelegatorValidatorsResponse {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // validators defines the validators a delegator is delegating for.
@@ -223,7 +243,7 @@ message QueryDelegatorValidatorsResponse {
 // QueryDelegatorWithdrawAddressRequest is the request type for the
 // Query/DelegatorWithdrawAddress RPC method.
 message QueryDelegatorWithdrawAddressRequest {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // delegator_address defines the delegator address to query for.
@@ -233,7 +253,7 @@ message QueryDelegatorWithdrawAddressRequest {
 // QueryDelegatorWithdrawAddressResponse is the response type for the
 // Query/DelegatorWithdrawAddress RPC method.
 message QueryDelegatorWithdrawAddressResponse {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // withdraw_address defines the delegator address to query for.
@@ -249,8 +269,8 @@ message QueryCommunityPoolRequest {}
 message QueryCommunityPoolResponse {
   // pool defines community pool's coins.
   repeated cosmos.base.v1beta1.DecCoin pool = 1 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
   ];
 }

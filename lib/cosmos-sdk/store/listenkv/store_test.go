@@ -6,12 +6,12 @@ import (
 	"io"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codecTypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store/dbadapter"
-	"github.com/cosmos/cosmos-sdk/store/listenkv"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codecTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/dbadapter"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/listenkv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -123,7 +123,7 @@ func TestListenKVStoreSet(t *testing.T) {
 		buf.Reset()
 		store.Set(tc.key, tc.value)
 		storeKVPair := new(types.StoreKVPair)
-		testMarshaller.UnmarshalLengthPrefixed(buf.Bytes(), storeKVPair)
+		testMarshaller.UnmarshalLengthPrefixed(buf.Bytes(), storeKVPair) //nolint:errcheck
 
 		require.Equal(t, tc.expectedOut, storeKVPair)
 	}
@@ -157,7 +157,7 @@ func TestListenKVStoreDelete(t *testing.T) {
 		buf.Reset()
 		store.Delete(tc.key)
 		storeKVPair := new(types.StoreKVPair)
-		testMarshaller.UnmarshalLengthPrefixed(buf.Bytes(), storeKVPair)
+		testMarshaller.UnmarshalLengthPrefixed(buf.Bytes(), storeKVPair) //nolint:errcheck
 
 		require.Equal(t, tc.expectedOut, storeKVPair)
 	}

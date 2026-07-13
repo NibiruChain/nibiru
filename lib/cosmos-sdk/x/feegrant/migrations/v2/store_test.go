@@ -5,18 +5,20 @@ import (
 	"time"
 
 	"cosmossdk.io/depinject"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	v2 "github.com/cosmos/cosmos-sdk/x/feegrant/migrations/v2"
-	feegranttestutil "github.com/cosmos/cosmos-sdk/x/feegrant/testutil"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/migrations/v2"
+	feegranttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/testutil"
 )
 
 func TestMigration(t *testing.T) {
-	var cdc codec.Codec
+	var cdc codec.Codec //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(feegranttestutil.AppConfig, &cdc)
 
 	feegrantKey := sdk.NewKVStoreKey(v2.ModuleName)

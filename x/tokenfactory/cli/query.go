@@ -7,7 +7,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 )

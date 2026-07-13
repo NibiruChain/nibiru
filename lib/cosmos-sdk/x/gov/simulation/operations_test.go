@@ -10,28 +10,28 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/testutil/configurator"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	_ "github.com/cosmos/cosmos-sdk/x/auth"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
-	_ "github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	_ "github.com/cosmos/cosmos-sdk/x/consensus"
-	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
-	"github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	"github.com/cosmos/cosmos-sdk/x/gov/simulation"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	_ "github.com/cosmos/cosmos-sdk/x/params"
-	_ "github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx/config"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
+	govcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 )
 
 var (
@@ -271,7 +271,7 @@ func TestSimulateMsgVote(t *testing.T) {
 	require.NoError(t, err)
 
 	var msg v1.MsgVote
-	govcodec.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	govcodec.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	require.True(t, operationMsg.OK)
 	require.Equal(t, uint64(1), msg.ProposalId)
@@ -315,7 +315,7 @@ func TestSimulateMsgVoteWeighted(t *testing.T) {
 	require.NoError(t, err)
 
 	var msg v1.MsgVoteWeighted
-	govcodec.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	govcodec.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	require.True(t, operationMsg.OK)
 	require.Equal(t, uint64(1), msg.ProposalId)
@@ -349,7 +349,7 @@ func createTestSuite(t *testing.T, isCheckTx bool) (suite, sdk.Context) {
 	), &res.AccountKeeper, &res.BankKeeper, &res.GovKeeper, &res.StakingKeeper, &res.cdc)
 	require.NoError(t, err)
 
-	ctx := app.BaseApp.NewContext(isCheckTx, tmproto.Header{})
+	ctx := app.NewContext(isCheckTx, tmproto.Header{})
 
 	res.App = app
 	return res, ctx

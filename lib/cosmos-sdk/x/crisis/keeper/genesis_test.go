@@ -6,14 +6,14 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	"github.com/cosmos/cosmos-sdk/x/crisis/keeper"
-	crisistestutil "github.com/cosmos/cosmos-sdk/x/crisis/testutil"
-	"github.com/cosmos/cosmos-sdk/x/crisis/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/keeper"
+	crisistestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
 )
 
 type GenesisTestSuite struct {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // generates AccAddress with `prefix` and calls String method
@@ -24,10 +24,9 @@ func addressStringCaller(require *require.Assertions, prefix byte, max uint32, c
 			return
 		default:
 			binary.BigEndian.PutUint32(bz[1:], i)
-			str := types.AccAddress(bz).String()
+			str := sdk.AccAddress(bz).String()
 			require.True(str != "")
 		}
-
 	}
 }
 

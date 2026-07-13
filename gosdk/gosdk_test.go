@@ -14,8 +14,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 // --------------------------------------------------

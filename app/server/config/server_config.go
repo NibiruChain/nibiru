@@ -14,8 +14,9 @@ import (
 	"github.com/cometbft/cometbft/libs/strings"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/server/config"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/config"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (

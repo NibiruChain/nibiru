@@ -10,10 +10,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	sdkkeys "github.com/cosmos/cosmos-sdk/client/keys"
-	cryptokeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdkkeys "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/keys"
+	cryptokeyring "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 const flagListNames = "list-names"

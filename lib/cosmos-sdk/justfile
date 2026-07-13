@@ -13,15 +13,102 @@ gen-proto-go:
   fi
   echo "✅ SUCCESS: just gen-proto-go"
 
-# Run cosmos-sdk tests relevant to Nibiru
+# Regenerate committed MockGen files. Run after interface changes in
+# cometbft-db or expected_keepers. After regen, testutil/mock/types_handler.go
+# may need manual re-edits so mock ante/post handlers call next() (Sei pattern).
+gen-mocks:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  mockgen='go run github.com/golang/mock/mockgen@v1.6.0'
+
+  mkdir -p testutil/mock baseapp/testutil/mock store/pruning/mock
+
+  printf "Generating shared mocks (testutil/mock/)...\n"
+  $mockgen -source=client/account_retriever.go -package mock -destination testutil/mock/account_retriever.go
+  $mockgen -source=types/module/module.go -package mock -destination testutil/mock/types_module_module.go
+  $mockgen -source=types/module/mock_appmodule_test.go -package mock -destination testutil/mock/types_mock_appmodule.go
+  $mockgen -source=types/invariant.go -package mock -destination testutil/mock/types_invariant.go
+  # NOTE: mockgen cannot preserve the custom Sei-style next() forwarding logic in
+  # testutil/mock/types_handler.go. After regenerating, reapply that local patch
+  # before committing the generated file.
+  $mockgen -source=types/handler.go -package mock -destination testutil/mock/types_handler.go
+  $mockgen -package mock -destination testutil/mock/tendermint_tm_db_DB.go github.com/cometbft/cometbft-db DB
+  $mockgen -package mock -destination testutil/mock/tendermint_tendermint_libs_log_DB.go github.com/cometbft/cometbft/libs/log Logger
+  $mockgen -package mock -destination testutil/mock/grpc_server.go github.com/cosmos/gogoproto/grpc Server
+
+  printf "Generating package-local mocks...\n"
+  $mockgen -source=baseapp/abci_utils.go -package mock -destination baseapp/testutil/mock/mocks.go
+  $mockgen -package mock -destination store/pruning/mock/db_mock.go github.com/cometbft/cometbft-db DB,Batch,Iterator
+
+  printf "Generating module keeper mocks (x/*/testutil/)...\n"
+  $mockgen -source=x/auth/types/expected_keepers.go -package testutil -destination x/auth/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/auth/ante/expected_keepers.go -package testutil -destination x/auth/ante/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/auth/vesting/types/expected_keepers.go -package testutil -destination x/auth/vesting/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/authz/expected_keepers.go -package testutil -destination x/authz/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/bank/types/expected_keepers.go -package testutil -destination x/bank/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/crisis/types/expected_keepers.go -package testutil -destination x/crisis/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/distribution/types/expected_keepers.go -package testutil -destination x/distribution/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/evidence/types/expected_keepers.go -package testutil -destination x/evidence/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/feegrant/expected_keepers.go -package testutil -destination x/feegrant/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/genutil/types/expected_keepers.go -package testutil -destination x/genutil/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/gov/testutil/expected_keepers.go -package testutil -destination x/gov/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/mint/types/expected_keepers.go -package testutil -destination x/mint/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/slashing/types/expected_keepers.go -package testutil -destination x/slashing/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/staking/types/expected_keepers.go -package testutil -destination x/staking/testutil/expected_keepers_mocks.go
+  $mockgen -source=x/params/proposal_handler_test.go -package testutil -destination x/params/testutil/staking_keeper_mock.go
+
+  echo "✅ SUCCESS: just gen-mocks"
+
+# Run the complete cosmos-sdk test suite in readable sections.
 test:
   #!/usr/bin/env bash
   set -euo pipefail
-  printf "\n\nRun tests - cosmos-sdk/types:\n"
-  go test ./types/... -tags='ledger test_ledger_mock'
 
-  printf "\n\nRun tests - cosmos-sdk/x:\n"
-  go test ./x/...
+  tags='ledger test_ledger_mock'
+  module_path="$(go list -m)"
+  package_prefix="$module_path/lib/cosmos-sdk/"
+  package_list="$(go list ./...)"
+  failed=0
 
-  printf "\n\nRun tests - cosmos-sdk/baseapp:\n"
-  go test ./baseapp/...
+  baseapp_types=()
+  x_modules=()
+  everything_else=()
+
+  while IFS= read -r pkg; do
+    if [[ "$pkg" == "${package_prefix%/}" ]]; then
+      baseapp_types+=("$pkg")
+      continue
+    fi
+
+    relative="${pkg#"$package_prefix"}"
+    case "$relative" in
+      baseapp|baseapp/*|types|types/*)
+        baseapp_types+=("$pkg")
+        ;;
+      x|x/*)
+        x_modules+=("$pkg")
+        ;;
+      *)
+        everything_else+=("$pkg")
+        ;;
+    esac
+  done <<< "$package_list"
+
+  run_group() {
+    local title="$1"
+    shift
+
+    echo "::group::$title"
+    for pkg in "$@"; do
+      if ! go test "$pkg" -tags="$tags"; then
+        failed=1
+      fi
+    done
+    echo "::endgroup::"
+  }
+
+  run_group "Cosmos SDK: Baseapp + types" "${baseapp_types[@]}"
+  run_group "Cosmos SDK: x modules" "${x_modules[@]}"
+  run_group "Cosmos SDK: Everything else" "${everything_else[@]}"
+
+  exit "$failed"

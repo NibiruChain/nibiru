@@ -12,7 +12,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/ethereum/go-ethereum/common"

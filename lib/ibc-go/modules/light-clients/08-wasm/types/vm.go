@@ -11,8 +11,8 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"

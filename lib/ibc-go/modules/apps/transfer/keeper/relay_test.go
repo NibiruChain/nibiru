@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	banktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

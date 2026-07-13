@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 

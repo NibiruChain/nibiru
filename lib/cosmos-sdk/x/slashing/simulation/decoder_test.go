@@ -9,13 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/kv"
-	"github.com/cosmos/cosmos-sdk/x/slashing/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing/testutil"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 )
 
 // nolint:deadcode,unused,varcheck
@@ -27,7 +28,8 @@ var (
 )
 
 func TestDecodeStore(t *testing.T) {
-	var cdc codec.Codec
+	var cdc codec.Codec //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &cdc)
 	dec := simulation.NewDecodeStore(cdc)
 

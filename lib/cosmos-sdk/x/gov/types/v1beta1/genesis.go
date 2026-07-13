@@ -3,9 +3,9 @@ package v1beta1
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 // NewGenesisState creates a new genesis state for the governance module
@@ -47,13 +47,13 @@ func (data GenesisState) Empty() bool {
 // ValidateGenesis checks if parameters are within valid ranges
 func ValidateGenesis(data *GenesisState) error {
 	threshold := data.TallyParams.Threshold
-	if threshold.IsNegative() || threshold.GT(math.LegacyOneDec()) {
+	if threshold.IsNegative() || threshold.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("governance vote threshold should be positive and less or equal to one, is %s",
 			threshold.String())
 	}
 
 	veto := data.TallyParams.VetoThreshold
-	if veto.IsNegative() || veto.GT(math.LegacyOneDec()) {
+	if veto.IsNegative() || veto.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("governance vote veto threshold should be positive and less or equal to one, is %s",
 			veto.String())
 	}

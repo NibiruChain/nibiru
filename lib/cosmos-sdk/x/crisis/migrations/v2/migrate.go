@@ -1,11 +1,11 @@
 package v2
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/crisis/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/exported"
 )
 
 const (
@@ -27,7 +27,7 @@ func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace 
 	legacySubspace.Get(ctx, ConstantFee, &currConstantFee)
 
 	if !currConstantFee.IsValid() {
-		return errors.ErrInvalidCoins.Wrap("constant fee")
+		return sdkerrors.ErrInvalidCoins.Wrap("constant fee")
 	}
 
 	bz, err := cdc.Marshal(&currConstantFee)

@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/holiman/uint256"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 

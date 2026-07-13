@@ -3,11 +3,11 @@ package simulation_test
 import (
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	"github.com/cosmos/cosmos-sdk/x/authz/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	authzkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/simulation"
 )
 
 func TestWeightedOperations(t *testing.T) {

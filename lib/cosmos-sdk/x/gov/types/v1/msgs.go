@@ -3,15 +3,15 @@ package v1
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/x/gov/codec"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdktx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 var (
@@ -223,7 +223,7 @@ func (msg MsgVoteWeighted) ValidateBasic() error {
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, WeightedVoteOptions(msg.Options).String())
 	}
 
-	totalWeight := math.LegacyNewDec(0)
+	totalWeight := sdkmath.LegacyNewDec(0)
 	usedOptions := make(map[VoteOption]bool)
 	for _, option := range msg.Options {
 		if !option.IsValid() {
@@ -240,11 +240,11 @@ func (msg MsgVoteWeighted) ValidateBasic() error {
 		usedOptions[option.Option] = true
 	}
 
-	if totalWeight.GT(math.LegacyNewDec(1)) {
+	if totalWeight.GT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(types.ErrInvalidVote, "Total weight overflow 1.00")
 	}
 
-	if totalWeight.LT(math.LegacyNewDec(1)) {
+	if totalWeight.LT(sdkmath.LegacyNewDec(1)) {
 		return sdkerrors.Wrap(types.ErrInvalidVote, "Total weight lower than 1.00")
 	}
 

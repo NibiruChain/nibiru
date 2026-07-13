@@ -3,15 +3,15 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 var _ types.QueryServer = BaseKeeper{}
@@ -85,7 +85,7 @@ func (k BaseKeeper) SpendableBalances(ctx context.Context, req *types.QuerySpend
 
 	balances := sdk.NewCoins()
 	accountStore := k.getAccountStore(sdkCtx, addr)
-	zeroAmt := math.ZeroInt()
+	zeroAmt := sdkmath.ZeroInt()
 
 	pageRes, err := query.Paginate(accountStore, req.Pagination, func(key, _ []byte) error {
 		balances = append(balances, sdk.NewCoin(string(key), zeroAmt))

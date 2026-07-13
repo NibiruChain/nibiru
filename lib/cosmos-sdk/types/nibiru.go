@@ -6,7 +6,7 @@ package types
 
 // lastErrApplyEvmMsg: Context keys should be unexported, unique types. A named,
 // empty struct is guaranteed to be unique in any Go scope.
-type lastErrApplyEvmMsg struct{}
+type lastErrApplyEvmMsg struct{} //nolint:unused
 
 // Holds a reference to the latest non-nil error resulting from apply
 // EVM, persisting through panics and nested "revert" calls. This

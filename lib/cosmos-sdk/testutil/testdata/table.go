@@ -1,6 +1,6 @@
 package testdata
 
-import "github.com/cosmos/cosmos-sdk/types/errors"
+import "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 var ErrTest = errors.Register("table_testdata", 2, "test")
 

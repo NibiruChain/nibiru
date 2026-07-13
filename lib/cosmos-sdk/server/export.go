@@ -7,12 +7,12 @@ import (
 	"os"
 
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 const (
@@ -75,7 +75,7 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 				return fmt.Errorf("error exporting state: %v", err)
 			}
 
-			doc, err := tmtypes.GenesisDocFromFile(serverCtx.Config.GenesisFile())
+			doc, err := cmttypes.GenesisDocFromFile(serverCtx.Config.GenesisFile())
 			if err != nil {
 				return err
 			}
@@ -83,17 +83,17 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 			doc.AppState = exported.AppState
 			doc.Validators = exported.Validators
 			doc.InitialHeight = exported.Height
-			doc.ConsensusParams = &tmtypes.ConsensusParams{
-				Block: tmtypes.BlockParams{
+			doc.ConsensusParams = &cmttypes.ConsensusParams{
+				Block: cmttypes.BlockParams{
 					MaxBytes: exported.ConsensusParams.Block.MaxBytes,
 					MaxGas:   exported.ConsensusParams.Block.MaxGas,
 				},
-				Evidence: tmtypes.EvidenceParams{
+				Evidence: cmttypes.EvidenceParams{
 					MaxAgeNumBlocks: exported.ConsensusParams.Evidence.MaxAgeNumBlocks,
 					MaxAgeDuration:  exported.ConsensusParams.Evidence.MaxAgeDuration,
 					MaxBytes:        exported.ConsensusParams.Evidence.MaxBytes,
 				},
-				Validator: tmtypes.ValidatorParams{
+				Validator: cmttypes.ValidatorParams{
 					PubKeyTypes: exported.ConsensusParams.Validator.PubKeyTypes,
 				},
 			}
@@ -115,7 +115,7 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 				return nil
 			}
 
-			var exportedGenDoc tmtypes.GenesisDoc
+			var exportedGenDoc cmttypes.GenesisDoc
 			if err = tmjson.Unmarshal(out, &exportedGenDoc); err != nil {
 				return err
 			}

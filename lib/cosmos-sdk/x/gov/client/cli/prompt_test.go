@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client/cli"
 )
 
 type st struct {
@@ -47,7 +47,7 @@ func TestPromptIntegerOverflow(t *testing.T) {
 
 			fin, fw := readline.NewFillableStdin(os.Stdin)
 			readline.Stdin = fin
-			fw.Write([]byte(overflowStr + "\n"))
+			fw.Write([]byte(overflowStr + "\n")) //nolint:errcheck
 
 			v, err := cli.Prompt(st{}, "")
 			assert.Equal(t, st{}, v, "expected a value of zero")
@@ -78,7 +78,7 @@ func TestPromptParseInteger(t *testing.T) {
 
 			fin, fw := readline.NewFillableStdin(os.Stdin)
 			readline.Stdin = fin
-			fw.Write([]byte(tc.in + "\n"))
+			fw.Write([]byte(tc.in + "\n")) //nolint:errcheck
 
 			v, err := cli.Prompt(st{}, "")
 			assert.Nil(t, err, "expected a nil error")

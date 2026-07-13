@@ -7,7 +7,7 @@ import (
 
 	ics23 "github.com/confio/ics23/go"
 
-	sdkmaps "github.com/cosmos/cosmos-sdk/store/internal/maps"
+	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"
 )
 
 var (
@@ -72,7 +72,6 @@ func CreateNonMembershipProof(data map[string][]byte, key []byte) (*ics23.Commit
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	proof := &ics23.CommitmentProof{

@@ -6,13 +6,13 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 )
 
 // File for storing in-package BaseApp optional functions,

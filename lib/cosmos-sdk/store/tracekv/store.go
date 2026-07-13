@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (
@@ -188,14 +188,14 @@ func writeOperation(w io.Writer, op operation, tc types.TraceContext, key, value
 
 	raw, err := json.Marshal(traceOp)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to serialize trace operation"))
+		panic(sdkerrors.Wrap(err, "failed to serialize trace operation"))
 	}
 
 	if _, err := w.Write(raw); err != nil {
-		panic(errors.Wrap(err, "failed to write trace operation"))
+		panic(sdkerrors.Wrap(err, "failed to write trace operation"))
 	}
 
 	if _, err = io.WriteString(w, "\n"); err != nil {
-		panic(errors.Wrap(err, "failed to write newline"))
+		panic(sdkerrors.Wrap(err, "failed to write newline"))
 	}
 }

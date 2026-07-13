@@ -1,15 +1,16 @@
 package v2
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1auth "github.com/cosmos/cosmos-sdk/x/auth/migrations/v1"
-	v1 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v1"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	v1auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/v1"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 // migrateSupply migrates the supply to be stored by denom key instead in a
@@ -120,7 +121,7 @@ func pruneZeroSupply(store sdk.KVStore) error {
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		var amount math.Int
+		var amount sdkmath.Int
 		if err := amount.Unmarshal(iterator.Value()); err != nil {
 			return err
 		}

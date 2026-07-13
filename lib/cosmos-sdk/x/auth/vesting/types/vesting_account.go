@@ -4,13 +4,13 @@ import (
 	"errors"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestexported "github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	vestexported "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/exported"
 )
 
 // Compile-time type assertions
@@ -70,7 +70,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 		// compute x and y per the specification, where:
 		// X := min(max(V - DV, 0), D)
 		// Y := D - X
-		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), math.ZeroInt()), coin.Amount)
+		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
 		y := coin.Amount.Sub(x)
 
 		if !x.IsZero() {
@@ -238,7 +238,7 @@ func (cva ContinuousVestingAccount) GetVestedCoins(blockTime time.Time) sdk.Coin
 	// calculate the vesting scalar
 	x := blockTime.Unix() - cva.StartTime
 	y := cva.EndTime - cva.StartTime
-	s := math.LegacyNewDec(x).Quo(math.LegacyNewDec(y))
+	s := sdkmath.LegacyNewDec(x).Quo(sdkmath.LegacyNewDec(y))
 
 	for _, ovc := range cva.OriginalVesting {
 		vestedAmt := sdk.NewDecFromInt(ovc.Amount).Mul(s).RoundInt()
@@ -257,7 +257,7 @@ func (cva ContinuousVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coi
 // LockedCoins returns the set of coins that are not spendable (i.e. locked),
 // defined as the vesting coins that are not delegated.
 func (cva ContinuousVestingAccount) LockedCoins(blockTime time.Time) sdk.Coins {
-	return cva.BaseVestingAccount.LockedCoinsFromVesting(cva.GetVestingCoins(blockTime))
+	return cva.LockedCoinsFromVesting(cva.GetVestingCoins(blockTime))
 }
 
 // TrackDelegation tracks a desired delegation amount by setting the appropriate
@@ -385,7 +385,7 @@ func (pva PeriodicVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coins
 // LockedCoins returns the set of coins that are not spendable (i.e. locked),
 // defined as the vesting coins that are not delegated.
 func (pva PeriodicVestingAccount) LockedCoins(blockTime time.Time) sdk.Coins {
-	return pva.BaseVestingAccount.LockedCoinsFromVesting(pva.GetVestingCoins(blockTime))
+	return pva.LockedCoinsFromVesting(pva.GetVestingCoins(blockTime))
 }
 
 // TrackDelegation tracks a desired delegation amount by setting the appropriate
@@ -498,7 +498,7 @@ func (dva DelayedVestingAccount) GetVestingCoins(blockTime time.Time) sdk.Coins 
 // LockedCoins returns the set of coins that are not spendable (i.e. locked),
 // defined as the vesting coins that are not delegated.
 func (dva DelayedVestingAccount) LockedCoins(blockTime time.Time) sdk.Coins {
-	return dva.BaseVestingAccount.LockedCoinsFromVesting(dva.GetVestingCoins(blockTime))
+	return dva.LockedCoinsFromVesting(dva.GetVestingCoins(blockTime))
 }
 
 // TrackDelegation tracks a desired delegation amount by setting the appropriate
@@ -557,7 +557,7 @@ func (plva PermanentLockedAccount) GetVestingCoins(_ time.Time) sdk.Coins {
 // LockedCoins returns the set of coins that are not spendable (i.e. locked),
 // defined as the vesting coins that are not delegated.
 func (plva PermanentLockedAccount) LockedCoins(_ time.Time) sdk.Coins {
-	return plva.BaseVestingAccount.LockedCoinsFromVesting(plva.OriginalVesting)
+	return plva.LockedCoinsFromVesting(plva.OriginalVesting)
 }
 
 // TrackDelegation tracks a desired delegation amount by setting the appropriate

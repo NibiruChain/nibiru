@@ -10,11 +10,12 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
 )
 
 const FlagAppDBBackend = "app-db-backend"

@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
 )
 
 // entry kinds for use within OperationEntry

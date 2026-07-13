@@ -8,31 +8,29 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/suite"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
-	"github.com/cosmos/cosmos-sdk/x/slashing/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing/testutil"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	banktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	distributionkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
+	slashingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 type SimTestSuite struct {
@@ -51,7 +49,6 @@ type SimTestSuite struct {
 	stakingKeeper     *stakingkeeper.Keeper
 	slashingKeeper    slashingkeeper.Keeper
 	distrKeeper       distributionkeeper.Keeper
-	mintKeeper        mintkeeper.Keeper
 }
 
 func (suite *SimTestSuite) SetupTest() {
@@ -60,16 +57,16 @@ func (suite *SimTestSuite) SetupTest() {
 	accounts := simtypes.RandomAccounts(suite.r, 4)
 
 	// create validator (non random as using a seed)
-	createValidator := func() (*tmtypes.ValidatorSet, error) {
+	createValidator := func() (*cmttypes.ValidatorSet, error) {
 		account := accounts[0]
 		tmPk, err := cryptocodec.ToTmPubKeyInterface(account.PubKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create pubkey: %w", err)
 		}
 
-		validator := tmtypes.NewValidator(tmPk, 1)
+		validator := cmttypes.NewValidator(tmPk, 1)
 
-		return tmtypes.NewValidatorSet([]*tmtypes.Validator{validator}), nil
+		return cmttypes.NewValidatorSet([]*cmttypes.Validator{validator}), nil
 	}
 
 	startupCfg := simtestutil.DefaultStartUpConfig()
@@ -84,14 +81,13 @@ func (suite *SimTestSuite) SetupTest() {
 		&suite.accountKeeper,
 		&suite.bankKeeper,
 		&suite.stakingKeeper,
-		&suite.mintKeeper,
 		&suite.slashingKeeper,
 		&suite.distrKeeper,
 	)
 
 	suite.Require().NoError(err)
 	suite.app = app
-	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{})
+	suite.ctx = app.NewContext(false, tmproto.Header{})
 
 	// remove genesis validator account
 	suite.accounts = accounts[1:]
@@ -105,9 +101,6 @@ func (suite *SimTestSuite) SetupTest() {
 		suite.accountKeeper.SetAccount(suite.ctx, acc)
 		suite.Require().NoError(banktestutil.FundAccount(suite.bankKeeper, suite.ctx, account.Address, initCoins))
 	}
-
-	suite.mintKeeper.SetParams(suite.ctx, minttypes.DefaultParams())
-	suite.mintKeeper.SetMinter(suite.ctx, minttypes.DefaultInitialMinter())
 }
 
 func TestSimTestSuite(t *testing.T) {
@@ -150,7 +143,7 @@ func (suite *SimTestSuite) TestSimulateMsgUnjail() {
 	suite.Require().NoError(err)
 
 	// setup validator0 by consensus address
-	suite.stakingKeeper.SetValidatorByConsAddr(ctx, validator0)
+	suite.stakingKeeper.SetValidatorByConsAddr(ctx, validator0) //nolint:errcheck
 	val0ConsAddress, err := validator0.GetConsAddr()
 	suite.Require().NoError(err)
 	info := types.NewValidatorSigningInfo(val0ConsAddress, int64(4), int64(3),
@@ -167,7 +160,7 @@ func (suite *SimTestSuite) TestSimulateMsgUnjail() {
 	suite.Require().NoError(err)
 	selfDelegation := stakingtypes.NewDelegation(val0AccAddress.Bytes(), validator0.GetOperator(), issuedShares)
 	suite.stakingKeeper.SetDelegation(ctx, selfDelegation)
-	suite.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), val0AccAddress.Bytes(), distrtypes.NewDelegatorStartingInfo(2, math.LegacyOneDec(), 200))
+	suite.distrKeeper.SetDelegatorStartingInfo(ctx, validator0.GetOperator(), val0AccAddress.Bytes(), distrtypes.NewDelegatorStartingInfo(2, sdkmath.LegacyOneDec(), 200))
 
 	// begin a new block
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: suite.app.LastBlockHeight() + 1, AppHash: suite.app.LastCommitID().Hash, Time: blockTime}})
@@ -178,7 +171,7 @@ func (suite *SimTestSuite) TestSimulateMsgUnjail() {
 	suite.Require().NoError(err)
 
 	var msg types.MsgUnjail
-	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	suite.Require().True(operationMsg.OK)
 	suite.Require().Equal(types.TypeMsgUnjail, msg.Type())
@@ -187,7 +180,7 @@ func (suite *SimTestSuite) TestSimulateMsgUnjail() {
 }
 
 func getTestingValidator0(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, accounts []simtypes.Account) (stakingtypes.Validator, error) {
-	commission0 := stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyOneDec(), math.LegacyOneDec())
+	commission0 := stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec())
 	return getTestingValidator(ctx, stakingKeeper, accounts, commission0, 0)
 }
 
@@ -205,7 +198,7 @@ func getTestingValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, a
 		return stakingtypes.Validator{}, fmt.Errorf("failed to set initial commission: %w", err)
 	}
 
-	validator.DelegatorShares = math.LegacyNewDec(100)
+	validator.DelegatorShares = sdkmath.LegacyNewDec(100)
 	validator.Tokens = sdk.NewInt(1000000)
 
 	stakingKeeper.SetValidator(ctx, validator)

@@ -3,15 +3,15 @@ package simulation
 import (
 	"math/rand"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	"github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	"github.com/cosmos/cosmos-sdk/x/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/simulation"
 )
 
 // Simulation operation weights constants
@@ -124,7 +124,7 @@ func SimulateMsgRevokeAllowance(cdc *codec.ProtoCodec, ak feegrant.AccountKeeper
 		hasGrant := false
 		var granterAddr sdk.AccAddress
 		var granteeAddr sdk.AccAddress
-		k.IterateAllFeeAllowances(ctx, func(grant feegrant.Grant) bool {
+		k.IterateAllFeeAllowances(ctx, func(grant feegrant.Grant) bool { //nolint:errcheck
 			granter := sdk.MustAccAddressFromBech32(grant.Granter)
 			grantee := sdk.MustAccAddressFromBech32(grant.Grantee)
 			granterAddr = granter

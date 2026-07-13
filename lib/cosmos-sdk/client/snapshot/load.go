@@ -10,10 +10,11 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
 )
 
 const SnapshotFileName = "_snapshot"

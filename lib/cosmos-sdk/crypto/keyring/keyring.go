@@ -12,18 +12,19 @@ import (
 
 	"github.com/99designs/keyring"
 	tmcrypto "github.com/cometbft/cometbft/crypto"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
-	"github.com/cosmos/cosmos-sdk/client/input"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/bcrypt"
-	"github.com/cosmos/cosmos-sdk/crypto/ledger"
-	"github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/go-bip39"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/input"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/bcrypt"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/ledger"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // Backend options for Keyring
@@ -325,7 +326,7 @@ func (ks keystore) ImportPrivKey(uid, armor, passphrase string) error {
 
 	privKey, _, err := crypto.UnarmorDecryptPrivKey(armor, passphrase)
 	if err != nil {
-		return errors.Wrap(err, "failed to decrypt private key")
+		return pkgerrors.Wrap(err, "failed to decrypt private key")
 	}
 
 	_, err = ks.writeLocalKey(uid, privKey)
@@ -412,7 +413,7 @@ func (ks keystore) Sign(uid string, msg []byte) ([]byte, types.PubKey, error) {
 			return nil, nil, err
 		}
 
-		return nil, pub, errors.New("cannot sign with offline keys")
+		return nil, pub, pkgerrors.New("cannot sign with offline keys")
 	}
 }
 
@@ -596,7 +597,7 @@ func (ks keystore) NewAccount(name string, mnemonic string, bip39Passphrase stri
 	// if found
 	address := sdk.AccAddress(privKey.PubKey().Address())
 	if _, err := ks.KeyByAddress(address); err == nil {
-		return nil, errors.New("duplicated address created")
+		return nil, pkgerrors.New("duplicated address created")
 	}
 
 	return ks.writeLocalKey(name, privKey)
@@ -627,7 +628,7 @@ func (ks keystore) SupportedAlgorithms() (SigningAlgoList, SigningAlgoList) {
 func SignWithLedger(k *Record, msg []byte) (sig []byte, pub types.PubKey, err error) {
 	ledgerInfo := k.GetLedger()
 	if ledgerInfo == nil {
-		return nil, nil, errors.New("not a ledger object")
+		return nil, nil, pkgerrors.New("not a ledger object")
 	}
 
 	path := ledgerInfo.GetPath()
@@ -651,7 +652,7 @@ func SignWithLedger(k *Record, msg []byte) (sig []byte, pub types.PubKey, err er
 	}
 
 	if !priv.PubKey().VerifySignature(msg, sig) {
-		return nil, nil, errors.New("Ledger generated an invalid signature. Perhaps you have multiple ledgers and need to try another one")
+		return nil, nil, pkgerrors.New("Ledger generated an invalid signature. Perhaps you have multiple ledgers and need to try another one")
 	}
 
 	return sig, priv.PubKey(), nil
@@ -852,19 +853,19 @@ func (ks keystore) writeRecord(k *Record) error {
 // In case of inconsistent keyring, it recovers it automatically.
 func (ks keystore) existsInDb(addr sdk.Address, name string) (bool, error) {
 	_, errAddr := ks.db.Get(addrHexKeyAsString(addr))
-	if errAddr != nil && !errors.Is(errAddr, keyring.ErrKeyNotFound) {
+	if errAddr != nil && !pkgerrors.Is(errAddr, keyring.ErrKeyNotFound) {
 		return false, errAddr
 	}
 
 	_, errInfo := ks.db.Get(infoKey(name))
 	if errInfo == nil {
 		return true, nil // uid lookup succeeds - info exists
-	} else if !errors.Is(errInfo, keyring.ErrKeyNotFound) {
+	} else if !pkgerrors.Is(errInfo, keyring.ErrKeyNotFound) {
 		return false, errInfo // received unexpected error - returns
 	}
 
 	// looking for an issue, record with meta (getByAddress) exists, but record with public key itself does not
-	if errAddr == nil && errors.Is(errInfo, keyring.ErrKeyNotFound) {
+	if errAddr == nil && pkgerrors.Is(errInfo, keyring.ErrKeyNotFound) {
 		fmt.Fprintf(os.Stderr, "address \"%s\" exists but pubkey itself does not\n", hex.EncodeToString(addr.Bytes()))
 		fmt.Fprintln(os.Stderr, "recreating pubkey record")
 		err := ks.db.Remove(addrHexKeyAsString(addr))
@@ -1007,7 +1008,7 @@ func (ks keystore) SetItem(item keyring.Item) error {
 
 func (ks keystore) convertFromLegacyInfo(info LegacyInfo) (*Record, error) {
 	if info == nil {
-		return nil, errors.New("unable to convert LegacyInfo to Record cause info is nil")
+		return nil, pkgerrors.New("unable to convert LegacyInfo to Record cause info is nil")
 	}
 
 	name := info.GetName()
@@ -1033,8 +1034,7 @@ func (ks keystore) convertFromLegacyInfo(info LegacyInfo) (*Record, error) {
 
 		return NewLedgerRecord(name, pk, path)
 	default:
-		return nil, errors.New("unknown LegacyInfo type")
-
+		return nil, pkgerrors.New("unknown LegacyInfo type")
 	}
 }
 

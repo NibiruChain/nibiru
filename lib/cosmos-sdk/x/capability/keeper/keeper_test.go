@@ -6,12 +6,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	"github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	"github.com/cosmos/cosmos-sdk/x/capability/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
 )
 
 var (
@@ -140,7 +140,7 @@ func (suite *KeeperTestSuite) TestAuthenticateCapability() {
 	suite.Require().False(sk2.AuthenticateCapability(suite.ctx, cap2, "invalid"))
 	suite.Require().False(sk2.AuthenticateCapability(suite.ctx, cap1, "bond"))
 
-	sk2.ReleaseCapability(suite.ctx, cap2)
+	sk2.ReleaseCapability(suite.ctx, cap2) //nolint:errcheck
 	suite.Require().False(sk2.AuthenticateCapability(suite.ctx, cap2, "bond"))
 
 	badCap := types.NewCapability(100)

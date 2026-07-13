@@ -12,10 +12,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	cmtlog "github.com/cometbft/cometbft/libs/log"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/server"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

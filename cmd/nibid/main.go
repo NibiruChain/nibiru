@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/server"
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 )

@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	connectionv7 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/migrations/v7"
 )

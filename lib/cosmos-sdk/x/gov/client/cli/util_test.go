@@ -13,16 +13,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 func TestParseSubmitLegacyProposal(t *testing.T) {
@@ -39,17 +39,17 @@ func TestParseSubmitLegacyProposal(t *testing.T) {
 	fs := NewCmdSubmitLegacyProposal().Flags()
 
 	// nonexistent json
-	fs.Set(FlagProposal, "fileDoesNotExist")
+	fs.Set(FlagProposal, "fileDoesNotExist") //nolint:errcheck
 	_, err := parseSubmitLegacyProposal(fs)
 	require.Error(t, err)
 
 	// invalid json
-	fs.Set(FlagProposal, badJSON.Name())
+	fs.Set(FlagProposal, badJSON.Name()) //nolint:errcheck
 	_, err = parseSubmitLegacyProposal(fs)
 	require.Error(t, err)
 
 	// ok json
-	fs.Set(FlagProposal, okJSON.Name())
+	fs.Set(FlagProposal, okJSON.Name()) //nolint:errcheck
 	proposal1, err := parseSubmitLegacyProposal(fs)
 	require.Nil(t, err, "unexpected error")
 	require.Equal(t, "Test Proposal", proposal1.Title)
@@ -59,14 +59,14 @@ func TestParseSubmitLegacyProposal(t *testing.T) {
 
 	// flags that can't be used with --proposal
 	for _, incompatibleFlag := range ProposalFlags {
-		fs.Set(incompatibleFlag, "some value")
+		fs.Set(incompatibleFlag, "some value") //nolint:errcheck
 		_, err := parseSubmitLegacyProposal(fs)
 		require.Error(t, err)
-		fs.Set(incompatibleFlag, "")
+		fs.Set(incompatibleFlag, "") //nolint:errcheck
 	}
 
 	// no --proposal, only flags
-	fs.Set(FlagProposal, "")
+	fs.Set(FlagProposal, "") //nolint:errcheck
 	flagTestCases := map[string]struct {
 		pTitle       string
 		pDescription string
@@ -100,10 +100,10 @@ func TestParseSubmitLegacyProposal(t *testing.T) {
 	}
 	for name, tc := range flagTestCases {
 		t.Run(name, func(t *testing.T) {
-			fs.Set(FlagTitle, tc.pTitle)
-			fs.Set(FlagDescription, tc.pDescription)
-			fs.Set(FlagProposalType, tc.pType)
-			fs.Set(FlagDeposit, proposal1.Deposit)
+			fs.Set(FlagTitle, tc.pTitle)             //nolint:errcheck
+			fs.Set(FlagDescription, tc.pDescription) //nolint:errcheck
+			fs.Set(FlagProposalType, tc.pType)       //nolint:errcheck
+			fs.Set(FlagDeposit, proposal1.Deposit)   //nolint:errcheck
 			proposal2, err := parseSubmitLegacyProposal(fs)
 
 			if tc.expErr {

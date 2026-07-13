@@ -3,7 +3,7 @@ package simulation
 import (
 	"math/rand"
 
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 )

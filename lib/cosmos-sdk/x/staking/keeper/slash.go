@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	types "github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // Slash a validator for an infraction committed at a known height
@@ -30,7 +30,7 @@ import (
 //
 //	Infraction was committed at the current height or at a past height,
 //	not at a height in the future
-func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec) math.Int {
+func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec) sdkmath.Int {
 	logger := k.Logger(ctx)
 
 	if slashFactor.IsNegative() {
@@ -115,14 +115,14 @@ func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeigh
 
 	// cannot decrease balance below zero
 	tokensToBurn := sdk.MinInt(remainingSlashAmount, validator.Tokens)
-	tokensToBurn = sdk.MaxInt(tokensToBurn, math.ZeroInt()) // defensive.
+	tokensToBurn = sdk.MaxInt(tokensToBurn, sdkmath.ZeroInt()) // defensive.
 
 	// we need to calculate the *effective* slash fraction for distribution
 	if validator.Tokens.IsPositive() {
 		effectiveFraction := sdk.NewDecFromInt(tokensToBurn).QuoRoundUp(sdk.NewDecFromInt(validator.Tokens))
 		// possible if power has changed
-		if effectiveFraction.GT(math.LegacyOneDec()) {
-			effectiveFraction = math.LegacyOneDec()
+		if effectiveFraction.GT(sdkmath.LegacyOneDec()) {
+			effectiveFraction = sdkmath.LegacyOneDec()
 		}
 		// call the before-slashed hook
 		if err := k.Hooks().BeforeValidatorSlashed(ctx, operatorAddress, effectiveFraction); err != nil {
@@ -157,7 +157,7 @@ func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeigh
 }
 
 // SlashWithInfractionReason implementation doesn't require the infraction (types.Infraction) to work but is required by Interchain Security.
-func (k Keeper) SlashWithInfractionReason(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec, _ types.Infraction) math.Int {
+func (k Keeper) SlashWithInfractionReason(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeight int64, power int64, slashFactor sdk.Dec, _ types.Infraction) sdkmath.Int {
 	return k.Slash(ctx, consAddr, infractionHeight, power, slashFactor)
 }
 
@@ -184,10 +184,10 @@ func (k Keeper) Unjail(ctx sdk.Context, consAddr sdk.ConsAddress) {
 // insufficient stake remaining)
 func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation types.UnbondingDelegation,
 	infractionHeight int64, slashFactor sdk.Dec,
-) (totalSlashAmount math.Int) {
+) (totalSlashAmount sdkmath.Int) {
 	now := ctx.BlockHeader().Time
-	totalSlashAmount = math.ZeroInt()
-	burnedAmount := math.ZeroInt()
+	totalSlashAmount = sdkmath.ZeroInt()
+	burnedAmount := sdkmath.ZeroInt()
 
 	// perform slashing on all entries within the unbonding delegation
 	for i, entry := range unbondingDelegation.Entries {
@@ -238,10 +238,10 @@ func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation ty
 // NOTE this is only slashing for prior infractions from the source validator
 func (k Keeper) SlashRedelegation(ctx sdk.Context, srcValidator types.Validator, redelegation types.Redelegation,
 	infractionHeight int64, slashFactor sdk.Dec,
-) (totalSlashAmount math.Int) {
+) (totalSlashAmount sdkmath.Int) {
 	now := ctx.BlockHeader().Time
-	totalSlashAmount = math.ZeroInt()
-	bondedBurnedAmount, notBondedBurnedAmount := math.ZeroInt(), math.ZeroInt()
+	totalSlashAmount = sdkmath.ZeroInt()
+	bondedBurnedAmount, notBondedBurnedAmount := sdkmath.ZeroInt(), sdkmath.ZeroInt()
 
 	// perform slashing on all entries within the redelegation
 	for _, entry := range redelegation.Entries {
@@ -270,7 +270,7 @@ func (k Keeper) SlashRedelegation(ctx sdk.Context, srcValidator types.Validator,
 		if found {
 			for i, entry := range unbondingDelegation.Entries {
 				// slash with the amount of `slashAmount` if possible, else slash all unbonding token
-				unbondingSlashAmount := math.MinInt(slashAmount, entry.Balance)
+				unbondingSlashAmount := sdkmath.MinInt(slashAmount, entry.Balance)
 
 				switch {
 				// There's no token to slash

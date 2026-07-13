@@ -3,8 +3,8 @@ package v7_test
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 
 	ibcclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
 	v7 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/migrations/v7"

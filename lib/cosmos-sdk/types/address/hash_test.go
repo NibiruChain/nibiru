@@ -57,7 +57,8 @@ func (suite *AddressSuite) TestComposed() {
 	assert.NotEqual(ac, ac2, "NewComposed must be sensitive to type")
 
 	// changing order of addresses shouldn't impact a composed address
-	ac2, err = Compose(typ, []Addressable{a1, addrMock{make([]byte, 300, 300)}})
+	//nolint:staticcheck
+	ac2, err = Compose(typ, []Addressable{a1, addrMock{make([]byte, 300, 300)}}) //nolint:ineffassign
 	assert.Error(err)
 	assert.Contains(err.Error(), "should be max 255 bytes, got 300")
 }

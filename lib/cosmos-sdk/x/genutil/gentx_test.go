@@ -7,23 +7,24 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltestutil "github.com/cosmos/cosmos-sdk/x/genutil/testutil"
-	"github.com/cosmos/cosmos-sdk/x/genutil/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
+	genutiltestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 var (
@@ -62,7 +63,7 @@ func (suite *GenTxTestSuite) SetupTest() {
 
 	var err error
 	amount := sdk.NewInt64Coin(sdk.DefaultBondDenom, 50)
-	one := math.OneInt()
+	one := sdkmath.OneInt()
 	suite.msg1, err = stakingtypes.NewMsgCreateValidator(
 		sdk.ValAddress(pk1.Address()), pk1, amount, desc, comm, one)
 	suite.NoError(err)
@@ -90,9 +91,7 @@ func (suite *GenTxTestSuite) setAccountBalance(balances []banktypes.Balance) jso
 		},
 		Supply: sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
 	}
-	for _, balance := range balances {
-		bankGenesisState.Balances = append(bankGenesisState.Balances, balance)
-	}
+	bankGenesisState.Balances = append(bankGenesisState.Balances, balances...)
 	for _, balance := range bankGenesisState.Balances {
 		bankGenesisState.Supply.Add(balance.Coins...)
 	}
@@ -315,8 +314,9 @@ func (suite *GenTxTestSuite) TestDeliverGenTxs() {
 
 			if tc.expPass {
 				suite.Require().NotPanics(func() {
+					//nolint:errcheck
 					genutil.DeliverGenTxs(
-						suite.ctx, genTxs, suite.stakingKeeper, tc.deliverTxFn,
+						suite.ctx, genTxs, suite.stakingKeeper, tc.deliverTxFn, //nolint:errcheck
 						suite.encodingConfig.TxConfig,
 					)
 				})

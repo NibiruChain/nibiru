@@ -3,14 +3,14 @@ package authz
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
-	authzcodec "github.com/cosmos/cosmos-sdk/x/authz/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
+	authzcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/codec"
 
 	"github.com/cosmos/gogoproto/proto"
 
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 var (

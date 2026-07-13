@@ -3,7 +3,7 @@ package sudo
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 )
 
 func (gen *GenesisState) Validate() error {

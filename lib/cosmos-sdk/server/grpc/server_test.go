@@ -14,20 +14,20 @@ import (
 	"google.golang.org/grpc/metadata"
 	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	reflectionv1 "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
-	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/codec"
-	reflectionv2 "github.com/cosmos/cosmos-sdk/server/grpc/reflection/v2alpha1"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
-	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	reflectionv1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/grpc/reflection"
+	clienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	reflectionv2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/grpc/reflection/v2alpha1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/network"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"
+	txtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	authclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/client"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 type IntegrationTestSuite struct {
@@ -96,7 +96,7 @@ func (s *IntegrationTestSuite) TestGRPCServer_BankBalance() {
 	s.Require().NotEmpty(blockHeight[0]) // Should contain the block height
 
 	// Request metadata should work
-	bankRes, err = bankClient.Balance(
+	bankRes, err = bankClient.Balance( //nolint:staticcheck
 		metadata.AppendToOutgoingContext(context.Background(), grpctypes.GRPCBlockHeightHeader, "1"), // Add metadata to request
 		&banktypes.QueryBalanceRequest{Address: val0.Address.String(), Denom: denom},
 		grpc.Header(&header),

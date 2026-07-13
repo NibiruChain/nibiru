@@ -7,17 +7,17 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 
-	"github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 type UpgradeTestSuite struct {
@@ -70,7 +70,7 @@ func (suite *UpgradeTestSuite) TestQueryCurrentPlan() {
 			"with current upgrade plan",
 			func() {
 				plan := types.Plan{Name: "test-plan", Height: 5}
-				suite.upgradeKeeper.ScheduleUpgrade(suite.ctx, plan)
+				suite.upgradeKeeper.ScheduleUpgrade(suite.ctx, plan) //nolint:errcheck
 
 				req = &types.QueryCurrentPlanRequest{}
 				expResponse = types.QueryCurrentPlanResponse{Plan: &plan}
@@ -123,7 +123,7 @@ func (suite *UpgradeTestSuite) TestAppliedCurrentPlan() {
 
 				planName := "test-plan"
 				plan := types.Plan{Name: planName, Height: expHeight}
-				suite.upgradeKeeper.ScheduleUpgrade(suite.ctx, plan)
+				suite.upgradeKeeper.ScheduleUpgrade(suite.ctx, plan) //nolint:errcheck
 
 				suite.ctx = suite.ctx.WithBlockHeight(expHeight)
 				suite.upgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, plan types.Plan, vm module.VersionMap) (module.VersionMap, error) {

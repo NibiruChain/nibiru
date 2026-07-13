@@ -7,13 +7,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	sdktestuil "github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v1"
-	v2 "github.com/cosmos/cosmos-sdk/x/staking/migrations/v2"
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdktestuil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/migrations/v1"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/migrations/v2"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 func TestStoreMigration(t *testing.T) {
@@ -25,7 +25,8 @@ func TestStoreMigration(t *testing.T) {
 	_, pk1, addr1 := testdata.KeyTestPubAddr()
 	valAddr1 := sdk.ValAddress(addr1)
 	val := testutil.NewValidator(t, valAddr1, pk1)
-	_, pk1, addr2 := testdata.KeyTestPubAddr()
+	//nolint:staticcheck
+	_, pk1, addr2 := testdata.KeyTestPubAddr() //nolint:ineffassign
 	valAddr2 := sdk.ValAddress(addr2)
 	_, _, addr3 := testdata.KeyTestPubAddr()
 	consAddr := sdk.ConsAddress(addr3.String())

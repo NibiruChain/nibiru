@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 )
 
 const (
@@ -34,7 +34,7 @@ func TestDeposits(t *testing.T) {
 	require.True(t, sdk.NewCoins(proposal.TotalDeposit...).IsEqual(sdk.NewCoins()))
 
 	// Check no deposits at beginning
-	deposit, found := govKeeper.GetDeposit(ctx, proposalID, TestAddrs[1])
+	deposit, found := govKeeper.GetDeposit(ctx, proposalID, TestAddrs[1]) //nolint:ineffassign
 	require.False(t, found)
 	proposal, ok := govKeeper.GetProposal(ctx, proposalID)
 	require.True(t, ok)
@@ -199,7 +199,7 @@ func TestValidateInitialDeposit(t *testing.T) {
 			params.MinDeposit = tc.minDeposit
 			params.MinInitialDepositRatio = sdk.NewDec(tc.minInitialDepositPercent).Quo(sdk.NewDec(100)).String()
 
-			govKeeper.SetParams(ctx, params)
+			govKeeper.SetParams(ctx, params) //nolint:errcheck
 
 			err := govKeeper.ValidateInitialDeposit(ctx, tc.initialDeposit)
 

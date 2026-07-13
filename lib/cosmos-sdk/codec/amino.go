@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"io"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	amino "github.com/tendermint/go-amino"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 // LegacyAmino defines a wrapper for an Amino codec that properly
@@ -30,8 +30,8 @@ func NewLegacyAmino() *LegacyAmino {
 // RegisterEvidences registers Tendermint evidence types with the provided Amino
 // codec.
 func RegisterEvidences(cdc *LegacyAmino) {
-	cdc.Amino.RegisterInterface((*tmtypes.Evidence)(nil), nil)
-	cdc.Amino.RegisterConcrete(&tmtypes.DuplicateVoteEvidence{}, "tendermint/DuplicateVoteEvidence", nil)
+	cdc.Amino.RegisterInterface((*cmttypes.Evidence)(nil), nil)
+	cdc.Amino.RegisterConcrete(&cmttypes.DuplicateVoteEvidence{}, "tendermint/DuplicateVoteEvidence", nil)
 }
 
 // MarshalJSONIndent provides a utility for indented JSON encoding of an object

@@ -2,8 +2,8 @@ package gosdk
 
 // import (
 // 	"github.com/NibiruChain/nibiru/v2/app"
-// 	sdkclient "github.com/cosmos/cosmos-sdk/client"
-// 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+// 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+// 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 // )
 
 // TODO: https://github.com/NibiruChain/nibiru/issues/1894

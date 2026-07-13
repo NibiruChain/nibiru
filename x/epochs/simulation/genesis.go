@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )

@@ -5,6 +5,13 @@ on:
   pull_request:
     paths:
       - "proto/**"
+      - "lib/cosmos-sdk/proto/**"
+      - "lib/ibc-go/proto/**"
+      - "buf.work.yaml"
+      - "contrib/scripts/proto.sh"
+      - "contrib/scripts/protocgen.sh"
+      - "go_mod_test.go"
+      - "justfile"
 
 # Allow concurrent runs on main/release branches but isolates other branches 
 concurrency:
@@ -34,7 +41,27 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1.50.0
         with:
           github_token: ${{ github.token }}
-      - uses: bufbuild/buf-breaking-action@v1
+      - name: Check for breaking changes
+        run: >-
+          buf breaking proto
+          --against "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},subdir=proto"
+          --exclude-imports
+          --error-format github-actions
+
+  proto-gen-go:
+    name: Verify generated Go output
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
-          input: "proto"
-          against: "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},subdir=proto"
+          go-version-file: go.mod
+      - name: Install just
+        uses: taiki-e/install-action@just
+      - name: Regenerate protobuf output
+        run: just proto gen
+      - name: Verify generated output is clean
+        run: git diff --exit-code
+      - name: Verify generated imports
+        run: go test . -run TestGeneratedProtoImports_NoUpstreamModules

@@ -2,12 +2,12 @@
 syntax = "proto3";
 package cosmos.authz.v1beta1;
 
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/authz/v1beta1/authz.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/authz";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz";
 
 // Query defines the gRPC querier service.
 service Query {

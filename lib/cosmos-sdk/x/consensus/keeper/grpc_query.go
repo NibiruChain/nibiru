@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/consensus/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 )
 
 var _ types.QueryServer = Querier{}
@@ -26,7 +26,7 @@ func NewQuerier(keeper Keeper) Querier {
 func (k Querier) Params(ctx context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	params, err := k.Keeper.Get(sdkCtx)
+	params, err := k.Get(sdkCtx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

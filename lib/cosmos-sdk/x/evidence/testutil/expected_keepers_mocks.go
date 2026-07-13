@@ -8,10 +8,10 @@ import (
 	reflect "reflect"
 	time "time"
 
-	types "github.com/cosmos/cosmos-sdk/crypto/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/auth/types"
-	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	types0 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	types2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

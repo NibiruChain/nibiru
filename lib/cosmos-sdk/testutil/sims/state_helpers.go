@@ -10,19 +10,19 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	simcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/simulation/client/cli"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // Simulation parameter constants
@@ -127,7 +127,7 @@ func AppStateFnWithExtendedCbs(
 			panic(err)
 		}
 		// compute not bonded balance
-		notBondedTokens := math.ZeroInt()
+		notBondedTokens := sdkmath.ZeroInt()
 		for _, val := range stakingState.Validators {
 			if val.Status != stakingtypes.Unbonded {
 				continue
@@ -202,11 +202,11 @@ func AppStateRandomizedFn(
 	// number of bonded accounts
 	var (
 		numInitiallyBonded int64
-		initialStake       math.Int
+		initialStake       sdkmath.Int
 	)
 	appParams.GetOrGenerate(
 		cdc, StakePerAccount, &initialStake, r,
-		func(r *rand.Rand) { initialStake = math.NewInt(r.Int63n(1e12)) },
+		func(r *rand.Rand) { initialStake = sdkmath.NewInt(r.Int63n(1e12)) },
 	)
 	appParams.GetOrGenerate(
 		cdc, InitiallyBondedValidators, &numInitiallyBonded, r,
@@ -249,13 +249,13 @@ func AppStateRandomizedFn(
 
 // AppStateFromGenesisFileFn util function to generate the genesis AppState
 // from a genesis.json file.
-func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account, error) {
+func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (cmttypes.GenesisDoc, []simtypes.Account, error) {
 	bytes, err := os.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var genesis tmtypes.GenesisDoc
+	var genesis cmttypes.GenesisDoc
 	// NOTE: Tendermint uses a custom JSON decoder for GenesisDoc
 	err = tmjson.Unmarshal(bytes, &genesis)
 	if err != nil {

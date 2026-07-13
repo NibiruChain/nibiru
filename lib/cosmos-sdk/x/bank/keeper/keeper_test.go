@@ -6,26 +6,26 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/bank/exported"
-	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	banktestutil "github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	vesting "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	banktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 const (
@@ -41,7 +41,7 @@ var (
 	holderAcc    = authtypes.NewEmptyModuleAccount(holder)
 	burnerAcc    = authtypes.NewEmptyModuleAccount(authtypes.Burner, authtypes.Burner)
 	minterAcc    = authtypes.NewEmptyModuleAccount(authtypes.Minter, authtypes.Minter)
-	mintAcc      = authtypes.NewEmptyModuleAccount(minttypes.ModuleName, authtypes.Minter)
+	mintAcc      = authtypes.NewEmptyModuleAccount(mint.ModuleName, authtypes.Minter)
 	multiPermAcc = authtypes.NewEmptyModuleAccount(multiPerm, authtypes.Burner, authtypes.Minter, authtypes.Staking)
 
 	baseAcc = authtypes.NewBaseAccountWithAddress(sdk.AccAddress([]byte("baseAcc")))
@@ -209,7 +209,7 @@ func (suite *KeeperTestSuite) TestGetAuthority() {
 	tests := map[string]string{
 		"some random account":    "cosmos139f7kncmglres2nf3h4hc4tade85ekfr8sulz5",
 		"gov module account":     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		"another module account": authtypes.NewModuleAddress(minttypes.ModuleName).String(),
+		"another module account": authtypes.NewModuleAddress(mint.ModuleName).String(),
 	}
 
 	for name, expected := range tests {
@@ -262,11 +262,11 @@ func (suite *KeeperTestSuite) TestSendCoinsFromModuleToAccount_Blocklist() {
 	keeper := suite.bankKeeper
 
 	suite.mockMintCoins(mintAcc)
-	require.NoError(keeper.MintCoins(ctx, minttypes.ModuleName, initCoins))
+	require.NoError(keeper.MintCoins(ctx, mint.ModuleName, initCoins))
 
 	suite.authKeeper.EXPECT().GetModuleAddress(mintAcc.Name).Return(mintAcc.GetAddress())
 	require.Error(keeper.SendCoinsFromModuleToAccount(
-		ctx, minttypes.ModuleName, accAddrs[4], initCoins,
+		ctx, mint.ModuleName, accAddrs[4], initCoins,
 	))
 }
 
@@ -277,10 +277,10 @@ func (suite *KeeperTestSuite) TestSupply_SendCoins() {
 
 	// set initial balances
 	suite.mockMintCoins(mintAcc)
-	require.NoError(keeper.MintCoins(ctx, minttypes.ModuleName, initCoins))
+	require.NoError(keeper.MintCoins(ctx, mint.ModuleName, initCoins))
 
 	suite.mockSendCoinsFromModuleToAccount(mintAcc, holderAcc.GetAddress())
-	require.NoError(keeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, holderAcc.GetAddress(), initCoins))
+	require.NoError(keeper.SendCoinsFromModuleToAccount(ctx, mint.ModuleName, holderAcc.GetAddress(), initCoins))
 
 	authKeeper.EXPECT().GetModuleAddress("").Return(nil)
 	require.Panics(func() {
@@ -622,9 +622,9 @@ func (suite *KeeperTestSuite) TestSendEnabled() {
 
 	require.NoError(suite.bankKeeper.SetParams(ctx, params))
 
-	bondCoin := sdk.NewCoin(sdk.DefaultBondDenom, math.OneInt())
-	fooCoin := sdk.NewCoin("foocoin", math.OneInt())
-	barCoin := sdk.NewCoin("barcoin", math.OneInt())
+	bondCoin := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.OneInt())
+	fooCoin := sdk.NewCoin("foocoin", sdkmath.OneInt())
+	barCoin := sdk.NewCoin("barcoin", sdkmath.OneInt())
 
 	// assert with default (all denom) send enabled both Bar and Bond Denom are enabled
 	require.Equal(enabled, suite.bankKeeper.IsSendEnabledCoin(ctx, barCoin))
@@ -1610,10 +1610,7 @@ func (suite *KeeperTestSuite) TestIterateSendEnabledEntries() {
 		suite.T().Run(fmt.Sprintf("all denoms have expected values default %t", def), func(t *testing.T) {
 			bankKeeper.IterateSendEnabledEntries(ctx, func(denom string, sendEnabled bool) (stop bool) {
 				seen = append(seen, denom)
-				exp := true
-				if strings.HasSuffix(denom, "false") {
-					exp = false
-				}
+				exp := !strings.HasSuffix(denom, "false")
 
 				require.Equal(exp, sendEnabled, denom)
 				return false

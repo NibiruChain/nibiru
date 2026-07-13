@@ -1,9 +1,9 @@
 package v2
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/distribution/migrations/v1"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/migrations/v1"
 )
 
 // MigrateStore performs in-place store migrations from v0.40 to v0.43. The

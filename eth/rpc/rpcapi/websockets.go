@@ -13,10 +13,11 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	pkgerrors "github.com/pkg/errors"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

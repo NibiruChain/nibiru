@@ -15,20 +15,20 @@ import (
 	protoio "github.com/cosmos/gogoproto/io"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	iavltree "github.com/cosmos/iavl"
-	"github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	"github.com/cosmos/cosmos-sdk/store/cachemulti"
-	"github.com/cosmos/cosmos-sdk/store/dbadapter"
-	"github.com/cosmos/cosmos-sdk/store/iavl"
-	"github.com/cosmos/cosmos-sdk/store/listenkv"
-	"github.com/cosmos/cosmos-sdk/store/mem"
-	"github.com/cosmos/cosmos-sdk/store/pruning"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/store/tracekv"
-	"github.com/cosmos/cosmos-sdk/store/transient"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachemulti"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/dbadapter"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/iavl"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/listenkv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/mem"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/tracekv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/transient"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (
@@ -249,7 +249,7 @@ func (rs *Store) loadVersion(ver int64, upgrades *types.StoreUpgrades) error {
 
 		store, err := rs.loadCommitStoreFromParams(key, commitID, storeParams)
 		if err != nil {
-			return errors.Wrap(err, "failed to load store")
+			return pkgerrors.Wrap(err, "failed to load store")
 		}
 
 		newStores[key] = store
@@ -257,7 +257,7 @@ func (rs *Store) loadVersion(ver int64, upgrades *types.StoreUpgrades) error {
 		// If it was deleted, remove all data
 		if upgrades.IsDeleted(key.Name()) {
 			if err := deleteKVStore(types.KVStore(store)); err != nil {
-				return errors.Wrapf(err, "failed to delete store %s", key.Name())
+				return pkgerrors.Wrapf(err, "failed to delete store %s", key.Name())
 			}
 			rs.removalMap[key] = true
 		} else if oldName := upgrades.RenamedFrom(key.Name()); oldName != "" {
@@ -269,12 +269,12 @@ func (rs *Store) loadVersion(ver int64, upgrades *types.StoreUpgrades) error {
 			// load from the old name
 			oldStore, err := rs.loadCommitStoreFromParams(oldKey, rs.getCommitID(infos, oldName), oldParams)
 			if err != nil {
-				return errors.Wrapf(err, "failed to load old store %s", oldName)
+				return pkgerrors.Wrapf(err, "failed to load old store %s", oldName)
 			}
 
 			// move all data
 			if err := moveKVStoreData(types.KVStore(oldStore), types.KVStore(store)); err != nil {
-				return errors.Wrapf(err, "failed to move store %s -> %s", oldName, key.Name())
+				return pkgerrors.Wrapf(err, "failed to move store %s -> %s", oldName, key.Name())
 			}
 
 			// add the old key so its deletion is committed
@@ -643,7 +643,7 @@ func (rs *Store) PruneStores(clearPruningManager bool, pruningHeights []int64) (
 			continue
 		}
 
-		if errCause := errors.Cause(err); errCause != nil && errCause != iavltree.ErrVersionDoesNotExist {
+		if errCause := pkgerrors.Cause(err); errCause != nil && errCause != iavltree.ErrVersionDoesNotExist {
 			return err
 		}
 	}
@@ -1052,14 +1052,14 @@ func (rs *Store) GetCommitInfo(ver int64) (*types.CommitInfo, error) {
 
 	bz, err := rs.db.Get([]byte(cInfoKey))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get commit info")
+		return nil, pkgerrors.Wrap(err, "failed to get commit info")
 	} else if bz == nil {
-		return nil, errors.New("no commit info found")
+		return nil, pkgerrors.New("no commit info found")
 	}
 
 	cInfo := &types.CommitInfo{}
 	if err = cInfo.Unmarshal(bz); err != nil {
-		return nil, errors.Wrap(err, "failed unmarshal commit info")
+		return nil, pkgerrors.Wrap(err, "failed unmarshal commit info")
 	}
 
 	return cInfo, nil

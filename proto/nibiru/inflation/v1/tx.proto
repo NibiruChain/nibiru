@@ -7,7 +7,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "nibiru/inflation/v1/inflation.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/mint";
 
 service Msg {
   // ToggleInflation defines a method to enable or disable inflation.

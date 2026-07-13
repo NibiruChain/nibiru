@@ -7,9 +7,9 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 type storeTestSuite struct {
@@ -63,7 +63,7 @@ func (s *storeTestSuite) TestNewTransientStoreKeys() {
 func (s *storeTestSuite) TestNewInfiniteGasMeter() {
 	gm := sdk.NewInfiniteGasMeter()
 	s.Require().NotNil(gm)
-	_, ok := gm.(types.GasMeter)
+	_, ok := gm.(types.GasMeter) //nolint:staticcheck
 	s.Require().True(ok)
 }
 

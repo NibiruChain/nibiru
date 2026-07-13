@@ -6,8 +6,8 @@ import (
 	tmcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 
-	ecdsa "github.com/cosmos/cosmos-sdk/crypto/keys/internal/ecdsa"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	ecdsa "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/internal/ecdsa"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 )
 
 // customProtobufType is here to make sure that ecdsaPK and ecdsaSK implement the
@@ -67,12 +67,12 @@ type ecdsaPK struct {
 
 // Marshal implements customProtobufType.
 func (pk ecdsaPK) Marshal() ([]byte, error) {
-	return pk.PubKey.Bytes(), nil
+	return pk.Bytes(), nil
 }
 
 // MarshalJSON implements customProtobufType.
 func (pk ecdsaPK) MarshalJSON() ([]byte, error) {
-	b64 := base64.StdEncoding.EncodeToString(pk.PubKey.Bytes())
+	b64 := base64.StdEncoding.EncodeToString(pk.Bytes())
 	return []byte("\"" + b64 + "\""), nil
 }
 

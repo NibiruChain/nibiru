@@ -5,11 +5,11 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cosmos/cosmos-sdk/store/cachekv"
-	"github.com/cosmos/cosmos-sdk/store/dbadapter"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/store/tracekv"
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/dbadapter"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/tracekv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 var (

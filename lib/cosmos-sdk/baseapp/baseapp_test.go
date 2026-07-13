@@ -12,21 +12,21 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	baseapptestutil "github.com/cosmos/cosmos-sdk/baseapp/testutil"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	baseapptestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
+	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
 )
 
 var (
@@ -122,7 +122,7 @@ func NewBaseAppSuiteWithSnapshots(t *testing.T, cfg SnapshotsConfig, opts ...fun
 			}
 
 			builder := suite.txConfig.NewTxBuilder()
-			builder.SetMsgs(msgs...)
+			require.NoError(t, builder.SetMsgs(msgs...))
 			setTxSignature(t, builder, 0)
 
 			txBytes, err := suite.txConfig.TxEncoder()(builder.GetTx())
@@ -494,7 +494,7 @@ func TestCustomRunTxPanicHandler(t *testing.T) {
 		tx := newTxCounter(t, suite.txConfig, 0, 0)
 
 		require.PanicsWithValue(t, customPanicMsg, func() {
-			suite.baseApp.SimDeliver(suite.txConfig.TxEncoder(), tx)
+			suite.baseApp.SimDeliver(suite.txConfig.TxEncoder(), tx) //nolint:errcheck
 		})
 	}
 }
@@ -537,7 +537,7 @@ func TestBaseAppAnteHandler(t *testing.T) {
 	// execute at tx that will pass the ante handler (the checkTx state should
 	// mutate) but will fail the message handler
 	tx = newTxCounter(t, suite.txConfig, 0, 0)
-	tx = setFailOnHandler(suite.txConfig, tx, true)
+	tx = setFailOnHandler(t, suite.txConfig, tx, true)
 
 	txBytes, err = suite.txConfig.TxEncoder()(tx)
 	require.NoError(t, err)

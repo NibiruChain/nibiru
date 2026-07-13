@@ -12,8 +12,9 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	"github.com/cosmos/cosmos-sdk/client"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 

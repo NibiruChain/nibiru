@@ -2,7 +2,6 @@ package upgrade_test
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -13,19 +12,20 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 type TestSuite struct {
@@ -68,14 +68,14 @@ func TestRequireName(t *testing.T) {
 
 	err := s.handler(s.ctx, &types.SoftwareUpgradeProposal{Title: "prop", Plan: types.Plan{}})
 	require.Error(t, err)
-	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err)
+	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err) //nolint:staticcheck
 }
 
 func TestRequireFutureBlock(t *testing.T) {
 	s := setupTest(t, 10, map[int64]bool{})
 	err := s.handler(s.ctx, &types.SoftwareUpgradeProposal{Title: "prop", Plan: types.Plan{Name: "test", Height: s.ctx.BlockHeight() - 1}})
 	require.Error(t, err)
-	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err)
+	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err) //nolint:staticcheck
 }
 
 func TestDoHeightUpgrade(t *testing.T) {
@@ -200,7 +200,7 @@ func TestCantApplySameUpgradeTwice(t *testing.T) {
 	t.Log("Verify an executed upgrade \"test\" can't be rescheduled")
 	err = s.handler(s.ctx, &types.SoftwareUpgradeProposal{Title: "prop", Plan: types.Plan{Name: "test", Height: height}})
 	require.Error(t, err)
-	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err)
+	require.True(t, errors.Is(sdkerrors.ErrInvalidRequest, err), err) //nolint:staticcheck
 }
 
 func TestNoSpuriousUpgrades(t *testing.T) {
@@ -218,10 +218,10 @@ func TestPlanStringer(t *testing.T) {
   height: 100
   Info: .`, types.Plan{Name: "test", Height: 100, Info: ""}.String())
 
-	require.Equal(t, fmt.Sprintf(`Upgrade Plan
+	require.Equal(t, `Upgrade Plan
   Name: test
   height: 100
-  Info: .`), types.Plan{Name: "test", Height: 100, Info: ""}.String())
+  Info: .`, types.Plan{Name: "test", Height: 100, Info: ""}.String())
 }
 
 func VerifyNotDone(t *testing.T, newCtx sdk.Context, name string) {

@@ -1,7 +1,7 @@
 package simapp
 
 import (
-	"github.com/cosmos/cosmos-sdk/std"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/std"
 
 	simappparams "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp/params"
 )

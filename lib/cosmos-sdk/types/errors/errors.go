@@ -1,7 +1,7 @@
 package errors
 
 import (
-	errorsmod "cosmossdk.io/errors"
+	sdkioerrors "cosmossdk.io/errors"
 )
 
 // Type Aliases to errors module
@@ -12,25 +12,25 @@ import (
 //
 // Please use the above module instead of this package.
 var (
-	SuccessABCICode    = errorsmod.SuccessABCICode
-	ABCIInfo           = errorsmod.ABCIInfo
-	UndefinedCodespace = errorsmod.UndefinedCodespace
-	Register           = errorsmod.Register
-	ABCIError          = errorsmod.ABCIError
-	New                = errorsmod.New
-	Wrap               = errorsmod.Wrap
-	Wrapf              = errorsmod.Wrapf
-	Recover            = errorsmod.Recover
-	WithType           = errorsmod.WithType
-	IsOf               = errorsmod.IsOf
-	AssertNil          = errorsmod.AssertNil
+	SuccessABCICode    = sdkioerrors.SuccessABCICode
+	ABCIInfo           = sdkioerrors.ABCIInfo
+	UndefinedCodespace = sdkioerrors.UndefinedCodespace
+	Register           = sdkioerrors.Register
+	ABCIError          = sdkioerrors.ABCIError
+	New                = sdkioerrors.New
+	Wrap               = sdkioerrors.Wrap
+	Wrapf              = sdkioerrors.Wrapf
+	Recover            = sdkioerrors.Recover
+	WithType           = sdkioerrors.WithType
+	IsOf               = sdkioerrors.IsOf
+	AssertNil          = sdkioerrors.AssertNil
 )
 
 // Error type alias for errorsmod.Error
 //
 // Deprecated: the type has been moved to cosmossdk.io/errors
 // module. Please use the above module instead of this package.
-type Error = errorsmod.Error
+type Error = sdkioerrors.Error
 
 // RootCodespace is the codespace for all errors defined in this package
 const RootCodespace = "sdk"
@@ -168,5 +168,5 @@ var (
 	ErrInvalidGasLimit = Register(RootCodespace, 41, "invalid gas limit")
 
 	// ErrPanic should only be set when we recovering from a panic
-	ErrPanic = errorsmod.ErrPanic
+	ErrPanic = sdkioerrors.ErrPanic
 )

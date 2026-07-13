@@ -3,16 +3,16 @@ package staking
 import (
 	"fmt"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // WriteValidators returns a slice of bonded genesis validators.
-func WriteValidators(ctx sdk.Context, keeper *keeper.Keeper) (vals []tmtypes.GenesisValidator, returnErr error) {
+func WriteValidators(ctx sdk.Context, keeper *keeper.Keeper) (vals []cmttypes.GenesisValidator, returnErr error) {
 	keeper.IterateLastValidators(ctx, func(_ int64, validator types.ValidatorI) (stop bool) {
 		pk, err := validator.ConsPubKey()
 		if err != nil {
@@ -25,7 +25,7 @@ func WriteValidators(ctx sdk.Context, keeper *keeper.Keeper) (vals []tmtypes.Gen
 			return true
 		}
 
-		vals = append(vals, tmtypes.GenesisValidator{
+		vals = append(vals, cmttypes.GenesisValidator{
 			Address: sdk.ConsAddress(tmPk.Address()).Bytes(),
 			PubKey:  tmPk,
 			Power:   validator.GetConsensusPower(keeper.PowerReduction(ctx)),

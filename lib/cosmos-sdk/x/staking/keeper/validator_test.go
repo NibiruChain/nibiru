@@ -5,13 +5,15 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 func (s *KeeperTestSuite) applyValidatorSetUpdates(ctx sdk.Context, keeper *stakingkeeper.Keeper, expectedUpdatesLen int) []abci.ValidatorUpdate {
@@ -37,8 +39,9 @@ func (s *KeeperTestSuite) TestValidator() {
 	require.Equal(stakingtypes.Unbonded, validator.Status)
 	require.Equal(valTokens, validator.Tokens)
 	require.Equal(valTokens, validator.DelegatorShares.RoundInt())
-	keeper.SetValidator(ctx, validator)
+	keeper.SetValidator(ctx, validator) //nolint:errcheck
 	keeper.SetValidatorByPowerIndex(ctx, validator)
+	//nolint:errcheck
 	keeper.SetValidatorByConsAddr(ctx, validator)
 
 	// ensure update
@@ -92,7 +95,7 @@ func (s *KeeperTestSuite) TestValidatorBasics() {
 	for i, power := range powers {
 		validators[i] = testutil.NewValidator(s.T(), sdk.ValAddress(PKs[i].Address().Bytes()), PKs[i])
 		validators[i].Status = stakingtypes.Unbonded
-		validators[i].Tokens = math.ZeroInt()
+		validators[i].Tokens = sdkmath.ZeroInt()
 		tokens := keeper.TokensFromConsensusPower(ctx, power)
 
 		validators[i], _ = validators[i].AddTokensFromDel(tokens)
@@ -112,8 +115,9 @@ func (s *KeeperTestSuite) TestValidatorBasics() {
 	require.Len(resVals, 0)
 
 	// set and retrieve a record
-	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.NotBondedPoolName, stakingtypes.BondedPoolName, gomock.Any())
+	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.NotBondedPoolName, stakingtypes.BondedPoolName, gomock.Any()) //nolint:errcheck
 	validators[0] = stakingkeeper.TestingUpdateValidator(keeper, ctx, validators[0], true)
+	//nolint:errcheck
 	keeper.SetValidatorByConsAddr(ctx, validators[0])
 	resVal, found := keeper.GetValidator(ctx, sdk.ValAddress(PKs[0].Address().Bytes()))
 	require.True(found)
@@ -173,7 +177,7 @@ func (s *KeeperTestSuite) TestValidatorBasics() {
 	require.PanicsWithValue("attempting to remove a validator which still contains tokens",
 		func() { keeper.RemoveValidator(ctx, validators[1].GetOperator()) })
 
-	validators[1].Tokens = math.ZeroInt()                    // ...remove all tokens
+	validators[1].Tokens = sdkmath.ZeroInt()                 // ...remove all tokens
 	keeper.SetValidator(ctx, validators[1])                  // ...set the validator
 	keeper.RemoveValidator(ctx, validators[1].GetOperator()) // Now it can be removed.
 	_, found = keeper.GetValidator(ctx, sdk.ValAddress(PKs[1].Address().Bytes()))
@@ -205,7 +209,7 @@ func (s *KeeperTestSuite) TestUpdateValidatorByPowerIndex() {
 
 	// burn half the delegator shares
 	keeper.DeleteValidatorByPowerIndex(ctx, validator)
-	validator, burned := validator.RemoveDelShares(delSharesCreated.Quo(math.LegacyNewDec(2)))
+	validator, burned := validator.RemoveDelShares(delSharesCreated.Quo(sdkmath.LegacyNewDec(2)))
 	require.Equal(keeper.TokensFromConsensusPower(ctx, 50), burned)
 	stakingkeeper.TestingUpdateValidator(keeper, ctx, validator, true) // update the validator, possibly kicking it out
 	require.False(stakingkeeper.ValidatorByPowerIndexExists(ctx, keeper, power))
@@ -234,7 +238,6 @@ func (s *KeeperTestSuite) TestApplyAndReturnValidatorSetUpdatesPowerDecrease() {
 		validators[i] = testutil.NewValidator(s.T(), sdk.ValAddress(PKs[i].Address().Bytes()), PKs[i])
 		tokens := keeper.TokensFromConsensusPower(ctx, power)
 		validators[i], _ = validators[i].AddTokensFromDel(tokens)
-
 	}
 
 	s.bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), stakingtypes.NotBondedPoolName, stakingtypes.BondedPoolName, gomock.Any())
@@ -273,7 +276,8 @@ func (s *KeeperTestSuite) TestUpdateValidatorCommission() {
 
 	// Set MinCommissionRate to 0.05
 	params := keeper.GetParams(ctx)
-	params.MinCommissionRate = sdk.NewDecWithPrec(5, 2)
+	params.MinCommissionRate = sdk.NewDecWithPrec(5, 2) //nolint:errcheck
+	//nolint:errcheck
 	keeper.SetParams(ctx, params)
 
 	commission1 := stakingtypes.NewCommissionWithTime(
@@ -296,7 +300,7 @@ func (s *KeeperTestSuite) TestUpdateValidatorCommission() {
 		newRate     sdk.Dec
 		expectedErr bool
 	}{
-		{val1, math.LegacyZeroDec(), true},
+		{val1, sdkmath.LegacyZeroDec(), true},
 		{val2, sdk.NewDecWithPrec(-1, 1), true},
 		{val2, sdk.NewDecWithPrec(4, 1), true},
 		{val2, sdk.NewDecWithPrec(3, 1), true},

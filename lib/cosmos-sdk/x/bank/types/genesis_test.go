@@ -3,11 +3,11 @@ package types
 import (
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 func TestGenesisStateValidate(t *testing.T) {
@@ -138,7 +138,7 @@ func TestGenesisStateValidate(t *testing.T) {
 		{
 			"invalid supply",
 			GenesisState{
-				Supply: sdk.Coins{sdk.Coin{Denom: "", Amount: math.OneInt()}},
+				Supply: sdk.Coins{sdk.Coin{Denom: "", Amount: sdkmath.OneInt()}},
 			},
 			true,
 		},

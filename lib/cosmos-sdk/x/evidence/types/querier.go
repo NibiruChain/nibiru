@@ -1,7 +1,7 @@
 package types
 
 import (
-	query "github.com/cosmos/cosmos-sdk/types/query"
+	query "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 )
 
 // Querier routes for the evidence module

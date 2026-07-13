@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -62,7 +62,7 @@ func (k Keeper) ModuleVersions(c context.Context, req *types.QueryModuleVersions
 			return &types.QueryModuleVersionsResponse{ModuleVersions: res}, nil
 		}
 		// module requested, but not found
-		return nil, errors.Wrapf(errors.ErrNotFound, "x/upgrade: QueryModuleVersions module %s not found", req.ModuleName)
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrNotFound, "x/upgrade: QueryModuleVersions module %s not found", req.ModuleName)
 	}
 
 	// if no module requested return all module versions from state

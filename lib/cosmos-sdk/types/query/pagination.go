@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )
 
 // DefaultPage is the default `page` number for queries.
@@ -84,7 +84,6 @@ func Paginate(
 		var nextKey []byte
 
 		for ; iterator.Valid(); iterator.Next() {
-
 			if count == limit {
 				nextKey = iterator.Key()
 				break

@@ -26,6 +26,6 @@ func TestFailingInterfaceRegistry(t *testing.T) {
 		reg.ListImplementations("")
 	})
 	require.Panics(t, func() {
-		reg.EnsureRegistered(nil)
+		reg.EnsureRegistered(nil) //nolint:errcheck
 	})
 }

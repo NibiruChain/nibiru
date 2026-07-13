@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )

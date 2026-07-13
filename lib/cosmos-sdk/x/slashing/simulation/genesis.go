@@ -8,11 +8,12 @@ import (
 	"math/rand"
 	"time"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 )
 
 // Simulation parameter constants
@@ -30,7 +31,7 @@ func GenSignedBlocksWindow(r *rand.Rand) int64 {
 }
 
 // GenMinSignedPerWindow randomized MinSignedPerWindow
-func GenMinSignedPerWindow(r *rand.Rand) math.LegacyDec {
+func GenMinSignedPerWindow(r *rand.Rand) sdkmath.LegacyDec {
 	return sdk.NewDecWithPrec(int64(r.Intn(10)), 1)
 }
 
@@ -40,13 +41,13 @@ func GenDowntimeJailDuration(r *rand.Rand) time.Duration {
 }
 
 // GenSlashFractionDoubleSign randomized SlashFractionDoubleSign
-func GenSlashFractionDoubleSign(r *rand.Rand) math.LegacyDec {
-	return math.LegacyNewDec(1).Quo(math.LegacyNewDec(int64(r.Intn(50) + 1)))
+func GenSlashFractionDoubleSign(r *rand.Rand) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(int64(r.Intn(50) + 1)))
 }
 
 // GenSlashFractionDowntime randomized SlashFractionDowntime
-func GenSlashFractionDowntime(r *rand.Rand) math.LegacyDec {
-	return math.LegacyNewDec(1).Quo(math.LegacyNewDec(int64(r.Intn(200) + 1)))
+func GenSlashFractionDowntime(r *rand.Rand) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(int64(r.Intn(200) + 1)))
 }
 
 // RandomizedGenState generates a random GenesisState for slashing

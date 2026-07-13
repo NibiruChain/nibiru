@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/client/utils"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

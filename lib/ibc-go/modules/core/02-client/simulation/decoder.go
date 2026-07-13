@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/keeper"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"

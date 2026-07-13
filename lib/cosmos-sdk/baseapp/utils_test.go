@@ -19,7 +19,6 @@ import (
 	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 	consensusmodulev1 "cosmossdk.io/api/cosmos/consensus/module/v1"
-	mintmodulev1 "cosmossdk.io/api/cosmos/mint/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
@@ -28,34 +27,33 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	baseapptestutil "github.com/cosmos/cosmos-sdk/baseapp/testutil"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/testutil/mock"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	_ "github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	_ "github.com/cosmos/cosmos-sdk/x/bank"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	_ "github.com/cosmos/cosmos-sdk/x/consensus"
-	_ "github.com/cosmos/cosmos-sdk/x/mint"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	_ "github.com/cosmos/cosmos-sdk/x/params"
-	_ "github.com/cosmos/cosmos-sdk/x/staking"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	baseapptestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/mock"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
+	signingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx/config"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 var (
@@ -80,8 +78,8 @@ func GenesisStateWithSingleValidator(t *testing.T, codec codec.Codec, builder *r
 	require.NoError(t, err)
 
 	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	validator := cmttypes.NewValidator(pubKey, 1)
+	valSet := cmttypes.NewValidatorSet([]*cmttypes.Validator{validator})
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
@@ -109,7 +107,6 @@ func makeTestConfig() depinject.Config {
 				Config: appconfig.WrapAny(&runtimev1alpha1.Module{
 					AppName: "BaseAppApp",
 					BeginBlockers: []string{
-						"mint",
 						"staking",
 						"auth",
 						"bank",
@@ -120,7 +117,6 @@ func makeTestConfig() depinject.Config {
 						"staking",
 						"auth",
 						"bank",
-						"mint",
 						"params",
 						"consensus",
 					},
@@ -134,7 +130,6 @@ func makeTestConfig() depinject.Config {
 						"auth",
 						"bank",
 						"staking",
-						"mint",
 						"params",
 						"consensus",
 					},
@@ -146,7 +141,7 @@ func makeTestConfig() depinject.Config {
 					Bech32Prefix: "cosmos",
 					ModuleAccountPermissions: []*authmodulev1.ModuleAccountPermission{
 						{Account: authtypes.FeeCollectorName},
-						{Account: minttypes.ModuleName, Permissions: []string{authtypes.Minter}},
+						{Account: mint.ModuleName, Permissions: []string{authtypes.Minter}},
 						{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 						{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 					},
@@ -163,10 +158,6 @@ func makeTestConfig() depinject.Config {
 			{
 				Name:   "staking",
 				Config: appconfig.WrapAny(&stakingmodulev1.Module{}),
-			},
-			{
-				Name:   "mint",
-				Config: appconfig.WrapAny(&mintmodulev1.Module{}),
 			},
 			{
 				Name:   "consensus",
@@ -343,7 +334,7 @@ func (ps *paramStore) Set(_ sdk.Context, value *tmproto.ConsensusParams) {
 		panic(err)
 	}
 
-	ps.db.Set(ParamStoreKey, bz)
+	ps.db.Set(ParamStoreKey, bz) //nolint:errcheck
 }
 
 func (ps *paramStore) Has(_ sdk.Context) bool {
@@ -430,7 +421,7 @@ func newTxCounter(t *testing.T, cfg client.TxConfig, counter int64, msgCounters 
 	}
 
 	builder := cfg.NewTxBuilder()
-	builder.SetMsgs(msgs...)
+	require.NoError(t, builder.SetMsgs(msgs...))
 	builder.SetMemo("counter=" + strconv.FormatInt(counter, 10) + "&failOnAnte=false")
 	setTxSignature(t, builder, uint64(counter))
 
@@ -451,7 +442,7 @@ func getIntFromStore(t *testing.T, store sdk.KVStore, key []byte) int64 {
 
 func setFailOnAnte(t *testing.T, cfg client.TxConfig, tx signing.Tx, failOnAnte bool) signing.Tx {
 	builder := cfg.NewTxBuilder()
-	builder.SetMsgs(tx.GetMsgs()...)
+	require.NoError(t, builder.SetMsgs(tx.GetMsgs()...))
 
 	memo := tx.GetMemo()
 	vals, err := url.ParseQuery(memo)
@@ -465,7 +456,7 @@ func setFailOnAnte(t *testing.T, cfg client.TxConfig, tx signing.Tx, failOnAnte 
 	return builder.GetTx()
 }
 
-func setFailOnHandler(cfg client.TxConfig, tx signing.Tx, fail bool) signing.Tx {
+func setFailOnHandler(t *testing.T, cfg client.TxConfig, tx signing.Tx, fail bool) signing.Tx {
 	builder := cfg.NewTxBuilder()
 	builder.SetMemo(tx.GetMemo())
 
@@ -477,6 +468,6 @@ func setFailOnHandler(cfg client.TxConfig, tx signing.Tx, fail bool) signing.Tx 
 		}
 	}
 
-	builder.SetMsgs(msgs...)
+	require.NoError(t, builder.SetMsgs(msgs...))
 	return builder.GetTx()
 }

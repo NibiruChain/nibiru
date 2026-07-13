@@ -1,14 +1,14 @@
 package keepers
 
 import (
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
+	consensusparamkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
+	distrkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
+	feegrantkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
+	govkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/keeper"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 
 	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
 
@@ -21,13 +21,13 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/inflation/keeper"
+	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/mint/keeper"
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"

@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	epochs "github.com/NibiruChain/nibiru/v2/x/epochs"
-	inflation "github.com/NibiruChain/nibiru/v2/x/inflation"
+	inflation "github.com/NibiruChain/nibiru/v2/x/mint"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"

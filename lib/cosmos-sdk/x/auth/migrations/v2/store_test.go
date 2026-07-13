@@ -8,23 +8,23 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/testutil"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authexported "github.com/cosmos/cosmos-sdk/x/auth/exported"
-	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	v1 "github.com/cosmos/cosmos-sdk/x/auth/migrations/v1"
-	v4 "github.com/cosmos/cosmos-sdk/x/auth/migrations/v4"
-	authtestutil "github.com/cosmos/cosmos-sdk/x/auth/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting/exported"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authexported "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/v1"
+	v4 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/v4"
+	authtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/testutil"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/exported"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/types"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 type mockSubspace struct {
@@ -64,8 +64,8 @@ func TestMigrateVestingAccounts(t *testing.T) {
 	legacySubspace := newMockSubspace(authtypes.DefaultParams())
 	require.NoError(t, v4.Migrate(ctx, store, legacySubspace, cdc))
 
-	ctx = app.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
-	stakingKeeper.SetParams(ctx, stakingtypes.DefaultParams())
+	ctx = app.NewContext(false, tmproto.Header{Time: time.Now()})
+	stakingKeeper.SetParams(ctx, stakingtypes.DefaultParams()) //nolint:errcheck
 
 	testCases := []struct {
 		name        string

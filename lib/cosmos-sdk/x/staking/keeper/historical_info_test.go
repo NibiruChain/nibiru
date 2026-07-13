@@ -3,14 +3,14 @@ package keeper_test
 import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // IsValSetSorted reports whether valset is sorted.
-func IsValSetSorted(data []stakingtypes.Validator, powerReduction math.Int) bool {
+func IsValSetSorted(data []stakingtypes.Validator, powerReduction sdkmath.Int) bool {
 	n := len(data)
 	for i := n - 1; i > 0; i-- {
 		if stakingtypes.ValidatorsByVotingPower(data).Less(i, i-1, powerReduction) {
@@ -56,7 +56,7 @@ func (s *KeeperTestSuite) TestTrackHistoricalInfo() {
 	// set historical entries in params to 5
 	params := stakingtypes.DefaultParams()
 	params.HistoricalEntries = 5
-	keeper.SetParams(ctx, params)
+	keeper.SetParams(ctx, params) //nolint:errcheck
 
 	// set historical info at 5, 4 which should be pruned
 	// and check that it has been stored

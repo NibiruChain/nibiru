@@ -12,7 +12,7 @@ import (
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
 	wasmibctesting "github.com/NibiruChain/nibiru/v2/x/wasm/ibctesting"

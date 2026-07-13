@@ -5,16 +5,16 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/slashing/testutil"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 )
 
 func (s *KeeperTestSuite) TestExportAndInitGenesis() {
 	ctx, keeper := s.ctx, s.slashingKeeper
 	require := s.Require()
 
-	keeper.SetParams(ctx, testutil.TestParams())
+	keeper.SetParams(ctx, testutil.TestParams()) //nolint:errcheck
 
 	consAddr1 := sdk.ConsAddress(sdk.AccAddress([]byte("addr1_______________")))
 	consAddr2 := sdk.ConsAddress(sdk.AccAddress([]byte("addr2_______________")))

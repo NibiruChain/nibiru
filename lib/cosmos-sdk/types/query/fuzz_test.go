@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	fuzz "github.com/google/gofuzz"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 type fuzzTestSuite struct {
@@ -85,7 +85,7 @@ func FuzzPagination(f *testing.F) {
 		balancesStore := prefix.NewStore(authStore, types.BalancesPrefix)
 		accountStore := prefix.NewStore(balancesStore, address.MustLengthPrefix(addr1))
 		_, _ = query.Paginate(accountStore, req.Pagination, func(key []byte, value []byte) error {
-			var amount math.Int
+			var amount sdkmath.Int
 			err := amount.Unmarshal(value)
 			if err != nil {
 				return err

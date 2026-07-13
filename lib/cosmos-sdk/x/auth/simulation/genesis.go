@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"math/rand"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/types"
 )
 
 // Simulation parameter constants
@@ -30,7 +30,7 @@ func RandomGenesisAccounts(simState *module.SimulationState) types.GenesisAccoun
 
 		// Only consider making a vesting account once the initial bonded validator
 		// set is exhausted due to needing to track DelegatedVesting.
-		if !(int64(i) > simState.NumBonded && simState.Rand.Intn(100) < 50) {
+		if int64(i) <= simState.NumBonded || simState.Rand.Intn(100) >= 50 {
 			genesisAccs[i] = bacc
 			continue
 		}

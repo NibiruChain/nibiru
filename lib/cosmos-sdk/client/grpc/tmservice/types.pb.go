@@ -5,9 +5,9 @@ package tmservice
 
 import (
 	fmt "fmt"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
 	types "github.com/cometbft/cometbft/proto/tendermint/types"
 	version "github.com/cometbft/cometbft/proto/tendermint/version"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"

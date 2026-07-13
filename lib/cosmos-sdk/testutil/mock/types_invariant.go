@@ -7,7 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
-	types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

@@ -3,9 +3,9 @@ package exported
 import (
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // VestingAccount defines an account type that vests coins via a vesting schedule.

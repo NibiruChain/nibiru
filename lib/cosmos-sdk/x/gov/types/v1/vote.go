@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 const (
@@ -70,7 +70,7 @@ func (w *WeightedVoteOption) IsValid() bool {
 		return false
 	}
 
-	if !weight.IsPositive() || weight.GT(math.LegacyNewDec(1)) {
+	if !weight.IsPositive() || weight.GT(sdkmath.LegacyNewDec(1)) {
 		return false
 	}
 
@@ -79,13 +79,13 @@ func (w *WeightedVoteOption) IsValid() bool {
 
 // NewNonSplitVoteOption creates a single option vote with weight 1
 func NewNonSplitVoteOption(option VoteOption) WeightedVoteOptions {
-	return WeightedVoteOptions{{option, math.LegacyNewDec(1).String()}}
+	return WeightedVoteOptions{{option, sdkmath.LegacyNewDec(1).String()}}
 }
 
 // ValidWeightedVoteOption returns true if the sub vote is valid and false otherwise.
 func ValidWeightedVoteOption(option WeightedVoteOption) bool {
 	weight, err := sdk.NewDecFromStr(option.Weight)
-	if err != nil || !weight.IsPositive() || weight.GT(math.LegacyNewDec(1)) {
+	if err != nil || !weight.IsPositive() || weight.GT(sdkmath.LegacyNewDec(1)) {
 		return false
 	}
 	return ValidVoteOption(option.Option)
@@ -149,8 +149,8 @@ func ValidVoteOption(option VoteOption) bool {
 func (vo VoteOption) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(vo.String()))
+		s.Write([]byte(vo.String())) //nolint:errcheck
 	default:
-		s.Write([]byte(fmt.Sprintf("%v", byte(vo))))
+		fmt.Fprintf(s, "%v", byte(vo)) //nolint:errcheck
 	}
 }

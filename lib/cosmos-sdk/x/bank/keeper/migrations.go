@@ -1,12 +1,12 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank/exported"
-	v2 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v2"
-	v3 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
-	v4 "github.com/cosmos/cosmos-sdk/x/bank/migrations/v4"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/exported"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v2"
+	v3 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v3"
+	v4 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/migrations/v4"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 // Migrator is a struct for handling in-place store migrations.

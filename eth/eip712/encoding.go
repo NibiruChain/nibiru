@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 
-	"cosmossdk.io/simapp/params"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	txTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 var (
@@ -23,11 +24,18 @@ var (
 	aminoCodec *codec.LegacyAmino
 )
 
+type EncodingConfig struct {
+	InterfaceRegistry types.InterfaceRegistry
+	Codec             codec.Codec
+	TxConfig          client.TxConfig
+	Amino             *codec.LegacyAmino
+}
+
 // SetEncodingConfig set the encoding config to the singleton codecs (Amino and Protobuf).
 // The process of unmarshaling SignDoc bytes into a SignDoc object requires having a codec
 // populated with all relevant message types. As a result, we must call this method on app
 // initialization with the app's encoding config.
-func SetEncodingConfig(cfg params.EncodingConfig) {
+func SetEncodingConfig(cfg EncodingConfig) {
 	aminoCodec = cfg.Amino
 	protoCodec = codec.NewProtoCodec(cfg.InterfaceRegistry)
 }

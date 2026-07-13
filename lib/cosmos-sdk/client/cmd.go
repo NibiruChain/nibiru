@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cometbft/cometbft/libs/cli"
-	"github.com/pkg/errors"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // ClientContextKey defines the context key used to retrieve a client.Context from
@@ -75,7 +75,7 @@ func ValidateCmd(cmd *cobra.Command, args []string) error {
 				err += fmt.Sprintf("\t%v\n", s)
 			}
 		}
-		return errors.New(err)
+		return pkgerrors.New(err)
 	}
 
 	return cmd.Help()
@@ -92,8 +92,8 @@ func ValidateCmd(cmd *cobra.Command, args []string) error {
 // - client.Context field pre-populated & flag not set: uses pre-populated value
 // - client.Context field pre-populated & flag set: uses set flag value
 func ReadPersistentCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, error) {
-	if clientCtx.OutputFormat == "" || flagSet.Changed(cli.OutputFlag) {
-		output, _ := flagSet.GetString(cli.OutputFlag)
+	if clientCtx.OutputFormat == "" || flagSet.Changed(cmtcli.OutputFlag) {
+		output, _ := flagSet.GetString(cmtcli.OutputFlag)
 		clientCtx = clientCtx.WithOutputFormat(output)
 	}
 
@@ -296,7 +296,7 @@ func readTxCommandFlags(clientCtx Context, flagSet *pflag.FlagSet) (Context, err
 		if isAux {
 			// If the user didn't explicitly set an --output flag, use JSON by
 			// default.
-			if clientCtx.OutputFormat == "" || !flagSet.Changed(cli.OutputFlag) {
+			if clientCtx.OutputFormat == "" || !flagSet.Changed(cmtcli.OutputFlag) {
 				clientCtx = clientCtx.WithOutputFormat("json")
 			}
 
@@ -350,7 +350,7 @@ func GetClientContextFromCmd(cmd *cobra.Command) Context {
 func SetCmdClientContext(cmd *cobra.Command, clientCtx Context) error {
 	v := cmd.Context().Value(ClientContextKey)
 	if v == nil {
-		return errors.New("client context not set")
+		return pkgerrors.New("client context not set")
 	}
 
 	clientCtxPtr := v.(*Context)

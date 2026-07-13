@@ -3,12 +3,12 @@
 package testutil
 
 import (
-	math "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 )
 
 // AccountKeeper extends gov's actual expected AccountKeeper with additional
@@ -31,5 +31,5 @@ type StakingKeeper interface {
 	types.StakingKeeper
 
 	BondDenom(ctx sdk.Context) string
-	TokensFromConsensusPower(ctx sdk.Context, power int64) math.Int
+	TokensFromConsensusPower(ctx sdk.Context, power int64) sdkmath.Int
 }

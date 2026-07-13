@@ -4,16 +4,16 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	"github.com/cosmos/cosmos-sdk/crypto/ledger"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerr "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/ledger"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (
@@ -95,7 +95,7 @@ func runShowCmd(cmd *cobra.Command, args []string) (err error) {
 	isShowDevice, _ := cmd.Flags().GetBool(FlagDevice)
 
 	isOutputSet := false
-	tmp := cmd.Flag(cli.OutputFlag)
+	tmp := cmd.Flag(cmtcli.OutputFlag)
 	if tmp != nil {
 		isOutputSet = tmp.Changed
 	}
@@ -115,7 +115,7 @@ func runShowCmd(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if isOutputSet {
-		clientCtx.OutputFormat, _ = cmd.Flags().GetString(cli.OutputFlag)
+		clientCtx.OutputFormat, _ = cmd.Flags().GetString(cmtcli.OutputFlag)
 	}
 
 	switch {
@@ -173,7 +173,7 @@ func fetchKey(kb keyring.Keyring, keyref string) (*keyring.Record, error) {
 	// if the key is not there or if we have a problem with a keyring itself then we move to a
 	// fallback: searching for key by address.
 
-	if err == nil || !sdkerr.IsOf(err, sdkerr.ErrIO, sdkerr.ErrKeyNotFound) {
+	if err == nil || !sdkerrors.IsOf(err, sdkerrors.ErrIO, sdkerrors.ErrKeyNotFound) {
 		return k, err
 	}
 
@@ -183,7 +183,7 @@ func fetchKey(kb keyring.Keyring, keyref string) (*keyring.Record, error) {
 	}
 
 	k, err = kb.KeyByAddress(accAddr)
-	return k, sdkerr.Wrap(err, "Invalid key")
+	return k, sdkerrors.Wrap(err, "Invalid key")
 }
 
 func validateMultisigThreshold(k, nKeys int) error {

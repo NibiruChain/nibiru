@@ -6,11 +6,11 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	types "github.com/cosmos/cosmos-sdk/codec/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
-	types1 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"

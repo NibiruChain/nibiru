@@ -12,8 +12,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/eth/crypto/ethsecp256k1"
-	"github.com/cosmos/cosmos-sdk/client"
-	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	txtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"

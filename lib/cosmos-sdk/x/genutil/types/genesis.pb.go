@@ -6,7 +6,7 @@ package types
 import (
 	encoding_json "encoding/json"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"

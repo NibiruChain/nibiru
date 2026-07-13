@@ -8,22 +8,22 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/testutil/configurator"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	_ "github.com/cosmos/cosmos-sdk/x/auth"
-	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
-	_ "github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank/simulation"
-	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	_ "github.com/cosmos/cosmos-sdk/x/consensus"
-	_ "github.com/cosmos/cosmos-sdk/x/params"
-	_ "github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx/config"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 )
 
 type SimTestSuite struct {
@@ -52,7 +52,7 @@ func (suite *SimTestSuite) SetupTest() {
 
 	suite.NoError(err)
 
-	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{})
+	suite.ctx = suite.app.NewContext(false, tmproto.Header{})
 }
 
 // TestWeightedOperations tests the weights of the operations.
@@ -106,7 +106,7 @@ func (suite *SimTestSuite) TestSimulateMsgSend() {
 	suite.Require().NoError(err)
 
 	var msg types.MsgSend
-	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	suite.Require().True(operationMsg.OK)
 	suite.Require().Equal("65337742stake", msg.Amount.String())
@@ -135,7 +135,7 @@ func (suite *SimTestSuite) TestSimulateMsgMultiSend() {
 	require.NoError(err)
 
 	var msg types.MsgMultiSend
-	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	require.True(operationMsg.OK)
 	require.Len(msg.Inputs, 1)
@@ -172,7 +172,7 @@ func (suite *SimTestSuite) TestSimulateModuleAccountMsgSend() {
 	suite.Require().Error(err)
 
 	var msg types.MsgSend
-	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	suite.Require().False(operationMsg.OK)
 	suite.Require().Equal(operationMsg.Comment, "invalid transfers")
@@ -201,7 +201,7 @@ func (suite *SimTestSuite) TestSimulateMsgMultiSendToModuleAccount() {
 	suite.Require().Error(err)
 
 	var msg types.MsgMultiSend
-	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
+	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg) //nolint:errcheck
 
 	suite.Require().False(operationMsg.OK) // sending tokens to a module account should fail
 	suite.Require().Equal(operationMsg.Comment, "invalid transfers")

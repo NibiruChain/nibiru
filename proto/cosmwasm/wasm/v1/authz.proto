@@ -1,12 +1,12 @@
 syntax = "proto3";
 package cosmwasm.wasm.v1;
 
-import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
-import "cosmos/base/v1beta1/coin.proto";
-import "cosmwasm/wasm/v1/types.proto";
-import "google/protobuf/any.proto";
 import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmwasm/wasm/v1/types.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
@@ -15,36 +15,39 @@ option (gogoproto.goproto_getters_all) = false;
 // Since: wasmd 0.42
 message StoreCodeAuthorization {
   option (amino.name) = "wasm/StoreCodeAuthorization";
-  option (cosmos_proto.implements_interface) =
-      "cosmos.authz.v1beta1.Authorization";
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for code upload
-  repeated CodeGrant grants = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated CodeGrant grants = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // ContractExecutionAuthorization defines authorization for wasm execute.
 // Since: wasmd 0.30
 message ContractExecutionAuthorization {
   option (amino.name) = "wasm/ContractExecutionAuthorization";
-  option (cosmos_proto.implements_interface) =
-      "cosmos.authz.v1beta1.Authorization";
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract executions
-  repeated ContractGrant grants = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated ContractGrant grants = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // ContractMigrationAuthorization defines authorization for wasm contract
 // migration. Since: wasmd 0.30
 message ContractMigrationAuthorization {
   option (amino.name) = "wasm/ContractMigrationAuthorization";
-  option (cosmos_proto.implements_interface) =
-      "cosmos.authz.v1beta1.Authorization";
+  option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract migrations
-  repeated ContractGrant grants = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated ContractGrant grants = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // CodeGrant a granted permission for a single code
@@ -67,23 +70,19 @@ message ContractGrant {
 
   // Limit defines execution limits that are enforced and updated when the grant
   // is applied. When the limit lapsed the grant is removed.
-  google.protobuf.Any limit = 2 [ (cosmos_proto.accepts_interface) =
-                                      "cosmwasm.wasm.v1.ContractAuthzLimitX" ];
+  google.protobuf.Any limit = 2 [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX"];
 
   // Filter define more fine-grained control on the message payload passed
   // to the contract in the operation. When no filter applies on execution, the
   // operation is prohibited.
-  google.protobuf.Any filter = 3
-      [ (cosmos_proto.accepts_interface) =
-            "cosmwasm.wasm.v1.ContractAuthzFilterX" ];
+  google.protobuf.Any filter = 3 [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX"];
 }
 
 // MaxCallsLimit limited number of calls to the contract. No funds transferable.
 // Since: wasmd 0.30
 message MaxCallsLimit {
   option (amino.name) = "wasm/MaxCallsLimit";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
   uint64 remaining = 1;
@@ -93,14 +92,13 @@ message MaxCallsLimit {
 // Since: wasmd 0.30
 message MaxFundsLimit {
   option (amino.name) = "wasm/MaxFundsLimit";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Amounts is the maximal amount of tokens transferable to the contract.
   repeated cosmos.base.v1beta1.Coin amounts = 1 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
 
@@ -109,8 +107,7 @@ message MaxFundsLimit {
 // Since: wasmd 0.30
 message CombinedLimit {
   option (amino.name) = "wasm/CombinedLimit";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzLimitX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
   uint64 calls_remaining = 1;
@@ -118,7 +115,7 @@ message CombinedLimit {
   repeated cosmos.base.v1beta1.Coin amounts = 2 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
 
@@ -127,8 +124,7 @@ message CombinedLimit {
 // Since: wasmd 0.30
 message AllowAllMessagesFilter {
   option (amino.name) = "wasm/AllowAllMessagesFilter";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 }
 
 // AcceptedMessageKeysFilter accept only the specific contract message keys in
@@ -136,8 +132,7 @@ message AllowAllMessagesFilter {
 // Since: wasmd 0.30
 message AcceptedMessageKeysFilter {
   option (amino.name) = "wasm/AcceptedMessageKeysFilter";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of unique keys
   repeated string keys = 1;
@@ -148,9 +143,8 @@ message AcceptedMessageKeysFilter {
 // Since: wasmd 0.30
 message AcceptedMessagesFilter {
   option (amino.name) = "wasm/AcceptedMessagesFilter";
-  option (cosmos_proto.implements_interface) =
-      "cosmwasm.wasm.v1.ContractAuthzFilterX";
+  option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of raw contract messages
-  repeated bytes messages = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
+  repeated bytes messages = 1 [(gogoproto.casttype) = "RawContractMessage"];
 }

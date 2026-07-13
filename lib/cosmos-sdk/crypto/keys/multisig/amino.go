@@ -1,9 +1,9 @@
 package multisig
 
 import (
-	types "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // tmMultisig implements a K of N threshold multisig. It is used for

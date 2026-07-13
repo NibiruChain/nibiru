@@ -5,29 +5,29 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/cosmos/cosmos-sdk/testutil/configurator"
-	testutilsims "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	_ "github.com/cosmos/cosmos-sdk/x/auth"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	_ "github.com/cosmos/cosmos-sdk/x/bank"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/bank/testutil"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	_ "github.com/cosmos/cosmos-sdk/x/consensus"
-	_ "github.com/cosmos/cosmos-sdk/x/params"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"
+	testutilsims "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 )
 
 const (
@@ -75,7 +75,7 @@ func (s *paginationTestSuite) SetupTest() {
 
 	s.NoError(err)
 
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+	ctx := app.NewContext(false, tmproto.Header{Height: 1})
 
 	s.ctx, s.bankKeeper, s.accountKeeper, s.cdc, s.app, s.interfaceReg = ctx, bankKeeper, accountKeeper, cdc, app, reg
 }
@@ -194,7 +194,7 @@ func (s *paginationTestSuite) TestPagination() {
 	s.T().Log("verify paginate with offset and key - error")
 	pageReq = &query.PageRequest{Key: res.Pagination.NextKey, Offset: 100, Limit: defaultLimit, CountTotal: false}
 	request = types.NewQueryAllBalancesRequest(addr1, pageReq)
-	res, err = queryClient.AllBalances(gocontext.Background(), request)
+	res, err = queryClient.AllBalances(gocontext.Background(), request) //nolint:staticcheck
 	s.Require().Error(err)
 	s.Require().Equal("rpc error: code = InvalidArgument desc = paginate: invalid request, either offset or key is expected, got both", err.Error())
 
@@ -317,7 +317,7 @@ func (s *paginationTestSuite) TestReversePagination() {
 	s.T().Log("verify paginate with offset and key - error")
 	pageReq = &query.PageRequest{Key: res1.Pagination.NextKey, Offset: 100, Limit: defaultLimit, CountTotal: false}
 	request = types.NewQueryAllBalancesRequest(addr1, pageReq)
-	res, err = queryClient.AllBalances(gocontext.Background(), request)
+	res, err = queryClient.AllBalances(gocontext.Background(), request) //nolint:staticcheck
 	s.Require().Error(err)
 	s.Require().Equal("rpc error: code = InvalidArgument desc = paginate: invalid request, either offset or key is expected, got both", err.Error())
 
@@ -354,7 +354,7 @@ func (s *paginationTestSuite) TestPaginate() {
 	balancesStore := prefix.NewStore(authStore, types.BalancesPrefix)
 	accountStore := prefix.NewStore(balancesStore, address.MustLengthPrefix(addr1))
 	pageRes, err := query.Paginate(accountStore, request.Pagination, func(key []byte, value []byte) error {
-		var amount math.Int
+		var amount sdkmath.Int
 		err := amount.Unmarshal(value)
 		if err != nil {
 			return err

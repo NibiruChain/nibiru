@@ -7,7 +7,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
 	ibcerrors "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/errors"

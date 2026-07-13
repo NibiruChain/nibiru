@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
 
 	"github.com/stretchr/testify/require"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 func reencodeAccountAddress(t *testing.T, src string) string {

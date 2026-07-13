@@ -6,16 +6,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/testutil"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client" //nolint:staticcheck
+	//nolint:staticcheck
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	//nolint:staticcheck
+	clienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	txtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/testutil"
 )
 
 var (
@@ -64,8 +67,9 @@ func TestBuilderWithAux(t *testing.T) {
 	aux2Builder.SetSequence(12)
 	aux2Builder.SetTimeoutHeight(3)
 	aux2Builder.SetMemo(memo)
-	aux2Builder.SetChainID(chainID)
-	aux2Builder.SetMsgs(msg)
+	aux2Builder.SetChainID(chainID) //nolint:errcheck
+	aux2Builder.SetMsgs(msg)        //nolint:errcheck
+	//nolint:errcheck
 	aux2Builder.SetPubKey(aux2Pk)
 	aux2Builder.SetTip(tip)
 	extOptAny, err := codectypes.NewAnyWithValue(extOpt)
@@ -135,7 +139,8 @@ func TestBuilderWithAux(t *testing.T) {
 	require.NoError(t, err)
 	tipperSigV2 := sigs[0]
 	aux2SigV2 := sigs[1]
-	// Set all signer infos.
+	// Set all signer infos. //nolint:errcheck
+	//nolint:errcheck
 	w.SetSignatures(tipperSigV2, aux2SigV2, signing.SignatureV2{
 		PubKey:   feepayerPk,
 		Sequence: 15,
@@ -154,7 +159,8 @@ func TestBuilderWithAux(t *testing.T) {
 	require.NoError(t, err)
 	feepayerSig, err := feepayerPriv.Sign(signBz)
 	require.NoError(t, err)
-	// Set all signatures.
+	// Set all signatures. //nolint:errcheck
+	//nolint:errcheck
 	w.SetSignatures(tipperSigV2, aux2SigV2, signing.SignatureV2{
 		PubKey: feepayerPk,
 		Data: &signing.SingleSignatureData{
@@ -203,8 +209,9 @@ func makeTipperTxBuilder(t *testing.T) (tx.AuxTxBuilder, []byte) {
 	tipperBuilder.SetSequence(2)
 	tipperBuilder.SetTimeoutHeight(3)
 	tipperBuilder.SetMemo(memo)
-	tipperBuilder.SetChainID(chainID)
-	tipperBuilder.SetMsgs(msg)
+	tipperBuilder.SetChainID(chainID) //nolint:errcheck
+	tipperBuilder.SetMsgs(msg)        //nolint:errcheck
+	//nolint:errcheck
 	tipperBuilder.SetPubKey(tipperPk)
 	tipperBuilder.SetTip(tip)
 	extOptAny, err := codectypes.NewAnyWithValue(extOpt)

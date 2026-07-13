@@ -8,13 +8,13 @@ import (
 	"math/rand"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 )
 
 // Simulation parameter constants
@@ -49,17 +49,17 @@ func GenVotingParamsVotingPeriod(r *rand.Rand) time.Duration {
 }
 
 // GenTallyParamsQuorum returns randomized TallyParamsQuorum
-func GenTallyParamsQuorum(r *rand.Rand) math.LegacyDec {
+func GenTallyParamsQuorum(r *rand.Rand) sdkmath.LegacyDec {
 	return sdk.NewDecWithPrec(int64(simulation.RandIntBetween(r, 334, 500)), 3)
 }
 
 // GenTallyParamsThreshold returns randomized TallyParamsThreshold
-func GenTallyParamsThreshold(r *rand.Rand) math.LegacyDec {
+func GenTallyParamsThreshold(r *rand.Rand) sdkmath.LegacyDec {
 	return sdk.NewDecWithPrec(int64(simulation.RandIntBetween(r, 450, 550)), 3)
 }
 
 // GenTallyParamsVeto returns randomized TallyParamsVeto
-func GenTallyParamsVeto(r *rand.Rand) math.LegacyDec {
+func GenTallyParamsVeto(r *rand.Rand) sdkmath.LegacyDec {
 	return sdk.NewDecWithPrec(int64(simulation.RandIntBetween(r, 250, 334)), 3)
 }
 

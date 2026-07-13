@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
 // migrateJSONWeightedVotes migrates the ADR-037 weighted votes.

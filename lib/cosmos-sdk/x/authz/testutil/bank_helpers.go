@@ -3,7 +3,7 @@ package testutil
 import (
 	"context"
 
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 var _ bank.MsgServer = MockBankKeeper{}

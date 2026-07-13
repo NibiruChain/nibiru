@@ -6,10 +6,10 @@ package feegrant
 import (
 	context "context"
 	fmt "fmt"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/cosmos-proto"
-	types "github.com/cosmos/cosmos-sdk/codec/types"
-	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"

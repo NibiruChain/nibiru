@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/x/authz"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 )
 
 var _ authz.QueryServer = Keeper{}

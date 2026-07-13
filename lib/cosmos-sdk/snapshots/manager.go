@@ -13,8 +13,8 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
-	"github.com/cosmos/cosmos-sdk/snapshots/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // Manager manages snapshot and restore operations for an app, making sure only a single
@@ -368,11 +368,7 @@ func (m *Manager) doRestoreSnapshot(snapshot types.Snapshot, chChunks <-chan io.
 		return sdkerrors.Wrap(err, "multistore restore")
 	}
 
-	for {
-		if nextItem.Item == nil {
-			// end of stream
-			break
-		}
+	for nextItem.Item != nil {
 		metadata := nextItem.GetExtension()
 		if metadata == nil {
 			return sdkerrors.Wrapf(sdkerrors.ErrLogic, "unknown snapshot item %T", nextItem.Item)

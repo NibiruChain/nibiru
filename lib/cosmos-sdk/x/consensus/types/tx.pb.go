@@ -6,9 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
 	types "github.com/cometbft/cometbft/proto/tendermint/types"
 	_ "github.com/cosmos/cosmos-proto"
-	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"

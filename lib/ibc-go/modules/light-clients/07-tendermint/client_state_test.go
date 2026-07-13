@@ -3,8 +3,9 @@ package tendermint_test
 import (
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ics23 "github.com/cosmos/ics23/go"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	transfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

@@ -9,8 +9,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 )
 
 // DumpArchiveCmd returns a command to dump the snapshot as portable archive format

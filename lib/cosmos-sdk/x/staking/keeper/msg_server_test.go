@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdkmath "cosmossdk.io/math"
+
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 func (s *KeeperTestSuite) TestMsgUpdateParams() {
@@ -39,7 +40,7 @@ func (s *KeeperTestSuite) TestMsgUpdateParams() {
 			input: &stakingtypes.MsgUpdateParams{
 				Authority: keeper.GetAuthority(),
 				Params: stakingtypes.Params{
-					MinCommissionRate: math.LegacyNewDec(-10),
+					MinCommissionRate: sdkmath.LegacyNewDec(-10),
 					UnbondingTime:     stakingtypes.DefaultUnbondingTime,
 					MaxValidators:     stakingtypes.DefaultMaxValidators,
 					MaxEntries:        stakingtypes.DefaultMaxEntries,
@@ -55,7 +56,7 @@ func (s *KeeperTestSuite) TestMsgUpdateParams() {
 			input: &stakingtypes.MsgUpdateParams{
 				Authority: keeper.GetAuthority(),
 				Params: stakingtypes.Params{
-					MinCommissionRate: math.LegacyNewDec(2),
+					MinCommissionRate: sdkmath.LegacyNewDec(2),
 					UnbondingTime:     stakingtypes.DefaultUnbondingTime,
 					MaxValidators:     stakingtypes.DefaultMaxValidators,
 					MaxEntries:        stakingtypes.DefaultMaxEntries,

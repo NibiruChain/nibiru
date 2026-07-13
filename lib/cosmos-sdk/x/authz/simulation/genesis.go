@@ -1,8 +1,8 @@
 package simulation
 
 import (
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/authz"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 )
 
 // RandomizedGenState generates a random GenesisState for authz.

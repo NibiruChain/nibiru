@@ -1,10 +1,11 @@
 package cli
 
 import (
-	"github.com/cosmos/cosmos-sdk/x/gov/client/cli"
-	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/spf13/pflag"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client/cli"
+	gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 func parseArgsToContent(fs *pflag.FlagSet, name string) (gov.Content, error) {

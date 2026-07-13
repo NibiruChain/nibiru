@@ -8,18 +8,18 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	stakingtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 var (
@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) SetupTest() {
 		bankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	keeper.SetParams(ctx, stakingtypes.DefaultParams())
+	keeper.SetParams(ctx, stakingtypes.DefaultParams()) //nolint:errcheck
 
 	s.ctx = ctx
 	s.stakingKeeper = keeper
@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestParams() {
 	expParams := stakingtypes.DefaultParams()
 	expParams.MaxValidators = 555
 	expParams.MaxEntries = 111
-	keeper.SetParams(ctx, expParams)
+	keeper.SetParams(ctx, expParams) //nolint:errcheck
 	resParams := keeper.GetParams(ctx)
 	require.True(expParams.Equal(resParams))
 }
@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestLastTotalPower() {
 	ctx, keeper := s.ctx, s.stakingKeeper
 	require := s.Require()
 
-	expTotalPower := math.NewInt(10 ^ 9)
+	expTotalPower := sdkmath.NewInt(10 ^ 9)
 	keeper.SetLastTotalPower(ctx, expTotalPower)
 	resTotalPower := keeper.GetLastTotalPower(ctx)
 	require.True(expTotalPower.Equal(resTotalPower))

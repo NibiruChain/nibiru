@@ -2,10 +2,11 @@ package ante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 
 	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
 

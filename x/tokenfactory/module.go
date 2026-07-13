@@ -15,15 +15,16 @@ import (
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
-	sdkcodectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdkcodectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/cli"
 	"github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"

@@ -6,9 +6,7 @@ import "cosmos/app/v1alpha1/module.proto";
 
 // Module is the config object of the slashing module.
 message Module {
-  option (cosmos.app.v1alpha1.module) = {
-    go_import: "github.com/cosmos/cosmos-sdk/x/slashing"
-  };
+  option (cosmos.app.v1alpha1.module) = {go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"};
 
   // authority defines the custom module authority. If not set, defaults to the governance module.
   string authority = 1;

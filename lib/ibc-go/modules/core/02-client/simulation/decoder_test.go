@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/simulation"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

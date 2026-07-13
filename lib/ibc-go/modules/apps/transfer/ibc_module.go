@@ -8,9 +8,9 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"

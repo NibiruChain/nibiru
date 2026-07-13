@@ -1,8 +1,8 @@
 package v3
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 )
 
 // MigrateJSON accepts exported v2 (v0.46) x/distribution genesis state and migrates it to

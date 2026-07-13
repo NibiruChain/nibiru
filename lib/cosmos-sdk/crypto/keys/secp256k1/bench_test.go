@@ -4,8 +4,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/internal/benchmarking"
-	"github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/internal/benchmarking"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 )
 
 func BenchmarkKeyGeneration(b *testing.B) {

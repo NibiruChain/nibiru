@@ -7,13 +7,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/version"
-	gcutils "github.com/cosmos/cosmos-sdk/x/gov/client/utils"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+	gcutils "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client/utils"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -292,7 +292,7 @@ $ %[1]s query gov votes 1 --page=2 --limit=100
 			}
 
 			propStatus := proposalRes.GetProposal().Status
-			if !(propStatus == v1.StatusVotingPeriod || propStatus == v1.StatusDepositPeriod) {
+			if propStatus != v1.StatusVotingPeriod && propStatus != v1.StatusDepositPeriod {
 				page, _ := cmd.Flags().GetInt(flags.FlagPage)
 				limit, _ := cmd.Flags().GetInt(flags.FlagLimit)
 
@@ -307,7 +307,6 @@ $ %[1]s query gov votes 1 --page=2 --limit=100
 				// or wrap lists of proto.Message in some other message)
 				clientCtx.LegacyAmino.MustUnmarshalJSON(resByTxQuery, &votes)
 				return clientCtx.PrintObjectLegacy(votes)
-
 			}
 
 			pageReq, err := client.ReadPageRequest(cmd.Flags())

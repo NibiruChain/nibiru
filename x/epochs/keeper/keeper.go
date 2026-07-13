@@ -1,11 +1,11 @@
 package keeper
 
 import (
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )

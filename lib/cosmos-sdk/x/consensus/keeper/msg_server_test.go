@@ -2,12 +2,13 @@ package keeper_test
 
 import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtypes "github.com/cometbft/cometbft/types"
-	"github.com/cosmos/cosmos-sdk/x/consensus/types"
+	cmttypes "github.com/cometbft/cometbft/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateParams() {
-	defaultConsensusParams := tmtypes.DefaultConsensusParams().ToProto()
+	defaultConsensusParams := cmttypes.DefaultConsensusParams().ToProto()
 	testCases := []struct {
 		name      string
 		input     *types.MsgUpdateParams
@@ -91,7 +92,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			if tc.expPanic {
-				s.Require().Panics(func() {
+				s.Require().Panics(func() { //nolint:errcheck
 					s.msgServer.UpdateParams(s.ctx, tc.input)
 				})
 			} else {

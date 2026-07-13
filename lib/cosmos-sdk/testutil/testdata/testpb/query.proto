@@ -4,7 +4,7 @@ package testpb;
 import "google/protobuf/any.proto";
 import "testpb/testdata.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/testutil/testdata";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata";
 
 // Query tests the protobuf Query service as defined in
 // https://github.com/cosmos/cosmos-sdk/issues/5921.

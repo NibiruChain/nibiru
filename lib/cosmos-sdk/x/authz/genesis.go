@@ -3,7 +3,7 @@ package authz
 import (
 	fmt "fmt"
 
-	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 // NewGenesisState creates new GenesisState object
@@ -22,7 +22,6 @@ func ValidateGenesis(data GenesisState) error {
 		if a.Granter == "" {
 			return fmt.Errorf("authorization: %d,missing granter", i)
 		}
-
 	}
 	return nil
 }

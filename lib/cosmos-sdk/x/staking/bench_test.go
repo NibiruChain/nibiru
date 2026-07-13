@@ -3,12 +3,13 @@ package staking_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 func BenchmarkValidateGenesis10Validators(b *testing.B) {
@@ -33,7 +34,7 @@ func benchmarkValidateGenesis(b *testing.B, n int) {
 		validator := testutil.NewValidator(b, addr, pubKey)
 		ni := int64(i + 1)
 		validator.Tokens = sdk.NewInt(ni)
-		validator.DelegatorShares = math.LegacyNewDec(ni)
+		validator.DelegatorShares = sdkmath.LegacyNewDec(ni)
 		validators = append(validators, validator)
 	}
 

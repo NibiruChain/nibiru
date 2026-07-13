@@ -6,17 +6,17 @@ import (
 	"strconv"
 	"strings"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/cosmos-sdk/version"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 )
 
 const (
@@ -113,7 +113,7 @@ func GetAccountCmd() *cobra.Command {
 				}
 				catchingUp := status.SyncInfo.CatchingUp
 				if !catchingUp {
-					return errors.Wrapf(err, "your node may be syncing, please check node status using `/status`")
+					return sdkerrors.Wrapf(err, "your node may be syncing, please check node status using `/status`")
 				}
 				return err
 			}
@@ -297,7 +297,7 @@ $ %s query txs --%s 'message.sender=cosmos1...&message.action=withdraw_delegator
 				}
 
 				tokens := strings.Split(event, "=")
-				if tokens[0] == tmtypes.TxHeightKey {
+				if tokens[0] == cmttypes.TxHeightKey {
 					event = fmt.Sprintf("%s=%s", tokens[0], tokens[1])
 				} else {
 					event = fmt.Sprintf("%s='%s'", tokens[0], tokens[1])
@@ -322,7 +322,7 @@ $ %s query txs --%s 'message.sender=cosmos1...&message.action=withdraw_delegator
 	cmd.Flags().Int(flags.FlagPage, query.DefaultPage, "Query a specific page of paginated results")
 	cmd.Flags().Int(flags.FlagLimit, query.DefaultLimit, "Query number of transactions results per page returned")
 	cmd.Flags().String(flagEvents, "", fmt.Sprintf("list of transaction events in the form of %s", eventFormat))
-	cmd.MarkFlagRequired(flagEvents)
+	cmd.MarkFlagRequired(flagEvents) //nolint:errcheck
 
 	return cmd
 }
@@ -389,7 +389,7 @@ $ %s query tx --%s=%s <sig1_base64>,<sig2_base64...>
 					}
 					if len(txs.Txs) > 1 {
 						// This case means there's a bug somewhere else in the code. Should not happen.
-						return errors.ErrLogic.Wrapf("found %d txs matching given signatures", len(txs.Txs))
+						return sdkerrors.ErrLogic.Wrapf("found %d txs matching given signatures", len(txs.Txs))
 					}
 
 					return clientCtx.PrintProto(txs.Txs[0])

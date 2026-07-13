@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/store/cachekv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/types/kv"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 )
 
 var (
@@ -38,13 +38,13 @@ func newAlohaTree(t *testing.T, db dbm.DB) (*iavl.MutableTree, types.CommitID) {
 	require.NoError(t, err)
 
 	for k, v := range treeData {
-		tree.Set([]byte(k), []byte(v))
+		tree.Set([]byte(k), []byte(v)) //nolint:errcheck
 	}
 
 	for i := 0; i < nMoreData; i++ {
 		key := randBytes(12)
 		value := randBytes(50)
-		tree.Set(key, value)
+		tree.Set(key, value) //nolint:errcheck
 	}
 
 	hash, ver, err := tree.SaveVersion()
@@ -117,7 +117,7 @@ func TestLoadStore(t *testing.T) {
 
 func TestGetImmutable(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree, cID := newAlohaTree(t, db)
+	tree, cID := newAlohaTree(t, db) //nolint:ineffassign
 	store := UnsafeNewStore(tree)
 
 	updated, err := tree.Set([]byte("hello"), []byte("adios"))
@@ -576,7 +576,7 @@ func BenchmarkIAVLIteratorNext(b *testing.B) {
 	for i := 0; i < treeSize; i++ {
 		key := randBytes(4)
 		value := randBytes(50)
-		tree.Set(key, value)
+		tree.Set(key, value) //nolint:errcheck
 	}
 
 	iavlStore := UnsafeNewStore(tree)

@@ -5,12 +5,12 @@ package tx
 
 import (
 	fmt "fmt"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	github_com_cosmos_cosmos_sdk_types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	types2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	signing "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
 	_ "github.com/cosmos/cosmos-proto"
-	types "github.com/cosmos/cosmos-sdk/codec/types"
-	types1 "github.com/cosmos/cosmos-sdk/crypto/types"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
-	types2 "github.com/cosmos/cosmos-sdk/types"
-	signing "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"

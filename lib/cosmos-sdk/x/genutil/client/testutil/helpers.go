@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	tmcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/cli"
+	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/viper"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	genutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/cli"
 )
 
 func ExecInitCmd(testMbm module.BasicManager, home string, cdc codec.Codec) error {
@@ -35,15 +35,15 @@ func ExecInitCmd(testMbm module.BasicManager, home string, cdc codec.Codec) erro
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-	cmd.SetArgs([]string{"appnode-test", fmt.Sprintf("--%s=%s", cli.HomeFlag, home)})
+	cmd.SetArgs([]string{"appnode-test", fmt.Sprintf("--%s=%s", cmtcli.HomeFlag, home)})
 
 	return cmd.ExecuteContext(ctx)
 }
 
-func CreateDefaultTendermintConfig(rootDir string) (*tmcfg.Config, error) {
-	conf := tmcfg.DefaultConfig()
+func CreateDefaultTendermintConfig(rootDir string) (*cmtcfg.Config, error) {
+	conf := cmtcfg.DefaultConfig()
 	conf.SetRoot(rootDir)
-	tmcfg.EnsureRoot(rootDir)
+	cmtcfg.EnsureRoot(rootDir)
 
 	if err := conf.ValidateBasic(); err != nil {
 		return nil, fmt.Errorf("error in config file: %v", err)

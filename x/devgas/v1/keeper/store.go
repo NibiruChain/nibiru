@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 

@@ -10,20 +10,22 @@ import (
 
 	"cosmossdk.io/depinject"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing/simulation"
-	"github.com/cosmos/cosmos-sdk/x/slashing/testutil"
-	"github.com/cosmos/cosmos-sdk/x/slashing/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/simulation"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 )
 
 // TestRandomizedGenState tests the normal scenario of applying RandomizedGenState.
 // Abonormal scenarios are not tested here.
 func TestRandomizedGenState(t *testing.T) {
-	var interfaceRegistry codectypes.InterfaceRegistry
+	var interfaceRegistry codectypes.InterfaceRegistry //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &interfaceRegistry)
 	cdc := codec.NewProtoCodec(interfaceRegistry)
 
@@ -60,7 +62,8 @@ func TestRandomizedGenState(t *testing.T) {
 
 // TestRandomizedGenState tests abnormal scenarios of applying RandomizedGenState.
 func TestRandomizedGenState1(t *testing.T) {
-	var interfaceRegistry codectypes.InterfaceRegistry
+	var interfaceRegistry codectypes.InterfaceRegistry //nolint:errcheck
+	//nolint:errcheck
 	depinject.Inject(testutil.AppConfig, &interfaceRegistry)
 	cdc := codec.NewProtoCodec(interfaceRegistry)
 

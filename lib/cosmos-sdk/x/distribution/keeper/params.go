@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 )
 
 // GetParams returns the total set of distribution parameters.
@@ -36,7 +36,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 }
 
 // GetCommunityTax returns the current distribution community tax.
-func (k Keeper) GetCommunityTax(ctx sdk.Context) math.LegacyDec {
+func (k Keeper) GetCommunityTax(ctx sdk.Context) sdkmath.LegacyDec {
 	return k.GetParams(ctx).CommunityTax
 }
 

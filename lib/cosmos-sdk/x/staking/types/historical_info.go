@@ -3,19 +3,19 @@ package types
 import (
 	"sort"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 // NewHistoricalInfo will create a historical information struct from header and valset
 // it will first sort valset before inclusion into historical info
-func NewHistoricalInfo(header tmproto.Header, valSet Validators, powerReduction math.Int) HistoricalInfo {
+func NewHistoricalInfo(header tmproto.Header, valSet Validators, powerReduction sdkmath.Int) HistoricalInfo {
 	// Must sort in the same way that tendermint does
 	sort.SliceStable(valSet, func(i, j int) bool {
 		return ValidatorsByVotingPower(valSet).Less(i, j, powerReduction)

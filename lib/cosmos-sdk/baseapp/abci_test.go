@@ -14,17 +14,17 @@ import (
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	baseapptestutil "github.com/cosmos/cosmos-sdk/baseapp/testutil"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	baseapptestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
+	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 )
 
 func TestABCI_Info(t *testing.T) {
@@ -729,7 +729,7 @@ func TestABCI_DeliverTx_MultiMsg(t *testing.T) {
 	msgs = append(msgs, &baseapptestutil.MsgCounter2{Counter: 0})
 	msgs = append(msgs, &baseapptestutil.MsgCounter2{Counter: 1})
 
-	builder.SetMsgs(msgs...)
+	require.NoError(t, builder.SetMsgs(msgs...))
 	builder.SetMemo(tx.GetMemo())
 	setTxSignature(t, builder, 0)
 
@@ -878,7 +878,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 	// transaction with no known route
 	{
 		txBuilder := suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&baseapptestutil.MsgCounter2{})
+		require.NoError(t, txBuilder.SetMsgs(&baseapptestutil.MsgCounter2{}))
 		setTxSignature(t, txBuilder, 0)
 		unknownRouteTx := txBuilder.GetTx()
 
@@ -891,7 +891,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 		require.EqualValues(t, sdkerrors.ErrUnknownRequest.ABCICode(), code, err)
 
 		txBuilder = suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&baseapptestutil.MsgCounter{}, &baseapptestutil.MsgCounter2{})
+		require.NoError(t, txBuilder.SetMsgs(&baseapptestutil.MsgCounter{}, &baseapptestutil.MsgCounter2{}))
 		setTxSignature(t, txBuilder, 0)
 		unknownRouteTx = txBuilder.GetTx()
 
@@ -907,7 +907,7 @@ func TestABCI_InvalidTransaction(t *testing.T) {
 	// Transaction with an unregistered message
 	{
 		txBuilder := suite.txConfig.NewTxBuilder()
-		txBuilder.SetMsgs(&testdata.MsgCreateDog{})
+		require.NoError(t, txBuilder.SetMsgs(&testdata.MsgCreateDog{}))
 		tx := txBuilder.GetTx()
 
 		txBytes, err := suite.txConfig.TxEncoder()(tx)
@@ -1537,7 +1537,7 @@ func TestABCI_PrepareProposal_MaxGas(t *testing.T) {
 		msgs := []sdk.Msg{msg}
 
 		builder := suite.txConfig.NewTxBuilder()
-		builder.SetMsgs(msgs...)
+		require.NoError(t, builder.SetMsgs(msgs...))
 		builder.SetMemo("counter=" + strconv.FormatInt(i, 10) + "&failOnAnte=false")
 		builder.SetGasLimit(10)
 		setTxSignature(t, builder, uint64(i))

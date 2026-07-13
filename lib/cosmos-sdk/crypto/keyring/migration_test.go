@@ -7,13 +7,13 @@ import (
 	"github.com/99designs/keyring"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/codec/legacy"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/multisig"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const n1 = "cosmos.info"
@@ -133,7 +133,8 @@ func (s *MigrationTestSuite) TestMigrateLocalRecord() {
 
 	s.Require().NoError(s.ks.SetItem(item))
 
-	k2, err := s.ks.migrate(n1)
+	//nolint:staticcheck
+	k2, err := s.ks.migrate(n1) //nolint:ineffassign
 	s.Require().Equal(k2.Name, k1.Name)
 
 	pub, err := k2.GetPubKey()

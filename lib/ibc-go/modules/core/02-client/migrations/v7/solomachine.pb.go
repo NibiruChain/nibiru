@@ -5,7 +5,7 @@ package v7
 
 import (
 	fmt "fmt"
-	types "github.com/cosmos/cosmos-sdk/codec/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	types1 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/03-connection/types"

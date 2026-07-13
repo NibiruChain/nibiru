@@ -6,8 +6,8 @@ package authz
 import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	types "github.com/cosmos/cosmos-sdk/codec/types"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"

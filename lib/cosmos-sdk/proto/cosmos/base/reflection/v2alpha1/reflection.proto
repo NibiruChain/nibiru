@@ -4,7 +4,7 @@ package cosmos.base.reflection.v2alpha1;
 
 import "google/api/annotations.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/server/grpc/reflection/v2alpha1";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/grpc/reflection/v2alpha1";
 
 // AppDescriptor describes a cosmos-sdk based application
 message AppDescriptor {
@@ -122,7 +122,7 @@ service ReflectionService {
   // GetChainDescriptor returns the description of the chain
   rpc GetChainDescriptor(GetChainDescriptorRequest) returns (GetChainDescriptorResponse) {
     option (google.api.http).get = "/cosmos/base/reflection/v1beta1/app_descriptor/chain";
-  };
+  }
   // GetCodecDescriptor returns the descriptor of the codec of the application
   rpc GetCodecDescriptor(GetCodecDescriptorRequest) returns (GetCodecDescriptorResponse) {
     option (google.api.http).get = "/cosmos/base/reflection/v1beta1/app_descriptor/codec";

@@ -1,7 +1,7 @@
 package epochs
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // EpochHooks defines a set of lifecycle hooks to occur in the ABCI BeginBlock

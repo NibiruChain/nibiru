@@ -1,9 +1,10 @@
 package snapshot
 
 import (
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/spf13/cobra"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 )
 
 // ExportSnapshotCmd returns a command to take a snapshot of the application state

@@ -13,10 +13,10 @@ import (
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 )
 
 func createTestInterfaceRegistry() types.InterfaceRegistry {
@@ -103,7 +103,8 @@ func TestProtoCodecMarshal(t *testing.T) {
 	err = cdc.UnmarshalInterface(bz, &animal)
 	require.NoError(t, err)
 
-	bz, err = cdc.MarshalInterface(bird)
+	//nolint:staticcheck
+	bz, err = cdc.MarshalInterface(bird) //nolint:ineffassign
 	require.ErrorContains(t, err, "does not have a registered interface")
 
 	bz, err = cartoonCdc.MarshalInterface(bird)

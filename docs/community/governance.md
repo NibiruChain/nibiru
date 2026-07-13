@@ -79,7 +79,7 @@ To represent weighted vote on chain, we use the following [Protobuf](https://dev
 message WeightedVoteOption {
   VoteOption option = 1;
   string     weight = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false,
     (gogoproto.moretags)   = "yaml:\"weight\""
   ];

@@ -1,15 +1,15 @@
 syntax = "proto3";
 package cosmos.auth.v1beta1;
 
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "gogoproto/gogo.proto";
-import "google/protobuf/any.proto";
-import "google/api/annotations.proto";
 import "cosmos/auth/v1beta1/auth.proto";
-import "cosmos_proto/cosmos.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/x/auth/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -21,13 +21,13 @@ service Query {
   // Since: cosmos-sdk 0.43
   rpc Accounts(QueryAccountsRequest) returns (QueryAccountsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/accounts";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/accounts";
   }
 
   // Account returns account details based on address.
   rpc Account(QueryAccountRequest) returns (QueryAccountResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/accounts/{address}";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/accounts/{address}";
   }
 
   // AccountAddressByID returns account address based on account number.
@@ -35,13 +35,13 @@ service Query {
   // Since: cosmos-sdk 0.46.2
   rpc AccountAddressByID(QueryAccountAddressByIDRequest) returns (QueryAccountAddressByIDResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/address_by_id/{id}";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/address_by_id/{id}";
   }
 
   // Params queries all parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/params";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/params";
   }
 
   // ModuleAccounts returns all the existing module accounts.
@@ -49,13 +49,13 @@ service Query {
   // Since: cosmos-sdk 0.46
   rpc ModuleAccounts(QueryModuleAccountsRequest) returns (QueryModuleAccountsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/module_accounts";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/module_accounts";
   }
 
   // ModuleAccountByName returns the module account info by module name
   rpc ModuleAccountByName(QueryModuleAccountByNameRequest) returns (QueryModuleAccountByNameResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/module_accounts/{name}";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/module_accounts/{name}";
   }
 
   // Bech32Prefix queries bech32Prefix
@@ -84,7 +84,7 @@ service Query {
   // Since: cosmos-sdk 0.47
   rpc AccountInfo(QueryAccountInfoRequest) returns (QueryAccountInfoResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get               = "/cosmos/auth/v1beta1/account_info/{address}";
+    option (google.api.http).get = "/cosmos/auth/v1beta1/account_info/{address}";
   }
 }
 
@@ -109,7 +109,7 @@ message QueryAccountsResponse {
 
 // QueryAccountRequest is the request type for the Query/Account RPC method.
 message QueryAccountRequest {
-  option (gogoproto.equal)           = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   // address defines the address to query for.
@@ -221,7 +221,6 @@ message QueryAccountAddressByIDResponse {
 //
 // Since: cosmos-sdk 0.47
 message QueryAccountInfoRequest {
-
   // address is the account address string.
   string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
@@ -230,7 +229,6 @@ message QueryAccountInfoRequest {
 //
 // Since: cosmos-sdk 0.47
 message QueryAccountInfoResponse {
-
   // info is the account info which is represented by BaseAccount.
   BaseAccount info = 1;
 }

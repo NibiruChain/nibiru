@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	v2 "github.com/cosmos/cosmos-sdk/x/crisis/migrations/v2"
-	"github.com/cosmos/cosmos-sdk/x/crisis/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
+	v2 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/migrations/v2"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
 )
 
 type mockSubspace struct {

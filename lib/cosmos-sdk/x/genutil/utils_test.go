@@ -10,7 +10,7 @@ import (
 	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
 
-	"github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +25,7 @@ func TestExportGenesisFileWithTime(t *testing.T) {
 func TestInitializeNodeValidatorFilesFromMnemonic(t *testing.T) {
 	t.Parallel()
 
-	cfg := config.TestConfig()
+	cfg := cmtcfg.TestConfig()
 	cfg.RootDir = t.TempDir()
 	require.NoError(t, os.MkdirAll(filepath.Join(cfg.RootDir, "config"), 0o755))
 

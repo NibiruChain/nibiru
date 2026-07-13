@@ -10,15 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
-	"github.com/cosmos/cosmos-sdk/x/gov"
+	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
+	txsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
 )
 
 // testPubKey is a dummy implementation of PubKey used for testing.
@@ -84,15 +84,15 @@ type sigErrTx struct {
 	getSigs func() ([]txsigning.SignatureV2, error)
 }
 
-func (_ sigErrTx) Size() int64 { return 0 }
+func (_ sigErrTx) Size() int64 { return 0 } //nolint:staticcheck
 
-func (_ sigErrTx) GetMsgs() []sdk.Msg { return nil }
+func (_ sigErrTx) GetMsgs() []sdk.Msg { return nil } //nolint:staticcheck
 
-func (_ sigErrTx) ValidateBasic() error { return nil }
+func (_ sigErrTx) ValidateBasic() error { return nil } //nolint:staticcheck
 
-func (_ sigErrTx) GetSigners() []sdk.AccAddress { return nil }
+func (_ sigErrTx) GetSigners() []sdk.AccAddress { return nil } //nolint:staticcheck
 
-func (_ sigErrTx) GetPubKeys() ([]cryptotypes.PubKey, error) { return nil, nil }
+func (_ sigErrTx) GetPubKeys() ([]cryptotypes.PubKey, error) { return nil, nil } //nolint:staticcheck
 
 func (t sigErrTx) GetSignaturesV2() ([]txsigning.SignatureV2, error) { return t.getSigs() }
 

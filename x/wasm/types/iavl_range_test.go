@@ -7,8 +7,8 @@ import (
 	iavl2 "github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/store"
-	"github.com/cosmos/cosmos-sdk/store/iavl"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/iavl"
 )
 
 // This is modeled close to

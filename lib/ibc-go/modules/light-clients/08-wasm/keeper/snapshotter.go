@@ -5,9 +5,10 @@ import (
 	"io"
 
 	sdkioerrors "cosmossdk.io/errors"
-	snapshot "github.com/cosmos/cosmos-sdk/snapshots/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	snapshot "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 

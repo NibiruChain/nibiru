@@ -4,19 +4,19 @@ import (
 	"reflect"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	"github.com/cosmos/cosmos-sdk/x/params/keeper"
-	"github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/keeper"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types/proposal"
 )
 
 type KeeperTestSuite struct {
@@ -190,9 +190,9 @@ func TestSubspace(t *testing.T) {
 		{"uint16", uint16(1), uint16(0), new(uint16)},
 		{"uint32", uint32(1), uint32(0), new(uint32)},
 		{"uint64", uint64(1), uint64(0), new(uint64)},
-		{"int", sdk.NewInt(1), *new(math.Int), new(math.Int)},
+		{"int", sdk.NewInt(1), *new(sdkmath.Int), new(sdkmath.Int)},
 		{"uint", sdk.NewUint(1), *new(sdk.Uint), new(sdk.Uint)},
-		{"dec", math.LegacyNewDec(1), *new(sdk.Dec), new(sdk.Dec)},
+		{"dec", sdkmath.LegacyNewDec(1), *new(sdk.Dec), new(sdk.Dec)},
 		{"struct", s{1}, s{0}, new(s)},
 	}
 
@@ -205,7 +205,7 @@ func TestSubspace(t *testing.T) {
 		types.NewParamSetPair([]byte("uint16"), uint16(0), validateNoOp),
 		types.NewParamSetPair([]byte("uint32"), uint32(0), validateNoOp),
 		types.NewParamSetPair([]byte("uint64"), uint64(0), validateNoOp),
-		types.NewParamSetPair([]byte("int"), math.Int{}, validateNoOp),
+		types.NewParamSetPair([]byte("int"), sdkmath.Int{}, validateNoOp),
 		types.NewParamSetPair([]byte("uint"), sdk.Uint{}, validateNoOp),
 		types.NewParamSetPair([]byte("dec"), sdk.Dec{}, validateNoOp),
 		types.NewParamSetPair([]byte("struct"), s{}, validateNoOp),

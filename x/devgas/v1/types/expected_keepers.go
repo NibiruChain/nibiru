@@ -3,9 +3,9 @@ package types
 import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
-	// "github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	acctypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	// "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	acctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 )
 
 // AccountKeeper defines the expected interface needed to retrieve account info.

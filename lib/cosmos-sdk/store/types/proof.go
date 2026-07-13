@@ -7,9 +7,9 @@ import (
 	tmmerkle "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	ics23 "github.com/confio/ics23/go"
 
-	sdkmaps "github.com/cosmos/cosmos-sdk/store/internal/maps"
-	sdkproofs "github.com/cosmos/cosmos-sdk/store/internal/proofs"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"
+	sdkproofs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/proofs"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
 const (

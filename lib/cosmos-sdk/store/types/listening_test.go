@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 )
 
 func TestNewStoreKVPairWriteListener(t *testing.T) {
@@ -45,7 +45,7 @@ func TestOnWrite(t *testing.T) {
 		StoreKey: testStoreKey.Name(),
 		Delete:   false,
 	}
-	testMarshaller.UnmarshalLengthPrefixed(outputBytes, outputKVPair)
+	testMarshaller.UnmarshalLengthPrefixed(outputBytes, outputKVPair) //nolint:errcheck
 	require.EqualValues(t, expectedOutputKVPair, outputKVPair)
 	testWriter.Reset()
 
@@ -61,6 +61,6 @@ func TestOnWrite(t *testing.T) {
 		StoreKey: testStoreKey.Name(),
 		Delete:   true,
 	}
-	testMarshaller.UnmarshalLengthPrefixed(outputBytes, outputKVPair)
+	testMarshaller.UnmarshalLengthPrefixed(outputBytes, outputKVPair) //nolint:errcheck
 	require.EqualValues(t, expectedOutputKVPair, outputKVPair)
 }

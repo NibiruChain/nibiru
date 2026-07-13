@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 )
 
 type addrData struct {
@@ -83,6 +83,5 @@ func TestFundraiserCompatibility(t *testing.T) {
 		addr := pub.Address()
 		t.Logf("ADDR  \t%X %X\n", addrB, addr)
 		require.Equal(t, addr, crypto.Address(addrB), fmt.Sprintf("Expected addresses to match %d", i))
-
 	}
 }

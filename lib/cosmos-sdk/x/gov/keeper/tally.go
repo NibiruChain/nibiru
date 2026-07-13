@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
 
 // TODO: Break into several smaller functions for clarity
@@ -13,12 +14,12 @@ import (
 // voters
 func (keeper Keeper) Tally(ctx sdk.Context, proposal v1.Proposal) (passes bool, burnDeposits bool, tallyResults v1.TallyResult) {
 	results := make(map[v1.VoteOption]sdk.Dec)
-	results[v1.OptionYes] = math.LegacyZeroDec()
-	results[v1.OptionAbstain] = math.LegacyZeroDec()
-	results[v1.OptionNo] = math.LegacyZeroDec()
-	results[v1.OptionNoWithVeto] = math.LegacyZeroDec()
+	results[v1.OptionYes] = sdkmath.LegacyZeroDec()
+	results[v1.OptionAbstain] = sdkmath.LegacyZeroDec()
+	results[v1.OptionNo] = sdkmath.LegacyZeroDec()
+	results[v1.OptionNoWithVeto] = sdkmath.LegacyZeroDec()
 
-	totalVotingPower := math.LegacyZeroDec()
+	totalVotingPower := sdkmath.LegacyZeroDec()
 	currValidators := make(map[string]v1.ValidatorGovInfo)
 
 	// fetch all the bonded validators, insert them into currValidators
@@ -27,7 +28,7 @@ func (keeper Keeper) Tally(ctx sdk.Context, proposal v1.Proposal) (passes bool, 
 			validator.GetOperator(),
 			validator.GetBondedTokens(),
 			validator.GetDelegatorShares(),
-			math.LegacyZeroDec(),
+			sdkmath.LegacyZeroDec(),
 			v1.WeightedVoteOptions{},
 		)
 
@@ -106,7 +107,7 @@ func (keeper Keeper) Tally(ctx sdk.Context, proposal v1.Proposal) (passes bool, 
 	}
 
 	// If no one votes (everyone abstains), proposal fails
-	if totalVotingPower.Sub(results[v1.OptionAbstain]).Equal(math.LegacyZeroDec()) {
+	if totalVotingPower.Sub(results[v1.OptionAbstain]).Equal(sdkmath.LegacyZeroDec()) {
 		return false, false, tallyResults
 	}
 
