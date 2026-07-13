@@ -31,15 +31,19 @@ service Query {
 
   // ConnectionClientState queries the client state associated with the
   // connection.
-  rpc ConnectionClientState(QueryConnectionClientStateRequest) returns (QueryConnectionClientStateResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1/connections/{connection_id}/client_state";
+  rpc ConnectionClientState(QueryConnectionClientStateRequest)
+      returns (QueryConnectionClientStateResponse) {
+    option (google.api.http).get =
+        "/ibc/core/connection/v1/connections/{connection_id}/client_state";
   }
 
   // ConnectionConsensusState queries the consensus state associated with the
   // connection.
-  rpc ConnectionConsensusState(QueryConnectionConsensusStateRequest) returns (QueryConnectionConsensusStateResponse) {
-    option (google.api.http).get = "/ibc/core/connection/v1/connections/{connection_id}/consensus_state/"
-                                   "revision/{revision_number}/height/{revision_height}";
+  rpc ConnectionConsensusState(QueryConnectionConsensusStateRequest)
+      returns (QueryConnectionConsensusStateResponse) {
+    option (google.api.http).get =
+        "/ibc/core/connection/v1/connections/{connection_id}/consensus_state/"
+        "revision/{revision_number}/height/{revision_height}";
   }
 
   // ConnectionParams queries all parameters of the ibc connection submodule.
@@ -142,10 +146,12 @@ message QueryConnectionConsensusStateResponse {
   ibc.core.client.v1.Height proof_height = 4 [(gogoproto.nullable) = false];
 }
 
-// QueryConnectionParamsRequest is the request type for the Query/ConnectionParams RPC method.
+// QueryConnectionParamsRequest is the request type for the
+// Query/ConnectionParams RPC method.
 message QueryConnectionParamsRequest {}
 
-// QueryConnectionParamsResponse is the response type for the Query/ConnectionParams RPC method.
+// QueryConnectionParamsResponse is the response type for the
+// Query/ConnectionParams RPC method.
 message QueryConnectionParamsResponse {
   // params defines the parameters of the module.
   Params params = 1;

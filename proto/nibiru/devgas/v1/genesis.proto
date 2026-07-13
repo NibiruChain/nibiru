@@ -11,8 +11,7 @@ message GenesisState {
   // params are the feeshare module parameters
   nibiru.devgas.v1.ModuleParams params = 1 [(gogoproto.nullable) = false];
   // FeeShare is a slice of active registered contracts for fee distribution
-  repeated nibiru.devgas.v1.FeeShare fee_share = 2
-      [(gogoproto.nullable) = false];
+  repeated nibiru.devgas.v1.FeeShare fee_share = 2 [(gogoproto.nullable) = false];
 }
 
 // ModuleParams defines the params for the devgas module

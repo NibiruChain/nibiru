@@ -17,8 +17,7 @@ service Query {
   // QueryZeroGasActors returns the "ZeroGasActors" state. Zero gas actors are
   // a set of accounts that can execute zero gas transactions against a
   // whitelisted  set of smart contracts.
-  rpc QueryZeroGasActors(QueryZeroGasActorsRequest)
-      returns (QueryZeroGasActorsResponse) {
+  rpc QueryZeroGasActors(QueryZeroGasActorsRequest) returns (QueryZeroGasActorsResponse) {
     option (google.api.http).get = "/nibiru/sudo/zero_gas_actors";
   }
 }

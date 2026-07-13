@@ -15,10 +15,10 @@ message ModuleOptions {
 
 // ServiceCommandDescriptor describes a CLI command based on a protobuf service.
 message ServiceCommandDescriptor {
-
   // service is the fully qualified name of the protobuf service to build
   // the command from. It can be left empty if sub_commands are used instead
-  // which may be the case if a module provides multiple tx and/or query services.
+  // which may be the case if a module provides multiple tx and/or query
+  // services.
   string service = 1;
 
   // rpc_command_options are options for commands generated from rpc methods.
@@ -55,20 +55,23 @@ message RpcCommandOptions {
   // example is examples of how to use the command.
   string example = 5;
 
-  // alias is an array of aliases that can be used instead of the first word in Use.
+  // alias is an array of aliases that can be used instead of the first word in
+  // Use.
   repeated string alias = 6;
 
-  // suggest_for is an array of command names for which this command will be suggested -
-  // similar to aliases but only suggests.
+  // suggest_for is an array of command names for which this command will be
+  // suggested - similar to aliases but only suggests.
   repeated string suggest_for = 7;
 
-  // deprecated defines, if this command is deprecated and should print this string when used.
+  // deprecated defines, if this command is deprecated and should print this
+  // string when used.
   string deprecated = 8;
 
-  // version defines the version for this command. If this value is non-empty and the command does not
-  // define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
-  // will print content of the "Version" variable. A shorthand "v" flag will also be added if the
-  // command does not define one.
+  // version defines the version for this command. If this value is non-empty and
+  // the command does not define a "version" flag, a "version" boolean flag will
+  // be added to the command and, if specified, will print content of the
+  // "Version" variable. A shorthand "v" flag will also be added if the command
+  // does not define one.
   string version = 9;
 
   // flag_options are options for flags generated from rpc request fields.
@@ -88,7 +91,6 @@ message RpcCommandOptions {
 // kebab-case name of the field. Fields can be turned into positional arguments
 // instead by using RpcCommandOptions.positional_args.
 message FlagOptions {
-
   // name is an alternate name to use for the field flag.
   string name = 1;
 
@@ -101,13 +103,15 @@ message FlagOptions {
   // default_value is the default value as text.
   string default_value = 4;
 
-  // default value is the default value as text if the flag is used without any value.
+  // default value is the default value as text if the flag is used without any
+  // value.
   string no_opt_default_value = 5;
 
   // deprecated is the usage text to show if this flag is deprecated.
   string deprecated = 6;
 
-  // shorthand_deprecated is the usage text to show if the shorthand of this flag is deprecated.
+  // shorthand_deprecated is the usage text to show if the shorthand of this flag
+  // is deprecated.
   string shorthand_deprecated = 7;
 
   // hidden hides the flag from help/usage text

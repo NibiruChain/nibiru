@@ -18,10 +18,7 @@ message StoreCodeAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for code upload
-  repeated CodeGrant grants = 1 [
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated CodeGrant grants = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // ContractExecutionAuthorization defines authorization for wasm execute.
@@ -31,10 +28,7 @@ message ContractExecutionAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract executions
-  repeated ContractGrant grants = 1 [
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated ContractGrant grants = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // ContractMigrationAuthorization defines authorization for wasm contract
@@ -44,10 +38,7 @@ message ContractMigrationAuthorization {
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract migrations
-  repeated ContractGrant grants = 1 [
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated ContractGrant grants = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // CodeGrant a granted permission for a single code
@@ -70,12 +61,14 @@ message ContractGrant {
 
   // Limit defines execution limits that are enforced and updated when the grant
   // is applied. When the limit lapsed the grant is removed.
-  google.protobuf.Any limit = 2 [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX"];
+  google.protobuf.Any limit = 2
+      [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX"];
 
   // Filter define more fine-grained control on the message payload passed
   // to the contract in the operation. When no filter applies on execution, the
   // operation is prohibited.
-  google.protobuf.Any filter = 3 [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX"];
+  google.protobuf.Any filter = 3
+      [(cosmos_proto.accepts_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX"];
 }
 
 // MaxCallsLimit limited number of calls to the contract. No funds transferable.

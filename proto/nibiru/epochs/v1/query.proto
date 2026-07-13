@@ -15,16 +15,14 @@ service Query {
     option (google.api.http).get = "/nibiru/epochs/v1beta1/epochs";
   }
   // CurrentEpoch provide current epoch of specified identifier
-  rpc CurrentEpoch(QueryCurrentEpochRequest)
-      returns (QueryCurrentEpochResponse) {
+  rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {
     option (google.api.http).get = "/nibiru/epochs/v1beta1/current_epoch";
   }
 }
 
 message QueryEpochInfosRequest {}
 message QueryEpochInfosResponse {
-  repeated nibiru.epochs.v1.EpochInfo epochs = 1
-      [(gogoproto.nullable) = false];
+  repeated nibiru.epochs.v1.EpochInfo epochs = 1 [(gogoproto.nullable) = false];
 }
 
 message QueryCurrentEpochRequest {

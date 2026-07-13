@@ -10,8 +10,5 @@ option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant"
 
 // GenesisState contains a set of fee allowances, persisted from the store
 message GenesisState {
-  repeated Grant allowances = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated Grant allowances = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }

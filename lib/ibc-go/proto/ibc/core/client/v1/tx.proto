@@ -72,7 +72,8 @@ message MsgUpgradeClient {
   // proof that old chain committed to new client
   bytes proof_upgrade_client = 4 [(gogoproto.moretags) = "yaml:\"proof_upgrade_client\""];
   // proof that old chain committed to new consensus state
-  bytes proof_upgrade_consensus_state = 5 [(gogoproto.moretags) = "yaml:\"proof_upgrade_consensus_state\""];
+  bytes proof_upgrade_consensus_state = 5
+      [(gogoproto.moretags) = "yaml:\"proof_upgrade_consensus_state\""];
   // signer address
   string signer = 6;
 }

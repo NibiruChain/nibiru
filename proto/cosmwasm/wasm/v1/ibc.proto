@@ -13,12 +13,10 @@ message MsgIBCSend {
 
   // Timeout height relative to the current block height.
   // The timeout is disabled when set to 0.
-  uint64 timeout_height = 4
-      [(gogoproto.moretags) = "yaml:\"timeout_height\""];
+  uint64 timeout_height = 4 [(gogoproto.moretags) = "yaml:\"timeout_height\""];
   // Timeout timestamp (in nanoseconds) relative to the current block timestamp.
   // The timeout is disabled when set to 0.
-  uint64 timeout_timestamp = 5
-      [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
+  uint64 timeout_timestamp = 5 [(gogoproto.moretags) = "yaml:\"timeout_timestamp\""];
 
   // Data is the payload to transfer. We must not make assumption what format or
   // content is in here.

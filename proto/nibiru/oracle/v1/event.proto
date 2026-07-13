@@ -39,10 +39,8 @@ message EventAggregateVote {
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 
-  repeated nibiru.oracle.v1.ExchangeRateTuple prices = 3 [
-    (gogoproto.castrepeated) = "ExchangeRateTuples",
-    (gogoproto.nullable)     = false
-  ];
+  repeated nibiru.oracle.v1.ExchangeRateTuple prices = 3
+      [(gogoproto.castrepeated) = "ExchangeRateTuples", (gogoproto.nullable) = false];
 }
 
 // Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added

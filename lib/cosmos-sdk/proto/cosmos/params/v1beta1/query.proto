@@ -36,10 +36,7 @@ message QueryParamsRequest {
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // param defines the queried parameter.
-  ParamChange param = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  ParamChange param = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // QuerySubspacesRequest defines a request type for querying for all registered
@@ -61,6 +58,6 @@ message QuerySubspacesResponse {
 //
 // Since: cosmos-sdk 0.46
 message Subspace {
-  string subspace = 1;
-  repeated string keys = 2;
+  string          subspace = 1;
+  repeated string keys     = 2;
 }

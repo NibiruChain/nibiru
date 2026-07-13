@@ -33,8 +33,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // Module parameters stored in state
-  nibiru.tokenfactory.v1.ModuleParams params = 1
-      [(gogoproto.nullable) = false];
+  nibiru.tokenfactory.v1.ModuleParams params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryDenomsRequest: gRPC query for all denoms registered for a creator

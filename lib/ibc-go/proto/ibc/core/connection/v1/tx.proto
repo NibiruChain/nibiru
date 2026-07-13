@@ -49,13 +49,17 @@ message MsgConnectionOpenTry {
   option (gogoproto.goproto_getters) = false;
 
   string client_id = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
-  // Deprecated: this field is unused. Crossing hellos are no longer supported in core IBC.
-  string previous_connection_id = 2 [deprecated = true, (gogoproto.moretags) = "yaml:\"previous_connection_id\""];
-  google.protobuf.Any       client_state = 3 [deprecated = true, (gogoproto.moretags) = "yaml:\"client_state\""];
-  Counterparty              counterparty = 4 [(gogoproto.nullable) = false];
-  uint64                    delay_period = 5 [(gogoproto.moretags) = "yaml:\"delay_period\""];
-  repeated Version          counterparty_versions = 6 [(gogoproto.moretags) = "yaml:\"counterparty_versions\""];
-  ibc.core.client.v1.Height proof_height          = 7
+  // Deprecated: this field is unused. Crossing hellos are no longer supported in
+  // core IBC.
+  string previous_connection_id = 2
+      [deprecated = true, (gogoproto.moretags) = "yaml:\"previous_connection_id\""];
+  google.protobuf.Any client_state = 3
+      [deprecated = true, (gogoproto.moretags) = "yaml:\"client_state\""];
+  Counterparty     counterparty          = 4 [(gogoproto.nullable) = false];
+  uint64           delay_period          = 5 [(gogoproto.moretags) = "yaml:\"delay_period\""];
+  repeated Version counterparty_versions = 6
+      [(gogoproto.moretags) = "yaml:\"counterparty_versions\""];
+  ibc.core.client.v1.Height proof_height = 7
       [(gogoproto.moretags) = "yaml:\"proof_height\"", (gogoproto.nullable) = false];
   // proof of the initialization the connection on Chain A: `UNITIALIZED ->
   // INIT`
@@ -63,11 +67,15 @@ message MsgConnectionOpenTry {
   // proof of client state included in message
   bytes proof_client = 9 [deprecated = true, (gogoproto.moretags) = "yaml:\"proof_client\""];
   // proof of client consensus state
-  bytes                     proof_consensus = 10 [deprecated = true, (gogoproto.moretags) = "yaml:\"proof_consensus\""];
-  ibc.core.client.v1.Height consensus_height = 11
-      [deprecated = true, (gogoproto.moretags) = "yaml:\"consensus_height\"", (gogoproto.nullable) = false];
+  bytes proof_consensus = 10 [deprecated = true, (gogoproto.moretags) = "yaml:\"proof_consensus\""];
+  ibc.core.client.v1.Height consensus_height = 11 [
+    deprecated           = true,
+    (gogoproto.moretags) = "yaml:\"consensus_height\"",
+    (gogoproto.nullable) = false
+  ];
   string signer = 12;
-  // optional proof data for host state machines that are unable to introspect their own consensus state
+  // optional proof data for host state machines that are unable to introspect
+  // their own consensus state
   bytes host_consensus_state_proof = 13 [deprecated = true];
 }
 
@@ -80,11 +88,12 @@ message MsgConnectionOpenAck {
   option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string              connection_id              = 1 [(gogoproto.moretags) = "yaml:\"connection_id\""];
-  string              counterparty_connection_id = 2 [(gogoproto.moretags) = "yaml:\"counterparty_connection_id\""];
-  Version             version                    = 3;
-  google.protobuf.Any client_state               = 4 [(gogoproto.moretags) = "yaml:\"client_state\""];
-  ibc.core.client.v1.Height proof_height         = 5
+  string connection_id              = 1 [(gogoproto.moretags) = "yaml:\"connection_id\""];
+  string counterparty_connection_id = 2
+      [(gogoproto.moretags) = "yaml:\"counterparty_connection_id\""];
+  Version                   version      = 3;
+  google.protobuf.Any       client_state = 4 [(gogoproto.moretags) = "yaml:\"client_state\""];
+  ibc.core.client.v1.Height proof_height = 5
       [(gogoproto.moretags) = "yaml:\"proof_height\"", (gogoproto.nullable) = false];
   // proof of the initialization the connection on Chain B: `UNITIALIZED ->
   // TRYOPEN`
@@ -92,11 +101,12 @@ message MsgConnectionOpenAck {
   // proof of client state included in message
   bytes proof_client = 7 [(gogoproto.moretags) = "yaml:\"proof_client\""];
   // proof of client consensus state
-  bytes                     proof_consensus  = 8 [(gogoproto.moretags) = "yaml:\"proof_consensus\""];
+  bytes                     proof_consensus = 8 [(gogoproto.moretags) = "yaml:\"proof_consensus\""];
   ibc.core.client.v1.Height consensus_height = 9
       [(gogoproto.moretags) = "yaml:\"consensus_height\"", (gogoproto.nullable) = false];
   string signer = 10;
-  // optional proof data for host state machines that are unable to introspect their own consensus state
+  // optional proof data for host state machines that are unable to introspect
+  // their own consensus state
   bytes host_consensus_state_proof = 11;
 }
 

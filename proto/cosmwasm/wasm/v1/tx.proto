@@ -30,7 +30,8 @@ service Msg {
   // ClearAdmin removes any admin stored for a smart contract
   rpc ClearAdmin(MsgClearAdmin) returns (MsgClearAdminResponse);
   // UpdateInstantiateConfig updates instantiate config for a smart contract
-  rpc UpdateInstantiateConfig(MsgUpdateInstantiateConfig) returns (MsgUpdateInstantiateConfigResponse);
+  rpc UpdateInstantiateConfig(MsgUpdateInstantiateConfig)
+      returns (MsgUpdateInstantiateConfigResponse);
   // UpdateParams defines a governance operation for updating the x/wasm
   // module parameters. The authority is defined in the keeper.
   //
@@ -55,20 +56,24 @@ service Msg {
   // and instantiating the contract. The authority is defined in the keeper.
   //
   // Since: 0.40
-  rpc StoreAndInstantiateContract(MsgStoreAndInstantiateContract) returns (MsgStoreAndInstantiateContractResponse);
+  rpc StoreAndInstantiateContract(MsgStoreAndInstantiateContract)
+      returns (MsgStoreAndInstantiateContractResponse);
   // RemoveCodeUploadParamsAddresses defines a governance operation for
   // removing addresses from code upload params.
   // The authority is defined in the keeper.
-  rpc RemoveCodeUploadParamsAddresses(MsgRemoveCodeUploadParamsAddresses) returns (MsgRemoveCodeUploadParamsAddressesResponse);
+  rpc RemoveCodeUploadParamsAddresses(MsgRemoveCodeUploadParamsAddresses)
+      returns (MsgRemoveCodeUploadParamsAddressesResponse);
   // AddCodeUploadParamsAddresses defines a governance operation for
   // adding addresses to code upload params.
   // The authority is defined in the keeper.
-  rpc AddCodeUploadParamsAddresses(MsgAddCodeUploadParamsAddresses) returns (MsgAddCodeUploadParamsAddressesResponse);
+  rpc AddCodeUploadParamsAddresses(MsgAddCodeUploadParamsAddresses)
+      returns (MsgAddCodeUploadParamsAddressesResponse);
   // StoreAndMigrateContract defines a governance operation for storing
   // and migrating the contract. The authority is defined in the keeper.
   //
   // Since: 0.42
-  rpc StoreAndMigrateContract(MsgStoreAndMigrateContract) returns (MsgStoreAndMigrateContractResponse);
+  rpc StoreAndMigrateContract(MsgStoreAndMigrateContract)
+      returns (MsgStoreAndMigrateContractResponse);
   // UpdateContractLabel sets a new label for a smart contract
   //
   // Since: 0.43
@@ -250,10 +255,8 @@ message AccessConfigUpdate {
   // CodeID is the reference to the stored WASM code to be updated
   uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
   // InstantiatePermission to apply to the set of code ids
-  AccessConfig instantiate_permission = 2 [
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  AccessConfig instantiate_permission = 2
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // MsgUpdateInstantiateConfig updates instantiate config for a smart contract
@@ -285,10 +288,7 @@ message MsgUpdateParams {
   // params defines the x/wasm parameters to update.
   //
   // NOTE: All parameters must be supplied.
-  Params params = 2 [
-    (gogoproto.nullable)   = false,
-    (amino.dont_omitempty) = true
-  ];
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a
@@ -332,10 +332,8 @@ message MsgPinCodes {
   // Authority is the address of the governance account.
   string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // CodeIDs references the new WASM codes
-  repeated uint64 code_ids = 2 [
-    (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags)   = "yaml:\"code_ids\""
-  ];
+  repeated uint64 code_ids = 2
+      [(gogoproto.customname) = "CodeIDs", (gogoproto.moretags) = "yaml:\"code_ids\""];
 }
 
 // MsgPinCodesResponse defines the response structure for executing a
@@ -354,10 +352,8 @@ message MsgUnpinCodes {
   // Authority is the address of the governance account.
   string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // CodeIDs references the WASM codes
-  repeated uint64 code_ids = 2 [
-    (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags)   = "yaml:\"code_ids\""
-  ];
+  repeated uint64 code_ids = 2
+      [(gogoproto.customname) = "CodeIDs", (gogoproto.moretags) = "yaml:\"code_ids\""];
 }
 
 // MsgUnpinCodesResponse defines the response structure for executing a

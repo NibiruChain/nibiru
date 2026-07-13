@@ -254,7 +254,8 @@ message EthCallRequest {
   // gas_cap defines the default gas cap to be used
   uint64 gas_cap = 2;
   // proposer_address of the requested block in hex format
-  bytes proposer_address = 3 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 3
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the eip155 chain id parsed from the requested block header
   int64 chain_id = 4;
 }
@@ -282,12 +283,11 @@ message QueryTraceTxRequest {
   // block_hash of requested transaction
   string block_hash = 6;
   // block_time of requested transaction
-  google.protobuf.Timestamp block_time = 7 [
-    (gogoproto.nullable) = false,
-    (gogoproto.stdtime)  = true
-  ];
+  google.protobuf.Timestamp block_time = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   // proposer_address is the proposer of the requested block
-  bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 8
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the the eip155 chain id parsed from the requested block header
   int64 chain_id = 9;
   // block_max_gas of the block of the requested transaction
@@ -311,12 +311,11 @@ message QueryTraceBlockRequest {
   // block_hash (hex) of the traced block
   string block_hash = 6;
   // block_time of the traced block
-  google.protobuf.Timestamp block_time = 7 [
-    (gogoproto.nullable) = false,
-    (gogoproto.stdtime)  = true
-  ];
+  google.protobuf.Timestamp block_time = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   // proposer_address is the address of the requested block
-  bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 8
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the eip155 chain id parsed from the requested block header
   int64 chain_id = 9;
   // block_max_gas of the traced block

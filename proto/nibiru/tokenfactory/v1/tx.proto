@@ -18,17 +18,14 @@ service Msg {
   rpc ChangeAdmin(MsgChangeAdmin) returns (MsgChangeAdminResponse);
   // UpdateModuleParams: A governance operation for updating the x/tokenfactory
   // module parameters.
-  rpc UpdateModuleParams(MsgUpdateModuleParams)
-      returns (MsgUpdateModuleParamsResponse);
+  rpc UpdateModuleParams(MsgUpdateModuleParams) returns (MsgUpdateModuleParamsResponse);
   rpc Mint(MsgMint) returns (MsgMintResponse);
   rpc Burn(MsgBurn) returns (MsgBurnResponse);
-  rpc SetDenomMetadata(MsgSetDenomMetadata)
-      returns (MsgSetDenomMetadataResponse);
+  rpc SetDenomMetadata(MsgSetDenomMetadata) returns (MsgSetDenomMetadataResponse);
 
   // SudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to
   // change bank metadata. [SUDO] Only callable by sudoers.
-  rpc SudoSetDenomMetadata(MsgSudoSetDenomMetadata)
-      returns (MsgSudoSetDenomMetadataResponse);
+  rpc SudoSetDenomMetadata(MsgSudoSetDenomMetadata) returns (MsgSudoSetDenomMetadataResponse);
 
   // burns a native token such as unibi
   rpc BurnNative(MsgBurnNative) returns (MsgBurnNativeResponse);
@@ -49,8 +46,7 @@ message MsgCreateDenom {
 // MsgCreateDenomResponse is the return value of MsgCreateDenom
 message MsgCreateDenomResponse {
   // NewTokenDenom: identifier for the newly created token factory denom.
-  string new_token_denom = 1
-      [(gogoproto.moretags) = "yaml:\"new_token_denom\""];
+  string new_token_denom = 1 [(gogoproto.moretags) = "yaml:\"new_token_denom\""];
 }
 
 // MsgChangeAdmin is the sdk.Msg type for allowing an admin account to change
@@ -71,8 +67,7 @@ message MsgUpdateModuleParams {
   // Authority: Address of the governance module account.
   string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
-  nibiru.tokenfactory.v1.ModuleParams params = 2
-      [(gogoproto.nullable) = false];
+  nibiru.tokenfactory.v1.ModuleParams params = 2 [(gogoproto.nullable) = false];
 }
 
 // MsgUpdateModuleParamsResponse is the gRPC response for the
@@ -87,10 +82,7 @@ message MsgMint {
       [(gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false];
   // mint_to_addr: An address to which tokens will be minted. If blank,
   // tokens are minted to the "sender".
-  string mint_to = 3 [
-    (gogoproto.moretags) = "yaml:\"mint_to\"",
-    (gogoproto.nullable) = true
-  ];
+  string mint_to = 3 [(gogoproto.moretags) = "yaml:\"mint_to\"", (gogoproto.nullable) = true];
 }
 
 message MsgMintResponse {

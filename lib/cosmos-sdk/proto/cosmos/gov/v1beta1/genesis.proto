@@ -15,34 +15,25 @@ message GenesisState {
   // deposits defines all the deposits present at genesis.
   repeated Deposit deposits = 2 [
     (gogoproto.castrepeated) = "Deposits",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true
   ];
   // votes defines all the votes present at genesis.
   repeated Vote votes = 3 [
     (gogoproto.castrepeated) = "Votes",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true
   ];
   // proposals defines all the proposals present at genesis.
   repeated Proposal proposals = 4 [
     (gogoproto.castrepeated) = "Proposals",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true
   ];
   // params defines all the parameters of related to deposit.
-  DepositParams deposit_params = 5 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  DepositParams deposit_params = 5 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // params defines all the parameters of related to voting.
-  VotingParams voting_params = 6 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  VotingParams voting_params = 6 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // params defines all the parameters of related to tally.
-  TallyParams tally_params = 7 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  TallyParams tally_params = 7 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }

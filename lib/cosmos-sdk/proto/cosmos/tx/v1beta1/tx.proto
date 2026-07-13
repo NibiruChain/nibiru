@@ -109,7 +109,8 @@ message TxBody {
 
   // memo is any arbitrary note/comment to be added to the transaction.
   // WARNING: in clients, any publicly exposed text should not be called memo,
-  // but should be called `note` instead (see https://github.com/cosmos/cosmos-sdk/issues/9122).
+  // but should be called `note` instead (see
+  // https://github.com/cosmos/cosmos-sdk/issues/9122).
   string memo = 2;
 
   // timeout is the block height after which this transaction will not
@@ -206,7 +207,7 @@ message ModeInfo {
 message Fee {
   // amount is the amount of coins to be paid as a fee
   repeated cosmos.base.v1beta1.Coin amount = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 
@@ -214,14 +215,16 @@ message Fee {
   // before an out of gas error occurs
   uint64 gas_limit = 2;
 
-  // if unset, the first signer is responsible for paying the fees. If set, the specified account must pay the fees.
-  // the payer must be a tx signer (and thus have signed this field in AuthInfo).
-  // setting this field does *not* change the ordering of required signers for the transaction.
+  // if unset, the first signer is responsible for paying the fees. If set, the
+  // specified account must pay the fees. the payer must be a tx signer (and thus
+  // have signed this field in AuthInfo). setting this field does *not* change
+  // the ordering of required signers for the transaction.
   string payer = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
-  // if set, the fee payer (either the first signer or the value of the payer field) requests that a fee grant be used
-  // to pay fees instead of the fee payer's own balance. If an appropriate fee grant does not exist or the chain does
-  // not support fee grants, this will fail
+  // if set, the fee payer (either the first signer or the value of the payer
+  // field) requests that a fee grant be used to pay fees instead of the fee
+  // payer's own balance. If an appropriate fee grant does not exist or the chain
+  // does not support fee grants, this will fail
   string granter = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
@@ -231,7 +234,7 @@ message Fee {
 message Tip {
   // amount is the amount of the tip
   repeated cosmos.base.v1beta1.Coin amount = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
   // tipper is the address of the account paying for the tip

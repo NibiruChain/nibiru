@@ -39,11 +39,8 @@ message Params {
   ];
   // The set of whitelisted markets, or asset pairs, for the module.
   // Ex. '["unibi:uusd","ubtc:uusd"]'
-  repeated string whitelist = 4 [
-    (gogoproto.moretags) = "yaml:\"whitelist\"",
-    (gogoproto.customtype) =
-        "Pair"
-  ];
+  repeated string whitelist = 4
+      [(gogoproto.moretags) = "yaml:\"whitelist\"", (gogoproto.customtype) = "Pair"];
   // SlashFraction returns the proportion of an oracle's stake that gets
   // slashed in the event of slashing. `SlashFraction` specifies the exact
   // penalty for failing a voting period.
@@ -86,8 +83,7 @@ message Params {
     (gogoproto.nullable)   = false
   ];
 
-  uint64 expiration_blocks = 11
-      [(gogoproto.moretags) = "yaml:\"expiration_blocks\""];
+  uint64 expiration_blocks = 11 [(gogoproto.moretags) = "yaml:\"expiration_blocks\""];
 }
 
 // Struct for aggregate prevoting on the ExchangeRateVote.
@@ -124,10 +120,9 @@ message ExchangeRateTuple {
   option (gogoproto.goproto_getters) = false;
 
   string pair = 1 [
-    (gogoproto.moretags) = "yaml:\"pair\"",
-    (gogoproto.customtype) =
-        "Pair",
-    (gogoproto.nullable) = false
+    (gogoproto.moretags)   = "yaml:\"pair\"",
+    (gogoproto.customtype) = "Pair",
+    (gogoproto.nullable)   = false
   ];
 
   string exchange_rate = 2 [
@@ -151,8 +146,7 @@ message ExchangeRateAtBlock {
   // Block timestamp for the block where the oracle came to consensus for this
   // price. This timestamp is a conventional Unix millisecond time, i.e. the
   // number of milliseconds elapsed since January 1, 1970 UTC.
-  int64 block_timestamp_ms = 3
-      [(gogoproto.moretags) = "yaml:\"block_timestamp_ms\""];
+  int64 block_timestamp_ms = 3 [(gogoproto.moretags) = "yaml:\"block_timestamp_ms\""];
 }
 
 // Rewards defines a credit object towards validators
