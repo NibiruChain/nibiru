@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { Command } from "commander";
 
 const DEFAULT_BUMP_TYPE = "minor";
-const RELEASE_TAG_PREFIX = "lib/wasmvm-ffi/";
+const RELEASE_TAG_PREFIX = "lib/wasmvm/";
+const LEGACY_RELEASE_TAG_PREFIX = "lib/wasmvm-ffi/";
 const FIRST_RELEASE_TAG = `${RELEASE_TAG_PREFIX}v1.10.0`;
 const RELEASE_VERSION_PATTERN = "v[0-9]+\\.[0-9]+\\.[0-9]+";
 const RELEASE_TAG_PATTERN = `${RELEASE_TAG_PREFIX}${RELEASE_VERSION_PATTERN}`;
@@ -34,10 +35,9 @@ export interface LibwasmvmReleaseVersion {
 }
 
 export interface PublishDryRunPlan {
-  bumpType: BumpType;
   branch: string;
   commitSha: string;
-  nextTag: string;
+  tag: string;
   commands: string[];
 }
 
@@ -158,7 +158,7 @@ export const parseLibwasmvmReleaseTag = (
   tag: string,
 ): LibwasmvmReleaseVersion | undefined => {
   const match = tag.match(
-    /^lib\/wasmvm-ffi\/v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$/,
+    /^lib\/wasmvm(?:-ffi)?\/v(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)$/,
   );
 
   if (match?.groups === undefined) {
@@ -246,7 +246,9 @@ export const findLatestLibwasmvmReleaseTagFromGhOutput = (
 export const getLocalGitTags = async (
   runner: CommandRunner = runShellCommand,
 ): Promise<string[]> => {
-  const stdout = await runner(`git tag --list "${RELEASE_TAG_PREFIX}v*.*.*"`);
+  const stdout = await runner(
+    `git tag --list "${RELEASE_TAG_PREFIX}v*.*.*" "${LEGACY_RELEASE_TAG_PREFIX}v*.*.*"`,
+  );
   return stdout
     .split("\n")
     .map((line) => line.trim())
@@ -308,7 +310,7 @@ export const getLibwasmvmTagsPointingAtCommit = async (
   const stdout = await runner(
     `git tag --points-at ${quoteShellArg(
       commit,
-    )} --list "${RELEASE_TAG_PREFIX}v*.*.*"`,
+    )} --list "${RELEASE_TAG_PREFIX}v*.*.*" "${LEGACY_RELEASE_TAG_PREFIX}v*.*.*"`,
   );
   return stdout
     .split("\n")
@@ -403,26 +405,20 @@ export const assertArtifactCommitAfterLatestRelease = async (
 export const buildPublishDryRunPlan = (
   branch: string,
   commitSha: string,
-  localTags: string[],
-  bumpType?: string,
+  tag: string,
   artifactsDir: string,
 ): PublishDryRunPlan => {
-  const normalizedBumpType = normalizeBumpType(bumpType);
-  const nextTag = computeNextLibwasmvmReleaseTag(localTags, normalizedBumpType);
   const artifactArgs = REQUIRED_RELEASE_ARTIFACTS.map(
     (fileName) => `${artifactsDir}/${fileName}`,
   ).join(" ");
 
   return {
-    bumpType: normalizedBumpType,
     branch,
     commitSha,
-    nextTag,
+    tag,
     commands: [
       `test -d ${artifactsDir}`,
-      `git tag --no-sign -a ${nextTag} ${commitSha} -m "libwasmvm ${nextTag}"`,
-      `git push origin ${nextTag}`,
-      `gh release create ${nextTag} ${artifactArgs} --repo ${GITHUB_REPO} --title "${nextTag}" --notes-file <release-body.md>`,
+      `gh release create ${tag} ${artifactArgs} --repo ${GITHUB_REPO} --title "${tag}" --notes-file <release-body.md>`,
     ],
   };
 };
@@ -430,13 +426,12 @@ export const buildPublishDryRunPlan = (
 export const printPublishDryRun = (plan: PublishDryRunPlan): void => {
   console.log("Dry run: no release changes were made.");
   console.log(
-    "Pass --run to tag the commit, create the GitHub Release, and upload assets.",
+    "Pass --run to create the GitHub Release and upload assets.",
   );
   console.log("");
   console.log(`Branch: ${plan.branch}`);
   console.log(`Commit: ${plan.commitSha}`);
-  console.log(`Bump: ${plan.bumpType}`);
-  console.log(`Next tag: ${plan.nextTag}`);
+  console.log(`Tag: ${plan.tag}`);
   console.log("");
   console.log("Commands that would run:");
   for (const command of plan.commands) {
@@ -485,9 +480,8 @@ export const renderReleaseMetadataMarkdown = (
   return `${lines.join("\n")}\n`;
 };
 
-export const createGitTagAndRelease = async (
+export const createGitHubRelease = async (
   tag: string,
-  commitSha: string,
   releaseBodyPath: string,
   artifactsDir: string,
   runner: CommandRunner = runShellCommand,
@@ -496,12 +490,6 @@ export const createGitTagAndRelease = async (
     quoteShellArg(join(artifactsDir, fileName)),
   ).join(" ");
 
-  await runner(
-    `git tag --no-sign -a ${quoteShellArg(tag)} ${quoteShellArg(
-      commitSha,
-    )} -m ${quoteShellArg(`libwasmvm ${tag}`)}`,
-  );
-  await runner(`git push origin ${quoteShellArg(tag)}`);
   await runner(
     `gh release create ${quoteShellArg(
       tag,
@@ -512,7 +500,7 @@ export const createGitTagAndRelease = async (
 };
 
 export const publishArtifacts = async (
-  bumpType?: string,
+  tag: string,
   options: {
     run?: boolean;
     artifactsDir?: string;
@@ -520,17 +508,15 @@ export const publishArtifacts = async (
   } = {},
 ): Promise<void> => {
   const runner = options.runner ?? runShellCommand;
+  const normalizedTag = normalizeReleaseTag(tag);
   const artifactsDir =
     options.artifactsDir ?? (await resolveDefaultArtifactsDir(runner));
-  const normalizedBumpType = normalizeBumpType(bumpType);
   const branch = (await runner("git branch --show-current")).trim();
   const commitSha = (await runner("git rev-parse HEAD")).trim();
-  const localTags = await getLocalGitTags(runner);
   const dryRunPlan = buildPublishDryRunPlan(
     branch,
     commitSha,
-    localTags,
-    normalizedBumpType,
+    normalizedTag,
     artifactsDir,
   );
 
@@ -547,33 +533,10 @@ export const publishArtifacts = async (
 
   await ensureGhCli(runner);
   await validateExistingArtifacts(artifactsDir);
-
-  const artifactTags = await getLibwasmvmTagsPointingAtCommit(
-    commitSha,
-    runner,
-  );
-  if (artifactTags.length > 0) {
-    const releasedArtifactTag = await findReleasedHeadTag(artifactTags, runner);
-    if (releasedArtifactTag !== undefined) {
-      console.log(
-        `${releasedArtifactTag} already has a GitHub Release; skipping.`,
-      );
-      return;
-    }
-
-    const latestArtifactTag = sortLibwasmvmReleaseTags(artifactTags).at(-1);
+  const tagCommit = await getTagCommit(normalizedTag, runner);
+  if (tagCommit !== commitSha) {
     throw new Error(
-      `${latestArtifactTag} tags artifact commit ${commitSha} ` +
-        "but does not have a GitHub Release.",
-    );
-  }
-
-  await assertArtifactCommitAfterLatestRelease(commitSha, runner);
-
-  if (localTags.includes(dryRunPlan.nextTag)) {
-    throw new Error(
-      `${dryRunPlan.nextTag} already exists but does not have a release ` +
-        "for the current HEAD.",
+      `Tag ${normalizedTag} points to ${tagCommit}, not current HEAD ${commitSha}.`,
     );
   }
 
@@ -581,10 +544,10 @@ export const publishArtifacts = async (
     await runner(`git log -1 --format=%s ${quoteShellArg(commitSha)}`)
   ).trim();
   const metadata: PublishReleaseMetadata = {
-    tag: dryRunPlan.nextTag,
+    tag: normalizedTag,
     commitSha,
     commitSubject,
-    releaseUrl: `https://github.com/${GITHUB_REPO}/releases/tag/${encodeURIComponent(dryRunPlan.nextTag)}`,
+    releaseUrl: `https://github.com/${GITHUB_REPO}/releases/tag/${encodeURIComponent(normalizedTag)}`,
     workflowRunUrl: buildWorkflowRunUrl(),
   };
   const releaseNotesDir = await mkdtemp(
@@ -597,9 +560,8 @@ export const publishArtifacts = async (
       Bun.file(releaseBodyPath),
       renderReleaseMetadataMarkdown(metadata),
     );
-    await createGitTagAndRelease(
-      dryRunPlan.nextTag,
-      commitSha,
+    await createGitHubRelease(
+      normalizedTag,
       releaseBodyPath,
       artifactsDir,
       runner,
@@ -607,7 +569,7 @@ export const publishArtifacts = async (
   } finally {
     await rm(releaseNotesDir, { recursive: true, force: true });
   }
-  console.log(`Published ${dryRunPlan.nextTag}`);
+  console.log(`Published ${normalizedTag}`);
 };
 
 export const printNextTag = async (bumpType?: string): Promise<void> => {
@@ -643,10 +605,10 @@ program
 program
   .command("publish")
   .description("Publish tested libwasmvm artifacts")
-  .argument("[bump]", "patch | minor | major", DEFAULT_BUMP_TYPE)
+  .argument("<tag>", "existing lib/wasmvm/vX.Y.Z tag")
   .option("--run", "execute the release; without this, print a dry run")
-  .action((bumpType: string | undefined, options: { run?: boolean }) => {
-    return runCliAction(() => publishArtifacts(bumpType, options));
+  .action((tag: string, options: { run?: boolean }) => {
+    return runCliAction(() => publishArtifacts(tag, options));
   });
 
 program

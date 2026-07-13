@@ -1,17 +1,18 @@
 name: "Wasm VM FFI"
 # Builds release candidate libwasmvm artifacts on ordinary branch and PR runs.
-# Durable GitHub Release publishing only runs from main.
+# Durable GitHub Release publishing only runs for lib/wasmvm version tags.
 
 on:
   push:
     branches:
       - main
+    tags:
+      - "lib/wasmvm/v*.*.*"
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   # changes-wasmvm (job): Detects changes that should run Wasm VM FFI jobs.
@@ -34,28 +35,20 @@ jobs:
               - "lib/wasmvm/**"
               - ".github/workflows/wasmvm.yml"
 
-      # This step centralizes the Wasm VM FFI workflow policy. The path filter
-      # controls ordinary PR runs, while `workflow_dispatch` and `push` events
-      # force the jobs to execute. Release publishing is blocked by PR label
-      # `skip-release`; pull request events carry labels directly, but push
-      # events require looking up the pull request associated with the pushed
-      # commit before deciding whether to publish.
+      # The path filter controls ordinary PR runs, while workflow dispatch and
+      # push events force the jobs to execute. Only matching version-tag pushes
+      # may publish a release.
       - name: Decide Wasm VM FFI run mode
         id: decision
         env:
-          GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref }}
-          REPOSITORY: ${{ github.repository }}
-          SHA: ${{ github.sha }}
           HAS_CHANGES_FOR_WASMVM: ${{ steps.filter.outputs.wasmvm }}
-          PR_LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
         run: |
           set -euo pipefail
 
           do_run=false
           do_release=false
-          has_skip_release=false
           reason="No Wasm VM FFI changes detected."
 
           if [[ "$HAS_CHANGES_FOR_WASMVM" == "true" ]]; then
@@ -69,20 +62,9 @@ jobs:
             reason="Push events run Wasm VM FFI jobs."
           fi
 
-          if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            has_skip_release="$(jq -r 'if . == null then false else any(.[]; . == "skip-release") end' <<< "$PR_LABELS_JSON")"
-          elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "refs/heads/main" ]]; then
-            prs_json="$(gh api -H "Accept: application/vnd.github+json" "/repos/$REPOSITORY/commits/$SHA/pulls")"
-            has_skip_release="$(jq -r 'any(.[].labels[]?.name; . == "skip-release")' <<< "$prs_json")"
-          fi
-
-          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "refs/heads/main" && "$do_run" == "true" ]]; then
-            if [[ "$has_skip_release" == "true" ]]; then
-              reason="Wasm VM FFI release blocked by skip-release label."
-            else
-              do_release=true
-              reason="Push to main runs Wasm VM FFI release."
-            fi
+          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" =~ ^refs/tags/lib/wasmvm/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            do_release=true
+            reason="Wasm VM FFI version tag push runs release publishing."
           fi
 
           {
@@ -550,14 +532,24 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout tested commit
+      - name: Checkout pushed tag
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
+      - name: Verify tag commit is reachable from main
+        run: |
+          set -euo pipefail
+          git fetch origin main:refs/remotes/origin/main
+          tag_commit="$(git rev-parse "${GITHUB_REF_NAME}^{commit}")"
+          if ! git merge-base --is-ancestor "$tag_commit" origin/main; then
+            echo "${GITHUB_REF_NAME} (${tag_commit}) is not reachable from origin/main." >&2
+            exit 1
+          fi
+
       - name: Use tested commit as local main branch
-        run: git checkout -B main "$GITHUB_SHA"
+        run: git checkout -B main "${GITHUB_REF_NAME}^{commit}"
 
       - name: Install just
         uses: taiki-e/install-action@just
@@ -592,10 +584,5 @@ jobs:
       - name: Test release script
         run: just wasmvm release test
 
-      - name: Configure git tag identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
       - name: Publish tested libwasmvm release
-        run: just wasmvm release publish --run
+        run: just wasmvm release publish "$GITHUB_REF_NAME" --run
