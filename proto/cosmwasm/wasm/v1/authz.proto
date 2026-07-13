@@ -8,18 +8,18 @@ import "cosmwasm/wasm/v1/types.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
+option go_package                      = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // StoreCodeAuthorization defines authorization for wasm code upload.
 // Since: wasmd 0.42
 message StoreCodeAuthorization {
-  option (amino.name) = "wasm/StoreCodeAuthorization";
+  option (amino.name)                        = "wasm/StoreCodeAuthorization";
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for code upload
   repeated CodeGrant grants = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
 }
@@ -27,12 +27,12 @@ message StoreCodeAuthorization {
 // ContractExecutionAuthorization defines authorization for wasm execute.
 // Since: wasmd 0.30
 message ContractExecutionAuthorization {
-  option (amino.name) = "wasm/ContractExecutionAuthorization";
+  option (amino.name)                        = "wasm/ContractExecutionAuthorization";
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract executions
   repeated ContractGrant grants = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
 }
@@ -40,12 +40,12 @@ message ContractExecutionAuthorization {
 // ContractMigrationAuthorization defines authorization for wasm contract
 // migration. Since: wasmd 0.30
 message ContractMigrationAuthorization {
-  option (amino.name) = "wasm/ContractMigrationAuthorization";
+  option (amino.name)                        = "wasm/ContractMigrationAuthorization";
   option (cosmos_proto.implements_interface) = "cosmos.authz.v1beta1.Authorization";
 
   // Grants for contract migrations
   repeated ContractGrant grants = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
 }
@@ -81,7 +81,7 @@ message ContractGrant {
 // MaxCallsLimit limited number of calls to the contract. No funds transferable.
 // Since: wasmd 0.30
 message MaxCallsLimit {
-  option (amino.name) = "wasm/MaxCallsLimit";
+  option (amino.name)                        = "wasm/MaxCallsLimit";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
@@ -91,13 +91,13 @@ message MaxCallsLimit {
 // MaxFundsLimit defines the maximal amounts that can be sent to the contract.
 // Since: wasmd 0.30
 message MaxFundsLimit {
-  option (amino.name) = "wasm/MaxFundsLimit";
+  option (amino.name)                        = "wasm/MaxFundsLimit";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Amounts is the maximal amount of tokens transferable to the contract.
   repeated cosmos.base.v1beta1.Coin amounts = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
@@ -106,15 +106,15 @@ message MaxFundsLimit {
 // the maximal number of calls executable. Both need to remain >0 to be valid.
 // Since: wasmd 0.30
 message CombinedLimit {
-  option (amino.name) = "wasm/CombinedLimit";
+  option (amino.name)                        = "wasm/CombinedLimit";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzLimitX";
 
   // Remaining number that is decremented on each execution
   uint64 calls_remaining = 1;
   // Amounts is the maximal amount of tokens transferable to the contract.
   repeated cosmos.base.v1beta1.Coin amounts = 2 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
@@ -123,7 +123,7 @@ message CombinedLimit {
 // message.
 // Since: wasmd 0.30
 message AllowAllMessagesFilter {
-  option (amino.name) = "wasm/AllowAllMessagesFilter";
+  option (amino.name)                        = "wasm/AllowAllMessagesFilter";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 }
 
@@ -131,7 +131,7 @@ message AllowAllMessagesFilter {
 // the json object to be executed.
 // Since: wasmd 0.30
 message AcceptedMessageKeysFilter {
-  option (amino.name) = "wasm/AcceptedMessageKeysFilter";
+  option (amino.name)                        = "wasm/AcceptedMessageKeysFilter";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of unique keys
@@ -142,7 +142,7 @@ message AcceptedMessageKeysFilter {
 // executed.
 // Since: wasmd 0.30
 message AcceptedMessagesFilter {
-  option (amino.name) = "wasm/AcceptedMessagesFilter";
+  option (amino.name)                        = "wasm/AcceptedMessagesFilter";
   option (cosmos_proto.implements_interface) = "cosmwasm.wasm.v1.ContractAuthzFilterX";
 
   // Messages is the list of raw contract messages

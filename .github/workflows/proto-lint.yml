@@ -57,6 +57,10 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - name: Set up Buf
+        uses: bufbuild/buf-setup-action@v1.55.1
+        with:
+          github_token: ${{ github.token }}
       - name: Install just
         uses: taiki-e/install-action@just
       - name: Regenerate protobuf output

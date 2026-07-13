@@ -91,7 +91,7 @@ service Query {
 // QueryExchangeRateRequest is the request type for the Query/ExchangeRate RPC
 // method.
 message QueryExchangeRateRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // pair defines the pair to query for.
@@ -107,9 +107,9 @@ message QueryExchangeRateRequest {
 message QueryExchangeRateResponse {
   // exchange_rate defines the exchange rate of assets voted by validators
   string exchange_rate = 1 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // Block timestamp for the block where the oracle came to consensus for this
@@ -135,7 +135,7 @@ message QueryExchangeRatesResponse {
   // pairs.
   repeated nibiru.oracle.v1.ExchangeRateTuple exchange_rates = 1 [
     (gogoproto.castrepeated) = "ExchangeRateTuples",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)     = false
   ];
 }
 
@@ -172,7 +172,7 @@ message QueryVoteTargetsResponse {
 // QueryFeederDelegationRequest is the request type for the
 // Query/FeederDelegation RPC method.
 message QueryFeederDelegationRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // validator defines the validator address to query for.
@@ -189,7 +189,7 @@ message QueryFeederDelegationResponse {
 // QueryMissCounterRequest is the request type for the Query/MissCounter RPC
 // method.
 message QueryMissCounterRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // validator defines the validator address to query for.
@@ -206,7 +206,7 @@ message QueryMissCounterResponse {
 // QueryAggregatePrevoteRequest is the request type for the
 // Query/AggregatePrevote RPC method.
 message QueryAggregatePrevoteRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // validator defines the validator address to query for.
@@ -219,7 +219,7 @@ message QueryAggregatePrevoteResponse {
   // aggregate_prevote defines oracle aggregate prevote submitted by a validator
   // in the current vote period
   nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_prevote = 1
-      [ (gogoproto.nullable) = false ];
+      [(gogoproto.nullable) = false];
 }
 
 // QueryAggregatePrevotesRequest is the request type for the
@@ -232,13 +232,13 @@ message QueryAggregatePrevotesResponse {
   // aggregate_prevotes defines all oracle aggregate prevotes submitted in the
   // current vote period
   repeated nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_prevotes = 1
-      [ (gogoproto.nullable) = false ];
+      [(gogoproto.nullable) = false];
 }
 
 // QueryAggregateVoteRequest is the request type for the Query/AggregateVote RPC
 // method.
 message QueryAggregateVoteRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // validator defines the validator address to query for.
@@ -251,7 +251,7 @@ message QueryAggregateVoteResponse {
   // aggregate_vote defines oracle aggregate vote submitted by a validator in
   // the current vote period
   nibiru.oracle.v1.AggregateExchangeRateVote aggregate_vote = 1
-      [ (gogoproto.nullable) = false ];
+      [(gogoproto.nullable) = false];
 }
 
 // QueryAggregateVotesRequest is the request type for the Query/AggregateVotes
@@ -264,7 +264,7 @@ message QueryAggregateVotesResponse {
   // aggregate_votes defines all oracle aggregate votes submitted in the current
   // vote period
   repeated nibiru.oracle.v1.AggregateExchangeRateVote aggregate_votes = 1
-      [ (gogoproto.nullable) = false ];
+      [(gogoproto.nullable) = false];
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -273,5 +273,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  nibiru.oracle.v1.Params params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.oracle.v1.Params params = 1 [(gogoproto.nullable) = false];
 }

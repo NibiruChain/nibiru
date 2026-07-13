@@ -41,19 +41,19 @@ message EventBlockBloom {
 
 // EventFunTokenCreated defines a fun token creation event.
 message EventFunTokenCreated {
-  string bank_denom = 1;
+  string bank_denom             = 1;
   string erc20_contract_address = 2;
-  string creator = 3;
-  bool is_made_from_coin = 4;
+  string creator                = 3;
+  bool   is_made_from_coin      = 4;
 }
 
 // EventConvertCoinToEvm is an event emitted when converting Bank Coins into
 // ERC20 tokens with the "eth.evm.v1.MsgConvertCoinToEvm" transaction message.
 message EventConvertCoinToEvm {
-  string sender = 1;
-  string erc20_contract_address = 2;
-  string to_eth_addr = 3;
-  cosmos.base.v1beta1.Coin bank_coin = 4 [
+  string                   sender                 = 1;
+  string                   erc20_contract_address = 2;
+  string                   to_eth_addr            = 3;
+  cosmos.base.v1beta1.Coin bank_coin              = 4 [
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
@@ -62,34 +62,34 @@ message EventConvertCoinToEvm {
 
 // EventTransfer defines event for EVM transfer
 message EventTransfer {
-  string sender = 1;
+  string sender    = 1;
   string recipient = 2;
-  string amount = 3;
+  string amount    = 3;
 }
 
 // EventContractDeployed defines event for EVM contract deployment
 message EventContractDeployed {
-  string sender = 1;
+  string sender        = 1;
   string contract_addr = 2;
 }
 
 // EventContractExecuted defines event for EVM contract execution
 message EventContractExecuted {
-  string sender = 1;
+  string sender        = 1;
   string contract_addr = 2;
 }
 
 // EventConvertEvmToCoin is an event emitted when converting ERC20 tokens to
 // Bank Coins with the "eth.evm.v1.MsgConvertEvmToCoin" transaction message.
 message EventConvertEvmToCoin {
-  string sender = 1;
-  string erc20_contract_address = 2;
-  string to_address = 3;
-  cosmos.base.v1beta1.Coin bank_coin = 4 [
+  string                   sender                 = 1;
+  string                   erc20_contract_address = 2;
+  string                   to_address             = 3;
+  cosmos.base.v1beta1.Coin bank_coin              = 4 [
     (gogoproto.moretags) = "yaml:\"bank_coin\"",
     (gogoproto.nullable) = false
   ];
-  string sender_eth_addr = 6;
+  string   sender_eth_addr             = 6;
   repeated eth.evm.v1.LogLite evm_logs = 7 [(gogoproto.nullable) = false];
 }
 
@@ -100,7 +100,7 @@ message EventWeiBlockDelta {
   // this point. It is the value for "NetWeiBlockDelta" in the EVM state.
   string net_wei_block_delta = 1 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // WeiBlockDelta is the net sum of all calls of "AddWei" and "SubWei" in the
@@ -110,7 +110,7 @@ message EventWeiBlockDelta {
   // supply. "WeiBlockDelta" is a mechanism for recording that if it happens.
   string wei_block_delta = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // block_number for which this event is emitted during EVM EndBlock

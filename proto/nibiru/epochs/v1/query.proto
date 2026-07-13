@@ -24,8 +24,12 @@ service Query {
 message QueryEpochInfosRequest {}
 message QueryEpochInfosResponse {
   repeated nibiru.epochs.v1.EpochInfo epochs = 1
-      [ (gogoproto.nullable) = false ];
+      [(gogoproto.nullable) = false];
 }
 
-message QueryCurrentEpochRequest { string identifier = 1; }
-message QueryCurrentEpochResponse { uint64 current_epoch = 1; }
+message QueryCurrentEpochRequest {
+  string identifier = 1;
+}
+message QueryCurrentEpochResponse {
+  uint64 current_epoch = 1;
+}

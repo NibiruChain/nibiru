@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "cosmwasm/wasm/v1/types.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
+option go_package                      = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
 
 // Msg defines the wasm Msg service.
@@ -77,7 +77,7 @@ service Msg {
 
 // MsgStoreCode submit Wasm code to the system
 message MsgStoreCode {
-  option (amino.name) = "wasm/MsgStoreCode";
+  option (amino.name)           = "wasm/MsgStoreCode";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the actor that signed the messages
@@ -101,7 +101,7 @@ message MsgStoreCodeResponse {
 // MsgInstantiateContract create a new smart contract instance for the given
 // code id.
 message MsgInstantiateContract {
-  option (amino.name) = "wasm/MsgInstantiateContract";
+  option (amino.name)           = "wasm/MsgInstantiateContract";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -116,8 +116,8 @@ message MsgInstantiateContract {
   bytes msg = 5 [(gogoproto.casttype) = "RawContractMessage"];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
@@ -133,7 +133,7 @@ message MsgInstantiateContractResponse {
 // MsgInstantiateContract2 create a new smart contract instance for the given
 // code id with a predicable address.
 message MsgInstantiateContract2 {
-  option (amino.name) = "wasm/MsgInstantiateContract2";
+  option (amino.name)           = "wasm/MsgInstantiateContract2";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -148,8 +148,8 @@ message MsgInstantiateContract2 {
   bytes msg = 5 [(gogoproto.casttype) = "RawContractMessage"];
   // Funds coins that are transferred to the contract on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 6 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
   // Salt is an arbitrary value provided by the sender. Size can be 1 to 64.
@@ -169,7 +169,7 @@ message MsgInstantiateContract2Response {
 
 // MsgExecuteContract submits the given message data to a smart contract
 message MsgExecuteContract {
-  option (amino.name) = "wasm/MsgExecuteContract";
+  option (amino.name)           = "wasm/MsgExecuteContract";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -180,8 +180,8 @@ message MsgExecuteContract {
   bytes msg = 3 [(gogoproto.casttype) = "RawContractMessage"];
   // Funds coins that are transferred to the contract on execution
   repeated cosmos.base.v1beta1.Coin funds = 5 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
@@ -194,7 +194,7 @@ message MsgExecuteContractResponse {
 
 // MsgMigrateContract runs a code upgrade/ downgrade for a smart contract
 message MsgMigrateContract {
-  option (amino.name) = "wasm/MsgMigrateContract";
+  option (amino.name)           = "wasm/MsgMigrateContract";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -216,7 +216,7 @@ message MsgMigrateContractResponse {
 
 // MsgUpdateAdmin sets a new admin for a smart contract
 message MsgUpdateAdmin {
-  option (amino.name) = "wasm/MsgUpdateAdmin";
+  option (amino.name)           = "wasm/MsgUpdateAdmin";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -232,7 +232,7 @@ message MsgUpdateAdminResponse {}
 
 // MsgClearAdmin removes any admin stored for a smart contract
 message MsgClearAdmin {
-  option (amino.name) = "wasm/MsgClearAdmin";
+  option (amino.name)           = "wasm/MsgClearAdmin";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the actor that signed the messages
@@ -251,14 +251,14 @@ message AccessConfigUpdate {
   uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
   // InstantiatePermission to apply to the set of code ids
   AccessConfig instantiate_permission = 2 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
 }
 
 // MsgUpdateInstantiateConfig updates instantiate config for a smart contract
 message MsgUpdateInstantiateConfig {
-  option (amino.name) = "wasm/MsgUpdateInstantiateConfig";
+  option (amino.name)           = "wasm/MsgUpdateInstantiateConfig";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -276,7 +276,7 @@ message MsgUpdateInstantiateConfigResponse {}
 //
 // Since: 0.40
 message MsgUpdateParams {
-  option (amino.name) = "wasm/MsgUpdateParams";
+  option (amino.name)           = "wasm/MsgUpdateParams";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -286,7 +286,7 @@ message MsgUpdateParams {
   //
   // NOTE: All parameters must be supplied.
   Params params = 2 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
 }
@@ -301,7 +301,7 @@ message MsgUpdateParamsResponse {}
 //
 // Since: 0.40
 message MsgSudoContract {
-  option (amino.name) = "wasm/MsgSudoContract";
+  option (amino.name)           = "wasm/MsgSudoContract";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -326,7 +326,7 @@ message MsgSudoContractResponse {
 //
 // Since: 0.40
 message MsgPinCodes {
-  option (amino.name) = "wasm/MsgPinCodes";
+  option (amino.name)           = "wasm/MsgPinCodes";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -334,7 +334,7 @@ message MsgPinCodes {
   // CodeIDs references the new WASM codes
   repeated uint64 code_ids = 2 [
     (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags) = "yaml:\"code_ids\""
+    (gogoproto.moretags)   = "yaml:\"code_ids\""
   ];
 }
 
@@ -348,7 +348,7 @@ message MsgPinCodesResponse {}
 //
 // Since: 0.40
 message MsgUnpinCodes {
-  option (amino.name) = "wasm/MsgUnpinCodes";
+  option (amino.name)           = "wasm/MsgUnpinCodes";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -356,7 +356,7 @@ message MsgUnpinCodes {
   // CodeIDs references the WASM codes
   repeated uint64 code_ids = 2 [
     (gogoproto.customname) = "CodeIDs",
-    (gogoproto.moretags) = "yaml:\"code_ids\""
+    (gogoproto.moretags)   = "yaml:\"code_ids\""
   ];
 }
 
@@ -371,7 +371,7 @@ message MsgUnpinCodesResponse {}
 //
 // Since: 0.40
 message MsgStoreAndInstantiateContract {
-  option (amino.name) = "wasm/MsgStoreAndInstantiateContract";
+  option (amino.name)           = "wasm/MsgStoreAndInstantiateContract";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -392,8 +392,8 @@ message MsgStoreAndInstantiateContract {
   // Funds coins that are transferred from the authority account to the contract
   // on instantiation
   repeated cosmos.base.v1beta1.Coin funds = 9 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
   // Source is the URL where the code is hosted
@@ -420,7 +420,7 @@ message MsgStoreAndInstantiateContractResponse {
 // MsgAddCodeUploadParamsAddresses is the
 // MsgAddCodeUploadParamsAddresses request type.
 message MsgAddCodeUploadParamsAddresses {
-  option (amino.name) = "wasm/MsgAddCodeUploadParamsAddresses";
+  option (amino.name)           = "wasm/MsgAddCodeUploadParamsAddresses";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -436,7 +436,7 @@ message MsgAddCodeUploadParamsAddressesResponse {}
 // MsgRemoveCodeUploadParamsAddresses is the
 // MsgRemoveCodeUploadParamsAddresses request type.
 message MsgRemoveCodeUploadParamsAddresses {
-  option (amino.name) = "wasm/MsgRemoveCodeUploadParamsAddresses";
+  option (amino.name)           = "wasm/MsgRemoveCodeUploadParamsAddresses";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -454,7 +454,7 @@ message MsgRemoveCodeUploadParamsAddressesResponse {}
 //
 // Since: 0.42
 message MsgStoreAndMigrateContract {
-  option (amino.name) = "wasm/MsgStoreAndMigrateContract";
+  option (amino.name)           = "wasm/MsgStoreAndMigrateContract";
   option (cosmos.msg.v1.signer) = "authority";
 
   // Authority is the address of the governance account.
@@ -484,7 +484,7 @@ message MsgStoreAndMigrateContractResponse {
 
 // MsgUpdateContractLabel sets a new label for a smart contract
 message MsgUpdateContractLabel {
-  option (amino.name) = "wasm/MsgUpdateContractLabel";
+  option (amino.name)           = "wasm/MsgUpdateContractLabel";
   option (cosmos.msg.v1.signer) = "sender";
 
   // Sender is the that actor that signed the messages
@@ -497,4 +497,3 @@ message MsgUpdateContractLabel {
 
 // MsgUpdateContractLabelResponse returns empty data
 message MsgUpdateContractLabelResponse {}
-

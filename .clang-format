@@ -1,0 +1,12 @@
+# Protobuf formatting configuration. Edit this file, then run `just proto fmt`.
+---
+Language: Proto
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 0
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+SpacesInSquareBrackets: true # True := [ (gogoproto...) ] instead of [(gogoproto...)]
+ReflowComments: true
+SortIncludes: true
+SortUsingDeclarations: true

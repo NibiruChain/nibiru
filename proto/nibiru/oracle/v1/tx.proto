@@ -42,16 +42,16 @@ service Msg {
 // MsgAggregateExchangeRatePrevote represents a message to submit
 // aggregate exchange rate prevote.
 message MsgAggregateExchangeRatePrevote {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string hash = 1 [ (gogoproto.moretags) = "yaml:\"hash\"" ];
+  string hash = 1 [(gogoproto.moretags) = "yaml:\"hash\""];
   // Feeder is the Bech32 address of the price feeder. A validator may
   // specify multiple price feeders by delegating them consent. The validator
   // address is also a valid feeder by default.
-  string feeder = 2 [ (gogoproto.moretags) = "yaml:\"feeder\"" ];
+  string feeder = 2 [(gogoproto.moretags) = "yaml:\"feeder\""];
   // Validator is the Bech32 address to which the prevote will be credited.
-  string validator = 3 [ (gogoproto.moretags) = "yaml:\"validator\"" ];
+  string validator = 3 [(gogoproto.moretags) = "yaml:\"validator\""];
 }
 
 // MsgAggregateExchangeRatePrevoteResponse defines the
@@ -61,18 +61,18 @@ message MsgAggregateExchangeRatePrevoteResponse {}
 // MsgAggregateExchangeRateVote represents a message to submit
 // aggregate exchange rate vote.
 message MsgAggregateExchangeRateVote {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string salt = 1 [ (gogoproto.moretags) = "yaml:\"salt\"" ];
+  string salt           = 1 [(gogoproto.moretags) = "yaml:\"salt\""];
   string exchange_rates = 2
-      [ (gogoproto.moretags) = "yaml:\"exchange_rates\"" ];
+      [(gogoproto.moretags) = "yaml:\"exchange_rates\""];
   // Feeder is the Bech32 address of the price feeder. A validator may
   // specify multiple price feeders by delegating them consent. The validator
   // address is also a valid feeder by default.
-  string feeder = 3 [ (gogoproto.moretags) = "yaml:\"feeder\"" ];
+  string feeder = 3 [(gogoproto.moretags) = "yaml:\"feeder\""];
   // Validator is the Bech32 address to which the vote will be credited.
-  string validator = 4 [ (gogoproto.moretags) = "yaml:\"validator\"" ];
+  string validator = 4 [(gogoproto.moretags) = "yaml:\"validator\""];
 }
 
 // MsgAggregateExchangeRateVoteResponse defines the
@@ -82,11 +82,11 @@ message MsgAggregateExchangeRateVoteResponse {}
 // MsgDelegateFeedConsent represents a message to delegate oracle voting rights
 // to another address.
 message MsgDelegateFeedConsent {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string operator = 1 [ (gogoproto.moretags) = "yaml:\"operator\"" ];
-  string delegate = 2 [ (gogoproto.moretags) = "yaml:\"delegate\"" ];
+  string operator = 1 [(gogoproto.moretags) = "yaml:\"operator\""];
+  string delegate = 2 [(gogoproto.moretags) = "yaml:\"delegate\""];
 }
 
 // MsgDelegateFeedConsentResponse defines the Msg/DelegateFeedConsent response
@@ -94,18 +94,18 @@ message MsgDelegateFeedConsent {
 message MsgDelegateFeedConsentResponse {}
 
 message MsgEditOracleParams {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
 
-  OracleParamsMsg params = 2 [ (gogoproto.moretags) = "yaml:\"params\"" ];
+  OracleParamsMsg params = 2 [(gogoproto.moretags) = "yaml:\"params\""];
 }
 
 message MsgEditOracleParamsResponse {}
 
 message OracleParamsMsg {
-  option (gogoproto.equal) = true;
+  option (gogoproto.equal)            = true;
   option (gogoproto.goproto_stringer) = true;
 
   // VotePeriod defines the number of blocks during which voting takes place.
@@ -117,10 +117,10 @@ message OracleParamsMsg {
   // VoteThreshold specifies the minimum proportion of votes that must be
   // received for a ballot to pass.
   string vote_threshold = 2 [
-    (gogoproto.moretags) = "yaml:\"vote_threshold\"",
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.moretags)   = "yaml:\"vote_threshold\"",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
   // RewardBand defines a maxium divergence that a price vote can have from the
   // weighted median in the ballot. If a vote lies within the valid range
@@ -131,10 +131,10 @@ message OracleParamsMsg {
   // Note that if the reward band is smaller than 1 standard
   // deviation, the band is taken to be 1 standard deviation.a price
   string reward_band = 3 [
-    (gogoproto.moretags) = "yaml:\"reward_band\"",
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.moretags)   = "yaml:\"reward_band\"",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
   // The set of whitelisted markets, or asset pairs, for the module.
   // Ex. '["unibi:uusd","ubtc:uusd"]'
@@ -148,10 +148,10 @@ message OracleParamsMsg {
   // slashed in the event of slashing. `SlashFraction` specifies the exact
   // penalty for failing a voting period.
   string slash_fraction = 5 [
-    (gogoproto.moretags) = "yaml:\"slash_fraction\"",
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.moretags)   = "yaml:\"slash_fraction\"",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
   // SlashWindow returns the number of voting periods that specify a
   // "slash window". After each slash window, all oracles that have missed more
@@ -162,18 +162,18 @@ message OracleParamsMsg {
     (gogoproto.nullable) = true
   ];
   string min_valid_per_window = 7 [
-    (gogoproto.moretags) = "yaml:\"min_valid_per_window\"",
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.moretags)   = "yaml:\"min_valid_per_window\"",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
 
   // Amount of time to look back for TWAP calculations
   google.protobuf.Duration twap_lookback_window = 8 [
-    (gogoproto.nullable) = true,
+    (gogoproto.nullable)    = true,
     (gogoproto.stdduration) = true,
-    (gogoproto.jsontag) = "twap_lookback_window,omitempty",
-    (gogoproto.moretags) = "yaml:\"twap_lookback_window\""
+    (gogoproto.jsontag)     = "twap_lookback_window,omitempty",
+    (gogoproto.moretags)    = "yaml:\"twap_lookback_window\""
   ];
 
   // The minimum number of voters (i.e. oracle validators) per pair for it to be
@@ -185,10 +185,10 @@ message OracleParamsMsg {
 
   // The validator fee ratio that is given to validators every epoch.
   string validator_fee_ratio = 10 [
-    (gogoproto.moretags) = "yaml:\"validator_fee_ratio\"",
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.moretags)   = "yaml:\"validator_fee_ratio\"",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
 
   uint64 expiration_blocks = 11 [

@@ -63,7 +63,7 @@ message MsgEthereumTx {
 // LegacyTx is a custom implementation of "LegacyTx" from
 // "github.com/ethereum/go-ethereum/core/types".
 message LegacyTx {
-  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_getters)         = false;
   option (cosmos_proto.implements_interface) = "TxData";
 
   // nonce corresponds to the account nonce (transaction sequence).
@@ -104,14 +104,14 @@ message LegacyTx {
 // It is a custom implementation of "AccessListTx" from
 // "github.com/ethereum/go-ethereum/core/types".
 message AccessListTx {
-  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_getters)         = false;
   option (cosmos_proto.implements_interface) = "TxData";
 
   // chain_id of the destination EVM chain
   string chain_id = 1 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.customname) = "ChainID",
-    (gogoproto.jsontag) = "chainID"
+    (gogoproto.jsontag)    = "chainID"
   ];
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
@@ -131,8 +131,8 @@ message AccessListTx {
   // accesses is an array of access tuples
   repeated AccessTuple accesses = 8 [
     (gogoproto.castrepeated) = "AccessList",
-    (gogoproto.jsontag) = "accessList",
-    (gogoproto.nullable) = false
+    (gogoproto.jsontag)      = "accessList",
+    (gogoproto.nullable)     = false
   ];
 
   // v defines the recovery id and "v" signature value from the elliptic curve
@@ -157,14 +157,14 @@ message AccessListTx {
 // implementation of "DynamicFeeTx" from
 // "github.com/ethereum/go-ethereum/core/types".
 message DynamicFeeTx {
-  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_getters)         = false;
   option (cosmos_proto.implements_interface) = "TxData";
 
   // chain_id of the destination EVM chain
   string chain_id = 1 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.customname) = "ChainID",
-    (gogoproto.jsontag) = "chainID"
+    (gogoproto.jsontag)    = "chainID"
   ];
   // nonce corresponds to the account nonce (transaction sequence).
   uint64 nonce = 2;
@@ -186,8 +186,8 @@ message DynamicFeeTx {
   // accesses is an array of access tuples
   repeated AccessTuple accesses = 9 [
     (gogoproto.castrepeated) = "AccessList",
-    (gogoproto.jsontag) = "accessList",
-    (gogoproto.nullable) = false
+    (gogoproto.jsontag)      = "accessList",
+    (gogoproto.nullable)     = false
   ];
   // v defines the recovery id and "v" signature value from the elliptic curve
   // digital signatute algorithm (ECDSA). It indicates which of two possible
@@ -255,7 +255,7 @@ message MsgCreateFunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string from_erc20 = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable)   = true
   ];
 
   // Coin denomination in the Bank Module.
@@ -283,7 +283,7 @@ message MsgConvertCoinToEvm {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string to_eth_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // Sender: Address for the signer of the transaction.
@@ -307,13 +307,13 @@ message MsgConvertEvmToCoin {
   // Hexadecimal address of the ERC20 token to be converted and sent
   string erc20_addr = 2 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // Amount of ERC20 tokens to convert
   string amount = 3 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // Recipient address for the bank coins in Ethereum hexadecimal or

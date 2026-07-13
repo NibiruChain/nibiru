@@ -51,4 +51,6 @@ message EventUpdateDevGas {
 
 // ABCI event emitted when fee sharing payouts are made, containing details on
 // the payouts in JSON format.
-message EventPayoutDevGas { string payouts = 1; }
+message EventPayoutDevGas {
+  string payouts = 1;
+}

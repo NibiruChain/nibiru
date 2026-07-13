@@ -29,7 +29,7 @@ message GenesisAccount {
   string code = 2;
   // storage defines the set of state key values for the account.
   repeated State storage = 3 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "Storage"
   ];
 }

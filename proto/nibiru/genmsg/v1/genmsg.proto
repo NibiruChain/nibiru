@@ -7,4 +7,6 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/genmsg/v1";
 
 // GenesisState represents the messages to be processed during genesis by the
 // genmsg module.
-message GenesisState { repeated google.protobuf.Any messages = 1; }
+message GenesisState {
+  repeated google.protobuf.Any messages = 1;
+}

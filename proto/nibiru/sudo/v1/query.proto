@@ -30,7 +30,7 @@ message QuerySudoersRequest {}
 // QuerySudoersResponse is the response type for the gRPC query method,
 // "/nibiru.sudo.v1.Query/QuerySudoers"
 message QuerySudoersResponse {
-  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.Sudoers sudoers = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryZeroGasActorsRequest is the request type for the gRPC query method,
@@ -40,5 +40,5 @@ message QueryZeroGasActorsRequest {}
 // QueryZeroGasActorsResponse is the response type for the gRPC query method,
 // "/nibiru.sudo.v1.Query/QueryZeroGasActors"
 message QueryZeroGasActorsResponse {
-  nibiru.sudo.v1.ZeroGasActors actors = 1 [ (gogoproto.nullable) = false ];
+  nibiru.sudo.v1.ZeroGasActors actors = 1 [(gogoproto.nullable) = false];
 }

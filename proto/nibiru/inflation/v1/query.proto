@@ -61,7 +61,7 @@ message QueryEpochMintProvisionRequest {}
 message QueryEpochMintProvisionResponse {
   // epoch_mint_provision is the current minting per epoch provision value.
   cosmos.base.v1beta1.DecCoin epoch_mint_provision = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
@@ -87,7 +87,7 @@ message QueryCirculatingSupplyRequest {}
 message QueryCirculatingSupplyResponse {
   // circulating_supply is the total amount of coins in circulation
   cosmos.base.v1beta1.DecCoin circulating_supply = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
@@ -101,9 +101,9 @@ message QueryInflationRateRequest {}
 message QueryInflationRateResponse {
   // inflation_rate by which the total supply increases within one period
   string inflation_rate = 1 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 }
 

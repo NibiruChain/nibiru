@@ -85,7 +85,7 @@ service Query {
 
 // QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 message QueryEthAccountRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the Ethereum hex address or nibi Bech32 address to query the
@@ -120,7 +120,7 @@ message QueryEthAccountResponse {
 // QueryValidatorAccountRequest is the request type for the
 // Query/ValidatorAccount RPC method.
 message QueryValidatorAccountRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // cons_address is the validator cons address to query the account for.
@@ -140,7 +140,7 @@ message QueryValidatorAccountResponse {
 
 // QueryBalanceRequest: Response type for "/eth.evm.v1.Query/Balance"
 message QueryBalanceRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the balance for.
@@ -167,26 +167,26 @@ message QueryBalanceResponse {
 
 // BalanceBank is the Bank module balance view for a token.
 message BalanceBank {
-  string symbol = 1;
+  string symbol        = 1;
   string balance_human = 2;
-  uint32 decimals = 3;
-  string coin_denom = 4;
-  string balance_base = 5;
+  uint32 decimals      = 3;
+  string coin_denom    = 4;
+  string balance_base  = 5;
 }
 
 // BalanceERC20 is the ERC20 balance view for a token.
 message BalanceERC20 {
-  string address = 1;
-  string symbol = 2;
+  string address       = 1;
+  string symbol        = 2;
   string balance_human = 3;
-  uint32 decimals = 4;
-  string name = 5;
-  string balance_base = 6;
+  uint32 decimals      = 4;
+  string name          = 5;
+  string balance_base  = 6;
 }
 
 // QueryStorageRequest is the request type for the Query/Storage RPC method.
 message QueryStorageRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the storage state for.
@@ -205,7 +205,7 @@ message QueryStorageResponse {
 
 // QueryCodeRequest is the request type for the Query/Code RPC method.
 message QueryCodeRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the code for.
@@ -221,7 +221,7 @@ message QueryCodeResponse {
 
 // QueryTxLogsRequest is the request type for the Query/TxLogs RPC method.
 message QueryTxLogsRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // hash is the ethereum transaction hex hash to query the logs for.
@@ -284,7 +284,7 @@ message QueryTraceTxRequest {
   // block_time of requested transaction
   google.protobuf.Timestamp block_time = 7 [
     (gogoproto.nullable) = false,
-    (gogoproto.stdtime) = true
+    (gogoproto.stdtime)  = true
   ];
   // proposer_address is the proposer of the requested block
   bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
@@ -313,7 +313,7 @@ message QueryTraceBlockRequest {
   // block_time of the traced block
   google.protobuf.Timestamp block_time = 7 [
     (gogoproto.nullable) = false,
-    (gogoproto.stdtime) = true
+    (gogoproto.stdtime)  = true
   ];
   // proposer_address is the address of the requested block
   bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
@@ -344,7 +344,7 @@ message QueryBaseFeeResponse {
 }
 
 message QueryFunTokenMappingRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // Either the hexadecimal-encoded ERC20 contract address or denomination of
@@ -353,7 +353,7 @@ message QueryFunTokenMappingRequest {
 }
 
 message QueryFunTokenMappingResponse {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // fun_token is a mapping between the Bank Coin and the ERC20 contract address

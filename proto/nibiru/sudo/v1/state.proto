@@ -17,9 +17,9 @@ message Sudoers {
 
 // GenesisState: State for migrations and genesis for the x/sudo module.
 message GenesisState {
-  nibiru.sudo.v1.Sudoers sudoers = 1 [ (gogoproto.nullable) = false ];
-  nibiru.sudo.v1.ZeroGasActors zero_gas_actors = 2;
-  string wasm_block_hooks_contract = 3;
+  nibiru.sudo.v1.Sudoers       sudoers                   = 1 [(gogoproto.nullable) = false];
+  nibiru.sudo.v1.ZeroGasActors zero_gas_actors           = 2;
+  string                       wasm_block_hooks_contract = 3;
 }
 
 // ZeroGasActors: Actors that can execute zero gas transactions against a set of
