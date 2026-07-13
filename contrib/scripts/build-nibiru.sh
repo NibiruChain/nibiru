@@ -251,7 +251,7 @@ ensure_wasmvm_lib() {
 
   local lib_dir wasmvm_gh_tag wasmvm_gh_tag_url base_url
   lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-  wasmvm_gh_tag="lib/wasmvm-ffi/${wasmvm_version}"
+  wasmvm_gh_tag="lib/wasmvm/${wasmvm_version}"
   wasmvm_gh_tag_url=$(jq -nr --arg s "$wasmvm_gh_tag" '$s|@uri')
   base_url="https://github.com/NibiruChain/nibiru/releases/download/${wasmvm_gh_tag_url}"
 
@@ -400,7 +400,7 @@ main() {
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="v1.12.0" # tag name `lib/wasmvm-ffi/v*`
+  wasmvm_version="v1.12.0" # tag name `lib/wasmvm/v*`
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
 
