@@ -7,18 +7,17 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-
-	"github.com/NibiruChain/nibiru/v2/app/wasmext"
-	"github.com/NibiruChain/nibiru/v2/evm"
-	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 type Suite struct {
@@ -69,8 +68,8 @@ func (s *Suite) TestEvmFilter() {
 		deps.Ctx(),
 		wasmContractAddr,
 		"ibcport-unused",
-		wasmvm.CosmosMsg{
-			Stargate: &wasmvm.StargateMsg{
+		wvm.CosmosMsg{
+			Stargate: &wvm.StargateMsg{
 				TypeURL: sdk.MsgTypeURL(ethTxMsg),
 				Value:   protoValueBz,
 			},
@@ -92,8 +91,8 @@ func (s *Suite) TestEvmFilter() {
 		deps.Ctx(),
 		wasmContractAddr,
 		"ibcport-unused",
-		wasmvm.CosmosMsg{
-			Stargate: &wasmvm.StargateMsg{
+		wvm.CosmosMsg{
+			Stargate: &wvm.StargateMsg{
 				TypeURL: sdk.MsgTypeURL(txMsg),
 				Value:   protoValueBz,
 			},
@@ -181,8 +180,8 @@ func (s *Suite) TestWasmSdkMessageHandlerRejectsBlockedMessages() {
 				deps.Ctx(),
 				contractAddr,
 				"ibcport-unused",
-				wasmvm.CosmosMsg{
-					Stargate: &wasmvm.StargateMsg{
+				wvm.CosmosMsg{
+					Stargate: &wvm.StargateMsg{
 						TypeURL: sdk.MsgTypeURL(tc.msg),
 						Value:   protoValueBz,
 					},

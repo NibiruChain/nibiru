@@ -47,7 +47,7 @@ import (
 	"runtime/debug"
 	"unsafe"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 // Note: we have to include all exports in the same file (at least since they both import bindings.h),

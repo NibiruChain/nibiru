@@ -1,11 +1,11 @@
-package cosmwasm
+package wasmvm
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 func TestCreateChecksum(t *testing.T) {

@@ -1,8 +1,8 @@
 package ibcwasm
 
 import (
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -36,30 +36,30 @@ type WasmEngine interface {
 	// for performance.
 	Instantiate(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		info wasmvmtypes.MessageInfo,
+		env wvm.Env,
+		info wvm.MessageInfo,
 		initMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Query allows a client to execute a contract-specific query. If the result is not empty, it should be
 	// valid json-encoded data to return to the client.
 	// The meaning of path and data can be determined by the code. Path is the suffix of the abci.QueryRequest.Path
 	Query(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		queryMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
+		deserCost wvm.UFraction,
 	) ([]byte, uint64, error)
 
 	// Migrate migrates an existing contract to a new code binary.
@@ -70,15 +70,15 @@ type WasmEngine interface {
 	// MigrateMsg has some data on how to perform the migration.
 	Migrate(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		migrateMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Sudo allows native Go modules to make priviledged (sudo) calls on the contract.
 	// The contract can expose entry points that cannot be triggered by any transaction, but only via
@@ -88,15 +88,15 @@ type WasmEngine interface {
 	// without forking cosmwasm-vm.
 	Sudo(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		sudoMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// GetCode will load the original wasm code for the given checksum.
 	// This will only succeed if that checksum was previously returned from
@@ -127,5 +127,5 @@ type QueryRouter interface {
 
 type QueryPluginsI interface {
 	// HandleQuery will route the query to the correct plugin and return the result
-	HandleQuery(ctx sdk.Context, caller string, request wasmvmtypes.QueryRequest) ([]byte, error)
+	HandleQuery(ctx sdk.Context, caller string, request wvm.QueryRequest) ([]byte, error)
 }

@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 )
@@ -74,7 +74,7 @@ var (
 
 	// ErrNoSuchContractFn error factory for an error when an address does not belong to a contract
 	ErrNoSuchContractFn = WasmVMFlavouredErrorFactory(sdkioerrors.Register(DefaultCodespace, 22, "no such contract"),
-		func(addr string) error { return wasmvmtypes.NoSuchContract{Addr: addr} },
+		func(addr string) error { return wvm.NoSuchContract{Addr: addr} },
 	)
 
 	// code 23 -26 were used for json parser
@@ -84,7 +84,7 @@ var (
 
 	// ErrNoSuchCodeFn factory for an error when a code id does not belong to a code info
 	ErrNoSuchCodeFn = WasmVMFlavouredErrorFactory(sdkioerrors.Register(DefaultCodespace, 28, "no such code"),
-		func(id uint64) error { return wasmvmtypes.NoSuchCode{CodeID: id} },
+		func(id uint64) error { return wvm.NoSuchCode{CodeID: id} },
 	)
 )
 

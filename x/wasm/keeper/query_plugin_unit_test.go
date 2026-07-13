@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 
@@ -95,9 +95,9 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// first, normal query for the bank balance (to make sure our query is proper)
-	bankQuery := wasmvmtypes.QueryRequest{
-		Bank: &wasmvmtypes.BankQuery{
-			AllBalances: &wasmvmtypes.AllBalancesQuery{
+	bankQuery := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			AllBalances: &wvm.AllBalancesQuery{
 				Address: creator.String(),
 			},
 		},
@@ -110,7 +110,7 @@ func TestReflectStargateQuery(t *testing.T) {
 	require.NoError(t, err)
 	var simpleChain testdata.ChainResponse
 	mustUnmarshal(t, simpleRes, &simpleChain)
-	var simpleBalance wasmvmtypes.AllBalancesResponse
+	var simpleBalance wvm.AllBalancesResponse
 	mustUnmarshal(t, simpleChain.Data, &simpleBalance)
 	require.Equal(t, len(expectedBalance), len(simpleBalance.Amount))
 	assert.Equal(t, simpleBalance.Amount[0].Amount, expectedBalance[0].Amount.String())
@@ -132,7 +132,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 	require.NotEmpty(t, currentStakeSupply.Amount) // ensure we have real data
 	specs := map[string]struct {
 		denom     string
-		expAmount wasmvmtypes.Coin
+		expAmount wvm.Coin
 	}{
 		"known denom": {
 			denom:     "stake",
@@ -140,7 +140,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 		},
 		"unknown denom": {
 			denom:     "unknown",
-			expAmount: wasmvmtypes.Coin{Denom: "unknown", Amount: "0"},
+			expAmount: wvm.Coin{Denom: "unknown", Amount: "0"},
 		},
 	}
 	for name, spec := range specs {
@@ -148,9 +148,9 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 			// when
 			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
 				Chain: &testdata.ChainQuery{
-					Request: &wasmvmtypes.QueryRequest{
-						Bank: &wasmvmtypes.BankQuery{
-							Supply: &wasmvmtypes.SupplyQuery{Denom: spec.denom},
+					Request: &wvm.QueryRequest{
+						Bank: &wvm.BankQuery{
+							Supply: &wvm.SupplyQuery{Denom: spec.denom},
 						},
 					},
 				},
@@ -161,7 +161,7 @@ func TestReflectTotalSupplyQuery(t *testing.T) {
 			require.NoError(t, err)
 			var rsp testdata.ChainResponse
 			mustUnmarshal(t, simpleRes, &rsp)
-			var supplyRsp wasmvmtypes.SupplyResponse
+			var supplyRsp wvm.SupplyResponse
 			mustUnmarshal(t, rsp.Data, &supplyRsp)
 			assert.Equal(t, spec.expAmount, supplyRsp.Amount, spec.expAmount)
 		})
@@ -194,8 +194,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	protoQueryBin, err := proto.Marshal(&protoQuery)
 	require.NoError(t, err)
 
-	protoRequest := wasmvmtypes.QueryRequest{
-		Stargate: &wasmvmtypes.StargateQuery{
+	protoRequest := wvm.QueryRequest{
+		Stargate: &wvm.StargateQuery{
 			Path: "/cosmos.bank.v1beta1.Query/AllBalances",
 			Data: protoQueryBin,
 		},
@@ -211,8 +211,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	require.Contains(t, err.Error(), "Unsupported query")
 
 	// now, try to build a protobuf query
-	protoRequest = wasmvmtypes.QueryRequest{
-		Stargate: &wasmvmtypes.StargateQuery{
+	protoRequest = wvm.QueryRequest{
+		Stargate: &wvm.StargateQuery{
 			Path: "/cosmos.tx.v1beta1.Service/GetTx",
 			Data: []byte{},
 		},
@@ -228,8 +228,8 @@ func TestReflectInvalidStargateQuery(t *testing.T) {
 	require.Contains(t, err.Error(), "Unsupported query")
 
 	// and another one
-	protoRequest = wasmvmtypes.QueryRequest{
-		Stargate: &wasmvmtypes.StargateQuery{
+	protoRequest = wvm.QueryRequest{
+		Stargate: &wvm.StargateQuery{
 			Path: "/cosmos.base.tendermint.v1beta1.Service/GetNodeInfo",
 			Data: []byte{},
 		},
@@ -284,8 +284,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.Equal(t, stateRes.Owner, creator.String())
 
 	// now, let's reflect a smart query into the x/wasm handlers and see if we get the same result
-	reflectOwnerQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
-		Smart: &wasmvmtypes.SmartQuery{
+	reflectOwnerQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wvm.QueryRequest{Wasm: &wvm.WasmQuery{
+		Smart: &wvm.SmartQuery{
 			ContractAddr: reflectAddr.String(),
 			Msg:          ownerQuery,
 		},
@@ -301,8 +301,8 @@ func TestMaskReflectWasmQueries(t *testing.T) {
 	require.Equal(t, reflectOwnerRes.Owner, creator.String())
 
 	// and with queryRaw
-	reflectStateQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
-		Raw: &wasmvmtypes.RawQuery{
+	reflectStateQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wvm.QueryRequest{Wasm: &wvm.WasmQuery{
+		Raw: &wvm.RawQuery{
 			ContractAddr: reflectAddr.String(),
 			Key:          configKey,
 		},
@@ -344,8 +344,8 @@ func TestWasmRawQueryWithNil(t *testing.T) {
 	require.Nil(t, raw)
 
 	// and with queryRaw
-	reflectQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wasmvmtypes.QueryRequest{Wasm: &wasmvmtypes.WasmQuery{
-		Raw: &wasmvmtypes.RawQuery{
+	reflectQuery := testdata.ReflectQueryMsg{Chain: &testdata.ChainQuery{Request: &wvm.QueryRequest{Wasm: &wvm.WasmQuery{
+		Raw: &wvm.RawQuery{
 			ContractAddr: reflectAddr.String(),
 			Key:          missingKey,
 		},
@@ -493,17 +493,17 @@ func TestDistributionQuery(t *testing.T) {
 	noopSetup := func(t *testing.T, ctx sdk.Context) sdk.Context { return ctx }
 	specs := map[string]struct {
 		setup  func(t *testing.T, ctx sdk.Context) sdk.Context
-		query  *wasmvmtypes.DistributionQuery
+		query  *wvm.DistributionQuery
 		expErr bool
 		assert func(t *testing.T, d []byte)
 	}{
 		"delegator address - no withdrawal addr set": {
 			setup: noopSetup,
-			query: &wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: delegator.String()},
+			query: &wvm.DistributionQuery{
+				DelegatorWithdrawAddress: &wvm.DelegatorWithdrawAddressQuery{DelegatorAddress: delegator.String()},
 			},
 			assert: func(t *testing.T, d []byte) {
-				rsp := unmarshalReflect[wasmvmtypes.DelegatorWithdrawAddressResponse](t, d)
+				rsp := unmarshalReflect[wvm.DelegatorWithdrawAddressResponse](t, d)
 				assert.Equal(t, delegator.String(), rsp.WithdrawAddress)
 			},
 		},
@@ -512,19 +512,19 @@ func TestDistributionQuery(t *testing.T) {
 				require.NoError(t, keepers.DistKeeper.SetWithdrawAddr(ctx, delegator, otherAddr))
 				return ctx
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{DelegatorAddress: delegator.String()},
+			query: &wvm.DistributionQuery{
+				DelegatorWithdrawAddress: &wvm.DelegatorWithdrawAddressQuery{DelegatorAddress: delegator.String()},
 			},
 			assert: func(t *testing.T, d []byte) {
-				var rsp wasmvmtypes.DelegatorWithdrawAddressResponse
+				var rsp wvm.DelegatorWithdrawAddressResponse
 				mustUnmarshal(t, d, &rsp)
 				assert.Equal(t, otherAddr.String(), rsp.WithdrawAddress)
 			},
 		},
 		"delegator address - empty": {
 			setup: noopSetup,
-			query: &wasmvmtypes.DistributionQuery{
-				DelegatorWithdrawAddress: &wasmvmtypes.DelegatorWithdrawAddressQuery{},
+			query: &wvm.DistributionQuery{
+				DelegatorWithdrawAddress: &wvm.DelegatorWithdrawAddressQuery{},
 			},
 			expErr: true,
 		},
@@ -537,13 +537,13 @@ func TestDistributionQuery(t *testing.T) {
 				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
 				return nextBlock(ctx, keepers.StakingKeeper)
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegationRewards: &wasmvmtypes.DelegationRewardsQuery{DelegatorAddress: delegator.String(), ValidatorAddress: val1Addr.String()},
+			query: &wvm.DistributionQuery{
+				DelegationRewards: &wvm.DelegationRewardsQuery{DelegatorAddress: delegator.String(), ValidatorAddress: val1Addr.String()},
 			},
 			assert: func(t *testing.T, d []byte) {
-				var rsp wasmvmtypes.DelegationRewardsResponse
+				var rsp wvm.DelegationRewardsResponse
 				mustUnmarshal(t, d, &rsp)
-				expRewards := []wasmvmtypes.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}}
+				expRewards := []wvm.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}}
 				assert.Equal(t, expRewards, rsp.Rewards)
 			},
 		},
@@ -552,8 +552,8 @@ func TestDistributionQuery(t *testing.T) {
 				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
 				return nextBlock(ctx, keepers.StakingKeeper)
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegationRewards: &wasmvmtypes.DelegationRewardsQuery{DelegatorAddress: delegator.String(), ValidatorAddress: val1Addr.String()},
+			query: &wvm.DistributionQuery{
+				DelegationRewards: &wvm.DelegationRewardsQuery{DelegatorAddress: delegator.String(), ValidatorAddress: val1Addr.String()},
 			},
 			expErr: true,
 		},
@@ -565,8 +565,8 @@ func TestDistributionQuery(t *testing.T) {
 				require.NoError(t, err)
 				return ctx
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegationRewards: &wasmvmtypes.DelegationRewardsQuery{DelegatorAddress: delegator.String()},
+			query: &wvm.DistributionQuery{
+				DelegationRewards: &wvm.DelegationRewardsQuery{DelegatorAddress: delegator.String()},
 			},
 			expErr: true,
 		},
@@ -579,20 +579,20 @@ func TestDistributionQuery(t *testing.T) {
 				setValidatorRewards(ctx, keepers.StakingKeeper, keepers.DistKeeper, val1Addr, "100000000")
 				return nextBlock(ctx, keepers.StakingKeeper)
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegationTotalRewards: &wasmvmtypes.DelegationTotalRewardsQuery{DelegatorAddress: delegator.String()},
+			query: &wvm.DistributionQuery{
+				DelegationTotalRewards: &wvm.DelegationTotalRewardsQuery{DelegatorAddress: delegator.String()},
 			},
 			assert: func(t *testing.T, d []byte) {
-				var rsp wasmvmtypes.DelegationTotalRewardsResponse
+				var rsp wvm.DelegationTotalRewardsResponse
 				mustUnmarshal(t, d, &rsp)
-				expRewards := []wasmvmtypes.DelegatorReward{
+				expRewards := []wvm.DelegatorReward{
 					{
-						Reward:           []wasmvmtypes.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}},
+						Reward:           []wvm.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}},
 						ValidatorAddress: val1Addr.String(),
 					},
 				}
 				assert.Equal(t, expRewards, rsp.Rewards)
-				expTotal := []wasmvmtypes.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}}
+				expTotal := []wvm.DecCoin{{Amount: "45000000.000000000000000000", Denom: "stake"}}
 				assert.Equal(t, expTotal, rsp.Total)
 			},
 		},
@@ -606,11 +606,11 @@ func TestDistributionQuery(t *testing.T) {
 				}
 				return ctx
 			},
-			query: &wasmvmtypes.DistributionQuery{
-				DelegatorValidators: &wasmvmtypes.DelegatorValidatorsQuery{DelegatorAddress: delegator.String()},
+			query: &wvm.DistributionQuery{
+				DelegatorValidators: &wvm.DelegatorValidatorsQuery{DelegatorAddress: delegator.String()},
 			},
 			assert: func(t *testing.T, d []byte) {
-				var rsp wasmvmtypes.DelegatorValidatorsResponse
+				var rsp wvm.DelegatorValidatorsResponse
 				mustUnmarshal(t, d, &rsp)
 				expVals := []string{val1Addr.String(), val2Addr.String()}
 				if bytes.Compare(val1Addr, val2Addr) > 0 {
@@ -628,7 +628,7 @@ func TestDistributionQuery(t *testing.T) {
 			// when
 			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
 				Chain: &testdata.ChainQuery{
-					Request: &wasmvmtypes.QueryRequest{Distribution: spec.query},
+					Request: &wvm.QueryRequest{Distribution: spec.query},
 				},
 			})
 			simpleRes, gotErr := keeper.QuerySmart(ctx, example.Contract, queryBz)
@@ -725,20 +725,20 @@ func TestIBCListChannelsQuery(t *testing.T) {
 	specs := map[string]struct {
 		setup    func(t *testing.T, ctx sdk.Context) sdk.Context
 		contract sdk.AccAddress
-		query    *wasmvmtypes.IBCQuery
+		query    *wvm.IBCQuery
 		expErr   bool
 		assert   func(t *testing.T, d []byte)
 	}{
 		"open channels - with query portID empty": {
 			contract: ibcExample.Contract,
 			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
-			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			query:    &wvm.IBCQuery{ListChannels: &wvm.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
-				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
-				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
+				rsp := unmarshalReflect[wvm.ListChannelsResponse](t, d)
+				exp := wvm.ListChannelsResponse{Channels: []wvm.IBCChannel{
 					{
-						Endpoint: wasmvmtypes.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-0"},
-						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+						Endpoint: wvm.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-0"},
+						CounterpartyEndpoint: wvm.IBCEndpoint{
 							PortID:    "counterPartyPortID",
 							ChannelID: "counterPartyChannelID",
 						},
@@ -746,8 +746,8 @@ func TestIBCListChannelsQuery(t *testing.T) {
 						Version:      "v1",
 						ConnectionID: "one",
 					}, {
-						Endpoint: wasmvmtypes.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-2"},
-						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+						Endpoint: wvm.IBCEndpoint{PortID: myIBCPortID, ChannelID: "channel-2"},
+						CounterpartyEndpoint: wvm.IBCEndpoint{
 							PortID:    "otherCounterPartyPortID",
 							ChannelID: "otherCounterPartyChannelID",
 						},
@@ -762,13 +762,13 @@ func TestIBCListChannelsQuery(t *testing.T) {
 		"open channels - with query portID passed": {
 			contract: ibcExample.Contract,
 			setup:    withChannelsStored("OtherPortID", myExampleChannels...),
-			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{PortID: "OtherPortID"}},
+			query:    &wvm.IBCQuery{ListChannels: &wvm.ListChannelsQuery{PortID: "OtherPortID"}},
 			assert: func(t *testing.T, d []byte) {
-				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
-				exp := wasmvmtypes.ListChannelsResponse{Channels: []wasmvmtypes.IBCChannel{
+				rsp := unmarshalReflect[wvm.ListChannelsResponse](t, d)
+				exp := wvm.ListChannelsResponse{Channels: []wvm.IBCChannel{
 					{
-						Endpoint: wasmvmtypes.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-0"},
-						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+						Endpoint: wvm.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-0"},
+						CounterpartyEndpoint: wvm.IBCEndpoint{
 							PortID:    "counterPartyPortID",
 							ChannelID: "counterPartyChannelID",
 						},
@@ -776,8 +776,8 @@ func TestIBCListChannelsQuery(t *testing.T) {
 						Version:      "v1",
 						ConnectionID: "one",
 					}, {
-						Endpoint: wasmvmtypes.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-2"},
-						CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{
+						Endpoint: wvm.IBCEndpoint{PortID: "OtherPortID", ChannelID: "channel-2"},
+						CounterpartyEndpoint: wvm.IBCEndpoint{
 							PortID:    "otherCounterPartyPortID",
 							ChannelID: "otherCounterPartyChannelID",
 						},
@@ -792,18 +792,18 @@ func TestIBCListChannelsQuery(t *testing.T) {
 		"non ibc contract - with query portID empty": {
 			contract: nonIbcExample.Contract,
 			setup:    withChannelsStored(myIBCPortID, myExampleChannels...),
-			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			query:    &wvm.IBCQuery{ListChannels: &wvm.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
-				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				rsp := unmarshalReflect[wvm.ListChannelsResponse](t, d)
 				assert.Nil(t, rsp.Channels)
 			},
 		},
 		"no matching channels": {
 			contract: ibcExample.Contract,
 			setup:    noopSetup,
-			query:    &wasmvmtypes.IBCQuery{ListChannels: &wasmvmtypes.ListChannelsQuery{}},
+			query:    &wvm.IBCQuery{ListChannels: &wvm.ListChannelsQuery{}},
 			assert: func(t *testing.T, d []byte) {
-				rsp := unmarshalReflect[wasmvmtypes.ListChannelsResponse](t, d)
+				rsp := unmarshalReflect[wvm.ListChannelsResponse](t, d)
 				assert.Empty(t, rsp.Channels)
 			},
 		},
@@ -816,7 +816,7 @@ func TestIBCListChannelsQuery(t *testing.T) {
 			// when
 			queryBz := mustMarshal(t, testdata.ReflectQueryMsg{
 				Chain: &testdata.ChainQuery{
-					Request: &wasmvmtypes.QueryRequest{IBC: spec.query},
+					Request: &wvm.QueryRequest{IBC: spec.query},
 				},
 			})
 			simpleRes, gotErr := keeper.QuerySmart(ctx, spec.contract, queryBz)

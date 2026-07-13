@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
@@ -104,7 +104,7 @@ func TestOnRecvPacket(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			mock := IBCContractKeeperMock{
-				OnRecvPacketFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
+				OnRecvPacketFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wvm.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
 					// additional custom event to confirm event handling on state commit/ rollback
 					ctx.EventManager().EmitEvent(myCustomEvent)
 					return spec.contractRsp, spec.contractOkMsgExecErr
@@ -130,16 +130,16 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 	var myTimestamp uint64 = 1
 	specs := map[string]struct {
 		src channeltypes.Packet
-		exp wasmvmtypes.IBCPacket
+		exp wvm.IBCPacket
 	}{
 		"with height timeout": {
 			src: IBCPacketFixture(),
-			exp: wasmvmtypes.IBCPacket{
+			exp: wvm.IBCPacket{
 				Data:     []byte("myData"),
-				Src:      wasmvmtypes.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
-				Dest:     wasmvmtypes.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
+				Src:      wvm.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
+				Dest:     wvm.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
 				Sequence: 1,
-				Timeout:  wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2}},
+				Timeout:  wvm.IBCTimeout{Block: &wvm.IBCTimeoutBlock{Height: 1, Revision: 2}},
 			},
 		},
 		"with time timeout": {
@@ -147,24 +147,24 @@ func TestMapToWasmVMIBCPacket(t *testing.T) {
 				p.TimeoutTimestamp = myTimestamp
 				p.TimeoutHeight = clienttypes.Height{}
 			}),
-			exp: wasmvmtypes.IBCPacket{
+			exp: wvm.IBCPacket{
 				Data:     []byte("myData"),
-				Src:      wasmvmtypes.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
-				Dest:     wasmvmtypes.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
+				Src:      wvm.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
+				Dest:     wvm.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
 				Sequence: 1,
-				Timeout:  wasmvmtypes.IBCTimeout{Timestamp: myTimestamp},
+				Timeout:  wvm.IBCTimeout{Timestamp: myTimestamp},
 			},
 		}, "with time and height timeout": {
 			src: IBCPacketFixture(func(p *channeltypes.Packet) {
 				p.TimeoutTimestamp = myTimestamp
 			}),
-			exp: wasmvmtypes.IBCPacket{
+			exp: wvm.IBCPacket{
 				Data:     []byte("myData"),
-				Src:      wasmvmtypes.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
-				Dest:     wasmvmtypes.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
+				Src:      wvm.IBCEndpoint{PortID: "srcPort", ChannelID: "channel-1"},
+				Dest:     wvm.IBCEndpoint{PortID: "destPort", ChannelID: "channel-2"},
 				Sequence: 1,
-				Timeout: wasmvmtypes.IBCTimeout{
-					Block:     &wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2},
+				Timeout: wvm.IBCTimeout{
+					Block:     &wvm.IBCTimeoutBlock{Height: 1, Revision: 2},
 					Timestamp: myTimestamp,
 				},
 			},
@@ -202,10 +202,10 @@ var _ types.IBCContractKeeper = &IBCContractKeeperMock{}
 
 type IBCContractKeeperMock struct {
 	types.IBCContractKeeper
-	OnRecvPacketFn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
+	OnRecvPacketFn func(ctx sdk.Context, contractAddr sdk.AccAddress, msg wvm.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error)
 }
 
-func (m IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, msg wasmvmtypes.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
+func (m IBCContractKeeperMock) OnRecvPacket(ctx sdk.Context, contractAddr sdk.AccAddress, msg wvm.IBCPacketReceiveMsg) (ibcexported.Acknowledgement, error) {
 	if m.OnRecvPacketFn == nil {
 		panic("not expected to be called")
 	}

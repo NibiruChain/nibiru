@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -31,7 +31,7 @@ This design is based on wasmd's (v0.50.0) querier plugin design.
 */
 
 var (
-	_ wasmvmtypes.Querier   = (*queryHandler)(nil)
+	_ wvm.Querier           = (*queryHandler)(nil)
 	_ ibcwasm.QueryPluginsI = (*QueryPlugins)(nil)
 )
 
@@ -50,13 +50,13 @@ func newQueryHandler(ctx sdk.Context, callerID string) *queryHandler {
 	}
 }
 
-// GasConsumed implements the wasmvmtypes.Querier interface.
+// GasConsumed implements the [wvm.Querier] interface.
 func (q *queryHandler) GasConsumed() uint64 {
 	return VMGasRegister.ToWasmVMGas(q.Ctx.GasMeter().GasConsumed())
 }
 
-// Query implements the wasmvmtypes.Querier interface.
-func (q *queryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) ([]byte, error) {
+// Query implements the [wvm.Querier] interface.
+func (q *queryHandler) Query(request wvm.QueryRequest, gasLimit uint64) ([]byte, error) {
 	sdkGas := VMGasRegister.FromWasmVMGas(gasLimit)
 
 	// discard all changes/events in subCtx by not committing the cached context
@@ -78,7 +78,7 @@ func (q *queryHandler) Query(request wasmvmtypes.QueryRequest, gasLimit uint64) 
 
 type (
 	CustomQuerier   func(ctx sdk.Context, request json.RawMessage) ([]byte, error)
-	StargateQuerier func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error)
+	StargateQuerier func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error)
 
 	// QueryPlugins is a list of queriers that can be used to extend the default querier.
 	QueryPlugins struct {
@@ -106,7 +106,7 @@ func (e QueryPlugins) Merge(x *QueryPlugins) QueryPlugins {
 }
 
 // HandleQuery implements the ibcwasm.QueryPluginsI interface.
-func (e QueryPlugins) HandleQuery(ctx sdk.Context, _ string, request wasmvmtypes.QueryRequest) ([]byte, error) {
+func (e QueryPlugins) HandleQuery(ctx sdk.Context, _ string, request wvm.QueryRequest) ([]byte, error) {
 	if request.Stargate != nil {
 		return e.Stargate(ctx, request.Stargate)
 	}
@@ -115,7 +115,7 @@ func (e QueryPlugins) HandleQuery(ctx sdk.Context, _ string, request wasmvmtypes
 		return e.Custom(ctx, request.Custom)
 	}
 
-	return nil, wasmvmtypes.UnsupportedRequest{Kind: "Unsupported query request"}
+	return nil, wvm.UnsupportedRequest{Kind: "Unsupported query request"}
 }
 
 // NewDefaultQueryPlugins returns the default set of query plugins
@@ -128,19 +128,19 @@ func NewDefaultQueryPlugins() *QueryPlugins {
 
 // AcceptListStargateQuerier allows all queries that are in the provided accept list.
 // This function returns protobuf encoded responses in bytes.
-func AcceptListStargateQuerier(acceptedQueries []string) func(sdk.Context, *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return func(ctx sdk.Context, request *wasmvmtypes.StargateQuery) ([]byte, error) {
+func AcceptListStargateQuerier(acceptedQueries []string) func(sdk.Context, *wvm.StargateQuery) ([]byte, error) {
+	return func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error) {
 		// A default list of accepted queries can be added here.
 		// accepted = append(defaultAcceptList, accepted...)
 
 		isAccepted := slices.Contains(acceptedQueries, request.Path)
 		if !isAccepted {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
+			return nil, wvm.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
 
 		route := ibcwasm.GetQueryRouter().Route(request.Path)
 		if route == nil {
-			return nil, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
+			return nil, wvm.UnsupportedRequest{Kind: fmt.Sprintf("No route to query '%s'", request.Path)}
 		}
 
 		res, err := route(ctx, abci.RequestQuery{
@@ -151,7 +151,7 @@ func AcceptListStargateQuerier(acceptedQueries []string) func(sdk.Context, *wasm
 			return nil, err
 		}
 		if res.Value == nil {
-			return nil, wasmvmtypes.InvalidResponse{Err: "Query response is empty"}
+			return nil, wvm.InvalidResponse{Err: "Query response is empty"}
 		}
 
 		return res.Value, nil
@@ -161,7 +161,7 @@ func AcceptListStargateQuerier(acceptedQueries []string) func(sdk.Context, *wasm
 // RejectCustomQuerier rejects all custom queries
 func RejectCustomQuerier() func(sdk.Context, json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-		return nil, wasmvmtypes.UnsupportedRequest{Kind: "Custom queries are not allowed"}
+		return nil, wvm.UnsupportedRequest{Kind: "Custom queries are not allowed"}
 	}
 }
 
@@ -170,7 +170,7 @@ func RejectCustomQuerier() func(sdk.Context, json.RawMessage) ([]byte, error) {
 func redactError(err error) error {
 	// Do not redact system errors
 	// SystemErrors must be created in 08-wasm and we can ensure determinism
-	if wasmvmtypes.ToSystemError(err) != nil {
+	if wvm.ToSystemError(err) != nil {
 		return err
 	}
 

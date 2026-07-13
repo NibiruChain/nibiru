@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
@@ -160,11 +160,11 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 			func() {
 				msg = types.NewMsgMigrateContract(govAcc, defaultWasmClientID, newChecksum, []byte("{}"))
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					data, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				}
 			},
 			nil,
@@ -174,7 +174,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 			func() {
 				msg = types.NewMsgMigrateContract(govAcc, defaultWasmClientID, newChecksum, []byte("{}"))
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					// the checksum written in the client state will later be overwritten by the message server.
 					expClientStateBz := wasmtesting.CreateMockClientStateBz(suite.chainA.App.AppCodec(), []byte("invalid checksum"))
 					expClientState = clienttypes.MustUnmarshalClientState(suite.chainA.App.AppCodec(), expClientStateBz).(*types.ClientState)
@@ -183,7 +183,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 					data, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				}
 			},
 			nil,
@@ -193,7 +193,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 			func() {
 				msg = types.NewMsgMigrateContract(govAcc, defaultWasmClientID, oldChecksum, []byte("{}"))
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					panic("unreachable")
 				}
 			},
@@ -225,7 +225,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 			func() {
 				msg = types.NewMsgMigrateContract(govAcc, defaultWasmClientID, newChecksum, []byte("{}"))
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					return nil, wasmtesting.DefaultGasUsed, wasmtesting.ErrMockContract
 				}
 			},
@@ -236,7 +236,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 			func() {
 				msg = types.NewMsgMigrateContract(govAcc, defaultWasmClientID, newChecksum, []byte("{}"))
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					// the checksum written in here will be overwritten
 					newClientState := localhost.NewClientState(clienttypes.NewHeight(1, 1))
 
@@ -245,7 +245,7 @@ func (suite *KeeperTestSuite) TestMsgMigrateContract() {
 					data, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				}
 			},
 			types.ErrWasmInvalidContractModification,

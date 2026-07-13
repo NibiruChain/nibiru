@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
@@ -25,7 +25,7 @@ func (suite *TypesTestSuite) TestCheckForMisbehaviour() {
 		{
 			"success: no misbehaviour",
 			func() {
-				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					resp, err := json.Marshal(types.CheckForMisbehaviourResult{FoundMisbehaviour: false})
 					suite.Require().NoError(err)
 					return resp, wasmtesting.DefaultGasUsed, nil
@@ -35,7 +35,7 @@ func (suite *TypesTestSuite) TestCheckForMisbehaviour() {
 		},
 		{
 			"success: misbehaviour found", func() {
-				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					resp, err := json.Marshal(types.CheckForMisbehaviourResult{FoundMisbehaviour: true})
 					suite.Require().NoError(err)
 					return resp, wasmtesting.DefaultGasUsed, nil
@@ -45,7 +45,7 @@ func (suite *TypesTestSuite) TestCheckForMisbehaviour() {
 		},
 		{
 			"success: contract error, resp cannot be marshalled", func() {
-				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					resp := "cannot be unmarshalled"
 					return []byte(resp), wasmtesting.DefaultGasUsed, nil
 				})
@@ -54,7 +54,7 @@ func (suite *TypesTestSuite) TestCheckForMisbehaviour() {
 		},
 		{
 			"success: vm returns error, ", func() {
-				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.CheckForMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					return nil, 0, errors.New("invalid block ID")
 				})
 			},

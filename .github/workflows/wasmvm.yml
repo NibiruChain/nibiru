@@ -31,8 +31,8 @@ jobs:
         with:
           filters: |
             wasmvm:
-              - "lib/wasmvm-ffi/**"
-              - ".github/workflows/wasmvm-ffi.yml"
+              - "lib/wasmvm/**"
+              - ".github/workflows/wasmvm.yml"
 
       # This step centralizes the Wasm VM FFI workflow policy. The path filter
       # controls ordinary PR runs, while `workflow_dispatch` and `push` events
@@ -126,10 +126,10 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            lib/wasmvm-ffi/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+            lib/wasmvm/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-ffi-
+            ${{ runner.os }}-cargo-wasmvm-
 
       - name: Run Rust sanity checks
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -169,10 +169,10 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            lib/wasmvm-ffi/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+            lib/wasmvm/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-ffi-
+            ${{ runner.os }}-cargo-wasmvm-
 
       - name: Run Clippy
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -283,10 +283,10 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            lib/wasmvm-ffi/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-ffi-${{ hashFiles('lib/wasmvm-ffi/libwasmvm/Cargo.lock') }}
+            lib/wasmvm/libwasmvm/target/
+          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-ffi-
+            ${{ runner.os }}-cargo-wasmvm-
 
       - name: Build Rust shared library
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -355,7 +355,7 @@ jobs:
   #
   #     - name: Run Rust unit tests
   #       if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
-  #       working-directory: lib/wasmvm-ffi/libwasmvm
+  #       working-directory: lib/wasmvm/libwasmvm
   #       run: cargo test
   # ```
 
@@ -394,8 +394,8 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         run: |
           mkdir -p artifacts/static-musl
-          cp lib/wasmvm-ffi/internal/api/libwasmvm_muslc.a artifacts/static-musl/libwasmvm_muslc.x86_64.a
-          cp lib/wasmvm-ffi/internal/api/libwasmvm_muslc.aarch64.a artifacts/static-musl/
+          cp lib/wasmvm/internal/api/libwasmvm_muslc.a artifacts/static-musl/libwasmvm_muslc.x86_64.a
+          cp lib/wasmvm/internal/api/libwasmvm_muslc.aarch64.a artifacts/static-musl/
           (cd artifacts/static-musl && sha256sum -- libwasmvm_muslc.x86_64.a libwasmvm_muslc.aarch64.a > checksums.txt && cat checksums.txt)
 
       - name: Upload musl static libraries
@@ -466,8 +466,8 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         run: |
           mkdir -p artifacts/linux-shared
-          cp lib/wasmvm-ffi/internal/api/libwasmvm.x86_64.so artifacts/linux-shared/
-          cp lib/wasmvm-ffi/internal/api/libwasmvm.aarch64.so artifacts/linux-shared/
+          cp lib/wasmvm/internal/api/libwasmvm.x86_64.so artifacts/linux-shared/
+          cp lib/wasmvm/internal/api/libwasmvm.aarch64.so artifacts/linux-shared/
           (cd artifacts/linux-shared && sha256sum -- libwasmvm.aarch64.so libwasmvm.x86_64.so > checksums.txt && cat checksums.txt)
 
       - name: Upload Linux shared libraries
@@ -516,8 +516,8 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         run: |
           mkdir -p artifacts/darwin
-          cp lib/wasmvm-ffi/internal/api/libwasmvm.dylib artifacts/darwin/
-          cp lib/wasmvm-ffi/internal/api/libwasmvmstatic_darwin.a artifacts/darwin/
+          cp lib/wasmvm/internal/api/libwasmvm.dylib artifacts/darwin/
+          cp lib/wasmvm/internal/api/libwasmvmstatic_darwin.a artifacts/darwin/
           (cd artifacts/darwin && sha256sum -- libwasmvm.dylib libwasmvmstatic_darwin.a > checksums.txt && cat checksums.txt)
 
       - name: Upload Darwin libraries

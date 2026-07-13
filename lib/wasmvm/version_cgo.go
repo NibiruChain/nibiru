@@ -1,9 +1,9 @@
 //go:build cgo
 
-package cosmwasm
+package wasmvm
 
 import (
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/internal/api"
 )
 
 func libwasmvmVersionImpl() (string, error) {

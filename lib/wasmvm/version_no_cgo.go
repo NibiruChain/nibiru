@@ -1,6 +1,6 @@
 //go:build !cgo
 
-package cosmwasm
+package wasmvm
 
 import (
 	"fmt"

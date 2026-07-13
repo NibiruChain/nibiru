@@ -3,8 +3,8 @@ package types
 import (
 	"math"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
@@ -17,7 +17,7 @@ const (
 	DefaultDeserializationCostPerByte = 1
 )
 
-var costJSONDeserialization = wasmvmtypes.UFraction{
+var costJSONDeserialization = wvm.UFraction{
 	Numerator:   DefaultDeserializationCostPerByte * DefaultGasMultiplier,
 	Denominator: 1,
 }

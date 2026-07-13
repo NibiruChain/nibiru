@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	ibcclienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
@@ -24,24 +24,24 @@ import (
 )
 
 type (
-	BankEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
+	BankEncoder         func(sender sdk.AccAddress, msg *wvm.BankMsg) ([]sdk.Msg, error)
 	CustomEncoder       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
-	DistributionEncoder func(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error)
-	StakingEncoder      func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
-	StargateEncoder     func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
-	WasmEncoder         func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
-	IBCEncoder          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
+	DistributionEncoder func(sender sdk.AccAddress, msg *wvm.DistributionMsg) ([]sdk.Msg, error)
+	StakingEncoder      func(sender sdk.AccAddress, msg *wvm.StakingMsg) ([]sdk.Msg, error)
+	StargateEncoder     func(sender sdk.AccAddress, msg *wvm.StargateMsg) ([]sdk.Msg, error)
+	WasmEncoder         func(sender sdk.AccAddress, msg *wvm.WasmMsg) ([]sdk.Msg, error)
+	IBCEncoder          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wvm.IBCMsg) ([]sdk.Msg, error)
 )
 
 type MessageEncoders struct {
-	Bank         func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error)
+	Bank         func(sender sdk.AccAddress, msg *wvm.BankMsg) ([]sdk.Msg, error)
 	Custom       func(sender sdk.AccAddress, msg json.RawMessage) ([]sdk.Msg, error)
-	Distribution func(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error)
-	IBC          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error)
-	Staking      func(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error)
-	Stargate     func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error)
-	Wasm         func(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error)
-	Gov          func(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error)
+	Distribution func(sender sdk.AccAddress, msg *wvm.DistributionMsg) ([]sdk.Msg, error)
+	IBC          func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wvm.IBCMsg) ([]sdk.Msg, error)
+	Staking      func(sender sdk.AccAddress, msg *wvm.StakingMsg) ([]sdk.Msg, error)
+	Stargate     func(sender sdk.AccAddress, msg *wvm.StargateMsg) ([]sdk.Msg, error)
+	Wasm         func(sender sdk.AccAddress, msg *wvm.WasmMsg) ([]sdk.Msg, error)
+	Gov          func(sender sdk.AccAddress, msg *wvm.GovMsg) ([]sdk.Msg, error)
 }
 
 func DefaultEncoders(unpacker codectypes.AnyUnpacker, portSource types.ICS20TransferPortSource) MessageEncoders {
@@ -88,7 +88,7 @@ func (e MessageEncoders) Merge(o *MessageEncoders) MessageEncoders {
 	return e
 }
 
-func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Msg, error) {
+func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Bank != nil:
 		return e.Bank(contractAddr, msg.Bank)
@@ -110,7 +110,7 @@ func (e MessageEncoders) Encode(ctx sdk.Context, contractAddr sdk.AccAddress, co
 	return nil, sdkioerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Wasm")
 }
 
-func EncodeBankMsg(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error) {
+func EncodeBankMsg(sender sdk.AccAddress, msg *wvm.BankMsg) ([]sdk.Msg, error) {
 	if msg.Send == nil {
 		return nil, sdkioerrors.Wrap(types.ErrUnknownMsg, "unknown variant of Bank")
 	}
@@ -133,7 +133,7 @@ func NoCustomMsg(_ sdk.AccAddress, _ json.RawMessage) ([]sdk.Msg, error) {
 	return nil, sdkioerrors.Wrap(types.ErrUnknownMsg, "custom variant not supported")
 }
 
-func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionMsg) ([]sdk.Msg, error) {
+func EncodeDistributionMsg(sender sdk.AccAddress, msg *wvm.DistributionMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.SetWithdrawAddress != nil:
 		setMsg := distributiontypes.MsgSetWithdrawAddress{
@@ -162,7 +162,7 @@ func EncodeDistributionMsg(sender sdk.AccAddress, msg *wasmvmtypes.DistributionM
 	}
 }
 
-func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk.Msg, error) {
+func EncodeStakingMsg(sender sdk.AccAddress, msg *wvm.StakingMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Delegate != nil:
 		coin, err := ConvertWasmCoinToSdkCoin(msg.Delegate.Amount)
@@ -205,7 +205,7 @@ func EncodeStakingMsg(sender sdk.AccAddress, msg *wasmvmtypes.StakingMsg) ([]sdk
 }
 
 func EncodeStargateMsg(unpacker codectypes.AnyUnpacker) StargateEncoder {
-	return func(sender sdk.AccAddress, msg *wasmvmtypes.StargateMsg) ([]sdk.Msg, error) {
+	return func(sender sdk.AccAddress, msg *wvm.StargateMsg) ([]sdk.Msg, error) {
 		codecAny := codectypes.Any{
 			TypeUrl: msg.TypeURL,
 			Value:   msg.Value,
@@ -221,7 +221,7 @@ func EncodeStargateMsg(unpacker codectypes.AnyUnpacker) StargateEncoder {
 	}
 }
 
-func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, error) {
+func EncodeWasmMsg(sender sdk.AccAddress, msg *wvm.WasmMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Execute != nil:
 		coins, err := ConvertWasmCoinsToSdkCoins(msg.Execute.Funds)
@@ -295,8 +295,8 @@ func EncodeWasmMsg(sender sdk.AccAddress, msg *wasmvmtypes.WasmMsg) ([]sdk.Msg, 
 	}
 }
 
-func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
-	return func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wasmvmtypes.IBCMsg) ([]sdk.Msg, error) {
+func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wvm.IBCMsg) ([]sdk.Msg, error) {
+	return func(ctx sdk.Context, sender sdk.AccAddress, contractIBCPortID string, msg *wvm.IBCMsg) ([]sdk.Msg, error) {
 		switch {
 		case msg.CloseChannel != nil:
 			return []sdk.Msg{&channeltypes.MsgChannelCloseInit{
@@ -325,7 +325,7 @@ func EncodeIBCMsg(portSource types.ICS20TransferPortSource) func(ctx sdk.Context
 	}
 }
 
-func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, error) {
+func EncodeGovMsg(sender sdk.AccAddress, msg *wvm.GovMsg) ([]sdk.Msg, error) {
 	switch {
 	case msg.Vote != nil:
 		voteOption, err := convertVoteOption(msg.Vote.Vote)
@@ -358,13 +358,13 @@ func EncodeGovMsg(sender sdk.AccAddress, msg *wasmvmtypes.GovMsg) ([]sdk.Msg, er
 func convertVoteOption(s interface{}) (v1.VoteOption, error) {
 	var option v1.VoteOption
 	switch s {
-	case wasmvmtypes.Yes:
+	case wvm.Yes:
 		option = v1.OptionYes
-	case wasmvmtypes.No:
+	case wvm.No:
 		option = v1.OptionNo
-	case wasmvmtypes.NoWithVeto:
+	case wvm.NoWithVeto:
 		option = v1.OptionNoWithVeto
-	case wasmvmtypes.Abstain:
+	case wvm.Abstain:
 		option = v1.OptionAbstain
 	default:
 		return v1.OptionEmpty, types.ErrInvalid
@@ -373,7 +373,7 @@ func convertVoteOption(s interface{}) (v1.VoteOption, error) {
 }
 
 // ConvertWasmIBCTimeoutHeightToCosmosHeight converts a wasmvm type ibc timeout height to ibc module type height
-func ConvertWasmIBCTimeoutHeightToCosmosHeight(ibcTimeoutBlock *wasmvmtypes.IBCTimeoutBlock) ibcclienttypes.Height {
+func ConvertWasmIBCTimeoutHeightToCosmosHeight(ibcTimeoutBlock *wvm.IBCTimeoutBlock) ibcclienttypes.Height {
 	if ibcTimeoutBlock == nil {
 		return ibcclienttypes.NewHeight(0, 0)
 	}
@@ -381,7 +381,7 @@ func ConvertWasmIBCTimeoutHeightToCosmosHeight(ibcTimeoutBlock *wasmvmtypes.IBCT
 }
 
 // ConvertWasmCoinsToSdkCoins converts the wasm vm type coins to sdk type coins
-func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
+func ConvertWasmCoinsToSdkCoins(coins []wvm.Coin) (sdk.Coins, error) {
 	var toSend sdk.Coins
 	for _, coin := range coins {
 		c, err := ConvertWasmCoinToSdkCoin(coin)
@@ -394,7 +394,7 @@ func ConvertWasmCoinsToSdkCoins(coins []wasmvmtypes.Coin) (sdk.Coins, error) {
 }
 
 // ConvertWasmCoinToSdkCoin converts a wasm vm type coin to sdk type coin
-func ConvertWasmCoinToSdkCoin(coin wasmvmtypes.Coin) (sdk.Coin, error) {
+func ConvertWasmCoinToSdkCoin(coin wvm.Coin) (sdk.Coin, error) {
 	amount, ok := sdk.NewIntFromString(coin.Amount)
 	if !ok {
 		return sdk.Coin{}, sdkioerrors.Wrap(sdkerrors.ErrInvalidCoins, coin.Amount+coin.Denom)

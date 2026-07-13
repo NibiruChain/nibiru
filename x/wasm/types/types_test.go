@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
@@ -302,31 +302,31 @@ func TestNewEnv(t *testing.T) {
 	var myContractAddr sdk.AccAddress = randBytes(ContractAddrLen)
 	specs := map[string]struct {
 		srcCtx sdk.Context
-		exp    wasmvmtypes.Env
+		exp    wvm.Env
 	}{
 		"all good with tx counter": {
 			srcCtx: WithTXCounter(sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()), 0),
-			exp: wasmvmtypes.Env{
-				Block: wasmvmtypes.BlockInfo{
+			exp: wvm.Env{
+				Block: wvm.BlockInfo{
 					Height:  1,
 					Time:    1619700924259075000,
 					ChainID: "testing",
 				},
-				Contract: wasmvmtypes.ContractInfo{
+				Contract: wvm.ContractInfo{
 					Address: myContractAddr.String(),
 				},
-				Transaction: &wasmvmtypes.TransactionInfo{Index: 0},
+				Transaction: &wvm.TransactionInfo{Index: 0},
 			},
 		},
 		"without tx counter": {
 			srcCtx: sdk.Context{}.WithBlockHeight(1).WithBlockTime(myTime).WithChainID("testing").WithContext(context.Background()),
-			exp: wasmvmtypes.Env{
-				Block: wasmvmtypes.BlockInfo{
+			exp: wvm.Env{
+				Block: wvm.BlockInfo{
 					Height:  1,
 					Time:    1619700924259075000,
 					ChainID: "testing",
 				},
-				Contract: wasmvmtypes.ContractInfo{
+				Contract: wvm.ContractInfo{
 					Address: myContractAddr.String(),
 				},
 			},

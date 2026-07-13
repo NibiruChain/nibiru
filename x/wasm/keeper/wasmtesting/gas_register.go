@@ -1,7 +1,7 @@
 package wasmtesting
 
 import (
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
@@ -11,8 +11,8 @@ type MockGasRegister struct {
 	CompileCostFn             func(byteLength int) sdk.Gas
 	NewContractInstanceCostFn func(pinned bool, msgLen int) sdk.Gas
 	InstantiateContractCostFn func(pinned bool, msgLen int) sdk.Gas
-	ReplyCostFn               func(pinned bool, reply wasmvmtypes.Reply) sdk.Gas
-	EventCostsFn              func(evts []wasmvmtypes.EventAttribute) sdk.Gas
+	ReplyCostFn               func(pinned bool, reply wvm.Reply) sdk.Gas
+	EventCostsFn              func(evts []wvm.EventAttribute) sdk.Gas
 	ToWasmVMGasFn             func(source sdk.Gas) uint64
 	FromWasmVMGasFn           func(source uint64) sdk.Gas
 	UncompressCostsFn         func(byteLength int) sdk.Gas
@@ -46,14 +46,14 @@ func (m MockGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.G
 	return m.InstantiateContractCostFn(pinned, msgLen)
 }
 
-func (m MockGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
+func (m MockGasRegister) ReplyCosts(pinned bool, reply wvm.Reply) sdk.Gas {
 	if m.ReplyCostFn == nil {
 		panic("not expected to be called")
 	}
 	return m.ReplyCostFn(pinned, reply)
 }
 
-func (m MockGasRegister) EventCosts(evts []wasmvmtypes.EventAttribute, _ wasmvmtypes.Events) sdk.Gas {
+func (m MockGasRegister) EventCosts(evts []wvm.EventAttribute, _ wvm.Events) sdk.Gas {
 	if m.EventCostsFn == nil {
 		panic("not expected to be called")
 	}

@@ -42,7 +42,7 @@ The Go code consistes of three packages:
 1. The types (the `github.com/CosmWasm/wasmvm/types` import), using
    `package types`
 2. The internal package `internal/api`, using `package api`
-3. This repo (the `github.com/CosmWasm/wasmvm` import), using `package cosmwasm`
+3. This repo (the `github.com/CosmWasm/wasmvm` import), using `package wasmvm`
 
 The dependencies between them are as follows:
 

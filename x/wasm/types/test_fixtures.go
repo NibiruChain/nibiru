@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"math/rand"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -35,7 +35,7 @@ func (suite *TypesTestSuite) TestVerifyClientMessage() {
 		{
 			"success: valid misbehaviour",
 			func() {
-				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, env wvm.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					var msg *types.QueryMsg
 
 					err := json.Unmarshal(queryMsg, &msg)
@@ -70,7 +70,7 @@ func (suite *TypesTestSuite) TestVerifyClientMessage() {
 			func() {
 				clientMsg = &ibctm.Header{}
 
-				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					resp, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
@@ -82,7 +82,7 @@ func (suite *TypesTestSuite) TestVerifyClientMessage() {
 		{
 			"failure: error return from contract vm",
 			func() {
-				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.VerifyClientMessageMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, queryMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
@@ -136,7 +136,7 @@ func (suite *TypesTestSuite) TestVerifyUpgradeAndUpdateState() {
 		{
 			"success: successful upgrade",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.VerifyUpgradeAndUpdateStateMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.VerifyUpgradeAndUpdateStateMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					var payload types.SudoMsg
 
 					err := json.Unmarshal(sudoMsg, &payload)
@@ -167,7 +167,7 @@ func (suite *TypesTestSuite) TestVerifyUpgradeAndUpdateState() {
 					store.Set(host.ClientStateKey(), clienttypes.MustMarshalClientState(suite.chainA.App.AppCodec(), upgradedClient))
 					store.Set(host.ConsensusStateKey(wrappedUpgradedClient.GetLatestHeight()), clienttypes.MustMarshalConsensusState(suite.chainA.App.AppCodec(), upgradedConsState))
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				})
 			},
 			nil,
@@ -191,7 +191,7 @@ func (suite *TypesTestSuite) TestVerifyUpgradeAndUpdateState() {
 		{
 			"failure: contract returns error",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.VerifyUpgradeAndUpdateStateMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.VerifyUpgradeAndUpdateStateMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},

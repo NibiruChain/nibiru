@@ -8,8 +8,8 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	testifysuite "github.com/stretchr/testify/suite"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -88,7 +88,7 @@ func (suite *TypesTestSuite) SetupWasmWithMockVM() {
 func (suite *TypesTestSuite) setupWasmWithMockVM() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	suite.mockVM = wasmtesting.NewMockWasmEngine()
 
-	suite.mockVM.InstantiateFn = func(checksum wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	suite.mockVM.InstantiateFn = func(checksum wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
 		var payload types.InstantiateMessage
 		err := json.Unmarshal(initMsg, &payload)
 		suite.Require().NoError(err)
@@ -106,10 +106,10 @@ func (suite *TypesTestSuite) setupWasmWithMockVM() (ibctesting.TestingApp, map[s
 		resp, err := json.Marshal(types.EmptyResult{})
 		suite.Require().NoError(err)
 
-		return &wasmvmtypes.Response{Data: resp}, 0, nil
+		return &wvm.Response{Data: resp}, 0, nil
 	}
 
-	suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(checksum wasmvm.Checksum, env wasmvmtypes.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) ([]byte, uint64, error) {
+	suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(checksum wasmvm.Checksum, env wvm.Env, queryMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) ([]byte, uint64, error) {
 		resp, err := json.Marshal(types.StatusResult{Status: exported.Active.String()})
 		suite.Require().NoError(err)
 		return resp, wasmtesting.DefaultGasUsed, nil

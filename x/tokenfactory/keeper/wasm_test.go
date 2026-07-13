@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	codec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -272,7 +272,7 @@ func (s *TestSuite) TestStargateSerde() {
 		s.Run(tc.typeUrl, func() {
 			pbMsg, _ := (tc.sdkMsg).(codec.ProtoMarshaler)
 			sgMsgValue := s.encConfig.Codec.MustMarshal(pbMsg)
-			sgMsg := wasmvmtypes.StargateMsg{
+			sgMsg := wvm.StargateMsg{
 				TypeURL: tc.typeUrl,
 				Value:   sgMsgValue,
 			}
@@ -287,7 +287,7 @@ func (s *TestSuite) TestStargateSerde() {
 			wasmEncoders := wasmkeeper.DefaultEncoders(s.encConfig.Codec, ibcTransferPort)
 			mockContractAddr := testutil.NewAccAddress()
 			sdkMsgs, err := wasmEncoders.Encode(s.ctx, mockContractAddr, "mock-ibc-port",
-				wasmvmtypes.CosmosMsg{
+				wvm.CosmosMsg{
 					Stargate: &sgMsg,
 				},
 			)

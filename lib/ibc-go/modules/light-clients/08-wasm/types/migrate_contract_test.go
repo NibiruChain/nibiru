@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"
@@ -34,9 +34,9 @@ func (suite *TypesTestSuite) TestMigrateContract() {
 				suite.Require().NoError(err)
 
 				payload = []byte{1}
-				expChecksum := wasmvmtypes.ForceNewChecksum(hex.EncodeToString(newHash))
+				expChecksum := wvm.ForceNewChecksum(hex.EncodeToString(newHash))
 
-				suite.mockVM.MigrateFn = func(checksum wasmvm.Checksum, env wasmvmtypes.Env, msg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(checksum wasmvm.Checksum, env wvm.Env, msg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					suite.Require().Equal(expChecksum, checksum)
 					suite.Require().Equal(defaultWasmClientID, env.Contract.Address)
 					suite.Require().Equal(payload, msg)
@@ -44,7 +44,7 @@ func (suite *TypesTestSuite) TestMigrateContract() {
 					data, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				}
 			},
 			nil,
@@ -52,14 +52,14 @@ func (suite *TypesTestSuite) TestMigrateContract() {
 		{
 			"success: update client state",
 			func() {
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					expClientState = types.NewClientState([]byte{1}, newHash, clienttypes.NewHeight(2000, 2))
 					store.Set(host.ClientStateKey(), clienttypes.MustMarshalClientState(suite.chainA.App.AppCodec(), expClientState))
 
 					data, err := json.Marshal(types.EmptyResult{})
 					suite.Require().NoError(err)
 
-					return &wasmvmtypes.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: data}, wasmtesting.DefaultGasUsed, nil
 				}
 			},
 			nil,
@@ -69,7 +69,7 @@ func (suite *TypesTestSuite) TestMigrateContract() {
 			func() {
 				newHash = oldHash
 				// this should not be called
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					panic("unreachable")
 				}
 			},
@@ -89,7 +89,7 @@ func (suite *TypesTestSuite) TestMigrateContract() {
 				err := types.AddChecksum(suite.chainA.GetContext(), suite.chainA.App.AppCodec(), ibcwasm.GetWasmStoreKey(), newHash)
 				suite.Require().NoError(err)
 
-				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.MigrateFn = func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					return nil, wasmtesting.DefaultGasUsed, wasmtesting.ErrMockContract
 				}
 			},

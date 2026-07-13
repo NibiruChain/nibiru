@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -53,11 +53,11 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// creator can send contract's tokens to fred (using SendMsg)
-	msg := wasmvmtypes.CosmosMsg{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
+	msg := wvm.CosmosMsg{
+		Bank: &wvm.BankMsg{
+			Send: &wvm.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
+				Amount: []wvm.Coin{{
 					Denom:  "denom",
 					Amount: "15000",
 				}},
@@ -66,10 +66,10 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	}
 	reflectSend := testdata.ReflectHandleMsg{
 		ReflectSubMsg: &testdata.ReflectSubPayload{
-			Msgs: []wasmvmtypes.SubMsg{{
+			Msgs: []wvm.SubMsg{{
 				ID:      7,
 				Msg:     msg,
-				ReplyOn: wasmvmtypes.ReplyAlways,
+				ReplyOn: wvm.ReplyAlways,
 			}},
 		},
 	}
@@ -93,7 +93,7 @@ func TestDispatchSubMsgSuccessCase(t *testing.T) {
 	queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
 	require.NoError(t, err)
 
-	var res wasmvmtypes.Reply
+	var res wvm.Reply
 	err = json.Unmarshal(queryRes, &res)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(7), res.ID)
@@ -139,12 +139,12 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	hackatomAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, hackatomID, uploader, nil, initMsgBz, "hackatom demo", contractStart)
 	require.NoError(t, err)
 
-	validBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Bank: &wasmvmtypes.BankMsg{
-				Send: &wasmvmtypes.SendMsg{
+	validBankSend := func(contract, emptyAccount string) wvm.CosmosMsg {
+		return wvm.CosmosMsg{
+			Bank: &wvm.BankMsg{
+				Send: &wvm.SendMsg{
 					ToAddress: emptyAccount,
-					Amount: []wasmvmtypes.Coin{{
+					Amount: []wvm.Coin{{
 						Denom:  fundedDenom,
 						Amount: strconv.Itoa(fundedAmount / 2),
 					}},
@@ -153,12 +153,12 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
-	invalidBankSend := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Bank: &wasmvmtypes.BankMsg{
-				Send: &wasmvmtypes.SendMsg{
+	invalidBankSend := func(contract, emptyAccount string) wvm.CosmosMsg {
+		return wvm.CosmosMsg{
+			Bank: &wvm.BankMsg{
+				Send: &wvm.SendMsg{
 					ToAddress: emptyAccount,
-					Amount: []wasmvmtypes.Coin{{
+					Amount: []wvm.Coin{{
 						Denom:  fundedDenom,
 						Amount: strconv.Itoa(fundedAmount * 2),
 					}},
@@ -167,10 +167,10 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
-	infiniteLoop := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Wasm: &wasmvmtypes.WasmMsg{
-				Execute: &wasmvmtypes.ExecuteMsg{
+	infiniteLoop := func(contract, emptyAccount string) wvm.CosmosMsg {
+		return wvm.CosmosMsg{
+			Wasm: &wvm.WasmMsg{
+				Execute: &wvm.ExecuteMsg{
 					ContractAddr: hackatomAddr.String(),
 					Msg:          []byte(`{"cpu_loop":{}}`),
 				},
@@ -178,10 +178,10 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
-	instantiateContract := func(contract, emptyAccount string) wasmvmtypes.CosmosMsg {
-		return wasmvmtypes.CosmosMsg{
-			Wasm: &wasmvmtypes.WasmMsg{
-				Instantiate: &wasmvmtypes.InstantiateMsg{
+	instantiateContract := func(contract, emptyAccount string) wvm.CosmosMsg {
+		return wvm.CosmosMsg{
+			Wasm: &wvm.WasmMsg{
+				Instantiate: &wvm.InstantiateMsg{
 					CodeID: reflectID,
 					Msg:    []byte("{}"),
 					Label:  "subcall reflect",
@@ -190,17 +190,17 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 		}
 	}
 
-	type assertion func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult)
+	type assertion func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wvm.SubMsgResult)
 
 	assertReturnedEvents := func(expectedEvents int) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wvm.SubMsgResult) {
 			t.Helper()
 			require.Len(t, response.Ok.Events, expectedEvents)
 		}
 	}
 
 	assertGasUsed := func(minGas, maxGas uint64) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wvm.SubMsgResult) {
 			t.Helper()
 			if !types.EnableGasVerification {
 				return
@@ -212,13 +212,13 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	}
 
 	assertErrorString := func(shouldContain string) assertion {
-		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+		return func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wvm.SubMsgResult) {
 			t.Helper()
 			assert.Contains(t, response.Err, shouldContain)
 		}
 	}
 
-	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wasmvmtypes.SubMsgResult) {
+	assertGotContractAddr := func(t *testing.T, ctx sdk.Context, contract, emptyAccount string, response wvm.SubMsgResult) {
 		t.Helper()
 		// should get the events emitted on new contract
 		event := response.Ok.Events[0]
@@ -235,7 +235,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 	cases := map[string]struct {
 		submsgID uint64
 		// we will generate message from the
-		msg      func(contract, emptyAccount string) wasmvmtypes.CosmosMsg
+		msg      func(contract, emptyAccount string) wvm.CosmosMsg
 		gasLimit *uint64
 
 		// true if we expect this to throw out of gas panic
@@ -305,11 +305,11 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 			msg := tc.msg(contractAddr.String(), empty.String())
 			reflectSend := testdata.ReflectHandleMsg{
 				ReflectSubMsg: &testdata.ReflectSubPayload{
-					Msgs: []wasmvmtypes.SubMsg{{
+					Msgs: []wvm.SubMsg{{
 						ID:       tc.submsgID,
 						Msg:      msg,
 						GasLimit: tc.gasLimit,
-						ReplyOn:  wasmvmtypes.ReplyAlways,
+						ReplyOn:  wvm.ReplyAlways,
 					}},
 				},
 			}
@@ -341,7 +341,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 				require.NoError(t, err)
 				queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
 				require.NoError(t, err)
-				var res wasmvmtypes.Reply
+				var res wvm.Reply
 				err = json.Unmarshal(queryRes, &res)
 				require.NoError(t, err)
 				assert.Equal(t, tc.submsgID, res.ID)
@@ -366,7 +366,7 @@ func TestDispatchSubMsgErrorHandling(t *testing.T) {
 // This occurs with the IBC encoder. Test this.
 func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	// fake out the bank handle to return success with no data
-	nilEncoder := func(sender sdk.AccAddress, msg *wasmvmtypes.BankMsg) ([]sdk.Msg, error) {
+	nilEncoder := func(sender sdk.AccAddress, msg *wvm.BankMsg) ([]sdk.Msg, error) {
 		return nil, nil
 	}
 	customEncoders := &MessageEncoders{
@@ -392,11 +392,11 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	require.NotEmpty(t, contractAddr)
 
 	// creator can send contract's tokens to fred (using SendMsg)
-	msg := wasmvmtypes.CosmosMsg{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
+	msg := wvm.CosmosMsg{
+		Bank: &wvm.BankMsg{
+			Send: &wvm.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
+				Amount: []wvm.Coin{{
 					Denom:  "denom",
 					Amount: "15000",
 				}},
@@ -405,10 +405,10 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	}
 	reflectSend := testdata.ReflectHandleMsg{
 		ReflectSubMsg: &testdata.ReflectSubPayload{
-			Msgs: []wasmvmtypes.SubMsg{{
+			Msgs: []wvm.SubMsg{{
 				ID:      7,
 				Msg:     msg,
-				ReplyOn: wasmvmtypes.ReplyAlways,
+				ReplyOn: wvm.ReplyAlways,
 			}},
 		},
 	}
@@ -426,7 +426,7 @@ func TestDispatchSubMsgEncodeToNoSdkMsg(t *testing.T) {
 	queryRes, err := keeper.QuerySmart(ctx, contractAddr, queryBz)
 	require.NoError(t, err)
 
-	var res wasmvmtypes.Reply
+	var res wvm.Reply
 	err = json.Unmarshal(queryRes, &res)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(7), res.ID)
@@ -456,22 +456,22 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	contractAddr, _, err := keepers.ContractKeeper.Instantiate(ctx, codeID, creator, nil, []byte("{}"), "reflect contract 1", contractStart)
 	require.NoError(t, err)
 
-	goodSend := wasmvmtypes.CosmosMsg{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
+	goodSend := wvm.CosmosMsg{
+		Bank: &wvm.BankMsg{
+			Send: &wvm.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
+				Amount: []wvm.Coin{{
 					Denom:  "denom",
 					Amount: "1000",
 				}},
 			},
 		},
 	}
-	failSend := wasmvmtypes.CosmosMsg{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
+	failSend := wvm.CosmosMsg{
+		Bank: &wvm.BankMsg{
+			Send: &wvm.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
+				Amount: []wvm.Coin{{
 					Denom:  "no-such-token",
 					Amount: "777777",
 				}},
@@ -480,9 +480,9 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		// true for wasmvmtypes.ReplySuccess, false for wasmvmtypes.ReplyError
+		// true for [wvm.ReplySuccess], false for [wvm.ReplyError]
 		replyOnSuccess bool
-		msg            wasmvmtypes.CosmosMsg
+		msg            wvm.CosmosMsg
 		// true if the call should return an error (it wasn't handled)
 		expectError bool
 		// true if the reflect contract wrote the response (success or error) - it was captured
@@ -518,18 +518,18 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	for name, tc := range cases {
 		id++
 		t.Run(name, func(t *testing.T) {
-			subMsg := wasmvmtypes.SubMsg{
+			subMsg := wvm.SubMsg{
 				ID:      id,
 				Msg:     tc.msg,
-				ReplyOn: wasmvmtypes.ReplySuccess,
+				ReplyOn: wvm.ReplySuccess,
 			}
 			if !tc.replyOnSuccess {
-				subMsg.ReplyOn = wasmvmtypes.ReplyError
+				subMsg.ReplyOn = wvm.ReplyError
 			}
 
 			reflectSend := testdata.ReflectHandleMsg{
 				ReflectSubMsg: &testdata.ReflectSubPayload{
-					Msgs: []wasmvmtypes.SubMsg{subMsg},
+					Msgs: []wvm.SubMsg{subMsg},
 				},
 			}
 			reflectSendBz, err := json.Marshal(reflectSend)
@@ -552,7 +552,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 			if tc.writeResult {
 				// we got some data for this call
 				require.NoError(t, err)
-				var res wasmvmtypes.Reply
+				var res wvm.Reply
 				err = json.Unmarshal(queryRes, &res)
 				require.NoError(t, err)
 				require.Equal(t, id, res.ID)
@@ -569,18 +569,18 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	wasmtesting.MakeInstantiable(mockWasmVM)
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
-	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
 		if instanceLevel == 2 {
-			return &wasmvmtypes.Response{}, 0, nil
+			return &wvm.Response{}, 0, nil
 		}
 		instanceLevel++
 		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{
+		return &wvm.Response{
+			Messages: []wvm.SubMsg{
 				{
-					ReplyOn: wasmvmtypes.ReplyNever,
-					Msg: wasmvmtypes.CosmosMsg{
-						Wasm: &wasmvmtypes.WasmMsg{Instantiate: &wasmvmtypes.InstantiateMsg{
+					ReplyOn: wvm.ReplyNever,
+					Msg: wvm.CosmosMsg{
+						Wasm: &wvm.WasmMsg{Instantiate: &wvm.InstantiateMsg{
 							CodeID: 1, Msg: []byte(submsgPayload), Label: "from sub-msg",
 						}},
 					},
@@ -656,18 +656,18 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 
 	var instanceLevel int
 	// mock wasvm to return new migrate msgs with the response
-	mockWasmVM.MigrateFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+	mockWasmVM.MigrateFn = func(codeID wasmvm.Checksum, env wvm.Env, migrateMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
 		if instanceLevel == 1 {
-			return &wasmvmtypes.Response{}, 0, nil
+			return &wvm.Response{}, 0, nil
 		}
 		instanceLevel++
 		submsgPayload := fmt.Sprintf(`{"sub":%d}`, instanceLevel)
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{
+		return &wvm.Response{
+			Messages: []wvm.SubMsg{
 				{
-					ReplyOn: wasmvmtypes.ReplyNever,
-					Msg: wasmvmtypes.CosmosMsg{
-						Wasm: &wasmvmtypes.WasmMsg{Migrate: &wasmvmtypes.MigrateMsg{
+					ReplyOn: wvm.ReplyNever,
+					Msg: wvm.CosmosMsg{
+						Wasm: &wvm.WasmMsg{Migrate: &wvm.MigrateMsg{
 							ContractAddr: example1.Contract.String(),
 							NewCodeID:    example2.CodeID,
 							Msg:          []byte(submsgPayload),

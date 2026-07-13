@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 /***** Mock types.GoAPI ****/

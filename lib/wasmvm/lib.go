@@ -2,14 +2,14 @@
 
 // This file contains the part of the API that is exposed when cgo is enabled.
 
-package cosmwasm
+package wasmvm
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api"
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/internal/api"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 // VM is the main entry point to this library.

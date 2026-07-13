@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
@@ -30,19 +30,19 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 	capturingHandler, gotMsgs := wasmtesting.NewCapturingMessageHandler()
 
 	alwaysUnknownMsgHandler := &wasmtesting.MockMessageHandler{
-		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 			return nil, nil, types.ErrUnknownMsg
 		},
 	}
 
 	assertNotCalledHandler := &wasmtesting.MockMessageHandler{
-		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+		DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 			t.Fatal("not expected to be called")
 			return
 		},
 	}
 
-	myMsg := wasmvmtypes.CosmosMsg{Custom: []byte(`{}`)}
+	myMsg := wvm.CosmosMsg{Custom: []byte(`{}`)}
 	specs := map[string]struct {
 		handlers  []Messenger
 		expErr    *sdkioerrors.Error
@@ -59,7 +59,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 		},
 		"stops iteration on handler error": {
 			handlers: []Messenger{&wasmtesting.MockMessageHandler{
-				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+				DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 					return nil, nil, types.ErrInvalidMsg
 				},
 			}, assertNotCalledHandler},
@@ -68,7 +68,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 		"return events when handle": {
 			handlers: []Messenger{
 				&wasmtesting.MockMessageHandler{
-					DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+					DispatchMsgFn: func(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 						_, data, _ = capturingHandler.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 						return []sdk.Event{sdk.NewEvent("myEvent", sdk.NewAttribute("foo", "bar"))}, data, nil
 					},
@@ -83,7 +83,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			*gotMsgs = make([]wasmvmtypes.CosmosMsg, 0)
+			*gotMsgs = make([]wvm.CosmosMsg, 0)
 
 			// when
 			h := MessageHandlerChain{spec.handlers}
@@ -94,7 +94,7 @@ func TestMessageHandlerChainDispatch(t *testing.T) {
 			if spec.expErr != nil {
 				return
 			}
-			assert.Equal(t, []wasmvmtypes.CosmosMsg{myMsg}, *gotMsgs)
+			assert.Equal(t, []wvm.CosmosMsg{myMsg}, *gotMsgs)
 			assert.Equal(t, [][]byte{{1}}, gotData) // {1} is default in capturing handler
 			assert.Equal(t, spec.expEvents, gotEvents)
 		})
@@ -120,7 +120,7 @@ func TestSDKMessageHandlerDispatch(t *testing.T) {
 		return nil
 	})
 	myContractAddr := RandomAccountAddress(t)
-	myContractMessage := wasmvmtypes.CosmosMsg{Custom: []byte("{}")}
+	myContractMessage := wvm.CosmosMsg{Custom: []byte("{}")}
 
 	specs := map[string]struct {
 		srcRoute         MessageRouter
@@ -268,17 +268,17 @@ func TestIBCRawPacketHandler(t *testing.T) {
 	}
 
 	specs := map[string]struct {
-		srcMsg        wasmvmtypes.SendPacketMsg
+		srcMsg        wvm.SendPacketMsg
 		chanKeeper    types.ChannelKeeper
 		capKeeper     types.CapabilityKeeper
 		expPacketSent *CapturedPacket
 		expErr        *sdkioerrors.Error
 	}{
 		"all good": {
-			srcMsg: wasmvmtypes.SendPacketMsg{
+			srcMsg: wvm.SendPacketMsg{
 				ChannelID: "channel-1",
 				Data:      []byte("myData"),
-				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
+				Timeout:   wvm.IBCTimeout{Block: &wvm.IBCTimeoutBlock{Revision: 1, Height: 2}},
 			},
 			chanKeeper: chanKeeper,
 			capKeeper:  capKeeper,
@@ -290,10 +290,10 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			},
 		},
 		"capability not found returns error": {
-			srcMsg: wasmvmtypes.SendPacketMsg{
+			srcMsg: wvm.SendPacketMsg{
 				ChannelID: "channel-1",
 				Data:      []byte("myData"),
-				Timeout:   wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2}},
+				Timeout:   wvm.IBCTimeout{Block: &wvm.IBCTimeoutBlock{Revision: 1, Height: 2}},
 			},
 			chanKeeper: chanKeeper,
 			capKeeper: wasmtesting.MockCapabilityKeeper{
@@ -309,7 +309,7 @@ func TestIBCRawPacketHandler(t *testing.T) {
 			capturedPacket = nil
 			// when
 			h := NewIBCRawPacketHandler(capturePacketsSenderMock, spec.chanKeeper, spec.capKeeper)
-			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &spec.srcMsg}}) //nolint:gosec
+			evts, data, gotErr := h.DispatchMsg(ctx, RandomAccountAddress(t), ibcPort, wvm.CosmosMsg{IBC: &wvm.IBCMsg{SendPacket: &spec.srcMsg}}) //nolint:gosec
 			// then
 			require.True(t, spec.expErr.Is(gotErr), "exp %v but got %#+v", spec.expErr, gotErr)
 			if spec.expErr != nil {
@@ -346,20 +346,20 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	specs := map[string]struct {
-		msg    wasmvmtypes.BurnMsg
+		msg    wvm.BurnMsg
 		expErr bool
 	}{
 		"all good": {
-			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+			msg: wvm.BurnMsg{
+				Amount: wvm.Coins{{
 					Denom:  "denom",
 					Amount: "100",
 				}},
 			},
 		},
 		"not enough funds in contract": {
-			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+			msg: wvm.BurnMsg{
+				Amount: wvm.Coins{{
 					Denom:  "denom",
 					Amount: "101",
 				}},
@@ -367,8 +367,8 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			expErr: true,
 		},
 		"zero amount rejected": {
-			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+			msg: wvm.BurnMsg{
+				Amount: wvm.Coins{{
 					Denom:  "denom",
 					Amount: "0",
 				}},
@@ -376,8 +376,8 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 			expErr: true,
 		},
 		"unknown denom - insufficient funds": {
-			msg: wasmvmtypes.BurnMsg{
-				Amount: wasmvmtypes.Coins{{
+			msg: wvm.BurnMsg{
+				Amount: wvm.Coins{{
 					Denom:  "unknown",
 					Amount: "1",
 				}},
@@ -389,10 +389,10 @@ func TestBurnCoinMessageHandlerIntegration(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			ctx, _ = parentCtx.CacheContext()
-			k.wasmVM = &wasmtesting.MockWasmEngine{ExecuteFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
-				return &wasmvmtypes.Response{
-					Messages: []wasmvmtypes.SubMsg{
-						{Msg: wasmvmtypes.CosmosMsg{Bank: &wasmvmtypes.BankMsg{Burn: &spec.msg}}, ReplyOn: wasmvmtypes.ReplyNever}, //nolint:gosec
+			k.wasmVM = &wasmtesting.MockWasmEngine{ExecuteFn: func(codeID wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
+				return &wvm.Response{
+					Messages: []wvm.SubMsg{
+						{Msg: wvm.CosmosMsg{Bank: &wvm.BankMsg{Burn: &spec.msg}}, ReplyOn: wvm.ReplyNever}, //nolint:gosec
 					},
 				}, 0, nil
 			}}

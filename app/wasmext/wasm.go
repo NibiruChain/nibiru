@@ -5,7 +5,7 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -101,7 +101,7 @@ type MessageRouter interface {
 // msgEncoder is an extension point to customize encodings
 type msgEncoder interface {
 	// Encode converts wasmvm message to n cosmos message types
-	Encode(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Msg, error)
+	Encode(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) ([]sdk.Msg, error)
 }
 
 // WasmMessageHandler is a replacement constructor for
@@ -124,7 +124,7 @@ func NewSDKMessageHandler(router MessageRouter, encoders msgEncoder) SDKMessageH
 	}
 }
 
-func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
+func (h SDKMessageHandler) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error) {
 	sdkMsgs, err := h.encoders.Encode(ctx, contractAddr, contractIBCPortID, msg)
 	if err != nil {
 		return nil, nil, err

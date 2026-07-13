@@ -305,7 +305,7 @@ localnet-check:
 
 # Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
 wasmvm *args:
-    cd lib/wasmvm-ffi && just {{ args }}
+    cd lib/wasmvm && just {{ args }}
 
 # Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
 sai-trading *args:

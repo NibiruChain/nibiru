@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"

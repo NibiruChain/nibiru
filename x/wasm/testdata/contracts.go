@@ -4,7 +4,7 @@ import (
 	_ "embed"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	typwasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 const (
@@ -40,11 +40,11 @@ type OwnerPayload struct {
 }
 
 type ReflectPayload struct {
-	Msgs []typwasmvmtypes.CosmosMsg `json:"msgs"`
+	Msgs []wvm.CosmosMsg `json:"msgs"`
 }
 
 type ReflectSubPayload struct {
-	Msgs []typwasmvmtypes.SubMsg `json:"msgs"`
+	Msgs []wvm.SubMsg `json:"msgs"`
 }
 
 // ReflectQueryMsg is used to encode query messages
@@ -56,7 +56,7 @@ type ReflectQueryMsg struct {
 }
 
 type ChainQuery struct {
-	Request *typwasmvmtypes.QueryRequest `json:"request,omitempty"`
+	Request *wvm.QueryRequest `json:"request,omitempty"`
 }
 
 type Text struct {

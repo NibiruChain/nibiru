@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -274,7 +274,7 @@ func getExpectedLibwasmVersion() string {
 		panic("can't read build info")
 	}
 	for _, d := range buildInfo.Deps {
-		if d.Path != "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi" {
+		if d.Path != "github.com/NibiruChain/nibiru/v2/lib/wasmvm" {
 			continue
 		}
 		if d.Replace != nil {

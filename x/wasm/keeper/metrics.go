@@ -3,7 +3,7 @@ package keeper
 import (
 	"github.com/prometheus/client_golang/prometheus"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 
 // metricSource source of wasmvm metrics
 type metricSource interface {
-	GetMetrics() (*wasmvmtypes.Metrics, error)
+	GetMetrics() (*wvm.Metrics, error)
 }
 
 var _ prometheus.Collector = (*WasmVMMetricsCollector)(nil)

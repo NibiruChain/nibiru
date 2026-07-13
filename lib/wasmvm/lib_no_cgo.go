@@ -1,13 +1,13 @@
 // This file contains the part of the API that is exposed when cgo is disabled.
 
-package cosmwasm
+package wasmvm
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 // Checksum represents a hash of the Wasm bytecode that serves as an ID. Must be generated from this library.

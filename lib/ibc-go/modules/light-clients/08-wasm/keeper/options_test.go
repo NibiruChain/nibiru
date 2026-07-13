@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -19,8 +19,8 @@ func MockCustomQuerier() func(sdk.Context, json.RawMessage) ([]byte, error) {
 	}
 }
 
-func MockStargateQuerier() func(sdk.Context, *wasmvmtypes.StargateQuery) ([]byte, error) {
-	return func(_ sdk.Context, _ *wasmvmtypes.StargateQuery) ([]byte, error) {
+func MockStargateQuerier() func(sdk.Context, *wvm.StargateQuery) ([]byte, error) {
+	return func(_ sdk.Context, _ *wvm.StargateQuery) ([]byte, error) {
 		return nil, errors.New("stargate querier error for TestNewKeeperWithOptions")
 	}
 }
@@ -48,10 +48,10 @@ func (suite *KeeperTestSuite) TestNewKeeperWithOptions() {
 				plugins := ibcwasm.GetQueryPlugins().(*types.QueryPlugins)
 
 				_, err := plugins.Custom(sdk.Context{}, nil)
-				suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: "Custom queries are not allowed"})
+				suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: "Custom queries are not allowed"})
 
-				_, err = plugins.Stargate(sdk.Context{}, &wasmvmtypes.StargateQuery{})
-				suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: "'' path is not allowed from the contract"})
+				_, err = plugins.Stargate(sdk.Context{}, &wvm.StargateQuery{})
+				suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: "'' path is not allowed from the contract"})
 			},
 		},
 		{
@@ -76,8 +76,8 @@ func (suite *KeeperTestSuite) TestNewKeeperWithOptions() {
 				_, err := plugins.Custom(sdk.Context{}, nil)
 				suite.Require().ErrorContains(err, "custom querier error for TestNewKeeperWithOptions")
 
-				_, err = plugins.Stargate(sdk.Context{}, &wasmvmtypes.StargateQuery{})
-				suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: "'' path is not allowed from the contract"})
+				_, err = plugins.Stargate(sdk.Context{}, &wvm.StargateQuery{})
+				suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: "'' path is not allowed from the contract"})
 			},
 		},
 		{
@@ -100,9 +100,9 @@ func (suite *KeeperTestSuite) TestNewKeeperWithOptions() {
 				plugins := ibcwasm.GetQueryPlugins().(*types.QueryPlugins)
 
 				_, err := plugins.Custom(sdk.Context{}, nil)
-				suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: "Custom queries are not allowed"})
+				suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: "Custom queries are not allowed"})
 
-				_, err = plugins.Stargate(sdk.Context{}, &wasmvmtypes.StargateQuery{})
+				_, err = plugins.Stargate(sdk.Context{}, &wvm.StargateQuery{})
 				suite.Require().ErrorContains(err, "stargate querier error for TestNewKeeperWithOptions")
 			},
 		},
@@ -129,7 +129,7 @@ func (suite *KeeperTestSuite) TestNewKeeperWithOptions() {
 				_, err := plugins.Custom(sdk.Context{}, nil)
 				suite.Require().ErrorContains(err, "custom querier error for TestNewKeeperWithOptions")
 
-				_, err = plugins.Stargate(sdk.Context{}, &wasmvmtypes.StargateQuery{})
+				_, err = plugins.Stargate(sdk.Context{}, &wvm.StargateQuery{})
 				suite.Require().ErrorContains(err, "stargate querier error for TestNewKeeperWithOptions")
 			},
 		},

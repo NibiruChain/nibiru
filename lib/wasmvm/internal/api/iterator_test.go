@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api/testdb"
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/internal/api/testdb"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 )
 
 type queueData struct {

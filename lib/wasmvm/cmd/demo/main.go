@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 )
 
 const (

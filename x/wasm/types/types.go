@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -269,7 +269,7 @@ func (c ContractCodeHistoryEntry) ValidateBasic() error {
 }
 
 // NewEnv initializes the environment for a contract instance
-func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
+func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wvm.Env {
 	// safety checks before casting below
 	if ctx.BlockHeight() < 0 {
 		panic("Block height must never be negative")
@@ -279,34 +279,34 @@ func NewEnv(ctx sdk.Context, contractAddr sdk.AccAddress) wasmvmtypes.Env {
 		panic("Block (unix) time must never be empty or negative ")
 	}
 
-	env := wasmvmtypes.Env{
-		Block: wasmvmtypes.BlockInfo{
+	env := wvm.Env{
+		Block: wvm.BlockInfo{
 			Height:  uint64(ctx.BlockHeight()),
 			Time:    uint64(nano),
 			ChainID: ctx.ChainID(),
 		},
-		Contract: wasmvmtypes.ContractInfo{
+		Contract: wvm.ContractInfo{
 			Address: contractAddr.String(),
 		},
 	}
 	if txCounter, ok := TXCounter(ctx); ok {
-		env.Transaction = &wasmvmtypes.TransactionInfo{Index: txCounter}
+		env.Transaction = &wvm.TransactionInfo{Index: txCounter}
 	}
 	return env
 }
 
 // NewInfo initializes the MessageInfo for a contract instance
-func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wasmvmtypes.MessageInfo {
-	return wasmvmtypes.MessageInfo{
+func NewInfo(creator sdk.AccAddress, deposit sdk.Coins) wvm.MessageInfo {
+	return wvm.MessageInfo{
 		Sender: creator.String(),
 		Funds:  NewWasmCoins(deposit),
 	}
 }
 
 // NewWasmCoins translates between Cosmos SDK coins and Wasm coins
-func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wasmvmtypes.Coin) {
+func NewWasmCoins(cosmosCoins sdk.Coins) (wasmCoins []wvm.Coin) {
 	for _, coin := range cosmosCoins {
-		wasmCoin := wasmvmtypes.Coin{
+		wasmCoin := wvm.Coin{
 			Denom:  coin.Denom,
 			Amount: coin.Amount.String(),
 		}

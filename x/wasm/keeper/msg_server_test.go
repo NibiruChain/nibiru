@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -45,11 +45,11 @@ func TestStoreCode(t *testing.T) {
 
 	expHash, err := wasmvm.CreateChecksum(wasmContract)
 	require.NoError(t, err)
-	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(result.Checksum))
+	assert.Equal(t, expHash[:], wvm.Checksum(result.Checksum))
 	// and
 	info := wasmApp.WasmKeeper.GetCodeInfo(ctx, 1)
 	assert.NotNil(t, info)
-	assert.Equal(t, expHash[:], wasmvmtypes.Checksum(info.CodeHash))
+	assert.Equal(t, expHash[:], wvm.Checksum(info.CodeHash))
 	assert.Equal(t, sender.String(), info.Creator)
 	assert.Equal(t, types.DefaultParams().InstantiateDefaultPermission.With(sender), info.InstantiateConfig)
 }

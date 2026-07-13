@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
-	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -38,7 +38,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 		{
 			"success: no update",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, env wasmvmtypes.Env, sudoMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, env wvm.Env, sudoMsg []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					var msg types.SudoMsg
 					err := json.Unmarshal(sudoMsg, &msg)
 					suite.Require().NoError(err)
@@ -62,7 +62,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 						return nil, 0, err
 					}
 
-					return &wasmvmtypes.Response{
+					return &wvm.Response{
 						Data: resp,
 					}, wasmtesting.DefaultGasUsed, nil
 				})
@@ -73,7 +73,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 		{
 			"success: update client",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					var msg types.SudoMsg
 					err := json.Unmarshal(sudoMsg, &msg)
 					suite.Require().NoError(err)
@@ -94,7 +94,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 						return nil, 0, err
 					}
 
-					return &wasmvmtypes.Response{
+					return &wvm.Response{
 						Data: resp,
 					}, wasmtesting.DefaultGasUsed, nil
 				})
@@ -122,7 +122,7 @@ func (suite *TypesTestSuite) TestUpdateState() {
 		{
 			"failure: callbackFn returns error",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
@@ -185,7 +185,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 		{
 			"success: no update",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					var msg types.SudoMsg
 
 					err := json.Unmarshal(sudoMsg, &msg)
@@ -204,7 +204,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 						return nil, 0, err
 					}
 
-					return &wasmvmtypes.Response{
+					return &wvm.Response{
 						Data: resp,
 					}, wasmtesting.DefaultGasUsed, nil
 				})
@@ -215,7 +215,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 		{
 			"success: client state updated on valid misbehaviour",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, sudoMsg []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					var msg types.SudoMsg
 					err := json.Unmarshal(sudoMsg, &msg)
 					suite.Require().NoError(err)
@@ -233,7 +233,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 						return nil, 0, err
 					}
 
-					return &wasmvmtypes.Response{Data: resp}, wasmtesting.DefaultGasUsed, nil
+					return &wvm.Response{Data: resp}, wasmtesting.DefaultGasUsed, nil
 				})
 			},
 			nil,
@@ -251,7 +251,7 @@ func (suite *TypesTestSuite) TestUpdateStateOnMisbehaviour() {
 		{
 			"failure: err return from contract vm",
 			func() {
-				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
+				suite.mockVM.RegisterSudoCallback(types.UpdateStateOnMisbehaviourMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, store wasmvm.KVStore, _ wasmvm.GoAPI, _ wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) (*wvm.Response, uint64, error) {
 					return nil, 0, wasmtesting.ErrMockContract
 				})
 			},
