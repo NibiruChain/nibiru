@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 // frame stores all Iterators for one contract call
-type frame []types.Iterator
+type frame []wvm.Iterator
 
 // iteratorFrames contains one frame for each contract call, indexed by contract call ID.
 var (
@@ -56,7 +56,7 @@ func endCall(callID uint64) {
 // storeIterator will add this to the end of the frame for the given ID and return a reference to it.
 // We start counting with 1, so the 0 value is flagged as an error. This means we must
 // remember to do idx-1 when retrieving
-func storeIterator(callID uint64, it types.Iterator, frameLenLimit int) (uint64, error) {
+func storeIterator(callID uint64, it wvm.Iterator, frameLenLimit int) (uint64, error) {
 	iteratorFramesMutex.Lock()
 	defer iteratorFramesMutex.Unlock()
 
@@ -75,7 +75,7 @@ func storeIterator(callID uint64, it types.Iterator, frameLenLimit int) (uint64,
 // retrieveIterator will recover an iterator based on index. This ensures it will not be garbage collected.
 // We start counting with 1, in storeIterator so the 0 value is flagged as an error. This means we must
 // remember to do idx-1 when retrieving
-func retrieveIterator(callID uint64, index uint64) types.Iterator {
+func retrieveIterator(callID uint64, index uint64) wvm.Iterator {
 	iteratorFramesMutex.Lock()
 	defer iteratorFramesMutex.Unlock()
 	myFrame := iteratorFrames[callID]

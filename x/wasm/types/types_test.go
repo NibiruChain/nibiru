@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

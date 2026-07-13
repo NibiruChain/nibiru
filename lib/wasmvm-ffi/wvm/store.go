@@ -1,4 +1,4 @@
-package types
+package wvm
 
 // KVStore copies a subset of types from cosmos-sdk
 // We may wish to make this more generic sometime in the future, but not now

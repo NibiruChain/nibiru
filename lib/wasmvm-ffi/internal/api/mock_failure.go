@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 /***** Mock types.GoAPI ****/
@@ -16,8 +16,8 @@ func MockFailureHumanAddress(canon []byte) (string, uint64, error) {
 	return "", 0, fmt.Errorf("mock failure - human_address")
 }
 
-func NewMockFailureAPI() *types.GoAPI {
-	return &types.GoAPI{
+func NewMockFailureAPI() *wvm.GoAPI {
+	return &wvm.GoAPI{
 		HumanAddress:     MockFailureHumanAddress,
 		CanonicalAddress: MockFailureCanonicalAddress,
 	}

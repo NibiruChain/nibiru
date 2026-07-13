@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"

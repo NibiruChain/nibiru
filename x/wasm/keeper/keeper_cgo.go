@@ -5,7 +5,7 @@ package keeper
 import (
 	"path/filepath"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"

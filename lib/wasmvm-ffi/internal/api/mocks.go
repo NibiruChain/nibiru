@@ -11,25 +11,25 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmvm/internal/api/testdb"
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api/testdb"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 /** helper constructors **/
 
 const MOCK_CONTRACT_ADDR = "contract"
 
-func MockEnv() types.Env {
-	return types.Env{
-		Block: types.BlockInfo{
+func MockEnv() wvm.Env {
+	return wvm.Env{
+		Block: wvm.BlockInfo{
 			Height:  123,
 			Time:    1578939743_987654321,
 			ChainID: "foobar",
 		},
-		Transaction: &types.TransactionInfo{
+		Transaction: &wvm.TransactionInfo{
 			Index: 4,
 		},
-		Contract: types.ContractInfo{
+		Contract: wvm.ContractInfo{
 			Address: MOCK_CONTRACT_ADDR,
 		},
 	}
@@ -41,33 +41,33 @@ func MockEnvBin(t *testing.T) []byte {
 	return bin
 }
 
-func MockInfo(sender types.HumanAddress, funds []types.Coin) types.MessageInfo {
-	return types.MessageInfo{
+func MockInfo(sender wvm.HumanAddress, funds []wvm.Coin) wvm.MessageInfo {
+	return wvm.MessageInfo{
 		Sender: sender,
 		Funds:  funds,
 	}
 }
 
-func MockInfoWithFunds(sender types.HumanAddress) types.MessageInfo {
-	return MockInfo(sender, []types.Coin{{
+func MockInfoWithFunds(sender wvm.HumanAddress) wvm.MessageInfo {
+	return MockInfo(sender, []wvm.Coin{{
 		Denom:  "ATOM",
 		Amount: "100",
 	}})
 }
 
-func MockInfoBin(t *testing.T, sender types.HumanAddress) []byte {
+func MockInfoBin(t *testing.T, sender wvm.HumanAddress) []byte {
 	bin, err := json.Marshal(MockInfoWithFunds(sender))
 	require.NoError(t, err)
 	return bin
 }
 
-func MockIBCChannel(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannel {
-	return types.IBCChannel{
-		Endpoint: types.IBCEndpoint{
+func MockIBCChannel(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannel {
+	return wvm.IBCChannel{
+		Endpoint: wvm.IBCEndpoint{
 			PortID:    "my_port",
 			ChannelID: channelID,
 		},
-		CounterpartyEndpoint: types.IBCEndpoint{
+		CounterpartyEndpoint: wvm.IBCEndpoint{
 			PortID:    "their_port",
 			ChannelID: "channel-7",
 		},
@@ -77,28 +77,28 @@ func MockIBCChannel(channelID string, ordering types.IBCOrder, ibcVersion string
 	}
 }
 
-func MockIBCChannelOpenInit(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelOpenMsg {
-	return types.IBCChannelOpenMsg{
-		OpenInit: &types.IBCOpenInit{
+func MockIBCChannelOpenInit(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelOpenMsg {
+	return wvm.IBCChannelOpenMsg{
+		OpenInit: &wvm.IBCOpenInit{
 			Channel: MockIBCChannel(channelID, ordering, ibcVersion),
 		},
 		OpenTry: nil,
 	}
 }
 
-func MockIBCChannelOpenTry(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelOpenMsg {
-	return types.IBCChannelOpenMsg{
+func MockIBCChannelOpenTry(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelOpenMsg {
+	return wvm.IBCChannelOpenMsg{
 		OpenInit: nil,
-		OpenTry: &types.IBCOpenTry{
+		OpenTry: &wvm.IBCOpenTry{
 			Channel:             MockIBCChannel(channelID, ordering, ibcVersion),
 			CounterpartyVersion: ibcVersion,
 		},
 	}
 }
 
-func MockIBCChannelConnectAck(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelConnectMsg {
-	return types.IBCChannelConnectMsg{
-		OpenAck: &types.IBCOpenAck{
+func MockIBCChannelConnectAck(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelConnectMsg {
+	return wvm.IBCChannelConnectMsg{
+		OpenAck: &wvm.IBCOpenAck{
 			Channel:             MockIBCChannel(channelID, ordering, ibcVersion),
 			CounterpartyVersion: ibcVersion,
 		},
@@ -106,47 +106,47 @@ func MockIBCChannelConnectAck(channelID string, ordering types.IBCOrder, ibcVers
 	}
 }
 
-func MockIBCChannelConnectConfirm(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelConnectMsg {
-	return types.IBCChannelConnectMsg{
+func MockIBCChannelConnectConfirm(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelConnectMsg {
+	return wvm.IBCChannelConnectMsg{
 		OpenAck: nil,
-		OpenConfirm: &types.IBCOpenConfirm{
+		OpenConfirm: &wvm.IBCOpenConfirm{
 			Channel: MockIBCChannel(channelID, ordering, ibcVersion),
 		},
 	}
 }
 
-func MockIBCChannelCloseInit(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelCloseMsg {
-	return types.IBCChannelCloseMsg{
-		CloseInit: &types.IBCCloseInit{
+func MockIBCChannelCloseInit(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelCloseMsg {
+	return wvm.IBCChannelCloseMsg{
+		CloseInit: &wvm.IBCCloseInit{
 			Channel: MockIBCChannel(channelID, ordering, ibcVersion),
 		},
 		CloseConfirm: nil,
 	}
 }
 
-func MockIBCChannelCloseConfirm(channelID string, ordering types.IBCOrder, ibcVersion string) types.IBCChannelCloseMsg {
-	return types.IBCChannelCloseMsg{
+func MockIBCChannelCloseConfirm(channelID string, ordering wvm.IBCOrder, ibcVersion string) wvm.IBCChannelCloseMsg {
+	return wvm.IBCChannelCloseMsg{
 		CloseInit: nil,
-		CloseConfirm: &types.IBCCloseConfirm{
+		CloseConfirm: &wvm.IBCCloseConfirm{
 			Channel: MockIBCChannel(channelID, ordering, ibcVersion),
 		},
 	}
 }
 
-func MockIBCPacket(myChannel string, data []byte) types.IBCPacket {
-	return types.IBCPacket{
+func MockIBCPacket(myChannel string, data []byte) wvm.IBCPacket {
+	return wvm.IBCPacket{
 		Data: data,
-		Src: types.IBCEndpoint{
+		Src: wvm.IBCEndpoint{
 			PortID:    "their_port",
 			ChannelID: "channel-7",
 		},
-		Dest: types.IBCEndpoint{
+		Dest: wvm.IBCEndpoint{
 			PortID:    "my_port",
 			ChannelID: myChannel,
 		},
 		Sequence: 15,
-		Timeout: types.IBCTimeout{
-			Block: &types.IBCTimeoutBlock{
+		Timeout: wvm.IBCTimeout{
+			Block: &wvm.IBCTimeoutBlock{
 				Revision: 1,
 				Height:   123456,
 			},
@@ -154,25 +154,25 @@ func MockIBCPacket(myChannel string, data []byte) types.IBCPacket {
 	}
 }
 
-func MockIBCPacketReceive(myChannel string, data []byte) types.IBCPacketReceiveMsg {
-	return types.IBCPacketReceiveMsg{
+func MockIBCPacketReceive(myChannel string, data []byte) wvm.IBCPacketReceiveMsg {
+	return wvm.IBCPacketReceiveMsg{
 		Packet: MockIBCPacket(myChannel, data),
 	}
 }
 
-func MockIBCPacketAck(myChannel string, data []byte, ack types.IBCAcknowledgement) types.IBCPacketAckMsg {
+func MockIBCPacketAck(myChannel string, data []byte, ack wvm.IBCAcknowledgement) wvm.IBCPacketAckMsg {
 	packet := MockIBCPacket(myChannel, data)
 
-	return types.IBCPacketAckMsg{
+	return wvm.IBCPacketAckMsg{
 		Acknowledgement: ack,
 		OriginalPacket:  packet,
 	}
 }
 
-func MockIBCPacketTimeout(myChannel string, data []byte) types.IBCPacketTimeoutMsg {
+func MockIBCPacketTimeout(myChannel string, data []byte) wvm.IBCPacketTimeoutMsg {
 	packet := MockIBCPacket(myChannel, data)
 
-	return types.IBCPacketTimeoutMsg{
+	return wvm.IBCPacketTimeoutMsg{
 		Packet: packet,
 	}
 }
@@ -192,28 +192,28 @@ type ErrorGasOverflow struct {
 }
 
 type MockGasMeter interface {
-	types.GasMeter
-	ConsumeGas(amount types.Gas, descriptor string)
+	wvm.GasMeter
+	ConsumeGas(amount wvm.Gas, descriptor string)
 }
 
 type mockGasMeter struct {
-	limit    types.Gas
-	consumed types.Gas
+	limit    wvm.Gas
+	consumed wvm.Gas
 }
 
 // NewMockGasMeter returns a reference to a new mockGasMeter.
-func NewMockGasMeter(limit types.Gas) MockGasMeter {
+func NewMockGasMeter(limit wvm.Gas) MockGasMeter {
 	return &mockGasMeter{
 		limit:    limit,
 		consumed: 0,
 	}
 }
 
-func (g *mockGasMeter) GasConsumed() types.Gas {
+func (g *mockGasMeter) GasConsumed() wvm.Gas {
 	return g.consumed
 }
 
-func (g *mockGasMeter) Limit() types.Gas {
+func (g *mockGasMeter) Limit() wvm.Gas {
 	return g.limit
 }
 
@@ -227,7 +227,7 @@ func addUint64Overflow(a, b uint64) (uint64, bool) {
 	return a + b, false
 }
 
-func (g *mockGasMeter) ConsumeGas(amount types.Gas, descriptor string) {
+func (g *mockGasMeter) ConsumeGas(amount wvm.Gas, descriptor string) {
 	var overflow bool
 	// TODO: Should we set the consumed field after overflow checking?
 	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
@@ -305,7 +305,7 @@ func (l Lookup) Delete(key []byte) {
 }
 
 // Iterator wraps the underlying DB's Iterator method panicing on error.
-func (l Lookup) Iterator(start, end []byte) types.Iterator {
+func (l Lookup) Iterator(start, end []byte) wvm.Iterator {
 	l.meter.ConsumeGas(RangePrice, "range")
 	iter, err := l.db.Iterator(start, end)
 	if err != nil {
@@ -316,7 +316,7 @@ func (l Lookup) Iterator(start, end []byte) types.Iterator {
 }
 
 // ReverseIterator wraps the underlying DB's ReverseIterator method panicing on error.
-func (l Lookup) ReverseIterator(start, end []byte) types.Iterator {
+func (l Lookup) ReverseIterator(start, end []byte) wvm.Iterator {
 	l.meter.ConsumeGas(RangePrice, "range")
 	iter, err := l.db.ReverseIterator(start, end)
 	if err != nil {
@@ -326,7 +326,7 @@ func (l Lookup) ReverseIterator(start, end []byte) types.Iterator {
 	return iter
 }
 
-var _ types.KVStore = (*Lookup)(nil)
+var _ wvm.KVStore = (*Lookup)(nil)
 
 /***** Mock types.GoAPI ****/
 
@@ -361,8 +361,8 @@ func MockHumanAddress(canon []byte) (string, uint64, error) {
 	return human, CostHuman, nil
 }
 
-func NewMockAPI() *types.GoAPI {
-	return &types.GoAPI{
+func NewMockAPI() *wvm.GoAPI {
+	return &wvm.GoAPI{
 		HumanAddress:     MockHumanAddress,
 		CanonicalAddress: MockCanonicalAddress,
 	}
@@ -391,10 +391,10 @@ type MockQuerier struct {
 	usedGas uint64
 }
 
-var _ types.Querier = &MockQuerier{}
+var _ wvm.Querier = &MockQuerier{}
 
-func DefaultQuerier(contractAddr string, coins types.Coins) types.Querier {
-	balances := map[string]types.Coins{
+func DefaultQuerier(contractAddr string, coins wvm.Coins) wvm.Querier {
+	balances := map[string]wvm.Coins{
 		contractAddr: coins,
 	}
 	return &MockQuerier{
@@ -404,7 +404,7 @@ func DefaultQuerier(contractAddr string, coins types.Coins) types.Querier {
 	}
 }
 
-func (q *MockQuerier) Query(request types.QueryRequest, _gasLimit uint64) ([]byte, error) {
+func (q *MockQuerier) Query(request wvm.QueryRequest, _gasLimit uint64) ([]byte, error) {
 	marshaled, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
@@ -417,12 +417,12 @@ func (q *MockQuerier) Query(request types.QueryRequest, _gasLimit uint64) ([]byt
 		return q.Custom.Query(request.Custom)
 	}
 	if request.Staking != nil {
-		return nil, types.UnsupportedRequest{Kind: "staking"}
+		return nil, wvm.UnsupportedRequest{Kind: "staking"}
 	}
 	if request.Wasm != nil {
-		return nil, types.UnsupportedRequest{Kind: "wasm"}
+		return nil, wvm.UnsupportedRequest{Kind: "wasm"}
 	}
-	return nil, types.Unknown{}
+	return nil, wvm.Unknown{}
 }
 
 func (q MockQuerier) GasConsumed() uint64 {
@@ -430,13 +430,13 @@ func (q MockQuerier) GasConsumed() uint64 {
 }
 
 type BankQuerier struct {
-	Balances map[string]types.Coins
+	Balances map[string]wvm.Coins
 }
 
-func NewBankQuerier(balances map[string]types.Coins) BankQuerier {
-	bal := make(map[string]types.Coins, len(balances))
+func NewBankQuerier(balances map[string]wvm.Coins) BankQuerier {
+	bal := make(map[string]wvm.Coins, len(balances))
 	for k, v := range balances {
-		dst := make([]types.Coin, len(v))
+		dst := make([]wvm.Coin, len(v))
 		copy(dst, v)
 		bal[k] = dst
 	}
@@ -445,28 +445,28 @@ func NewBankQuerier(balances map[string]types.Coins) BankQuerier {
 	}
 }
 
-func (q BankQuerier) Query(request *types.BankQuery) ([]byte, error) {
+func (q BankQuerier) Query(request *wvm.BankQuery) ([]byte, error) {
 	if request.Balance != nil {
 		denom := request.Balance.Denom
-		coin := types.NewCoin(0, denom)
+		coin := wvm.NewCoin(0, denom)
 		for _, c := range q.Balances[request.Balance.Address] {
 			if c.Denom == denom {
 				coin = c
 			}
 		}
-		resp := types.BalanceResponse{
+		resp := wvm.BalanceResponse{
 			Amount: coin,
 		}
 		return json.Marshal(resp)
 	}
 	if request.AllBalances != nil {
 		coins := q.Balances[request.AllBalances.Address]
-		resp := types.AllBalancesResponse{
+		resp := wvm.AllBalancesResponse{
 			Amount: coins,
 		}
 		return json.Marshal(resp)
 	}
-	return nil, types.UnsupportedRequest{Kind: "Empty BankQuery"}
+	return nil, wvm.UnsupportedRequest{Kind: "Empty BankQuery"}
 }
 
 type CustomQuerier interface {
@@ -478,7 +478,7 @@ type NoCustom struct{}
 var _ CustomQuerier = NoCustom{}
 
 func (q NoCustom) Query(request json.RawMessage) ([]byte, error) {
-	return nil, types.UnsupportedRequest{Kind: "custom"}
+	return nil, wvm.UnsupportedRequest{Kind: "custom"}
 }
 
 // ReflectCustom fulfills the requirements for testing `reflect` contract
@@ -521,35 +521,35 @@ func (q ReflectCustom) Query(request json.RawMessage) ([]byte, error) {
 
 func TestBankQuerierAllBalances(t *testing.T) {
 	addr := "foobar"
-	balance := types.Coins{types.NewCoin(12345678, "ATOM"), types.NewCoin(54321, "ETH")}
+	balance := wvm.Coins{wvm.NewCoin(12345678, "ATOM"), wvm.NewCoin(54321, "ETH")}
 	q := DefaultQuerier(addr, balance)
 
 	// query existing account
-	req := types.QueryRequest{
-		Bank: &types.BankQuery{
-			AllBalances: &types.AllBalancesQuery{
+	req := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			AllBalances: &wvm.AllBalancesQuery{
 				Address: addr,
 			},
 		},
 	}
 	res, err := q.Query(req, DEFAULT_QUERIER_GAS_LIMIT)
 	require.NoError(t, err)
-	var resp types.AllBalancesResponse
+	var resp wvm.AllBalancesResponse
 	err = json.Unmarshal(res, &resp)
 	require.NoError(t, err)
 	assert.Equal(t, resp.Amount, balance)
 
 	// query missing account
-	req2 := types.QueryRequest{
-		Bank: &types.BankQuery{
-			AllBalances: &types.AllBalancesQuery{
+	req2 := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			AllBalances: &wvm.AllBalancesQuery{
 				Address: "someone-else",
 			},
 		},
 	}
 	res, err = q.Query(req2, DEFAULT_QUERIER_GAS_LIMIT)
 	require.NoError(t, err)
-	var resp2 types.AllBalancesResponse
+	var resp2 wvm.AllBalancesResponse
 	err = json.Unmarshal(res, &resp2)
 	require.NoError(t, err)
 	assert.Nil(t, resp2.Amount)
@@ -557,13 +557,13 @@ func TestBankQuerierAllBalances(t *testing.T) {
 
 func TestBankQuerierBalance(t *testing.T) {
 	addr := "foobar"
-	balance := types.Coins{types.NewCoin(12345678, "ATOM"), types.NewCoin(54321, "ETH")}
+	balance := wvm.Coins{wvm.NewCoin(12345678, "ATOM"), wvm.NewCoin(54321, "ETH")}
 	q := DefaultQuerier(addr, balance)
 
 	// query existing account with matching denom
-	req := types.QueryRequest{
-		Bank: &types.BankQuery{
-			Balance: &types.BalanceQuery{
+	req := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			Balance: &wvm.BalanceQuery{
 				Address: addr,
 				Denom:   "ATOM",
 			},
@@ -571,15 +571,15 @@ func TestBankQuerierBalance(t *testing.T) {
 	}
 	res, err := q.Query(req, DEFAULT_QUERIER_GAS_LIMIT)
 	require.NoError(t, err)
-	var resp types.BalanceResponse
+	var resp wvm.BalanceResponse
 	err = json.Unmarshal(res, &resp)
 	require.NoError(t, err)
-	assert.Equal(t, resp.Amount, types.NewCoin(12345678, "ATOM"))
+	assert.Equal(t, resp.Amount, wvm.NewCoin(12345678, "ATOM"))
 
 	// query existing account with missing denom
-	req2 := types.QueryRequest{
-		Bank: &types.BankQuery{
-			Balance: &types.BalanceQuery{
+	req2 := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			Balance: &wvm.BalanceQuery{
 				Address: addr,
 				Denom:   "BTC",
 			},
@@ -587,15 +587,15 @@ func TestBankQuerierBalance(t *testing.T) {
 	}
 	res, err = q.Query(req2, DEFAULT_QUERIER_GAS_LIMIT)
 	require.NoError(t, err)
-	var resp2 types.BalanceResponse
+	var resp2 wvm.BalanceResponse
 	err = json.Unmarshal(res, &resp2)
 	require.NoError(t, err)
-	assert.Equal(t, resp2.Amount, types.NewCoin(0, "BTC"))
+	assert.Equal(t, resp2.Amount, wvm.NewCoin(0, "BTC"))
 
 	// query missing account
-	req3 := types.QueryRequest{
-		Bank: &types.BankQuery{
-			Balance: &types.BalanceQuery{
+	req3 := wvm.QueryRequest{
+		Bank: &wvm.BankQuery{
+			Balance: &wvm.BalanceQuery{
 				Address: "someone-else",
 				Denom:   "ATOM",
 			},
@@ -603,10 +603,10 @@ func TestBankQuerierBalance(t *testing.T) {
 	}
 	res, err = q.Query(req3, DEFAULT_QUERIER_GAS_LIMIT)
 	require.NoError(t, err)
-	var resp3 types.BalanceResponse
+	var resp3 wvm.BalanceResponse
 	err = json.Unmarshal(res, &resp3)
 	require.NoError(t, err)
-	assert.Equal(t, resp3.Amount, types.NewCoin(0, "ATOM"))
+	assert.Equal(t, resp3.Amount, wvm.NewCoin(0, "ATOM"))
 }
 
 func TestReflectCustomQuerier(t *testing.T) {

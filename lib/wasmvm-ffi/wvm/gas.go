@@ -1,4 +1,4 @@
-package types
+package wvm
 
 type Gas = uint64
 

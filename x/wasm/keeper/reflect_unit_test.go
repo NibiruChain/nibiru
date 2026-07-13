@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 

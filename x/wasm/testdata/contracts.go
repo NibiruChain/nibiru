@@ -3,8 +3,8 @@ package testdata
 import (
 	_ "embed"
 
-	typwasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	typwasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 const (

@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	testifysuite "github.com/stretchr/testify/suite"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	"github.com/cometbft/cometbft/libs/log"
 

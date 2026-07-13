@@ -3,8 +3,6 @@ module github.com/NibiruChain/nibiru/v2
 go 1.25.0
 
 require (
-	github.com/CosmWasm/wasmvm v1.10.0
-
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.37.18
 	github.com/cometbft/cometbft-db v0.11.0
@@ -68,6 +66,7 @@ require (
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/docker/distribution v2.8.2+incompatible
+	github.com/google/btree v1.1.3
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -157,7 +156,6 @@ require (
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
-	github.com/google/btree v1.1.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
@@ -252,9 +250,9 @@ require (
 replace (
 	cosmossdk.io/api => cosmossdk.io/api v0.3.1
 
-	// Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
+	// NOTE: Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
 	// ARM64 Singlepass relocation panics.
-	github.com/CosmWasm/wasmvm => ./lib/wasmvm-ffi
+	// github.com/CosmWasm/wasmvm => ./lib/wasmvm-ffi
 
 	// - Below is a replace statement based on GitHub tags that we used prior to
 	//   managing the full stack of deps as a monorepo. Left here intentionally

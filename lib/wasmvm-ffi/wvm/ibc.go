@@ -1,4 +1,4 @@
-package types
+package wvm
 
 type IBCEndpoint struct {
 	PortID    string `json:"port_id"`

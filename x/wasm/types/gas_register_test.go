@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

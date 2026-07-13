@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/suite"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/gogoproto/proto"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 

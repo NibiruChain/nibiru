@@ -11,8 +11,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/require"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	codec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 // Value types
@@ -34,7 +34,7 @@ type Cache struct {
 	ptr *C.cache_t
 }
 
-type Querier = types.Querier
+type Querier = wvm.Querier
 
 func InitCache(dataDir string, supportedCapabilities string, cacheSize uint32, instanceMemoryLimit uint32) (Cache, error) {
 	dataDirBytes := []byte(dataDir)
@@ -124,7 +124,7 @@ func Unpin(cache Cache, checksum []byte) error {
 	return nil
 }
 
-func AnalyzeCode(cache Cache, checksum []byte) (*types.AnalysisReport, error) {
+func AnalyzeCode(cache Cache, checksum []byte) (*wvm.AnalysisReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	errmsg := uninitializedUnmanagedVector()
@@ -133,7 +133,7 @@ func AnalyzeCode(cache Cache, checksum []byte) (*types.AnalysisReport, error) {
 		return nil, errorWithMessage(err, errmsg)
 	}
 	requiredCapabilities := string(copyAndDestroyUnmanagedVector(report.required_capabilities))
-	res := types.AnalysisReport{
+	res := wvm.AnalysisReport{
 		HasIBCEntryPoints:    bool(report.has_ibc_entry_points),
 		RequiredFeatures:     requiredCapabilities,
 		RequiredCapabilities: requiredCapabilities,
@@ -141,14 +141,14 @@ func AnalyzeCode(cache Cache, checksum []byte) (*types.AnalysisReport, error) {
 	return &res, nil
 }
 
-func GetMetrics(cache Cache) (*types.Metrics, error) {
+func GetMetrics(cache Cache) (*wvm.Metrics, error) {
 	errmsg := uninitializedUnmanagedVector()
 	metrics, err := C.get_metrics(cache.ptr, &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}
 
-	return &types.Metrics{
+	return &wvm.Metrics{
 		HitsPinnedMemoryCache:     uint32(metrics.hits_pinned_memory_cache),
 		HitsMemoryCache:           uint32(metrics.hits_memory_cache),
 		HitsFsCache:               uint32(metrics.hits_fs_cache),
@@ -166,13 +166,13 @@ func Instantiate(
 	env []byte,
 	info []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -206,13 +206,13 @@ func Execute(
 	env []byte,
 	info []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -245,13 +245,13 @@ func Migrate(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -282,13 +282,13 @@ func Sudo(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -319,13 +319,13 @@ func Reply(
 	checksum []byte,
 	env []byte,
 	reply []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -356,13 +356,13 @@ func Query(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -393,13 +393,13 @@ func IBCChannelOpen(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -430,13 +430,13 @@ func IBCChannelConnect(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -467,13 +467,13 @@ func IBCChannelClose(
 	checksum []byte,
 	env []byte,
 	msg []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -504,13 +504,13 @@ func IBCPacketReceive(
 	checksum []byte,
 	env []byte,
 	packet []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -541,13 +541,13 @@ func IBCPacketAck(
 	checksum []byte,
 	env []byte,
 	ack []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -578,13 +578,13 @@ func IBCPacketTimeout(
 	checksum []byte,
 	env []byte,
 	packet []byte,
-	gasMeter *types.GasMeter,
-	store types.KVStore,
-	api *types.GoAPI,
+	gasMeter *wvm.GasMeter,
+	store wvm.KVStore,
+	api *wvm.GoAPI,
 	querier *Querier,
 	gasLimit uint64,
 	printDebug bool,
-) ([]byte, types.GasReport, error) {
+) ([]byte, wvm.GasReport, error) {
 	cs := makeView(checksum)
 	defer runtime.KeepAlive(checksum)
 	e := makeView(env)
@@ -610,8 +610,8 @@ func IBCPacketTimeout(
 	return copyAndDestroyUnmanagedVector(res), convertGasReport(gasReport), nil
 }
 
-func convertGasReport(report C.GasReport) types.GasReport {
-	return types.GasReport{
+func convertGasReport(report C.GasReport) wvm.GasReport {
+	return wvm.GasReport{
 		Limit:          uint64(report.limit),
 		Remaining:      uint64(report.remaining),
 		UsedExternally: uint64(report.used_externally),
@@ -624,7 +624,7 @@ func convertGasReport(report C.GasReport) types.GasReport {
 func errorWithMessage(err error, b C.UnmanagedVector) error {
 	// this checks for out of gas as a special case
 	if errno, ok := err.(syscall.Errno); ok && int(errno) == 2 {
-		return types.OutOfGasError{}
+		return wvm.OutOfGasError{}
 	}
 	msg := copyAndDestroyUnmanagedVector(b)
 	if msg == nil {

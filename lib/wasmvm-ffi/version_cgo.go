@@ -3,7 +3,7 @@
 package cosmwasm
 
 import (
-	"github.com/CosmWasm/wasmvm/internal/api"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api"
 )
 
 func libwasmvmVersionImpl() (string, error) {

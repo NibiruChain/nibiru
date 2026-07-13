@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmvm/internal/api"
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 const (
@@ -134,12 +134,12 @@ func TestHappyPath(t *testing.T) {
 	vm := withVM(t)
 	checksum := createTestContract(t, vm, HACKATOM_TEST_CONTRACT)
 
-	deserCost := types.UFraction{Numerator: 1, Denominator: 1}
+	deserCost := wvm.UFraction{Numerator: 1, Denominator: 1}
 	gasMeter1 := api.NewMockGasMeter(TESTING_GAS_LIMIT)
 	// instantiate it with this store
 	store := api.NewLookup(gasMeter1)
 	goapi := api.NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := api.DefaultQuerier(api.MOCK_CONTRACT_ADDR, balance)
 
 	// instantiate
@@ -175,12 +175,12 @@ func TestEnv(t *testing.T) {
 	vm := withVM(t)
 	checksum := createTestContract(t, vm, CYBERPUNK_TEST_CONTRACT)
 
-	deserCost := types.UFraction{Numerator: 1, Denominator: 1}
+	deserCost := wvm.UFraction{Numerator: 1, Denominator: 1}
 	gasMeter1 := api.NewMockGasMeter(TESTING_GAS_LIMIT)
 	// instantiate it with this store
 	store := api.NewLookup(gasMeter1)
 	goapi := api.NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := api.DefaultQuerier(api.MOCK_CONTRACT_ADDR, balance)
 
 	// instantiate
@@ -191,13 +191,13 @@ func TestEnv(t *testing.T) {
 	require.Equal(t, 0, len(ires.Messages))
 
 	// Execute mirror env without Transaction
-	env = types.Env{
-		Block: types.BlockInfo{
+	env = wvm.Env{
+		Block: wvm.BlockInfo{
 			Height:  444,
 			Time:    1955939743_123456789,
 			ChainID: "nice-chain",
 		},
-		Contract: types.ContractInfo{
+		Contract: wvm.ContractInfo{
 			Address: "wasm10dyr9899g6t0pelew4nvf4j5c3jcgv0r5d3a5l",
 		},
 		Transaction: nil,
@@ -210,16 +210,16 @@ func TestEnv(t *testing.T) {
 	require.Equal(t, expected, ires.Data)
 
 	// Execute mirror env with Transaction
-	env = types.Env{
-		Block: types.BlockInfo{
+	env = wvm.Env{
+		Block: wvm.BlockInfo{
 			Height:  444,
 			Time:    1955939743_123456789,
 			ChainID: "nice-chain",
 		},
-		Contract: types.ContractInfo{
+		Contract: wvm.ContractInfo{
 			Address: "wasm10dyr9899g6t0pelew4nvf4j5c3jcgv0r5d3a5l",
 		},
-		Transaction: &types.TransactionInfo{
+		Transaction: &wvm.TransactionInfo{
 			Index: 18,
 		},
 	}
@@ -237,24 +237,24 @@ func TestGetMetrics(t *testing.T) {
 	// GetMetrics 1
 	metrics, err := vm.GetMetrics()
 	require.NoError(t, err)
-	assert.Equal(t, &types.Metrics{}, metrics)
+	assert.Equal(t, &wvm.Metrics{}, metrics)
 
 	// Create contract
 	checksum := createTestContract(t, vm, HACKATOM_TEST_CONTRACT)
 
-	deserCost := types.UFraction{Numerator: 1, Denominator: 1}
+	deserCost := wvm.UFraction{Numerator: 1, Denominator: 1}
 
 	// GetMetrics 2
 	metrics, err = vm.GetMetrics()
 	require.NoError(t, err)
-	assert.Equal(t, &types.Metrics{}, metrics)
+	assert.Equal(t, &wvm.Metrics{}, metrics)
 
 	// Instantiate 1
 	gasMeter1 := api.NewMockGasMeter(TESTING_GAS_LIMIT)
 	// instantiate it with this store
 	store := api.NewLookup(gasMeter1)
 	goapi := api.NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := api.DefaultQuerier(api.MOCK_CONTRACT_ADDR, balance)
 
 	env := api.MockEnv()

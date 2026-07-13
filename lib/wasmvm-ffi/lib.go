@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/CosmWasm/wasmvm/internal/api"
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/internal/api"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 // VM is the main entry point to this library.
@@ -106,12 +106,12 @@ func (vm *VM) Unpin(checksum Checksum) error {
 // Returns a report of static analysis of the wasm contract (uncompiled).
 // This contract must have been stored in the cache previously (via Create).
 // Only info currently returned is if it exposes all ibc entry points, but this may grow later
-func (vm *VM) AnalyzeCode(checksum Checksum) (*types.AnalysisReport, error) {
+func (vm *VM) AnalyzeCode(checksum Checksum) (*wvm.AnalysisReport, error) {
 	return api.AnalyzeCode(vm.cache, checksum)
 }
 
 // GetMetrics some internal metrics for monitoring purposes.
-func (vm *VM) GetMetrics() (*types.Metrics, error) {
+func (vm *VM) GetMetrics() (*wvm.Metrics, error) {
 	return api.GetMetrics(vm.cache)
 }
 
@@ -125,16 +125,16 @@ func (vm *VM) GetMetrics() (*types.Metrics, error) {
 // for performance.
 func (vm *VM) Instantiate(
 	checksum Checksum,
-	env types.Env,
-	info types.MessageInfo,
+	env wvm.Env,
+	info wvm.MessageInfo,
 	initMsg []byte,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.Response, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.Response, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -148,7 +148,7 @@ func (vm *VM) Instantiate(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &result)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -167,16 +167,16 @@ func (vm *VM) Instantiate(
 // and setting the env with relevant info on this instance (address, balance, etc)
 func (vm *VM) Execute(
 	checksum Checksum,
-	env types.Env,
-	info types.MessageInfo,
+	env wvm.Env,
+	info wvm.MessageInfo,
 	executeMsg []byte,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.Response, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.Response, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -190,7 +190,7 @@ func (vm *VM) Execute(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &result)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -206,14 +206,14 @@ func (vm *VM) Execute(
 // The meaning of path and data can be determined by the code. Path is the suffix of the abci.QueryRequest.Path
 func (vm *VM) Query(
 	checksum Checksum,
-	env types.Env,
+	env wvm.Env,
 	queryMsg []byte,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
+	deserCost wvm.UFraction,
 ) ([]byte, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
@@ -224,7 +224,7 @@ func (vm *VM) Query(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.QueryResponse
+	var resp wvm.QueryResponse
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -243,15 +243,15 @@ func (vm *VM) Query(
 // MigrateMsg has some data on how to perform the migration.
 func (vm *VM) Migrate(
 	checksum Checksum,
-	env types.Env,
+	env wvm.Env,
 	migrateMsg []byte,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.Response, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.Response, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -261,7 +261,7 @@ func (vm *VM) Migrate(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.ContractResult
+	var resp wvm.ContractResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -280,15 +280,15 @@ func (vm *VM) Migrate(
 // without forking cosmwasm-vm.
 func (vm *VM) Sudo(
 	checksum Checksum,
-	env types.Env,
+	env wvm.Env,
 	sudoMsg []byte,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.Response, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.Response, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -298,7 +298,7 @@ func (vm *VM) Sudo(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.ContractResult
+	var resp wvm.ContractResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -315,15 +315,15 @@ func (vm *VM) Sudo(
 // These work much like Sudo (same scenario) but focuses on one specific case (and one message type)
 func (vm *VM) Reply(
 	checksum Checksum,
-	env types.Env,
-	reply types.Reply,
+	env wvm.Env,
+	reply wvm.Reply,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.Response, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.Response, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -337,7 +337,7 @@ func (vm *VM) Reply(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.ContractResult
+	var resp wvm.ContractResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -352,15 +352,15 @@ func (vm *VM) Reply(
 // during the handshake pahse
 func (vm *VM) IBCChannelOpen(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCChannelOpenMsg,
+	env wvm.Env,
+	msg wvm.IBCChannelOpenMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBC3ChannelOpenResponse, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBC3ChannelOpenResponse, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -374,7 +374,7 @@ func (vm *VM) IBCChannelOpen(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCChannelOpenResult
+	var resp wvm.IBCChannelOpenResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -389,15 +389,15 @@ func (vm *VM) IBCChannelOpen(
 // during the handshake pahse
 func (vm *VM) IBCChannelConnect(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCChannelConnectMsg,
+	env wvm.Env,
+	msg wvm.IBCChannelConnectMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBCBasicResponse, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBCBasicResponse, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -411,7 +411,7 @@ func (vm *VM) IBCChannelConnect(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCBasicResult
+	var resp wvm.IBCBasicResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -426,15 +426,15 @@ func (vm *VM) IBCChannelConnect(
 // at the end of the channel lifetime
 func (vm *VM) IBCChannelClose(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCChannelCloseMsg,
+	env wvm.Env,
+	msg wvm.IBCChannelCloseMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBCBasicResponse, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBCBasicResponse, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -448,7 +448,7 @@ func (vm *VM) IBCChannelClose(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCBasicResult
+	var resp wvm.IBCBasicResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -463,15 +463,15 @@ func (vm *VM) IBCChannelClose(
 // packet is received on a channel belonging to this contract
 func (vm *VM) IBCPacketReceive(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCPacketReceiveMsg,
+	env wvm.Env,
+	msg wvm.IBCPacketReceiveMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBCReceiveResult, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBCReceiveResult, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -485,7 +485,7 @@ func (vm *VM) IBCPacketReceive(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCReceiveResult
+	var resp wvm.IBCReceiveResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -498,15 +498,15 @@ func (vm *VM) IBCPacketReceive(
 // is received
 func (vm *VM) IBCPacketAck(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCPacketAckMsg,
+	env wvm.Env,
+	msg wvm.IBCPacketAckMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBCBasicResponse, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBCBasicResponse, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -520,7 +520,7 @@ func (vm *VM) IBCPacketAck(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCBasicResult
+	var resp wvm.IBCBasicResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -536,15 +536,15 @@ func (vm *VM) IBCPacketAck(
 // Usually handled like ack returning an error
 func (vm *VM) IBCPacketTimeout(
 	checksum Checksum,
-	env types.Env,
-	msg types.IBCPacketTimeoutMsg,
+	env wvm.Env,
+	msg wvm.IBCPacketTimeoutMsg,
 	store KVStore,
 	goapi GoAPI,
 	querier Querier,
 	gasMeter GasMeter,
 	gasLimit uint64,
-	deserCost types.UFraction,
-) (*types.IBCBasicResponse, uint64, error) {
+	deserCost wvm.UFraction,
+) (*wvm.IBCBasicResponse, uint64, error) {
 	envBin, err := json.Marshal(env)
 	if err != nil {
 		return nil, 0, err
@@ -558,7 +558,7 @@ func (vm *VM) IBCPacketTimeout(
 		return nil, gasReport.UsedInternally, err
 	}
 
-	var resp types.IBCBasicResult
+	var resp wvm.IBCBasicResult
 	err = DeserializeResponse(gasLimit, deserCost, &gasReport, data, &resp)
 	if err != nil {
 		return nil, gasReport.UsedInternally, err
@@ -569,7 +569,7 @@ func (vm *VM) IBCPacketTimeout(
 	return resp.Ok, gasReport.UsedInternally, nil
 }
 
-func DeserializeResponse(gasLimit uint64, deserCost types.UFraction, gasReport *types.GasReport, data []byte, response any) error {
+func DeserializeResponse(gasLimit uint64, deserCost wvm.UFraction, gasReport *wvm.GasReport, data []byte, response any) error {
 	gasForDeserialization := deserCost.Mul(uint64(len(data))).Floor()
 	if gasLimit < gasForDeserialization+gasReport.UsedInternally {
 		return fmt.Errorf("insufficient gas left to deserialize contract execution result (%d bytes)", len(data))

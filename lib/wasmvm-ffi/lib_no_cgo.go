@@ -7,26 +7,26 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 // Checksum represents a hash of the Wasm bytecode that serves as an ID. Must be generated from this library.
-type Checksum = types.Checksum
+type Checksum = wvm.Checksum
 
 // WasmCode is an alias for raw bytes of the wasm compiled code
 type WasmCode []byte
 
 // KVStore is a reference to some sub-kvstore that is valid for one instance of a code
-type KVStore = types.KVStore
+type KVStore = wvm.KVStore
 
 // GoAPI is a reference to some "precompiles", go callbacks
-type GoAPI = types.GoAPI
+type GoAPI = wvm.GoAPI
 
 // Querier lets us make read-only queries on other modules
-type Querier = types.Querier
+type Querier = wvm.Querier
 
 // GasMeter is a read-only version of the sdk gas meter
-type GasMeter = types.GasMeter
+type GasMeter = wvm.GasMeter
 
 // LibwasmvmVersion returns the version of the loaded library
 // at runtime. This can be used for debugging to verify the loaded version

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 const (
@@ -260,7 +260,7 @@ func TestGetMetrics(t *testing.T) {
 	// GetMetrics 1
 	metrics, err := GetMetrics(cache)
 	require.NoError(t, err)
-	assert.Equal(t, &types.Metrics{}, metrics)
+	assert.Equal(t, &wvm.Metrics{}, metrics)
 
 	// Store contract
 	wasm, err := ioutil.ReadFile("../../testdata/hackatom.wasm")
@@ -271,14 +271,14 @@ func TestGetMetrics(t *testing.T) {
 	// GetMetrics 2
 	metrics, err = GetMetrics(cache)
 	require.NoError(t, err)
-	assert.Equal(t, &types.Metrics{}, metrics)
+	assert.Equal(t, &wvm.Metrics{}, metrics)
 
 	// Instantiate 1
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
-	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, types.Coins{types.NewCoin(100, "ATOM")})
+	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, wvm.Coins{wvm.NewCoin(100, "ATOM")})
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
 	msg1 := []byte(`{"verifier": "fred", "beneficiary": "bob"}`)
@@ -380,11 +380,11 @@ func TestInstantiate(t *testing.T) {
 	require.NoError(t, err)
 
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	// instantiate it with this store
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
-	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, types.Coins{types.NewCoin(100, "ATOM")})
+	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, wvm.Coins{wvm.NewCoin(100, "ATOM")})
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
 	msg := []byte(`{"verifier": "fred", "beneficiary": "bob"}`)
@@ -394,7 +394,7 @@ func TestInstantiate(t *testing.T) {
 	requireOkResponse(t, res, 0)
 	assert.Equal(t, uint64(0x2d4998b04), cost.UsedInternally)
 
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Equal(t, "", result.Err)
@@ -407,11 +407,11 @@ func TestExecute(t *testing.T) {
 	checksum := createHackatomContract(t, cache)
 
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -428,7 +428,7 @@ func TestExecute(t *testing.T) {
 
 	// execute with the same store
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	env = MockEnvBin(t)
 	info = MockInfoBin(t, "fred")
@@ -440,7 +440,7 @@ func TestExecute(t *testing.T) {
 	t.Logf("Time (%d gas): %s\n", cost.UsedInternally, diff)
 
 	// make sure it read the balance properly and we got 250 atoms
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Equal(t, "", result.Err)
@@ -472,11 +472,11 @@ func TestExecutePanic(t *testing.T) {
 
 	maxGas := TESTING_GAS_LIMIT
 	gasMeter1 := NewMockGasMeter(maxGas)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -487,7 +487,7 @@ func TestExecutePanic(t *testing.T) {
 
 	// execute a panic
 	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
 	_, _, err = Execute(cache, checksum, env, info, []byte(`{"panic":{}}`), &igasMeter2, store, api, &querier, maxGas, TESTING_PRINT_DEBUG)
@@ -501,11 +501,11 @@ func TestExecuteUnreachable(t *testing.T) {
 
 	maxGas := TESTING_GAS_LIMIT
 	gasMeter1 := NewMockGasMeter(maxGas)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -516,7 +516,7 @@ func TestExecuteUnreachable(t *testing.T) {
 
 	// execute a panic
 	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
 	_, _, err = Execute(cache, checksum, env, info, []byte(`{"unreachable":{}}`), &igasMeter2, store, api, &querier, maxGas, TESTING_PRINT_DEBUG)
@@ -529,7 +529,7 @@ func TestExecuteCpuLoop(t *testing.T) {
 	checksum := createCyberpunkContract(t, cache)
 
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
@@ -550,7 +550,7 @@ func TestExecuteCpuLoop(t *testing.T) {
 	// execute a cpu loop
 	maxGas := uint64(40_000_000)
 	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
 	start = time.Now()
@@ -568,11 +568,11 @@ func TestExecuteStorageLoop(t *testing.T) {
 
 	maxGas := TESTING_GAS_LIMIT
 	gasMeter1 := NewMockGasMeter(maxGas)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -585,7 +585,7 @@ func TestExecuteStorageLoop(t *testing.T) {
 
 	// execute a storage loop
 	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
 	start := time.Now()
@@ -608,10 +608,10 @@ func TestExecuteUserErrorsInApiCalls(t *testing.T) {
 
 	maxGas := TESTING_GAS_LIMIT
 	gasMeter1 := NewMockGasMeter(maxGas)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -623,7 +623,7 @@ func TestExecuteUserErrorsInApiCalls(t *testing.T) {
 	requireOkResponse(t, res, 0)
 
 	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
 	failingApi := NewMockFailureAPI()
@@ -638,11 +638,11 @@ func TestMigrate(t *testing.T) {
 	checksum := createHackatomContract(t, cache)
 
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	// instantiate it with this store
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -656,7 +656,7 @@ func TestMigrate(t *testing.T) {
 	query := []byte(`{"verifier":{}}`)
 	data, _, err := Query(cache, checksum, env, query, &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres types.QueryResponse
+	var qres wvm.QueryResponse
 	err = json.Unmarshal(data, &qres)
 	require.NoError(t, err)
 	require.Equal(t, "", qres.Err)
@@ -670,7 +670,7 @@ func TestMigrate(t *testing.T) {
 	// should update verifier to alice
 	data, _, err = Query(cache, checksum, env, query, &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres2 types.QueryResponse
+	var qres2 wvm.QueryResponse
 	err = json.Unmarshal(data, &qres2)
 	require.NoError(t, err)
 	require.Equal(t, "", qres2.Err)
@@ -684,10 +684,10 @@ func TestMultipleInstances(t *testing.T) {
 
 	// instance1 controlled by fred
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	store1 := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, types.Coins{types.NewCoin(100, "ATOM")})
+	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, wvm.Coins{wvm.NewCoin(100, "ATOM")})
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "regen")
 	msg := []byte(`{"verifier": "fred", "beneficiary": "bob"}`)
@@ -699,7 +699,7 @@ func TestMultipleInstances(t *testing.T) {
 
 	// instance2 controlled by mary
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store2 := NewLookup(gasMeter2)
 	info = MockInfoBin(t, "chrous")
 	msg = []byte(`{"verifier": "mary", "beneficiary": "sue"}`)
@@ -737,11 +737,11 @@ func TestSudo(t *testing.T) {
 	checksum := createHackatomContract(t, cache)
 
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	balance := types.Coins{types.NewCoin(250, "ATOM")}
+	balance := wvm.Coins{wvm.NewCoin(250, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, balance)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
@@ -753,7 +753,7 @@ func TestSudo(t *testing.T) {
 
 	// call sudo with same store
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	env = MockEnvBin(t)
 	msg = []byte(`{"steal_funds":{"recipient":"community-pool","amount":[{"amount":"700","denom":"gold"}]}}`)
@@ -761,7 +761,7 @@ func TestSudo(t *testing.T) {
 	require.NoError(t, err)
 
 	// make sure it blindly followed orders
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Equal(t, "", result.Err)
@@ -771,7 +771,7 @@ func TestSudo(t *testing.T) {
 	require.NotNil(t, dispatch.Bank.Send, "%#v", dispatch)
 	send := dispatch.Bank.Send
 	assert.Equal(t, "community-pool", send.ToAddress)
-	expectedPayout := types.Coins{types.NewCoin(700, "gold")}
+	expectedPayout := wvm.Coins{wvm.NewCoin(700, "gold")}
 	assert.Equal(t, expectedPayout, send.Amount)
 }
 
@@ -781,7 +781,7 @@ func TestDispatchSubmessage(t *testing.T) {
 	checksum := createReflectContract(t, cache)
 
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
@@ -796,27 +796,27 @@ func TestDispatchSubmessage(t *testing.T) {
 
 	// dispatch a submessage
 	var id uint64 = 1234
-	payload := types.SubMsg{
+	payload := wvm.SubMsg{
 		ID: id,
-		Msg: types.CosmosMsg{Bank: &types.BankMsg{Send: &types.SendMsg{
+		Msg: wvm.CosmosMsg{Bank: &wvm.BankMsg{Send: &wvm.SendMsg{
 			ToAddress: "friend",
-			Amount:    types.Coins{types.NewCoin(1, "token")},
+			Amount:    wvm.Coins{wvm.NewCoin(1, "token")},
 		}}},
-		ReplyOn: types.ReplyAlways,
+		ReplyOn: wvm.ReplyAlways,
 	}
 	payloadBin, err := json.Marshal(payload)
 	require.NoError(t, err)
 	payloadMsg := []byte(fmt.Sprintf(`{"reflect_sub_msg":{"msgs":[%s]}}`, string(payloadBin)))
 
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	env = MockEnvBin(t)
 	res, _, err = Execute(cache, checksum, env, info, payloadMsg, &igasMeter2, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
 
 	// make sure it blindly followed orders
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Equal(t, "", result.Err)
@@ -834,7 +834,7 @@ func TestReplyAndQuery(t *testing.T) {
 	checksum := createReflectContract(t, cache)
 
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	// instantiate it with this store
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
@@ -849,17 +849,17 @@ func TestReplyAndQuery(t *testing.T) {
 
 	var id uint64 = 1234
 	data := []byte("foobar")
-	events := types.Events{{
+	events := wvm.Events{{
 		Type: "message",
-		Attributes: types.EventAttributes{{
+		Attributes: wvm.EventAttributes{{
 			Key:   "signer",
 			Value: "caller-addr",
 		}},
 	}}
-	reply := types.Reply{
+	reply := wvm.Reply{
 		ID: id,
-		Result: types.SubMsgResult{
-			Ok: &types.SubMsgResponse{
+		Result: wvm.SubMsgResult{
+			Ok: &wvm.SubMsgResponse{
 				Events: events,
 				Data:   data,
 			},
@@ -869,7 +869,7 @@ func TestReplyAndQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	env = MockEnvBin(t)
 	res, _, err = Reply(cache, checksum, env, replyBin, &igasMeter2, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
@@ -887,7 +887,7 @@ func TestReplyAndQuery(t *testing.T) {
 	require.NoError(t, err)
 	qres := requireQueryOk(t, res)
 
-	var stored types.Reply
+	var stored wvm.Reply
 	err = json.Unmarshal(qres, &stored)
 	require.NoError(t, err)
 	assert.Equal(t, id, stored.ID)
@@ -898,7 +898,7 @@ func TestReplyAndQuery(t *testing.T) {
 }
 
 func requireOkResponse(t *testing.T, res []byte, expectedMsgs int) {
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err := json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Equal(t, "", result.Err)
@@ -906,7 +906,7 @@ func requireOkResponse(t *testing.T, res []byte, expectedMsgs int) {
 }
 
 func requireQueryError(t *testing.T, res []byte) {
-	var result types.QueryResponse
+	var result wvm.QueryResponse
 	err := json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Empty(t, result.Ok)
@@ -914,7 +914,7 @@ func requireQueryError(t *testing.T, res []byte) {
 }
 
 func requireQueryOk(t *testing.T, res []byte) []byte {
-	var result types.QueryResponse
+	var result wvm.QueryResponse
 	err := json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	require.Empty(t, result.Err)
@@ -951,16 +951,16 @@ func createContract(t *testing.T, cache Cache, wasmFile string) []byte {
 }
 
 // exec runs the handle tx with the given signer
-func exec(t *testing.T, cache Cache, checksum []byte, signer types.HumanAddress, store types.KVStore, api *types.GoAPI, querier Querier, gasExpected uint64) types.ContractResult {
+func exec(t *testing.T, cache Cache, checksum []byte, signer wvm.HumanAddress, store wvm.KVStore, api *wvm.GoAPI, querier Querier, gasExpected uint64) wvm.ContractResult {
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, signer)
 	res, cost, err := Execute(cache, checksum, env, info, []byte(`{"release":{}}`), &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
 	assert.Equal(t, gasExpected, cost.UsedInternally)
 
-	var result types.ContractResult
+	var result wvm.ContractResult
 	err = json.Unmarshal(res, &result)
 	require.NoError(t, err)
 	return result
@@ -973,10 +973,10 @@ func TestQuery(t *testing.T) {
 
 	// set up contract
 	gasMeter1 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter1 := types.GasMeter(gasMeter1)
+	igasMeter1 := wvm.GasMeter(gasMeter1)
 	store := NewLookup(gasMeter1)
 	api := NewMockAPI()
-	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, types.Coins{types.NewCoin(100, "ATOM")})
+	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, wvm.Coins{wvm.NewCoin(100, "ATOM")})
 	env := MockEnvBin(t)
 	info := MockInfoBin(t, "creator")
 	msg := []byte(`{"verifier": "fred", "beneficiary": "bob"}`)
@@ -985,24 +985,24 @@ func TestQuery(t *testing.T) {
 
 	// invalid query
 	gasMeter2 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter2 := types.GasMeter(gasMeter2)
+	igasMeter2 := wvm.GasMeter(gasMeter2)
 	store.SetGasMeter(gasMeter2)
 	query := []byte(`{"Raw":{"val":"config"}}`)
 	data, _, err := Query(cache, checksum, env, query, &igasMeter2, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var badResp types.QueryResponse
+	var badResp wvm.QueryResponse
 	err = json.Unmarshal(data, &badResp)
 	require.NoError(t, err)
 	require.Contains(t, badResp.Err, "Error parsing into type hackatom::msg::QueryMsg: unknown variant `Raw`, expected one of")
 
 	// make a valid query
 	gasMeter3 := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter3 := types.GasMeter(gasMeter3)
+	igasMeter3 := wvm.GasMeter(gasMeter3)
 	store.SetGasMeter(gasMeter3)
 	query = []byte(`{"verifier":{}}`)
 	data, _, err = Query(cache, checksum, env, query, &igasMeter3, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres types.QueryResponse
+	var qres wvm.QueryResponse
 	err = json.Unmarshal(data, &qres)
 	require.NoError(t, err)
 	require.Equal(t, "", qres.Err)
@@ -1016,10 +1016,10 @@ func TestHackatomQuerier(t *testing.T) {
 
 	// set up contract
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
-	initBalance := types.Coins{types.NewCoin(1234, "ATOM"), types.NewCoin(65432, "ETH")}
+	initBalance := wvm.Coins{wvm.NewCoin(1234, "ATOM"), wvm.NewCoin(65432, "ETH")}
 	querier := DefaultQuerier("foobar", initBalance)
 
 	// make a valid query to the other address
@@ -1028,11 +1028,11 @@ func TestHackatomQuerier(t *testing.T) {
 	env := MockEnvBin(t)
 	data, _, err := Query(cache, checksum, env, query, &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres types.QueryResponse
+	var qres wvm.QueryResponse
 	err = json.Unmarshal(data, &qres)
 	require.NoError(t, err)
 	require.Equal(t, "", qres.Err)
-	var balances types.AllBalancesResponse
+	var balances wvm.AllBalancesResponse
 	err = json.Unmarshal(qres.Ok, &balances)
 	require.NoError(t, err)
 	require.Equal(t, balances.Amount, initBalance)
@@ -1059,10 +1059,10 @@ func TestCustomReflectQuerier(t *testing.T) {
 
 	// set up contract
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
-	initBalance := types.Coins{types.NewCoin(1234, "ATOM")}
+	initBalance := wvm.Coins{wvm.NewCoin(1234, "ATOM")}
 	querier := DefaultQuerier(MOCK_CONTRACT_ADDR, initBalance)
 	// we need this to handle the custom requests from the reflect contract
 	innerQuerier := querier.(*MockQuerier)
@@ -1080,7 +1080,7 @@ func TestCustomReflectQuerier(t *testing.T) {
 	env := MockEnvBin(t)
 	data, _, err := Query(cache, checksum, env, query, &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres types.QueryResponse
+	var qres wvm.QueryResponse
 	err = json.Unmarshal(data, &qres)
 	require.NoError(t, err)
 	require.Equal(t, "", qres.Err)
@@ -1121,7 +1121,7 @@ func TestFloats(t *testing.T) {
 	checksum := createFloaty2(t, cache)
 
 	gasMeter := NewMockGasMeter(TESTING_GAS_LIMIT)
-	igasMeter := types.GasMeter(gasMeter)
+	igasMeter := wvm.GasMeter(gasMeter)
 	// instantiate it with this store
 	store := NewLookup(gasMeter)
 	api := NewMockAPI()
@@ -1132,7 +1132,7 @@ func TestFloats(t *testing.T) {
 	query := []byte(`{"instructions":{}}`)
 	data, _, err := Query(cache, checksum, env, query, &igasMeter, store, api, &querier, TESTING_GAS_LIMIT, TESTING_PRINT_DEBUG)
 	require.NoError(t, err)
-	var qres types.QueryResponse
+	var qres wvm.QueryResponse
 	err = json.Unmarshal(data, &qres)
 	require.NoError(t, err)
 	require.Equal(t, "", qres.Err)

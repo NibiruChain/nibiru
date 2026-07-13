@@ -3,7 +3,7 @@ package testdb
 import (
 	"errors"
 
-	"github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 var (
@@ -15,4 +15,4 @@ var (
 	errValueNil = errors.New("value cannot be nil")
 )
 
-type Iterator = types.Iterator
+type Iterator = wvm.Iterator

@@ -1,4 +1,4 @@
-package types
+package wvm
 
 type (
 	HumanizeAddress     func([]byte) (string, uint64, error)

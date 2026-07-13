@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
 
 	sdkioerrors "cosmossdk.io/errors"
 

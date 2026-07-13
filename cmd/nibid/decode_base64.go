@@ -12,7 +12,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
-	wasmvm "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 )
 
 // YieldStargateMsgs takes a byte slice of JSON data and converts it into a slice

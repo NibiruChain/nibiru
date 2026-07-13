@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/docker/distribution/reference"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

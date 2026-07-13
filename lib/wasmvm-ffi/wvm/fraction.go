@@ -1,4 +1,4 @@
-package types
+package wvm
 
 type Fraction struct {
 	Numerator   int64

@@ -5,8 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	wasmvmtypes "github.com/NibiruChain/nibiru/v2/lib/wasmvm-ffi/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
