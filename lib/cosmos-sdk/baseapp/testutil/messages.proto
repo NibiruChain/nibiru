@@ -33,7 +33,4 @@ service Counter2 {
   rpc IncrementCounter(MsgCounter2) returns (MsgCreateCounterResponse);
 }
 
-service KeyValue {
-  rpc Set(MsgKeyValue) returns (MsgCreateKeyValueResponse);
-}
-
+service KeyValue { rpc Set(MsgKeyValue) returns (MsgCreateKeyValueResponse); }

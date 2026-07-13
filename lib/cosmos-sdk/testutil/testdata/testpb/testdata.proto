@@ -26,13 +26,9 @@ message HasAnimal {
   int64 x = 2;
 }
 
-message HasHasAnimal {
-  google.protobuf.Any has_animal = 1;
-}
+message HasHasAnimal { google.protobuf.Any has_animal = 1; }
 
-message HasHasHasAnimal {
-  google.protobuf.Any has_has_animal = 1;
-}
+message HasHasHasAnimal { google.protobuf.Any has_has_animal = 1; }
 
 // bad MultiSignature with extra fields
 message BadMultiSignature {

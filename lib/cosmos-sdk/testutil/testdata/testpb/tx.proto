@@ -8,17 +8,11 @@ option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/te
 
 // Msg tests the Protobuf message service as defined in
 // https://github.com/cosmos/cosmos-sdk/issues/7500.
-service Msg {
-  rpc CreateDog(MsgCreateDog) returns (MsgCreateDogResponse);
-}
+service Msg { rpc CreateDog(MsgCreateDog) returns (MsgCreateDogResponse); }
 
-message MsgCreateDog {
-  testpb.Dog dog = 1;
-}
+message MsgCreateDog { testpb.Dog dog = 1; }
 
-message MsgCreateDogResponse {
-  string name = 1;
-}
+message MsgCreateDogResponse { string name = 1; }
 
 // TestMsg is msg type for testing protobuf message using any, as defined in
 // https://github.com/cosmos/cosmos-sdk/issues/6213.
