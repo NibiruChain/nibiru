@@ -14,26 +14,14 @@ service Query {
   rpc TestAny(TestAnyRequest) returns (TestAnyResponse);
 }
 
-message EchoRequest {
-  string message = 1;
-}
+message EchoRequest { string message = 1; }
 
-message EchoResponse {
-  string message = 1;
-}
+message EchoResponse { string message = 1; }
 
-message SayHelloRequest {
-  string name = 1;
-}
+message SayHelloRequest { string name = 1; }
 
-message SayHelloResponse {
-  string greeting = 1;
-}
+message SayHelloResponse { string greeting = 1; }
 
-message TestAnyRequest {
-  google.protobuf.Any any_animal = 1;
-}
+message TestAnyRequest { google.protobuf.Any any_animal = 1; }
 
-message TestAnyResponse {
-  testpb.HasAnimal has_animal = 1;
-}
+message TestAnyResponse { testpb.HasAnimal has_animal = 1; }

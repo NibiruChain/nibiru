@@ -10,8 +10,6 @@ option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz";
 
 // GenesisState defines the authz module's genesis state.
 message GenesisState {
-  repeated GrantAuthorization authorization = 1 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated GrantAuthorization authorization = 1
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }

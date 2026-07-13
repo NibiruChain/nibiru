@@ -7,44 +7,35 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
+option go_package                      = "github.com/NibiruChain/nibiru/v2/x/wasm/types";
 option (gogoproto.goproto_getters_all) = false;
-option (gogoproto.equal_all) = false;
+option (gogoproto.equal_all)           = false;
 
 // Query provides defines the gRPC querier service
 service Query {
   // ContractInfo gets the contract meta data
-  rpc ContractInfo(QueryContractInfoRequest)
-      returns (QueryContractInfoResponse) {
+  rpc ContractInfo(QueryContractInfoRequest) returns (QueryContractInfoResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}";
   }
   // ContractHistory gets the contract code history
-  rpc ContractHistory(QueryContractHistoryRequest)
-      returns (QueryContractHistoryResponse) {
-    option (google.api.http).get =
-        "/cosmwasm/wasm/v1/contract/{address}/history";
+  rpc ContractHistory(QueryContractHistoryRequest) returns (QueryContractHistoryResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/history";
   }
   // ContractsByCode lists all smart contracts for a code id
-  rpc ContractsByCode(QueryContractsByCodeRequest)
-      returns (QueryContractsByCodeResponse) {
+  rpc ContractsByCode(QueryContractsByCodeRequest) returns (QueryContractsByCodeResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/code/{code_id}/contracts";
   }
   // AllContractState gets all raw store data for a single contract
-  rpc AllContractState(QueryAllContractStateRequest)
-      returns (QueryAllContractStateResponse) {
+  rpc AllContractState(QueryAllContractStateRequest) returns (QueryAllContractStateResponse) {
     option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/state";
   }
   // RawContractState gets single key from the raw store data of a contract
-  rpc RawContractState(QueryRawContractStateRequest)
-      returns (QueryRawContractStateResponse) {
-    option (google.api.http).get =
-        "/cosmwasm/wasm/v1/contract/{address}/raw/{query_data}";
+  rpc RawContractState(QueryRawContractStateRequest) returns (QueryRawContractStateResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/raw/{query_data}";
   }
   // SmartContractState get smart query result from the contract
-  rpc SmartContractState(QuerySmartContractStateRequest)
-      returns (QuerySmartContractStateResponse) {
-    option (google.api.http).get =
-        "/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}";
+  rpc SmartContractState(QuerySmartContractStateRequest) returns (QuerySmartContractStateResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contract/{address}/smart/{query_data}";
   }
   // Code gets the binary code and metadata for a singe wasm code
   rpc Code(QueryCodeRequest) returns (QueryCodeResponse) {
@@ -66,10 +57,8 @@ service Query {
   }
 
   // ContractsByCreator gets the contracts by creator
-  rpc ContractsByCreator(QueryContractsByCreatorRequest)
-      returns (QueryContractsByCreatorResponse) {
-    option (google.api.http).get =
-        "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
+  rpc ContractsByCreator(QueryContractsByCreatorRequest) returns (QueryContractsByCreatorResponse) {
+    option (google.api.http).get = "/cosmwasm/wasm/v1/contracts/creator/{creator_address}";
   }
 }
 
@@ -85,12 +74,12 @@ message QueryContractInfoResponse {
   option (gogoproto.equal) = true;
 
   // address is the address of the contract
-  string address = 1;
+  string       address       = 1;
   ContractInfo contract_info = 2 [
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false,
+    (gogoproto.embed)      = true,
+    (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true,
-    (gogoproto.jsontag) = ""
+    (gogoproto.jsontag)    = ""
   ];
 }
 
@@ -107,7 +96,7 @@ message QueryContractHistoryRequest {
 // Query/ContractHistory RPC method
 message QueryContractHistoryResponse {
   repeated ContractCodeHistoryEntry entries = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -115,7 +104,7 @@ message QueryContractHistoryResponse {
 // QueryContractsByCodeRequest is the request type for the Query/ContractsByCode
 // RPC method
 message QueryContractsByCodeRequest {
-  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+  uint64 code_id = 1;  // grpc-gateway_out does not support Go style CodID
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -142,8 +131,7 @@ message QueryAllContractStateRequest {
 // QueryAllContractStateResponse is the response type for the
 // Query/AllContractState RPC method
 message QueryAllContractStateResponse {
-  repeated Model models = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  repeated Model models = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -152,8 +140,8 @@ message QueryAllContractStateResponse {
 // Query/RawContractState RPC method
 message QueryRawContractStateRequest {
   // address is the address of the contract
-  string address = 1;
-  bytes query_data = 2;
+  string address    = 1;
+  bytes  query_data = 2;
 }
 
 // QueryRawContractStateResponse is the response type for the
@@ -169,45 +157,41 @@ message QuerySmartContractStateRequest {
   // address is the address of the contract
   string address = 1;
   // QueryData contains the query data passed to the contract
-  bytes query_data = 2 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes query_data = 2 [(gogoproto.casttype) = "RawContractMessage"];
 }
 
 // QuerySmartContractStateResponse is the response type for the
 // Query/SmartContractState RPC method
 message QuerySmartContractStateResponse {
   // Data contains the json data returned from the smart contract
-  bytes data = 1 [ (gogoproto.casttype) = "RawContractMessage" ];
+  bytes data = 1 [(gogoproto.casttype) = "RawContractMessage"];
 }
 
 // QueryCodeRequest is the request type for the Query/Code RPC method
 message QueryCodeRequest {
-  uint64 code_id = 1; // grpc-gateway_out does not support Go style CodID
+  uint64 code_id = 1;  // grpc-gateway_out does not support Go style CodID
 }
 
 // CodeInfoResponse contains code meta data from CodeInfo
 message CodeInfoResponse {
   option (gogoproto.equal) = true;
 
-  uint64 code_id = 1 [
-    (gogoproto.customname) = "CodeID",
-    (gogoproto.jsontag) = "id"
-  ]; // id for legacy support
-  string creator = 2;
-  bytes data_hash = 3
-      [ (gogoproto.casttype) =
-            "github.com/cometbft/cometbft/libs/bytes.HexBytes" ];
+  uint64 code_id = 1
+      [(gogoproto.customname) = "CodeID",
+       (gogoproto.jsontag)    = "id"];  // id for legacy support
+  string creator   = 2;
+  bytes  data_hash = 3 [(gogoproto.casttype) = "github.com/cometbft/cometbft/libs/bytes.HexBytes"];
   // Used in v1beta1
   reserved 4, 5;
   AccessConfig instantiate_permission = 6
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // QueryCodeResponse is the response type for the Query/Code RPC method
 message QueryCodeResponse {
-  option (gogoproto.equal) = true;
-  CodeInfoResponse code_info = 1
-      [ (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
-  bytes data = 2 [ (gogoproto.jsontag) = "data" ];
+  option (gogoproto.equal)   = true;
+  CodeInfoResponse code_info = 1 [(gogoproto.embed) = true, (gogoproto.jsontag) = ""];
+  bytes            data      = 2 [(gogoproto.jsontag) = "data"];
 }
 
 // QueryCodesRequest is the request type for the Query/Codes RPC method
@@ -219,7 +203,7 @@ message QueryCodesRequest {
 // QueryCodesResponse is the response type for the Query/Codes RPC method
 message QueryCodesResponse {
   repeated CodeInfoResponse code_infos = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -234,7 +218,7 @@ message QueryPinnedCodesRequest {
 // QueryPinnedCodesResponse is the response type for the
 // Query/PinnedCodes RPC method
 message QueryPinnedCodesResponse {
-  repeated uint64 code_ids = 1 [ (gogoproto.customname) = "CodeIDs" ];
+  repeated uint64 code_ids = 1 [(gogoproto.customname) = "CodeIDs"];
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -245,8 +229,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1
-      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  Params params = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // QueryContractsByCreatorRequest is the request type for the

@@ -11,7 +11,8 @@ import "gogoproto/gogo.proto";
 message Params {
   // host_enabled enables or disables the host submodule.
   bool host_enabled = 1 [(gogoproto.moretags) = "yaml:\"host_enabled\""];
-  // allow_messages defines a list of sdk message typeURLs allowed to be executed on a host chain.
+  // allow_messages defines a list of sdk message typeURLs allowed to be executed
+  // on a host chain.
   repeated string allow_messages = 2 [(gogoproto.moretags) = "yaml:\"allow_messages\""];
 }
 

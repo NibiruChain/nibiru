@@ -11,11 +11,11 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // Emitted when a price is posted
 message EventPriceUpdate {
-  string pair = 1;
+  string pair  = 1;
   string price = 2 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
   int64 timestamp_ms = 3;
 }
@@ -39,10 +39,8 @@ message EventAggregateVote {
   // transaction messages on behalf of the voting validator.
   string feeder = 2;
 
-  repeated nibiru.oracle.v1.ExchangeRateTuple prices = 3 [
-    (gogoproto.castrepeated) = "ExchangeRateTuples",
-    (gogoproto.nullable) = false
-  ];
+  repeated nibiru.oracle.v1.ExchangeRateTuple prices = 3
+      [(gogoproto.castrepeated) = "ExchangeRateTuples", (gogoproto.nullable) = false];
 }
 
 // Emitted by MsgAggregateExchangePrevote when an aggregate prevote is added

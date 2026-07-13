@@ -10,9 +10,9 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1";
-option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_getters_all)  = false;
 option (gogoproto.goproto_stringer_all) = false;
-option (gogoproto.stringer_all) = false;
+option (gogoproto.stringer_all)         = false;
 
 // VoteOption enumerates the valid vote options for a given governance proposal.
 enum VoteOption {
@@ -34,14 +34,15 @@ enum VoteOption {
 //
 // Since: cosmos-sdk 0.43
 message WeightedVoteOption {
-  // option defines the valid vote options, it must not contain duplicate vote options.
+  // option defines the valid vote options, it must not contain duplicate vote
+  // options.
   VoteOption option = 1;
 
   // weight is the vote weight associated with the vote option.
   string weight = 2 [
-    (cosmos_proto.scalar) = "cosmos.Dec",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 }
 
@@ -49,7 +50,7 @@ message WeightedVoteOption {
 // manually updated in case of approval.
 message TextProposal {
   option (cosmos_proto.implements_interface) = "cosmos.gov.v1beta1.Content";
-  option (amino.name) = "cosmos-sdk/TextProposal";
+  option (amino.name)                        = "cosmos-sdk/TextProposal";
 
   option (gogoproto.equal) = true;
 
@@ -64,7 +65,7 @@ message TextProposal {
 // proposal.
 message Deposit {
   option (gogoproto.goproto_getters) = false;
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
 
   // proposal_id defines the unique id of the proposal.
   uint64 proposal_id = 1;
@@ -74,8 +75,8 @@ message Deposit {
 
   // amount to be deposited by depositor.
   repeated cosmos.base.v1beta1.Coin amount = 3 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 }
@@ -95,45 +96,30 @@ message Proposal {
   // final_tally_result is the final tally result of the proposal. When
   // querying a proposal via gRPC, this field is not populated until the
   // proposal's voting period has ended.
-  TallyResult final_tally_result = 4 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  TallyResult final_tally_result = 4 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   // submit_time is the time of proposal submission.
-  google.protobuf.Timestamp submit_time = 5 [
-    (gogoproto.stdtime) = true,
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  google.protobuf.Timestamp submit_time = 5
+      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   // deposit_end_time is the end time for deposition.
-  google.protobuf.Timestamp deposit_end_time = 6 [
-    (gogoproto.stdtime) = true,
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  google.protobuf.Timestamp deposit_end_time = 6
+      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   // total_deposit is the total deposit on the proposal.
   repeated cosmos.base.v1beta1.Coin total_deposit = 7 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
+    (gogoproto.nullable)     = false,
+    (amino.dont_omitempty)   = true,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins"
   ];
 
   // voting_start_time is the starting time to vote on a proposal.
-  google.protobuf.Timestamp voting_start_time = 8 [
-    (gogoproto.stdtime) = true,
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  google.protobuf.Timestamp voting_start_time = 8
+      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   // voting_end_time is the end time of voting on a proposal.
-  google.protobuf.Timestamp voting_end_time = 9 [
-    (gogoproto.stdtime) = true,
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  google.protobuf.Timestamp voting_end_time = 9
+      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // ProposalStatus enumerates the valid statuses of a proposal.
@@ -165,30 +151,30 @@ message TallyResult {
 
   // yes is the number of yes votes on a proposal.
   string yes = 1 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+    (cosmos_proto.scalar)  = "cosmos.Int",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // abstain is the number of abstain votes on a proposal.
   string abstain = 2 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+    (cosmos_proto.scalar)  = "cosmos.Int",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // no is the number of no votes on a proposal.
   string no = 3 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+    (cosmos_proto.scalar)  = "cosmos.Int",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // no_with_veto is the number of no with veto votes on a proposal.
   string no_with_veto = 4 [
-    (cosmos_proto.scalar) = "cosmos.Int",
+    (cosmos_proto.scalar)  = "cosmos.Int",
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 }
 
@@ -196,14 +182,11 @@ message TallyResult {
 // A Vote consists of a proposal ID, the voter, and the vote option.
 message Vote {
   option (gogoproto.goproto_stringer) = false;
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)            = false;
 
   // proposal_id defines the unique id of the proposal.
-  uint64 proposal_id = 1 [
-    (gogoproto.jsontag) = "id",
-    (amino.field_name) = "id",
-    (amino.dont_omitempty) = true
-  ];
+  uint64 proposal_id = 1
+      [(gogoproto.jsontag) = "id", (amino.field_name) = "id", (amino.dont_omitempty) = true];
 
   // voter is the voter address of the proposal.
   string voter = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
@@ -215,27 +198,25 @@ message Vote {
   // options is the weighted vote options.
   //
   // Since: cosmos-sdk 0.43
-  repeated WeightedVoteOption options = 4 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated WeightedVoteOption options = 4
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
 
 // DepositParams defines the params for deposits on governance proposals.
 message DepositParams {
   // Minimum deposit for a proposal to enter voting period.
   repeated cosmos.base.v1beta1.Coin min_deposit = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)     = false,
     (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Coins",
-    (gogoproto.jsontag) = "min_deposit,omitempty"
+    (gogoproto.jsontag)      = "min_deposit,omitempty"
   ];
 
   // Maximum period for Atom holders to deposit on a proposal. Initial value: 2
   // months.
   google.protobuf.Duration max_deposit_period = 2 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)    = false,
     (gogoproto.stdduration) = true,
-    (gogoproto.jsontag) = "max_deposit_period,omitempty"
+    (gogoproto.jsontag)     = "max_deposit_period,omitempty"
   ];
 }
 
@@ -243,9 +224,9 @@ message DepositParams {
 message VotingParams {
   // Duration of the voting period.
   google.protobuf.Duration voting_period = 1 [
-    (gogoproto.nullable) = false,
+    (gogoproto.nullable)    = false,
     (gogoproto.stdduration) = true,
-    (gogoproto.jsontag) = "voting_period,omitempty"
+    (gogoproto.jsontag)     = "voting_period,omitempty"
   ];
 }
 
@@ -255,22 +236,22 @@ message TallyParams {
   // considered valid.
   bytes quorum = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false,
-    (gogoproto.jsontag) = "quorum,omitempty"
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag)    = "quorum,omitempty"
   ];
 
   // Minimum proportion of Yes votes for proposal to pass. Default value: 0.5.
   bytes threshold = 2 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false,
-    (gogoproto.jsontag) = "threshold,omitempty"
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag)    = "threshold,omitempty"
   ];
 
   // Minimum value of Veto votes to Total votes ratio for proposal to be
   // vetoed. Default value: 1/3.
   bytes veto_threshold = 3 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false,
-    (gogoproto.jsontag) = "veto_threshold,omitempty"
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag)    = "veto_threshold,omitempty"
   ];
 }

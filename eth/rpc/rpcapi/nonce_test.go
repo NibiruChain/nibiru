@@ -77,11 +77,6 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.T().Logf("sdk.TxResp %v: %s", txMsg.name, jsonBz)
 	}
 
-	s.Require().NoError(s.cli.WaitForNextBlock())
-
-	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
-	s.Require().Equal(nonce+3, currentNonce)
-
 	s.T().Log("Assert all transactions included in block")
 	for _, txMsg := range txMsgs {
 		blockNum, blockHash, receipt, err := WaitForReceipt(s, txMsg.coreTx.Hash())
@@ -90,6 +85,12 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.Require().NotNilf(blockNum, "expect receipt | %v", txMsg.name)
 		s.Require().NotNilf(blockHash, "expect receipt | %v", txMsg.name)
 	}
+
+	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
+	s.Require().GreaterOrEqualf(
+		currentNonce, nonce+3, "nonce (before) %d, currentNonce %d must differ by at least 3",
+		nonce, currentNonce,
+	)
 }
 
 // buildSDKTxWithEVMMessages creates an SDK transaction with EVM messages

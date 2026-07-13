@@ -10,8 +10,10 @@ import "ibc/core/channel/v1/channel.proto";
 
 // Msg defines the 27-interchain-accounts/controller Msg service.
 service Msg {
-  // RegisterInterchainAccount defines a rpc handler for MsgRegisterInterchainAccount.
-  rpc RegisterInterchainAccount(MsgRegisterInterchainAccount) returns (MsgRegisterInterchainAccountResponse);
+  // RegisterInterchainAccount defines a rpc handler for
+  // MsgRegisterInterchainAccount.
+  rpc RegisterInterchainAccount(MsgRegisterInterchainAccount)
+      returns (MsgRegisterInterchainAccountResponse);
   // SendTx defines a rpc handler for MsgSendTx.
   rpc SendTx(MsgSendTx) returns (MsgSendTxResponse);
 }
@@ -27,7 +29,8 @@ message MsgRegisterInterchainAccount {
   ibc.core.channel.v1.Order ordering      = 4;
 }
 
-// MsgRegisterInterchainAccountResponse defines the response for Msg/RegisterAccount
+// MsgRegisterInterchainAccountResponse defines the response for
+// Msg/RegisterAccount
 message MsgRegisterInterchainAccountResponse {
   string channel_id = 1 [(gogoproto.moretags) = "yaml:\"channel_id\""];
   string port_id    = 2 [(gogoproto.moretags) = "yaml:\"port_id\""];
@@ -42,8 +45,8 @@ message MsgSendTx {
   string connection_id = 2 [(gogoproto.moretags) = "yaml:\"connection_id\""];
   ibc.applications.interchain_accounts.v1.InterchainAccountPacketData packet_data = 3
       [(gogoproto.moretags) = "yaml:\"packet_data\"", (gogoproto.nullable) = false];
-  // Relative timeout timestamp provided will be added to the current block time during transaction execution.
-  // The timeout timestamp must be non-zero.
+  // Relative timeout timestamp provided will be added to the current block time
+  // during transaction execution. The timeout timestamp must be non-zero.
   uint64 relative_timeout = 4 [(gogoproto.moretags) = "yaml:\"relative_timeout\""];
 }
 

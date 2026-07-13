@@ -36,8 +36,10 @@ service Query {
     option (google.api.http).get = "/ibc/core/client/v1/consensus_states/{client_id}";
   }
 
-  // ConsensusStateHeights queries the height of every consensus states associated with a given client.
-  rpc ConsensusStateHeights(QueryConsensusStateHeightsRequest) returns (QueryConsensusStateHeightsResponse) {
+  // ConsensusStateHeights queries the height of every consensus states
+  // associated with a given client.
+  rpc ConsensusStateHeights(QueryConsensusStateHeightsRequest)
+      returns (QueryConsensusStateHeightsResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/consensus_states/{client_id}/heights";
   }
 
@@ -52,12 +54,14 @@ service Query {
   }
 
   // UpgradedClientState queries an Upgraded IBC light client.
-  rpc UpgradedClientState(QueryUpgradedClientStateRequest) returns (QueryUpgradedClientStateResponse) {
+  rpc UpgradedClientState(QueryUpgradedClientStateRequest)
+      returns (QueryUpgradedClientStateResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/upgraded_client_states";
   }
 
   // UpgradedConsensusState queries an Upgraded IBC consensus state.
-  rpc UpgradedConsensusState(QueryUpgradedConsensusStateRequest) returns (QueryUpgradedConsensusStateResponse) {
+  rpc UpgradedConsensusState(QueryUpgradedConsensusStateRequest)
+      returns (QueryUpgradedConsensusStateResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/upgraded_consensus_states";
   }
 }
@@ -142,8 +146,8 @@ message QueryConsensusStatesResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryConsensusStateHeightsRequest is the request type for Query/ConsensusStateHeights
-// RPC method.
+// QueryConsensusStateHeightsRequest is the request type for
+// Query/ConsensusStateHeights RPC method.
 message QueryConsensusStateHeightsRequest {
   // client identifier
   string client_id = 1;

@@ -12,7 +12,7 @@ message EventEpochStart {
 
   // The start timestamp of the epoch.
   google.protobuf.Timestamp epoch_start_time = 2
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+      [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
 }
 
 message EventEpochEnd {

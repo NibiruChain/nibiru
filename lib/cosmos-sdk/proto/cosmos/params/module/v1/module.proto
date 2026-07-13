@@ -6,5 +6,7 @@ import "cosmos/app/v1alpha1/module.proto";
 
 // Module is the config object of the params module.
 message Module {
-  option (cosmos.app.v1alpha1.module) = {go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"};
+  option (cosmos.app.v1alpha1.module) = {
+    go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+  };
 }

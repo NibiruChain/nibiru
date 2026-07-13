@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PROTO_VERSION="0.14.0"
-PROTO_IMAGE="ghcr.io/cosmos/proto-builder:${PROTO_VERSION}"
-PROTO_FMT_IMAGE="tendermintdev/docker-build-proto"
+# BUF_VERSION: Version installed only when Buf is missing from PATH.
+BUF_VERSION="1.55.1"
+PROTOC_GEN_GOCOSMOS_VERSION="1.4.10"
+PROTOC_GEN_GRPC_GATEWAY_VERSION="1.16.0"
 
+# REPO_ROOT: Resolve the repository so this script also works outside its root.
+REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")/../.." rev-parse --show-toplevel)"
+cd "${REPO_ROOT}"
+# shellcheck source=contrib/bashlib.sh
+source contrib/bashlib.sh
+
+# usage: Print the proto command dispatcher help text.
 usage() {
   cat <<EOF
 NAME:
@@ -26,19 +34,13 @@ GLOBAL OPTIONS:
 EOF
 }
 
-log_info() {
-  printf 'INFO: %s\n' "$*" >&2
-}
-
-log_error() {
-  printf 'ERROR: %s\n' "$*" >&2
-}
-
+# shell_join: Print a shell-escaped command for a readable execution log.
 shell_join() {
   printf '%q ' "$@"
   printf '\n'
 }
 
+# run_cmd: Print a command, then execute it unless --cmd requested a preview.
 run_cmd() {
   if [[ "${PRINT_CMD}" == "true" ]]; then
     shell_join "$@"
@@ -49,52 +51,175 @@ run_cmd() {
   "$@"
 }
 
-repo_root() {
-  git rev-parse --show-toplevel
+# check_clang_format: Ensure the formatter is available for `proto fmt`.
+#
+# Behavior:
+#   - Use an existing PATH or Homebrew keg-only installation when available.
+#   - Otherwise, install via apt-get first and Homebrew second.
+#   - Return an actionable error if neither installation path provides it.
+check_clang_format() {
+  if which_ok clang-format >/dev/null 2>&1; then
+    return 0
+  fi
+
+  add_brew_clang_format_to_path && which_ok clang-format && return 0
+
+  log_info "Installing clang-format for $(uname -m)"
+  if command -v apt-get >/dev/null 2>&1; then
+    if sudo apt-get install -y clang-format; then
+      which_ok clang-format && return 0
+    fi
+    log_warning "Unable to install clang-format with apt-get; trying Homebrew."
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    if brew install clang-format; then
+      add_brew_clang_format_to_path && which_ok clang-format && return 0
+    fi
+  fi
+
+  log_error "clang-format is required for protobuf formatting. Install clang-format and ensure it is on PATH."
+  return 1
 }
 
-docker_run() {
-  local -r image="$1"
-  shift
+# add_brew_clang_format_to_path: Expose Homebrew's keg-only clang-format to
+# the current script process. Returns 1 when Homebrew or its formatter is absent.
+add_brew_clang_format_to_path() {
+  local brew_prefix
+  command -v brew >/dev/null 2>&1 || return 1
+  brew_prefix="$(brew --prefix clang-format 2>/dev/null)" || return 1
+  [[ -x "${brew_prefix}/bin/clang-format" ]] || return 1
 
-  run_cmd docker run \
-    --rm \
-    -v "$(repo_root):/workspace" \
-    --workdir /workspace \
-    "${image}" \
-    "$@"
+  export PATH="${brew_prefix}/bin:${PATH}"
 }
 
+# add_go_bin_to_path: Expose binaries installed by `go install` to this process.
+add_go_bin_to_path() {
+  local go_bin
+  go_bin="$(go env GOBIN)"
+  if [[ -z "${go_bin}" ]]; then
+    go_bin="$(go env GOPATH)/bin"
+  fi
+  export PATH="${go_bin}:${PATH}"
+}
+
+# check_buf: Ensure Buf is available for `proto lint` and `proto gen`.
+# Installs BUF_VERSION with Go only when Buf is absent from PATH.
+check_buf() {
+  if which_ok buf >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log_info "buf is not present; installing buf ${BUF_VERSION}"
+  if ! which_ok go; then
+    log_error "buf is required for protobuf linting and generation. Install Go, then run: go install github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+    return 1
+  fi
+
+  add_go_bin_to_path
+  if which_ok buf >/dev/null 2>&1; then
+    return 0
+  fi
+
+  run_cmd go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+  add_go_bin_to_path
+  if ! which_ok buf >/dev/null 2>&1; then
+    log_error "buf installation completed, but its Go bin directory does not contain an executable."
+    return 1
+  fi
+}
+
+# go_tool_has_version: Check whether a Go binary has the expected module version.
+go_tool_has_version() {
+  local binary="$1"
+  local module="$2"
+  local version="$3"
+  local binary_path
+
+  binary_path="$(command -v "${binary}")" || return 1
+  go version -m "${binary_path}" 2>/dev/null | awk \
+    -v module="${module}" -v version="v${version}" \
+    '$1 == "mod" && $2 == module && $3 == version { found = 1 } END { exit !found }'
+}
+
+# check_proto_plugins: Install the pinned Buf plugins when absent or outdated.
+check_proto_plugins() {
+  local plugin_spec plugin package module version
+  local -a plugin_specs=(
+    "protoc-gen-gocosmos|github.com/cosmos/gogoproto/protoc-gen-gocosmos|github.com/cosmos/gogoproto|${PROTOC_GEN_GOCOSMOS_VERSION}"
+    "protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway|${PROTOC_GEN_GRPC_GATEWAY_VERSION}"
+  )
+
+  if ! which_ok go; then
+    log_error "Go is required to install protobuf generation plugins."
+    return 1
+  fi
+  add_go_bin_to_path
+
+  for plugin_spec in "${plugin_specs[@]}"; do
+    IFS='|' read -r plugin package module version <<<"${plugin_spec}"
+    if go_tool_has_version "${plugin}" "${module}" "${version}"; then
+      continue
+    fi
+
+    log_info "Installing ${plugin} v${version}"
+    run_cmd go install "${package}@v${version}"
+    if ! go_tool_has_version "${plugin}" "${module}" "${version}"; then
+      log_error "${plugin} v${version} installation could not be verified."
+      return 1
+    fi
+  done
+}
+
+# proto_gen: Generate protobuf Go and API files with the host Buf toolchain.
 proto_gen() {
   log_info "Generating Protobuf files"
-  run_cmd docker run \
-    --rm \
-    --user root \
-    -e "HOST_UID=$(id -u)" \
-    -e "HOST_GID=$(id -g)" \
-    -v "$(repo_root):/workspace" \
-    --workdir /workspace \
-    "${PROTO_IMAGE}" \
-    sh -lc 'apk add --no-cache bash go git su-exec >/dev/null && export PATH="/go/bin:$PATH" && su-exec "$HOST_UID:$HOST_GID" env HOME=/tmp PATH="/go/bin:$PATH" bash ./contrib/scripts/protocgen.sh'
+  if [[ "${PRINT_CMD}" != "true" ]]; then
+    check_buf
+    check_proto_plugins
+  fi
+  run_cmd bash contrib/scripts/protocgen.sh
 }
 
-# FIXME: TODO https://github.com/NibiruChain/nibiru/issues/2636
+# proto_fmt: Format Nibiru, Cosmos SDK, and IBC-Go protobuf files with
+# clang-format and the repository's .clang-format rules.
 proto_fmt() {
+  local dir
+  local -a targets=()
+
   log_info "Formatting Protobuf files"
-  docker_run \
-    "${PROTO_FMT_IMAGE}" \
-    find ./ -not -path "./third_party/*" -name "*.proto" -exec clang-format -i {} ";"
+  if [[ "${PRINT_CMD}" != "true" ]]; then
+    check_clang_format
+  fi
+
+  for dir in ./proto ./lib/cosmos-sdk/proto ./lib/ibc-go/proto; do
+    if [[ -d "${dir}" ]]; then
+      targets+=("${dir}")
+    else
+      log_warning "Skipping missing protobuf directory: ${dir}"
+    fi
+  done
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    log_error "No protobuf directories were found to format."
+    return 1
+  fi
+
+  run_cmd find "${targets[@]}" -name '*.proto' -exec clang-format -i {} \;
 }
 
+# proto_lint: Run Buf lint from the Nibiru-owned proto module root.
 proto_lint() {
   log_info "Linting Protobuf files"
-  run_cmd docker run --rm \
-    -v "$(repo_root):/workspace" \
-    --workdir /workspace/proto \
-    "${PROTO_IMAGE}" \
-    buf lint --error-format=json "$@"
+  if [[ "${PRINT_CMD}" != "true" ]]; then
+    check_buf
+  fi
+  (
+    cd proto
+    run_cmd buf lint --error-format=json "$@"
+  )
 }
 
+# proto_all: Run formatting, linting, then generation in that order.
 proto_all() {
   proto_fmt
   proto_lint

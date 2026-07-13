@@ -38,7 +38,8 @@ service Query {
 
   // ChannelConsensusState queries for the consensus state for the channel
   // associated with the provided channel identifiers.
-  rpc ChannelConsensusState(QueryChannelConsensusStateRequest) returns (QueryChannelConsensusStateResponse) {
+  rpc ChannelConsensusState(QueryChannelConsensusStateRequest)
+      returns (QueryChannelConsensusStateResponse) {
     option (google.api.http).get = "/ibc/core/channel/v1/channels/{channel_id}/"
                                    "ports/{port_id}/consensus_state/revision/"
                                    "{revision_number}/height/{revision_height}";
@@ -65,14 +66,16 @@ service Query {
   }
 
   // PacketAcknowledgement queries a stored packet acknowledgement hash.
-  rpc PacketAcknowledgement(QueryPacketAcknowledgementRequest) returns (QueryPacketAcknowledgementResponse) {
+  rpc PacketAcknowledgement(QueryPacketAcknowledgementRequest)
+      returns (QueryPacketAcknowledgementResponse) {
     option (google.api.http).get = "/ibc/core/channel/v1/channels/{channel_id}/"
                                    "ports/{port_id}/packet_acks/{sequence}";
   }
 
   // PacketAcknowledgements returns all the packet acknowledgements associated
   // with a channel.
-  rpc PacketAcknowledgements(QueryPacketAcknowledgementsRequest) returns (QueryPacketAcknowledgementsResponse) {
+  rpc PacketAcknowledgements(QueryPacketAcknowledgementsRequest)
+      returns (QueryPacketAcknowledgementsResponse) {
     option (google.api.http).get = "/ibc/core/channel/v1/channels/{channel_id}/"
                                    "ports/{port_id}/packet_acknowledgements";
   }
@@ -94,7 +97,8 @@ service Query {
   }
 
   // NextSequenceReceive returns the next receive sequence for a given channel.
-  rpc NextSequenceReceive(QueryNextSequenceReceiveRequest) returns (QueryNextSequenceReceiveResponse) {
+  rpc NextSequenceReceive(QueryNextSequenceReceiveRequest)
+      returns (QueryNextSequenceReceiveResponse) {
     option (google.api.http).get = "/ibc/core/channel/v1/channels/{channel_id}/"
                                    "ports/{port_id}/next_sequence";
   }

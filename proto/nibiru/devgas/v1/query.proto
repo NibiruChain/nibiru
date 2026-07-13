@@ -19,8 +19,7 @@ service Query {
 
   // FeeShare retrieves a registered FeeShare for a given contract address
   rpc FeeShare(QueryFeeShareRequest) returns (QueryFeeShareResponse) {
-    option (google.api.http).get =
-        "/nibiru/devgas/v1/fee_shares/{contract_address}";
+    option (google.api.http).get = "/nibiru/devgas/v1/fee_shares/{contract_address}";
   }
 
   // Params retrieves the module params
@@ -32,8 +31,7 @@ service Query {
   // address
   rpc FeeSharesByWithdrawer(QueryFeeSharesByWithdrawerRequest)
       returns (QueryFeeSharesByWithdrawerResponse) {
-    option (google.api.http).get =
-        "/nibiru/devgas/v1/fee_shares/{withdrawer_address}";
+    option (google.api.http).get = "/nibiru/devgas/v1/fee_shares/{withdrawer_address}";
   }
 }
 
@@ -58,8 +56,7 @@ message QueryFeeSharesRequest {
 // method.
 message QueryFeeSharesResponse {
   // FeeShare is the slice of all stored Reveneue for the deployer
-  repeated nibiru.devgas.v1.FeeShare feeshare = 1
-      [ (gogoproto.nullable) = false ];
+  repeated nibiru.devgas.v1.FeeShare feeshare = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryFeeShareRequest is the request type for the Query/FeeShare RPC method.
@@ -71,7 +68,7 @@ message QueryFeeShareRequest {
 // QueryFeeShareResponse is the response type for the Query/FeeShare RPC method.
 message QueryFeeShareResponse {
   // FeeShare is a stored Reveneue for the queried contract
-  nibiru.devgas.v1.FeeShare feeshare = 1 [ (gogoproto.nullable) = false ];
+  nibiru.devgas.v1.FeeShare feeshare = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -80,7 +77,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params is the returned FeeShare parameter
-  nibiru.devgas.v1.ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.devgas.v1.ModuleParams params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryFeeSharesByWithdrawerRequest is the request type for the
@@ -93,6 +90,5 @@ message QueryFeeSharesByWithdrawerRequest {
 // QueryFeeSharesByWithdrawerResponse is the response type for the
 // Query/FeeSharesByWithdrawer RPC method.
 message QueryFeeSharesByWithdrawerResponse {
-  repeated nibiru.devgas.v1.FeeShare feeshare = 1
-      [ (gogoproto.nullable) = false ];
+  repeated nibiru.devgas.v1.FeeShare feeshare = 1 [(gogoproto.nullable) = false];
 }

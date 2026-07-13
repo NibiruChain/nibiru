@@ -1,0 +1,14 @@
+# Protobuf formatting configuration for clang-format, invoked by `just proto fmt`.
+# Unlike `buf format`, clang-format reads this file, so edit these rules to tune
+# the repository's protobuf style and rerun `just proto fmt` to apply them.
+---
+Language: Proto
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 100  # 0 disables this.
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+SpacesInSquareBrackets: true # True := [ (gogoproto...) ] instead of [(gogoproto...)]
+ReflowComments: true
+SortIncludes: true
+SortUsingDeclarations: true

@@ -16,7 +16,7 @@ message DenomAuthorityMetadata {
 
   // Admin: Bech32 address of the admin for the tokefactory denom. Can be empty
   // for no admin.
-  string admin = 1 [ (gogoproto.moretags) = "yaml:\"admin\"" ];
+  string admin = 1 [(gogoproto.moretags) = "yaml:\"admin\""];
 }
 
 // ModuleParams defines the parameters for the tokenfactory module.
@@ -49,7 +49,7 @@ message ModuleParams {
   // Adds gas consumption to the execution of `MsgCreateDenom` as a method of
   // spam prevention. Defaults to 10 NIBI.
   uint64 denom_creation_gas_consume = 1
-      [ (gogoproto.moretags) = "yaml:\"denom_creation_gas_consume\"" ];
+      [(gogoproto.moretags) = "yaml:\"denom_creation_gas_consume\""];
 }
 
 // TFDenom is a token factory (TF) denom. The canonical representation is
@@ -70,21 +70,17 @@ message TFDenom {
 
 // GenesisState for the Token Factory module.
 message GenesisState {
-  ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+  ModuleParams params = 1 [(gogoproto.nullable) = false];
 
-  repeated GenesisDenom factory_denoms = 2 [
-    (gogoproto.moretags) = "yaml:\"factory_denoms\"",
-    (gogoproto.nullable) = false
-  ];
+  repeated GenesisDenom factory_denoms = 2
+      [(gogoproto.moretags) = "yaml:\"factory_denoms\"", (gogoproto.nullable) = false];
 }
 
 // GenesisDenom defines a tokenfactory denoms in the genesis state.
 message GenesisDenom {
   option (gogoproto.equal) = true;
 
-  string denom = 1 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
-  DenomAuthorityMetadata authority_metadata = 2 [
-    (gogoproto.moretags) = "yaml:\"authority_metadata\"",
-    (gogoproto.nullable) = false
-  ];
+  string                 denom              = 1 [(gogoproto.moretags) = "yaml:\"denom\""];
+  DenomAuthorityMetadata authority_metadata = 2
+      [(gogoproto.moretags) = "yaml:\"authority_metadata\"", (gogoproto.nullable) = false];
 }

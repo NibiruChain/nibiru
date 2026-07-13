@@ -6,7 +6,6 @@ import "cosmos/app/v1alpha1/config.proto";
 
 // Query is the app module query service.
 service Query {
-
   // Config returns the current app config.
   rpc Config(QueryConfigRequest) returns (QueryConfigResponse) {}
 }
@@ -16,7 +15,6 @@ message QueryConfigRequest {}
 
 // QueryConfigRequest is the Query/Config response type.
 message QueryConfigResponse {
-
   // config is the current app config.
   Config config = 1;
 }

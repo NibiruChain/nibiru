@@ -6,7 +6,9 @@ import "cosmos/app/v1alpha1/module.proto";
 
 // Module is the config object for the auth module.
 message Module {
-  option (cosmos.app.v1alpha1.module) = {go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"};
+  option (cosmos.app.v1alpha1.module) = {
+    go_import: "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+  };
 
   // bech32_prefix is the bech32 account prefix for the app.
   string bech32_prefix = 1;
@@ -14,7 +16,8 @@ message Module {
   // module_account_permissions are module account permissions.
   repeated ModuleAccountPermission module_account_permissions = 2;
 
-  // authority defines the custom module authority. If not set, defaults to the governance module.
+  // authority defines the custom module authority. If not set, defaults to the
+  // governance module.
   string authority = 3;
 }
 

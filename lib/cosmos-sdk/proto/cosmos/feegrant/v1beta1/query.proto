@@ -24,7 +24,8 @@ service Query {
   // AllowancesByGranter returns all the grants given by an address
   //
   // Since: cosmos-sdk 0.46
-  rpc AllowancesByGranter(QueryAllowancesByGranterRequest) returns (QueryAllowancesByGranterResponse) {
+  rpc AllowancesByGranter(QueryAllowancesByGranterRequest)
+      returns (QueryAllowancesByGranterResponse) {
     option (google.api.http).get = "/cosmos/feegrant/v1beta1/issued/{granter}";
   }
 }
@@ -34,17 +35,20 @@ message QueryAllowanceRequest {
   // granter is the address of the user granting an allowance of their funds.
   string granter = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
-  // grantee is the address of the user being granted an allowance of another user's funds.
+  // grantee is the address of the user being granted an allowance of another
+  // user's funds.
   string grantee = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-// QueryAllowanceResponse is the response type for the Query/Allowance RPC method.
+// QueryAllowanceResponse is the response type for the Query/Allowance RPC
+// method.
 message QueryAllowanceResponse {
   // allowance is a allowance granted for grantee by granter.
   cosmos.feegrant.v1beta1.Grant allowance = 1;
 }
 
-// QueryAllowancesRequest is the request type for the Query/Allowances RPC method.
+// QueryAllowancesRequest is the request type for the Query/Allowances RPC
+// method.
 message QueryAllowancesRequest {
   string grantee = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
@@ -52,7 +56,8 @@ message QueryAllowancesRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryAllowancesResponse is the response type for the Query/Allowances RPC method.
+// QueryAllowancesResponse is the response type for the Query/Allowances RPC
+// method.
 message QueryAllowancesResponse {
   // allowances are allowance's granted for grantee by granter.
   repeated cosmos.feegrant.v1beta1.Grant allowances = 1;
@@ -61,7 +66,8 @@ message QueryAllowancesResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryAllowancesByGranterRequest is the request type for the Query/AllowancesByGranter RPC method.
+// QueryAllowancesByGranterRequest is the request type for the
+// Query/AllowancesByGranter RPC method.
 //
 // Since: cosmos-sdk 0.46
 message QueryAllowancesByGranterRequest {
@@ -71,7 +77,8 @@ message QueryAllowancesByGranterRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryAllowancesByGranterResponse is the response type for the Query/AllowancesByGranter RPC method.
+// QueryAllowancesByGranterResponse is the response type for the
+// Query/AllowancesByGranter RPC method.
 //
 // Since: cosmos-sdk 0.46
 message QueryAllowancesByGranterResponse {
