@@ -11,9 +11,9 @@ description: >-
 
 ## Nibiru Networks & RPC Endpoints  
 
-Easily configure your wallet, node, or dApp with Nibiru's network settings. Below are the RPC endpoints, network identifiers, and blockchain explorers for both the **mainnet** and **testnet**. For a full setup guide, including adding Nibiru as a custom network in your wallet, visit: [Nibiru Networks and RPCs](./networks/index.md).  
+Easily configure your wallet, node, or dApp with Nibiru's network settings. Below are the RPC endpoints, network identifiers, and blockchain explorers for **Nibiru** and **Nibiru Testnet**. For a full setup guide, including adding Nibiru as a custom network in your wallet, visit: [Nibiru Networks and RPCs](./networks/index.md).  
 
-| EVM Info | Nibiru **Mainnet**  | Nibiru **Testnet** |
+| EVM Info | Nibiru | Nibiru Testnet |
 | --- | --- | --- |
 | **EVM RPC** | [evm-rpc.nibiru.fi](https://evm-rpc.nibiru.fi) | [evm-rpc.testnet-2.nibiru.fi](https://evm-rpc.testnet-2.nibiru.fi) |
 | **EIP-155 Chain ID** | `6900` (`0x1AF4` in Hex) | `6911` (`0x1AFF` in Hex) |
@@ -64,7 +64,7 @@ written in Python.
 
 See the [Nibiru Architecure](../concepts/arch/index.md) for comprehensive documentation.
 
-Nibiru's Cosmos-SDK modules define the core logic for Nibi-Perps, Nibi-Swap, and the decentralized oracle network. Nibiru's modules are defined in the "x/" subfolder of the protocol's Golang code (e.g. the "evm" module is defined in the "x/evm" folder).
+Nibiru's Cosmos-SDK modules define the core logic for Nibi-Perps, Nibi-Swap, and the decentralized oracle network. Nibiru's modules are defined in the "x/" subfolder of the protocol's Golang code (e.g. the "oracle" module is defined in the "x/oracle" folder).
 
 ## Nibiru Discord Server
 

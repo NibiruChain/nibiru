@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -23,6 +24,20 @@ func (k Keeper) QuerySudoers(
 	return &sudo.QuerySudoersResponse{
 		Sudoers: sudoers,
 	}, err
+}
+
+// GetWasmBlockHooksContract returns the configured Wasm block-hooks contract
+// address and whether the address is present.
+func (k Keeper) GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool) {
+	contract := k.WasmBlockHooksContract.GetOr(ctx, "")
+	if contract == "" {
+		return nil, false
+	}
+	addr, err := sdk.AccAddressFromBech32(contract)
+	if err != nil {
+		return nil, false
+	}
+	return addr, true
 }
 
 func (k Keeper) GetZeroGasActors(ctx sdk.Context) sudo.ZeroGasActors {

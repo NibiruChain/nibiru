@@ -10,9 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
 // Prior to v2.7.0 on mainnet, WNIBI.sol is live as a contract, but the EVM
@@ -22,7 +22,7 @@ import (
 func (s *Suite2_7_0) TestMainnet() {
 	deps := evmtest.NewTestDeps()
 
-	deps.SetCtx(deps.Ctx().WithChainID("cataclysm-1")) // Pretend to be mainnet
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET)) // Pretend to be mainnet
 	s.Equal(
 		big.NewInt(appconst.ETH_CHAIN_ID_MAINNET).String(),
 		deps.EvmKeeper.EthChainID(deps.Ctx()).String(),

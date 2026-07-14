@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/omap"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
 
 type Suite struct {
@@ -125,7 +125,7 @@ func (s *Suite) TestGetSetDelete() {
 // generic value argument.
 type DummyValue struct{}
 
-// TestPair tests an SortedMap where the key is an asset.Pair.
+// TestPair tests an SortedMap where the key is an types.Pair.
 func (s *Suite) TestPair() {
 	pairStrs := []string{
 		"abc:xyz", "abc:abc", "aaa:bbb", "xyz:xyz", "bbb:ccc", "xyz:abc",
@@ -134,10 +134,10 @@ func (s *Suite) TestPair() {
 	sortedKeyStrs = append(sortedKeyStrs, pairStrs...)
 	sort.Strings(sortedKeyStrs)
 
-	sortedKeys := asset.MustNewPairs(sortedKeyStrs...)
-	pairs := asset.MustNewPairs(pairStrs...)
+	sortedKeys := types.MustNewPairs(sortedKeyStrs...)
+	pairs := types.MustNewPairs(pairStrs...)
 
-	unsortedMap := make(map[asset.Pair]DummyValue)
+	unsortedMap := make(map[types.Pair]DummyValue)
 	for _, pair := range pairs {
 		unsortedMap[pair] = DummyValue{}
 	}
@@ -145,9 +145,9 @@ func (s *Suite) TestPair() {
 	om := omap.SortedMap_Pair(unsortedMap)
 	s.Require().Equal(6, om.Len())
 	s.Require().EqualValues(sortedKeys, om.Keys())
-	s.Require().NotEqualValues(asset.PairsToStrings(sortedKeys), pairStrs)
+	s.Require().NotEqualValues(types.PairsToStrings(sortedKeys), pairStrs)
 
-	var pairsFromLoop []asset.Pair
+	var pairsFromLoop []types.Pair
 	for pair := range om.Range() {
 		pairsFromLoop = append(pairsFromLoop, pair)
 	}

@@ -1,17 +1,20 @@
 package wasmext
 
 import (
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 
 	sdkioerrors "cosmossdk.io/errors"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdkcodec "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // NibiruWasmOptions: Wasm Options are extension points to instantiate the Wasm
@@ -50,8 +53,13 @@ func (h SDKMessageHandler) handleSdkMessage(ctx sdk.Context, contractAddr sdk.Ad
 	}
 
 	msgTypeUrl := sdk.MsgTypeURL(msg)
-	if msgTypeUrl == sdk.MsgTypeURL(new(evm.MsgEthereumTx)) {
+	switch msgTypeUrl {
+	case sdk.MsgTypeURL(new(evm.MsgEthereumTx)):
 		return nil, sdkioerrors.Wrap(sdkerrors.ErrUnauthorized, "Wasm VM to EVM call pattern is not yet supported")
+	case sdk.MsgTypeURL(new(authz.MsgExec)),
+		sdk.MsgTypeURL(new(authz.MsgGrant)),
+		sdk.MsgTypeURL(new(authz.MsgRevoke)):
+		return nil, sdkioerrors.Wrapf(sdkerrors.ErrUnauthorized, "Wasm VM dispatch of %s is not allowed", msgTypeUrl)
 	}
 
 	// find the handler and execute it

@@ -6,13 +6,13 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
 )
 
 // GetEpochInfo returns epoch info by identifier.
-func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (epoch types.EpochInfo, err error) {
+func (k Keeper) GetEpochInfo(ctx sdk.Context, identifier string) (epoch epochs.EpochInfo, err error) {
 	epoch, err = k.Epochs.Get(ctx, identifier)
 	if err != nil {
 		err = fmt.Errorf("epoch with identifier %s not found", identifier)
@@ -31,7 +31,7 @@ func (k Keeper) EpochExists(ctx sdk.Context, identifier string) bool {
 // AddEpochInfo adds a new epoch info. Will return an error if the epoch fails validation,
 // or re-uses an existing identifier.
 // This method also sets the start time if left unset, and sets the epoch start height.
-func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch types.EpochInfo) error {
+func (k Keeper) AddEpochInfo(ctx sdk.Context, epoch epochs.EpochInfo) error {
 	if err := epoch.Validate(); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (k Keeper) DeleteEpochInfo(ctx sdk.Context, identifier string) (err error) 
 // IterateEpochInfo iterate through epochs.
 func (k Keeper) IterateEpochInfo(
 	ctx sdk.Context,
-	fn func(index int64, epochInfo types.EpochInfo) (stop bool),
+	fn func(index int64, epochInfo epochs.EpochInfo) (stop bool),
 ) {
 	iterate := k.Epochs.Iterate(ctx, &collections.Range[string]{})
 	i := int64(0)
@@ -79,11 +79,11 @@ func (k Keeper) IterateEpochInfo(
 }
 
 // AllEpochInfos iterate through epochs to return all epochs info.
-func (k Keeper) AllEpochInfos(ctx sdk.Context) []types.EpochInfo {
-	var epochs []types.EpochInfo
-	k.IterateEpochInfo(ctx, func(index int64, epochInfo types.EpochInfo) (stop bool) {
-		epochs = append(epochs, epochInfo)
+func (k Keeper) AllEpochInfos(ctx sdk.Context) []epochs.EpochInfo {
+	var infos []epochs.EpochInfo
+	k.IterateEpochInfo(ctx, func(index int64, epochInfo epochs.EpochInfo) (stop bool) {
+		infos = append(infos, epochInfo)
 		return false
 	})
-	return epochs
+	return infos
 }

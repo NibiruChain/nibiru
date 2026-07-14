@@ -9,95 +9,100 @@ import (
 	"path/filepath"
 
 	"cosmossdk.io/depinject"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
-	"github.com/cosmos/cosmos-sdk/client/grpc/node"
-	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	"github.com/cosmos/cosmos-sdk/server/api"
-	"github.com/cosmos/cosmos-sdk/server/config"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/streaming"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/cosmos/cosmos-sdk/x/auth"
-	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	distr "github.com/cosmos/cosmos-sdk/x/distribution"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
-	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/grpc/node"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/grpc/tmservice"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/api"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/config"
+	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/streaming"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+	authsims "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/simulation"
+	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	authzmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability"
+	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
+	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
+	distr "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution"
+	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence"
+	feegrantmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	paramsclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/client"
+	paramstypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+
+	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
+	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	ibctransfer "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer"
+	ibctransferkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	ibc "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core"
+	ibcclientclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/client"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	ibctm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/07-tendermint"
+	ibcwasm "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
+
+	"github.com/NibiruChain/nibiru/v2/x/wasm"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmmodule"
+	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmmodule"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/epochsmod"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
-	"github.com/NibiruChain/nibiru/v2/x/inflation"
-	inflationtypes "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
+	"github.com/NibiruChain/nibiru/v2/x/mint/mintmod"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	oracle "github.com/NibiruChain/nibiru/v2/x/oracle"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemod"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
@@ -107,8 +112,9 @@ import (
 )
 
 const (
-	appName      = "Nibiru"
-	DisplayDenom = "NIBI"
+	appName                  = "Nibiru"
+	DisplayDenom             = "NIBI"
+	deprecatedIBCFeeStoreKey = "feeibc"
 )
 
 var (
@@ -145,12 +151,11 @@ var (
 		ibctm.AppModuleBasic{},
 		ica.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
-		ibcfee.AppModuleBasic{},
 		// native x/
 		evmmodule.AppModuleBasic{},
-		oracle.AppModuleBasic{},
-		epochs.AppModuleBasic{},
-		inflation.AppModuleBasic{},
+		oraclemod.AppModuleBasic{},
+		epochsmod.AppModuleBasic{},
+		mintmod.AppModuleBasic{},
 		sudomodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		devgas.AppModuleBasic{},
@@ -162,17 +167,16 @@ var (
 	maccPerms = map[string][]string{
 		authtypes.FeeCollectorName:     nil,
 		distrtypes.ModuleName:          nil,
-		inflationtypes.ModuleName:      {authtypes.Minter, authtypes.Burner},
+		mint.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		oracletypes.ModuleName:         {},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		ibcfeetypes.ModuleName:         {},
 		icatypes.ModuleName:            {},
 
 		evm.ModuleName:                  {authtypes.Minter, authtypes.Burner},
-		epochstypes.ModuleName:          {},
+		epochs.ModuleName:               {},
 		sudo.ModuleName:                 {},
 		nutil.TreasuryPoolModuleAccount: {},
 		wasmtypes.ModuleName:            {authtypes.Burner},
@@ -186,9 +190,9 @@ var (
 	_ ibctesting.TestingApp   = (*NibiruApp)(nil)
 )
 
-// NibiruApp extends an ABCI application, but with most of its parameters exported.
-// They are exported for convenience in creating helper functions, as object
-// capabilities aren't needed for testing.
+// NibiruApp extends an ABCI application, but with most of its parameters
+// exported. They are exported for convenience in creating helper functions, as
+// object capabilities aren't needed for testing.
 type NibiruApp struct {
 	*runtime.App
 
@@ -198,8 +202,8 @@ type NibiruApp struct {
 	interfaceRegistry codectypes.InterfaceRegistry
 
 	// keys to access the substores
-	// TODO(k-yang): remove once depinject is fully integrated
-	keys map[string]*storetypes.KVStoreKey
+	keys  map[string]*storetypes.KVStoreKey
+	tkeys map[string]*storetypes.TransientStoreKey
 
 	AppKeepers // embed all module keepers
 
@@ -261,39 +265,66 @@ func NewNibiruApp(
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
-	var (
-		app        = &NibiruApp{}
-		appBuilder *runtime.AppBuilder
-		appConfig  = depinject.Configs(
-			AppConfig,
-			depinject.Supply(
-				// supply the application options
-				appOpts,
+	app := &NibiruApp{
+		keys: sdk.NewKVStoreKeys(
+			// ibc keys
+			ibctransfertypes.StoreKey,
+			// Retain the empty historical ICS-29 store as an inert tombstone.
+			deprecatedIBCFeeStoreKey,
+			ibcexported.StoreKey,
+			icahosttypes.StoreKey,
+			icacontrollertypes.StoreKey,
+			ibcwasmtypes.StoreKey,
 
-				// ADVANCED CONFIGURATION
+			// nibiru x/ keys
+			epochs.StoreKey,
+			oracletypes.StoreKey,
+			mint.StoreKey,
+			sudo.StoreKey,
+			evm.StoreKey,
+			wasmtypes.StoreKey,
+			devgastypes.StoreKey,
+			tokenfactorytypes.StoreKey,
+		),
+		tkeys: sdk.NewTransientStoreKeys(
+			evm.TransientKey,
+		),
+	}
+	var appBuilder *runtime.AppBuilder
 
-				//
-				// AUTH
-				//
-				// For providing a custom function required in auth to generate custom account types
-				// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
-				//
-				// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+	encodingConfig := MakeEncodingConfig()
+	app.SudoKeeper = sudokeeper.NewKeeper(encodingConfig.Codec, app.keys[sudo.StoreKey])
 
-				// For providing a custom a base account type add it below.
-				// By default the auth module uses authtypes.ProtoBaseAccount().
-				//
-				func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+	appConfig := depinject.Configs(
+		depinject.Supply(
+			// supply the application options
+			appOpts,
+			app.SudoKeeper,
 
-				//
-				// MINT
-				//
+			// ADVANCED CONFIGURATION
 
-				// For providing a custom inflation function for x/mint add here your
-				// custom function that implements the minttypes.InflationCalculationFn
-				// interface.
-			),
-		)
+			//
+			// AUTH
+			//
+			// For providing a custom function required in auth to generate custom account types
+			// add it below. By default the auth module uses simulation.RandomGenesisAccounts.
+			//
+			// authtypes.RandomGenesisAccountsFn(simulation.RandomGenesisAccounts),
+
+			// For providing a custom a base account type add it below.
+			// By default the auth module uses authtypes.ProtoBaseAccount().
+			//
+			func() authtypes.AccountI { return eth.ProtoBaseAccount() },
+
+			//
+			// MINT
+			//
+
+			// For providing a custom inflation function for x/mint add here your
+			// custom function that implements the minttypes.InflationCalculationFn
+			// interface.
+		),
+		AppConfig,
 	)
 
 	if err := depinject.Inject(appConfig,
@@ -316,32 +347,18 @@ func NewNibiruApp(
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.ConsensusParamsKeeper,
-		&app.SudoKeeper,
-		&app.OracleKeeper,
-		&app.EpochsKeeper,
-		&app.InflationKeeper,
-		&app.EvmKeeper,
-		&app.TokenFactoryKeeper,
 	); err != nil {
 		panic(err)
 	}
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
-	// init non-depinject keys
-	app.keys = sdk.NewKVStoreKeys(
-		// ibc keys
-		ibctransfertypes.StoreKey,
-		ibcfeetypes.StoreKey,
-		ibcexported.StoreKey,
-		icahosttypes.StoreKey,
-		icacontrollertypes.StoreKey,
-		ibcwasmtypes.StoreKey,
-
-		// nibiru x/ keys
-		wasmtypes.StoreKey,
-		devgastypes.StoreKey,
-	)
+	// register non-depinject keys
 	for _, k := range app.keys {
+		if err := app.RegisterStores(k); err != nil {
+			panic(err)
+		}
+	}
+	for _, k := range app.tkeys {
 		if err := app.RegisterStores(k); err != nil {
 			panic(err)
 		}
@@ -352,18 +369,23 @@ func NewNibiruApp(
 	// register non-depinject modules
 	if err := app.RegisterModules(
 		// Nibiru modules
+		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
+		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
+		mintmod.NewAppModule(app.InflationKeeper, app.AccountKeeper, *app.StakingKeeper),
+		sudomodule.NewAppModule(app.appCodec, app.SudoKeeper),
+		evmmodule.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		genmsg.NewAppModule(app.MsgServiceRouter()),
 
 		// ibc
-		ibc.NewAppModule(app.ibcKeeper),
+		ibc.NewAppModule(app.IbcKeeper),
 		ibctransfer.NewAppModule(app.ibcTransferKeeper),
-		ibcfee.NewAppModule(app.ibcFeeKeeper),
 		ica.NewAppModule(&app.icaControllerKeeper, &app.icaHostKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
 
 		// wasm
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
+		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
 	); err != nil {
 		panic(err)
 	}
@@ -409,16 +431,10 @@ func NewNibiruApp(
 
 	app.sm.RegisterStoreDecoders()
 
-	// A custom InitChainer can be set if extra pre-init-genesis logic is required.
-	// By default, when using app wiring enabled module, this is not required.
-	// For instance, the upgrade module will set automatically the module version map in its init genesis thanks to app wiring.
-	// However, when registering a module manually (i.e. that does not support app wiring), the module version map
-	// must be set manually as follow. The upgrade module will de-duplicate the module version map.
-	//
-	// app.SetInitChainer(func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
-	// 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	// 	return app.App.InitChainer(ctx, req)
-	// })
+	// Register the init chainer after manual modules are added to ModuleManager.
+	// The upgrade module's depinject path only seeds versions for app-wired modules,
+	// so InitChainer writes the full ModuleManager version map before InitGenesis.
+	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
 	app.SetAnteHandler(NewAnteHandler(app.AppKeepers, ante.AnteHandlerOptions{
@@ -430,7 +446,7 @@ func NewNibiruApp(
 			SigGasConsumer:         authante.DefaultSigVerificationGasConsumer,
 			ExtensionOptionChecker: func(*codectypes.Any) bool { return true },
 		},
-		IBCKeeper:         app.ibcKeeper,
+		IBCKeeper:         app.IbcKeeper,
 		TxCounterStoreKey: app.keys[wasmtypes.StoreKey],
 		WasmConfig:        &wasmConfig,
 		DevGasKeeper:      &app.DevGasKeeper,
@@ -615,12 +631,30 @@ func (app *NibiruApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
-func (app *NibiruApp) GetStakingKeeper() types.StakingKeeper {
+func (app *NibiruApp) GetStakingKeeper() *stakingkeeper.Keeper {
 	return app.StakingKeeper
 }
 
 func (app *NibiruApp) GetIBCKeeper() *ibckeeper.Keeper {
-	return app.ibcKeeper
+	return app.IbcKeeper
+}
+
+// These keeper getters satisfy the first-party Wasm IBC test harness interface.
+// Production code should prefer direct field access on NibiruApp.
+func (app *NibiruApp) GetWasmKeeper() wasmkeeper.Keeper {
+	return app.WasmKeeper
+}
+
+func (app *NibiruApp) GetBankKeeper() bankkeeper.Keeper {
+	return app.BankKeeper
+}
+
+func (app *NibiruApp) GetAccountKeeper() authkeeper.AccountKeeper {
+	return app.AccountKeeper
+}
+
+func (app *NibiruApp) GetTransferKeeper() ibctransferkeeper.Keeper {
+	return app.ibcTransferKeeper
 }
 
 func (app *NibiruApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {

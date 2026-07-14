@@ -12,9 +12,11 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	db "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/cosmos-sdk/version"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
+
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 const (
@@ -76,6 +78,9 @@ func RuntimeVersion() string {
 
 // EIP 155 Chain IDs for Nibiru
 const (
+	// SDK_CHAIN_ID_MAINNET is the CometBFT / Cosmos SDK chain ID for Nibiru mainnet.
+	SDK_CHAIN_ID_MAINNET = "cataclysm-1"
+
 	ETH_CHAIN_ID_MAINNET int64 = 6900
 
 	ETH_CHAIN_ID_TESTNET_1 int64 = 7210
@@ -97,7 +102,7 @@ const (
 // knownEthChainIDMap maps `sdk.Context` chain IDs to their corresponding EIP-155
 // Ethereum Chain IDs, which must be positive integers.
 var knownEthChainIDMap = map[string]int64{
-	"cataclysm-1": ETH_CHAIN_ID_MAINNET,
+	SDK_CHAIN_ID_MAINNET: ETH_CHAIN_ID_MAINNET,
 
 	"nibiru-testnet-1": ETH_CHAIN_ID_TESTNET_1,
 	"nibiru-testnet-2": ETH_CHAIN_ID_TESTNET_2,

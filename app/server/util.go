@@ -9,9 +9,9 @@ import (
 
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 
-	sdkserver "github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/version"
+	sdkserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
 	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	tmlog "github.com/cometbft/cometbft/libs/log"

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/nutil/asset"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
 )
@@ -31,9 +31,9 @@ func TestParams(t *testing.T) {
 	slashWindow := uint64(1000)
 	minValidPerWindow := sdkmath.LegacyNewDecWithPrec(1, 4)
 	minFeeRatio := sdkmath.LegacyNewDecWithPrec(1, 2)
-	whitelist := []asset.Pair{
-		asset.NewPair(denoms.BTC, denoms.NUSD),
-		asset.NewPair(denoms.ETH, denoms.NUSD),
+	whitelist := []types.Pair{
+		types.NewPair(denoms.BTC, denoms.NUSD),
+		types.NewPair(denoms.ETH, denoms.NUSD),
 	}
 
 	// Should really test validateParams, but skipping because obvious
@@ -66,13 +66,13 @@ func TestMergeOracleParams(t *testing.T) {
 	oracleRewardBand := sdk.NewDecWithPrec(1, 2)
 	changedRewardBand := sdk.NewDecWithPrec(2, 2)
 
-	whitelist := []asset.Pair{
-		asset.NewPair(denoms.BTC, denoms.NUSD),
-		asset.NewPair(denoms.ETH, denoms.NUSD),
+	whitelist := []types.Pair{
+		types.NewPair(denoms.BTC, denoms.NUSD),
+		types.NewPair(denoms.ETH, denoms.NUSD),
 	}
-	chagedWhitelist := []asset.Pair{
-		asset.NewPair(denoms.ATOM, denoms.NUSD),
-		asset.NewPair(denoms.ADA, denoms.NUSD),
+	chagedWhitelist := []types.Pair{
+		types.NewPair(denoms.ATOM, denoms.NUSD),
+		types.NewPair(denoms.ADA, denoms.NUSD),
 	}
 
 	slashFraction := sdk.NewDecWithPrec(1, 2)
@@ -229,7 +229,7 @@ func TestMergeOracleParams(t *testing.T) {
 			name: "empty whitelist not updated",
 			msg: &types.MsgEditOracleParams{
 				Params: &types.OracleParamsMsg{
-					Whitelist: []asset.Pair{},
+					Whitelist: []types.Pair{},
 				},
 			},
 			require: func(params types.Params) {

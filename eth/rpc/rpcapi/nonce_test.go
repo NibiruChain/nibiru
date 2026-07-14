@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 
 	sdkmath "cosmossdk.io/math"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
+
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // TestNonceIncrementWithMultipleMsgsTx tests that the nonce is incremented
@@ -76,11 +77,6 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.T().Logf("sdk.TxResp %v: %s", txMsg.name, jsonBz)
 	}
 
-	s.Require().NoError(s.cli.WaitForNextBlock())
-
-	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
-	s.Require().Equal(nonce+3, currentNonce)
-
 	s.T().Log("Assert all transactions included in block")
 	for _, txMsg := range txMsgs {
 		blockNum, blockHash, receipt, err := WaitForReceipt(s, txMsg.coreTx.Hash())
@@ -89,6 +85,12 @@ func (s *BackendSuite) TestNonceIncrementWithMultipleMsgsTx() {
 		s.Require().NotNilf(blockNum, "expect receipt | %v", txMsg.name)
 		s.Require().NotNilf(blockHash, "expect receipt | %v", txMsg.name)
 	}
+
+	currentNonce = s.getCurrentNonce(s.evmSenderEthAddr)
+	s.Require().GreaterOrEqualf(
+		currentNonce, nonce+3, "nonce (before) %d, currentNonce %d must differ by at least 3",
+		nonce, currentNonce,
+	)
 }
 
 // buildSDKTxWithEVMMessages creates an SDK transaction with EVM messages

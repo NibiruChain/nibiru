@@ -15,7 +15,9 @@
 ARG src=base
 
 # ----- Stage "build-base" ----------
-FROM golang:1.24 AS build-base
+FROM golang:1.25 AS build-base
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /nibiru
 
@@ -24,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
-COPY ["internal/", "./internal/"]
+COPY ["lib/wasmvm-ffi/", "./lib/wasmvm-ffi/"]
 RUN go mod download
 
 COPY . .
@@ -32,7 +34,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg \
     --mount=type=cache,target=/nibiru/temp \
-    make build && cp build/nibid /root/
+    bash contrib/scripts/build-nibiru.sh --run --just-build && cp build/nibid /root/
 
 # ----- Stage "build-external" 
 # Binary Copy (External Build)

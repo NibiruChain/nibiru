@@ -9,19 +9,16 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {
-  nibiru.oracle.v1.Params params = 1 [(gogoproto.nullable) = false];
+  nibiru.oracle.v1.Params params                                = 1 [(gogoproto.nullable) = false];
   repeated nibiru.oracle.v1.FeederDelegation feeder_delegations = 2 [(gogoproto.nullable) = false];
-  repeated nibiru.oracle.v1.ExchangeRateTuple exchange_rates = 3 [
-    (gogoproto.castrepeated) = "ExchangeRateTuples",
-    (gogoproto.nullable) = false
-  ];
+  repeated nibiru.oracle.v1.ExchangeRateTuple exchange_rates    = 3
+      [(gogoproto.castrepeated) = "ExchangeRateTuples", (gogoproto.nullable) = false];
   repeated nibiru.oracle.v1.MissCounter miss_counters = 4 [(gogoproto.nullable) = false];
-  repeated nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_exchange_rate_prevotes = 5 [(gogoproto.nullable) = false];
-  repeated nibiru.oracle.v1.AggregateExchangeRateVote aggregate_exchange_rate_votes = 6 [(gogoproto.nullable) = false];
-  repeated string pairs = 7 [
-    (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/x/nutil/asset.Pair",
-    (gogoproto.nullable) = false
-  ];
+  repeated nibiru.oracle.v1.AggregateExchangeRatePrevote aggregate_exchange_rate_prevotes = 5
+      [(gogoproto.nullable) = false];
+  repeated nibiru.oracle.v1.AggregateExchangeRateVote aggregate_exchange_rate_votes = 6
+      [(gogoproto.nullable) = false];
+  repeated string pairs = 7 [(gogoproto.customtype) = "Pair", (gogoproto.nullable) = false];
   repeated nibiru.oracle.v1.Rewards rewards = 8 [(gogoproto.nullable) = false];
 }
 
@@ -29,7 +26,7 @@ message GenesisState {
 // delegated to. By default this struct is only used at genesis to feed in
 // default feeder addresses.
 message FeederDelegation {
-  string feeder_address = 1;
+  string feeder_address    = 1;
   string validator_address = 2;
 }
 
@@ -37,5 +34,5 @@ message FeederDelegation {
 // oracle module's genesis state
 message MissCounter {
   string validator_address = 1;
-  uint64 miss_counter = 2;
+  uint64 miss_counter      = 2;
 }

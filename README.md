@@ -1,8 +1,8 @@
 # Nibiru
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/NibiruChain/nibiru.svg)](https://pkg.go.dev/github.com/NibiruChain/nibiru/v2#section-readme)
-[![Nibiru Test workflow][badge-go-linter]][workflow-go-linter]
-[![Nibiru Test workflow][badge-go-releaser]][workflow-go-releaser]
+[![Core Tests][badge-core-tests]][workflow-core-tests]
+[![Latest release][badge-release-latest]][release-latest]
 [![GitHub][license-badge]](https://github.com/NibiruChain/nibiru/blob/main/LICENSE.md)
 
 **Nibiru** is a breakthrough Layer 1 blockchain and smart contract ecosystem providing superior throughput, improved security, and a high-performance EVM execution layer. Nibiru aims to be the most developer-friendly and user-friendly smart contract ecosystem, leading the charge toward mainstream Web3 adoption by innovating at each layer of the stack: dApp development, scalable blockchain data indexing, consensus optimizations, a comprehensive developer toolkit, and composability across multiple VMs.
@@ -47,7 +47,7 @@ These sections of the codebase extend or augment core runtime behavior.
 
 | Module | Description |
 | --- | --- |
-| [EVM](https://github.com/NibiruChain/nibiru/tree/main/x/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
+| [EVM](https://github.com/NibiruChain/nibiru/tree/main/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
 | [Wasm][code-x-wasm]           | Implements the execution environment for WebAssembly (WASM) smart contracts. CosmWasm smart contracts are Rust-based, Wasm smart contracts built for enhanced security, performance, and interoperability. See our [CosmWasm sandbox monorepo (nibiru-wasm)](https://github.com/NibiruChain/nibiru-wasm/tree/main) for the protocol's core smart contracts. |
 | [Eth][code-x-eth]             | Ethereum integration utilities: EVM JSON-RPC server (HTTP/WebSocket) and APIs (eth/net/web3/debug/txpool), EVM transaction indexer for fast lookups, EIP-155 chain IDs, and EIP-712 signing helpers. See also [server][code-app-server] for JSON-RPC bootstrap and config. |
 | [App][code-app]               | Core application logic including custom ante handlers for transaction preprocessing, gas management, signature verification, and EVM integration. Key features include oracle gas optimization, zero-gas actors, and enhanced security guards. |
@@ -69,7 +69,7 @@ These sections of the codebase extend or augment core runtime behavior.
 [code-x-inflation]: https://github.com/NibiruChain/nibiru/tree/main/x/inflation
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/main/x/oracle
 [code-x-wasm]: https://nibiru.fi/docs/wasm/
-[code-x-evm]: https://github.com/NibiruChain/nibiru/tree/main/x/evm
+[code-x-evm]: https://github.com/NibiruChain/nibiru/tree/main/evm
 [code-x-eth]: https://github.com/NibiruChain/nibiru/tree/main/eth
 [code-app-server]: https://github.com/NibiruChain/nibiru/tree/main/app/server
 [code-app]: https://github.com/NibiruChain/nibiru/tree/main/app
@@ -141,10 +141,10 @@ Usage instructions for the `nibid` CLI are available at [nibiru.fi/docs/dev/cli]
 Unless a file notes otherwise, it will fall under the [BSD-2-Clause License](./LICENSE.md).  
 
 [license-badge]: https://img.shields.io/badge/License-BSD--2--Clause-blue
-[badge-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml/badge.svg?query=branch%3Amain
-[workflow-go-linter]: https://github.com/NibiruChain/nibiru/actions/workflows/golangci-lint.yml?query=branch%3Amain
-[badge-go-releaser]: https://github.com/NibiruChain/nibiru/actions/workflows/goreleaser.yml/badge.svg?query=branch%3Amain
-[workflow-go-releaser]: https://github.com/NibiruChain/nibiru/actions/workflows/goreleaser.yml?query=branch%3Amain
+[badge-core-tests]: https://github.com/NibiruChain/nibiru/actions/workflows/test-core.yml/badge.svg?query=branch%3Amain
+[workflow-core-tests]: https://github.com/NibiruChain/nibiru/actions/workflows/test-core.yml?query=branch%3Amain
+[badge-release-latest]: https://img.shields.io/github/v/release/NibiruChain/nibiru
+[release-latest]: https://github.com/NibiruChain/nibiru/releases/latest
 [social-twitter]: https://x.com/NibiruChain
 [social-discord]: https://discord.gg/nibirufi
 [social-telegram]: https://t.me/nibiruchain

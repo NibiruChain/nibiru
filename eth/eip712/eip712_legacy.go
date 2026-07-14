@@ -11,10 +11,11 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
@@ -172,7 +173,7 @@ type CosmosAnyWrapper struct {
 // list of types that can be understood in Ethereum's type system.
 func legacyTraverseFields(
 	// cdc: A codec capable of unpackaing protobuf
-	// `"github.com/cosmos/cosmos-sdk/codec/types".Any` types into Go
+	// `"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types".Any` types into Go
 	// structs.
 	cdc codectypes.AnyUnpacker,
 	// typeMap: map storing type descriptions

@@ -52,8 +52,8 @@ message MsgCreateDenomResponse {
 // MsgChangeAdmin is the sdk.Msg type for allowing an admin account to change
 // admin of a denom to a new account
 message MsgChangeAdmin {
-  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
-  string denom = 2 [(gogoproto.moretags) = "yaml:\"denom\""];
+  string sender    = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  string denom     = 2 [(gogoproto.moretags) = "yaml:\"denom\""];
   string new_admin = 3 [(gogoproto.moretags) = "yaml:\"new_admin\""];
 }
 
@@ -78,16 +78,11 @@ message MsgUpdateModuleParamsResponse {}
 message MsgMint {
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // coin: The denom identifier and amount to mint.
-  cosmos.base.v1beta1.Coin coin = 2 [
-    (gogoproto.moretags) = "yaml:\"coin\"",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin coin = 2
+      [(gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false];
   // mint_to_addr: An address to which tokens will be minted. If blank,
   // tokens are minted to the "sender".
-  string mint_to = 3 [
-    (gogoproto.moretags) = "yaml:\"mint_to\"",
-    (gogoproto.nullable) = true
-  ];
+  string mint_to = 3 [(gogoproto.moretags) = "yaml:\"mint_to\"", (gogoproto.nullable) = true];
 }
 
 message MsgMintResponse {
@@ -102,10 +97,8 @@ message MsgMintResponse {
 message MsgBurn {
   string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
   // coin: The denom identifier and amount to burn.
-  cosmos.base.v1beta1.Coin coin = 2 [
-    (gogoproto.moretags) = "yaml:\"coin\"",
-    (gogoproto.nullable) = false
-  ];
+  cosmos.base.v1beta1.Coin coin = 2
+      [(gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false];
   // burn_from: The address from which tokens will be burned.
   string burn_from = 3 [(gogoproto.moretags) = "yaml:\"burn_from\""];
 }
@@ -124,9 +117,8 @@ message MsgSetDenomMetadata {
 
 message MsgSetDenomMetadataResponse {}
 
-// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
-// bank metadata.
-// [SUDO] Only callable by sudoers.
+// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to
+// change bank metadata. [SUDO] Only callable by sudoers.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought
@@ -149,11 +141,9 @@ message MsgSudoSetDenomMetadataResponse {}
 
 // Burn a native token such as unibi
 message MsgBurnNative {
-  string sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
-  cosmos.base.v1beta1.Coin coin = 2 [
-    (gogoproto.moretags) = "yaml:\"coin\"",
-    (gogoproto.nullable) = false
-  ];
+  string                   sender = 1 [(gogoproto.moretags) = "yaml:\"sender\""];
+  cosmos.base.v1beta1.Coin coin   = 2
+      [(gogoproto.moretags) = "yaml:\"coin\"", (gogoproto.nullable) = false];
 }
 
 message MsgBurnNativeResponse {}

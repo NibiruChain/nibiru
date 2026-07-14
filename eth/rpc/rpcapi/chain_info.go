@@ -7,7 +7,6 @@ import (
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -15,9 +14,11 @@ import (
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 	pkgerrors "github.com/pkg/errors"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.

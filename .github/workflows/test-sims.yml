@@ -13,10 +13,10 @@ jobs:
   test-sim-nondeterminism:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           cache: true
       - name: TestAppStateDeterminism
         run: |
@@ -25,10 +25,10 @@ jobs:
   test-sim-default-genesis-fast:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           cache: true
       - name: TestFullAppSimulation
         run: |
@@ -37,10 +37,10 @@ jobs:
   test-sim-import-export:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           cache: true
       - name: TestAppImportExport
         run: |
@@ -49,10 +49,10 @@ jobs:
   test-sim-after-import:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24
+          go-version-file: go.mod
           cache: true
       - name: TestAppSimulationAfterImport
         run: |

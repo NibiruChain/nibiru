@@ -4,16 +4,17 @@ import (
 	"context"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdktypestx "github.com/cosmos/cosmos-sdk/types/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"google.golang.org/grpc"
 
+	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdkclienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdktypestx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
 )
 
 func BroadcastMsgsWithSeq(
@@ -35,7 +36,7 @@ func BroadcastMsgsWithSeq(
 		return nil, err
 	}
 
-	bondDenom := denoms.NIBI
+	bondDenom := appconst.DENOM_UNIBI
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(bondDenom, sdk.NewInt(1000))))
 	txBuilder.SetGasLimit(uint64(2 * nutil.TO_MICRO))
 

@@ -3,42 +3,43 @@ package upgrades_test
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	sdkmath "cosmossdk.io/math"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/stretchr/testify/require"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
+
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	nutiltestutil "github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 const (
 	artifactDir             = "testdata"
 	artifactCW3FlexMultisig = "cw3_flex_multisig.wasm"
 	artifactCW4Group        = "cw4_group.wasm"
+)
 
-	chainIDMainnet = "cataclysm-1"
+var (
+	addrLegacyMultisig = upgrades.AddrCfg_v2_14.LegacyMultisig.String()
+	addrKevinNanoS     = upgrades.AddrCfg_v2_14.KevinNanoS.String()
 
-	addrLegacyMultisig = "nibi1xfdlvvmx03nyav4840z25m33qrwzy67p4eadn7"
-	addrKevinNanoS     = "nibi1w3s6gdtt09ekhmwzfszc6qtxh298fstu895gn8"
+	addrTreasuryAddSigner = upgrades.AddrCfg_v2_14.TreasuryAddSigner.String()
+	addrGimeno            = upgrades.AddrCfg_v2_14.TreasuryRemoveSigners[0].String()
+	addrJC                = upgrades.AddrCfg_v2_14.TreasuryRemoveSigners[1].String()
 
-	addrTreasuryAddSigner = "nibi1cj6edencz3tetxuwkxcdrlfwpg8cr02ef3uvz2"
-	addrGimeno            = "nibi1wwhdx03msygelmm8tm5z6nzh4dklwkettwd5vj"
-	addrJC                = "nibi1aj6vgnj5hh0ehe5memz0f38z2lla2z5gdj5vst"
+	addrLayerZeroUSDCeAdapter = upgrades.AddrCfg_v2_14.LayerZeroOFTAdapters[0]
+	addrLayerZeroWNIBIAdapter = upgrades.AddrCfg_v2_14.LayerZeroOFTAdapters[1]
 )
 
 // TestUpgrade2_14_0_HappyPath stores and instantiates real CW4 group and CW3
@@ -48,7 +49,7 @@ const (
 // supplied by mainnet.
 func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithChainID(chainIDMainnet))
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 	ctx := deps.Ctx()
 
 	legacyMultisig := mustAccAddress(addrLegacyMultisig)
@@ -101,7 +102,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	)
 	executeCW4UpdateAdmin(t, deps, hotWalletCW4, kevinNanoS, hotWalletCW3)
 
-	hotWalletBalance := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.NewInt(34_508_752_254)))
+	hotWalletBalance := sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.NewInt(34_508_752_254)))
 	require.NoError(t, testapp.FundAccount(deps.App.BankKeeper, ctx, hotWalletCW3, hotWalletBalance))
 	require.True(t, deps.App.BankKeeper.GetAllBalances(ctx, treasuryCW3).IsZero())
 
@@ -112,7 +113,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	}()
 
 	eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
-	require.NoError(t, runUpgradeForTest(deps, upgrades.Upgrade2_14_0))
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 	eventsInUpgrade := nutiltestutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())
 	eventsJSON, err := json.MarshalIndent(eventsInUpgrade, "", "  ")
 	require.NoError(t, err)
@@ -144,6 +145,66 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	require.Equal(t, treasuryCW3.String(), contractAdmin(t, deps, hotWalletCW4))
 	require.True(t, deps.App.BankKeeper.GetAllBalances(ctx, hotWalletCW3).IsZero())
 	require.Equal(t, hotWalletBalance, deps.App.BankKeeper.GetAllBalances(ctx, treasuryCW3))
+}
+
+func TestUpgrade2_14_0_AddsLayerZeroAdaptersToZeroGasActorsMainnet(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
+
+	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:                []string{addrTreasuryAddSigner},
+		Contracts:              []string{addrLegacyMultisig},
+		AlwaysZeroGasContracts: []string{existingAlwaysZeroGas},
+	})
+
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
+
+	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
+	require.Equal(t, []string{addrTreasuryAddSigner}, actors.Senders)
+	require.Equal(t, []string{addrLegacyMultisig}, actors.Contracts)
+	require.Equal(t, []string{
+		existingAlwaysZeroGas,
+		addrLayerZeroUSDCeAdapter,
+		addrLayerZeroWNIBIAdapter,
+	}, actors.AlwaysZeroGasContracts)
+}
+
+func TestUpgrade2_14_0_DoesNotDuplicateLayerZeroAdapters(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
+
+	existingAlwaysZeroGas := "0x0000000000000000000000000000000000000005"
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{
+			existingAlwaysZeroGas,
+			addrLayerZeroUSDCeAdapter,
+			addrLayerZeroWNIBIAdapter,
+		},
+	})
+
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
+
+	actors := deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx())
+	require.Equal(t, []string{
+		existingAlwaysZeroGas,
+		addrLayerZeroUSDCeAdapter,
+		addrLayerZeroWNIBIAdapter,
+	}, actors.AlwaysZeroGasContracts)
+}
+
+func TestUpgrade2_14_0_DoesNotAddLayerZeroAdaptersOffMainnet(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithChainID(upgrades.AddrCfg_v2_14.Testnet2ChainID))
+
+	existingActors := sudo.ZeroGasActors{
+		AlwaysZeroGasContracts: []string{"0x0000000000000000000000000000000000000005"},
+	}
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), existingActors)
+
+	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
+
+	require.Equal(t, existingActors, deps.App.SudoKeeper.GetZeroGasActors(deps.Ctx()))
 }
 
 // assertUpgrade2_14_0Events checks the observable event footprint of the happy
@@ -360,39 +421,6 @@ func executeCW4UpdateAdmin(
 		sdk.Coins{},
 	)
 	require.NoError(t, err)
-}
-
-// runUpgradeForTest invokes a registered upgrade handler with the same app
-// wiring used by other upgrade tests.
-func runUpgradeForTest(deps evmtest.TestDeps, upgrade upgrades.Upgrade) error {
-	upgradeHandler := upgrade.CreateUpgradeHandler(
-		deps.App.ModuleManager,
-		module.NewConfigurator(
-			deps.App.AppCodec(),
-			deps.App.MsgServiceRouter(),
-			deps.App.GRPCQueryRouter(),
-		),
-		&deps.App.PublicKeepers,
-		deps.App.GetIBCKeeper().ClientKeeper,
-	)
-
-	plan := upgradetypes.Plan{
-		Name:                upgrade.UpgradeName,
-		Time:                time.Time{},
-		Height:              deps.Ctx().BlockHeight(),
-		Info:                "Testing Upgrade " + upgrade.UpgradeName,
-		UpgradedClientState: (*codectypes.Any)(nil),
-	}
-	if err := plan.ValidateBasic(); err != nil {
-		return fmt.Errorf("invalid upgrade.Plan: %w", err)
-	}
-
-	_, err := upgradeHandler(
-		deps.Ctx(),
-		plan,
-		deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx()),
-	)
-	return err
 }
 
 // testUpgrade2_14_0AddressConfig keeps production signers/admins but swaps the

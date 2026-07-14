@@ -1,12 +1,15 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"bytes"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // TestExportInitGenesis_Roundtrip tests the complete export/import cycle for the sudo module.
@@ -25,6 +28,7 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	_, contractAddrs := testutil.PrivKeyAddressPairs(3)
 	_, senderAddrs := testutil.PrivKeyAddressPairs(2)
 	_, zeroGasContractAddrs := testutil.PrivKeyAddressPairs(2)
+	wasmBlockHooksContract := sdk.AccAddress(bytes.Repeat([]byte{1}, wasmtypes.ContractAddrLen)).String()
 
 	// Set Sudoers state
 	sudoers := sudo.Sudoers{
@@ -39,6 +43,7 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 		Contracts: []string{zeroGasContractAddrs[0].String(), zeroGasContractAddrs[1].String()},
 	}
 	k.ZeroGasActors.Set(ctx, zeroGasActors)
+	k.WasmBlockHooksContract.Set(ctx, wasmBlockHooksContract)
 
 	// Verify initial state works
 	// CheckPermissions should succeed for root and contracts
@@ -66,6 +71,7 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 
 	// Compare genesis states are identical
 	s.Equal(exported.Sudoers.Root, reExported.Sudoers.Root)
+	s.Equal(exported.WasmBlockHooksContract, reExported.WasmBlockHooksContract)
 
 	// Compare contracts using set equality (order-independent)
 	originalContracts := set.New(exported.Sudoers.Contracts...)
@@ -93,4 +99,8 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	s.NoError(err)
 	s.Equal(zeroGasActors.Senders, queryResp.Actors.Senders)
 	s.Equal(zeroGasActors.Contracts, queryResp.Actors.Contracts)
+
+	gotContract, configured := nibiru2.SudoKeeper.GetWasmBlockHooksContract(ctx2)
+	s.True(configured)
+	s.Equal(wasmBlockHooksContract, gotContract.String())
 }

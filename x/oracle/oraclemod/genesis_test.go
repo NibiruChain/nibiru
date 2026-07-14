@@ -1,0 +1,145 @@
+package oraclemod_test
+
+import (
+	"testing"
+
+	sdkmath "cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/oraclemod"
+	"github.com/NibiruChain/nibiru/v2/x/oracle/types"
+)
+
+func TestExportInitGenesis(t *testing.T) {
+	input := keeper.CreateTestFixture(t)
+
+	input.OracleKeeper.ModuleParams.Set(input.Ctx, types.DefaultParams())
+	input.OracleKeeper.FeederDelegations.Insert(input.Ctx, keeper.ValAddrs[0], keeper.Addrs[1])
+	input.OracleKeeper.ExchangeRateMap.Insert(input.Ctx, "pair1:pair2",
+		types.ExchangeRateAtBlock{
+			ExchangeRate:     sdkmath.LegacyNewDec(123),
+			CreatedBlock:     0,
+			BlockTimestampMs: 0,
+		})
+	input.OracleKeeper.Prevotes.Insert(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRatePrevote(types.AggregateVoteHash{123}, keeper.ValAddrs[0], uint64(2)))
+	input.OracleKeeper.Votes.Insert(input.Ctx, keeper.ValAddrs[0], types.NewAggregateExchangeRateVote(types.ExchangeRateTuples{{Pair: "foo", ExchangeRate: sdkmath.LegacyNewDec(123)}}, keeper.ValAddrs[0]))
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, "pair1:pair1")
+	input.OracleKeeper.WhitelistedPairs.Insert(input.Ctx, "pair2:pair2")
+	input.OracleKeeper.MissCounters.Insert(input.Ctx, keeper.ValAddrs[0], 10)
+	input.OracleKeeper.Rewards.Insert(input.Ctx, 0, types.Rewards{
+		Id:          0,
+		VotePeriods: 100,
+		Coins:       sdk.NewCoins(sdk.NewInt64Coin("test", 1000)),
+	})
+	genesis := oraclemod.ExportGenesis(input.Ctx, input.OracleKeeper)
+
+	newInput := keeper.CreateTestFixture(t)
+	oraclemod.InitGenesis(newInput.Ctx, newInput.OracleKeeper, genesis)
+	newGenesis := oraclemod.ExportGenesis(newInput.Ctx, newInput.OracleKeeper)
+
+	require.Equal(t, genesis, newGenesis)
+}
+
+func TestInitGenesis(t *testing.T) {
+	input := keeper.CreateTestFixture(t)
+	genesis := types.DefaultGenesisState()
+	require.NotPanics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.FeederDelegations = []types.FeederDelegation{{
+		FeederAddress:    keeper.Addrs[0].String(),
+		ValidatorAddress: "invalid",
+	}}
+
+	require.Panics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.FeederDelegations = []types.FeederDelegation{{
+		FeederAddress:    "invalid",
+		ValidatorAddress: keeper.ValAddrs[0].String(),
+	}}
+
+	require.Panics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.FeederDelegations = []types.FeederDelegation{{
+		FeederAddress:    keeper.Addrs[0].String(),
+		ValidatorAddress: keeper.ValAddrs[0].String(),
+	}}
+
+	genesis.MissCounters = []types.MissCounter{
+		{
+			ValidatorAddress: "invalid",
+			MissCounter:      10,
+		},
+	}
+
+	require.Panics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.MissCounters = []types.MissCounter{
+		{
+			ValidatorAddress: keeper.ValAddrs[0].String(),
+			MissCounter:      10,
+		},
+	}
+
+	genesis.AggregateExchangeRatePrevotes = []types.AggregateExchangeRatePrevote{
+		{
+			Hash:        "hash",
+			Voter:       "invalid",
+			SubmitBlock: 100,
+		},
+	}
+
+	require.Panics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.AggregateExchangeRatePrevotes = []types.AggregateExchangeRatePrevote{
+		{
+			Hash:        "hash",
+			Voter:       keeper.ValAddrs[0].String(),
+			SubmitBlock: 100,
+		},
+	}
+
+	genesis.AggregateExchangeRateVotes = []types.AggregateExchangeRateVote{
+		{
+			ExchangeRateTuples: []types.ExchangeRateTuple{
+				{
+					Pair:         "nibi:usd",
+					ExchangeRate: sdkmath.LegacyNewDec(10),
+				},
+			},
+			Voter: "invalid",
+		},
+	}
+
+	require.Panics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+
+	genesis.AggregateExchangeRateVotes = []types.AggregateExchangeRateVote{
+		{
+			ExchangeRateTuples: []types.ExchangeRateTuple{
+				{
+					Pair:         "nibi:usd",
+					ExchangeRate: sdkmath.LegacyNewDec(10),
+				},
+			},
+			Voter: keeper.ValAddrs[0].String(),
+		},
+	}
+
+	require.NotPanics(t, func() {
+		oraclemod.InitGenesis(input.Ctx, input.OracleKeeper, genesis)
+	})
+}

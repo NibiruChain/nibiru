@@ -13,8 +13,7 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types";
 // Msg defines the fees Msg service.
 service Msg {
   // RegisterFeeShare registers a new contract for receiving transaction fees
-  rpc RegisterFeeShare(MsgRegisterFeeShare)
-      returns (MsgRegisterFeeShareResponse) {
+  rpc RegisterFeeShare(MsgRegisterFeeShare) returns (MsgRegisterFeeShareResponse) {
     option (google.api.http).post = "/nibiru/devgas/v1/tx/register_FeeShare";
   };
   // UpdateFeeShare updates the withdrawer address of a FeeShare
@@ -84,12 +83,12 @@ message MsgUpdateParams {
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 
   // params defines the x/feeshare parameters to update.
   //
   // NOTE: All parameters must be supplied.
-  ModuleParams params = 2 [ (gogoproto.nullable) = false ];
+  ModuleParams params = 2 [(gogoproto.nullable) = false];
 }
 
 // MsgUpdateParamsResponse defines the response structure for executing a

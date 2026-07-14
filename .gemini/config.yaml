@@ -5,7 +5,7 @@ have_fun: true
 # Code Assist should ignore. Files matching any pattern in this list will be
 # skipped during interactions. [Glob
 # patterns](https://code.visualstudio.com/docs/editor/glob-patterns)
-ignore_patterns: ["**/*.pb.go", "x/evm/embeds/abi/*", "api/*", "node_modules"]
+ignore_patterns: ["**/*.pb.go", "evm/embeds/abi/*", "api/*", "node_modules"]
 code_review:
   disable: false
   # comment_severity_threshold: enum{ LOW, MEDIUM, HIGH, CRITICAL}

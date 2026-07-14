@@ -2,12 +2,12 @@ syntax = "proto3";
 package nibiru.inflation.v1;
 
 import "cosmos/base/v1beta1/coin.proto";
-import "nibiru/inflation/v1/genesis.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos_proto/cosmos.proto";
+import "nibiru/inflation/v1/genesis.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/inflation/types";
+option go_package = "github.com/NibiruChain/nibiru/v2/x/mint";
 
 // Query provides defines the gRPC querier service.
 service Query {
@@ -17,27 +17,23 @@ service Query {
   }
 
   // EpochMintProvision retrieves current minting epoch provision value.
-  rpc EpochMintProvision(QueryEpochMintProvisionRequest)
-      returns (QueryEpochMintProvisionResponse) {
+  rpc EpochMintProvision(QueryEpochMintProvisionRequest) returns (QueryEpochMintProvisionResponse) {
     option (google.api.http).get = "/nibiru/inflation/v1/epoch_mint_provision";
   }
 
   // SkippedEpochs retrieves the total number of skipped epochs.
-  rpc SkippedEpochs(QuerySkippedEpochsRequest)
-      returns (QuerySkippedEpochsResponse) {
+  rpc SkippedEpochs(QuerySkippedEpochsRequest) returns (QuerySkippedEpochsResponse) {
     option (google.api.http).get = "/nibiru/inflation/v1/skipped_epochs";
   }
 
   // CirculatingSupply retrieves the total number of tokens that are in
   // circulation (i.e. excluding unvested tokens).
-  rpc CirculatingSupply(QueryCirculatingSupplyRequest)
-      returns (QueryCirculatingSupplyResponse) {
+  rpc CirculatingSupply(QueryCirculatingSupplyRequest) returns (QueryCirculatingSupplyResponse) {
     option (google.api.http).get = "/nibiru/inflation/v1/circulating_supply";
   }
 
   // InflationRate retrieves the inflation rate of the current period.
-  rpc InflationRate(QueryInflationRateRequest)
-      returns (QueryInflationRateResponse) {
+  rpc InflationRate(QueryInflationRateRequest) returns (QueryInflationRateResponse) {
     option (google.api.http).get = "/nibiru/inflation/v1/inflation_rate";
   }
 
@@ -65,8 +61,8 @@ message QueryEpochMintProvisionRequest {}
 message QueryEpochMintProvisionResponse {
   // epoch_mint_provision is the current minting per epoch provision value.
   cosmos.base.v1beta1.DecCoin epoch_mint_provision = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
 
@@ -91,8 +87,8 @@ message QueryCirculatingSupplyRequest {}
 message QueryCirculatingSupplyResponse {
   // circulating_supply is the total amount of coins in circulation
   cosmos.base.v1beta1.DecCoin circulating_supply = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+    (gogoproto.nullable)     = false,
+    (gogoproto.castrepeated) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DecCoins"
   ];
 }
 
@@ -107,7 +103,7 @@ message QueryInflationRateResponse {
   string inflation_rate = 1 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 }
 
@@ -117,5 +113,5 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params defines the parameters of the module.
-  nibiru.inflation.v1.Params params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.inflation.v1.Params params = 1 [(gogoproto.nullable) = false];
 }

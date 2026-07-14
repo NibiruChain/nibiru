@@ -9,23 +9,23 @@ title: "Nibiru EVM | FAQ"
 
 ### What is the EVM Explorer for Nibiru?
 
-**Mainnet:**  
+**Nibiru:**  
 📎 [https://nibiscan.io](https://nibiscan.io)
 
-**Testnet (Testnet-2):**  
+**Nibiru Testnet:**  
 📎 [https://testnet.nibiscan.io](https://testnet.nibiscan.io)
 
 ---
 
 ### What are the EVM RPC URLs and Chain IDs?
 
-**Mainnet**  
+**Nibiru**  
 
 - RPC: `https://evm-rpc.nibiru.fi`  
 - Chain ID: `6900` (Hex: `0x1AF4`)  
 - Chain Name: `cataclysm-1`
 
-**Testnet-2**  
+**Nibiru Testnet**  
 
 - RPC: `https://evm-rpc.testnet-2.nibiru.fi`  
 - Chain ID: `6911` (Hex: `0x1AFF`)  

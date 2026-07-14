@@ -1,13 +1,13 @@
 package ante_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 )
 
-func (s *Suite) TestAnteDecoratorPreventEtheruemTxMsgs() {
+func (s *Suite) TestAnteDecPreventEthereumTxMsgs() {
 	testCases := []struct {
 		name    string
 		txSetup func(deps *evmtest.TestDeps) sdk.Tx

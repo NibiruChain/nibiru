@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -22,6 +22,8 @@ func (k Keeper) EditSudoers(
 		return k.AddContracts(goCtx, msg)
 	case sudo.RemoveContracts:
 		return k.RemoveContracts(goCtx, msg)
+	case sudo.EditWasmBlockHooksContract:
+		return k.EditWasmBlockHooksContract(goCtx, msg)
 	default:
 		return nil, fmt.Errorf("invalid action type specified on msg: %s", msg)
 	}

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/testutil/testdata"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/vesting/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/bank/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/mint"
 )
 
 func (suite *KeeperTestSuite) TestQueryBalance() {
@@ -204,7 +204,7 @@ func (suite *KeeperTestSuite) TestQueryTotalSupply() {
 	suite.mockMintCoins(mintAcc)
 	suite.
 		Require().
-		NoError(suite.bankKeeper.MintCoins(ctx, minttypes.ModuleName, testCoins))
+		NoError(suite.bankKeeper.MintCoins(ctx, mint.ModuleName, testCoins))
 
 	res, err = queryClient.TotalSupply(gocontext.Background(), &types.QueryTotalSupplyRequest{})
 	suite.Require().NoError(err)
@@ -225,7 +225,7 @@ func (suite *KeeperTestSuite) TestQueryTotalSupplyOf() {
 	suite.mockMintCoins(mintAcc)
 	suite.
 		Require().
-		NoError(suite.bankKeeper.MintCoins(ctx, minttypes.ModuleName, expectedTotalSupply))
+		NoError(suite.bankKeeper.MintCoins(ctx, mint.ModuleName, expectedTotalSupply))
 
 	_, err := queryClient.SupplyOf(gocontext.Background(), &types.QuerySupplyOfRequest{})
 	suite.Require().Error(err)
@@ -429,7 +429,7 @@ func (suite *KeeperTestSuite) TestGRPCDenomOwners() {
 	keeper := suite.bankKeeper
 
 	suite.mockMintCoins(mintAcc)
-	suite.Require().NoError(keeper.MintCoins(ctx, minttypes.ModuleName, initCoins))
+	suite.Require().NoError(keeper.MintCoins(ctx, mint.ModuleName, initCoins))
 
 	for i := 0; i < 10; i++ {
 		addr := sdk.AccAddress([]byte(fmt.Sprintf("account-%d", i)))
@@ -439,7 +439,7 @@ func (suite *KeeperTestSuite) TestGRPCDenomOwners() {
 			sdk.TokensFromConsensusPower(initialPower/10, sdk.DefaultPowerReduction),
 		))
 		suite.mockSendCoinsFromModuleToAccount(mintAcc, addr)
-		suite.Require().NoError(keeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, bal))
+		suite.Require().NoError(keeper.SendCoinsFromModuleToAccount(ctx, mint.ModuleName, addr, bal))
 	}
 
 	testCases := map[string]struct {

@@ -8,17 +8,19 @@ import (
 	"testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
 	"github.com/stretchr/testify/suite"
 
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
-	sdkclient "github.com/cosmos/cosmos-sdk/client"
-	sdktestutilcli "github.com/cosmos/cosmos-sdk/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	testutilmod "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+
+	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	sdktestutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1/client/cli"

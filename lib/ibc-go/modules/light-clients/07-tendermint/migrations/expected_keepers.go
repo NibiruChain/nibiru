@@ -1,0 +1,17 @@
+package migrations
+
+import (
+	"github.com/cometbft/cometbft/libs/log"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+)
+
+// ClientKeeper expected account IBC client keeper
+type ClientKeeper interface {
+	GetClientState(ctx sdk.Context, clientID string) (exported.ClientState, bool)
+	IterateClientStates(ctx sdk.Context, prefix []byte, cb func(string, exported.ClientState) bool)
+	ClientStore(ctx sdk.Context, clientID string) sdk.KVStore
+	Logger(ctx sdk.Context) log.Logger
+}

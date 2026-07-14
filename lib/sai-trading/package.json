@@ -1,0 +1,16 @@
+{
+  "name": "nibiru/sai-trading",
+  "private": false,
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@uniquedivine/bash": "0.0.2",
+    "@uniquedivine/jiyuu": "^0.0.2",
+    "just-install": "^2.0.2"
+  }
+}

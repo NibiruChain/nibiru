@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 
-	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
 	"google.golang.org/grpc"
 
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
+
+	"github.com/NibiruChain/nibiru/v2/evm"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	epochs "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
-	inflation "github.com/NibiruChain/nibiru/v2/x/inflation/types"
+	epochs "github.com/NibiruChain/nibiru/v2/x/epochs"
+	inflation "github.com/NibiruChain/nibiru/v2/x/mint"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"

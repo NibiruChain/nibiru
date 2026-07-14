@@ -2,16 +2,19 @@ package ante
 
 import (
 	sdkioerrors "cosmossdk.io/errors"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/store/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	sdkante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
+
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
+
+	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
-	evmstate "github.com/NibiruChain/nibiru/v2/x/evm/evmstate"
 )
 
 type AnteHandlerOptions struct {

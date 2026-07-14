@@ -17,7 +17,7 @@ cd passkey-app && npm install && npm run dev
 If you want to run the bundler manually instead of the background process from `just passkey-demo`, use:
 
 ```bash
-cd evm-e2e/passkey-sdk
+cd evm/e2e/passkey-sdk
 ENTRY_POINT=$(jq -r .entryPoint ../.cache/passkey-demo.json) \
 FACTORY_ADDR=$(jq -r .passkeyFactory ../.cache/passkey-demo.json) \
 JSON_RPC_ENDPOINT=http://127.0.0.1:8545 \

@@ -9,16 +9,17 @@ import (
 
 	sdkioerrors "cosmossdk.io/errors"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	pkgerrors "github.com/pkg/errors"
 
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by

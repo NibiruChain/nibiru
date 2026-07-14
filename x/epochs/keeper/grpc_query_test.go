@@ -6,21 +6,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
+	"github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 )
 
 func TestQueryEpochInfos(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
-	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
-	queryClient := epochstypes.NewQueryClient(queryHelper)
+	epochs.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
+	queryClient := epochs.NewQueryClient(queryHelper)
 
 	epochInfos := nibiruApp.EpochsKeeper.AllEpochInfos(ctx)
 	chainStartTime := epochInfos[0].StartTime
@@ -28,7 +28,7 @@ func TestQueryEpochInfos(t *testing.T) {
 
 	// Invalid param
 	epochInfosResponse, err := queryClient.EpochInfos(
-		gocontext.Background(), &epochstypes.QueryEpochInfosRequest{},
+		gocontext.Background(), &epochs.QueryEpochInfosRequest{},
 	)
 	require.NoError(t, err, errMsg)
 	require.Len(t, epochInfosResponse.Epochs, 4)
@@ -53,15 +53,15 @@ func TestCurrentEpochQuery(t *testing.T) {
 	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
 
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, nibiruApp.InterfaceRegistry())
-	epochstypes.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
-	queryClient := epochstypes.NewQueryClient(queryHelper)
+	epochs.RegisterQueryServer(queryHelper, keeper.NewQuerier(*nibiruApp.EpochsKeeper))
+	queryClient := epochs.NewQueryClient(queryHelper)
 
 	// Valid epoch
-	epochInfosResponse, err := queryClient.CurrentEpoch(gocontext.Background(), &epochstypes.QueryCurrentEpochRequest{Identifier: "30 min"})
+	epochInfosResponse, err := queryClient.CurrentEpoch(gocontext.Background(), &epochs.QueryCurrentEpochRequest{Identifier: "30 min"})
 	require.NoError(t, err)
 	require.Equal(t, epochInfosResponse.CurrentEpoch, uint64(0))
 
 	// Invalid epoch
-	_, err = queryClient.CurrentEpoch(gocontext.Background(), &epochstypes.QueryCurrentEpochRequest{Identifier: "invalid epoch"})
+	_, err = queryClient.CurrentEpoch(gocontext.Background(), &epochs.QueryCurrentEpochRequest{Identifier: "invalid epoch"})
 	require.Error(t, err)
 }

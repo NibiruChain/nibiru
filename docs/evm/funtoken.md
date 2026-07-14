@@ -91,7 +91,7 @@ type MsgCreateFunToken struct {
 If the mapping is generated from an ERC20, this TxMsg creates a Bank Coin to go
 with it, and if the mapping's generated from a coin, the EVM
 deploys an ERC20 contract for which it will be the owner. The resulting deployed
-ERC20 is guaranteed is embedded in the Nibiru binary (x/evm/embeds/ERC20Minter.sol).
+ERC20 is guaranteed to be embedded in the Nibiru binary (evm/embeds/ERC20Minter.sol).
 
 The `FunToken.isMadeFromCoin` field reflects which one of these situations is in
 effect.

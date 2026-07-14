@@ -140,7 +140,7 @@ To ensure the reliability of their EVM integration, the Nibiru transitioned from
 
 **2.2.5 - User Experience Improvements**
 
-User experience has seen notable enhancements as well. The team resolved several user-facing issues, such as improving staking processes with popular wallets like Keplr and ensuring seamless connectivity with MetaMask. These fixes make it easier for users to interact with the blockchain, whether they're staking tokens or managing their wallets, thereby boosting overall satisfaction and accessibility. Additionally, the development of an [EVM Explorer](https://evm-explorer.nibiru.fi/) has improved the visibility and usability of EVM-related data.
+User experience has seen notable enhancements as well. The team resolved several user-facing issues, such as improving staking processes with popular wallets like Keplr and ensuring seamless connectivity with MetaMask. These fixes make it easier for users to interact with the blockchain, whether they're staking tokens or managing their wallets, thereby boosting overall satisfaction and accessibility. Additionally, the development of [NibiScan](https://nibiscan.io/) has improved the visibility and usability of EVM-related data.
 
 ### 2.3 Sai.fun: Bringing Perps to Nibiru
 

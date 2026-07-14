@@ -10,9 +10,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
-	"github.com/NibiruChain/nibiru/v2/x/evm/embeds"
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/evm/embeds"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )
 
@@ -253,9 +253,9 @@ func (s *BackendSuite) TestMultipleMsgsTxGasUsage() {
 	s.Require().LessOrEqual(balAfterU64, balBeforeU64, "balance must have decreased")
 	gasUsedFromAllTxs := receiptContractCreation.GasUsed + receiptFirstTransfer.GasUsed + receiptSecondTransfer.GasUsed
 
-	// "x/evm/evmstate/msg_ethereum_tx_test.go" file.
+	// "evm/evmstate/msg_ethereum_tx_test.go" file.
 	// Light assertion is fine here. We test EIP-3529 refudn logic thoroughly
-	// inside of "x/evm/evmstate".
+	// inside of "evm/evmstate".
 	s.Require().LessOrEqual(
 		gasUsedFromAllTxs,
 		balBefore.Uint64()-balAfter.Uint64(),

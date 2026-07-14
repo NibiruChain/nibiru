@@ -6,19 +6,21 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	sdkclienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/stretchr/testify/suite"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkclienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 )
 
 type AnteTestSuite struct {

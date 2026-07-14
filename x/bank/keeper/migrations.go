@@ -1,12 +1,10 @@
 package keeper
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/bank/exported"
-	v2 "github.com/NibiruChain/nibiru/v2/x/bank/migrations/v2"
-	v3 "github.com/NibiruChain/nibiru/v2/x/bank/migrations/v3"
 	v4 "github.com/NibiruChain/nibiru/v2/x/bank/migrations/v4"
 )
 
@@ -19,16 +17,6 @@ type Migrator struct {
 // NewMigrator returns a new Migrator.
 func NewMigrator(keeper BaseKeeper, legacySubspace exported.Subspace) Migrator {
 	return Migrator{keeper: keeper, legacySubspace: legacySubspace}
-}
-
-// Migrate1to2 migrates from version 1 to 2.
-func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	return v2.MigrateStore(ctx, m.keeper.storeKey, m.keeper.cdc)
-}
-
-// Migrate2to3 migrates x/bank storage from version 2 to 3.
-func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	return v3.MigrateStore(ctx, m.keeper.storeKey, m.keeper.cdc)
 }
 
 // Migrate3to4 migrates x/bank storage from version 3 to 4.

@@ -9,7 +9,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/evm";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -61,7 +61,8 @@ service Query {
     option (google.api.http).get = "/nibiru/evm/v1/trace_tx";
   }
 
-  // TraceBlock implements the `debug_traceBlockByNumber` and `debug_traceBlockByHash` rpc api
+  // TraceBlock implements the `debug_traceBlockByNumber` and
+  // `debug_traceBlockByHash` rpc api
   rpc TraceBlock(QueryTraceBlockRequest) returns (QueryTraceBlockResponse) {
     option (google.api.http).get = "/nibiru/evm/v1/trace_block";
   }
@@ -84,10 +85,11 @@ service Query {
 
 // QueryEthAccountRequest: Request type for "/eth.evm.v1.Query/EthAccount"
 message QueryEthAccountRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // address is the Ethereum hex address or nibi Bech32 address to query the account for.
+  // address is the Ethereum hex address or nibi Bech32 address to query the
+  // account for.
   string address = 1;
 }
 
@@ -118,7 +120,7 @@ message QueryEthAccountResponse {
 // QueryValidatorAccountRequest is the request type for the
 // Query/ValidatorAccount RPC method.
 message QueryValidatorAccountRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // cons_address is the validator cons address to query the account for.
@@ -138,11 +140,14 @@ message QueryValidatorAccountResponse {
 
 // QueryBalanceRequest: Response type for "/eth.evm.v1.Query/Balance"
 message QueryBalanceRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the balance for.
   string address = 1;
+  // token is an ERC20 address or bank denom to query alongside the native EVM
+  // balance. Leave empty to query only the native EVM balance.
+  string token = 2;
 }
 
 // QueryBalanceResponse: Response type for "/eth.evm.v1.Query/Balance"
@@ -152,11 +157,36 @@ message QueryBalanceResponse {
   // balance is the balance of the EVM denomination in units of wei. 1 wei is 1
   // attoNIBI.
   string balance_wei = 2;
+  // bank is the Bank module token balance details when a bank representation is
+  // available for the requested token.
+  eth.evm.v1.BalanceBank bank = 3 [(gogoproto.nullable) = true];
+  // erc20 is the ERC20 token balance details when an ERC20 representation is
+  // available for the requested token.
+  eth.evm.v1.BalanceERC20 erc20 = 4 [(gogoproto.nullable) = true];
+}
+
+// BalanceBank is the Bank module balance view for a token.
+message BalanceBank {
+  string symbol        = 1;
+  string balance_human = 2;
+  uint32 decimals      = 3;
+  string coin_denom    = 4;
+  string balance_base  = 5;
+}
+
+// BalanceERC20 is the ERC20 balance view for a token.
+message BalanceERC20 {
+  string address       = 1;
+  string symbol        = 2;
+  string balance_human = 3;
+  uint32 decimals      = 4;
+  string name          = 5;
+  string balance_base  = 6;
 }
 
 // QueryStorageRequest is the request type for the Query/Storage RPC method.
 message QueryStorageRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the storage state for.
@@ -175,7 +205,7 @@ message QueryStorageResponse {
 
 // QueryCodeRequest is the request type for the Query/Code RPC method.
 message QueryCodeRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // address is the ethereum hex address to query the code for.
@@ -191,7 +221,7 @@ message QueryCodeResponse {
 
 // QueryTxLogsRequest is the request type for the Query/TxLogs RPC method.
 message QueryTxLogsRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // hash is the ethereum transaction hex hash to query the logs for.
@@ -224,7 +254,8 @@ message EthCallRequest {
   // gas_cap defines the default gas cap to be used
   uint64 gas_cap = 2;
   // proposer_address of the requested block in hex format
-  bytes proposer_address = 3 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 3
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the eip155 chain id parsed from the requested block header
   int64 chain_id = 4;
 }
@@ -252,12 +283,11 @@ message QueryTraceTxRequest {
   // block_hash of requested transaction
   string block_hash = 6;
   // block_time of requested transaction
-  google.protobuf.Timestamp block_time = 7 [
-    (gogoproto.nullable) = false,
-    (gogoproto.stdtime) = true
-  ];
+  google.protobuf.Timestamp block_time = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   // proposer_address is the proposer of the requested block
-  bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 8
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the the eip155 chain id parsed from the requested block header
   int64 chain_id = 9;
   // block_max_gas of the block of the requested transaction
@@ -281,12 +311,11 @@ message QueryTraceBlockRequest {
   // block_hash (hex) of the traced block
   string block_hash = 6;
   // block_time of the traced block
-  google.protobuf.Timestamp block_time = 7 [
-    (gogoproto.nullable) = false,
-    (gogoproto.stdtime) = true
-  ];
+  google.protobuf.Timestamp block_time = 7
+      [(gogoproto.nullable) = false, (gogoproto.stdtime) = true];
   // proposer_address is the address of the requested block
-  bytes proposer_address = 8 [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.ConsAddress"];
+  bytes proposer_address = 8
+      [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.ConsAddress"];
   // chain_id is the eip155 chain id parsed from the requested block header
   int64 chain_id = 9;
   // block_max_gas of the traced block
@@ -304,7 +333,8 @@ message QueryTraceBlockResponse {
 message QueryBaseFeeRequest {}
 
 // QueryBaseFeeResponse returns the EIP1559 base fee.
-// See https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
+// See
+// https://github.com/ethereum/EIPs/blob/ba6c342c23164072adb500c3136e3ae6eabff306/EIPS/eip-1559.md.
 message QueryBaseFeeResponse {
   // base_fee is the EIP1559 base fee in units of wei.
   string base_fee = 1 [(gogoproto.customtype) = "cosmossdk.io/math.Int"];
@@ -313,16 +343,16 @@ message QueryBaseFeeResponse {
 }
 
 message QueryFunTokenMappingRequest {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
-  // Either the hexadecimal-encoded ERC20 contract address or denomination of the
-  // Bank Coin.
+  // Either the hexadecimal-encoded ERC20 contract address or denomination of
+  // the Bank Coin.
   string token = 1;
 }
 
 message QueryFunTokenMappingResponse {
-  option (gogoproto.equal) = false;
+  option (gogoproto.equal)           = false;
   option (gogoproto.goproto_getters) = false;
 
   // fun_token is a mapping between the Bank Coin and the ERC20 contract address

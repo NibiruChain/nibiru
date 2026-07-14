@@ -6,10 +6,10 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	_ "github.com/cosmos/cosmos-proto"
-	types "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
-	types1 "github.com/cosmos/cosmos-sdk/x/bank/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -631,9 +631,8 @@ func (m *MsgSetDenomMetadataResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgSetDenomMetadataResponse proto.InternalMessageInfo
 
-// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
-// bank metadata.
-// [SUDO] Only callable by sudoers.
+// MsgSudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to
+// change bank metadata. [SUDO] Only callable by sudoers.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought

@@ -3,7 +3,7 @@ package nutil
 import (
 	"fmt"
 
-	sdkquery "github.com/cosmos/cosmos-sdk/types/query"
+	sdkquery "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 )
 
 const DefaultPageItemsLimit uint64 = 50

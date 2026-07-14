@@ -58,13 +58,13 @@ Nibiru maintains public testnets to function as beta-testing environments as wel
 testing playground for developers to test their dApp and Smart Contracts.
 
 Documentation on connecting Nibiru's networks can be found [here](../networks).
-For the purpose of this guide, to connect to Nibur's most stable network, testnet-1,
-run the following:
+For the purpose of this guide, connect to **Nibiru Testnet** (chain ID `nibiru-testnet-2`)
+by running the following:
 
 ```bash
-RPC_URL="https://rpc.testnet-1.nibiru.fi:443"
+RPC_URL="https://rpc.testnet-2.nibiru.fi:443"
 nibid config node $RPC_URL
-nibid config chain-id nibiru-testnet-1
+nibid config chain-id nibiru-testnet-2
 nibid config broadcast-mode sync
 nibid config # Prints your new config to verify correctness
 ```

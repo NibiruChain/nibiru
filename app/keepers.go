@@ -4,61 +4,70 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm"
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/server"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1beta1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
-	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
-	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
-	ibctransfer "github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibcclient "github.com/cosmos/ibc-go/v7/modules/core/02-client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 	"github.com/spf13/cast"
+
+	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
+	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/keeper"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
+	crisiskeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/keeper"
+	crisistypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
+	distrkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
+	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
+	evidencekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence/keeper"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	govv1beta1types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
+	paramskeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/keeper"
+	paramproposal "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types/proposal"
+	slashingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/keeper"
+	slashingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
+	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+
+	icacontroller "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"
+	ibctransfer "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer"
+	ibctransferkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
+	ibcclient "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
+	ibcclienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
+	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
+	ibckeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/keeper"
+	ibcwasmkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/light-clients/08-wasm/types"
+	ibcmock "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
+
+	"github.com/NibiruChain/nibiru/v2/x/wasm"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
+	"github.com/NibiruChain/nibiru/v2/evm"
+	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
+	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
-	epochstypes "github.com/NibiruChain/nibiru/v2/x/epochs/types"
-	"github.com/NibiruChain/nibiru/v2/x/evm/precompile"
+	"github.com/NibiruChain/nibiru/v2/x/epochs"
+	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
+	inflationtypes "github.com/NibiruChain/nibiru/v2/x/mint"
+	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/mint/keeper"
+	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
+	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 )
 
 const wasmVmContractMemoryLimit = 32
@@ -80,10 +89,6 @@ type AppKeepers struct {
 	   the IBC light client misbehavior evidence route. */
 	evidenceKeeper evidencekeeper.Keeper
 
-	/* ibcKeeper defines each ICS keeper for IBC. ibcKeeper must be a pointer in
-	   the app, so we can SetRouter on it correctly. */
-	ibcKeeper    *ibckeeper.Keeper
-	ibcFeeKeeper ibcfeekeeper.Keeper
 	/* ibcTransferKeeper is for cross-chain fungible token transfers. */
 	ibcTransferKeeper   ibctransferkeeper.Keeper
 	icaControllerKeeper icacontrollerkeeper.Keeper
@@ -99,7 +104,6 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.ScopedIBCKeeper = app.capabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	app.ScopedICAControllerKeeper = app.capabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	app.ScopedICAHostKeeper = app.capabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
-	// scopedFeeMockKeeper := app.capabilityKeeper.ScopeToModule(MockFeePort)
 	app.ScopedTransferKeeper = app.capabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 
 	// NOTE: the IBC mock keeper and application module is used only for testing core IBC. Do
@@ -131,15 +135,46 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
 
 	// ---------------------------------- Nibiru Chain x/ keepers
+	app.OracleKeeper = oraclekeeper.NewKeeper(
+		app.appCodec,
+		app.keys[oracletypes.StoreKey],
+		app.AccountKeeper,
+	)
+	app.InflationKeeper = inflationkeeper.NewKeeper(
+		app.appCodec,
+		app.keys[inflationtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.DistrKeeper,
+		app.StakingKeeper,
+		app.SudoKeeper,
+		authtypes.FeeCollectorName,
+	)
+	app.EpochsKeeper = epochskeeper.NewKeeper(
+		app.appCodec,
+		app.keys[epochs.StoreKey],
+	)
 	app.EpochsKeeper.SetHooks(
-		epochstypes.NewMultiEpochHooks(
+		epochs.NewMultiEpochHooks(
 			app.InflationKeeper.Hooks(),
 		),
 	)
+	evmKeeper := evmstate.NewKeeper(
+		app.appCodec,
+		app.keys[evm.StoreKey],
+		app.tkeys[evm.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.SudoKeeper,
+		cast.ToString(appOpts.Get("evm.tracer")),
+	)
+	app.EvmKeeper = &evmKeeper
 
 	// ---------------------------------- IBC keepers
 
-	app.ibcKeeper = ibckeeper.NewKeeper(
+	app.IbcKeeper = ibckeeper.NewKeeper(
 		app.appCodec,
 		app.keys[ibcexported.StoreKey],
 		app.getSubspace(ibcexported.ModuleName),
@@ -148,23 +183,13 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.ScopedIBCKeeper,
 	)
 
-	// IBC Fee Module keeper
-	app.ibcFeeKeeper = ibcfeekeeper.NewKeeper(
-		app.appCodec, app.keys[ibcfeetypes.StoreKey],
-		app.ibcKeeper.ChannelKeeper, // may be replaced with IBC middleware
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-	)
-
 	app.ibcTransferKeeper = ibctransferkeeper.NewKeeper(
 		app.appCodec,
 		app.keys[ibctransfertypes.StoreKey],
 		/* paramSubspace */ app.getSubspace(ibctransfertypes.ModuleName),
-		/* ibctransfertypes.ICS4Wrapper */ app.ibcFeeKeeper,
-		/* ibctransfertypes.ChannelKeeper */ app.ibcKeeper.ChannelKeeper,
-		/* ibctransfertypes.PortKeeper */ &app.ibcKeeper.PortKeeper,
+		/* ibctransfertypes.ICS4Wrapper */ app.IbcKeeper.ChannelKeeper,
+		/* ibctransfertypes.ChannelKeeper */ app.IbcKeeper.ChannelKeeper,
+		/* ibctransfertypes.PortKeeper */ &app.IbcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ScopedTransferKeeper,
@@ -173,9 +198,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.icaControllerKeeper = icacontrollerkeeper.NewKeeper(
 		app.appCodec, app.keys[icacontrollertypes.StoreKey],
 		app.getSubspace(icacontrollertypes.SubModuleName),
-		app.ibcFeeKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		&app.IbcKeeper.PortKeeper,
 		app.ScopedICAControllerKeeper,
 		app.MsgServiceRouter(),
 	)
@@ -184,9 +209,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.appCodec,
 		app.keys[icahosttypes.StoreKey],
 		app.getSubspace(icahosttypes.SubModuleName),
-		app.ibcFeeKeeper,
-		app.ibcKeeper.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		&app.IbcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.ScopedICAHostKeeper,
 		app.MsgServiceRouter(),
@@ -235,8 +260,8 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 
 	wmha := wasmext.MsgHandlerArgs{
 		Router:           app.MsgServiceRouter(),
-		Ics4Wrapper:      app.ibcFeeKeeper,
-		ChannelKeeper:    app.ibcKeeper.ChannelKeeper,
+		Ics4Wrapper:      app.IbcKeeper.ChannelKeeper,
+		ChannelKeeper:    app.IbcKeeper.ChannelKeeper,
 		CapabilityKeeper: app.ScopedWasmKeeper,
 		BankKeeper:       app.BankKeeper,
 		Unpacker:         app.appCodec,
@@ -250,9 +275,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
-		wmha.Ics4Wrapper, // ISC4 Wrapper: fee IBC middleware
+		wmha.Ics4Wrapper,
 		wmha.ChannelKeeper,
-		&app.ibcKeeper.PortKeeper,
+		&app.IbcKeeper.PortKeeper,
 		wmha.CapabilityKeeper,
 		wmha.PortSource,
 		wmha.Router,
@@ -260,6 +285,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		wasmDir,
 		wasmConfig,
 		supportedWasmVMFeatures,
+		app.SudoKeeper,
 		govModuleAddr,
 		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
 	)
@@ -267,7 +293,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
 		app.appCodec,
 		app.keys[ibcwasmtypes.StoreKey],
-		app.ibcKeeper.ClientKeeper,
+		app.IbcKeeper.ClientKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmVM,
 		app.GRPCQueryRouter(),
@@ -283,6 +309,15 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		authtypes.FeeCollectorName,
 		govModuleAddr,
 	)
+	app.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
+		app.keys[tokenfactorytypes.StoreKey],
+		app.appCodec,
+		app.BankKeeper,
+		app.AccountKeeper,
+		app.DistrKeeper,
+		app.SudoKeeper,
+		govModuleAddr,
+	)
 
 	// register the proposal types
 
@@ -291,23 +326,9 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	// not replicate if you do not need to test core IBC or light clients.
 	// mockModule := ibcmock.NewAppModule(&app.ibcKeeper.PortKeeper)
 
-	// Create Transfer Stack
-	// SendPacket, since it is originating from the application to core IBC:
-	// transferKeeper.SendPacket -> fee.SendPacket -> channel.SendPacket
-
-	// RecvPacket, message that originates from core IBC and goes down to app, the flow is the other way
-	// channel.RecvPacket -> fee.OnRecvPacket -> transfer.OnRecvPacket
-
-	// transfer stack contains (from top to bottom):
-	// - IBC Fee Middleware
-	// - Transfer
-
 	ibcRouter := porttypes.NewRouter()
 
-	// create IBC module from bottom to top of stack
-	var transferStack porttypes.IBCModule
-	transferStack = ibctransfer.NewIBCModule(app.ibcTransferKeeper)
-	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.ibcFeeKeeper)
+	transferStack := ibctransfer.NewIBCModule(app.ibcTransferKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
@@ -318,13 +339,13 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 	var noAuthzModule porttypes.IBCModule
 	icaControllerStack = icacontroller.NewIBCMiddleware(noAuthzModule, app.icaControllerKeeper)
 
-	// RecvPacket, message that originates from core IBC and goes down to app, the flow is:
-	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
 	icaHostStack := icahost.NewIBCModule(app.icaHostKeeper)
 
-	var wasmStack porttypes.IBCModule
-	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.ibcKeeper.ChannelKeeper, app.ibcFeeKeeper)
-	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.ibcFeeKeeper)
+	wasmStack := wasm.NewIBCHandler(
+		app.WasmKeeper,
+		app.IbcKeeper.ChannelKeeper,
+		app.IbcKeeper.ChannelKeeper,
+	)
 
 	// Add transfer stack to IBC Router
 	ibcRouter.
@@ -333,32 +354,16 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack)
 
-	// Create Mock IBC Fee module stack for testing
-	// SendPacket, since it is originating from the application to core IBC:
-	// mockModule.SendPacket -> fee.SendPacket -> channel.SendPacket
-
-	// OnRecvPacket, message that originates from core IBC and goes down to app, the flow is the otherway
-	// channel.RecvPacket -> fee.OnRecvPacket -> mockModule.OnRecvPacket
-
-	// OnAcknowledgementPacket as this is where fee's are paid out
-	// mockModule.OnAcknowledgementPacket -> fee.OnAcknowledgementPacket -> channel.OnAcknowledgementPacket
-
-	// create fee wrapped mock module
-	// feeMockModule := ibcmock.NewIBCModule(&mockModule, ibcmock.NewMockIBCApp(MockFeePort, scopedFeeMockKeeper))
-	// app.FeeMockModule = feeMockModule
-	// feeWithMockModule := ibcfee.NewIBCMiddleware(feeMockModule, app.ibcFeeKeeper)
-	// ibcRouter.AddRoute(MockFeePort, feeWithMockModule)
-
 	/* SetRouter finalizes all routes by sealing the router.
 	   No more routes can be added. */
-	app.ibcKeeper.SetRouter(ibcRouter)
+	app.IbcKeeper.SetRouter(ibcRouter)
 
 	govRouter := govv1beta1types.NewRouter()
 	govRouter.
 		AddRoute(govtypes.RouterKey, govv1beta1types.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.paramsKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.ibcKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IbcKeeper.ClientKeeper))
 
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
@@ -373,6 +378,7 @@ func BlockedAddresses() map[string]bool {
 	for acc := range maccPerms {
 		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
+	modAccAddrs[authtypes.NewModuleAddress(deprecatedIBCFeeStoreKey).String()] = true
 
 	// allow the following addresses to receive funds
 	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -394,7 +400,6 @@ func initSubspace(
 	// ibc params keepers
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
-	paramsKeeper.Subspace(ibcfeetypes.ModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// wasm params keepers

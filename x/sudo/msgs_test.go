@@ -1,15 +1,19 @@
 package sudo_test
 
 import (
+	"bytes"
 	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/NibiruChain/nibiru/v2/x/evm/evmtest"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 var _ suite.SetupAllSuite = (*Suite)(nil) // LogRoutingSuite has a setup fn
@@ -21,6 +25,81 @@ type Suite struct {
 func TestSudo(t *testing.T) {
 	evmtest.EnsureNibiruPrefix()
 	suite.Run(t, new(Suite))
+}
+
+func (s *Suite) TestMsgEditSudoers_ValidateBasic_EditWasmBlockHooksContract() {
+	goodSender := testutil.NewAccAddress().String()
+	goodContract := sdk.AccAddress(bytes.Repeat([]byte{1}, wasmtypes.ContractAddrLen)).String()
+	sdkLenAddr := testutil.NewAccAddress().String()
+
+	cases := []struct {
+		name    string
+		msg     sudo.MsgEditSudoers
+		wantErr string
+	}{
+		{
+			name: "ok: set contract",
+			msg: sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    goodSender,
+				Contracts: []string{goodContract},
+			},
+		},
+		{
+			name: "ok: clear contract",
+			msg: sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    goodSender,
+				Contracts: []string{""},
+			},
+		},
+		{
+			name: "err: zero contracts",
+			msg: sudo.MsgEditSudoers{
+				Action: string(sudo.EditWasmBlockHooksContract),
+				Sender: goodSender,
+			},
+			wantErr: "expects exactly one contract argument",
+		},
+		{
+			name: "err: multiple contracts",
+			msg: sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    goodSender,
+				Contracts: []string{goodContract, goodContract},
+			},
+			wantErr: "expects exactly one contract argument",
+		},
+		{
+			name: "err: invalid bech32",
+			msg: sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    goodSender,
+				Contracts: []string{"not-an-address"},
+			},
+			wantErr: "decoding bech32 failed",
+		},
+		{
+			name: "err: valid account address with sdk length",
+			msg: sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    goodSender,
+				Contracts: []string{sdkLenAddr},
+			},
+			wantErr: "wasm block hooks contract address must be 32 bytes",
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			err := tc.msg.ValidateBasic()
+			if tc.wantErr == "" {
+				s.Require().NoError(err)
+				return
+			}
+			s.Require().ErrorContains(err, tc.wantErr)
+		})
+	}
 }
 
 func (s *Suite) TestMsgEditZeroGasActors_ValidateBasic() {

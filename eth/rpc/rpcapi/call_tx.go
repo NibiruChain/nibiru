@@ -9,9 +9,6 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -20,8 +17,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
-	"github.com/NibiruChain/nibiru/v2/x/evm"
+	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
@@ -214,9 +215,6 @@ func (b *Backend) isZeroGasJsonTxArgsLatest(args evm.JsonTxArgs) bool {
 	if args.To == nil {
 		return false
 	}
-	if args.Value != nil && args.Value.ToInt().Sign() != 0 {
-		return false
-	}
 
 	res, err := sudo.NewQueryClient(b.clientCtx).QueryZeroGasActors(
 		context.Background(),
@@ -358,7 +356,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 	//
 	// Chain execution still uses the real base fee. This method is only a
 	// wallet-facing fee hint.
-	var result = evm.WalletZeroBaseFeeWei()
+	result := evm.WalletZeroBaseFeeWei()
 
 	return (*hexutil.Big)(result), nil
 }

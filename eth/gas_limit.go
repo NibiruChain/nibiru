@@ -6,7 +6,7 @@ import (
 	fmt "fmt"
 	math "math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // BlockGasLimit: Gas (limit) as defined by the block gas meter. Gas limit is

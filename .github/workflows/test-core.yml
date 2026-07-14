@@ -1,0 +1,552 @@
+name: "Core Tests"
+
+on:
+  workflow_dispatch: # Runs on manual calls
+  schedule:
+    - cron: "0 0 * * *" # Runs automatically every day
+  push:
+    branches: ["main"]
+  pull_request:
+
+# Allow concurrent runs on main/release branches but isolates other branches
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) }}
+
+jobs:
+  unit-tests:
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: unit-tests was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: Run all unit tests.
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: just test-unit
+
+  golangci:
+    name: lint
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-golangci
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: golangci was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - uses: actions/setup-go@v6
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true # Note that golangci-lint action already caches for us (https://github.com/golangci/golangci-lint-action#performance)
+
+      - name: golangci-lint
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: golangci/golangci-lint-action@v9
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: v2.6.1
+
+          # Optional: working directory, useful for monorepos
+          # working-directory: somedir
+
+          # Optional: golangci-lint command line arguments.
+          args: --fix=false
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # only-new-issues: true
+
+          # Optional: if set to true then the all caching functionality will be
+          #   completely disabled. Takes precedence over all other caching options.
+          skip-cache: false
+
+          # Optional: if set to true then the action won't cache or restore ~/go/pkg.
+          # skip-pkg-cache: true
+
+          # Optional: if set to true then the action won't cache or restore ~/.cache/go-build.
+          # skip-build-cache: true
+
+  changes-nibiru-go:
+    runs-on: ubuntu-latest
+    outputs:
+      nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
+      ibc-go: ${{ steps.check_nibiru_go.outputs.ibc-go }}
+      cosmos-sdk: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Check for Nibiru Go-related changes"
+        id: check_nibiru_go
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            nibiru-go:
+              - "app/**/*.go"
+              - "cmd/**/*.go"
+              - "eth/**/*.go"
+              - "evm/**/*.go"
+              - "gosdk/**/*.go"
+              - "x/**/*.go"
+              - "proto/**/*.proto"
+              - "x/**/*.proto"
+              - "go.mod"
+              - "go.sum"
+              - "contrib/docker-compose/*"
+              - "contrib/scripts/build-nibiru.sh"
+              - "cmd/nibid/localnet.sh"
+              - "Dockerfile"
+              - "justfile"
+              - ".github/workflows/test-core.yml"
+              - "evm/e2e/**"
+              - "lib/sai-trading/**"
+            ibc-go:
+              - "lib/ibc-go/**"
+              - "go.mod"
+              - "go.sum"
+              - "justfile"
+              - ".github/workflows/test-core.yml"
+            cosmos-sdk:
+              - "lib/cosmos-sdk/**"
+              - ".github/workflows/test-core.yml"
+
+      - name: skip-build
+        if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
+        run: |
+          echo "Nibiru Golang files were not changed."
+
+  build:
+    needs: changes-nibiru-go
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    steps:
+      - name: skip-build
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'false'
+        run: |
+          echo "job: build was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: "Build the nibid binary"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          contrib/scripts/build-nibiru.sh --run --just-build
+
+      - name: "Verify nibid binary"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          test -x build/nibid
+          build/nibid version
+
+      - name: "Upload nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true' && matrix.runner == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: nibid-linux-amd64
+          path: build/nibid
+          if-no-files-found: error
+
+  localnet-scripts:
+    needs: [changes-nibiru-go, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-localnet-scripts
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: localnet-scripts was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Run scripts/chaosnet.sh (Used in Docker image)"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          just test-chaosnet
+
+      - name: "Run cmd/nibid/localnet.sh"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          just localnet --no-build &
+          pid_localnet=$!
+          sleep 8
+          nibid_pid="$(pgrep -x nibid)"
+          kill "$nibid_pid"
+          wait "$pid_localnet" || true
+
+  heavy-tests:
+    # Job that runs all tests and publishes code coverage reports.
+    needs: [changes-nibiru-go, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: skip-heavy-tests
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: heavy-tests was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Launch localnet"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run all tests."
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: just test-cover
+
+      - name: "Upload coverage reports to Codecov"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: codecov/codecov-action@v7
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        # Docs on usable "with" flags for codecov/codecov-action v5:
+        # https://github.com/codecov/codecov-action?tab=readme-ov-file#example-workflowyml-with-codecov-action
+        with:
+          disable_search: true
+          files: coverage.out
+
+  test-ibc:
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: skip-test-ibc
+        if: needs.changes-nibiru-go.outputs.ibc-go != 'true'
+        run: |
+          echo "job: test-ibc was skipped since IBC Go files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
+        uses: taiki-e/install-action@just
+
+      - name: "Run IBC tests"
+        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
+        run: just test-ibc
+
+  e2e-evm:
+    name: EVM E2E tests
+    needs: [changes-nibiru-go, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-e2e-evm
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: e2e-evm was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Setup NodeJS with npm caching"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/jod"
+          cache-dependency-path: "evm/e2e/package-lock.json"
+
+      - name: "Install E2E dependencies"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: just install
+        working-directory: "evm/e2e"
+
+      - name: "Launch localnet"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run E2E tests"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: just test
+        working-directory: "evm/e2e"
+        env:
+          JSON_RPC_ENDPOINT: http://127.0.0.1:8545
+          MNEMONIC: guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host
+
+  # proto-gen-rs: Tests the script that generates protobuf bindings in Rust
+  proto-gen-rs:
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: proto-gen-rs was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false # Repo go code is not used in this job.
+
+      - name: "Install buf CLI"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          go install github.com/bufbuild/buf/cmd/buf@v1.64.0
+
+      - name: "Setup Node & npm (for npx)"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "lts/jod" # Node v20
+
+      - name: "Generate Rust proto bindings"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          bash proto/buf.gen.rs.sh
+
+  cosmos-sdk:
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.cosmos-sdk != 'true'
+        run: |
+          echo "job \"cosmos-sdk\" was skipped since relevant files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.cosmos-sdk == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.cosmos-sdk == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.cosmos-sdk == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: Run tests for lib/cosmos-sdk
+        if: needs.changes-nibiru-go.outputs.cosmos-sdk == 'true'
+        run: |
+          just csdk test
+
+  sai-trading:
+    name: Sai E2E (sai-trading)
+    needs: [changes-nibiru-go, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-sai-trading
+        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+        run: |
+          echo "job: sai-trading was skipped since Nibiru Golang files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Download nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: nibid-linux-amd64
+          path: dist
+
+      - name: "Install nibid artifact"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
+          nibid version
+
+      - name: "Setup Bun"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.22
+
+      - name: "Setup Go"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: lib/sai-trading/go.mod
+
+      - name: "Install sai-trading dependencies"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        working-directory: "lib/sai-trading/scripts"
+        run: bun install
+
+      - name: "Launch localnet"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: |
+          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
+          pid_localnet=$!
+          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
+          # sleep 22s to keep a small stability buffer and reduce startup races.
+          # check after 10s so startup failures fail this step instead of surfacing
+          # later as test connection errors.
+          sleep 10
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+            echo "localnet failed to stay running during startup"
+            cat log-localnet.txt
+            exit 1
+          fi
+
+          echo "Localnet is running in the background { pid=$pid_localnet }"
+          sleep 12
+
+      - name: "Run sai-trading tests"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        working-directory: "lib/sai-trading"
+        run: just test

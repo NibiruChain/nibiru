@@ -1,123 +1,84 @@
-# Nibiru/INSTALL.md
+# Nibiru Installation Guide
 
-This guide will explain how to install the Nibiru binary, `nibid`, onto your system.
+This guide explains how to install the Nibiru binary, `nibid`, from this repository.
 
-#### Table of Contents
+## 1) Prerequisites
 
-- [1. Update the system](#1-update-the-system)
-- [2. Install Golang](#2-install-golang)
-- [3. Install build requirements](#3-install-build-requirements)
-- [4. Clone the Nibiru Repository](#4-clone-the-nibiru-repository)
-- [Upgrade](#upgrade)
-- [Troubleshooting](#troubleshooting)
-  - [Contributing](#contributing)
-  - [Error when running `make install` on MacOS](#error-when-running-make-install-on-macos)
+- Go (see `go.mod` for the required version): [Install Go](https://go.dev/doc/install)
+- command `just`: [Install just](https://just.systems/man/en/packages.html)
+- Common build tooling (`git`, C compiler toolchain, `curl`, `jq`)
 
-## 1. Update the system
-
-On Ubuntu, start by updating your system
+Example packages on Ubuntu:
 
 ```bash
 sudo apt update
-sudo apt upgrade --yes
+sudo apt install --yes git build-essential curl jq
 ```
 
-## 2. Install Golang
-
-Steps described here: https://go.dev/doc/install
-
-## 3. Install build requirements
-
-Install make and gcc.
-
-```bash
-sudo apt install git build-essential ufw curl jq snapd --yes
-wget -q -O - https://git.io/vQhTU | bash -s -- --version 1.16
-```
-
-After installed, open new terminal to properly load go
-
-## 4. Clone the Nibiru Repository
+## 2) Clone the Repository
 
 ```bash
 git clone https://github.com/NibiruChain/nibiru
 cd nibiru
 ```
 
-On this fresh clone of the repo, simply run
+## 3) Build and Install `nibid`
+
+From the repository root, run:
 
 ```bash
-make build
-make install
-make localnet
+just install
 ```
 
-and open another terminal.
+This builds and installs the `nibid` binary.
 
----
+## 4) Start a Local Network
 
-## Upgrade
-
-The scheduled mainnet upgrade to `nibiru-2` is planned for
-
-```
-cd nibiru
-git fetch tags
-git checkout v0.0.1
+```bash
+just localnet
 ```
 
-Testnet
+Open another terminal if you want to query the node while the localnet is running.
 
-One the Nibiru binary has been installed, for further information on joining the testnet, head over to the [testnet repo](https://github.com/NibiruChain/Networks/tree/main/Testnet).
+## Upgrade or Switch Versions
 
-Mainnet
+To switch to a specific tagged release:
 
-One the Nibiru binary has been installed, for further information on joining mainnet, head over to the [mainnet repo](https://github.com/NibiruChain/Networks/tree/main/Mainnet).
+```bash
+git fetch --tags
+git checkout <tag>
+just install
+```
+
+For network-specific instructions:
+
+- Testnet: [Nibiru Networks - Testnet](https://github.com/NibiruChain/Networks/tree/main/Testnet)
+- Mainnet: [Nibiru Networks - Mainnet](https://github.com/NibiruChain/Networks/tree/main/Mainnet)
 
 ## Troubleshooting
 
-A. If after steps 1-4 you don't have the `nibid` command, your go/bin directory may not be in your PATH yet. To do so, add the below to your `.zshrc` or `.bash_profile`
+### `nibid` Command Not Found
+
+If `nibid` is not on your `PATH`, add your Go bin directory:
 
 ```bash
-export PATH=$PATH:$(go env GOPATH)/bin
+export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-B. New commands you've made on the `nibid` don't show up. Your `nibid` probably just isn't updated again after the code changes, to recompile nibid run `make install` in the root
+Then reload your shell config.
 
-### Contributing
+### Binary Does Not Reflect Local Code Changes
 
-The code for `nibid` is located in the `/cmd/nibid` folder.
-
-In addition to the commands available within that folder, `nibid` pulls in cli subcommands from the modules e.g. `/x/oracle/cli`
-
-After updating the code run
+Rebuild and reinstall from the repository root:
 
 ```bash
-make build
-make install
+just install
 ```
 
-To see all the commands available just add `--help` to the end.
+### Updating Protobuf-Generated Code
 
-Example:
+Use command `just proto gen` from the repository root.
 
-```bash
-nibid --help
-nibid query --help
-nibid tx --help
-nibid query oracle --help
-```
+### macOS Notes
 
-### Error when running `make install` on MacOS
-
-If you get an error like this when running `make install` on MacOS:
-
-```
-/bin/sh: wget: command not found
-```
-
-You can fix it by installing `wget` with Homebrew:
-
-```
-brew install wget
-```
+If a local command used by your shell scripts is missing, install it with Homebrew (for example, command `brew install wget`).

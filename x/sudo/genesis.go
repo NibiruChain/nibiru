@@ -3,7 +3,7 @@ package sudo
 import (
 	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 )
 
 func (gen *GenesisState) Validate() error {
@@ -14,6 +14,12 @@ func (gen *GenesisState) Validate() error {
 	}
 	if gen.ZeroGasActors != nil {
 		err := gen.ZeroGasActors.Validate()
+		if err != nil {
+			return ErrGenesis(err.Error())
+		}
+	}
+	if gen.WasmBlockHooksContract != "" {
+		err := ValidateWasmBlockHooksContract(gen.WasmBlockHooksContract)
 		if err != nil {
 			return ErrGenesis(err.Error())
 		}

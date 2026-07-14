@@ -9,10 +9,9 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types";
 // GenesisState defines the module's genesis state.
 message GenesisState {
   // params are the feeshare module parameters
-  nibiru.devgas.v1.ModuleParams params = 1 [ (gogoproto.nullable) = false ];
+  nibiru.devgas.v1.ModuleParams params = 1 [(gogoproto.nullable) = false];
   // FeeShare is a slice of active registered contracts for fee distribution
-  repeated nibiru.devgas.v1.FeeShare fee_share = 2
-      [ (gogoproto.nullable) = false ];
+  repeated nibiru.devgas.v1.FeeShare fee_share = 2 [(gogoproto.nullable) = false];
 }
 
 // ModuleParams defines the params for the devgas module
@@ -24,7 +23,7 @@ message ModuleParams {
   string developer_shares = 2 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
   // allowed_denoms defines the list of denoms that are allowed to be paid to
   // the contract withdraw addresses. If said denom is not in the list, the fees

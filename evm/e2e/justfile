@@ -1,0 +1,38 @@
+# Use this justfile by 
+# (1) installing with "cargo install just" 
+# (2) running the "just" command.
+
+# Displays available recipes by running `just -l`.
+setup:
+  #!/usr/bin/env bash
+  just -l
+
+# Install all dependencies
+install:
+  #!/usr/bin/env bash
+  npm install
+  (cd passkey-sdk && npm install)
+  npx hardhat typechain
+
+# Runs the E2E tests
+test *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  npx bun test {{args}}
+
+# Runs tx receipt tests. Used for testnet quick check.
+test-basic:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  npx bun test -- tx_receipt.test.ts
+
+# Format
+fmt: 
+  npx prettier --write . --config prettier.config.js
+
+# Format (check only)
+fmt-check:
+  npx prettier --check . --config prettier.config.js
+
+gen-types:
+  npx hardhat typechain

@@ -2,10 +2,12 @@ package types
 
 import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	sdkioerrors "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 // ensure Msg interface compliance at compile time

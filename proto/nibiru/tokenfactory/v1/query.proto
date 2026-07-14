@@ -11,7 +11,6 @@ option go_package = "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types";
 
 // Query defines the gRPC querier service.
 service Query {
-
   // Params retrieves the module params
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/nibiru/tokenfactory/v1/params";
@@ -34,18 +33,23 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // Module parameters stored in state
-  nibiru.tokenfactory.v1.ModuleParams params = 1
-      [ (gogoproto.nullable) = false ];
+  nibiru.tokenfactory.v1.ModuleParams params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryDenomsRequest: gRPC query for all denoms registered for a creator
-message QueryDenomsRequest { string creator = 1; }
+message QueryDenomsRequest {
+  string creator = 1;
+}
 
 // QueryDenomsResponse: All registered denoms for a creator
-message QueryDenomsResponse { repeated string denoms = 1; }
+message QueryDenomsResponse {
+  repeated string denoms = 1;
+}
 
 // QueryDenomInfoRequest: gRPC query for the denom admin and x/bank metadata
-message QueryDenomInfoRequest { string denom = 1; }
+message QueryDenomInfoRequest {
+  string denom = 1;
+}
 
 // QueryDenomInfoResponse: All registered denoms for a creator
 message QueryDenomInfoResponse {
@@ -53,5 +57,5 @@ message QueryDenomInfoResponse {
   string admin = 1;
   // Metadata: Official x/bank metadata for the denom. All token factory denoms
   // are standard, native assets.
-  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.nullable) = false ];
+  cosmos.bank.v1beta1.Metadata metadata = 2 [(gogoproto.nullable) = false];
 }

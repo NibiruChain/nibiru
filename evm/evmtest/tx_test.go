@@ -1,0 +1,54 @@
+// Copyright (c) 2023-2024 Nibi, Inc.
+package evmtest_test
+
+import (
+	"math/big"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+)
+
+func (s *Suite) TestTransferWei() {
+	deps := evmtest.NewTestDeps()
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+	))
+
+	randomAcc := evmtest.NewEthPrivAcc()
+	to := randomAcc.EthAddr
+	evmResp, err := evmtest.TxTransferWei{
+		Deps:      &deps,
+		To:        to,
+		AmountWei: evm.NativeToWei(big.NewInt(420)),
+	}.Run()
+	s.Require().NoErrorf(err, "%#v", evmResp)
+	s.False(evmResp.Failed(), "%#v", evmResp)
+
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, evm.EVMBankDenom, deps.Sender.EthAddr, big.NewInt(69_000), "expect nonzero balance",
+	)
+
+	s.Run("DeployAndExecuteERC20Transfer", func() {
+		evmtest.DeployAndExecuteERC20Transfer(&deps, s.T())
+	})
+}
+
+func (s *Suite) TestDeployWNIBI() {
+	deps := evmtest.NewTestDeps()
+
+	evmParams := deps.EvmKeeper.GetParams(deps.Ctx())
+	acc := deps.EvmKeeper.GetAccount(deps.Ctx(), evmParams.CanonicalWnibi.Address)
+	s.Require().True(acc == nil || !acc.IsContract())
+
+	deps.DeployWNIBI(&s.Suite)
+	acc = deps.EvmKeeper.GetAccount(deps.Ctx(), evmParams.CanonicalWnibi.Address)
+	s.Require().NotNil(acc)
+	s.True(acc.IsContract())
+}

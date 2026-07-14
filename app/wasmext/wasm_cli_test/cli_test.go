@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	wasmcli "github.com/CosmWasm/wasmd/x/wasm/client/cli"
+	wasmcli "github.com/NibiruChain/nibiru/v2/x/wasm/cli"
 
-	"github.com/CosmWasm/wasmd/x/wasm/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
+	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 )
 
 const (

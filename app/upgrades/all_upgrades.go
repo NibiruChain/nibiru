@@ -3,25 +3,28 @@ package upgrades
 import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 
-	store "github.com/cosmos/cosmos-sdk/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+	store "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
+// Upgrade describes the behavior for a named Nibiru software upgrade and the
+// upgrade plan (See [upgradetypes.Plan]).
 type Upgrade struct {
+	// UpgradeName must match the name in the on-chain software upgrade plan.
+	// The upgrade keeper uses this value to register the handler and the store
+	// loader for the height specified by governance.
 	UpgradeName string
 
-	CreateUpgradeHandler func(
-		mm *module.Manager,
-		cfg module.Configurator,
-		nibiru *keepers.PublicKeepers,
-		ibcKeeperClientKeeper clientkeeper.Keeper,
-	) upgradetypes.UpgradeHandler
+	// Handler builds the upgrade handler that runs at the upgrade height. Use a
+	// custom handler when the upgrade needs app-specific state changes before
+	// module migrations. Otherwise use [DefaultUpgradeHandler].
+	Handler HandlerImpl
 
-	// StoreUpgrades defines a series of transformations to apply the multistore db
-	// upon load
+	// StoreUpgrades declares store keys added, renamed, or deleted when the node
+	// loads the upgraded binary. Leave this empty when the upgrade does not
+	// change the multistore layout.
 	StoreUpgrades store.StoreUpgrades
 }
 
@@ -47,19 +50,59 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_10_0,
 	Upgrade2_11_0,
 	Upgrade2_12_0,
+	Upgrade2_13_0,
 	Upgrade2_14_0,
+	Upgrade2_14_1,
+	Upgrade2_15_0,
+	Upgrade2_16_0,
 }
 
-// DefaultUpgradeHandler runs module manager migrations without running any other
-// logic that uses the Nibiru keepers. This is the most common value for
-// the "CreateUpgradeHandler" field of an [Upgrade].
-func DefaultUpgradeHandler(
+// HandlerImpl is a struct wrapper for custom upgrade handler implementations.
+type HandlerImpl interface {
+	Handler(
+		mm *module.Manager,
+		cfg module.Configurator,
+		nibiru *keepers.PublicKeepers,
+	) upgradetypes.UpgradeHandler
+}
+
+// NewVanillaUpgrade returns an [Upgrade] that only performs standard module
+// consensus version migrations without running any custom logic that uses the
+// Nibiru keepers. Standard releases that bump the binary to a new version and
+// modify the state machine are considered "vanilla" upgrades.
+func NewVanillaUpgrade(upgradeName string) Upgrade {
+	return Upgrade{
+		UpgradeName:   upgradeName,
+		Handler:       DefaultUpgradeHandler{},
+		StoreUpgrades: store.StoreUpgrades{},
+	}
+}
+
+// DefaultUpgradeHandler runs module manager migrations without running any
+// other logic that uses the Nibiru keepers.
+type DefaultUpgradeHandler struct{}
+
+var _ HandlerImpl = (*DefaultUpgradeHandler)(nil)
+
+// Handler for [DefaultUpgradeHandler] runs module manager migrations without
+// running any other logic that uses the Nibiru keepers.
+func (h DefaultUpgradeHandler) Handler(
 	mm *module.Manager,
 	cfg module.Configurator,
 	nibiru *keepers.PublicKeepers,
-	clientKeeper clientkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
+}
+
+// NewEventUpgradeFailure builds an [sdk.Event] to use when an upgrade fails and
+// exits. This is used to debug why an upgrade failed while allowing it to
+// proceed without panicking and halting the blockchain.
+func NewEventUpgradeFailure(upgradeName string, err error) sdk.Event {
+	return sdk.NewEvent(
+		"upgrade_failure",
+		sdk.NewAttribute("upgrade", upgradeName),
+		sdk.NewAttribute("error", err.Error()),
+	)
 }

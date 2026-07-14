@@ -1,0 +1,106 @@
+package evm
+
+// Copyright (c) 2023-2024 Nibi, Inc.
+
+import (
+	"encoding/hex"
+	"fmt"
+	"strings"
+
+	sdkioerrors "cosmossdk.io/errors"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/vm"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+)
+
+const (
+	codeErrInvalidState = uint32(iota) + 2 // NOTE: code 1 is reserved for internal errors
+	codeErrZeroAddress
+	codeErrInvalidAmount
+	codeErrInvalidGasPrice
+	codeErrInvalidGasFee
+	codeErrInvalidRefund
+	codeErrInvalidGasCap
+	codeErrInvalidBaseFee
+	codeErrInvalidAccount
+	codeErrInactivePrecompile
+)
+
+var (
+	// ErrInvalidState returns an error resulting from an invalid Storage State.
+	ErrInvalidState = sdkioerrors.Register(ModuleName, codeErrInvalidState, "invalid storage state")
+
+	// ErrZeroAddress returns an error resulting from an zero (empty) ethereum Address.
+	ErrZeroAddress = sdkioerrors.Register(ModuleName, codeErrZeroAddress, "invalid zero address")
+
+	// ErrInvalidAmount returns an error if a tx contains an invalid amount.
+	ErrInvalidAmount = sdkioerrors.Register(ModuleName, codeErrInvalidAmount, "invalid transaction amount")
+
+	// ErrInvalidGasPrice returns an error if an invalid gas price is provided to the tx.
+	ErrInvalidGasPrice = sdkioerrors.Register(ModuleName, codeErrInvalidGasPrice, "invalid gas price")
+
+	// ErrInvalidGasFee returns an error if the tx gas fee is out of bound.
+	ErrInvalidGasFee = sdkioerrors.Register(ModuleName, codeErrInvalidGasFee, "invalid gas fee")
+
+	// ErrInvalidRefund returns an error if the gas refund value is invalid.
+	ErrInvalidRefund = sdkioerrors.Register(ModuleName, codeErrInvalidRefund, "invalid gas refund amount")
+
+	// ErrInvalidGasCap returns an error if the gas cap value is negative or invalid
+	ErrInvalidGasCap = sdkioerrors.Register(ModuleName, codeErrInvalidGasCap, "invalid gas cap")
+
+	// ErrInvalidBaseFee returns an error if the base fee cap value is invalid
+	ErrInvalidBaseFee = sdkioerrors.Register(ModuleName, codeErrInvalidBaseFee, "invalid base fee")
+
+	// ErrInvalidAccount returns an error if the account is not an EVM compatible account
+	ErrInvalidAccount = sdkioerrors.Register(ModuleName, codeErrInvalidAccount, "account type is not a valid ethereum account")
+
+	ErrCanonicalWnibi = "canonical WNIBI address in state is a not a smart contract"
+)
+
+// ParseOOGPanic interprets the result of recover() and returns (oog
+// bool, perr error). If panicInfo is nil, returns (false, nil). OOG panics
+// (sdk.ErrorOutOfGas or message "out of gas") return (true, vm.ErrOutOfGas).
+// Other panics return (false, err) with err from formatUnexpected(panicInfo).
+// Callers should keep the line "panicInfo := recover()" explicit and pass
+// panicInfo here.
+func ParseOOGPanic(panicInfo any, formatUnexpected func(any) string) (oog bool, perr error) {
+	if panicInfo == nil {
+		return false, nil
+	}
+	if _, isOOG := panicInfo.(sdk.ErrorOutOfGas); isOOG {
+		return true, vm.ErrOutOfGas
+	}
+	if strings.Contains(fmt.Sprint(panicInfo), "out of gas") {
+		return true, vm.ErrOutOfGas
+	}
+	return false, fmt.Errorf("%s", formatUnexpected(panicInfo))
+}
+
+// NewRevertError unpacks the revert return bytes and returns a wrapped error
+// with the return reason.
+func NewRevertError(revertReason []byte) error {
+	if len(revertReason) == 0 {
+		return fmt.Errorf("execution reverted")
+	}
+
+	reason, err := abi.UnpackRevert(revertReason)
+	if err == nil {
+		return fmt.Errorf("execution reverted with reason \"%s\"", reason)
+	}
+
+	return fmt.Errorf("execution reverted with undecodable reason (raw hex: %v)", hex.EncodeToString(revertReason))
+}
+
+// RevertError is an API error that encompass an EVM revert with JSON error
+// code and a binary data blob.
+type RevertError struct {
+	error
+}
+
+// ErrStateDBCommit defines the error message when commit after executing EVM
+// transaction, for example transfer native token to a distribution module
+// account using an evm transaction. Note, the transfer amount cannot be set to
+// 0, otherwise this problem will not be triggered.
+const ErrStateDBCommit = "failed to commit stateDB"

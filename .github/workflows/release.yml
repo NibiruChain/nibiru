@@ -38,12 +38,14 @@ jobs:
           - platform: darwin/arm64
             runner: macos-latest
           - platform: darwin/amd64
-            runner: macos-latest
+            runner: macos-15-intel
+            # Native Intel Mac coverage for late x86_64 Macs such as the
+            # 2018 Mac mini, 2019 Mac Pro, and 2020 Intel iMac/MacBook models.
 
     runs-on: ${{ matrix.build.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -55,14 +57,16 @@ jobs:
           OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
           ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
           FINAL_NAME="nibid_${{ needs.version.outputs.value }}_${OS}_${ARCH}"
-          echo "OS=$OS" >> $GITHUB_ENV
-          echo "ARCH=$ARCH" >> $GITHUB_ENV
-          echo "FINAL_NAME=$FINAL_NAME" >> $GITHUB_ENV
+          {
+            echo "OS=$OS"
+            echo "ARCH=$ARCH"
+            echo "FINAL_NAME=$FINAL_NAME"
+          } >> "$GITHUB_ENV"
 
       - name: Build
         run: |
-          GOARCH=${{ env.ARCH }} VERSION=${{ needs.version.outputs.value }} make build
-          tar czf ${{ env.FINAL_NAME }}.tar.gz -C build nibid
+          GOOS=${{ env.OS }} GOARCH=${{ env.ARCH }} VERSION=${{ needs.version.outputs.value }} contrib/scripts/build-nibiru.sh --run --just-build
+          tar czf "${{ env.FINAL_NAME }}.tar.gz" -C build nibid
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -82,9 +86,11 @@ jobs:
       - name: Prepare env vars
         run: |
           DARWIN_NAME=nibid_${{ needs.version.outputs.value }}_darwin
-          echo "DARWIN_NAME_ARM64=${DARWIN_NAME}_arm64" >> $GITHUB_ENV
-          echo "DARWIN_NAME_AMD64=${DARWIN_NAME}_amd64" >> $GITHUB_ENV
-          echo "DARWIN_NAME_ALL=${DARWIN_NAME}_all" >> $GITHUB_ENV
+          {
+            echo "DARWIN_NAME_ARM64=${DARWIN_NAME}_arm64"
+            echo "DARWIN_NAME_AMD64=${DARWIN_NAME}_amd64"
+            echo "DARWIN_NAME_ALL=${DARWIN_NAME}_all"
+          } >> "$GITHUB_ENV"
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v8
@@ -101,16 +107,16 @@ jobs:
       - name: Extract artifacts
         run: |
           mkdir -p arm64_bin amd64_bin
-          tar xzf arm64/${DARWIN_NAME_ARM64}.tar.gz -C arm64_bin
-          tar xzf amd64/${DARWIN_NAME_AMD64}.tar.gz -C amd64_bin
+          tar xzf "arm64/${DARWIN_NAME_ARM64}.tar.gz" -C arm64_bin
+          tar xzf "amd64/${DARWIN_NAME_AMD64}.tar.gz" -C amd64_bin
 
       - name: Create universal binary
         run: |
-          mkdir -p ${{ env.DARWIN_NAME_ALL }}
-          lipo -create -output ${{ env.DARWIN_NAME_ALL }}/nibid amd64_bin/nibid arm64_bin/nibid
+          mkdir -p "${{ env.DARWIN_NAME_ALL }}"
+          lipo -create -output "${{ env.DARWIN_NAME_ALL }}/nibid" amd64_bin/nibid arm64_bin/nibid
 
       - name: Compress universal binary
-        run: tar czf ${{ env.DARWIN_NAME_ALL }}.tar.gz -C ${{ env.DARWIN_NAME_ALL }} nibid
+        run: tar czf "${{ env.DARWIN_NAME_ALL }}.tar.gz" -C "${{ env.DARWIN_NAME_ALL }}" nibid
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -128,13 +134,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare env vars
         run: |
           LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
-          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
-          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
+          {
+            echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64"
+            echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64"
+          } >> "$GITHUB_ENV"
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v8
@@ -149,8 +157,8 @@ jobs:
       - name: Extract artifacts
         run: |
           mkdir -p dist/arm64 dist/amd64
-          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz -C dist/arm64
-          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz -C dist/amd64
+          tar xzf "${{ env.LINUX_NAME_ARM64 }}.tar.gz" -C dist/arm64
+          tar xzf "${{ env.LINUX_NAME_AMD64 }}.tar.gz" -C dist/amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -190,13 +198,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Prepare env vars
         run: |
           LINUX_NAME=nibid_${{ needs.version.outputs.value }}_linux
-          echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64" >> $GITHUB_ENV
-          echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64" >> $GITHUB_ENV
+          {
+            echo "LINUX_NAME_ARM64=${LINUX_NAME}_arm64"
+            echo "LINUX_NAME_AMD64=${LINUX_NAME}_amd64"
+          } >> "$GITHUB_ENV"
 
       - name: Download arm64 artifact
         uses: actions/download-artifact@v8
@@ -211,8 +221,8 @@ jobs:
       - name: Extract artifacts
         run: |
           mkdir -p dist/arm64 dist/amd64
-          tar xzf ${{ env.LINUX_NAME_ARM64 }}.tar.gz -C dist/arm64
-          tar xzf ${{ env.LINUX_NAME_AMD64 }}.tar.gz -C dist/amd64
+          tar xzf "${{ env.LINUX_NAME_ARM64 }}.tar.gz" -C dist/arm64
+          tar xzf "${{ env.LINUX_NAME_AMD64 }}.tar.gz" -C dist/amd64
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -253,7 +263,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -268,7 +278,9 @@ jobs:
         run: |
           cd dist
           ls -la
-          shasum -a 256 *.tar.gz > nibid_${{ needs.version.outputs.value }}_checksums.txt
+          for artifact in *.tar.gz; do
+            shasum -a 256 "$artifact"
+          done > "nibid_${{ needs.version.outputs.value }}_checksums.txt"
 
       - name: Generate changelog
         id: changes
@@ -279,9 +291,11 @@ jobs:
           CHANGELOG=$(git log "$PREV_TAG"..HEAD --pretty=format:'- %h %s')
           echo "$CHANGELOG"
 
-          echo "changes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          {
+            echo "changes<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Publish Release
         uses: softprops/action-gh-release@v3

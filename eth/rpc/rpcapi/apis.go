@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"unicode"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 
 	"github.com/ethereum/go-ethereum/rpc"
 

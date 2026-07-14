@@ -78,7 +78,7 @@ Ready to start staking? Visit the [web app](https://app.nibiru.fi/stake) to begi
 2. [Nibiru (NIBI) Token](https://nibiru.fi/docs/learn/nibi.html): Nibiru tokens, commonly called "NIBI" tokens, are the native cryptocurrency of the Nibiru blockchain.
 3. [Guide: Staking on Nibiru](https://nibiru.fi/docs/use/stake.html): Put your NIBI to work and earn rewards for staking. Staking lets you earn rewards by helping verify transactions and secure the Nibiru blockchain.
 4. [#63 | How to Bridge to Nibiru Chain](https://nibiru.fi/blog/posts/63-how-to-bridge)
-5. Nibiru Inflation Module: This implements the [on-chain logic](https://github.com/NibiruChain/nibiru/tree/main/x/inflation) that manages when NIBI gets minted. 
+5. Nibiru Mint Module: This implements the [on-chain logic](https://github.com/NibiruChain/nibiru/tree/main/x/mint) that manages when NIBI gets minted. 
 
 ## Disclaimer
 

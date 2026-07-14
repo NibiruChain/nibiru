@@ -3,7 +3,7 @@ package ante
 // Interfaces needed for the Nibiru Chain ante handler
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 )

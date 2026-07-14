@@ -10,21 +10,22 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/wasmtesting"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	codec "github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	codec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/denoms"
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	fixture "github.com/NibiruChain/nibiru/v2/x/tokenfactory/testdata"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // Instantiate is a empty struct type with conventience functions for
@@ -67,7 +68,7 @@ func SetupContracts(
 ) map[string]LiveContract {
 	wasmName := fixture.WASM_NIBI_STARGATE
 	codeId := StoreContract(t, wasmName, ctx, nibiru, sender)
-	deposit := sdk.NewCoins(sdk.NewCoin(denoms.NIBI, sdkmath.OneInt()))
+	deposit := sdk.NewCoins(sdk.NewCoin(appconst.DENOM_UNIBI, sdkmath.OneInt()))
 	contract := Instantiate.ContractNibiStargate(t, ctx, nibiru, codeId, sender, deposit)
 	LiveContracts[wasmName] = LiveContract{
 		CodeId:   codeId,

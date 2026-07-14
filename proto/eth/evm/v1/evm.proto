@@ -4,7 +4,7 @@ package eth.evm.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/NibiruChain/nibiru/v2/x/evm";
+option go_package = "github.com/NibiruChain/nibiru/v2/evm";
 
 // FunToken is a fungible token mapping between a Bank Coin and a corresponding
 // ERC-20 smart contract. Bank Coins here refer to tokens like NIBI, IBC
@@ -14,7 +14,7 @@ message FunToken {
   // Hexadecimal address of the ERC20 token to which the `FunToken` maps
   string erc20_addr = 1 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
 
   // bank_denom: Coin denomination in the Bank Module.
@@ -37,10 +37,8 @@ message Params {
   reserved 3;
 
   // extra_eips defines the additional EIPs for the vm.Config
-  repeated int64 extra_eips = 4 [
-    (gogoproto.customname) = "ExtraEIPs",
-    (gogoproto.moretags) = "yaml:\"extra_eips\""
-  ];
+  repeated int64 extra_eips = 4
+      [(gogoproto.customname) = "ExtraEIPs", (gogoproto.moretags) = "yaml:\"extra_eips\""];
   // DEPRECATED: chain_config
   reserved 5;
   // DEPRECATED: allow_unprotected_txs
@@ -54,16 +52,31 @@ message Params {
 
   // Fee deducted and burned when calling "CreateFunToken" in units of
   // "evm_denom".
-  string create_funtoken_fee = 9 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
-  ];
+  string create_funtoken_fee = 9
+      [(gogoproto.customtype) = "cosmossdk.io/math.Int", (gogoproto.nullable) = false];
 
   // Hexadecimal address of the canonical WNIBI contract on Nibiru mainnet
   string canonical_wnibi = 10 [
     (gogoproto.customtype) = "github.com/NibiruChain/nibiru/v2/eth.EIP55Addr",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable)   = false
   ];
+
+  repeated eth.evm.v1.WasmPlugin wasm_plugins = 11 [(gogoproto.nullable) = false];
+}
+
+// WasmPlugin binds a stable plugin name to a Wasm contract address.
+//
+// EVM code should look up plugins by name instead of hard-coding Wasm contract
+// addresses. For example, plugin name "x-oracle" can identify the Wasm adapter
+// used by the legacy oracle precompile at
+// 0x0000000000000000000000000000000000000801.
+message WasmPlugin {
+  option (gogoproto.equal) = true;
+
+  // Name is a human-readable name for the plugin.
+  string name = 1;
+  // Addr is the Wasm smart contract address that defines the plugin
+  string addr = 2;
 }
 
 // State represents a single Storage key value pair item.
@@ -164,5 +177,5 @@ message TraceConfig {
   // enable_return_data switches the capture of return data
   bool enable_return_data = 12 [(gogoproto.jsontag) = "enableReturnData"];
   // tracer_config configures the tracer options
-  TracerConfig tracer_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
+  eth.evm.v1.TracerConfig tracer_config = 13 [(gogoproto.jsontag) = "tracerConfig"];
 }

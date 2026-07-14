@@ -11,9 +11,9 @@ import (
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
 var _ suite.SetupTestSuite = (*TestSuite)(nil)

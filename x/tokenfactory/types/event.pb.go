@@ -5,8 +5,8 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/bank/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"

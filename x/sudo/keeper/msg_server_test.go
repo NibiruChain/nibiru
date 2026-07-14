@@ -1,18 +1,21 @@
 package keeper_test
 
 import (
+	"bytes"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 func setup() (*app.NibiruApp, keeper.Keeper, sdk.Context) {
@@ -204,6 +207,141 @@ func (s *Suite) TestMsgServer_ChangeRoot() {
 	s.Require().NoError(err)
 
 	s.Require().Equal(newRoot, sudoers.Root)
+}
+
+func (s *Suite) TestMsgServer_EditWasmBlockHooksContract() {
+	root := testutil.NewAccAddress().String()
+	nonRoot := testutil.NewAccAddress().String()
+	contract := sdk.AccAddress(bytes.Repeat([]byte{1}, wasmtypes.ContractAddrLen)).String()
+	contract2 := sdk.AccAddress(bytes.Repeat([]byte{2}, wasmtypes.ContractAddrLen)).String()
+	sdkLenAddr := testutil.NewAccAddress().String()
+
+	for _, tc := range []struct {
+		name      string
+		sender    string
+		contracts []string
+		want      string
+		wantErr   string
+	}{
+		{
+			name:      "root sets contract",
+			sender:    root,
+			contracts: []string{contract},
+			want:      contract,
+		},
+		{
+			name:      "root changes contract",
+			sender:    root,
+			contracts: []string{contract2},
+			want:      contract2,
+		},
+		{
+			name:      "root clears contract",
+			sender:    root,
+			contracts: []string{""},
+			want:      "",
+		},
+		{
+			name:      "non-root rejected",
+			sender:    nonRoot,
+			contracts: []string{contract},
+			want:      "existing",
+			wantErr:   "message must be sent by root user",
+		},
+		{
+			name:    "zero contracts rejected",
+			sender:  root,
+			want:    "existing",
+			wantErr: "expects exactly one contract argument",
+		},
+		{
+			name:      "multiple contracts rejected",
+			sender:    root,
+			contracts: []string{contract, contract2},
+			want:      "existing",
+			wantErr:   "expects exactly one contract argument",
+		},
+		{
+			name:      "invalid bech32 rejected",
+			sender:    root,
+			contracts: []string{"invalid"},
+			want:      "existing",
+			wantErr:   "decoding bech32 failed",
+		},
+		{
+			name:      "sdk address length rejected",
+			sender:    root,
+			contracts: []string{sdkLenAddr},
+			want:      "existing",
+			wantErr:   "wasm block hooks contract address must be 32 bytes",
+		},
+	} {
+		s.Run(tc.name, func() {
+			_, k, ctx := setup()
+			k.Sudoers.Set(ctx, sudo.Sudoers{
+				Root:      root,
+				Contracts: []string{},
+			})
+			if tc.want == "existing" {
+				k.WasmBlockHooksContract.Set(ctx, contract)
+			}
+
+			_, err := k.EditSudoers(ctx, &sudo.MsgEditSudoers{
+				Action:    string(sudo.EditWasmBlockHooksContract),
+				Sender:    tc.sender,
+				Contracts: tc.contracts,
+			})
+			if tc.wantErr != "" {
+				s.Require().ErrorContains(err, tc.wantErr)
+				s.Require().Equal(contract, k.WasmBlockHooksContract.GetOr(ctx, ""))
+				return
+			}
+			s.Require().NoError(err)
+			s.Require().Equal(tc.want, k.WasmBlockHooksContract.GetOr(ctx, ""))
+			eventValue, hasEventValue := eventAttributeValue(
+				ctx.EventManager().Events(),
+				sudo.EventTypeWasmBlockHooksContractUpdate,
+				sudo.AttributeKeyWasmBlockHooksContract,
+			)
+			s.Require().True(hasEventValue)
+			s.Require().Equal(
+				tc.want,
+				eventValue,
+			)
+
+			gotAddr, configured := k.GetWasmBlockHooksContract(ctx)
+			s.Require().Equal(tc.want != "", configured)
+			if tc.want != "" {
+				s.Require().Equal(tc.want, gotAddr.String())
+			} else {
+				s.Require().Nil(gotAddr)
+			}
+		})
+	}
+}
+
+func (s *Suite) TestGetWasmBlockHooksContract_InvalidStoredAddress() {
+	_, k, ctx := setup()
+	k.WasmBlockHooksContract.Set(ctx, "not-a-contract-address")
+
+	gotAddr, configured := k.GetWasmBlockHooksContract(ctx)
+
+	s.Require().False(configured)
+	s.Require().Nil(gotAddr)
+}
+
+func eventAttributeValue(events sdk.Events, eventType, key string) (string, bool) {
+	for _, event := range events {
+		if event.Type != eventType {
+			continue
+		}
+		for _, attr := range event.Attributes {
+			if attr.Key == key {
+				return attr.Value, true
+			}
+		}
+	}
+	return "", false
 }
 
 func (s *Suite) TestSudo_FromPbSudoers() {

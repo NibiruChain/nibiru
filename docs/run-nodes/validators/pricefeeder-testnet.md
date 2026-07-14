@@ -18,7 +18,7 @@ description: Instructions for validators to set up a Testnet pricefeeder.
     See below for an explanation for the environment variables.
 
     ```bash
-    export CHAIN_ID="nibiru-testnet-1"
+    export CHAIN_ID="nibiru-testnet-2"
     export GRPC_ENDPOINT="localhost:9090"
     export WEBSOCKET_ENDPOINT="ws://localhost:26657/websocket"
     export FEEDER_MNEMONIC="<your feeder mnemonic here>"
@@ -68,9 +68,9 @@ description: Instructions for validators to set up a Testnet pricefeeder.
 
 | Name                 | Description                                                                                                   | Example                                                                                                                                                  |
 | -------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CHAIN_ID             | the chain id                                                                                                  | nibiru-testnet-1                                                                                                                                             |
-| GRPC_ENDPOINT        | the endpoint to fetch query params send txs                                                                   | **localhost:9090** if running locally **lcd.testnet-1.nibiru.fi:443** if running remotely                                                                   |
-| WEBSOCKET_ENDPOINT   | the endpoint to fetch streaming updates                                                                       | **ws://localhost:26657/websocket** if running locally **wss://lcd.testnet-1.nibiru.fi/websocket** if running remotely                                        |
+| CHAIN_ID             | the chain id                                                                                                  | `nibiru-testnet-2`                                                                                                                                             |
+| GRPC_ENDPOINT        | the endpoint to fetch query params send txs                                                                   | **localhost:9090** if running locally **grpc.testnet-2.nibiru.fi:443** if running remotely                                                                   |
+| WEBSOCKET_ENDPOINT   | the endpoint to fetch streaming updates                                                                       | **ws://localhost:26657/websocket** if running locally **wss://rpc.testnet-2.nibiru.fi/websocket** if running remotely                                        |
 | FEEDER_MNEMONIC      | the account that sends price votes                                                                            | guard cream sadness conduct invite crumble clock pudding hole grit liar hotel maid produce squeeze return argue turtle know drive eight casino maze host |
 | VALIDATOR_ADDRESS    | (OPTIONAL) the validator to send price votes for, not needed if the FEEDER_MNEMONIC is the validator mnemonic | nibivaloper1zaavvzxez0elundtn32qnk9lkm8kmcszuwx9jz                                                                                                       |
 

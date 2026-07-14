@@ -1,0 +1,195 @@
+package types_test
+
+import (
+	"testing"
+
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/stretchr/testify/require"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
+	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/simapp"
+)
+
+func TestMsgRegisterInterchainAccountValidateBasic(t *testing.T) {
+	var msg *types.MsgRegisterInterchainAccount
+
+	testCases := []struct {
+		name     string
+		malleate func()
+		expPass  bool
+	}{
+		{
+			"success",
+			func() {},
+			true,
+		},
+		{
+			"success: with empty channel version",
+			func() {
+				msg.Version = ""
+			},
+			true,
+		},
+		{
+			"connection id is invalid",
+			func() {
+				msg.ConnectionId = ""
+			},
+			false,
+		},
+		{
+			"owner address is empty",
+			func() {
+				msg.Owner = ""
+			},
+			false,
+		},
+		{
+			"owner address is too long",
+			func() {
+				msg.Owner = ibctesting.GenerateString(types.MaximumOwnerLength + 1)
+			},
+			false,
+		},
+	}
+
+	for i, tc := range testCases {
+		msg = types.NewMsgRegisterInterchainAccount(
+			ibctesting.FirstConnectionID,
+			ibctesting.TestAccAddress,
+			icatypes.NewDefaultMetadataString(ibctesting.FirstConnectionID, ibctesting.FirstConnectionID),
+		)
+
+		tc.malleate()
+
+		err := msg.ValidateBasic()
+		if tc.expPass {
+			require.NoError(t, err, "valid test case %d failed: %s", i, tc.name)
+		} else {
+			require.Error(t, err, "invalid test case %d passed: %s", i, tc.name)
+		}
+	}
+}
+
+func TestMsgRegisterInterchainAccountGetSigners(t *testing.T) {
+	expSigner, err := sdk.AccAddressFromBech32(ibctesting.TestAccAddress)
+	require.NoError(t, err)
+
+	msg := types.NewMsgRegisterInterchainAccount(ibctesting.FirstConnectionID, ibctesting.TestAccAddress, "")
+	require.Equal(t, []sdk.AccAddress{expSigner}, msg.GetSigners())
+}
+
+func TestMsgSendTxValidateBasic(t *testing.T) {
+	var msg *types.MsgSendTx
+
+	testCases := []struct {
+		name     string
+		malleate func()
+		expPass  bool
+	}{
+		{
+			"success",
+			func() {},
+			true,
+		},
+		{
+			"connection id is invalid",
+			func() {
+				msg.ConnectionId = ""
+			},
+			false,
+		},
+		{
+			"owner address is empty",
+			func() {
+				msg.Owner = ""
+			},
+			false,
+		},
+		{
+			"owner address is too long",
+			func() {
+				msg.Owner = ibctesting.GenerateString(types.MaximumOwnerLength + 1)
+			},
+			false,
+		},
+		{
+			"relative timeout is not set",
+			func() {
+				msg.RelativeTimeout = 0
+			},
+			false,
+		},
+		{
+			"messages array is empty",
+			func() {
+				msg.PacketData = icatypes.InterchainAccountPacketData{}
+			},
+			false,
+		},
+	}
+
+	for i, tc := range testCases {
+		msgBankSend := &banktypes.MsgSend{
+			FromAddress: ibctesting.TestAccAddress,
+			ToAddress:   ibctesting.TestAccAddress,
+			Amount:      ibctesting.TestCoins,
+		}
+
+		data, err := icatypes.SerializeCosmosTx(simapp.MakeTestEncodingConfig().Marshaler, []proto.Message{msgBankSend})
+		require.NoError(t, err)
+
+		packetData := icatypes.InterchainAccountPacketData{
+			Type: icatypes.EXECUTE_TX,
+			Data: data,
+		}
+
+		msg = types.NewMsgSendTx(
+			ibctesting.TestAccAddress,
+			ibctesting.FirstConnectionID,
+			100000,
+			packetData,
+		)
+
+		tc.malleate()
+
+		err = msg.ValidateBasic()
+		if tc.expPass {
+			require.NoError(t, err, "valid test case %d failed: %s", i, tc.name)
+		} else {
+			require.Error(t, err, "invalid test case %d passed: %s", i, tc.name)
+		}
+	}
+}
+
+func TestMsgSendTxGetSigners(t *testing.T) {
+	expSigner, err := sdk.AccAddressFromBech32(ibctesting.TestAccAddress)
+	require.NoError(t, err)
+
+	msgBankSend := &banktypes.MsgSend{
+		FromAddress: ibctesting.TestAccAddress,
+		ToAddress:   ibctesting.TestAccAddress,
+		Amount:      ibctesting.TestCoins,
+	}
+
+	data, err := icatypes.SerializeCosmosTx(simapp.MakeTestEncodingConfig().Marshaler, []proto.Message{msgBankSend})
+	require.NoError(t, err)
+
+	packetData := icatypes.InterchainAccountPacketData{
+		Type: icatypes.EXECUTE_TX,
+		Data: data,
+	}
+
+	msg := types.NewMsgSendTx(
+		ibctesting.TestAccAddress,
+		ibctesting.FirstConnectionID,
+		100000,
+		packetData,
+	)
+	require.Equal(t, []sdk.AccAddress{expSigner}, msg.GetSigners())
+}

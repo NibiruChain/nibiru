@@ -84,7 +84,7 @@ go_get_cosmos_protos() {
   ensure_nibiru_cosmos_sdk_version
 
   # get protos for: cosmos-sdk, cosmos-proto
-  go get "github.com/cosmos/cosmos-sdk@$nibiru_cosmos_sdk_version"
+  go get "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk@$nibiru_cosmos_sdk_version"
   go get github.com/cosmos/cosmos-proto
 }
 

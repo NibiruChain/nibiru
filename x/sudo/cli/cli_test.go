@@ -14,15 +14,15 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdktestutil "github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -92,7 +92,7 @@ func (s *TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.localnetCLI = localnetCLI
 
-	// `contrib/scripts/localnet.sh` patches genesis so the recovered
+	// `cmd/nibid/localnet.sh` patches genesis so the recovered
 	// `validator` account is the x/sudo root; `nutil.LocalnetValAddr` matches
 	// that fixed localnet account.
 	s.root = nutil.LocalnetValAddr
