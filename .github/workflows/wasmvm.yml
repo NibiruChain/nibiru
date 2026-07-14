@@ -1,4 +1,4 @@
-name: "Wasm VM FFI"
+name: "Wasm VM"
 # Builds release candidate libwasmvm artifacts on ordinary branch and PR runs.
 # Durable GitHub Release publishing only runs for lib/wasmvm version tags.
 
@@ -179,7 +179,7 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         uses: actions/setup-go@v6
         with:
-          go-version: 1.19.7
+          go-version-file: go.mod
           cache: true
 
       - name: Install just
@@ -248,7 +248,7 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         uses: actions/setup-go@v6
         with:
-          go-version: 1.19.7
+          go-version-file: go.mod
           cache: true
 
       - name: Install just

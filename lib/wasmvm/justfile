@@ -24,17 +24,44 @@ alias i := install
 
 # Build Go and Rust libraries.
 build:
-  make build
+  just build-rust
+  just build-go
 
 alias b := build
 
 # Build the Rust libwasmvm shared library.
 build-rust:
-  make build-rust
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  case "$(uname -s)" in
+    Linux)
+      shared_lib_src="libwasmvm.so"
+      arch="$(rustc --print cfg | awk -F '"' '/target_arch/ {print $2}')"
+      shared_lib_dst="libwasmvm.${arch}.so"
+      ;;
+    Darwin)
+      shared_lib_src="libwasmvm.dylib"
+      shared_lib_dst="libwasmvm.dylib"
+      ;;
+    *)
+      echo "unsupported platform: $(uname -s)" >&2
+      exit 1
+      ;;
+  esac
+
+  (cd libwasmvm && cargo build --release)
+  cp "libwasmvm/target/release/${shared_lib_src}" "internal/api/${shared_lib_dst}"
+  just update-bindings
 
 # Build Go packages and demo.
 build-go:
-  make build-go
+  #!/usr/bin/env bash
+  set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
+  cd "$repo_root"
+  go build ./lib/wasmvm/...
+  go build -o lib/wasmvm/build/demo ./lib/wasmvm/cmd/demo
 
 # Format Rust, Go, and shell files.
 fmt:
@@ -84,7 +111,8 @@ lint-go *args:
     lint_args=(--fix)
   fi
 
-  lint_cmd=(golangci-lint run -v "${lint_args[@]}")
+  repo_root="$(git rev-parse --show-toplevel)"
+  lint_cmd=(golangci-lint run -v "${lint_args[@]}" ./lib/wasmvm/...)
 
   if command -v golangci-lint >/dev/null 2>&1; then
     local_version="$(golangci-lint version --short 2>/dev/null || true)"
@@ -94,13 +122,13 @@ lint-go *args:
     local_major="${local_major%%.*}"
 
     if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
-      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}"
+      (cd "$repo_root" && GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}")
       exit 0
     fi
 
     if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
       echo "warning: running local golangci-lint ${local_version}; repo pins $image_version" >&2
-      GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}"
+      (cd "$repo_root" && GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/wasmvm-golangci-lint-cache}" "${lint_cmd[@]}")
       exit 0
     fi
 
@@ -113,7 +141,7 @@ lint-go *args:
   fi
 
   docker run --rm \
-    -v "$PWD":/app \
+    -v "$repo_root":/app \
     -v "${GOLANGCI_LINT_CACHE:-$HOME/.cache/golangci-lint/$image_version}":/root/.cache \
     -w /app \
     "golangci/golangci-lint:$image_version" \
@@ -132,24 +160,46 @@ alias t := test
 
 # Run Go tests.
 test-go:
-  make test
+  #!/usr/bin/env bash
+  set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
+  cd "$repo_root"
+  RUST_BACKTRACE=1 go test -v -count=1 ./lib/wasmvm/...
 
 # Run Go tests with cgo race-safety checks.
 test-go-safety:
-  make test-safety
+  #!/usr/bin/env bash
+  set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
+  cd "$repo_root"
+  GOEXPERIMENT=cgocheck2 go test -race -v -count=1 ./lib/wasmvm/...
 
 # Run Go tests against the static musl libwasmvm library in Alpine.
 test-alpine:
-  make test-alpine
+  #!/usr/bin/env bash
+  set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
+  wasmvm_dir="$repo_root/lib/wasmvm"
+  user_id="$(id -u)"
+  user_group="$(id -g)"
+
+  just artifact-static
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine go build -tags muslc ./lib/wasmvm/...
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine go test -tags muslc -count=1 ./lib/wasmvm/...
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine sh -c "cd lib/wasmvm && ./build_demo.sh"
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun/lib/wasmvm cosmwasm/go-ext-builder:0018-alpine file ./demo
+  for alpine_version in 3.18 3.17 3.16 3.15 3.14; do
+    docker run --rm --read-only -v "$wasmvm_dir":/mnt/testrun -w /mnt/testrun "alpine:${alpine_version}" ./demo ./testdata/hackatom.wasm
+  done
 
 # Build and test without cgo.
 test-no-cgo:
   #!/usr/bin/env bash
   set -euo pipefail
-  CGO_ENABLED=0 go build ./types
-  CGO_ENABLED=0 go build .
-  CGO_ENABLED=0 go test ./types
-  CGO_ENABLED=0 go test .
+  repo_root="$(git rev-parse --show-toplevel)"
+  cd "$repo_root"
+  CGO_ENABLED=0 go build ./lib/wasmvm ./lib/wasmvm/wvm
+  CGO_ENABLED=0 go test ./lib/wasmvm ./lib/wasmvm/wvm
 
 # Build Rust docs.
 doc:
@@ -179,7 +229,7 @@ check:
   (cd libwasmvm && cargo check)
   changes="$(git status --porcelain libwasmvm/bindings.h)"
   if [ -n "$changes" ]; then
-    echo "libwasmvm/bindings.h changed. Run 'make update-bindings' and commit the result." >&2
+    echo "libwasmvm/bindings.h changed. Run 'just update-bindings' and commit the result." >&2
     git status
     git --no-pager diff -- libwasmvm/bindings.h
     exit 1
@@ -193,6 +243,8 @@ bindings-check:
 go-tidy-check:
   #!/usr/bin/env bash
   set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
+  cd "$repo_root"
   before="$(sha256sum go.mod go.sum)"
   go mod tidy
   after="$(sha256sum go.mod go.sum)"
@@ -222,7 +274,17 @@ docker-image-cross:
 
 # Build static musl release artifacts.
 artifact-static:
-  make release-build-alpine
+  #!/usr/bin/env bash
+  set -euo pipefail
+  user_id="$(id -u)"
+  user_group="$(id -g)"
+
+  rm -rf libwasmvm/target/aarch64-unknown-linux-musl/release
+  rm -rf libwasmvm/target/x86_64-unknown-linux-musl/release
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-alpine
+  cp libwasmvm/artifacts/libwasmvm_muslc.a internal/api
+  cp libwasmvm/artifacts/libwasmvm_muslc.aarch64.a internal/api
+  just update-bindings
 
 # Build Linux shared release artifacts.
 artifact-linux:
@@ -237,8 +299,20 @@ artifact-linux:
 
 # Build Darwin shared and static release artifacts.
 artifact-darwin:
-  make release-build-macos
-  make release-build-macos-static
+  #!/usr/bin/env bash
+  set -euo pipefail
+  user_id="$(id -u)"
+  user_group="$(id -g)"
+
+  rm -rf libwasmvm/target/x86_64-apple-darwin/release
+  rm -rf libwasmvm/target/aarch64-apple-darwin/release
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-cross build_macos.sh
+  cp libwasmvm/artifacts/libwasmvm.dylib internal/api
+  rm -rf libwasmvm/target/x86_64-apple-darwin/release
+  rm -rf libwasmvm/target/aarch64-apple-darwin/release
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-cross build_macos_static.sh
+  cp libwasmvm/artifacts/libwasmvmstatic_darwin.a internal/api/libwasmvmstatic_darwin.a
+  just update-bindings
 
 # Run the libwasmvm release helper. Use this to install deps, test the helper,
 # dry-run publishing, print the next tag, or run a real GitHub Release publish.

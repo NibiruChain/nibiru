@@ -1,6 +1,7 @@
 package evmstate_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -165,6 +166,78 @@ func (s *Suite) TestContractCallsAnotherContract() {
 		)
 		s.Require().ErrorContains(err, vm.ErrExecutionReverted.Error())
 	})
+}
+
+func (s *Suite) TestRevertToSnapshotRollsBackEventManager() {
+	deps := evmtest.NewTestDeps()
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(evm.EVMBankDenom, sdk.NewInt(69_420))),
+	))
+
+	s.T().Log("Set up helloworldcounter.wasm")
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	helloWorldCounterWasm := wasmContracts[1]
+	deps.SetCtx(deps.Ctx().WithEventManager(sdk.NewEventManager()))
+
+	evmObj, sdb := deps.NewEVM()
+
+	snapshotIdx := sdb.Snapshot()
+	eventsBefore := sdb.Ctx().EventManager().Len()
+	logsBefore := len(sdb.Logs())
+	s.T().Logf("snapshot=%d eventsBefore=%d logsBefore=%d", snapshotIdx, eventsBefore, logsBefore)
+
+	test.IncrementWasmCounterWithExecuteMulti(
+		&s.Suite, &deps, evmObj, helloWorldCounterWasm, 1, false,
+	)
+
+	eventsAfterPrecompile := sdb.Ctx().EventManager().Events()
+	logsAfterPrecompile := sdb.Logs()
+	s.T().Logf(
+		"eventsAfterPrecompile=%d eventTypes=%v",
+		len(eventsAfterPrecompile), eventTypes(eventsAfterPrecompile),
+	)
+	s.T().Logf("eventsAfterPrecompile JSON:\n%s", eventsJSON(eventsAfterPrecompile))
+	s.T().Logf("logsAfterPrecompile=%d", len(logsAfterPrecompile))
+
+	s.Require().Greater(len(eventsAfterPrecompile), eventsBefore)
+	s.Require().Greater(len(logsAfterPrecompile), logsBefore)
+
+	sdb.RevertToSnapshot(snapshotIdx)
+
+	eventsAfterRevert := sdb.Ctx().EventManager().Events()
+	logsAfterRevert := sdb.Logs()
+	s.T().Logf(
+		"eventsAfterRevert=%d eventTypes=%v",
+		len(eventsAfterRevert), eventTypes(eventsAfterRevert),
+	)
+	s.T().Logf("eventsAfterRevert JSON:\n%s", eventsJSON(eventsAfterRevert))
+	s.T().Logf("logsAfterRevert=%d", len(logsAfterRevert))
+
+	s.Equal(logsBefore, len(logsAfterRevert), "EVM logs are snapshot-aware and revert")
+	s.Equal(
+		eventsBefore,
+		len(eventsAfterRevert),
+		"SDK events emitted after the snapshot should revert with the snapshot",
+	)
+}
+
+func eventTypes(events sdk.Events) []string {
+	types := make([]string, len(events))
+	for i, event := range events {
+		types[i] = event.Type
+	}
+	return types
+}
+
+func eventsJSON(events sdk.Events) string {
+	bz, err := json.MarshalIndent(events, "", "  ")
+	if err != nil {
+		return err.Error()
+	}
+	return string(bz)
 }
 
 func (s *Suite) TestJournalReversion() {

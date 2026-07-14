@@ -22,5 +22,5 @@ cargo build --release --target x86_64-apple-darwin
 
 # Create a universal library with both archs
 lipo -output artifacts/libwasmvm.dylib -create \
-  target/x86_64-apple-darwin/release/deps/libwasmvm.dylib \
-  target/aarch64-apple-darwin/release/deps/libwasmvm.dylib
+	target/x86_64-apple-darwin/release/deps/libwasmvm.dylib \
+	target/aarch64-apple-darwin/release/deps/libwasmvm.dylib
