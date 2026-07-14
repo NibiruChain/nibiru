@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"runtime/debug"
-	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -230,7 +229,7 @@ func AddModuleInitFlags(startCmd *cobra.Command) {
 			cmd.Println("libwasmvm version check skipped")
 			return nil
 		}
-		return CheckLibwasmVersion(getExpectedLibwasmVersion())
+		return CheckLibwasmVersion(wasmvm.ExpectedVersion)
 	}
 	startCmd.PreRunE = chainPreRuns(preCheck, startCmd.PreRunE)
 }
@@ -267,25 +266,8 @@ func ReadWasmConfig(opts servertypes.AppOptions) (types.WasmConfig, error) {
 	return cfg, nil
 }
 
-func getExpectedLibwasmVersion() string {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		panic("can't read build info")
-	}
-	for _, d := range buildInfo.Deps {
-		if d.Path != "github.com/CosmWasm/wasmvm" {
-			continue
-		}
-		if d.Replace != nil {
-			return d.Replace.Version
-		}
-		return d.Version
-	}
-	return ""
-}
-
 // CheckLibwasmVersion ensures that the libwasmvm version loaded at runtime matches the version
-// of the github.com/CosmWasm/wasmvm dependency in go.mod. This us useful when dealing with
+// of the in-tree libwasmvm Rust crate. This is useful when dealing with
 // shared libraries that are copied or moved from their default location, e.g. when building the node
 // on one machine and deploying it to other machines.
 //
@@ -303,7 +285,7 @@ func CheckLibwasmVersion(wasmExpectedVersion string) error {
 	if err != nil {
 		return fmt.Errorf("unable to retrieve libwasmversion %w", err)
 	}
-	if !strings.Contains(wasmExpectedVersion, wasmVersion) {
+	if wasmExpectedVersion != wasmVersion {
 		return fmt.Errorf("libwasmversion mismatch. got: %s; expected: %s", wasmVersion, wasmExpectedVersion)
 	}
 	return nil

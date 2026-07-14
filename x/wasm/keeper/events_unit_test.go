@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -56,23 +57,23 @@ func TestHasWasmModuleEvent(t *testing.T) {
 func TestNewCustomEvents(t *testing.T) {
 	myContract := RandomAccountAddress(t)
 	specs := map[string]struct {
-		src     wasmvmtypes.Events
+		src     wvm.Events
 		exp     sdk.Events
 		isError bool
 	}{
 		"all good": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type:       "foo",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
+				Attributes: []wvm.EventAttribute{{Key: "myKey", Value: "myVal"}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"))},
 		},
 		"multiple attributes": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "foo",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "myKey", Value: "myVal"},
 					{Key: "myOtherKey", Value: "myOtherVal"},
 				},
@@ -83,12 +84,12 @@ func TestNewCustomEvents(t *testing.T) {
 				sdk.NewAttribute("myOtherKey", "myOtherVal"))},
 		},
 		"multiple events": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type:       "foo",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
+				Attributes: []wvm.EventAttribute{{Key: "myKey", Value: "myVal"}},
 			}, {
 				Type:       "bar",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "otherKey", Value: "otherVal"}},
+				Attributes: []wvm.EventAttribute{{Key: "otherKey", Value: "otherVal"}},
 			}},
 			exp: sdk.Events{
 				sdk.NewEvent("wasm-foo",
@@ -100,29 +101,29 @@ func TestNewCustomEvents(t *testing.T) {
 			},
 		},
 		"without attributes": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "foo",
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-foo",
 				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
 		"error on short event type": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "f",
 			}},
 			isError: true,
 		},
 		"error on _contract_address": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type:       "foo",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
+				Attributes: []wvm.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			}},
 			isError: true,
 		},
 		"error on reserved prefix": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "wasm",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "_reserved", Value: "is skipped"},
 					{Key: "normal", Value: "is used"},
 				},
@@ -130,9 +131,9 @@ func TestNewCustomEvents(t *testing.T) {
 			isError: true,
 		},
 		"error on empty value": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "boom",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "key", Value: ""},
 				},
@@ -140,9 +141,9 @@ func TestNewCustomEvents(t *testing.T) {
 			isError: true,
 		},
 		"error on empty key": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "boom",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "", Value: "value"},
 				},
@@ -150,18 +151,18 @@ func TestNewCustomEvents(t *testing.T) {
 			isError: true,
 		},
 		"error on whitespace type": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "    f   ",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "some", Value: "data"},
 				},
 			}},
 			isError: true,
 		},
 		"error on only whitespace key": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "boom",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "\n\n\n\n", Value: "value"},
 				},
@@ -169,9 +170,9 @@ func TestNewCustomEvents(t *testing.T) {
 			isError: true,
 		},
 		"error on only whitespace value": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type: "boom",
-				Attributes: []wasmvmtypes.EventAttribute{
+				Attributes: []wvm.EventAttribute{
 					{Key: "some", Value: "data"},
 					{Key: "myKey", Value: " \t\r\n"},
 				},
@@ -179,16 +180,16 @@ func TestNewCustomEvents(t *testing.T) {
 			isError: true,
 		},
 		"strip out whitespace": {
-			src: wasmvmtypes.Events{{
+			src: wvm.Events{{
 				Type:       "  food\n",
-				Attributes: []wasmvmtypes.EventAttribute{{Key: "my Key", Value: "\tmyVal"}},
+				Attributes: []wvm.EventAttribute{{Key: "my Key", Value: "\tmyVal"}},
 			}},
 			exp: sdk.Events{sdk.NewEvent("wasm-food",
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("my Key", "myVal"))},
 		},
 		"empty event elements": {
-			src:     make(wasmvmtypes.Events, 10),
+			src:     make(wvm.Events, 10),
 			isError: true,
 		},
 		"nil": {
@@ -211,18 +212,18 @@ func TestNewCustomEvents(t *testing.T) {
 func TestNewWasmModuleEvent(t *testing.T) {
 	myContract := RandomAccountAddress(t)
 	specs := map[string]struct {
-		src     []wasmvmtypes.EventAttribute
+		src     []wvm.EventAttribute
 		exp     sdk.Events
 		isError bool
 	}{
 		"all good": {
-			src: []wasmvmtypes.EventAttribute{{Key: "myKey", Value: "myVal"}},
+			src: []wvm.EventAttribute{{Key: "myKey", Value: "myVal"}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("myKey", "myVal"))},
 		},
 		"multiple attributes": {
-			src: []wasmvmtypes.EventAttribute{
+			src: []wvm.EventAttribute{
 				{Key: "myKey", Value: "myVal"},
 				{Key: "myOtherKey", Value: "myOtherVal"},
 			},
@@ -236,25 +237,25 @@ func TestNewWasmModuleEvent(t *testing.T) {
 				sdk.NewAttribute("_contract_address", myContract.String()))},
 		},
 		"error on _contract_address": {
-			src:     []wasmvmtypes.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
+			src:     []wvm.EventAttribute{{Key: "_contract_address", Value: RandomBech32AccountAddress(t)}},
 			isError: true,
 		},
 		"error on whitespace key": {
-			src:     []wasmvmtypes.EventAttribute{{Key: "  ", Value: "value"}},
+			src:     []wvm.EventAttribute{{Key: "  ", Value: "value"}},
 			isError: true,
 		},
 		"error on whitespace value": {
-			src:     []wasmvmtypes.EventAttribute{{Key: "key", Value: "\n\n\n"}},
+			src:     []wvm.EventAttribute{{Key: "key", Value: "\n\n\n"}},
 			isError: true,
 		},
 		"strip whitespace": {
-			src: []wasmvmtypes.EventAttribute{{Key: "   my-real-key    ", Value: "\n\n\nsome-val\t\t\t"}},
+			src: []wvm.EventAttribute{{Key: "   my-real-key    ", Value: "\n\n\nsome-val\t\t\t"}},
 			exp: sdk.Events{sdk.NewEvent("wasm",
 				sdk.NewAttribute("_contract_address", myContract.String()),
 				sdk.NewAttribute("my-real-key", "some-val"))},
 		},
 		"empty elements": {
-			src:     make([]wasmvmtypes.EventAttribute, 10),
+			src:     make([]wvm.EventAttribute, 10),
 			isError: true,
 		},
 		"nil": {

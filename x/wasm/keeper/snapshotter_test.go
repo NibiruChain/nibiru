@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -102,7 +103,7 @@ func TestSnapshotter(t *testing.T) {
 				hash, err := wasmvm.CreateChecksum(bz)
 				require.NoError(t, err)
 				destCodeIDToChecksum[id] = hash[:]
-				assert.Equal(t, hash[:], wasmvmtypes.Checksum(info.CodeHash))
+				assert.Equal(t, hash[:], wvm.Checksum(info.CodeHash))
 				return false
 			})
 			assert.Equal(t, srcCodeIDToChecksum, destCodeIDToChecksum)

@@ -4,8 +4,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/spf13/cast"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

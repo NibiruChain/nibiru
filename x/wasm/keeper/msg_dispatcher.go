@@ -5,8 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -19,12 +20,12 @@ import (
 // Messenger is an extension point for custom wasmd message handling
 type Messenger interface {
 	// DispatchMsg encodes the wasmVM message and dispatches it.
-	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
+	DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wvm.CosmosMsg) (events []sdk.Event, data [][]byte, err error)
 }
 
 // replyer is a subset of keeper that can handle replies to submessages
 type replyer interface {
-	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wasmvmtypes.Reply) ([]byte, error)
+	reply(ctx sdk.Context, contractAddress sdk.AccAddress, reply wvm.Reply) ([]byte, error)
 }
 
 // MessageDispatcher coordinates message sending and submessage reply/ state commits
@@ -39,7 +40,7 @@ func NewMessageDispatcher(messenger Messenger, keeper replyer) *MessageDispatche
 }
 
 // DispatchMessages sends all messages.
-func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.CosmosMsg) error {
+func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wvm.CosmosMsg) error {
 	for _, msg := range msgs {
 		events, _, err := d.messenger.DispatchMsg(ctx, contractAddr, ibcPort, msg)
 		if err != nil {
@@ -52,7 +53,7 @@ func (d MessageDispatcher) DispatchMessages(ctx sdk.Context, contractAddr sdk.Ac
 }
 
 // dispatchMsgWithGasLimit sends a message with gas limit applied
-func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wasmvmtypes.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
+func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msg wvm.CosmosMsg, gasLimit uint64) (events []sdk.Event, data [][]byte, err error) {
 	limitedMeter := sdk.NewGasMeter(gasLimit)
 	subCtx := ctx.WithGasMeter(limitedMeter)
 
@@ -80,11 +81,11 @@ func (d MessageDispatcher) dispatchMsgWithGasLimit(ctx sdk.Context, contractAddr
 
 // DispatchSubmessages builds a sandbox to execute these messages and returns the execution result to the contract
 // that dispatched them, both on success as well as failure
-func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error) {
+func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wvm.SubMsg) ([]byte, error) {
 	var rsp []byte
 	for _, msg := range msgs {
 		switch msg.ReplyOn {
-		case wasmvmtypes.ReplySuccess, wasmvmtypes.ReplyError, wasmvmtypes.ReplyAlways, wasmvmtypes.ReplyNever:
+		case wvm.ReplySuccess, wvm.ReplyError, wvm.ReplyAlways, wvm.ReplyNever:
 		default:
 			return nil, sdkioerrors.Wrap(types.ErrInvalid, "replyOn value")
 		}
@@ -125,15 +126,15 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		} // on failure, revert state from sandbox, and ignore events (just skip doing the above)
 
 		// we only callback if requested. Short-circuit here the cases we don't want to
-		if (msg.ReplyOn == wasmvmtypes.ReplySuccess || msg.ReplyOn == wasmvmtypes.ReplyNever) && err != nil {
+		if (msg.ReplyOn == wvm.ReplySuccess || msg.ReplyOn == wvm.ReplyNever) && err != nil {
 			return nil, err
 		}
-		if msg.ReplyOn == wasmvmtypes.ReplyNever || (msg.ReplyOn == wasmvmtypes.ReplyError && err == nil) {
+		if msg.ReplyOn == wvm.ReplyNever || (msg.ReplyOn == wvm.ReplyError && err == nil) {
 			continue
 		}
 
 		// otherwise, we create a SubMsgResult and pass it into the calling contract
-		var result wasmvmtypes.SubMsgResult
+		var result wvm.SubMsgResult
 		if err == nil {
 			// just take the first one for now if there are multiple sub-sdk messages
 			// and safely return nothing if no data
@@ -141,8 +142,8 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 			if len(data) > 0 {
 				responseData = data[0]
 			}
-			result = wasmvmtypes.SubMsgResult{
-				Ok: &wasmvmtypes.SubMsgResponse{
+			result = wvm.SubMsgResult{
+				Ok: &wvm.SubMsgResponse{
 					Events: sdkEventsToWasmVMEvents(filteredEvents),
 					Data:   responseData,
 				},
@@ -150,13 +151,13 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 		} else {
 			// Issue #759 - we don't return error string for worries of non-determinism
 			moduleLogger(ctx).Info("Redacting submessage error", "cause", err)
-			result = wasmvmtypes.SubMsgResult{
+			result = wvm.SubMsgResult{
 				Err: redactError(err).Error(),
 			}
 		}
 
 		// now handle the reply, we use the parent context, and abort on error
-		reply := wasmvmtypes.Reply{
+		reply := wvm.Reply{
 			ID:     msg.ID,
 			Result: result,
 		}
@@ -178,7 +179,7 @@ func (d MessageDispatcher) DispatchSubmessages(ctx sdk.Context, contractAddr sdk
 func redactError(err error) error {
 	// Do not redact system errors
 	// SystemErrors must be created in x/wasm and we can ensure determinism
-	if wasmvmtypes.ToSystemError(err) != nil {
+	if wvm.ToSystemError(err) != nil {
 		return err
 	}
 
@@ -202,10 +203,10 @@ func filterEvents(events []sdk.Event) []sdk.Event {
 	return res
 }
 
-func sdkEventsToWasmVMEvents(events []sdk.Event) []wasmvmtypes.Event {
-	res := make([]wasmvmtypes.Event, len(events))
+func sdkEventsToWasmVMEvents(events []sdk.Event) []wvm.Event {
+	res := make([]wvm.Event, len(events))
 	for i, ev := range events {
-		res[i] = wasmvmtypes.Event{
+		res[i] = wvm.Event{
 			Type:       ev.Type,
 			Attributes: sdkAttributesToWasmVMAttributes(ev.Attributes),
 		}
@@ -213,10 +214,10 @@ func sdkEventsToWasmVMEvents(events []sdk.Event) []wasmvmtypes.Event {
 	return res
 }
 
-func sdkAttributesToWasmVMAttributes(attrs []abci.EventAttribute) []wasmvmtypes.EventAttribute {
-	res := make([]wasmvmtypes.EventAttribute, len(attrs))
+func sdkAttributesToWasmVMAttributes(attrs []abci.EventAttribute) []wvm.EventAttribute {
+	res := make([]wvm.EventAttribute, len(attrs))
 	for i, attr := range attrs {
-		res[i] = wasmvmtypes.EventAttribute{
+		res[i] = wvm.EventAttribute{
 			Key:   attr.Key,
 			Value: attr.Value,
 		}

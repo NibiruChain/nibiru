@@ -3,7 +3,7 @@ package wasm
 import (
 	"math"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	porttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/05-port/types"
@@ -57,11 +57,11 @@ func (i IBCHandler) OnChanOpenInit(
 		return "", sdkioerrors.Wrapf(err, "contract port id")
 	}
 
-	msg := wasmvmtypes.IBCChannelOpenMsg{
-		OpenInit: &wasmvmtypes.IBCOpenInit{
-			Channel: wasmvmtypes.IBCChannel{
-				Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
-				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
+	msg := wvm.IBCChannelOpenMsg{
+		OpenInit: &wvm.IBCOpenInit{
+			Channel: wvm.IBCChannel{
+				Endpoint:             wvm.IBCEndpoint{PortID: portID, ChannelID: channelID},
+				CounterpartyEndpoint: wvm.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
 				Order:                order.String(),
 				// DESIGN V3: this may be "" ??
 				Version:      version,
@@ -106,11 +106,11 @@ func (i IBCHandler) OnChanOpenTry(
 		return "", sdkioerrors.Wrapf(err, "contract port id")
 	}
 
-	msg := wasmvmtypes.IBCChannelOpenMsg{
-		OpenTry: &wasmvmtypes.IBCOpenTry{
-			Channel: wasmvmtypes.IBCChannel{
-				Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
-				CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
+	msg := wvm.IBCChannelOpenMsg{
+		OpenTry: &wvm.IBCOpenTry{
+			Channel: wvm.IBCChannel{
+				Endpoint:             wvm.IBCEndpoint{PortID: portID, ChannelID: channelID},
+				CounterpartyEndpoint: wvm.IBCEndpoint{PortID: counterParty.PortId, ChannelID: counterParty.ChannelId},
 				Order:                order.String(),
 				Version:              counterpartyVersion,
 				ConnectionID:         connectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
@@ -164,8 +164,8 @@ func (i IBCHandler) OnChanOpenAck(
 		return sdkioerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
 
-	msg := wasmvmtypes.IBCChannelConnectMsg{
-		OpenAck: &wasmvmtypes.IBCOpenAck{
+	msg := wvm.IBCChannelConnectMsg{
+		OpenAck: &wvm.IBCOpenAck{
 			Channel:             toWasmVMChannel(portID, channelID, channelInfo, appVersion),
 			CounterpartyVersion: counterpartyVersion,
 		},
@@ -187,8 +187,8 @@ func (i IBCHandler) OnChanOpenConfirm(ctx sdk.Context, portID, channelID string)
 	if !ok {
 		return sdkioerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
-	msg := wasmvmtypes.IBCChannelConnectMsg{
-		OpenConfirm: &wasmvmtypes.IBCOpenConfirm{
+	msg := wvm.IBCChannelConnectMsg{
+		OpenConfirm: &wvm.IBCOpenConfirm{
 			Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion),
 		},
 	}
@@ -210,8 +210,8 @@ func (i IBCHandler) OnChanCloseInit(ctx sdk.Context, portID, channelID string) e
 		return sdkioerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
 
-	msg := wasmvmtypes.IBCChannelCloseMsg{
-		CloseInit: &wasmvmtypes.IBCCloseInit{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
+	msg := wvm.IBCChannelCloseMsg{
+		CloseInit: &wvm.IBCCloseInit{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
 	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
 	if err != nil {
@@ -238,8 +238,8 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 		return sdkioerrors.Wrapf(channeltypes.ErrInvalidChannelVersion, "port ID (%s) channel ID (%s)", portID, channelID)
 	}
 
-	msg := wasmvmtypes.IBCChannelCloseMsg{
-		CloseConfirm: &wasmvmtypes.IBCCloseConfirm{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
+	msg := wvm.IBCChannelCloseMsg{
+		CloseConfirm: &wvm.IBCCloseConfirm{Channel: toWasmVMChannel(portID, channelID, channelInfo, appVersion)},
 	}
 	err = i.keeper.OnCloseChannel(ctx, contractAddr, msg)
 	if err != nil {
@@ -250,10 +250,10 @@ func (i IBCHandler) OnChanCloseConfirm(ctx sdk.Context, portID, channelID string
 	return err
 }
 
-func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel, appVersion string) wasmvmtypes.IBCChannel {
-	return wasmvmtypes.IBCChannel{
-		Endpoint:             wasmvmtypes.IBCEndpoint{PortID: portID, ChannelID: channelID},
-		CounterpartyEndpoint: wasmvmtypes.IBCEndpoint{PortID: channelInfo.Counterparty.PortId, ChannelID: channelInfo.Counterparty.ChannelId},
+func toWasmVMChannel(portID, channelID string, channelInfo channeltypes.Channel, appVersion string) wvm.IBCChannel {
+	return wvm.IBCChannel{
+		Endpoint:             wvm.IBCEndpoint{PortID: portID, ChannelID: channelID},
+		CounterpartyEndpoint: wvm.IBCEndpoint{PortID: channelInfo.Counterparty.PortId, ChannelID: channelInfo.Counterparty.ChannelId},
 		Order:                channelInfo.Ordering.String(),
 		Version:              appVersion,
 		ConnectionID:         channelInfo.ConnectionHops[0], // At the moment this list must be of length 1. In the future multi-hop channels may be supported.
@@ -273,7 +273,7 @@ func (i IBCHandler) OnRecvPacket(
 	}
 
 	em := sdk.NewEventManager()
-	msg := wasmvmtypes.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
+	msg := wvm.IBCPacketReceiveMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	ack, err := i.keeper.OnRecvPacket(ctx.WithEventManager(em), contractAddr, msg)
 	if err != nil {
 		ack = channeltypes.NewErrorAcknowledgement(err)
@@ -299,8 +299,8 @@ func (i IBCHandler) OnAcknowledgementPacket(
 		return sdkioerrors.Wrapf(err, "contract port id")
 	}
 
-	err = i.keeper.OnAckPacket(ctx, contractAddr, wasmvmtypes.IBCPacketAckMsg{
-		Acknowledgement: wasmvmtypes.IBCAcknowledgement{Data: acknowledgement},
+	err = i.keeper.OnAckPacket(ctx, contractAddr, wvm.IBCPacketAckMsg{
+		Acknowledgement: wvm.IBCAcknowledgement{Data: acknowledgement},
 		OriginalPacket:  newIBCPacket(packet),
 		Relayer:         relayer.String(),
 	})
@@ -316,7 +316,7 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 	if err != nil {
 		return sdkioerrors.Wrapf(err, "contract port id")
 	}
-	msg := wasmvmtypes.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
+	msg := wvm.IBCPacketTimeoutMsg{Packet: newIBCPacket(packet), Relayer: relayer.String()}
 	err = i.keeper.OnTimeoutPacket(ctx, contractAddr, msg)
 	if err != nil {
 		return sdkioerrors.Wrap(err, "on timeout")
@@ -324,21 +324,21 @@ func (i IBCHandler) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet,
 	return nil
 }
 
-func newIBCPacket(packet channeltypes.Packet) wasmvmtypes.IBCPacket {
-	timeout := wasmvmtypes.IBCTimeout{
+func newIBCPacket(packet channeltypes.Packet) wvm.IBCPacket {
+	timeout := wvm.IBCTimeout{
 		Timestamp: packet.TimeoutTimestamp,
 	}
 	if !packet.TimeoutHeight.IsZero() {
-		timeout.Block = &wasmvmtypes.IBCTimeoutBlock{
+		timeout.Block = &wvm.IBCTimeoutBlock{
 			Height:   packet.TimeoutHeight.RevisionHeight,
 			Revision: packet.TimeoutHeight.RevisionNumber,
 		}
 	}
 
-	return wasmvmtypes.IBCPacket{
+	return wvm.IBCPacket{
 		Data:     packet.Data,
-		Src:      wasmvmtypes.IBCEndpoint{ChannelID: packet.SourceChannel, PortID: packet.SourcePort},
-		Dest:     wasmvmtypes.IBCEndpoint{ChannelID: packet.DestinationChannel, PortID: packet.DestinationPort},
+		Src:      wvm.IBCEndpoint{ChannelID: packet.SourceChannel, PortID: packet.SourcePort},
+		Dest:     wvm.IBCEndpoint{ChannelID: packet.DestinationChannel, PortID: packet.DestinationPort},
 		Sequence: packet.Sequence,
 		Timeout:  timeout,
 	}

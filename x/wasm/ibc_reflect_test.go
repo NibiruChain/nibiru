@@ -3,9 +3,10 @@ package wasm_test
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	ibctesting "github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing"
@@ -118,7 +119,7 @@ type AccountQuery struct {
 }
 
 type AccountResponse struct {
-	LastUpdateTime uint64            `json:"last_update_time,string"`
-	RemoteAddr     string            `json:"remote_addr"`
-	RemoteBalance  wasmvmtypes.Coins `json:"remote_balance"`
+	LastUpdateTime uint64    `json:"last_update_time,string"`
+	RemoteAddr     string    `json:"remote_addr"`
+	RemoteBalance  wvm.Coins `json:"remote_balance"`
 }

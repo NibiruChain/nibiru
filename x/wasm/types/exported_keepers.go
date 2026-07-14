@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	ibcexported "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"
 
@@ -87,32 +87,32 @@ type IBCContractKeeper interface {
 	OnOpenChannel(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCChannelOpenMsg,
+		msg wvm.IBCChannelOpenMsg,
 	) (string, error)
 	OnConnectChannel(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCChannelConnectMsg,
+		msg wvm.IBCChannelConnectMsg,
 	) error
 	OnCloseChannel(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCChannelCloseMsg,
+		msg wvm.IBCChannelCloseMsg,
 	) error
 	OnRecvPacket(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCPacketReceiveMsg,
+		msg wvm.IBCPacketReceiveMsg,
 	) (ibcexported.Acknowledgement, error)
 	OnAckPacket(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		acknowledgement wasmvmtypes.IBCPacketAckMsg,
+		acknowledgement wvm.IBCPacketAckMsg,
 	) error
 	OnTimeoutPacket(
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
-		msg wasmvmtypes.IBCPacketTimeoutMsg,
+		msg wvm.IBCPacketTimeoutMsg,
 	) error
 	// ClaimCapability allows the transfer module to claim a capability
 	// that IBC module passes to it

@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 

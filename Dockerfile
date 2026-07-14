@@ -26,7 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
-COPY ["lib/wasmvm-ffi/", "./lib/wasmvm-ffi/"]
 RUN go mod download
 
 COPY . .

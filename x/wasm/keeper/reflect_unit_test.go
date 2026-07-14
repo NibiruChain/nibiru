@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -84,12 +85,12 @@ func TestReflectContractSend(t *testing.T) {
 	// this should reduce the reflect balance by 14k (to 26k)
 	// this 14k is added to the escrow, then the entire balance is sent to bob (total: 39k)
 	approveMsg := []byte(`{"release":{}}`)
-	msgs := []wasmvmtypes.CosmosMsg{{
-		Wasm: &wasmvmtypes.WasmMsg{
-			Execute: &wasmvmtypes.ExecuteMsg{
+	msgs := []wvm.CosmosMsg{{
+		Wasm: &wvm.WasmMsg{
+			Execute: &wvm.ExecuteMsg{
 				ContractAddr: escrowAddr.String(),
 				Msg:          approveMsg,
-				Funds: []wasmvmtypes.Coin{{
+				Funds: []wvm.Coin{{
 					Denom:  "denom",
 					Amount: "14000",
 				}},
@@ -151,11 +152,11 @@ func TestReflectCustomMsg(t *testing.T) {
 	checkAccount(t, ctx, accKeeper, bankKeeper, fred, nil)
 
 	// bob can send contract's tokens to fred (using SendMsg)
-	msgs := []wasmvmtypes.CosmosMsg{{
-		Bank: &wasmvmtypes.BankMsg{
-			Send: &wasmvmtypes.SendMsg{
+	msgs := []wvm.CosmosMsg{{
+		Bank: &wvm.BankMsg{
+			Send: &wvm.SendMsg{
 				ToAddress: fred.String(),
-				Amount: []wasmvmtypes.Coin{{
+				Amount: []wvm.Coin{{
 					Denom:  "denom",
 					Amount: "15000",
 				}},
@@ -188,7 +189,7 @@ func TestReflectCustomMsg(t *testing.T) {
 	require.NoError(t, err)
 	reflectOpaque := testdata.ReflectHandleMsg{
 		Reflect: &testdata.ReflectPayload{
-			Msgs: []wasmvmtypes.CosmosMsg{opaque},
+			Msgs: []wvm.CosmosMsg{opaque},
 		},
 	}
 	reflectOpaqueBz, err := json.Marshal(reflectOpaque)
@@ -252,19 +253,19 @@ type reflectCustomMsg struct {
 
 // toReflectRawMsg encodes an sdk msg using any type with json encoding.
 // Then wraps it as an opaque message
-func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wasmvmtypes.CosmosMsg, error) {
+func toReflectRawMsg(cdc codec.Codec, msg sdk.Msg) (wvm.CosmosMsg, error) {
 	codecAny, err := codectypes.NewAnyWithValue(msg)
 	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, err
+		return wvm.CosmosMsg{}, err
 	}
 	rawBz, err := cdc.MarshalJSON(codecAny)
 	if err != nil {
-		return wasmvmtypes.CosmosMsg{}, sdkioerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
+		return wvm.CosmosMsg{}, sdkioerrors.Wrap(sdkerrors.ErrJSONMarshal, err.Error())
 	}
 	customMsg, _ := json.Marshal(reflectCustomMsg{
 		Raw: rawBz,
 	})
-	res := wasmvmtypes.CosmosMsg{
+	res := wvm.CosmosMsg{
 		Custom: customMsg,
 	}
 	return res, err
