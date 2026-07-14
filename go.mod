@@ -89,8 +89,8 @@ require (
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/mod v0.37.0
 	golang.org/x/net v0.56.0
-	golang.org/x/sync v0.21.0
-	golang.org/x/text v0.39.0
+	golang.org/x/sync v0.22.0
+	golang.org/x/text v0.40.0
 	gotest.tools/v3 v3.5.2
 	pgregory.net/rapid v1.2.0
 	sigs.k8s.io/yaml v1.6.0
