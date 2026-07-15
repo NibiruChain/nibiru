@@ -19,7 +19,7 @@ RUN mkdir -p /usr/lib && \
   fi
 
 COPY go.mod go.sum /nibiru/
-COPY internal/ /nibiru/internal/
+
 RUN go mod download
 
 COPY lib/sai-trading/go.mod lib/sai-trading/go.sum /nibiru/lib/sai-trading/
