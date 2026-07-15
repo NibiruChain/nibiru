@@ -36,6 +36,7 @@ import (
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 
 	nibiruapp "github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"
@@ -616,16 +617,14 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	}
 
 	specs := map[string]struct {
-		req     *wvm.StargateQuery
-		expErr  bool
-		expResp string
+		req    *wvm.StargateQuery
+		expErr bool
 	}{
 		"in accept list - success result": {
 			req: &wvm.StargateQuery{
 				Path: "/cosmos.auth.v1beta1.Query/Account",
 				Data: marshal(&authtypes.QueryAccountRequest{Address: addrs[0].String()}),
 			},
-			expResp: fmt.Sprintf(`{"account":{"@type":"/eth.types.v1.EthAccount","base_account":{"address":%q,"pub_key":null,"account_number":"9","sequence":"0"},"code_hash":"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"}}`, addrs[0].String()),
 		},
 		"in accept list - error result": {
 			req: &wvm.StargateQuery{
@@ -658,7 +657,16 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 				return
 			}
 			require.NoError(t, gotErr)
-			assert.JSONEq(t, spec.expResp, string(gotBz), string(gotBz))
+			var response authtypes.QueryAccountResponse
+			wasmApp.AppCodec().MustUnmarshalJSON(gotBz, &response)
+			require.NotNil(t, response.Account)
+
+			var account authtypes.AccountI
+			require.NoError(t, wasmApp.AppCodec().UnpackAny(response.Account, &account))
+			ethAccount, ok := account.(*eth.EthAccount)
+			require.True(t, ok)
+			assert.Equal(t, addrs[0], ethAccount.GetAddress())
+			assert.Equal(t, "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470", ethAccount.CodeHash)
 		})
 	}
 }

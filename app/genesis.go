@@ -74,7 +74,10 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile str
 // object provided to it during init.
 type GenesisState map[string]json.RawMessage
 
-// NewDefaultGenesisState generates the default state for the application.
-// func NewDefaultGenesisState(cdc codec.JSONCodec) GenesisState {
-// 	return ModuleBasics.DefaultGenesis(cdc)
-// }
+// DefaultGenesis returns the application default genesis using Nibiru's
+// customized ModuleBasics. This keeps app-generated genesis (including test
+// apps) aligned with `nibid init` and includes the paired ERC-2470 auth/EVM
+// accounts.
+func (app *NibiruApp) DefaultGenesis() GenesisState {
+	return ModuleBasics.DefaultGenesis(app.appCodec)
+}
