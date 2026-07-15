@@ -5,7 +5,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	nibiruhd "github.com/NibiruChain/nibiru/v2/eth/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )

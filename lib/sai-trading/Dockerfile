@@ -7,7 +7,7 @@ RUN apt-get update && \
   musl-dev build-essential libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev ca-certificates wget && \
   rm -rf /var/lib/apt/lists/*
 
-ARG WASMVM_VERSION=1.5.9
+ARG WASMVM_VERSION=1.10.0
 ARG TARGETARCH
 
 RUN mkdir -p /usr/lib && \
@@ -21,16 +21,16 @@ COPY go.mod go.sum /nibiru/
 COPY internal/ /nibiru/internal/
 RUN go mod download
 
-COPY sai-trading/go.mod sai-trading/go.sum /nibiru/sai-trading/
-RUN cd sai-trading && go mod download
+COPY lib/sai-trading/go.mod lib/sai-trading/go.sum /nibiru/lib/sai-trading/
+RUN cd lib/sai-trading && go mod download
 
 COPY . .
 
-WORKDIR /nibiru/sai-trading
+WORKDIR /nibiru/lib/sai-trading
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
   --mount=type=cache,target=/go/pkg \
-  --mount=type=cache,target=/nibiru/sai-trading/temp \
+  --mount=type=cache,target=/nibiru/lib/sai-trading/temp \
   CGO_ENABLED=1 \
   go build -tags "netgo muslc" \
   -ldflags '-linkmode=external -extldflags "-Wl,-z,muldefs -static -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -lpthread"' \
@@ -42,10 +42,10 @@ WORKDIR /root
 
 RUN apk --no-cache add ca-certificates
 
-COPY --from=builder /nibiru/sai-trading/build/trader /usr/local/bin/trader
+COPY --from=builder /nibiru/lib/sai-trading/build/trader /usr/local/bin/trader
 
-COPY --from=builder /nibiru/sai-trading/networks.toml /root/networks.toml
-COPY --from=builder /nibiru/sai-trading/auto-trader.localnet.json /root/
-COPY --from=builder /nibiru/sai-trading/auto-trader.testnet.json /root/
+COPY --from=builder /nibiru/lib/sai-trading/networks.toml /root/networks.toml
+COPY --from=builder /nibiru/lib/sai-trading/auto-trader.localnet.json /root/
+COPY --from=builder /nibiru/lib/sai-trading/auto-trader.testnet.json /root/
 
 ENTRYPOINT ["trader"]

@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
-	"github.com/NibiruChain/nibiru/sai-trading/tutil"
+	"github.com/NibiruChain/nibiru/lib/sai-trading/services/evmtrader"
+	"github.com/NibiruChain/nibiru/lib/sai-trading/tutil"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/gosdk"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

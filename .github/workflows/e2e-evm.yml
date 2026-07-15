@@ -113,11 +113,11 @@ jobs:
         with:
           filters: |
             check_changes:
-              - "sai-trading/**/*.ts"
-              - "sai-trading/artifacts/*"
-              - "sai-trading/**/*.go"
-              - "sai-trading/go.mod"
-              - "sai-trading/go.sum"
+              - "lib/sai-trading/**/*.ts"
+              - "lib/sai-trading/artifacts/*"
+              - "lib/sai-trading/**/*.go"
+              - "lib/sai-trading/go.mod"
+              - "lib/sai-trading/go.sum"
 
       - name: Set up Go
         if: steps.check_changes.outputs.check_changes == 'true'
@@ -152,7 +152,7 @@ jobs:
         # - bun-revision : The output from running `bun-revision`.
 
       - if: steps.check_changes.outputs.check_changes == 'true'
-        working-directory: "sai-trading"
+        working-directory: "lib/sai-trading"
         run: |
           bun install
 
@@ -175,12 +175,12 @@ jobs:
           sleep 12
 
       - if: steps.check_changes.outputs.check_changes == 'true'
-        working-directory: "sai-trading"
+        working-directory: "lib/sai-trading"
         run: |
           just e2e-deploy
 
       - if: steps.check_changes.outputs.check_changes == 'true'
         name: "Run SAI Trading E2E tests"
-        working-directory: "sai-trading"
+        working-directory: "lib/sai-trading"
         run: |
           just e2e-test

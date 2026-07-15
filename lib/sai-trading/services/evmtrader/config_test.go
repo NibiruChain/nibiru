@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/sai-trading/services/evmtrader"
+	"github.com/NibiruChain/nibiru/lib/sai-trading/services/evmtrader"
 	"github.com/stretchr/testify/require"
 )
 
