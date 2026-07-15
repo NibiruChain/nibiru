@@ -125,7 +125,7 @@ var (
 	// non-dependant module elements, such as codec registration
 	// and genesis verification.
 	ModuleBasics = module.NewBasicManager(
-		auth.AppModuleBasic{},
+		AuthModule{},
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		BankModule{},
 		capability.AppModuleBasic{},
@@ -405,6 +405,11 @@ func NewNibiruApp(
 	cryptocodec.RegisterInterfaces(app.interfaceRegistry)
 	cryptocodec.RegisterCrypto(app.legacyAmino)
 
+	// The depinject-created codec is distinct from MakeEncodingConfig's
+	// registry. Register the custom EthAccount interface here as well so auth
+	// genesis accounts can be decoded and persisted by the account keeper.
+	eth.RegisterInterfaces(app.interfaceRegistry)
+
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
 		logger.Error("failed to load state streaming", "err", err)
@@ -506,6 +511,7 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
+	EnsureERC2470AuthAccount(app.appCodec, genesisState)
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
