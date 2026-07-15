@@ -252,7 +252,7 @@ replace (
 
 	// NOTE: Use Nibiru's wasmvm fork for patched Wasmer runtime artifacts that fix
 	// ARM64 Singlepass relocation panics.
-	// github.com/CosmWasm/wasmvm => ./lib/wasmvm-ffi
+	github.com/CosmWasm/wasmvm => ./lib/wasmvm
 
 	// - Below is a replace statement based on GitHub tags that we used prior to
 	//   managing the full stack of deps as a monorepo. Left here intentionally

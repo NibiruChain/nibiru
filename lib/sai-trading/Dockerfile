@@ -8,13 +8,14 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/*
 
 ARG WASMVM_VERSION=1.10.0
+ARG WASMVM_RELEASE_REPO=NibiruChain/go-wasmvm
 ARG TARGETARCH
 
 RUN mkdir -p /usr/lib && \
   if [ "${TARGETARCH}" = "arm64" ]; then \
-    wget -q https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.aarch64.a -O /usr/lib/libwasmvm_muslc.a; \
+    wget -q https://github.com/${WASMVM_RELEASE_REPO}/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.aarch64.a -O /usr/lib/libwasmvm_muslc.a; \
   else \
-    wget -q https://github.com/CosmWasm/wasmvm/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a -O /usr/lib/libwasmvm_muslc.a; \
+    wget -q https://github.com/${WASMVM_RELEASE_REPO}/releases/download/v${WASMVM_VERSION}/libwasmvm_muslc.x86_64.a -O /usr/lib/libwasmvm_muslc.a; \
   fi
 
 COPY go.mod go.sum /nibiru/

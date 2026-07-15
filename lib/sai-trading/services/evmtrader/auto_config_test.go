@@ -28,8 +28,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 					"networks_toml": "networks.toml"
 				},
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -47,8 +47,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "valid configuration without network settings",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -66,8 +66,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "invalid JSON syntax",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0
-					"collateral_index": 1
+					"market_indices": [0]
+					"collateral_indices": [1]
 				}
 			}`,
 			expectError: true,
@@ -77,8 +77,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "min_trade_size greater than max_trade_size",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 10000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -97,8 +97,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "min_leverage greater than max_leverage",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 20,
@@ -117,8 +117,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "min_leverage is zero",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 0,
@@ -137,8 +137,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "min_trade_size is zero",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 0,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -157,8 +157,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "blocks_before_close is zero",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -177,8 +177,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "max_open_positions is zero",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -197,8 +197,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "loop_delay_seconds is zero",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -217,8 +217,8 @@ func TestLoadAutoTradingConfig(t *testing.T) {
 			name: "max_open_positions is negative",
 			jsonContent: `{
 				"trading": {
-					"market_index": 0,
-					"collateral_index": 1,
+					"market_indices": [0],
+					"collateral_indices": [1],
 					"min_trade_size": 1000000,
 					"max_trade_size": 5000000,
 					"min_leverage": 1,
@@ -332,10 +332,12 @@ func TestValidate(t *testing.T) {
 			name: "min_leverage > max_leverage",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  20,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       20,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -350,10 +352,12 @@ func TestValidate(t *testing.T) {
 			name: "min_leverage is zero",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  0,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       0,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -368,10 +372,12 @@ func TestValidate(t *testing.T) {
 			name: "min_trade_size is zero",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 0,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      0,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -386,10 +392,12 @@ func TestValidate(t *testing.T) {
 			name: "blocks_before_close is zero",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 0,
@@ -404,10 +412,12 @@ func TestValidate(t *testing.T) {
 			name: "max_open_positions is zero",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -422,10 +432,12 @@ func TestValidate(t *testing.T) {
 			name: "loop_delay_seconds is zero",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -440,10 +452,12 @@ func TestValidate(t *testing.T) {
 			name: "max_open_positions is negative",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
@@ -458,10 +472,12 @@ func TestValidate(t *testing.T) {
 			name: "loop_delay_seconds is negative",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 1000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      1000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
