@@ -1,8 +1,8 @@
 package types
 
 import (
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
@@ -40,7 +40,7 @@ type WasmEngine interface {
 
 	// AnalyzeCode will statically analyze the code.
 	// Currently just reports if it exposes all IBC entry points.
-	AnalyzeCode(checksum wasmvm.Checksum) (*wasmvmtypes.AnalysisReport, error)
+	AnalyzeCode(checksum wasmvm.Checksum) (*wvm.AnalysisReport, error)
 
 	// Instantiate will create a new contract based on the given codeID.
 	// We can set the initMsg (contract "genesis") here, and it then receives
@@ -52,16 +52,16 @@ type WasmEngine interface {
 	// for performance.
 	Instantiate(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		info wasmvmtypes.MessageInfo,
+		env wvm.Env,
+		info wvm.MessageInfo,
 		initMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Execute calls a given contract. Since the only difference between contracts with the same CodeID is the
 	// data in their local storage, and their address in the outside world, we need no ContractID here.
@@ -71,30 +71,30 @@ type WasmEngine interface {
 	// and setting the env with relevant info on this instance (address, balance, etc)
 	Execute(
 		code wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		info wasmvmtypes.MessageInfo,
+		env wvm.Env,
+		info wvm.MessageInfo,
 		executeMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Query allows a client to execute a contract-specific query. If the result is not empty, it should be
 	// valid json-encoded data to return to the client.
 	// The meaning of path and data can be determined by the code. Path is the suffix of the abci.QueryRequest.Path
 	Query(
 		code wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		queryMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
+		deserCost wvm.UFraction,
 	) ([]byte, uint64, error)
 
 	// Migrate will migrate an existing contract to a new code binary.
@@ -105,15 +105,15 @@ type WasmEngine interface {
 	// MigrateMsg has some data on how to perform the migration.
 	Migrate(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		migrateMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Sudo runs an existing contract in read/write mode (like Execute), but is never exposed to external callers
 	// (either transactions or government proposals), but can only be called by other native Go modules directly.
@@ -122,28 +122,28 @@ type WasmEngine interface {
 	// deeply integrated with native modules.
 	Sudo(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
+		env wvm.Env,
 		sudoMsg []byte,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// Reply is called on the original dispatching contract after running a submessage
 	Reply(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		reply wasmvmtypes.Reply,
+		env wvm.Env,
+		reply wvm.Reply,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.Response, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.Response, uint64, error)
 
 	// GetCode will load the original wasm code for the given code id.
 	// This will only succeed if that code id was previously returned from
@@ -161,87 +161,87 @@ type WasmEngine interface {
 	// during the handshake phase
 	IBCChannelOpen(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannelOpenMsg,
+		env wvm.Env,
+		channel wvm.IBCChannelOpenMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBC3ChannelOpenResponse, uint64, error)
 
 	// IBCChannelConnect is available on IBC-enabled contracts and is a hook to call into
 	// during the handshake phase
 	IBCChannelConnect(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannelConnectMsg,
+		env wvm.Env,
+		channel wvm.IBCChannelConnectMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBCBasicResponse, uint64, error)
 
 	// IBCChannelClose is available on IBC-enabled contracts and is a hook to call into
 	// at the end of the channel lifetime
 	IBCChannelClose(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		channel wasmvmtypes.IBCChannelCloseMsg,
+		env wvm.Env,
+		channel wvm.IBCChannelCloseMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBCBasicResponse, uint64, error)
 
 	// IBCPacketReceive is available on IBC-enabled contracts and is called when an incoming
 	// packet is received on a channel belonging to this contract
 	IBCPacketReceive(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		packet wasmvmtypes.IBCPacketReceiveMsg,
+		env wvm.Env,
+		packet wvm.IBCPacketReceiveMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCReceiveResult, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBCReceiveResult, uint64, error)
 
 	// IBCPacketAck is available on IBC-enabled contracts and is called when an
 	// the response for an outgoing packet (previously sent by this contract)
 	// is received
 	IBCPacketAck(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		ack wasmvmtypes.IBCPacketAckMsg,
+		env wvm.Env,
+		ack wvm.IBCPacketAckMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBCBasicResponse, uint64, error)
 
 	// IBCPacketTimeout is available on IBC-enabled contracts and is called when an
 	// outgoing packet (previously sent by this contract) will probably never be executed.
 	// Usually handled like ack returning an error
 	IBCPacketTimeout(
 		checksum wasmvm.Checksum,
-		env wasmvmtypes.Env,
-		packet wasmvmtypes.IBCPacketTimeoutMsg,
+		env wvm.Env,
+		packet wvm.IBCPacketTimeoutMsg,
 		store wasmvm.KVStore,
 		goapi wasmvm.GoAPI,
 		querier wasmvm.Querier,
 		gasMeter wasmvm.GasMeter,
 		gasLimit uint64,
-		deserCost wasmvmtypes.UFraction,
-	) (*wasmvmtypes.IBCBasicResponse, uint64, error)
+		deserCost wvm.UFraction,
+	) (*wvm.IBCBasicResponse, uint64, error)
 
 	// Pin pins a code to an in-memory cache, such that is
 	// always loaded quickly when executed.
@@ -255,7 +255,7 @@ type WasmEngine interface {
 	Unpin(checksum wasmvm.Checksum) error
 
 	// GetMetrics some internal metrics for monitoring purposes.
-	GetMetrics() (*wasmvmtypes.Metrics, error)
+	GetMetrics() (*wvm.Metrics, error)
 }
 
 var _ wasmvm.KVStore = &StoreAdapter{}
@@ -285,10 +285,10 @@ func (s StoreAdapter) Delete(key []byte) {
 	s.parent.Delete(key)
 }
 
-func (s StoreAdapter) Iterator(start, end []byte) wasmvmtypes.Iterator {
+func (s StoreAdapter) Iterator(start, end []byte) wvm.Iterator {
 	return s.parent.Iterator(start, end)
 }
 
-func (s StoreAdapter) ReverseIterator(start, end []byte) wasmvmtypes.Iterator {
+func (s StoreAdapter) ReverseIterator(start, end []byte) wvm.Iterator {
 	return s.parent.ReverseIterator(start, end)
 }

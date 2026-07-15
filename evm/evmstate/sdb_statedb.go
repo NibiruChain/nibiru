@@ -68,6 +68,9 @@ type SDB struct {
 	savedStates []*LocalState
 	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot].
 	savedCtxs []sdk.Context
+	// This is the backbone of [SDB.Snapshot] and [SDB.RevertToSnapshot] for
+	// SDK events, which are not part of the MultiStore cache.
+	savedEventLens []int
 
 	txConfig TxConfig
 }
@@ -518,6 +521,7 @@ func (s *SDB) SelfDestruct6780(
 func (s *SDB) Snapshot() int {
 	branchedCtx := s.evmTxCtx.WithMultiStore(s.evmTxCtx.MultiStore().CacheMultiStore())
 	s.savedCtxs = append(s.savedCtxs, s.evmTxCtx)
+	s.savedEventLens = append(s.savedEventLens, s.evmTxCtx.EventManager().Len())
 	s.evmTxCtx = branchedCtx
 	s.savedStates = append(s.savedStates, s.localState)
 	s.localState = NewLocalState()
@@ -540,6 +544,8 @@ func (s *SDB) RevertToSnapshot(revid int) {
 	}
 	s.evmTxCtx = s.savedCtxs[revid]
 	s.savedCtxs = s.savedCtxs[:revid]
+	s.evmTxCtx.EventManager().TruncateEvents(s.savedEventLens[revid])
+	s.savedEventLens = s.savedEventLens[:revid]
 
 	s.localState = s.savedStates[revid]
 	s.savedStates = s.savedStates[:revid]

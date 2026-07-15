@@ -4,9 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 )
@@ -41,7 +42,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr.Wrap("my description"), &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
-				assert.Equal(t, wasmvmtypes.NoSuchCode{CodeID: 1}, gotErr)
+				assert.Equal(t, wvm.NoSuchCode{CodeID: 1}, gotErr)
 			},
 		},
 		"wrappedf supports WasmVMErrorable": {
@@ -50,7 +51,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr.Wrapf("my description: %d", 1), &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
-				assert.Equal(t, wasmvmtypes.NoSuchCode{CodeID: 1}, gotErr)
+				assert.Equal(t, wvm.NoSuchCode{CodeID: 1}, gotErr)
 			},
 		},
 		"supports WasmVMErrorable": {
@@ -59,7 +60,7 @@ func TestWasmVMFlavouredError(t *testing.T) {
 				var wasmvmErr WasmVMErrorable
 				require.True(t, errors.As(myErr, &wasmvmErr))
 				gotErr := wasmvmErr.ToWasmVMError()
-				assert.Equal(t, wasmvmtypes.NoSuchCode{CodeID: 1}, gotErr)
+				assert.Equal(t, wvm.NoSuchCode{CodeID: 1}, gotErr)
 			},
 		},
 		"fallback to sdk error when wasmvm error unset": {

@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -24,15 +24,15 @@ import (
 )
 
 var (
-	_ wasmvmtypes.KVStore = &storeAdapter{}
-	_ storetypes.KVStore  = &migrateClientWrappedStore{}
+	_ wvm.KVStore        = &storeAdapter{}
+	_ storetypes.KVStore = &migrateClientWrappedStore{}
 
 	subjectPrefix    = []byte("subject/")
 	substitutePrefix = []byte("substitute/")
 )
 
 // Checksum is a type alias used for wasm byte code checksums.
-type Checksum = wasmvmtypes.Checksum
+type Checksum = wvm.Checksum
 
 // CreateChecksum creates a sha256 checksum from the given wasm code, it forwards the
 // call to the wasmvm package. The code is checked for the following conditions:
@@ -297,7 +297,8 @@ func splitPrefix(key []byte) ([]byte, []byte) {
 	return nil, key
 }
 
-// storeAdapter bridges the SDK store implementation to wasmvm one. It implements the wasmvmtypes.KVStore interface.
+// storeAdapter bridges the SDK store implementation to wasmvm one. It implements
+// the [wvm.KVStore] interface.
 type storeAdapter struct {
 	parent storetypes.KVStore
 }
@@ -310,28 +311,28 @@ func newStoreAdapter(s storetypes.KVStore) *storeAdapter {
 	return &storeAdapter{parent: s}
 }
 
-// Get implements the wasmvmtypes.KVStore interface.
+// Get implements the [wvm.KVStore] interface.
 func (s storeAdapter) Get(key []byte) []byte {
 	return s.parent.Get(key)
 }
 
-// Set implements the wasmvmtypes.KVStore interface.
+// Set implements the [wvm.KVStore] interface.
 func (s storeAdapter) Set(key, value []byte) {
 	s.parent.Set(key, value)
 }
 
-// Delete implements the wasmvmtypes.KVStore interface.
+// Delete implements the [wvm.KVStore] interface.
 func (s storeAdapter) Delete(key []byte) {
 	s.parent.Delete(key)
 }
 
-// Iterator implements the wasmvmtypes.KVStore interface.
-func (s storeAdapter) Iterator(start, end []byte) wasmvmtypes.Iterator {
+// Iterator implements the [wvm.KVStore] interface.
+func (s storeAdapter) Iterator(start, end []byte) wvm.Iterator {
 	return s.parent.Iterator(start, end)
 }
 
-// ReverseIterator implements the wasmvmtypes.KVStore interface.
-func (s storeAdapter) ReverseIterator(start, end []byte) wasmvmtypes.Iterator {
+// ReverseIterator implements the [wvm.KVStore] interface.
+func (s storeAdapter) ReverseIterator(start, end []byte) wvm.Iterator {
 	return s.parent.ReverseIterator(start, end)
 }
 

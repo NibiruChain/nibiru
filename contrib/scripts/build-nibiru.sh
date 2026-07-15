@@ -98,23 +98,23 @@ parse_args() {
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -h | --help)
-        show_help
-        exit 0
-        ;;
-      --run)
-        RUN=true
-        shift
-        ;;
-      --just-build)
-        JUST_BUILD=true
-        shift
-        ;;
-      *)
-        log_error "unknown argument: $1"
-        show_help
-        exit 1
-        ;;
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    --run)
+      RUN=true
+      shift
+      ;;
+    --just-build)
+      JUST_BUILD=true
+      shift
+      ;;
+    *)
+      log_error "unknown argument: $1"
+      show_help
+      exit 1
+      ;;
     esac
   done
 
@@ -153,8 +153,8 @@ detect_arch_name() {
     arch="$(uname -m)"
   fi
   case "$arch" in
-    x86_64 | amd64) printf '%s' "amd64" ;;
-    *) printf '%s' "arm64" ;;
+  x86_64 | amd64) printf '%s' "amd64" ;;
+  *) printf '%s' "arm64" ;;
   esac
 }
 
@@ -249,8 +249,11 @@ ensure_wasmvm_lib() {
   local arch_name="$3"
   local wasmvm_version="$4"
 
-  local lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-  local base_url="https://github.com/NibiruChain/go-wasmvm/releases/download/v${wasmvm_version}"
+  local lib_dir wasmvm_gh_tag wasmvm_gh_tag_url base_url
+  lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
+  wasmvm_gh_tag="lib/wasmvm/${wasmvm_version}"
+  wasmvm_gh_tag_url=$(jq -nr --arg s "$wasmvm_gh_tag" '$s|@uri')
+  base_url="https://github.com/NibiruChain/nibiru/releases/download/${wasmvm_gh_tag_url}"
 
   mkdir -p "$lib_dir"
 
@@ -397,7 +400,7 @@ main() {
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="$(go list -m github.com/CosmWasm/wasmvm | awk '{sub(/^v/, "", $2); print $2}')"
+  wasmvm_version="v1.12.0" # tag name `lib/wasmvm/v*`
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
 

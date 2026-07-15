@@ -3,10 +3,11 @@ package keeper
 import (
 	"testing"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
@@ -62,7 +63,7 @@ func TestEncoding(t *testing.T) {
 
 	cases := map[string]struct {
 		sender             sdk.AccAddress
-		srcMsg             wasmvmtypes.CosmosMsg
+		srcMsg             wvm.CosmosMsg
 		srcContractIBCPort string
 		transferPortSource types.ICS20TransferPortSource
 		// set if valid
@@ -74,11 +75,11 @@ func TestEncoding(t *testing.T) {
 	}{
 		"simple send": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
+			srcMsg: wvm.CosmosMsg{
+				Bank: &wvm.BankMsg{
+					Send: &wvm.SendMsg{
 						ToAddress: addr2.String(),
-						Amount: []wasmvmtypes.Coin{
+						Amount: []wvm.Coin{
 							{
 								Denom:  "uatom",
 								Amount: "12345",
@@ -104,11 +105,11 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid send amount": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
+			srcMsg: wvm.CosmosMsg{
+				Bank: &wvm.BankMsg{
+					Send: &wvm.SendMsg{
 						ToAddress: addr2.String(),
-						Amount: []wasmvmtypes.Coin{
+						Amount: []wvm.Coin{
 							{
 								Denom:  "uatom",
 								Amount: "123.456",
@@ -121,11 +122,11 @@ func TestEncoding(t *testing.T) {
 		},
 		"invalid address": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Bank: &wasmvmtypes.BankMsg{
-					Send: &wasmvmtypes.SendMsg{
+			srcMsg: wvm.CosmosMsg{
+				Bank: &wvm.BankMsg{
+					Send: &wvm.SendMsg{
 						ToAddress: invalidAddr,
-						Amount: []wasmvmtypes.Coin{
+						Amount: []wvm.Coin{
 							{
 								Denom:  "uatom",
 								Amount: "7890",
@@ -148,13 +149,13 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm execute": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Execute: &wasmvmtypes.ExecuteMsg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					Execute: &wvm.ExecuteMsg{
 						ContractAddr: addr2.String(),
 						Msg:          jsonMsg,
-						Funds: []wasmvmtypes.Coin{
-							wasmvmtypes.NewCoin(12, "eth"),
+						Funds: []wvm.Coin{
+							wvm.NewCoin(12, "eth"),
 						},
 					},
 				},
@@ -170,13 +171,13 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm instantiate": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Instantiate: &wasmvmtypes.InstantiateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					Instantiate: &wvm.InstantiateMsg{
 						CodeID: 7,
 						Msg:    jsonMsg,
-						Funds: []wasmvmtypes.Coin{
-							wasmvmtypes.NewCoin(123, "eth"),
+						Funds: []wvm.Coin{
+							wvm.NewCoin(123, "eth"),
 						},
 						Label: "myLabel",
 						Admin: addr2.String(),
@@ -196,13 +197,13 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm instantiate2": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Instantiate2: &wasmvmtypes.Instantiate2Msg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					Instantiate2: &wvm.Instantiate2Msg{
 						CodeID: 7,
 						Msg:    jsonMsg,
-						Funds: []wasmvmtypes.Coin{
-							wasmvmtypes.NewCoin(123, "eth"),
+						Funds: []wvm.Coin{
+							wvm.NewCoin(123, "eth"),
 						},
 						Label: "myLabel",
 						Admin: addr2.String(),
@@ -225,9 +226,9 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm migrate": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					Migrate: &wasmvmtypes.MigrateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					Migrate: &wvm.MigrateMsg{
 						ContractAddr: addr1.String(),
 						NewCodeID:    12,
 						Msg:          jsonMsg,
@@ -245,9 +246,9 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm update admin": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					UpdateAdmin: &wasmvmtypes.UpdateAdminMsg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					UpdateAdmin: &wvm.UpdateAdminMsg{
 						ContractAddr: addr1.String(),
 						Admin:        addr3.String(),
 					},
@@ -263,9 +264,9 @@ func TestEncoding(t *testing.T) {
 		},
 		"wasm clear admin": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Wasm: &wasmvmtypes.WasmMsg{
-					ClearAdmin: &wasmvmtypes.ClearAdminMsg{
+			srcMsg: wvm.CosmosMsg{
+				Wasm: &wvm.WasmMsg{
+					ClearAdmin: &wvm.ClearAdminMsg{
 						ContractAddr: addr1.String(),
 					},
 				},
@@ -279,11 +280,11 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking delegate": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Delegate: &wasmvmtypes.DelegateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Staking: &wvm.StakingMsg{
+					Delegate: &wvm.DelegateMsg{
 						Validator: valAddr.String(),
-						Amount:    wasmvmtypes.NewCoin(777, "stake"),
+						Amount:    wvm.NewCoin(777, "stake"),
 					},
 				},
 			},
@@ -297,11 +298,11 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking delegate to non-validator - invalid": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Delegate: &wasmvmtypes.DelegateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Staking: &wvm.StakingMsg{
+					Delegate: &wvm.DelegateMsg{
 						Validator: addr2.String(),
-						Amount:    wasmvmtypes.NewCoin(777, "stake"),
+						Amount:    wvm.NewCoin(777, "stake"),
 					},
 				},
 			},
@@ -317,11 +318,11 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking undelegate": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Undelegate: &wasmvmtypes.UndelegateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Staking: &wvm.StakingMsg{
+					Undelegate: &wvm.UndelegateMsg{
 						Validator: valAddr.String(),
-						Amount:    wasmvmtypes.NewCoin(555, "stake"),
+						Amount:    wvm.NewCoin(555, "stake"),
 					},
 				},
 			},
@@ -335,12 +336,12 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking redelegate": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Staking: &wasmvmtypes.StakingMsg{
-					Redelegate: &wasmvmtypes.RedelegateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Staking: &wvm.StakingMsg{
+					Redelegate: &wvm.RedelegateMsg{
 						SrcValidator: valAddr.String(),
 						DstValidator: valAddr2.String(),
-						Amount:       wasmvmtypes.NewCoin(222, "stake"),
+						Amount:       wvm.NewCoin(222, "stake"),
 					},
 				},
 			},
@@ -355,9 +356,9 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking withdraw (explicit recipient)": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Distribution: &wasmvmtypes.DistributionMsg{
-					WithdrawDelegatorReward: &wasmvmtypes.WithdrawDelegatorRewardMsg{
+			srcMsg: wvm.CosmosMsg{
+				Distribution: &wvm.DistributionMsg{
+					WithdrawDelegatorReward: &wvm.WithdrawDelegatorRewardMsg{
 						Validator: valAddr2.String(),
 					},
 				},
@@ -371,9 +372,9 @@ func TestEncoding(t *testing.T) {
 		},
 		"staking set withdraw address": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Distribution: &wasmvmtypes.DistributionMsg{
-					SetWithdrawAddress: &wasmvmtypes.SetWithdrawAddressMsg{
+			srcMsg: wvm.CosmosMsg{
+				Distribution: &wvm.DistributionMsg{
+					SetWithdrawAddress: &wvm.SetWithdrawAddressMsg{
 						Address: addr2.String(),
 					},
 				},
@@ -387,12 +388,12 @@ func TestEncoding(t *testing.T) {
 		},
 		"distribution fund community pool": {
 			sender: addr1,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Distribution: &wasmvmtypes.DistributionMsg{
-					FundCommunityPool: &wasmvmtypes.FundCommunityPoolMsg{
-						Amount: wasmvmtypes.Coins{
-							wasmvmtypes.NewCoin(200, "stones"),
-							wasmvmtypes.NewCoin(200, "feathers"),
+			srcMsg: wvm.CosmosMsg{
+				Distribution: &wvm.DistributionMsg{
+					FundCommunityPool: &wvm.FundCommunityPoolMsg{
+						Amount: wvm.Coins{
+							wvm.NewCoin(200, "stones"),
+							wvm.NewCoin(200, "feathers"),
 						},
 					},
 				},
@@ -409,8 +410,8 @@ func TestEncoding(t *testing.T) {
 		},
 		"stargate encoded bank msg": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Stargate: &wvm.StargateMsg{
 					TypeURL: "/cosmos.bank.v1beta1.MsgSend",
 					Value:   bankMsgBin,
 				},
@@ -419,8 +420,8 @@ func TestEncoding(t *testing.T) {
 		},
 		"stargate encoded msg with any type": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Stargate: &wvm.StargateMsg{
 					TypeURL: "/cosmos.gov.v1.MsgSubmitProposal",
 					Value:   proposalMsgBin,
 				},
@@ -429,8 +430,8 @@ func TestEncoding(t *testing.T) {
 		},
 		"stargate encoded invalid typeUrl": {
 			sender: addr2,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Stargate: &wasmvmtypes.StargateMsg{
+			srcMsg: wvm.CosmosMsg{
+				Stargate: &wvm.StargateMsg{
 					TypeURL: "/cosmos.bank.v2.MsgSend",
 					Value:   bankMsgBin,
 				},
@@ -440,17 +441,17 @@ func TestEncoding(t *testing.T) {
 		"IBC transfer with block timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					Transfer: &wasmvmtypes.TransferMsg{
+			srcMsg: wvm.CosmosMsg{
+				IBC: &wvm.IBCMsg{
+					Transfer: &wvm.TransferMsg{
 						ChannelID: "myChanID",
 						ToAddress: addr2.String(),
-						Amount: wasmvmtypes.Coin{
+						Amount: wvm.Coin{
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						Timeout: wasmvmtypes.IBCTimeout{
-							Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 2},
+						Timeout: wvm.IBCTimeout{
+							Block: &wvm.IBCTimeoutBlock{Revision: 1, Height: 2},
 						},
 					},
 				},
@@ -475,16 +476,16 @@ func TestEncoding(t *testing.T) {
 		"IBC transfer with time timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					Transfer: &wasmvmtypes.TransferMsg{
+			srcMsg: wvm.CosmosMsg{
+				IBC: &wvm.IBCMsg{
+					Transfer: &wvm.TransferMsg{
 						ChannelID: "myChanID",
 						ToAddress: addr2.String(),
-						Amount: wasmvmtypes.Coin{
+						Amount: wvm.Coin{
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100},
+						Timeout: wvm.IBCTimeout{Timestamp: 100},
 					},
 				},
 			},
@@ -508,16 +509,16 @@ func TestEncoding(t *testing.T) {
 		"IBC transfer with time and height timeout": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					Transfer: &wasmvmtypes.TransferMsg{
+			srcMsg: wvm.CosmosMsg{
+				IBC: &wvm.IBCMsg{
+					Transfer: &wvm.TransferMsg{
 						ChannelID: "myChanID",
 						ToAddress: addr2.String(),
-						Amount: wasmvmtypes.Coin{
+						Amount: wvm.Coin{
 							Denom:  "ALX",
 							Amount: "1",
 						},
-						Timeout: wasmvmtypes.IBCTimeout{Timestamp: 100, Block: &wasmvmtypes.IBCTimeoutBlock{Height: 1, Revision: 2}},
+						Timeout: wvm.IBCTimeout{Timestamp: 100, Block: &wvm.IBCTimeoutBlock{Height: 1, Revision: 2}},
 					},
 				},
 			},
@@ -542,9 +543,9 @@ func TestEncoding(t *testing.T) {
 		"IBC close channel": {
 			sender:             addr1,
 			srcContractIBCPort: "myIBCPort",
-			srcMsg: wasmvmtypes.CosmosMsg{
-				IBC: &wasmvmtypes.IBCMsg{
-					CloseChannel: &wasmvmtypes.CloseChannelMsg{
+			srcMsg: wvm.CosmosMsg{
+				IBC: &wvm.IBCMsg{
+					CloseChannel: &wvm.CloseChannelMsg{
 						ChannelID: "channel-1",
 					},
 				},
@@ -589,7 +590,7 @@ func TestEncodeGovMsg(t *testing.T) {
 
 	cases := map[string]struct {
 		sender             sdk.AccAddress
-		srcMsg             wasmvmtypes.CosmosMsg
+		srcMsg             wvm.CosmosMsg
 		transferPortSource types.ICS20TransferPortSource
 		// set if valid
 		output []sdk.Msg
@@ -600,9 +601,9 @@ func TestEncodeGovMsg(t *testing.T) {
 	}{
 		"Gov vote: yes": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.Yes},
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					Vote: &wvm.VoteMsg{ProposalId: 1, Vote: wvm.Yes},
 				},
 			},
 			output: []sdk.Msg{
@@ -615,9 +616,9 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov vote: No": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.No},
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					Vote: &wvm.VoteMsg{ProposalId: 1, Vote: wvm.No},
 				},
 			},
 			output: []sdk.Msg{
@@ -630,9 +631,9 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov vote: Abstain": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 10, Vote: wasmvmtypes.Abstain},
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					Vote: &wvm.VoteMsg{ProposalId: 10, Vote: wvm.Abstain},
 				},
 			},
 			output: []sdk.Msg{
@@ -645,9 +646,9 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov vote: No with veto": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1, Vote: wasmvmtypes.NoWithVeto},
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					Vote: &wvm.VoteMsg{ProposalId: 1, Vote: wvm.NoWithVeto},
 				},
 			},
 			output: []sdk.Msg{
@@ -660,21 +661,21 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov vote: unset option": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					Vote: &wasmvmtypes.VoteMsg{ProposalId: 1},
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					Vote: &wvm.VoteMsg{ProposalId: 1},
 				},
 			},
 			expError: true,
 		},
 		"Gov weighted vote: single vote": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					VoteWeighted: &wvm.VoteWeightedMsg{
 						ProposalId: 1,
-						Options: []wasmvmtypes.WeightedVoteOption{
-							{Option: wasmvmtypes.Yes, Weight: "1"},
+						Options: []wvm.WeightedVoteOption{
+							{Option: wvm.Yes, Weight: "1"},
 						},
 					},
 				},
@@ -691,15 +692,15 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov weighted vote: splitted": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					VoteWeighted: &wvm.VoteWeightedMsg{
 						ProposalId: 1,
-						Options: []wasmvmtypes.WeightedVoteOption{
-							{Option: wasmvmtypes.Yes, Weight: "0.23"},
-							{Option: wasmvmtypes.No, Weight: "0.24"},
-							{Option: wasmvmtypes.Abstain, Weight: "0.26"},
-							{Option: wasmvmtypes.NoWithVeto, Weight: "0.27"},
+						Options: []wvm.WeightedVoteOption{
+							{Option: wvm.Yes, Weight: "0.23"},
+							{Option: wvm.No, Weight: "0.24"},
+							{Option: wvm.Abstain, Weight: "0.26"},
+							{Option: wvm.NoWithVeto, Weight: "0.27"},
 						},
 					},
 				},
@@ -719,13 +720,13 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov weighted vote: duplicate option - invalid": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					VoteWeighted: &wvm.VoteWeightedMsg{
 						ProposalId: 1,
-						Options: []wasmvmtypes.WeightedVoteOption{
-							{Option: wasmvmtypes.Yes, Weight: "0.5"},
-							{Option: wasmvmtypes.Yes, Weight: "0.5"},
+						Options: []wvm.WeightedVoteOption{
+							{Option: wvm.Yes, Weight: "0.5"},
+							{Option: wvm.Yes, Weight: "0.5"},
 						},
 					},
 				},
@@ -744,13 +745,13 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov weighted vote: weight sum exceeds 1- invalid": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					VoteWeighted: &wvm.VoteWeightedMsg{
 						ProposalId: 1,
-						Options: []wasmvmtypes.WeightedVoteOption{
-							{Option: wasmvmtypes.Yes, Weight: "0.51"},
-							{Option: wasmvmtypes.No, Weight: "0.5"},
+						Options: []wvm.WeightedVoteOption{
+							{Option: wvm.Yes, Weight: "0.51"},
+							{Option: wvm.No, Weight: "0.5"},
 						},
 					},
 				},
@@ -769,13 +770,13 @@ func TestEncodeGovMsg(t *testing.T) {
 		},
 		"Gov weighted vote: weight sum less than 1 - invalid": {
 			sender: myAddr,
-			srcMsg: wasmvmtypes.CosmosMsg{
-				Gov: &wasmvmtypes.GovMsg{
-					VoteWeighted: &wasmvmtypes.VoteWeightedMsg{
+			srcMsg: wvm.CosmosMsg{
+				Gov: &wvm.GovMsg{
+					VoteWeighted: &wvm.VoteWeightedMsg{
 						ProposalId: 1,
-						Options: []wasmvmtypes.WeightedVoteOption{
-							{Option: wasmvmtypes.Yes, Weight: "0.49"},
-							{Option: wasmvmtypes.No, Weight: "0.5"},
+						Options: []wvm.WeightedVoteOption{
+							{Option: wvm.Yes, Weight: "0.49"},
+							{Option: wvm.No, Weight: "0.5"},
 						},
 					},
 				},
@@ -821,40 +822,40 @@ func TestEncodeGovMsg(t *testing.T) {
 
 func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 	specs := map[string]struct {
-		src    wasmvmtypes.Coin
+		src    wvm.Coin
 		expErr bool
 		expVal sdk.Coin
 	}{
 		"all good": {
-			src: wasmvmtypes.Coin{
+			src: wvm.Coin{
 				Denom:  "foo",
 				Amount: "1",
 			},
 			expVal: sdk.NewCoin("foo", sdk.NewIntFromUint64(1)),
 		},
 		"negative amount": {
-			src: wasmvmtypes.Coin{
+			src: wvm.Coin{
 				Denom:  "foo",
 				Amount: "-1",
 			},
 			expErr: true,
 		},
 		"denom to short": {
-			src: wasmvmtypes.Coin{
+			src: wvm.Coin{
 				Denom:  "f",
 				Amount: "1",
 			},
 			expErr: true,
 		},
 		"invalid demum char": {
-			src: wasmvmtypes.Coin{
+			src: wvm.Coin{
 				Denom:  "&fff",
 				Amount: "1",
 			},
 			expErr: true,
 		},
 		"not a number amount": {
-			src: wasmvmtypes.Coin{
+			src: wvm.Coin{
 				Denom:  "foo",
 				Amount: "bar",
 			},
@@ -876,20 +877,20 @@ func TestConvertWasmCoinToSdkCoin(t *testing.T) {
 
 func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 	specs := map[string]struct {
-		src    []wasmvmtypes.Coin
+		src    []wvm.Coin
 		exp    sdk.Coins
 		expErr bool
 	}{
 		"empty": {
-			src: []wasmvmtypes.Coin{},
+			src: []wvm.Coin{},
 			exp: nil,
 		},
 		"single coin": {
-			src: []wasmvmtypes.Coin{{Denom: "foo", Amount: "1"}},
+			src: []wvm.Coin{{Denom: "foo", Amount: "1"}},
 			exp: sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1))),
 		},
 		"multiple coins": {
-			src: []wasmvmtypes.Coin{
+			src: []wvm.Coin{
 				{Denom: "foo", Amount: "1"},
 				{Denom: "bar", Amount: "2"},
 			},
@@ -899,7 +900,7 @@ func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 			),
 		},
 		"sorted": {
-			src: []wasmvmtypes.Coin{
+			src: []wvm.Coin{
 				{Denom: "foo", Amount: "1"},
 				{Denom: "other", Amount: "1"},
 				{Denom: "bar", Amount: "1"},
@@ -911,7 +912,7 @@ func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 			},
 		},
 		"zero amounts dropped": {
-			src: []wasmvmtypes.Coin{
+			src: []wvm.Coin{
 				{Denom: "foo", Amount: "1"},
 				{Denom: "bar", Amount: "0"},
 			},
@@ -920,25 +921,25 @@ func TestConvertWasmCoinsToSdkCoins(t *testing.T) {
 			),
 		},
 		"duplicate denoms merged": {
-			src: []wasmvmtypes.Coin{
+			src: []wvm.Coin{
 				{Denom: "foo", Amount: "1"},
 				{Denom: "foo", Amount: "1"},
 			},
 			exp: []sdk.Coin{sdk.NewCoin("foo", sdk.NewInt(2))},
 		},
 		"duplicate denoms with one 0 amount does not fail": {
-			src: []wasmvmtypes.Coin{
+			src: []wvm.Coin{
 				{Denom: "foo", Amount: "0"},
 				{Denom: "foo", Amount: "1"},
 			},
 			exp: []sdk.Coin{sdk.NewCoin("foo", sdk.NewInt(1))},
 		},
 		"empty denom rejected": {
-			src:    []wasmvmtypes.Coin{{Denom: "", Amount: "1"}},
+			src:    []wvm.Coin{{Denom: "", Amount: "1"}},
 			expErr: true,
 		},
 		"invalid denom rejected": {
-			src:    []wasmvmtypes.Coin{{Denom: "!%&", Amount: "1"}},
+			src:    []wvm.Coin{{Denom: "!%&", Amount: "1"}},
 			expErr: true,
 		},
 	}

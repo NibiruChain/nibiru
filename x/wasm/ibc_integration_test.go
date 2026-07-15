@@ -3,10 +3,11 @@ package wasm_test
 import (
 	"testing"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
@@ -26,25 +27,25 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 
 	const startVersion = "v1"
 	specs := map[string]struct {
-		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
+		contractRsp *wvm.IBC3ChannelOpenResponse
 		expVersion  string
 	}{
 		"different version": {
-			contractRsp: &wasmvmtypes.IBC3ChannelOpenResponse{Version: "v2"},
+			contractRsp: &wvm.IBC3ChannelOpenResponse{Version: "v2"},
 			expVersion:  "v2",
 		},
 		"no response": {
 			expVersion: startVersion,
 		},
 		"empty result": {
-			contractRsp: &wasmvmtypes.IBC3ChannelOpenResponse{},
+			contractRsp: &wvm.IBC3ChannelOpenResponse{},
 			expVersion:  startVersion,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			myContract := &wasmtesting.MockIBCContractCallbacks{
-				IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
+				IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wvm.Env, msg wvm.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.IBC3ChannelOpenResponse, uint64, error) {
 					return spec.contractRsp, 0, nil
 				},
 			}
@@ -80,25 +81,25 @@ func TestOnChanOpenTryVersion(t *testing.T) {
 
 	const startVersion = ibctransfertypes.Version
 	specs := map[string]struct {
-		contractRsp *wasmvmtypes.IBC3ChannelOpenResponse
+		contractRsp *wvm.IBC3ChannelOpenResponse
 		expVersion  string
 	}{
 		"different version": {
-			contractRsp: &wasmvmtypes.IBC3ChannelOpenResponse{Version: "v2"},
+			contractRsp: &wvm.IBC3ChannelOpenResponse{Version: "v2"},
 			expVersion:  "v2",
 		},
 		"no response": {
 			expVersion: startVersion,
 		},
 		"empty result": {
-			contractRsp: &wasmvmtypes.IBC3ChannelOpenResponse{},
+			contractRsp: &wvm.IBC3ChannelOpenResponse{},
 			expVersion:  startVersion,
 		},
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			myContract := &wasmtesting.MockIBCContractCallbacks{
-				IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
+				IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wvm.Env, msg wvm.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.IBC3ChannelOpenResponse, uint64, error) {
 					return spec.contractRsp, 0, nil
 				},
 			}
@@ -238,11 +239,11 @@ type captureAckTestContractEngine struct {
 // NewCaptureAckTestContractEngine constructor
 func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 	m := wasmtesting.NewIBCContractMockWasmEngine(&wasmtesting.MockIBCContractCallbacks{
-		IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBC3ChannelOpenResponse, uint64, error) {
-			return &wasmvmtypes.IBC3ChannelOpenResponse{}, 0, nil
+		IBCChannelOpenFn: func(codeID wasmvm.Checksum, env wvm.Env, msg wvm.IBCChannelOpenMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.IBC3ChannelOpenResponse, uint64, error) {
+			return &wvm.IBC3ChannelOpenResponse{}, 0, nil
 		},
-		IBCChannelConnectFn: func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
-			return &wasmvmtypes.IBCBasicResponse{}, 0, nil
+		IBCChannelConnectFn: func(codeID wasmvm.Checksum, env wvm.Env, msg wvm.IBCChannelConnectMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.IBCBasicResponse, uint64, error) {
+			return &wvm.IBCBasicResponse{}, 0, nil
 		},
 	})
 	return &captureAckTestContractEngine{m}
@@ -252,18 +253,18 @@ func NewCaptureAckTestContractEngine() *captureAckTestContractEngine {
 func (x *captureAckTestContractEngine) SubmitIBCPacket(t *testing.T, path *wasmibctesting.Path, chainA *wasmibctesting.TestChain, senderContractAddr sdk.AccAddress, packetData []byte) *[]byte {
 	t.Helper()
 	// prepare a bridge to send an ibc packet by an ordinary wasm execute message
-	x.ExecuteFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, info wasmvmtypes.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.Response, uint64, error) {
-		return &wasmvmtypes.Response{
-			Messages: []wasmvmtypes.SubMsg{{ID: 1, ReplyOn: wasmvmtypes.ReplyNever, Msg: wasmvmtypes.CosmosMsg{IBC: &wasmvmtypes.IBCMsg{SendPacket: &wasmvmtypes.SendPacketMsg{
-				ChannelID: path.EndpointA.ChannelID, Data: executeMsg, Timeout: wasmvmtypes.IBCTimeout{Block: &wasmvmtypes.IBCTimeoutBlock{Revision: 1, Height: 10000000}},
+	x.ExecuteFn = func(codeID wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, executeMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
+		return &wvm.Response{
+			Messages: []wvm.SubMsg{{ID: 1, ReplyOn: wvm.ReplyNever, Msg: wvm.CosmosMsg{IBC: &wvm.IBCMsg{SendPacket: &wvm.SendPacketMsg{
+				ChannelID: path.EndpointA.ChannelID, Data: executeMsg, Timeout: wvm.IBCTimeout{Block: &wvm.IBCTimeoutBlock{Revision: 1, Height: 10000000}},
 			}}}}},
 		}, 0, nil
 	}
 	// capture acknowledgement
 	var gotAck []byte
-	x.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wasmvmtypes.Env, msg wasmvmtypes.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wasmvmtypes.UFraction) (*wasmvmtypes.IBCBasicResponse, uint64, error) {
+	x.IBCPacketAckFn = func(codeID wasmvm.Checksum, env wvm.Env, msg wvm.IBCPacketAckMsg, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.IBCBasicResponse, uint64, error) {
 		gotAck = msg.Acknowledgement.Data
-		return &wasmvmtypes.IBCBasicResponse{}, 0, nil
+		return &wvm.IBCBasicResponse{}, 0, nil
 	}
 
 	// start the process

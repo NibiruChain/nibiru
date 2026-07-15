@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"strings"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/cosmos/gogoproto/proto"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 

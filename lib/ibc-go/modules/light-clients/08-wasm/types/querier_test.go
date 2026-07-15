@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -55,7 +55,7 @@ func (suite *TypesTestSuite) TestCustomQuery() {
 				}
 				ibcwasm.SetQueryPlugins(&querierPlugin)
 
-				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					echo := CustomQuery{
 						Echo: &QueryEcho{
 							Data: "hello world",
@@ -64,7 +64,7 @@ func (suite *TypesTestSuite) TestCustomQuery() {
 					echoJSON, err := json.Marshal(echo)
 					suite.Require().NoError(err)
 
-					resp, err := querier.Query(wasmvmtypes.QueryRequest{
+					resp, err := querier.Query(wvm.QueryRequest{
 						Custom: json.RawMessage(echoJSON),
 					}, math.MaxUint64)
 					suite.Require().NoError(err)
@@ -84,9 +84,9 @@ func (suite *TypesTestSuite) TestCustomQuery() {
 		{
 			"failure: default query",
 			func() {
-				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
-					resp, err := querier.Query(wasmvmtypes.QueryRequest{Custom: json.RawMessage("{}")}, math.MaxUint64)
-					suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: "Custom queries are not allowed"})
+				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
+					resp, err := querier.Query(wvm.QueryRequest{Custom: json.RawMessage("{}")}, math.MaxUint64)
+					suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: "Custom queries are not allowed"})
 					suite.Require().Nil(resp)
 
 					return nil, wasmtesting.DefaultGasUsed, err
@@ -131,13 +131,13 @@ func (suite *TypesTestSuite) TestStargateQuery() {
 
 				ibcwasm.SetQueryPlugins(&querierPlugin)
 
-				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					queryRequest := types.QueryChecksumsRequest{}
 					bz, err := queryRequest.Marshal()
 					suite.Require().NoError(err)
 
-					resp, err := querier.Query(wasmvmtypes.QueryRequest{
-						Stargate: &wasmvmtypes.StargateQuery{
+					resp, err := querier.Query(wvm.QueryRequest{
+						Stargate: &wvm.StargateQuery{
 							Path: typeURL,
 							Data: bz,
 						},
@@ -160,18 +160,18 @@ func (suite *TypesTestSuite) TestStargateQuery() {
 		{
 			"failure: default querier",
 			func() {
-				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wasmvmtypes.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wasmvmtypes.UFraction) ([]byte, uint64, error) {
+				suite.mockVM.RegisterQueryCallback(types.StatusMsg{}, func(_ wasmvm.Checksum, _ wvm.Env, _ []byte, _ wasmvm.KVStore, _ wasmvm.GoAPI, querier wasmvm.Querier, _ wasmvm.GasMeter, _ uint64, _ wvm.UFraction) ([]byte, uint64, error) {
 					queryRequest := types.QueryChecksumsRequest{}
 					bz, err := queryRequest.Marshal()
 					suite.Require().NoError(err)
 
-					resp, err := querier.Query(wasmvmtypes.QueryRequest{
-						Stargate: &wasmvmtypes.StargateQuery{
+					resp, err := querier.Query(wvm.QueryRequest{
+						Stargate: &wvm.StargateQuery{
 							Path: typeURL,
 							Data: bz,
 						},
 					}, math.MaxUint64)
-					suite.Require().ErrorIs(err, wasmvmtypes.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", typeURL)})
+					suite.Require().ErrorIs(err, wvm.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", typeURL)})
 					suite.Require().Nil(resp)
 
 					return nil, wasmtesting.DefaultGasUsed, err

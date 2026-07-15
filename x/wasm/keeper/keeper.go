@@ -11,9 +11,10 @@ import (
 	"strings"
 	"time"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/cometbft/cometbft/libs/log"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -42,7 +43,7 @@ type Option interface {
 // WasmVMQueryHandler is an extension point for custom query handler implementations
 type WasmVMQueryHandler interface {
 	// HandleQuery executes the requested query
-	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wasmvmtypes.QueryRequest) ([]byte, error)
+	HandleQuery(ctx sdk.Context, caller sdk.AccAddress, request wvm.QueryRequest) ([]byte, error)
 }
 
 type CoinTransferrer interface {
@@ -66,7 +67,7 @@ type WasmVMResponseHandler interface {
 		ctx sdk.Context,
 		contractAddr sdk.AccAddress,
 		ibcPort string,
-		messages []wasmvmtypes.SubMsg,
+		messages []wvm.SubMsg,
 		origRspData []byte,
 	) ([]byte, error)
 }
@@ -549,7 +550,7 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 func (k Keeper) reply(
 	ctx sdk.Context,
 	contractAddress sdk.AccAddress,
-	reply wasmvmtypes.Reply,
+	reply wvm.Reply,
 ) ([]byte, error) {
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
@@ -1036,10 +1037,10 @@ func (k *Keeper) handleContractResponse(
 	ctx sdk.Context,
 	contractAddr sdk.AccAddress,
 	ibcPort string,
-	msgs []wasmvmtypes.SubMsg,
-	attrs []wasmvmtypes.EventAttribute,
+	msgs []wvm.SubMsg,
+	attrs []wvm.EventAttribute,
 	data []byte,
-	evts wasmvmtypes.Events,
+	evts wvm.Events,
 ) ([]byte, error) {
 	attributeGasCost := k.gasRegister.EventCosts(attrs, evts)
 	ctx.GasMeter().ConsumeGas(attributeGasCost, "Custom contract event attributes")
@@ -1252,7 +1253,7 @@ func (b VestingCoinBurner) CleanupExistingAccount(ctx sdk.Context, existingAcc a
 }
 
 type msgDispatcher interface {
-	DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wasmvmtypes.SubMsg) ([]byte, error)
+	DispatchSubmessages(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, msgs []wvm.SubMsg) ([]byte, error)
 }
 
 // DefaultWasmVMContractResponseHandler default implementation that first dispatches submessage then normal messages.
@@ -1267,7 +1268,7 @@ func NewDefaultWasmVMContractResponseHandler(md msgDispatcher) *DefaultWasmVMCon
 }
 
 // Handle processes the data returned by a contract invocation.
-func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, messages []wasmvmtypes.SubMsg, origRspData []byte) ([]byte, error) {
+func (h DefaultWasmVMContractResponseHandler) Handle(ctx sdk.Context, contractAddr sdk.AccAddress, ibcPort string, messages []wvm.SubMsg, origRspData []byte) ([]byte, error) {
 	result := origRspData
 	switch rsp, err := h.md.DispatchSubmessages(ctx, contractAddr, ibcPort, messages); {
 	case err != nil:

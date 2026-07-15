@@ -37,8 +37,7 @@ contributors.
 - The original implementation for the collections API lives inside
   [NibiruChain/collections](https://github.com/NibiruChain/collections). It has
   since been included as part of the Cosmos-SDK and published under the
-  [cosmossdk.io/collections
-  package](https://github.com/NibiruChain/collections).
+  Nibiru's internal [x/collections package](https://github.com/NibiruChain/nibiru/tree/main/x/collections).
 - We leverage the API heavily in [modules of Nibiru
   Chain](https://github.com/NibiruChain/nibiru/tree/master/x) such as x/oracle,
   x/perp, and x/vpool.

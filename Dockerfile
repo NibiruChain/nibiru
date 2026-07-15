@@ -22,11 +22,10 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 WORKDIR /nibiru
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
+    jq liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev
 
 # COPY go.mod go.sum ./
 COPY ["go.mod", "go.sum", "./"]
-COPY ["lib/wasmvm-ffi/", "./lib/wasmvm-ffi/"]
 RUN go mod download
 
 COPY . .

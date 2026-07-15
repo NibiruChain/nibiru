@@ -10,9 +10,10 @@ import (
 	"os"
 	"strconv"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
+
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

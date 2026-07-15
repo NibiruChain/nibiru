@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 
@@ -32,7 +32,7 @@ var (
 )
 
 // instantiateContract calls vm.Instantiate with appropriate arguments.
-func instantiateContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wasmvmtypes.Response, error) {
+func instantiateContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wvm.Response, error) {
 	sdkGasMeter := ctx.GasMeter()
 	multipliedGasMeter := NewMultipliedGasMeter(sdkGasMeter, VMGasRegister)
 	gasLimit := VMGasRegister.runtimeGasForContract(ctx)
@@ -43,7 +43,7 @@ func instantiateContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Chec
 	}
 	env := getEnv(ctx, clientID)
 
-	msgInfo := wasmvmtypes.MessageInfo{
+	msgInfo := wvm.MessageInfo{
 		Sender: "",
 		Funds:  nil,
 	}
@@ -55,7 +55,7 @@ func instantiateContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Chec
 }
 
 // callContract calls vm.Sudo with internally constructed gas meter and environment.
-func callContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wasmvmtypes.Response, error) {
+func callContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wvm.Response, error) {
 	sdkGasMeter := ctx.GasMeter()
 	multipliedGasMeter := NewMultipliedGasMeter(sdkGasMeter, VMGasRegister)
 	gasLimit := VMGasRegister.runtimeGasForContract(ctx)
@@ -73,7 +73,7 @@ func callContract(ctx sdk.Context, clientStore sdk.KVStore, checksum Checksum, m
 }
 
 // migrateContract calls vm.Migrate with internally constructed gas meter and environment.
-func migrateContract(ctx sdk.Context, clientID string, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wasmvmtypes.Response, error) {
+func migrateContract(ctx sdk.Context, clientID string, clientStore sdk.KVStore, checksum Checksum, msg []byte) (*wvm.Response, error) {
 	sdkGasMeter := ctx.GasMeter()
 	multipliedGasMeter := NewMultipliedGasMeter(sdkGasMeter, VMGasRegister)
 	gasLimit := VMGasRegister.runtimeGasForContract(ctx)
@@ -260,7 +260,7 @@ func unmarshalClientState(cdc codec.BinaryCodec, bz []byte) (exported.ClientStat
 }
 
 // getEnv returns the state of the blockchain environment the contract is running on
-func getEnv(ctx sdk.Context, contractAddr string) wasmvmtypes.Env {
+func getEnv(ctx sdk.Context, contractAddr string) wvm.Env {
 	chainID := ctx.BlockHeader().ChainID
 	height := ctx.BlockHeader().Height
 
@@ -273,13 +273,13 @@ func getEnv(ctx sdk.Context, contractAddr string) wasmvmtypes.Env {
 		panic(errors.New("block (unix) time must never be negative "))
 	}
 
-	env := wasmvmtypes.Env{
-		Block: wasmvmtypes.BlockInfo{
+	env := wvm.Env{
+		Block: wvm.BlockInfo{
 			Height:  uint64(height),
 			Time:    uint64(nsec),
 			ChainID: chainID,
 		},
-		Contract: wasmvmtypes.ContractInfo{
+		Contract: wvm.ContractInfo{
 			Address: contractAddr,
 		},
 	}
@@ -297,7 +297,7 @@ func canonicalAddress(_ string) ([]byte, uint64, error) {
 
 // checkResponse returns an error if the response from a sudo, instantiate or migrate call
 // to the Wasm VM contains messages, events or attributes.
-func checkResponse(response *wasmvmtypes.Response) error {
+func checkResponse(response *wvm.Response) error {
 	// Only allow Data to flow back to us. SubMessages, Events and Attributes are not allowed.
 	if len(response.Messages) > 0 {
 		return ErrWasmSubMessagesNotAllowed

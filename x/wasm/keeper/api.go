@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	wasmvm "github.com/CosmWasm/wasmvm"
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -22,7 +22,7 @@ const (
 var (
 	costHumanize            = DefaultGasCostHumanAddress * types.DefaultGasMultiplier
 	costCanonical           = DefaultGasCostCanonicalAddress * types.DefaultGasMultiplier
-	costJSONDeserialization = wasmvmtypes.UFraction{
+	costJSONDeserialization = wvm.UFraction{
 		Numerator:   DefaultDeserializationCostPerByte * types.DefaultGasMultiplier,
 		Denominator: 1,
 	}

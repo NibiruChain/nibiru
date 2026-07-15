@@ -1,7 +1,7 @@
 package types
 
 import (
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
 	sdkioerrors "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -58,13 +58,13 @@ const (
 
 // default: 0.15 gas.
 // see https://github.com/CosmWasm/wasmd/pull/898#discussion_r937727200
-var defaultPerByteUncompressCost = wasmvmtypes.UFraction{
+var defaultPerByteUncompressCost = wvm.UFraction{
 	Numerator:   15,
 	Denominator: 100,
 }
 
 // DefaultPerByteUncompressCost is how much SDK gas we charge per source byte to unpack
-func DefaultPerByteUncompressCost() wasmvmtypes.UFraction {
+func DefaultPerByteUncompressCost() wvm.UFraction {
 	return defaultPerByteUncompressCost
 }
 
@@ -79,9 +79,9 @@ type GasRegister interface {
 	// InstantiateContractCosts costs when interacting with a wasm contract
 	InstantiateContractCosts(pinned bool, msgLen int) sdk.Gas
 	// ReplyCosts costs to to handle a message reply
-	ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas
+	ReplyCosts(pinned bool, reply wvm.Reply) sdk.Gas
 	// EventCosts costs to persist an event
-	EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) sdk.Gas
+	EventCosts(attrs []wvm.EventAttribute, events wvm.Events) sdk.Gas
 	// ToWasmVMGas converts from Cosmos SDK gas units to [CosmWasm gas] (aka. wasmvm gas)
 	//
 	// [CosmWasm gas]: https://github.com/CosmWasm/cosmwasm/blob/v1.3.1/docs/GAS.md
@@ -99,7 +99,7 @@ type WasmGasRegisterConfig struct {
 	// CompileCosts costs to persist and "compile" a new wasm contract
 	CompileCost sdk.Gas
 	// UncompressCost costs per byte to unpack a contract
-	UncompressCost wasmvmtypes.UFraction
+	UncompressCost wvm.UFraction
 	// GasMultiplier is how many cosmwasm gas points = 1 sdk gas point
 	// SDK reference costs can be found here: https://github.com/cosmos/cosmos-sdk/blob/02c6c9fafd58da88550ab4d7d494724a477c8a68/store/types/gas.go#L153-L164
 	GasMultiplier sdk.Gas
@@ -187,12 +187,12 @@ func (g WasmGasRegister) InstantiateContractCosts(pinned bool, msgLen int) sdk.G
 }
 
 // ReplyCosts costs to to handle a message reply
-func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Gas {
+func (g WasmGasRegister) ReplyCosts(pinned bool, reply wvm.Reply) sdk.Gas {
 	var eventGas sdk.Gas
 	msgLen := len(reply.Result.Err)
 	if reply.Result.Ok != nil {
 		msgLen += len(reply.Result.Ok.Data)
-		var attrs []wasmvmtypes.EventAttribute
+		var attrs []wvm.EventAttribute
 		for _, e := range reply.Result.Ok.Events {
 			eventGas += sdk.Gas(len(e.Type)) * g.c.EventAttributeDataCost
 			attrs = append(attrs, e.Attributes...)
@@ -204,7 +204,7 @@ func (g WasmGasRegister) ReplyCosts(pinned bool, reply wasmvmtypes.Reply) sdk.Ga
 }
 
 // EventCosts costs to persist an event
-func (g WasmGasRegister) EventCosts(attrs []wasmvmtypes.EventAttribute, events wasmvmtypes.Events) sdk.Gas {
+func (g WasmGasRegister) EventCosts(attrs []wvm.EventAttribute, events wvm.Events) sdk.Gas {
 	gas, remainingFreeTier := g.eventAttributeCosts(attrs, g.c.EventAttributeDataFreeTier)
 	for _, e := range events {
 		gas += g.c.CustomEventCost
@@ -216,7 +216,7 @@ func (g WasmGasRegister) EventCosts(attrs []wasmvmtypes.EventAttribute, events w
 	return gas
 }
 
-func (g WasmGasRegister) eventAttributeCosts(attrs []wasmvmtypes.EventAttribute, freeTier uint64) (sdk.Gas, uint64) {
+func (g WasmGasRegister) eventAttributeCosts(attrs []wvm.EventAttribute, freeTier uint64) (sdk.Gas, uint64) {
 	if len(attrs) == 0 {
 		return 0, freeTier
 	}
