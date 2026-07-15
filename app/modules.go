@@ -8,8 +8,11 @@ import (
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
 	crisistypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
@@ -22,7 +25,84 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/bank"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
+
+// AuthModule extends the Cosmos SDK auth default genesis with the canonical
+// ERC-2470 EthAccount required by the matching EVM genesis account.
+type AuthModule struct {
+	auth.AppModuleBasic
+}
+
+func (AuthModule) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
+	auth.AppModuleBasic{}.RegisterInterfaces(registry)
+	eth.RegisterInterfaces(registry)
+}
+
+func (AuthModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	genState := authtypes.DefaultGenesisState()
+	accounts, err := authtypes.UnpackAccounts(genState.Accounts)
+	if err != nil {
+		panic(fmt.Errorf("failed to unpack auth default genesis accounts: %w", err))
+	}
+
+	for _, account := range accounts {
+		if account.GetAddress().String() == evm.ERC2470Bech32Address {
+			return cdc.MustMarshalJSON(genState)
+		}
+	}
+
+	accounts = append(accounts, &eth.EthAccount{
+		BaseAccount: &authtypes.BaseAccount{
+			Address:       evm.ERC2470Bech32Address,
+			AccountNumber: uint64(len(accounts)),
+			Sequence:      0,
+		},
+		CodeHash: evm.ERC2470CodeHash,
+	})
+	packed, err := authtypes.PackAccounts(accounts)
+	if err != nil {
+		panic(fmt.Errorf("failed to pack auth default genesis accounts: %w", err))
+	}
+	genState.Accounts = packed
+	return cdc.MustMarshalJSON(genState)
+}
+
+// EnsureERC2470AuthAccount adds the canonical factory's auth account to a
+// caller-supplied genesis when a test or tooling path replaces the default
+// auth genesis wholesale.
+func EnsureERC2470AuthAccount(cdc codec.JSONCodec, appState GenesisState) {
+	var genState authtypes.GenesisState
+	cdc.MustUnmarshalJSON(appState[authtypes.ModuleName], &genState)
+	accounts, err := authtypes.UnpackAccounts(genState.Accounts)
+	if err != nil {
+		panic(fmt.Errorf("failed to unpack auth genesis accounts: %w", err))
+	}
+	for _, account := range accounts {
+		if account.GetAddress().String() == evm.ERC2470Bech32Address {
+			return
+		}
+	}
+	nextAccountNumber := uint64(0)
+	for _, account := range accounts {
+		if account.GetAccountNumber() >= nextAccountNumber {
+			nextAccountNumber = account.GetAccountNumber() + 1
+		}
+	}
+	accounts = append(accounts, &eth.EthAccount{
+		BaseAccount: &authtypes.BaseAccount{
+			Address:       evm.ERC2470Bech32Address,
+			AccountNumber: nextAccountNumber,
+		},
+		CodeHash: evm.ERC2470CodeHash,
+	})
+	genState.Accounts, err = authtypes.PackAccounts(accounts)
+	if err != nil {
+		panic(fmt.Errorf("failed to pack auth genesis accounts: %w", err))
+	}
+	appState[authtypes.ModuleName] = cdc.MustMarshalJSON(&genState)
+}
 
 // BankModule defines a custom wrapper around the x/bank module's AppModuleBasic
 // implementation to provide custom default genesis state.

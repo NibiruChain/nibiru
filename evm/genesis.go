@@ -19,7 +19,7 @@ func (ga GenesisAccount) Validate() error {
 // chain config values.
 func DefaultGenesisState() *GenesisState {
 	return &GenesisState{
-		Accounts: []GenesisAccount{},
+		Accounts: []GenesisAccount{ERC2470GenesisAccount()},
 		Params:   DefaultParams(),
 	}
 }

@@ -6,9 +6,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	"github.com/NibiruChain/nibiru/v2/evm"
 )
 
 type TestSuite struct {
@@ -71,4 +73,21 @@ func (s *TestSuite) TestGenesis() {
 			s.NoError(err)
 		})
 	}
+}
+
+func (s *TestSuite) TestAuthDefaultGenesisIncludesERC2470() {
+	var gen authtypes.GenesisState
+	s.encCfg.Codec.MustUnmarshalJSON(app.AuthModule{}.DefaultGenesis(s.encCfg.Codec), &gen)
+
+	accounts, err := authtypes.UnpackAccounts(gen.Accounts)
+	s.Require().NoError(err)
+
+	var found bool
+	for _, account := range accounts {
+		if account.GetAddress().String() == evm.ERC2470Bech32Address {
+			found = true
+			break
+		}
+	}
+	s.Require().True(found, "ERC-2470 auth account missing from default genesis")
 }
