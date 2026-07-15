@@ -91,8 +91,9 @@ func TestContractAddressesFromNetworkInfo(t *testing.T) {
 		GrpcUrl:   "grpc.testnet-1.nibiru.fi:443",
 		ChainID:   "nibiru-testnet-1",
 		Contracts: evmtrader.ContractConfig{
-			OracleAddress: "0x1111111111111111111111111111111111111111",
-			PerpAddress:   "0x2222222222222222222222222222222222222222",
+			OracleAddress:       "0x1111111111111111111111111111111111111111",
+			PerpAddress:         "0x2222222222222222222222222222222222222222",
+			EvmInterfaceAddress: "0x3333333333333333333333333333333333333333",
 		},
 	}
 
@@ -100,7 +101,8 @@ func TestContractAddressesFromNetworkInfo(t *testing.T) {
 
 	require.Equal(t, "0x1111111111111111111111111111111111111111", result.OracleAddress)
 	require.Equal(t, "0x2222222222222222222222222222222222222222", result.PerpAddress)
-	require.Equal(t, "0x3333333333333333333333333333333333333333", result.VaultAddress)
+	require.Equal(t, "0x3333333333333333333333333333333333333333", result.EvmInterfaceAddress)
+	require.Empty(t, result.VaultAddress)
 }
 
 func TestLoadNetworkConfig(t *testing.T) {

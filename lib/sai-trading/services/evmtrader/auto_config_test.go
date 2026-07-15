@@ -314,10 +314,12 @@ func TestValidate(t *testing.T) {
 			name: "min_trade_size > max_trade_size",
 			config: evmtrader.AutoTradingJSONConfig{
 				Trading: evmtrader.TradingSettings{
-					MinTradeSize: 10000000,
-					MaxTradeSize: 5000000,
-					MinLeverage:  1,
-					MaxLeverage:  10,
+					MarketIndices:     []uint64{0},
+					CollateralIndices: []uint64{1},
+					MinTradeSize:      10000000,
+					MaxTradeSize:      5000000,
+					MinLeverage:       1,
+					MaxLeverage:       10,
 				},
 				Bot: evmtrader.BotSettings{
 					BlocksBeforeClose: 10,
