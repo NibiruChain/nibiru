@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Pokemon Card Index (POKEMON)</title>
+
+  <!-- Ball outline -->
+  <circle cx="128" cy="128" r="120" fill="#F5F5F5"/>
+
+  <!-- Top half -->
+  <path
+    d="M8 128a120 120 0 0 1 240 0"
+    fill="#EE1515"
+  />
+
+  <!-- Bottom half -->
+  <path
+    d="M248 128a120 120 0 0 1-240 0"
+    fill="#F5F5F5"
+  />
+
+  <!-- Center band -->
+  <rect x="8" y="116" width="240" height="24" fill="#1F1F1F"/>
+
+  <!-- Center button -->
+  <circle cx="128" cy="128" r="30" fill="#1F1F1F"/>
+  <circle cx="128" cy="128" r="22" fill="#F5F5F5"/>
+  <circle cx="128" cy="128" r="14" fill="#F5F5F5" stroke="#1F1F1F" stroke-width="3"/>
+
+  <!-- Subtle highlight on red dome -->
+  <ellipse cx="96" cy="88" rx="28" ry="18" fill="#FFFFFF" opacity="0.18"/>
+</svg>
