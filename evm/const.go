@@ -163,10 +163,11 @@ const (
 // KVStore transient prefix namespaces for the EVM Module. Transient stores only
 // remain for current block, and have more gas efficient read and write access.
 const (
-	NamespaceBlockBloom   collections.Namespace = 1
-	NamespaceBlockTxIndex collections.Namespace = 2
-	NamespaceBlockLogSize collections.Namespace = 3
-	NamespaceBlockGasUsed collections.Namespace = 4
+	NamespaceBlockBloom     collections.Namespace = 1
+	NamespaceBlockTxIndex   collections.Namespace = 2
+	NamespaceBlockLogSize   collections.Namespace = 3
+	NamespaceBlockGasUsed   collections.Namespace = 4
+	NamespacePendingTxCount collections.Namespace = 5
 )
 
 var KeyPrefixBzAccState = KeyPrefixAccState.Prefix()

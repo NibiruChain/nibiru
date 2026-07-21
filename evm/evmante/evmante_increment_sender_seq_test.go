@@ -85,6 +85,60 @@ func (s *Suite) TestEthAnteIncrementNonce() {
 	}
 }
 
+func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
+	sdb := deps.NewStateDB()
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(100))
+	sdb.SetNonce(deps.Sender.EthAddr, 10)
+	sdb.Commit()
+	checkCtx := sdb.RootCtx()
+
+	runAnteStep := func(nonce uint64) error {
+		sdb = deps.EvmKeeper.NewSDB(
+			checkCtx,
+			deps.EvmKeeper.TxConfig(checkCtx, gethcommon.Hash{}),
+		)
+		return evmante.AnteStepIncrementNonce(
+			sdb,
+			sdb.Keeper(),
+			evmtest.HappyTransferTx(&deps, nonce),
+			false,
+			AnteOptionsForTests{},
+		)
+	}
+	requireState := func(wantNonce, wantPending uint64) {
+		acct := deps.EvmKeeper.GetAccount(checkCtx, deps.Sender.EthAddr)
+		s.Require().NotNil(acct)
+		s.Require().Equal(wantNonce, acct.Nonce)
+		s.Require().Equal(
+			wantPending,
+			deps.EvmKeeper.EVMState().PendingTxCount.GetOr(
+				checkCtx, deps.Sender.EthAddr, 0,
+			),
+		)
+	}
+
+	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
+	requireState(10, 0)
+
+	for _, nonce := range []uint64{10, 11, 73, 74, 10} {
+		s.Require().NoError(runAnteStep(nonce))
+	}
+	requireState(10, 5)
+
+	s.Require().ErrorContains(runAnteStep(75), "future nonce gap too large")
+	requireState(10, 5)
+
+	for pending := uint64(5); pending < evmante.MaxPendingTxsPerSender; pending++ {
+		s.Require().NoError(runAnteStep(10))
+	}
+	requireState(10, evmante.MaxPendingTxsPerSender)
+
+	s.Require().ErrorContains(runAnteStep(10), "too many pending transactions for sender")
+	requireState(10, evmante.MaxPendingTxsPerSender)
+}
+
 // AddBalanceSigned is only used in tests for convenience.
 func AddBalanceSigned(sdb *evmstate.SDB, addr gethcommon.Address, wei *big.Int) {
 	weiSign := wei.Sign()

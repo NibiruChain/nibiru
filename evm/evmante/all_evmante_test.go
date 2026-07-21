@@ -3,6 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -303,4 +304,61 @@ func (s *Suite) TestAnteHandlerEVM() {
 			}
 		})
 	}
+}
+
+func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
+	deps := evmtest.NewTestDeps()
+	sdb := deps.NewStateDB()
+	maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, evm.NativeToWei(maxGasMicronibi))
+	sdb.Commit()
+	deps.App.Commit()
+
+	checkTx := func(nonce uint64, checkType abci.CheckTxType) abci.ResponseCheckTx {
+		txMsg := evmtest.HappyTransferTx(&deps, nonce)
+		gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+		s.Require().NoError(txMsg.Sign(gethSigner, deps.Sender.KeyringSigner))
+
+		txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+		tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
+		s.Require().NoError(err)
+		txBytes, err := deps.App.GetTxConfig().TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		return deps.App.CheckTx(abci.RequestCheckTx{
+			Tx:   txBytes,
+			Type: checkType,
+		})
+	}
+
+	resp := checkTx(1_000, abci.CheckTxType_New)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "future nonce gap too large")
+
+	acceptedChecks := []struct {
+		nonce     uint64
+		checkType abci.CheckTxType
+	}{
+		{nonce: 2, checkType: abci.CheckTxType_New},
+		{nonce: 0, checkType: abci.CheckTxType_Recheck},
+		{nonce: 0, checkType: abci.CheckTxType_New},
+	}
+	for _, check := range acceptedChecks {
+		s.Require().True(checkTx(check.nonce, check.checkType).IsOK())
+	}
+
+	for pending := uint64(3); pending < evmante.MaxPendingTxsPerSender; pending++ {
+		s.Require().True(checkTx(1, abci.CheckTxType_New).IsOK())
+	}
+
+	resp = checkTx(1, abci.CheckTxType_New)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "too many pending transactions for sender")
+
+	blockHeader := deps.Ctx().BlockHeader()
+	blockHeader.Height++
+	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+	deps.App.EndBlock(abci.RequestEndBlock{Height: blockHeader.Height})
+	deps.App.Commit()
+	s.Require().True(checkTx(0, abci.CheckTxType_Recheck).IsOK())
 }

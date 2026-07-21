@@ -48,6 +48,9 @@ type EvmState struct {
 	BlockTxIndex collections.ItemTransient[uint64]
 	// BlockBloom: Bloom filters.
 	BlockBloom collections.ItemTransient[[]byte]
+	// PendingTxCount tracks node-local CheckTx admissions per EVM sender. It is
+	// reset with the transient store on commit and is never consensus state.
+	PendingTxCount collections.MapTransient[gethcommon.Address, uint64]
 
 	NetWeiBlockDelta collections.Item[sdkmath.Int]
 
@@ -91,6 +94,12 @@ func NewEvmState(
 		BlockTxIndex: collections.NewItemTransient(
 			storeKeyTransient,
 			evm.NamespaceBlockTxIndex,
+			collections.Uint64ValueEncoder,
+		),
+		PendingTxCount: collections.NewMapTransient(
+			storeKeyTransient,
+			evm.NamespacePendingTxCount,
+			eth.KeyEncoderEthAddr,
 			collections.Uint64ValueEncoder,
 		),
 		NetWeiBlockDelta: collections.NewItem(
