@@ -228,6 +228,27 @@ func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 	return parsedTrades, nil
 }
 
+// queryTradeInfo queries perp GetTradeInfo
+func (t *EVMTrader) queryTradeInfo(ctx context.Context, trader string, tradeIndex uint64) (*TradeInfo, error) {
+	queryMsg := map[string]interface{}{
+		"get_trade_info": map[string]interface{}{
+			"trader": trader,
+			"index":  tradeIndex,
+		},
+	}
+
+	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	var info TradeInfo
+	if err := json.Unmarshal(responseBytes, &info); err != nil {
+		return nil, fmt.Errorf("unmarshal trade info: %w, raw: %s", err, string(responseBytes))
+	}
+	return &info, nil
+}
+
 // queryMarket queries a single market by index
 func (t *EVMTrader) queryMarket(ctx context.Context, marketIndex uint64) (*MarketInfo, error) {
 	queryMsg := map[string]interface{}{

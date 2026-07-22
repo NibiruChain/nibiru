@@ -530,7 +530,7 @@ func (t *EVMTrader) runHealthCheck(ctx context.Context, cfg AutoTradingConfig, c
 
 	t.logInfo("Health check", flattenHealthFields(fields)...)
 	if t.cfg.SlackWebhook != "" {
-		sendSlackHealthNotification(t.cfg.SlackWebhook, fields)
+		t.sendSlackHealthNotification(t.cfg.SlackWebhook, fields)
 	}
 }
 

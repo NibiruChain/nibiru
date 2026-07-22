@@ -356,3 +356,33 @@ func TestParseTradeIDFromData(t *testing.T) {
 	// This may error depending on the exact format, which is ok for this edge case
 	// The main test is that it doesn't panic
 }
+
+func TestTradeInfoClosedPriceJSON(t *testing.T) {
+	raw := []byte(`{
+		"created_block": 8572205,
+		"closed_block": 8572210,
+		"closed_price": "0.00098012",
+		"max_slippage_p": "1",
+		"last_oi_update_ts": "1784646261224999476",
+		"collateral_price_usd": "0.001522815759"
+	}`)
+	var info TradeInfo
+	require.NoError(t, json.Unmarshal(raw, &info))
+	require.NotNil(t, info.ClosedBlock)
+	require.Equal(t, uint64(8572210), *info.ClosedBlock)
+	require.NotNil(t, info.ClosedPrice)
+	require.Equal(t, "0.00098012", *info.ClosedPrice)
+
+	openRaw := []byte(`{
+		"created_block": 1,
+		"closed_block": null,
+		"closed_price": null,
+		"max_slippage_p": "1",
+		"last_oi_update_ts": "0",
+		"collateral_price_usd": "1"
+	}`)
+	var openInfo TradeInfo
+	require.NoError(t, json.Unmarshal(openRaw, &openInfo))
+	require.Nil(t, openInfo.ClosedBlock)
+	require.Nil(t, openInfo.ClosedPrice)
+}

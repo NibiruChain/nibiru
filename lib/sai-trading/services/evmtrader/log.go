@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -233,7 +234,7 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 	}
 
 	// Send to Slack (non-blocking)
-	go sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
+	go t.sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
 }
 
 // buildSlackFields converts error fields to Slack field format
@@ -251,30 +252,44 @@ func buildSlackFields(fields map[string]any) []map[string]interface{} {
 	return slackFields
 }
 
-// sendSlackNotification sends a notification to Slack webhook
-func sendSlackNotification(webhookURL string, payload map[string]interface{}) {
+// sendSlackNotification posts a payload to the Slack webhook.
+func (t *EVMTrader) sendSlackNotification(webhookURL string, payload map[string]interface{}) {
+	if webhookURL == "" {
+		return
+	}
+
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return // Silently fail if we can't marshal
+		t.logWarn("Slack notification dropped: failed to marshal payload", "error", err.Error())
+		return
 	}
 
 	req, err := http.NewRequest("POST", webhookURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return // Silently fail if we can't create request
+		t.logWarn("Slack notification dropped: failed to build request", "error", err.Error())
+		return
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return // Silently fail if request fails
+		t.logWarn("Slack notification failed: request error", "error", err.Error())
+		return
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 256))
+		t.logWarn("Slack notification rejected by webhook",
+			"status", resp.StatusCode,
+			"response", strings.TrimSpace(string(body)),
+		)
+	}
 }
 
 // sendSlackHealthNotification sends a health-check summary to Slack (non-blocking).
-func sendSlackHealthNotification(webhookURL string, fields map[string]any) {
+func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[string]any) {
 	if webhookURL == "" {
 		return
 	}
@@ -378,7 +393,7 @@ func sendSlackHealthNotification(webhookURL string, fields map[string]any) {
 		},
 	}
 
-	go sendSlackNotification(webhookURL, slackMsg)
+	go t.sendSlackNotification(webhookURL, slackMsg)
 }
 
 func buildStatusReportText(

@@ -45,6 +45,8 @@ type EVMTrader struct {
 	tradeLogMu sync.Mutex
 	openTrades map[uint64]*tradeLifecycle
 
+	csvLogMu sync.Mutex
+
 	keeper *KeeperClient
 }
 
@@ -359,6 +361,8 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 		"height", txResp.Height,
 	)
 
+	closePrice, closeHeight := t.resolveCloseMeta(ctx, tradeIndex, txResp.Height)
+
 	trades, err := t.QueryTrades(ctx)
 	if err == nil {
 		for _, trade := range trades {
@@ -382,12 +386,31 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 			lc := t.openTrades[tradeIndex]
 			delete(t.openTrades, tradeIndex)
 			t.tradeLogMu.Unlock()
-			t.logTradeLifecycleCSV(tradeIndex, lc, trade, txResp.TxHash, txResp.Height)
+			t.logTradeLifecycleCSV(tradeIndex, lc, trade, closeHeight, closePrice)
 			break
 		}
 	}
 
 	return nil
+}
+
+func (t *EVMTrader) resolveCloseMeta(ctx context.Context, tradeIndex uint64, txHeight int64) (closePrice string, closeHeight int64) {
+	closeHeight = txHeight
+	info, err := t.queryTradeInfo(ctx, t.ethAddrBech32, tradeIndex)
+	if err != nil {
+		t.logWarn("GetTradeInfo unavailable for close price", "trade_index", tradeIndex, "error", err.Error())
+		return "", closeHeight
+	}
+	if info.ClosedBlock != nil {
+		closeHeight = int64(*info.ClosedBlock)
+	}
+	if info.ClosedPrice != nil {
+		if p := strings.TrimSpace(*info.ClosedPrice); p != "" {
+			return p, closeHeight
+		}
+	}
+	t.logWarn("Close price unresolved; leaving trades.csv close_price empty", "trade_index", tradeIndex)
+	return "", closeHeight
 }
 
 // getEncConfig returns the encoding configuration for the Nibiru chain.

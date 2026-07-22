@@ -10,7 +10,10 @@ import (
 
 // logTradeLifecycleCSV writes a single row per trade lifecycle (open+close) to logs/trades.csv.
 // It is called when a trade closes, using the stored open metadata (lc) plus the final close trade.
-func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, closeTrade ParsedTrade, txHash string, closeHeight int64) {
+func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, closeTrade ParsedTrade, closeHeight int64, closePrice string) {
+	t.csvLogMu.Lock()
+	defer t.csvLogMu.Unlock()
+
 	logDir := "logs"
 	logPath := filepath.Join(logDir, "trades.csv")
 
@@ -55,19 +58,18 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 
 	// Defaults from open lifecycle metadata, if present.
 	var (
-		openTime   string
-		openBlock  string
-		openPrice  string
-		marketIdx  string
-		direction  string
-		tradeType  string
-		collIdx    string
-		collAmt    string
-		collDenom  string
-		leverage   string
-		tp         string
-		sl         string
-		closePrice string
+		openTime  string
+		openBlock string
+		openPrice string
+		marketIdx string
+		direction string
+		tradeType string
+		collIdx   string
+		collAmt   string
+		collDenom string
+		leverage  string
+		tp        string
+		sl        string
 	)
 
 	if lc != nil {
@@ -119,10 +121,9 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 	if closeTrade.SL != nil && *closeTrade.SL != "" {
 		sl = *closeTrade.SL
 	}
-	// We don't have a dedicated close price field yet, but if OpenPrice is updated
- 	// on close we can reuse it. For now, prefer closeTrade.OpenPrice if non-empty.
-	if closeTrade.OpenPrice != "" {
-		closePrice = closeTrade.OpenPrice
+	// Prefer entry open_price from chain when lifecycle metadata is missing.
+	if openPrice == "" && closeTrade.OpenPrice != "" {
+		openPrice = closeTrade.OpenPrice
 	}
 
 	closeTime := time.Now().UTC().Format(time.RFC3339)
@@ -155,6 +156,9 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 // logTransactionCSV appends a single on-chain EVM transaction row to logs/transactions.csv.
 // It is best-effort and should never cause trading to fail.
 func (t *EVMTrader) logTransactionCSV(txHash string, status string, reason string, recipient string, height int64, gasWanted, gasUsed uint64) {
+	t.csvLogMu.Lock()
+	defer t.csvLogMu.Unlock()
+
 	logDir := "logs"
 	logPath := filepath.Join(logDir, "transactions.csv")
 
