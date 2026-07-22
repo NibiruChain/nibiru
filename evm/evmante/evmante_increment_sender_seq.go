@@ -19,8 +19,8 @@ var _ AnteStep = AnteStepIncrementNonce
 const (
 	// MaxPendingTxsPerSender is the inclusive number of transaction nonces one
 	// account may hold in a node's mempool: the committed state nonce through
-	// stateNonce + MaxPendingTxsPerSender - 1 (64 values when the limit is 64).
-	MaxPendingTxsPerSender uint64 = 64
+	// stateNonce + MaxPendingTxsPerSender - 1 (8 values when the limit is 8).
+	MaxPendingTxsPerSender uint64 = 8
 	// MaxFutureNonceGap is the maximum accepted distance between the transaction
 	// nonce and the committed state nonce during CheckTxType_New:
 	// txNonce - stateNonce must be strictly less than [MaxPendingTxsPerSender],

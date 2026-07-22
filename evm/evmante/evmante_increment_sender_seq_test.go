@@ -86,8 +86,8 @@ func (s *Suite) TestEthAnteIncrementNonce() {
 }
 
 // TestEthAnteIncrementNonceCheckTx proves the CheckTxType_New admission window:
-// with state nonce 10, transaction nonces 10 and 73 are admitted (64 inclusive
-// values through stateNonce + [evmante.MaxFutureNonceGap]), nonces 74 and 75
+// with state nonce 10, transaction nonces 10 and 17 are admitted (8 inclusive
+// values through stateNonce + [evmante.MaxFutureNonceGap]), nonces 18 and 19
 // are rejected, and CheckTx does not advance the committed state nonce.
 func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 	deps := evmtest.NewTestDeps()
@@ -120,13 +120,13 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
 	requireState(10)
 
-	for _, nonce := range []uint64{10, 11, 73, 10} {
+	for _, nonce := range []uint64{10, 11, 17, 10} {
 		s.Require().NoError(runAnteStep(nonce))
 	}
 	requireState(10)
 
-	s.Require().ErrorContains(runAnteStep(74), "future nonce gap too large")
-	s.Require().ErrorContains(runAnteStep(75), "future nonce gap too large")
+	s.Require().ErrorContains(runAnteStep(18), "future nonce gap too large")
+	s.Require().ErrorContains(runAnteStep(19), "future nonce gap too large")
 	requireState(10)
 }
 
