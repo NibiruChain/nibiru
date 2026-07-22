@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
+	cmttypes "github.com/cometbft/cometbft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
@@ -15,6 +16,18 @@ import (
 
 var _ AnteStep = AnteStepIncrementNonce
 
+const (
+	// MaxPendingTxsPerSender is the inclusive number of transaction nonces one
+	// account may hold in a node's mempool: the committed state nonce through
+	// stateNonce + MaxPendingTxsPerSender - 1 (8 values when the limit is 8).
+	MaxPendingTxsPerSender uint64 = 8
+	// MaxFutureNonceGap is the maximum accepted distance between the transaction
+	// nonce and the committed state nonce during CheckTxType_New:
+	// txNonce - stateNonce must be strictly less than [MaxPendingTxsPerSender],
+	// so MaxFutureNonceGap equals MaxPendingTxsPerSender - 1.
+	MaxFutureNonceGap uint64 = MaxPendingTxsPerSender - 1
+)
+
 // AnteStepIncrementNonce increments the sequence (nonce) of the sender account
 // and validates that the transaction nonce matches the expected account nonce.
 // This handler manages nonce verification and increment for Ethereum transactions.
@@ -24,11 +37,15 @@ var _ AnteStep = AnteStepIncrementNonce
 //   - the transaction nonce is invalid for the current context
 //   - transaction data cannot be unpacked
 //
-// During CheckTx: Allows nonce >= current nonce (for pending transactions)
-// During ReCheckTx/DeliverTx: Requires exact nonce match
+// During CheckTxType_New, the step admits transaction nonces in the inclusive
+// window from the committed state nonce through stateNonce + [MaxFutureNonceGap]
+// (rejecting when txNonce - stateNonce >= [MaxPendingTxsPerSender]).
+// [AnteStepMempoolAdmission] and [evm.Mempool.Insert] enforce live-slot
+// ownership. During CheckTxType_Recheck, the step retains complete state nonce
+// chains via [evm.Mempool.CheckRecheck]. Proposal and delivery execution require
+// the exact current state nonce.
 //
-// The nonce is incremented in the SDB state, ensuring proper sequencing
-// of transactions from the same sender.
+// The nonce is incremented only during DeliverTx in the active ante state.
 func AnteStepIncrementNonce(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
@@ -59,20 +76,41 @@ func AnteStepIncrementNonce(
 	txNonce = txData.GetNonce()
 
 	switch {
-	case sdb.Ctx().IsCheckTx():
-		if txNonce < stateNonce {
-			return fmt.Errorf(
-				"invalid nonce; got %d, should be expected %d or higher with pending txs in the same block", txNonce, stateNonce,
-			)
+	case sdb.IsReCheckTxOnly():
+		mp := opts.GetEVMMempool()
+		if mp == nil {
+			if txNonce != stateNonce {
+				return fmt.Errorf(
+					"invalid nonce; got %d, expected %d", txNonce, stateNonce,
+				)
+			}
+			return nil
 		}
-	case sdb.Ctx().IsReCheckTx() || sdb.IsDeliverTx():
+		return mp.CheckRecheck(
+			cmttypes.Tx(sdb.Ctx().TxBytes()).Key(),
+			msgEthTx.FromAddr(),
+			stateNonce,
+			txNonce,
+		)
+	case sdb.IsDeliverTx():
 		if txNonce != stateNonce {
 			return fmt.Errorf(
 				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
 			)
 		}
-		newNonce := stateNonce + 1
-		sdb.SetNonce(msgEthTx.FromAddr(), newNonce)
+		sdb.SetNonce(msgEthTx.FromAddr(), stateNonce+1)
+	case sdb.Ctx().IsCheckTx():
+		if txNonce < stateNonce {
+			return fmt.Errorf(
+				"invalid nonce; got %d, expected %d or higher", txNonce, stateNonce,
+			)
+		}
+		if txNonce-stateNonce >= MaxPendingTxsPerSender {
+			return fmt.Errorf(
+				"future nonce gap too large; got %d, state nonce %d, max gap %d",
+				txNonce, stateNonce, MaxFutureNonceGap,
+			)
+		}
 	default:
 	}
 

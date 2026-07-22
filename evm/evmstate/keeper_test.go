@@ -172,6 +172,50 @@ func (s *Suite) TestIsDeliverTx() {
 	}
 }
 
+// TestIsReCheckTxOnly verifies ABCI Recheck detection via [IsReCheckTxOnly].
+// Recheck sets both IsCheckTx and IsReCheckTx because the SDK sets checkTx=true
+// whenever recheckTx=true; New CheckTx has only IsCheckTx.
+func (s *Suite) TestIsReCheckTxOnly() {
+	deps := evmtest.NewTestDeps()
+
+	testCases := []struct {
+		name     string
+		setup    func(ctx sdk.Context) sdk.Context
+		expected bool
+	}{
+		{
+			name: "Default DeliverTx context",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx
+			},
+			expected: false,
+		},
+		{
+			name: "New CheckTx context",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsCheckTx(true)
+			},
+			expected: false,
+		},
+		{
+			name: "ReCheckTx context sets both flags",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsReCheckTx(true)
+			},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			testCtx := tc.setup(deps.Ctx())
+			s.Equal(tc.expected, evmstate.IsReCheckTxOnly(testCtx))
+			sdb := deps.EvmKeeper.NewSDB(testCtx, deps.EvmKeeper.TxConfig(testCtx, gethcommon.Hash{}))
+			s.Equal(tc.expected, sdb.IsReCheckTxOnly())
+		})
+	}
+}
+
 func (s *Suite) TestGetHashFn() {
 	deps := evmtest.NewTestDeps()
 	fn := deps.EvmKeeper.GetHashFn(deps.Ctx())

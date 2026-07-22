@@ -5,7 +5,7 @@
 <!-- Why is change being made?  What does this PR do?
 
 Other Potential Sections
-## Summary of Changes -> You can create this by commenting "/gemini summary"
+## Summary of Changes
 ## Testing Approach
 ## Why this Solution Works
 -->

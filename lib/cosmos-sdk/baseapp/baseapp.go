@@ -732,10 +732,17 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 			return gInfo, nil, anteEvents, priority, err
 		}
 	case runTxModeDeliver:
-		err = app.mempool.Remove(tx)
-		if err != nil && !errors.Is(err, mempool.ErrTxNotFound) {
-			return gInfo, nil, anteEvents, priority,
-				fmt.Errorf("failed to remove tx from mempool: %w", err)
+		// Mempools that implement [mempool.TxKeyRemover] are cleaned by
+		// [BaseApp.removeMempoolTxByKey] from the ABCI request bytes (failed
+		// recheck and every DeliverTx). Skip decoded [mempool.Mempool.Remove]
+		// because the decoded transaction cannot recover the original outer
+		// byte identity.
+		if _, removesByKey := app.mempool.(mempool.TxKeyRemover); !removesByKey {
+			err = app.mempool.Remove(tx)
+			if err != nil && !errors.Is(err, mempool.ErrTxNotFound) {
+				return gInfo, nil, anteEvents, priority,
+					fmt.Errorf("failed to remove tx from mempool: %w", err)
+			}
 		}
 	}
 
@@ -885,12 +892,23 @@ func (app *BaseApp) PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error) {
 		return nil, err
 	}
 
-	_, _, _, _, err = app.runTx(runTxPrepareProposal, bz) //nolint:dogsled
+	err = app.PrepareProposalVerifyTxBytes(bz)
 	if err != nil {
 		return nil, err
 	}
 
 	return bz, nil
+}
+
+// PrepareProposalVerifyTxBytes performs prepare-proposal ante verification on
+// the supplied outer transaction bytes without decoding and re-encoding them.
+// This preserves byte identity for transaction types whose ante handler
+// populates derived fields on the decoded transaction (for example EVM sender
+// recovery). Prefer this over [BaseApp.PrepareProposalVerifyTx] when the
+// proposal must return the exact bytes later included in the block.
+func (app *BaseApp) PrepareProposalVerifyTxBytes(txBytes []byte) error {
+	_, _, _, _, err := app.runTx(runTxPrepareProposal, txBytes) //nolint:dogsled
+	return err
 }
 
 // ProcessProposalVerifyTx performs transaction verification when receiving a
