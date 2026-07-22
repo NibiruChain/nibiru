@@ -3,8 +3,9 @@
 # August 31, 2026.
 FROM debian:11-slim
 
-RUN apt update -y \
-  && apt install -y gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu wget clang
+RUN apt-get -o Acquire::Retries=5 update -y \
+  && apt-get -o Acquire::Retries=5 install -y \
+    gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu wget clang
 
 ENV RUSTUP_HOME=/usr/local/rustup \
   CARGO_HOME=/usr/local/cargo \

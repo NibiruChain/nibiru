@@ -23,10 +23,11 @@ RUN rustup target add x86_64-apple-darwin aarch64-apple-darwin x86_64-pc-windows
 # At some point we might want to use our own package.
 RUN git clone https://github.com/tpoechtrager/osxcross \
   && cd osxcross \
+  && git checkout 28b7b67c937f4c620a7bf1e7b6dbce057bb7691e \
   # Don't change file name when downloading because osxcross auto-detects the version from the name
   && wget -nc https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz \
   && mv MacOSX11.3.sdk.tar.xz tarballs/ \
-  && UNATTENDED=yes OSX_VERSION_MIN=10.10 ./build.sh \
+  && UNATTENDED=1 BUILD_FLAVOR=stable OSX_VERSION_MIN=10.10 ./build.sh \
   # Cleanups before Docker layer is finalized
   && rm -r tarballs/
 RUN chmod +rx /opt/osxcross
