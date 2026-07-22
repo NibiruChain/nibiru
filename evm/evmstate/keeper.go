@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sync"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
@@ -52,6 +54,11 @@ type Keeper struct {
 	// include "access_list", "json", "struct", and "markdown". If any other
 	// value is used, a no operation tracer is set.
 	tracer string
+
+	// pendingTxCounts points at the current epoch's per-sender admission map.
+	// Values are *atomic.Uint64. EndBlock stores a fresh map; the old one is GC'd.
+	// Never consensus state.
+	pendingTxCounts atomic.Pointer[sync.Map]
 }
 
 func (k *Keeper) BK() bankkeeper.Keeper {
@@ -83,7 +90,7 @@ func NewKeeper(
 		panic(err)
 	}
 
-	return Keeper{
+	k := Keeper{
 		cdc:           cdc,
 		storeKey:      storeKey,
 		transientKey:  transientKey,
@@ -96,6 +103,8 @@ func NewKeeper(
 		SudoKeeper:    sudoKeeper,
 		tracer:        tracer,
 	}
+	k.pendingTxCounts.Store(&sync.Map{})
+	return k
 }
 
 // GetWeiBalance: Used in the EVM Ante Handler,
@@ -146,6 +155,55 @@ func IsDeliverTx(ctx sdk.Context) bool {
 
 func (sdb SDB) IsDeliverTx() bool {
 	return IsDeliverTx(sdb.Ctx())
+}
+
+// IsReCheckTxOnly is true only in ABCI ReCheckTx (ctx.IsReCheckTx()).
+// New CheckTx has IsCheckTx() && !IsReCheckTx(); ReCheckTx has both flags set
+// because the SDK sets checkTx=true whenever recheckTx=true.
+func IsReCheckTxOnly(ctx sdk.Context) bool {
+	return ctx.IsReCheckTx()
+}
+
+func (sdb SDB) IsReCheckTxOnly() bool {
+	return IsReCheckTxOnly(sdb.Ctx())
+}
+
+func (k *Keeper) pendingTxCountMap() *sync.Map {
+	return k.pendingTxCounts.Load()
+}
+
+// pendingTxCount returns the per-sender admission counter, creating it if needed.
+func (k *Keeper) pendingTxCount(addr gethcommon.Address) *atomic.Uint64 {
+	m := k.pendingTxCountMap()
+	if v, ok := m.Load(addr); ok {
+		return v.(*atomic.Uint64)
+	}
+	c := new(atomic.Uint64)
+	actual, loaded := m.LoadOrStore(addr, c)
+	if loaded {
+		return actual.(*atomic.Uint64)
+	}
+	return c
+}
+
+// PendingTxCount returns the node-local New CheckTx admission count for addr.
+func (k *Keeper) PendingTxCount(addr gethcommon.Address) uint64 {
+	if v, ok := k.pendingTxCountMap().Load(addr); ok {
+		return v.(*atomic.Uint64).Load()
+	}
+	return 0
+}
+
+// IncrementPendingTxCount increments and returns the new pending admission count.
+func (k *Keeper) IncrementPendingTxCount(addr gethcommon.Address) uint64 {
+	return k.pendingTxCount(addr).Add(1)
+}
+
+// ResetPendingTxCount replaces the pending admission map with an empty one.
+// The previous map is left for GC; in-flight increments on the old pointer are
+// discarded with that epoch and do not affect the new window.
+func (k *Keeper) ResetPendingTxCount() {
+	k.pendingTxCounts.Store(&sync.Map{})
 }
 
 func (k *Keeper) ImportGenesisAccount(ctx sdk.Context, account evm.GenesisAccount) (err error) {

@@ -17,10 +17,10 @@ var _ AnteStep = AnteStepIncrementNonce
 
 const (
 	// MaxPendingTxsPerSender bounds how many transactions one EVM account can
-	// place in a node's mempool between commits.
+	// place in a node's mempool via New CheckTx between EndBlocks.
 	MaxPendingTxsPerSender uint64 = 64
 	// MaxFutureNonceGap bounds the node-local queue of out-of-order transactions
-	// while retaining normal future-nonce and replacement admission.
+	// while retaining normal future-nonce and replacement admission on New CheckTx.
 	MaxFutureNonceGap uint64 = 64
 )
 
@@ -33,12 +33,12 @@ const (
 //   - the transaction nonce is invalid for the current context
 //   - transaction data cannot be unpacked
 //
-// During CheckTx/ReCheckTx: Allows a bounded future-nonce window and caps the
-// number of pending transactions per sender. During DeliverTx: Requires an exact
-// nonce match.
+// During New CheckTx: Allows a bounded future-nonce window and caps the number
+// of pending transactions per sender (process-local sync.Map, reset in EndBlock).
+// During ReCheckTx and DeliverTx: Requires an exact nonce match so future-nonce
+// junk does not survive mempool recheck into the next block.
 //
-// The nonce is incremented in the active ante state, ensuring proper sequencing
-// of transactions from the same sender.
+// The nonce is incremented only during DeliverTx in the active ante state.
 func AnteStepIncrementNonce(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
@@ -69,6 +69,15 @@ func AnteStepIncrementNonce(
 	txNonce = txData.GetNonce()
 
 	switch {
+	case sdb.IsDeliverTx() || sdb.IsReCheckTxOnly():
+		if txNonce != stateNonce {
+			return fmt.Errorf(
+				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
+			)
+		}
+		if sdb.IsDeliverTx() {
+			sdb.SetNonce(msgEthTx.FromAddr(), stateNonce+1)
+		}
 	case sdb.Ctx().IsCheckTx():
 		if txNonce < stateNonce {
 			return fmt.Errorf(
@@ -82,25 +91,14 @@ func AnteStepIncrementNonce(
 			)
 		}
 
-		pendingTxCount := k.EVMState().PendingTxCount.GetOr(
-			sdb.RootCtx(), msgEthTx.FromAddr(), 0,
-		)
+		pendingTxCount := k.PendingTxCount(msgEthTx.FromAddr())
 		if pendingTxCount >= MaxPendingTxsPerSender {
 			return fmt.Errorf(
 				"too many pending transactions for sender; got %d, limit %d",
 				pendingTxCount, MaxPendingTxsPerSender,
 			)
 		}
-		k.EVMState().PendingTxCount.Insert(
-			sdb.RootCtx(), msgEthTx.FromAddr(), pendingTxCount+1,
-		)
-	case sdb.IsDeliverTx():
-		if txNonce != stateNonce {
-			return fmt.Errorf(
-				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
-			)
-		}
-		sdb.SetNonce(msgEthTx.FromAddr(), stateNonce+1)
+		k.IncrementPendingTxCount(msgEthTx.FromAddr())
 	default:
 	}
 

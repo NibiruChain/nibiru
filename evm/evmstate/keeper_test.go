@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -170,6 +171,61 @@ func (s *Suite) TestIsDeliverTx() {
 			s.Equal(tc.expected, result, "IsDeliverTx result incorrect for %s", tc.name)
 		})
 	}
+}
+
+// TestIsReCheckTxOnly verifies ABCI ReCheckTx detection (ctx.IsReCheckTx).
+func (s *Suite) TestIsReCheckTxOnly() {
+	deps := evmtest.NewTestDeps()
+
+	testCases := []struct {
+		name     string
+		setup    func(ctx sdk.Context) sdk.Context
+		expected bool
+	}{
+		{
+			name: "Default DeliverTx context",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx
+			},
+			expected: false,
+		},
+		{
+			name: "New CheckTx context",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsCheckTx(true)
+			},
+			expected: false,
+		},
+		{
+			name: "ReCheckTx context sets both flags",
+			setup: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithIsReCheckTx(true)
+			},
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			testCtx := tc.setup(deps.Ctx())
+			s.Equal(tc.expected, evmstate.IsReCheckTxOnly(testCtx))
+			sdb := deps.EvmKeeper.NewSDB(testCtx, deps.EvmKeeper.TxConfig(testCtx, gethcommon.Hash{}))
+			s.Equal(tc.expected, sdb.IsReCheckTxOnly())
+		})
+	}
+}
+
+func (s *Suite) TestPendingTxCountReset() {
+	deps := evmtest.NewTestDeps()
+	addr := deps.Sender.EthAddr
+
+	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(addr))
+	s.Require().Equal(uint64(1), deps.EvmKeeper.IncrementPendingTxCount(addr))
+	s.Require().Equal(uint64(2), deps.EvmKeeper.IncrementPendingTxCount(addr))
+	s.Require().Equal(uint64(2), deps.EvmKeeper.PendingTxCount(addr))
+
+	deps.EvmKeeper.EndBlock(deps.Ctx(), abci.RequestEndBlock{Height: deps.Ctx().BlockHeight()})
+	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(addr))
 }
 
 func (s *Suite) TestGetHashFn() {

@@ -111,12 +111,7 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 		acct := deps.EvmKeeper.GetAccount(checkCtx, deps.Sender.EthAddr)
 		s.Require().NotNil(acct)
 		s.Require().Equal(wantNonce, acct.Nonce)
-		s.Require().Equal(
-			wantPending,
-			deps.EvmKeeper.EVMState().PendingTxCount.GetOr(
-				checkCtx, deps.Sender.EthAddr, 0,
-			),
-		)
+		s.Require().Equal(wantPending, deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
 	}
 
 	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
@@ -137,6 +132,42 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 
 	s.Require().ErrorContains(runAnteStep(10), "too many pending transactions for sender")
 	requireState(10, evmante.MaxPendingTxsPerSender)
+}
+
+func (s *Suite) TestEthAnteIncrementNonceReCheckTx() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
+	sdb := deps.NewStateDB()
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(100))
+	sdb.SetNonce(deps.Sender.EthAddr, 10)
+	sdb.Commit()
+	recheckCtx := sdb.RootCtx()
+
+	runAnteStep := func(nonce uint64) error {
+		sdb = deps.EvmKeeper.NewSDB(
+			recheckCtx,
+			deps.EvmKeeper.TxConfig(recheckCtx, gethcommon.Hash{}),
+		)
+		return evmante.AnteStepIncrementNonce(
+			sdb,
+			sdb.Keeper(),
+			evmtest.HappyTransferTx(&deps, nonce),
+			false,
+			AnteOptionsForTests{},
+		)
+	}
+
+	s.Require().True(evmstate.IsReCheckTxOnly(recheckCtx))
+	s.Require().ErrorContains(runAnteStep(11), "invalid nonce; got 11, expected 10")
+	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
+
+	s.Require().NoError(runAnteStep(10))
+	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr),
+		"ReCheckTx must not bump the New CheckTx pending counter")
+
+	acct := deps.EvmKeeper.GetAccount(recheckCtx, deps.Sender.EthAddr)
+	s.Require().NotNil(acct)
+	s.Require().Equal(uint64(10), acct.Nonce, "ReCheckTx must not persist SetNonce")
 }
 
 // AddBalanceSigned is only used in tests for convenience.

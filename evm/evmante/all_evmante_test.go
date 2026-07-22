@@ -335,19 +335,16 @@ func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 	s.Require().False(resp.IsOK())
 	s.Require().Contains(resp.Log, "future nonce gap too large")
 
-	acceptedChecks := []struct {
-		nonce     uint64
-		checkType abci.CheckTxType
-	}{
-		{nonce: 2, checkType: abci.CheckTxType_New},
-		{nonce: 0, checkType: abci.CheckTxType_Recheck},
-		{nonce: 0, checkType: abci.CheckTxType_New},
-	}
-	for _, check := range acceptedChecks {
-		s.Require().True(checkTx(check.nonce, check.checkType).IsOK())
-	}
+	// Future nonce is allowed on New CheckTx but purged on ReCheckTx (exact match).
+	s.Require().True(checkTx(2, abci.CheckTxType_New).IsOK())
+	resp = checkTx(2, abci.CheckTxType_Recheck)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "invalid nonce; got 2, expected 0")
 
-	for pending := uint64(3); pending < evmante.MaxPendingTxsPerSender; pending++ {
+	s.Require().True(checkTx(0, abci.CheckTxType_New).IsOK())
+	s.Require().True(checkTx(0, abci.CheckTxType_Recheck).IsOK())
+
+	for pending := uint64(2); pending < evmante.MaxPendingTxsPerSender; pending++ {
 		s.Require().True(checkTx(1, abci.CheckTxType_New).IsOK())
 	}
 
@@ -359,6 +356,13 @@ func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 	blockHeader.Height++
 	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
 	deps.App.EndBlock(abci.RequestEndBlock{Height: blockHeader.Height})
+	s.Require().Equal(uint64(0), deps.App.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
 	deps.App.Commit()
+
+	// After EndBlock reset, New CheckTx can admit again; ReCheckTx still exact.
+	s.Require().True(checkTx(0, abci.CheckTxType_New).IsOK())
 	s.Require().True(checkTx(0, abci.CheckTxType_Recheck).IsOK())
+	resp = checkTx(1, abci.CheckTxType_Recheck)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "invalid nonce; got 1, expected 0")
 }
