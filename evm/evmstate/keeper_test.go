@@ -172,7 +172,9 @@ func (s *Suite) TestIsDeliverTx() {
 	}
 }
 
-// TestIsReCheckTxOnly verifies ABCI ReCheckTx detection (ctx.IsReCheckTx).
+// TestIsReCheckTxOnly verifies ABCI Recheck detection via [IsReCheckTxOnly].
+// Recheck sets both IsCheckTx and IsReCheckTx because the SDK sets checkTx=true
+// whenever recheckTx=true; New CheckTx has only IsCheckTx.
 func (s *Suite) TestIsReCheckTxOnly() {
 	deps := evmtest.NewTestDeps()
 

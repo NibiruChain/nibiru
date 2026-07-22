@@ -85,6 +85,10 @@ func (s *Suite) TestEthAnteIncrementNonce() {
 	}
 }
 
+// TestEthAnteIncrementNonceCheckTx proves the CheckTxType_New admission window:
+// with state nonce 10, transaction nonces 10 and 73 are admitted (64 inclusive
+// values through stateNonce + [evmante.MaxFutureNonceGap]), nonces 74 and 75
+// are rejected, and CheckTx does not advance the committed state nonce.
 func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 	deps := evmtest.NewTestDeps()
 	deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
@@ -126,6 +130,9 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 	requireState(10)
 }
 
+// TestEthAnteIncrementNonceReCheckTx proves that without a mempool, recheck
+// requires the exact committed state nonce and must not persist nonce updates
+// (see [evmstate.IsReCheckTxOnly]).
 func (s *Suite) TestEthAnteIncrementNonceReCheckTx() {
 	deps := evmtest.NewTestDeps()
 	deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))

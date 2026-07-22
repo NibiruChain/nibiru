@@ -13,6 +13,8 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
+// acceptingPrepareVerifier records the outer bytes passed to prepare-proposal
+// verification so tests can assert byte identity against insertion.
 type acceptingPrepareVerifier struct {
 	seen [][]byte
 }
@@ -22,6 +24,10 @@ func (v *acceptingPrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) 
 	return nil
 }
 
+// insertProposalEVMTransaction inserts one EVM transaction into [evm.Mempool]
+// using RPC-shaped encoding: [evm.MsgEthereumTx.From] is empty in the outer
+// bytes, then restored on the decoded message for authenticated insertion.
+// Returns the original outer bytes that proposal selection must preserve.
 func insertProposalEVMTransaction(
 	t *testing.T,
 	deps *evmtest.TestDeps,
@@ -44,6 +50,10 @@ func insertProposalEVMTransaction(
 	return txBytes
 }
 
+// TestEVMPrepareProposalPreservesStateNonceChainBytes proves
+// [app.NewEVMPrepareProposalHandler] selects only the contiguous state nonce
+// chain from committed state nonce 10 (slots 10 and 11), omits gapped nonce 13,
+// and returns the original outer bytes captured at insertion.
 func TestEVMPrepareProposalPreservesStateNonceChainBytes(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
@@ -67,6 +77,30 @@ func TestEVMPrepareProposalPreservesStateNonceChainBytes(t *testing.T) {
 	require.Equal(t, response.Txs, verifier.seen)
 }
 
+// TestEVMPrepareProposalTreatsMissingAccountAsNonceZero proves that a sender
+// with no committed account is treated as state nonce 0, so a first-time or
+// zero-gas sender's nonce-0 transaction remains proposable. Ante creates the
+// account only on deliver; proposal selection must not skip nil accounts.
+func TestEVMPrepareProposalTreatsMissingAccountAsNonceZero(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	require.Nil(t, deps.EvmKeeper.GetAccount(deps.Ctx(), deps.Sender.EthAddr))
+	tx0 := insertProposalEVMTransaction(t, &deps, 0, 1)
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+	})
+
+	require.Equal(t, [][]byte{tx0}, response.Txs)
+	require.Equal(t, response.Txs, verifier.seen)
+}
+
+// TestEVMPrepareProposalPassesThroughNonEVMOrder proves the non-EVM proposal
+// lane preserves CometBFT's relative order from RequestPrepareProposal.Txs.
 func TestEVMPrepareProposalPassesThroughNonEVMOrder(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	buildNonEVM := func(memo string) []byte {
@@ -93,6 +127,9 @@ func TestEVMPrepareProposalPassesThroughNonEVMOrder(t *testing.T) {
 	require.Equal(t, [][]byte{txA, txB}, response.Txs)
 }
 
+// TestEVMPrepareProposalPrioritizesExecutableSenderHeads proves that across
+// senders, higher-priority executable heads are selected first, without
+// breaking within-sender nonce order.
 func TestEVMPrepareProposalPrioritizesExecutableSenderHeads(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	setAccount := func() {

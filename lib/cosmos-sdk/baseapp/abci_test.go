@@ -29,6 +29,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 )
 
+// keyedRemovalMempool is a test stub implementing [mempool.TxKeyRemover] so
+// BaseApp keyed cleanup can be asserted without a full EVM mempool.
 type keyedRemovalMempool struct {
 	removed []cmttypes.TxKey
 }
@@ -44,6 +46,9 @@ func (pool *keyedRemovalMempool) RemoveByTxKey(key cmttypes.TxKey) error {
 	return nil
 }
 
+// TestABCI_KeyedMempoolCleanup proves BaseApp removes mempool entries by the
+// exact [cmttypes.TxKey] derived from ABCI request bytes on failed
+// CheckTxType_Recheck and on every DeliverTx, including failed delivery.
 func TestABCI_KeyedMempoolCleanup(t *testing.T) {
 	t.Run("failed CheckTxType_Recheck", func(t *testing.T) {
 		pool := new(keyedRemovalMempool)

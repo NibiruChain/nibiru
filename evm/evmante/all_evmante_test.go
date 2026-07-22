@@ -306,6 +306,12 @@ func (s *Suite) TestAnteHandlerEVM() {
 	}
 }
 
+// TestAnteHandlerEVMCheckTxNonceSequence exercises the full EVM ante path with
+// [evm.Mempool]: far-future nonces are rejected at admission, a gapped future
+// nonce is admitted on CheckTxType_New then purged on CheckTxType_Recheck, a
+// complete state nonce chain survives recheck, the 65th live slot and nonce
+// collisions are rejected, and live slots persist across EndBlock until
+// inclusion or a failed recheck removes them.
 func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 	deps := evmtest.NewTestDeps()
 	sdb := deps.NewStateDB()

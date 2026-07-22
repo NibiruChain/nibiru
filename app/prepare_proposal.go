@@ -13,23 +13,36 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
+// prepareProposalTxVerifier verifies original outer transaction bytes during
+// PrepareProposal without decoding and re-encoding them. Byte identity matters
+// for EVM transactions because ante validation populates [evm.MsgEthereumTx.From]
+// on the decoded object.
 type prepareProposalTxVerifier interface {
 	PrepareProposalVerifyTxBytes(txBytes []byte) error
 }
 
+// proposalChain is a contiguous executable prefix for one sender: the state
+// nonce chain entry at the committed state nonce and any consecutive later
+// nonces. [proposalChain.index] advances only after the current head is selected
+// so the handler never skips one sender nonce to include a later nonce.
 type proposalChain struct {
 	txs   []evm.MempoolTx
 	index int
 }
 
+// current returns the next executable transaction in the chain.
 func (chain *proposalChain) current() evm.MempoolTx {
 	return chain.txs[chain.index]
 }
 
+// proposalHeap orders executable sender heads for interleaving across senders.
+// See [proposalHeap.Less].
 type proposalHeap []*proposalChain
 
 func (h proposalHeap) Len() int { return len(h) }
 
+// Less orders heads by higher [evm.MempoolTx.Priority], then lower
+// [evm.MempoolTx.ArrivalID], then sender address, then transaction nonce.
 func (h proposalHeap) Less(i, j int) bool {
 	a, b := h[i].current(), h[j].current()
 	if a.Priority != b.Priority {
@@ -59,9 +72,19 @@ func (h *proposalHeap) Pop() any {
 	return value
 }
 
-// NewEVMPrepareProposalHandler returns Nibiru's EVM-aware proposal builder. It
-// selects complete state nonce chains from the node-local EVM mempool before
-// appending valid non-EVM candidates in their CometBFT-provided order.
+// NewEVMPrepareProposalHandler returns Nibiru's EVM-aware proposal builder.
+//
+// The handler snapshots [evm.Mempool] via [evm.Mempool.Snapshot] and selects
+// each sender's complete state nonce chain (contiguous live slots from the
+// committed state nonce) through [executableProposalChains], prioritizes
+// executable sender heads with [proposalHeap], and returns original outer bytes
+// from [evm.MempoolTx.TxBytes]. It then appends verified non-EVM candidates from
+// RequestPrepareProposal.Txs in their CometBFT-provided relative order. EVM
+// transactions present in req.Txs are ignored so proposal construction does not
+// rebuild the EVM index from Comet candidates. A recovered panic yields an empty
+// proposal rather than an unfiltered EVM candidate set. Node-local mempool
+// membership affects only this node's candidate selection; ProcessProposal and
+// delivery validate from proposal bytes and application state alone.
 func NewEVMPrepareProposalHandler(
 	app *NibiruApp,
 	verifier prepareProposalTxVerifier,
@@ -140,6 +163,13 @@ func NewEVMPrepareProposalHandler(
 	}
 }
 
+// executableProposalChains builds each sender's state nonce chain from an
+// [evm.Mempool.Snapshot]. The committed state nonce is the account nonce when
+// the account exists, and 0 when [evmstate.Keeper.GetAccount] returns nil, so
+// first-time and zero-gas senders remain proposable before ante creates the
+// account on deliver. A sender is included only when it owns a live slot at
+// that state nonce; the chain extends through consecutive nonces and stops at
+// the first gap.
 func executableProposalChains(
 	ctx sdk.Context,
 	keeper *evmstate.Keeper,
@@ -147,14 +177,14 @@ func executableProposalChains(
 ) []*proposalChain {
 	chains := make([]*proposalChain, 0, len(snapshot))
 	for _, sender := range snapshot {
-		account := keeper.GetAccount(ctx, sender.Sender)
-		if account == nil {
-			continue
+		stateNonce := uint64(0)
+		if account := keeper.GetAccount(ctx, sender.Sender); account != nil {
+			stateNonce = account.Nonce
 		}
 		start := sort.Search(len(sender.Txs), func(index int) bool {
-			return sender.Txs[index].Nonce >= account.Nonce
+			return sender.Txs[index].Nonce >= stateNonce
 		})
-		if start >= len(sender.Txs) || sender.Txs[start].Nonce != account.Nonce {
+		if start >= len(sender.Txs) || sender.Txs[start].Nonce != stateNonce {
 			continue
 		}
 		end := start + 1
@@ -166,6 +196,8 @@ func executableProposalChains(
 	return chains
 }
 
+// proposalCapacityAllows reports whether next units fit in the remaining
+// capacity without overflowing used or maximum.
 func proposalCapacityAllows(used, next, maximum uint64) bool {
 	return used <= maximum && next <= maximum-used
 }

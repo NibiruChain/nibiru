@@ -17,11 +17,14 @@ import (
 var _ AnteStep = AnteStepIncrementNonce
 
 const (
-	// MaxPendingTxsPerSender bounds how many live EVM nonce slots one account
-	// can own in a node's mempool.
+	// MaxPendingTxsPerSender is the inclusive number of transaction nonces one
+	// account may hold in a node's mempool: the committed state nonce through
+	// stateNonce + MaxPendingTxsPerSender - 1 (64 values when the limit is 64).
 	MaxPendingTxsPerSender uint64 = 64
-	// MaxFutureNonceGap bounds the node-local queue of out-of-order transactions
-	// while retaining normal future-nonce and replacement admission on New CheckTx.
+	// MaxFutureNonceGap is the maximum accepted distance between the transaction
+	// nonce and the committed state nonce during CheckTxType_New:
+	// txNonce - stateNonce must be strictly less than [MaxPendingTxsPerSender],
+	// so MaxFutureNonceGap equals MaxPendingTxsPerSender - 1.
 	MaxFutureNonceGap uint64 = MaxPendingTxsPerSender - 1
 )
 
@@ -34,10 +37,13 @@ const (
 //   - the transaction nonce is invalid for the current context
 //   - transaction data cannot be unpacked
 //
-// During CheckTxType_New, the step permits the bounded future-nonce window;
-// AnteStepMempoolAdmission and evm.Mempool.Insert enforce live-slot ownership.
-// During CheckTxType_Recheck, the step retains complete state nonce chains.
-// Proposal and delivery execution require the exact current state nonce.
+// During CheckTxType_New, the step admits transaction nonces in the inclusive
+// window from the committed state nonce through stateNonce + [MaxFutureNonceGap]
+// (rejecting when txNonce - stateNonce >= [MaxPendingTxsPerSender]).
+// [AnteStepMempoolAdmission] and [evm.Mempool.Insert] enforce live-slot
+// ownership. During CheckTxType_Recheck, the step retains complete state nonce
+// chains via [evm.Mempool.CheckRecheck]. Proposal and delivery execution require
+// the exact current state nonce.
 //
 // The nonce is incremented only during DeliverTx in the active ante state.
 func AnteStepIncrementNonce(
@@ -71,8 +77,8 @@ func AnteStepIncrementNonce(
 
 	switch {
 	case sdb.IsReCheckTxOnly():
-		pool := opts.GetEVMMempool()
-		if pool == nil {
+		mp := opts.GetEVMMempool()
+		if mp == nil {
 			if txNonce != stateNonce {
 				return fmt.Errorf(
 					"invalid nonce; got %d, expected %d", txNonce, stateNonce,
@@ -80,7 +86,7 @@ func AnteStepIncrementNonce(
 			}
 			return nil
 		}
-		return pool.CheckRecheck(
+		return mp.CheckRecheck(
 			cmttypes.Tx(sdb.Ctx().TxBytes()).Key(),
 			msgEthTx.FromAddr(),
 			stateNonce,

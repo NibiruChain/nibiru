@@ -34,7 +34,6 @@ import (
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
 	authante "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/ante"
@@ -260,14 +259,7 @@ func NewNibiruApp(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
 	evmMempool := evm.NewMempool(evmante.MaxPendingTxsPerSender)
-	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-		app.SetMempool(evmMempool)
-		// Keep proposal behavior independent until the Nibiru-specific handler is
-		// installed after keepers and transaction encoding are initialized.
-		handler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, app)
-		app.SetPrepareProposal(handler.PrepareProposalHandler())
-		app.SetProcessProposal(handler.ProcessProposalHandler())
-	})
+	baseAppOptions = append(baseAppOptions, baseapp.SetMempool(evmMempool))
 
 	app := &NibiruApp{
 		EvmMempool: evmMempool,

@@ -148,13 +148,15 @@ func (sdb SDB) IsDeliverTx() bool {
 	return IsDeliverTx(sdb.Ctx())
 }
 
-// IsReCheckTxOnly is true only in ABCI ReCheckTx (ctx.IsReCheckTx()).
-// New CheckTx has IsCheckTx() && !IsReCheckTx(); ReCheckTx has both flags set
-// because the SDK sets checkTx=true whenever recheckTx=true.
+// IsReCheckTxOnly is true only in ABCI Recheck ([sdk.Context.IsReCheckTx]).
+// New CheckTx has [sdk.Context.IsCheckTx] && ![sdk.Context.IsReCheckTx]; Recheck
+// has both flags set because the SDK sets checkTx=true whenever recheckTx=true.
 func IsReCheckTxOnly(ctx sdk.Context) bool {
 	return ctx.IsReCheckTx()
 }
 
+// IsReCheckTxOnly reports whether the active context is ABCI Recheck only.
+// See [IsReCheckTxOnly].
 func (sdb SDB) IsReCheckTxOnly() bool {
 	return IsReCheckTxOnly(sdb.Ctx())
 }

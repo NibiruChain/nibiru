@@ -13,8 +13,11 @@ var _ AnteStep = AnteStepMempoolAdmission
 
 // AnteStepMempoolAdmission rejects an authenticated CheckTxType_New EVM
 // transaction when its sender and nonce slot is occupied or its sender has
-// reached the live-slot limit. The check is read-only; BaseApp reserves the
-// slot through evm.Mempool.Insert after every ante step succeeds.
+// reached the live-slot limit.
+//
+// This step must run after [EthSigVerification] so [evm.MsgEthereumTx.From]
+// holds the authenticated sender. The check is read-only; BaseApp reserves the
+// slot through [evm.Mempool.Insert] only after every ante step succeeds.
 func AnteStepMempoolAdmission(
 	sdb *evmstate.SDB,
 	k *evmstate.Keeper,
@@ -26,8 +29,8 @@ func AnteStepMempoolAdmission(
 	if !ctx.IsCheckTx() || ctx.IsReCheckTx() || simulate {
 		return nil
 	}
-	pool := opts.GetEVMMempool()
-	if pool == nil {
+	mp := opts.GetEVMMempool()
+	if mp == nil {
 		return nil
 	}
 	if len(ctx.TxBytes()) == 0 {
@@ -37,7 +40,7 @@ func AnteStepMempoolAdmission(
 	if err != nil {
 		return err
 	}
-	return pool.CheckNewTx(
+	return mp.CheckNewTx(
 		cmttypes.Tx(ctx.TxBytes()).Key(),
 		msgEthTx.FromAddr(),
 		txData.GetNonce(),

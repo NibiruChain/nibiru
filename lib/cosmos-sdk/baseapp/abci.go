@@ -431,8 +431,11 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 	}
 }
 
-// removeMempoolTxByKey removes an exact node-local SDK mempool transaction
-// without allowing cleanup failure to change a consensus execution result.
+// removeMempoolTxByKey removes an exact node-local SDK mempool transaction by
+// [cmttypes.TxKey] derived from the ABCI request bytes. Failed CheckTxType_Recheck
+// and every DeliverTx invoke this path. Unknown keys are success; other local
+// cleanup errors are logged and must not change a consensus execution result.
+// See [mempool.TxKeyRemover].
 func (app *BaseApp) removeMempoolTxByKey(txBytes []byte) {
 	remover, ok := app.mempool.(mempool.TxKeyRemover)
 	if !ok {

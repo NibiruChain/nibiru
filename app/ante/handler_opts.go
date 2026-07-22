@@ -64,7 +64,8 @@ func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
 	return opts.MaxTxGasWanted
 }
 
-// GetEVMMempool returns the node-local EVM mempool used by EVM ante steps.
+// GetEVMMempool returns the node-local [evm.Mempool] used by EVM ante steps such
+// as [evmante.AnteStepMempoolAdmission] and [evmante.AnteStepIncrementNonce].
 func (opts AnteHandlerOptions) GetEVMMempool() *evm.Mempool {
 	return opts.EvmMempool
 }

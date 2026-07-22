@@ -28,8 +28,9 @@ type Mempool interface {
 }
 
 // TxKeyRemover is an optional mempool capability for removing the exact outer
-// transaction bytes tracked by CometBFT. BaseApp uses it when decoded
-// transaction identity is insufficient or transaction decoding fails.
+// transaction bytes tracked by CometBFT via [cmttypes.TxKey]. BaseApp uses it
+// when decoded transaction identity is insufficient (for example EVM ante
+// populates derived sender fields) or transaction decoding fails.
 type TxKeyRemover interface {
 	RemoveByTxKey(cmttypes.TxKey) error
 }
