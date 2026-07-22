@@ -65,7 +65,7 @@ require (
 	github.com/cosmos/ledger-cosmos-go v0.12.4
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
 	github.com/google/btree v1.1.3
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.3
@@ -133,6 +133,7 @@ require (
 	github.com/dgraph-io/badger/v2 v2.2007.4 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
+	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
 	github.com/ethereum/c-kzg-4844 v1.0.0 // indirect
