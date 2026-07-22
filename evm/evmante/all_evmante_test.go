@@ -314,7 +314,7 @@ func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 	sdb.Commit()
 	deps.App.Commit()
 
-	checkTx := func(nonce uint64, checkType abci.CheckTxType) abci.ResponseCheckTx {
+	makeTxBytes := func(nonce uint64) []byte {
 		txMsg := evmtest.HappyTransferTx(&deps, nonce)
 		gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
 		s.Require().NoError(txMsg.Sign(gethSigner, deps.Sender.KeyringSigner))
@@ -324,45 +324,66 @@ func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 		s.Require().NoError(err)
 		txBytes, err := deps.App.GetTxConfig().TxEncoder()(tx)
 		s.Require().NoError(err)
-
+		return txBytes
+	}
+	checkTx := func(txBytes []byte, checkType abci.CheckTxType) abci.ResponseCheckTx {
 		return deps.App.CheckTx(abci.RequestCheckTx{
 			Tx:   txBytes,
 			Type: checkType,
 		})
 	}
+	liveTxs := make(map[uint64][]byte)
+	admit := func(nonce uint64) abci.ResponseCheckTx {
+		txBytes := makeTxBytes(nonce)
+		resp := checkTx(txBytes, abci.CheckTxType_New)
+		if resp.IsOK() {
+			liveTxs[nonce] = txBytes
+		}
+		return resp
+	}
+	recheck := func(nonce uint64) abci.ResponseCheckTx {
+		return checkTx(liveTxs[nonce], abci.CheckTxType_Recheck)
+	}
 
-	resp := checkTx(1_000, abci.CheckTxType_New)
+	resp := admit(1_000)
 	s.Require().False(resp.IsOK())
 	s.Require().Contains(resp.Log, "future nonce gap too large")
 
-	// Future nonce is allowed on New CheckTx but purged on ReCheckTx (exact match).
-	s.Require().True(checkTx(2, abci.CheckTxType_New).IsOK())
-	resp = checkTx(2, abci.CheckTxType_Recheck)
+	// A future nonce is admitted initially but purged when the state nonce chain
+	// is incomplete.
+	s.Require().True(admit(2).IsOK())
+	resp = recheck(2)
 	s.Require().False(resp.IsOK())
-	s.Require().Contains(resp.Log, "invalid nonce; got 2, expected 0")
+	s.Require().Contains(resp.Log, "state nonce chain is incomplete")
+	delete(liveTxs, 2)
 
-	s.Require().True(checkTx(0, abci.CheckTxType_New).IsOK())
-	s.Require().True(checkTx(0, abci.CheckTxType_Recheck).IsOK())
+	s.Require().True(admit(0).IsOK())
+	s.Require().True(admit(1).IsOK())
+	s.Require().True(admit(2).IsOK())
+	s.Require().True(recheck(2).IsOK(), "complete state nonce chain must survive recheck")
 
-	for pending := uint64(2); pending < evmante.MaxPendingTxsPerSender; pending++ {
-		s.Require().True(checkTx(1, abci.CheckTxType_New).IsOK())
+	for nonce := uint64(3); nonce < evmante.MaxPendingTxsPerSender; nonce++ {
+		s.Require().True(admit(nonce).IsOK())
 	}
 
-	resp = checkTx(1, abci.CheckTxType_New)
+	resp = admit(evmante.MaxPendingTxsPerSender)
 	s.Require().False(resp.IsOK())
-	s.Require().Contains(resp.Log, "too many pending transactions for sender")
+	s.Require().Contains(resp.Log, "sender slot limit reached")
+
+	resp = checkTx(makeTxBytes(1), abci.CheckTxType_New)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "nonce slot already occupied")
 
 	blockHeader := deps.Ctx().BlockHeader()
 	blockHeader.Height++
 	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
 	deps.App.EndBlock(abci.RequestEndBlock{Height: blockHeader.Height})
-	s.Require().Equal(uint64(0), deps.App.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
 	deps.App.Commit()
 
-	// After EndBlock reset, New CheckTx can admit again; ReCheckTx still exact.
-	s.Require().True(checkTx(0, abci.CheckTxType_New).IsOK())
-	s.Require().True(checkTx(0, abci.CheckTxType_Recheck).IsOK())
-	resp = checkTx(1, abci.CheckTxType_Recheck)
+	// EndBlock does not reset live slots. They remain until block inclusion or a
+	// failed CheckTxType_Recheck removes them.
+	s.Require().Equal(int(evmante.MaxPendingTxsPerSender), deps.App.EvmMempool.CountTx())
+	resp = checkTx(makeTxBytes(0), abci.CheckTxType_New)
 	s.Require().False(resp.IsOK())
-	s.Require().Contains(resp.Log, "invalid nonce; got 1, expected 0")
+	s.Require().Contains(resp.Log, "nonce slot already occupied")
 }

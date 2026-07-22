@@ -107,31 +107,22 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 			AnteOptionsForTests{},
 		)
 	}
-	requireState := func(wantNonce, wantPending uint64) {
+	requireState := func(wantNonce uint64) {
 		acct := deps.EvmKeeper.GetAccount(checkCtx, deps.Sender.EthAddr)
 		s.Require().NotNil(acct)
 		s.Require().Equal(wantNonce, acct.Nonce)
-		s.Require().Equal(wantPending, deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
 	}
 
 	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
-	requireState(10, 0)
+	requireState(10)
 
 	for _, nonce := range []uint64{10, 11, 73, 74, 10} {
 		s.Require().NoError(runAnteStep(nonce))
 	}
-	requireState(10, 5)
+	requireState(10)
 
 	s.Require().ErrorContains(runAnteStep(75), "future nonce gap too large")
-	requireState(10, 5)
-
-	for pending := uint64(5); pending < evmante.MaxPendingTxsPerSender; pending++ {
-		s.Require().NoError(runAnteStep(10))
-	}
-	requireState(10, evmante.MaxPendingTxsPerSender)
-
-	s.Require().ErrorContains(runAnteStep(10), "too many pending transactions for sender")
-	requireState(10, evmante.MaxPendingTxsPerSender)
+	requireState(10)
 }
 
 func (s *Suite) TestEthAnteIncrementNonceReCheckTx() {
@@ -159,11 +150,8 @@ func (s *Suite) TestEthAnteIncrementNonceReCheckTx() {
 
 	s.Require().True(evmstate.IsReCheckTxOnly(recheckCtx))
 	s.Require().ErrorContains(runAnteStep(11), "invalid nonce; got 11, expected 10")
-	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr))
 
 	s.Require().NoError(runAnteStep(10))
-	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(deps.Sender.EthAddr),
-		"ReCheckTx must not bump the New CheckTx pending counter")
 
 	acct := deps.EvmKeeper.GetAccount(recheckCtx, deps.Sender.EthAddr)
 	s.Require().NotNil(acct)

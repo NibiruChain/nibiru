@@ -89,6 +89,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/evm/evmmodule"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
@@ -200,6 +201,7 @@ type NibiruApp struct {
 	appCodec          codec.Codec
 	txConfig          client.TxConfig
 	interfaceRegistry codectypes.InterfaceRegistry
+	EvmMempool        *evm.Mempool
 
 	// keys to access the substores
 	keys  map[string]*storetypes.KVStoreKey
@@ -257,15 +259,18 @@ func NewNibiruApp(
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *NibiruApp {
+	evmMempool := evm.NewMempool(evmante.MaxPendingTxsPerSender)
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-		mp := mempool.NoOpMempool{}
-		app.SetMempool(mp)
-		handler := baseapp.NewDefaultProposalHandler(mp, app)
+		app.SetMempool(evmMempool)
+		// Keep proposal behavior independent until the Nibiru-specific handler is
+		// installed after keepers and transaction encoding are initialized.
+		handler := baseapp.NewDefaultProposalHandler(mempool.NoOpMempool{}, app)
 		app.SetPrepareProposal(handler.PrepareProposalHandler())
 		app.SetProcessProposal(handler.ProcessProposalHandler())
 	})
 
 	app := &NibiruApp{
+		EvmMempool: evmMempool,
 		keys: sdk.NewKVStoreKeys(
 			// ibc keys
 			ibctransfertypes.StoreKey,
@@ -459,8 +464,14 @@ func NewNibiruApp(
 		// TODO: feat(evm): enable app/server/config flag for Evm MaxTxGasWanted.
 		MaxTxGasWanted: DefaultMaxTxGasWanted,
 		EvmKeeper:      app.EvmKeeper,
+		EvmMempool:     app.EvmMempool,
 		AccountKeeper:  app.AccountKeeper,
 	}))
+	app.SetPrepareProposal(NewEVMPrepareProposalHandler(app, app.BaseApp))
+	app.SetProcessProposal(
+		baseapp.NewDefaultProposalHandler(app.EvmMempool, app.BaseApp).
+			ProcessProposalHandler(),
+	)
 
 	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {

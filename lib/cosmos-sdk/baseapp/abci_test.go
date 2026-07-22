@@ -2,6 +2,7 @@ package baseapp_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/require"
 
@@ -26,6 +28,64 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 )
+
+type keyedRemovalMempool struct {
+	removed []cmttypes.TxKey
+}
+
+func (*keyedRemovalMempool) Insert(context.Context, sdk.Tx) error { return nil }
+func (*keyedRemovalMempool) Select(context.Context, [][]byte) mempool.Iterator {
+	return nil
+}
+func (*keyedRemovalMempool) CountTx() int        { return 0 }
+func (*keyedRemovalMempool) Remove(sdk.Tx) error { return nil }
+func (pool *keyedRemovalMempool) RemoveByTxKey(key cmttypes.TxKey) error {
+	pool.removed = append(pool.removed, key)
+	return nil
+}
+
+func TestABCI_KeyedMempoolCleanup(t *testing.T) {
+	t.Run("failed CheckTxType_Recheck", func(t *testing.T) {
+		pool := new(keyedRemovalMempool)
+		anteOpt := func(app *baseapp.BaseApp) {
+			app.SetAnteHandler(func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				ctx = ctx.WithGasMeter(sdk.NewGasMeter(100))
+				if ctx.IsReCheckTx() {
+					return ctx, errors.New("recheck rejected")
+				}
+				return ctx, nil
+			})
+		}
+		suite := NewBaseAppSuite(t, baseapp.SetMempool(pool), anteOpt)
+		suite.baseApp.InitChain(abci.RequestInitChain{ConsensusParams: &tmproto.ConsensusParams{}})
+		txBytes, err := suite.txConfig.TxEncoder()(newTxCounter(t, suite.txConfig, 0, 1))
+		require.NoError(t, err)
+
+		response := suite.baseApp.CheckTx(abci.RequestCheckTx{
+			Tx: txBytes, Type: abci.CheckTxType_Recheck,
+		})
+		require.True(t, response.IsErr())
+		require.Equal(t, []cmttypes.TxKey{cmttypes.Tx(txBytes).Key()}, pool.removed)
+	})
+
+	t.Run("failed DeliverTx", func(t *testing.T) {
+		pool := new(keyedRemovalMempool)
+		anteOpt := func(app *baseapp.BaseApp) {
+			app.SetAnteHandler(func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+				return ctx.WithGasMeter(sdk.NewGasMeter(100)), errors.New("delivery rejected")
+			})
+		}
+		suite := NewBaseAppSuite(t, baseapp.SetMempool(pool), anteOpt)
+		suite.baseApp.InitChain(abci.RequestInitChain{ConsensusParams: &tmproto.ConsensusParams{}})
+		suite.baseApp.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 1}})
+		txBytes, err := suite.txConfig.TxEncoder()(newTxCounter(t, suite.txConfig, 0, 1))
+		require.NoError(t, err)
+
+		response := suite.baseApp.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
+		require.True(t, response.IsErr())
+		require.Equal(t, []cmttypes.TxKey{cmttypes.Tx(txBytes).Key()}, pool.removed)
+	})
+}
 
 func TestABCI_Info(t *testing.T) {
 	suite := NewBaseAppSuite(t)

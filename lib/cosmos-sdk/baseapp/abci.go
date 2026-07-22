@@ -12,6 +12,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
@@ -22,6 +23,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/telemetry"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 )
 
 // Supported ABCI Query prefixes
@@ -373,6 +375,9 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 
 	gInfo, result, anteEvents, priority, err := app.runTx(mode, req.Tx)
 	if err != nil {
+		if req.Type == abci.CheckTxType_Recheck {
+			app.removeMempoolTxByKey(req.Tx)
+		}
 		return sdkerrors.ResponseCheckTxWithEvents(err, gInfo.GasWanted, gInfo.GasUsed, anteEvents, app.trace)
 	}
 
@@ -394,6 +399,7 @@ func (app *BaseApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
 func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliverTx) {
 	gInfo := sdk.GasInfo{}
 	resultStr := "successful"
+	defer app.removeMempoolTxByKey(req.Tx)
 
 	defer func() {
 		for _, streamingListener := range app.abciListeners {
@@ -422,6 +428,19 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 		Log:       result.Log,
 		Data:      result.Data,
 		Events:    sdk.MarkEventsToIndex(result.Events, app.indexEvents),
+	}
+}
+
+// removeMempoolTxByKey removes an exact node-local SDK mempool transaction
+// without allowing cleanup failure to change a consensus execution result.
+func (app *BaseApp) removeMempoolTxByKey(txBytes []byte) {
+	remover, ok := app.mempool.(mempool.TxKeyRemover)
+	if !ok {
+		return
+	}
+	err := remover.RemoveByTxKey(cmttypes.Tx(txBytes).Key())
+	if err != nil && !errors.Is(err, mempool.ErrTxNotFound) {
+		app.logger.Error("failed to remove transaction from SDK mempool", "err", err)
 	}
 }
 

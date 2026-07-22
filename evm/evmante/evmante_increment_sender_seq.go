@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
+	cmttypes "github.com/cometbft/cometbft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
@@ -16,8 +17,8 @@ import (
 var _ AnteStep = AnteStepIncrementNonce
 
 const (
-	// MaxPendingTxsPerSender bounds how many transactions one EVM account can
-	// place in a node's mempool via New CheckTx between EndBlocks.
+	// MaxPendingTxsPerSender bounds how many live EVM nonce slots one account
+	// can own in a node's mempool.
 	MaxPendingTxsPerSender uint64 = 64
 	// MaxFutureNonceGap bounds the node-local queue of out-of-order transactions
 	// while retaining normal future-nonce and replacement admission on New CheckTx.
@@ -33,10 +34,10 @@ const (
 //   - the transaction nonce is invalid for the current context
 //   - transaction data cannot be unpacked
 //
-// During New CheckTx: Allows a bounded future-nonce window and caps the number
-// of pending transactions per sender (process-local sync.Map, reset in EndBlock).
-// During ReCheckTx and DeliverTx: Requires an exact nonce match so future-nonce
-// junk does not survive mempool recheck into the next block.
+// During CheckTxType_New, the step permits the bounded future-nonce window;
+// AnteStepMempoolAdmission and evm.Mempool.Insert enforce live-slot ownership.
+// During CheckTxType_Recheck, the step retains complete state nonce chains.
+// Proposal and delivery execution require the exact current state nonce.
 //
 // The nonce is incremented only during DeliverTx in the active ante state.
 func AnteStepIncrementNonce(
@@ -69,15 +70,29 @@ func AnteStepIncrementNonce(
 	txNonce = txData.GetNonce()
 
 	switch {
-	case sdb.IsDeliverTx() || sdb.IsReCheckTxOnly():
+	case sdb.IsReCheckTxOnly():
+		pool := opts.GetEVMMempool()
+		if pool == nil {
+			if txNonce != stateNonce {
+				return fmt.Errorf(
+					"invalid nonce; got %d, expected %d", txNonce, stateNonce,
+				)
+			}
+			return nil
+		}
+		return pool.CheckRecheck(
+			cmttypes.Tx(sdb.Ctx().TxBytes()).Key(),
+			msgEthTx.FromAddr(),
+			stateNonce,
+			txNonce,
+		)
+	case sdb.IsDeliverTx():
 		if txNonce != stateNonce {
 			return fmt.Errorf(
 				"invalid nonce; got %d, expected %d", txNonce, stateNonce,
 			)
 		}
-		if sdb.IsDeliverTx() {
-			sdb.SetNonce(msgEthTx.FromAddr(), stateNonce+1)
-		}
+		sdb.SetNonce(msgEthTx.FromAddr(), stateNonce+1)
 	case sdb.Ctx().IsCheckTx():
 		if txNonce < stateNonce {
 			return fmt.Errorf(
@@ -90,15 +105,6 @@ func AnteStepIncrementNonce(
 				txNonce, stateNonce, MaxFutureNonceGap,
 			)
 		}
-
-		pendingTxCount := k.PendingTxCount(msgEthTx.FromAddr())
-		if pendingTxCount >= MaxPendingTxsPerSender {
-			return fmt.Errorf(
-				"too many pending transactions for sender; got %d, limit %d",
-				pendingTxCount, MaxPendingTxsPerSender,
-			)
-		}
-		k.IncrementPendingTxCount(msgEthTx.FromAddr())
 	default:
 	}
 

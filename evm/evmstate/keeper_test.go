@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -213,19 +212,6 @@ func (s *Suite) TestIsReCheckTxOnly() {
 			s.Equal(tc.expected, sdb.IsReCheckTxOnly())
 		})
 	}
-}
-
-func (s *Suite) TestPendingTxCountReset() {
-	deps := evmtest.NewTestDeps()
-	addr := deps.Sender.EthAddr
-
-	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(addr))
-	s.Require().Equal(uint64(1), deps.EvmKeeper.IncrementPendingTxCount(addr))
-	s.Require().Equal(uint64(2), deps.EvmKeeper.IncrementPendingTxCount(addr))
-	s.Require().Equal(uint64(2), deps.EvmKeeper.PendingTxCount(addr))
-
-	deps.EvmKeeper.EndBlock(deps.Ctx(), abci.RequestEndBlock{Height: deps.Ctx().BlockHeight()})
-	s.Require().Equal(uint64(0), deps.EvmKeeper.PendingTxCount(addr))
 }
 
 func (s *Suite) TestGetHashFn() {

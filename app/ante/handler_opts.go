@@ -12,6 +12,7 @@ import (
 
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/v2/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
@@ -23,6 +24,7 @@ type AnteHandlerOptions struct {
 	DevGasKeeper     *devgaskeeper.Keeper
 	DevGasBankKeeper devgasante.BankKeeper
 	EvmKeeper        *evmstate.Keeper
+	EvmMempool       *evm.Mempool
 	AccountKeeper    authkeeper.AccountKeeper
 
 	TxCounterStoreKey types.StoreKey
@@ -47,6 +49,9 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 	if opts.IBCKeeper == nil {
 		return AnteHandlerError("ibc keeper")
 	}
+	if opts.EvmMempool == nil {
+		return AnteHandlerError("evm mempool")
+	}
 	return nil
 }
 
@@ -57,4 +62,9 @@ func AnteHandlerError(shortDesc string) error {
 // Implements the evmante.AnteOptionsEVM interface.
 func (opts AnteHandlerOptions) GetMaxTxGasWanted() uint64 {
 	return opts.MaxTxGasWanted
+}
+
+// GetEVMMempool returns the node-local EVM mempool used by EVM ante steps.
+func (opts AnteHandlerOptions) GetEVMMempool() *evm.Mempool {
+	return opts.EvmMempool
 }
