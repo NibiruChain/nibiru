@@ -51,10 +51,13 @@ type MempoolTx struct {
 }
 
 // MempoolSender is a point-in-time copy of one sender's live EVM nonce slots.
-// Txs is ordered by EVM nonce in ascending order and may contain nonce gaps.
+// MinNonce is the lowest live nonce in Txs; it is not necessarily the sender's
+// committed state nonce. Txs is ordered by EVM nonce in ascending order and may
+// contain nonce gaps.
 type MempoolSender struct {
-	Sender gethcommon.Address
-	Txs    []MempoolTx
+	Sender   gethcommon.Address
+	MinNonce uint64
+	Txs      []MempoolTx
 }
 
 type mempoolSlotKey struct {
@@ -68,7 +71,8 @@ type mempoolTx struct {
 }
 
 type mempoolSender struct {
-	slots map[uint64]*mempoolTx
+	slots    map[uint64]*mempoolTx
+	minNonce uint64
 }
 
 // Mempool is Nibiru's node-local EVM transaction index.
@@ -238,8 +242,13 @@ func (m *Mempool) Insert(goCtx context.Context, tx sdk.Tx) error {
 
 	senderEntry, found := m.bySender[sender]
 	if !found {
-		senderEntry = &mempoolSender{slots: make(map[uint64]*mempoolTx)}
+		senderEntry = &mempoolSender{
+			slots:    make(map[uint64]*mempoolTx),
+			minNonce: nonce,
+		}
 		m.bySender[sender] = senderEntry
+	} else if nonce < senderEntry.minNonce {
+		senderEntry.minNonce = nonce
 	}
 	entry := &mempoolTx{
 		tx: tx,
@@ -357,6 +366,14 @@ func (m *Mempool) removeEntry(txKey cmttypes.TxKey, slot mempoolSlotKey) {
 	delete(senderEntry.slots, slot.nonce)
 	if len(senderEntry.slots) == 0 {
 		delete(m.bySender, slot.sender)
+	} else if slot.nonce == senderEntry.minNonce {
+		first := true
+		for nonce := range senderEntry.slots {
+			if first || nonce < senderEntry.minNonce {
+				senderEntry.minNonce = nonce
+				first = false
+			}
+		}
 	}
 	m.txCount--
 }
@@ -377,7 +394,11 @@ func (m *Mempool) Snapshot() []MempoolSender {
 			txs = append(txs, tx)
 		}
 		sort.Slice(txs, func(i, j int) bool { return txs[i].Nonce < txs[j].Nonce })
-		snapshot = append(snapshot, MempoolSender{Sender: sender, Txs: txs})
+		snapshot = append(snapshot, MempoolSender{
+			Sender:   sender,
+			MinNonce: senderEntry.minNonce,
+			Txs:      txs,
+		})
 	}
 	sort.Slice(snapshot, func(i, j int) bool {
 		return bytes.Compare(snapshot[i].Sender[:], snapshot[j].Sender[:]) < 0

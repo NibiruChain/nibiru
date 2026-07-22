@@ -22,7 +22,7 @@ const (
 	MaxPendingTxsPerSender uint64 = 64
 	// MaxFutureNonceGap bounds the node-local queue of out-of-order transactions
 	// while retaining normal future-nonce and replacement admission on New CheckTx.
-	MaxFutureNonceGap uint64 = 64
+	MaxFutureNonceGap uint64 = MaxPendingTxsPerSender - 1
 )
 
 // AnteStepIncrementNonce increments the sequence (nonce) of the sender account
@@ -99,7 +99,7 @@ func AnteStepIncrementNonce(
 				"invalid nonce; got %d, expected %d or higher", txNonce, stateNonce,
 			)
 		}
-		if txNonce-stateNonce > MaxFutureNonceGap {
+		if txNonce-stateNonce >= MaxPendingTxsPerSender {
 			return fmt.Errorf(
 				"future nonce gap too large; got %d, state nonce %d, max gap %d",
 				txNonce, stateNonce, MaxFutureNonceGap,

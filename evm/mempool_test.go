@@ -138,6 +138,28 @@ func TestMempoolRemoveByTxKey(t *testing.T) {
 	require.ErrorIs(t, pool.RemoveByTxKey(tx.key), sdkmempool.ErrTxNotFound)
 }
 
+func TestMempoolTracksMinimumLiveNonce(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	pool := evm.NewMempool(4)
+	tx10 := newTestMempoolTx(t, &deps, 10, 1)
+	tx11 := newTestMempoolTx(t, &deps, 11, 1)
+	tx12 := newTestMempoolTx(t, &deps, 12, 1)
+
+	for _, tx := range []testMempoolTx{tx12, tx10, tx11} {
+		require.NoError(t, pool.Insert(tx.ctx, tx.tx))
+	}
+	require.Equal(t, uint64(10), pool.Snapshot()[0].MinNonce)
+
+	require.NoError(t, pool.RemoveByTxKey(tx11.key))
+	require.Equal(t, uint64(10), pool.Snapshot()[0].MinNonce)
+
+	require.NoError(t, pool.RemoveByTxKey(tx10.key))
+	require.Equal(t, uint64(12), pool.Snapshot()[0].MinNonce)
+
+	require.NoError(t, pool.RemoveByTxKey(tx12.key))
+	require.Empty(t, pool.Snapshot())
+}
+
 func TestMempoolIgnoresNonEVMTransactions(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	pool := evm.NewMempool(1)

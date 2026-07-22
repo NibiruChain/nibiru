@@ -116,11 +116,12 @@ func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
 	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
 	requireState(10)
 
-	for _, nonce := range []uint64{10, 11, 73, 74, 10} {
+	for _, nonce := range []uint64{10, 11, 73, 10} {
 		s.Require().NoError(runAnteStep(nonce))
 	}
 	requireState(10)
 
+	s.Require().ErrorContains(runAnteStep(74), "future nonce gap too large")
 	s.Require().ErrorContains(runAnteStep(75), "future nonce gap too large")
 	requireState(10)
 }

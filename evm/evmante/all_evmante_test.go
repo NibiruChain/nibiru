@@ -348,6 +348,9 @@ func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
 	resp := admit(1_000)
 	s.Require().False(resp.IsOK())
 	s.Require().Contains(resp.Log, "future nonce gap too large")
+	resp = admit(evmante.MaxPendingTxsPerSender)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "future nonce gap too large")
 
 	// A future nonce is admitted initially but purged when the state nonce chain
 	// is incomplete.
