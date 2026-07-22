@@ -85,6 +85,87 @@ func (s *Suite) TestEthAnteIncrementNonce() {
 	}
 }
 
+// TestEthAnteIncrementNonceCheckTx proves the CheckTxType_New admission window:
+// with state nonce 10, transaction nonces 10 and 73 are admitted (64 inclusive
+// values through stateNonce + [evmante.MaxFutureNonceGap]), nonces 74 and 75
+// are rejected, and CheckTx does not advance the committed state nonce.
+func (s *Suite) TestEthAnteIncrementNonceCheckTx() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithIsCheckTx(true))
+	sdb := deps.NewStateDB()
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(100))
+	sdb.SetNonce(deps.Sender.EthAddr, 10)
+	sdb.Commit()
+	checkCtx := sdb.RootCtx()
+
+	runAnteStep := func(nonce uint64) error {
+		sdb = deps.EvmKeeper.NewSDB(
+			checkCtx,
+			deps.EvmKeeper.TxConfig(checkCtx, gethcommon.Hash{}),
+		)
+		return evmante.AnteStepIncrementNonce(
+			sdb,
+			sdb.Keeper(),
+			evmtest.HappyTransferTx(&deps, nonce),
+			false,
+			AnteOptionsForTests{},
+		)
+	}
+	requireState := func(wantNonce uint64) {
+		acct := deps.EvmKeeper.GetAccount(checkCtx, deps.Sender.EthAddr)
+		s.Require().NotNil(acct)
+		s.Require().Equal(wantNonce, acct.Nonce)
+	}
+
+	s.Require().ErrorContains(runAnteStep(9), "invalid nonce; got 9, expected 10 or higher")
+	requireState(10)
+
+	for _, nonce := range []uint64{10, 11, 73, 10} {
+		s.Require().NoError(runAnteStep(nonce))
+	}
+	requireState(10)
+
+	s.Require().ErrorContains(runAnteStep(74), "future nonce gap too large")
+	s.Require().ErrorContains(runAnteStep(75), "future nonce gap too large")
+	requireState(10)
+}
+
+// TestEthAnteIncrementNonceReCheckTx proves that without a mempool, recheck
+// requires the exact committed state nonce and must not persist nonce updates
+// (see [evmstate.IsReCheckTxOnly]).
+func (s *Suite) TestEthAnteIncrementNonceReCheckTx() {
+	deps := evmtest.NewTestDeps()
+	deps.SetCtx(deps.Ctx().WithIsReCheckTx(true))
+	sdb := deps.NewStateDB()
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, big.NewInt(100))
+	sdb.SetNonce(deps.Sender.EthAddr, 10)
+	sdb.Commit()
+	recheckCtx := sdb.RootCtx()
+
+	runAnteStep := func(nonce uint64) error {
+		sdb = deps.EvmKeeper.NewSDB(
+			recheckCtx,
+			deps.EvmKeeper.TxConfig(recheckCtx, gethcommon.Hash{}),
+		)
+		return evmante.AnteStepIncrementNonce(
+			sdb,
+			sdb.Keeper(),
+			evmtest.HappyTransferTx(&deps, nonce),
+			false,
+			AnteOptionsForTests{},
+		)
+	}
+
+	s.Require().True(evmstate.IsReCheckTxOnly(recheckCtx))
+	s.Require().ErrorContains(runAnteStep(11), "invalid nonce; got 11, expected 10")
+
+	s.Require().NoError(runAnteStep(10))
+
+	acct := deps.EvmKeeper.GetAccount(recheckCtx, deps.Sender.EthAddr)
+	s.Require().NotNil(acct)
+	s.Require().Equal(uint64(10), acct.Nonce, "ReCheckTx must not persist SetNonce")
+}
+
 // AddBalanceSigned is only used in tests for convenience.
 func AddBalanceSigned(sdb *evmstate.SDB, addr gethcommon.Address, wei *big.Int) {
 	weiSign := wei.Sign()

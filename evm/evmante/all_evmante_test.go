@@ -3,6 +3,7 @@ package evmante_test
 import (
 	"math/big"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
@@ -303,4 +304,95 @@ func (s *Suite) TestAnteHandlerEVM() {
 			}
 		})
 	}
+}
+
+// TestAnteHandlerEVMCheckTxNonceSequence exercises the full EVM ante path with
+// [evm.Mempool]: far-future nonces are rejected at admission, a gapped future
+// nonce is admitted on CheckTxType_New then purged on CheckTxType_Recheck, a
+// complete state nonce chain survives recheck, the 65th live slot and nonce
+// collisions are rejected, and live slots persist across EndBlock until
+// inclusion or a failed recheck removes them.
+func (s *Suite) TestAnteHandlerEVMCheckTxNonceSequence() {
+	deps := evmtest.NewTestDeps()
+	sdb := deps.NewStateDB()
+	maxGasMicronibi := new(big.Int).Add(evmtest.GasLimitCreateContract(), big.NewInt(100))
+	AddBalanceSigned(sdb, deps.Sender.EthAddr, evm.NativeToWei(maxGasMicronibi))
+	sdb.Commit()
+	deps.App.Commit()
+
+	makeTxBytes := func(nonce uint64) []byte {
+		txMsg := evmtest.HappyTransferTx(&deps, nonce)
+		gethSigner := gethcore.LatestSignerForChainID(deps.App.EvmKeeper.EthChainID(deps.Ctx()))
+		s.Require().NoError(txMsg.Sign(gethSigner, deps.Sender.KeyringSigner))
+
+		txBuilder := deps.App.GetTxConfig().NewTxBuilder()
+		tx, err := txMsg.BuildTx(txBuilder, eth.EthBaseDenom)
+		s.Require().NoError(err)
+		txBytes, err := deps.App.GetTxConfig().TxEncoder()(tx)
+		s.Require().NoError(err)
+		return txBytes
+	}
+	checkTx := func(txBytes []byte, checkType abci.CheckTxType) abci.ResponseCheckTx {
+		return deps.App.CheckTx(abci.RequestCheckTx{
+			Tx:   txBytes,
+			Type: checkType,
+		})
+	}
+	liveTxs := make(map[uint64][]byte)
+	admit := func(nonce uint64) abci.ResponseCheckTx {
+		txBytes := makeTxBytes(nonce)
+		resp := checkTx(txBytes, abci.CheckTxType_New)
+		if resp.IsOK() {
+			liveTxs[nonce] = txBytes
+		}
+		return resp
+	}
+	recheck := func(nonce uint64) abci.ResponseCheckTx {
+		return checkTx(liveTxs[nonce], abci.CheckTxType_Recheck)
+	}
+
+	resp := admit(1_000)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "future nonce gap too large")
+	resp = admit(evmante.MaxPendingTxsPerSender)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "future nonce gap too large")
+
+	// A future nonce is admitted initially but purged when the state nonce chain
+	// is incomplete.
+	s.Require().True(admit(2).IsOK())
+	resp = recheck(2)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "state nonce chain is incomplete")
+	delete(liveTxs, 2)
+
+	s.Require().True(admit(0).IsOK())
+	s.Require().True(admit(1).IsOK())
+	s.Require().True(admit(2).IsOK())
+	s.Require().True(recheck(2).IsOK(), "complete state nonce chain must survive recheck")
+
+	for nonce := uint64(3); nonce < evmante.MaxPendingTxsPerSender; nonce++ {
+		s.Require().True(admit(nonce).IsOK())
+	}
+
+	resp = admit(evmante.MaxPendingTxsPerSender)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "sender slot limit reached")
+
+	resp = checkTx(makeTxBytes(1), abci.CheckTxType_New)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "nonce slot already occupied")
+
+	blockHeader := deps.Ctx().BlockHeader()
+	blockHeader.Height++
+	deps.App.BeginBlock(abci.RequestBeginBlock{Header: blockHeader})
+	deps.App.EndBlock(abci.RequestEndBlock{Height: blockHeader.Height})
+	deps.App.Commit()
+
+	// EndBlock does not reset live slots. They remain until block inclusion or a
+	// failed CheckTxType_Recheck removes them.
+	s.Require().Equal(int(evmante.MaxPendingTxsPerSender), deps.App.EvmMempool.CountTx())
+	resp = checkTx(makeTxBytes(0), abci.CheckTxType_New)
+	s.Require().False(resp.IsOK())
+	s.Require().Contains(resp.Log, "nonce slot already occupied")
 }

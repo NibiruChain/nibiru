@@ -24,6 +24,7 @@ var _ AnteStep = AnteStepGasWanted
 
 type AnteOptionsEVM interface {
 	GetMaxTxGasWanted() uint64
+	GetEVMMempool() *evm.Mempool
 }
 
 var _ AnteStep = AnteStepBlockGasMeter

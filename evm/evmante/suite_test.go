@@ -110,10 +110,15 @@ var _ evmante.AnteOptionsEVM = (*AnteOptionsForTests)(nil)
 
 type AnteOptionsForTests struct {
 	MaxTxGasWanted uint64
+	EvmMempool     *evm.Mempool
 }
 
 func (opts AnteOptionsForTests) GetMaxTxGasWanted() uint64 {
 	return opts.MaxTxGasWanted
+}
+
+func (opts AnteOptionsForTests) GetEVMMempool() *evm.Mempool {
+	return opts.EvmMempool
 }
 
 func (s *Suite) TestGenesis() {

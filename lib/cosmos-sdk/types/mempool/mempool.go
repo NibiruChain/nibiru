@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	cmttypes "github.com/cometbft/cometbft/types"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
@@ -23,6 +25,14 @@ type Mempool interface {
 	// Remove attempts to remove a transaction from the mempool, returning an error
 	// upon failure.
 	Remove(sdk.Tx) error
+}
+
+// TxKeyRemover is an optional mempool capability for removing the exact outer
+// transaction bytes tracked by CometBFT via [cmttypes.TxKey]. BaseApp uses it
+// when decoded transaction identity is insufficient (for example EVM ante
+// populates derived sender fields) or transaction decoding fails.
+type TxKeyRemover interface {
+	RemoveByTxKey(cmttypes.TxKey) error
 }
 
 // Iterator defines an app-side mempool iterator interface that is as minimal as possible.  The order of iteration
