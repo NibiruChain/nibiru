@@ -336,6 +336,178 @@ Not every v2.17 behavior has the same consensus scope:
   registry authority as state-machine interfaces when extending the initial
   implementation.
 
+## v2.16.0
+
+Nibiru v2.16 disables delegated `x/authz` execution, adds token-aware EVM
+balance queries across the Bank and ERC20 representations, and shortens the
+mainnet governance voting period from 48 hours to 24 hours. It also moves the
+build baseline to Go 1.25 and refreshes core Go, JavaScript, and CI
+dependencies.
+
+- [Release Link: v2.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.16.0).
+- Date: 2026-07-02
+- Draft source range: non-Dependabot release work from `v2.15.0` through
+  `v2.16.0`.
+
+### 1 - Main Highlights
+
+- **Authz execution disabled** - Messages `MsgGrant`, `MsgExec`, and `MsgRevoke` deterministically fail with error `ErrAuthzDisabled`. The restriction also applies when a Wasm contract attempts to dispatch those messages through Stargate. ([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+- **Compatibility without delegated authority** - The authz module remains registered for codec and service compatibility, but authz queries return empty responses, CLI authz commands are removed, and genesis import/export no longer exposes stored grants. Existing grant state is retained rather than deleted. ([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+- **Multi-VM token balances** - EVM query `QueryBalance` accepts an optional token identifier and returns Bank-side and ERC20-side balances with base-unit and human-readable metadata. It resolves native NIBI, WNIBI, FunToken mappings, bank-only denoms, ERC20-only contracts, and supported aliases. ([#2630](https://github.com/NibiruChain/nibiru/pull/2630), [#2631](https://github.com/NibiruChain/nibiru/pull/2631), [#2551](https://github.com/NibiruChain/nibiru/issues/2551))
+- **Correct WNIBI accounting** - WNIBI balances come from the ERC20 contract's independent ledger rather than being inferred from native EVM gas balance. Token resolution also avoids treating short hex-like bank denoms as ERC20 addresses and preserves zero-decimal ERC20 metadata. ([#2631](https://github.com/NibiruChain/nibiru/pull/2631))
+- **Faster mainnet governance** - The v2.16 upgrade handler changes governance parameter `VotingPeriod` from 48 hours to 24 hours on chain `cataclysm-1`. ([#2632](https://github.com/NibiruChain/nibiru/pull/2632))
+- **Go 1.25 build baseline** - The root module and Docker builder move to Go 1.25, while CI reads the required Go version from file `go.mod`. ([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+
+### 2 - Authz Disablement and Transaction Hardening
+
+**What changes:** Applications can no longer create, execute, or revoke Cosmos
+SDK authz grants. This is a consensus and state-machine behavior change rather
+than a CLI-only restriction.
+
+The authz message server rejects message types `MsgGrant`, `MsgExec`, and
+`MsgRevoke` with module error `ErrAuthzDisabled`. The Wasm Stargate message
+encoder rejects the same message type URLs, so a contract cannot bypass the
+restriction by dispatching authz messages through `x/wasm`.
+([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+
+The module preserves enough wiring for compatibility:
+
+- Authz protobuf types, interfaces, and gRPC services remain registered.
+- Authz query methods return structurally valid empty responses.
+- Existing grant key-value state is not deleted or rewritten.
+- Genesis import ignores authz grants, and export emits default empty authz
+  genesis.
+- Begin-block pruning of expired grants no longer runs.
+- Authz query and transaction commands are removed from `nibid`.
+
+Empty query results therefore mean that authz behavior is disabled; they do not
+prove that historical grant data was erased. Because pruning is disabled,
+historical grant state can remain stored after its expiration time.
+
+This release narrows the available delegated-execution surface. It does not
+claim to complete broader rollback hardening or audits of every cross-module
+call path.
+
+### 3 - Multi-VM EVM Balance Query
+
+**What it enables:** One EVM query can describe a token balance across Nibiru's
+Cosmos Bank and ERC20 representations without requiring clients to reconstruct
+FunToken mappings and token metadata.
+
+Request type `QueryBalanceRequest` adds optional field `token`. Response type
+`QueryBalanceResponse` adds nullable sections `bank` and `erc20`. These sections
+include base-unit and human-readable balances, symbol, decimals, and the
+resolved bank denom or ERC20 contract address.
+([#2630](https://github.com/NibiruChain/nibiru/pull/2630),
+[#2551](https://github.com/NibiruChain/nibiru/issues/2551))
+
+The server resolves:
+
+- Native NIBI and wrapped token WNIBI.
+- Bank denoms and ERC20 contracts connected through FunToken mappings.
+- Bank-only denoms and ERC20-only contracts.
+- Supported aliases `WNIBI` and `USDC`.
+
+Legacy requests without field `token` continue returning native field
+`balance_wei`. If token resolution fails, the response also retains that legacy
+native-balance shape. The new protobuf fields are additive.
+
+Follow-up corrections make WNIBI read method `balanceOf` from the wrapped-token
+contract instead of equating WNIBI with native NIBI. ERC20 detection requires a
+full address, metadata calls preserve a real zero-decimal value, and the CLI
+delegates token resolution to the query server.
+([#2631](https://github.com/NibiruChain/nibiru/pull/2631))
+
+### 4 - Governance Voting Period and Upgrade Handler
+
+The v2.16 upgrade handler changes mainnet governance parameter `VotingPeriod`
+from 48 hours to 24 hours. The custom parameter write runs only when the chain
+ID is `cataclysm-1`; other networks proceed directly to normal module
+migrations. ([#2632](https://github.com/NibiruChain/nibiru/pull/2632))
+
+If the governance parameter update fails, the handler logs
+`v2.16.0 upgrade failure`, emits event type `upgrade_failure`, and still runs
+module migrations. The upgrade therefore does not halt solely because the
+voting-period write failed. Operators must query governance params after the
+upgrade rather than using continued block production as proof of success.
+
+The release adds no store upgrades. Its state-machine changes come from the
+mainnet governance parameter write and the new binary's disabled authz
+behavior.
+
+The 24-hour fixed voting period is separate from later fast-track governance
+designs. v2.16 does not add early proposal finalization, review-window
+extensions, or time-targeted software-upgrade execution.
+
+### 5 - Go 1.25, CI, and Dependency Maintenance
+
+The minimum Go version becomes 1.25.0, and the release Docker builder uses Go
+1.25. CI setup reads the required toolchain version from file `go.mod`, reducing
+version drift between local, container, and workflow builds.
+([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+
+Dependency maintenance includes:
+
+- Go packages `golang.org/x/text`, `golang.org/x/crypto`,
+  `golang.org/x/mod`, `cosmossdk.io/errors`, `btcutil`, and `tidwall/gjson`.
+  ([#2605](https://github.com/NibiruChain/nibiru/pull/2605),
+  [#2606](https://github.com/NibiruChain/nibiru/pull/2606),
+  [#2624](https://github.com/NibiruChain/nibiru/pull/2624),
+  [#2625](https://github.com/NibiruChain/nibiru/pull/2625),
+  [#2626](https://github.com/NibiruChain/nibiru/pull/2626),
+  [#2627](https://github.com/NibiruChain/nibiru/pull/2627))
+- Go gRPC and network packages, plus JavaScript packages `ws`, `viem`, `qs`,
+  `esbuild`, Vite, `form-data`, and `js-yaml`, through the synchronized
+  dependency roll-up. ([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+- GitHub Actions `actions/checkout` and Codecov action updates.
+  ([#2611](https://github.com/NibiruChain/nibiru/pull/2611),
+  [#2614](https://github.com/NibiruChain/nibiru/pull/2614))
+
+The `btcutil` update also adapts the in-tree no-CGO secp256k1 signer to the
+updated `SignCompact` function signature.
+
+### 6 - Appendix for v2.16.0
+
+#### For Builders
+
+- **Authz clients** - Remove dependencies on grant creation, revocation, and
+  delegated execution. Empty authz query results represent disabled behavior,
+  not necessarily an empty underlying store.
+- **Wasm contracts** - Do not dispatch authz messages through Stargate; the
+  encoder rejects grant, exec, and revoke message URLs.
+- **Balance queries** - Set request field `token` when querying Bank and ERC20
+  representations. Continue omitting it when only native `balance_wei` is
+  needed.
+- **WNIBI** - Treat wrapped NIBI as an ERC20 balance independent of native NIBI
+  gas balance.
+- **Governance timing** - Mainnet voting closes after 24 hours, so interfaces
+  and alerting should not assume the prior 48-hour window.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.16.0` with a custom
+  governance parameter write followed by module migrations.
+- **Governance check:** Query governance params and confirm parameter
+  `voting_period` equals `86400s`.
+- **Failure monitoring:** Check upgrade logs and event type `upgrade_failure`;
+  continued block production does not prove the parameter write succeeded.
+- **Authz check:** Confirm authz transactions reject with module error 13 and
+  queries return empty compatibility responses.
+- **EVM query check:** Smoke-test both the legacy native balance request and a
+  token-specific Bank/ERC20 balance request.
+
+#### For Contributors / Repo Maintainers
+
+- Keep authz message, CLI, Wasm Stargate, genesis, simulation, and begin-block
+  behavior aligned so delegated execution cannot be reintroduced through one
+  surface unintentionally.
+- Do not reuse or reinterpret retained authz store data without a deliberate
+  migration and compatibility review.
+- Preserve the protobuf-wire compatibility of optional token request and
+  nullable Bank/ERC20 response fields.
+- Use Go 1.25.0 or later for builds, and keep CI toolchain selection aligned
+  with file `go.mod`.
+
 ## v2.15.0
 
 Nibiru v2.15 restores the legacy EVM oracle precompile path needed by MIM OFT
