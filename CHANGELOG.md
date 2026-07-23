@@ -38,6 +38,304 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.17.0
+
+Nibiru v2.17 hardens EVM transaction admission and proposal construction,
+introduces sudo-governed Wasm block hooks, and fixes event handling when EVM
+execution reverts. It also makes the ERC-2470 singleton factory part of default
+genesis and consolidates the Cosmos SDK, IBC Go, Wasm module, and Wasm VM into
+the Nibiru repository.
+
+- [Release Link: v2.17.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.17.0).
+- Date: 2026-07-23
+- Draft source range: non-Dependabot release work from `v2.16.0` through
+  `v2.17.0-test.5`.
+
+### 1 - Main Highlights
+
+- **Future-nonce flood protection** - Nodes use an EVM-aware, sender-and-nonce-indexed application mempool. Each authenticated sender may hold at most 8 live nonce slots, and conflicting transactions for an occupied nonce are rejected. ([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+- **Executable EVM proposals** - Proposal construction selects contiguous nonce chains that begin at each sender's committed state nonce instead of packing unusable future-nonce gaps into blocks. The index remains node-local and does not become consensus state. ([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+- **Wasm automation at block boundaries** - A sudo-configured registry contract can plan privileged Wasm `Sudo` calls during `BeginBlock` and `EndBlock`, with bounded plans, isolated execution, and structured events. ([#2667](https://github.com/NibiruChain/nibiru/pull/2667))
+- **Correct events after EVM reverts** - Reverting an EVM `StateDB` snapshot also removes Cosmos SDK events emitted after the snapshot, preventing events from reverted Bank, Wasm, or FunToken side effects from reaching indexers. ([#2696](https://github.com/NibiruChain/nibiru/pull/2696), [#2096](https://github.com/NibiruChain/nibiru/issues/2096))
+- **Canonical deterministic deployment factory** - Fresh genesis states include the ERC-2470 singleton factory at its standard address and the matching Cosmos `EthAccount`, allowing permissionless `CREATE2` deployment without a bootstrap transaction. ([#2697](https://github.com/NibiruChain/nibiru/pull/2697))
+- **First-party chain dependencies** - Nibiru's Cosmos SDK, IBC Go, Wasm module, and Wasm VM implementations now live in the repository as first-class source under directories `lib/` and `x/wasm`. ([#2656](https://github.com/NibiruChain/nibiru/pull/2656), [#2686](https://github.com/NibiruChain/nibiru/pull/2686), [#2690](https://github.com/NibiruChain/nibiru/pull/2690), [#2696](https://github.com/NibiruChain/nibiru/pull/2696))
+- **Explicit missing FunToken mappings** - EVM precompile method `IFunToken.getErc20Address` now reverts when no mapping exists instead of returning `address(0)`. ([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+- **Reliable release metadata** - Release builds inject version information into the in-tree Cosmos SDK package used by `nibid`, and CI rejects binaries with empty version fields. ([#2713](https://github.com/NibiruChain/nibiru/pull/2713))
+
+### 2 - EVM Mempool and Proposal Protection
+
+**What it fixes:** A sender could submit many transactions with random future
+nonces. The EVM ante flow accepted any nonce within its configured future
+window, CometBFT retained and gossiped those transactions, and proposers could
+include transactions that could not execute because earlier nonces were
+missing.
+
+v2.17 adds type `evm.Mempool`, a node-local Cosmos SDK mempool that indexes
+standard EVM transactions by authenticated sender, EVM nonce, and CometBFT
+transaction key. The production application allows each sender to own at most
+8 live nonce slots. An exact retransmission is idempotent, while a different
+transaction for an occupied `(sender, nonce)` slot is rejected. Fee-based
+same-nonce replacement is not part of this implementation.
+([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+
+Admission runs after EVM signature recovery so the index uses the authenticated
+sender. A slot is reserved only after the rest of the ante flow succeeds, which
+prevents an invalid transaction from consuming sender capacity.
+
+Proposal construction uses the application mempool to select only executable
+nonce chains:
+
+```txt
+committed sender nonce N
+-> select live transaction N
+-> select N+1, N+2, ... while the chain remains contiguous
+-> stop at the first missing nonce or block byte/gas limit
+```
+
+The proposer preserves the original outer Cosmos transaction bytes and keeps
+CometBFT ordering for non-EVM transactions. EVM sender heads compete by
+priority, but a higher future nonce cannot skip a missing predecessor.
+([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+
+This protection does not fork CometBFT and does not add mempool contents to
+consensus state. Different nodes may accept different same-nonce variants;
+`ProcessProposal` and block execution validate the proposed bytes against chain
+state without consulting local mempool membership.
+
+CometBFT setting `recheck = true` should remain enabled. After a block advances
+a sender's state nonce, recheck removes stale transactions and disconnected
+nonce tails from both the CometBFT and application mempools. Proposal
+construction still excludes disconnected tails if recheck is disabled, but
+those transactions can remain stored on the node.
+
+### 3 - Sudo-Governed Wasm Block Hooks
+
+**What it enables:** Chain governance can configure one registry contract to
+plan privileged Wasm calls at the beginning and end of each block. This creates
+a controlled path for protocol automation without placing recurring operations
+in the public mempool.
+
+The sudo root can set state field `wasm_block_hooks_contract`. When configured,
+the Wasm module queries that registry with one of these messages:
+
+```json
+{"begin_block_plan": {}}
+```
+
+```json
+{"end_block_plan": {}}
+```
+
+The returned plan may contain up to 32 target calls. Each call must use a valid
+32-byte contract address and a JSON object payload no larger than 16 KiB.
+Targets execute through method `Keeper.Sudo` in isolated cache contexts, so one
+failed target rolls back its own writes without blocking valid sibling calls.
+([#2667](https://github.com/NibiruChain/nibiru/pull/2667))
+
+Hook execution emits event types `wasm_block_hook/begin_block_failed`,
+`wasm_block_hook/end_block_failed`, and `wasm_block_hook/summary`. Summary
+events report the total dispatch count and, when needed, a structured list of
+individual failures for indexers and operators.
+
+The registry is a chain-critical trust surface: it can request privileged
+`Sudo` calls to arbitrary contracts every block. The default registry address
+is empty, so no contract dispatch occurs until the sudo root configures one.
+Hook execution uses the block execution context without a dedicated hook gas
+budget in this initial version; governance should review registry and target
+contracts accordingly.
+
+### 4 - EVM Snapshot and Event Rollback
+
+**What it fixes:** EVM journal snapshots previously reverted EVM state but left
+Cosmos SDK events emitted after a snapshot in the transaction event manager.
+An EVM call that invoked Bank, Wasm, or FunToken behavior and then reverted
+could therefore expose events for side effects that did not persist.
+
+v2.17 records the event count with each `StateDB` snapshot. Method `RevertToSnapshot`
+truncates the SDK event list to that count while reverting the EVM journal, so
+state and events follow the same rollback boundary.
+([#2696](https://github.com/NibiruChain/nibiru/pull/2696),
+[#2096](https://github.com/NibiruChain/nibiru/issues/2096))
+
+This is especially important for indexers and applications that derive activity
+from Cosmos event streams. They should no longer observe post-snapshot events
+from reverted EVM execution.
+
+### 5 - ERC-2470 Singleton Factory in Default Genesis
+
+Fresh Nibiru genesis states include the canonical ERC-2470 singleton factory at
+EVM address `0xce0042B868300000d44A59004Da54A005ffdcf9f`. The EVM genesis entry
+contains the canonical 308-byte runtime code, and auth genesis contains the
+matching Cosmos `EthAccount` and code hash. ([#2697](https://github.com/NibiruChain/nibiru/pull/2697))
+
+This gives localnets and future genesis-based networks a well-known,
+permissionless `CREATE2` deployment surface without requiring the standard's
+legacy, non-EIP-155 bootstrap transaction. Application-generated genesis and
+command `nibid init` use the same paired auth and EVM account state.
+
+The expected runtime code hash is:
+
+```txt
+0xc4d5542b53a8b779595a20a8ddd60e58a6c49d3c3decc2df83ced1c69c8ca807
+```
+
+This code change does not insert the factory into existing mainnet or testnet
+state during the v2.17 upgrade. Those networks already received the canonical
+factory through the separate deployment transaction recorded in the release
+work. Operators can verify the installed code with EVM JSON-RPC method
+`eth_getCode`.
+
+### 6 - IBC and EVM Compatibility Changes
+
+Nibiru now vendors IBC Go v7 and the 08-wasm light client under directory
+`lib/ibc-go`. The application imports that first-party source directly, keeping
+Nibiru-specific patches and version alignment in the same repository as the
+chain. ([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+
+Inactive ICS-29 fee middleware has been removed from application wiring and the
+vendored source. Its historical store key remains as an inert tombstone, so the
+removal does not reuse or reinterpret existing state.
+
+EVM precompile method `IFunToken.getErc20Address` now reverts with an explicit
+error if the requested bank denomination has no FunToken mapping. Contracts
+that treated `address(0)` as a not-found result must update their error handling.
+([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+
+### 7 - First-Party SDK, IBC, and Wasm Source
+
+v2.17 completes a large repository-layout transition:
+
+- The chain's Cosmos SDK fork is first-party source under directory
+  `lib/cosmos-sdk`.
+- IBC Go and the 08-wasm light client are first-party source under directory
+  `lib/ibc-go`.
+- The chain Wasm module is first-party source under directory `x/wasm`.
+- Go package `wasmvm` and its native `libwasmvm` artifacts live under directory
+  `lib/wasmvm`.
+- EVM modules, tools, embedded contracts, and end-to-end tests are grouped
+  under directory `evm`.
+
+The root Go module imports these packages through
+`github.com/NibiruChain/nibiru/v2/...` paths instead of upstream Cosmos SDK and
+IBC module paths. Local protobuf generation resolves the in-tree workspaces and
+includes regression checks against reintroducing upstream generated imports.
+Nibiru's custom inflation implementation also moves from package directory
+`x/inflation` to package directory `x/mint`.
+([#2644](https://github.com/NibiruChain/nibiru/pull/2644),
+[#2686](https://github.com/NibiruChain/nibiru/pull/2686),
+[#2690](https://github.com/NibiruChain/nibiru/pull/2690))
+
+Wasm VM builds and releases are now owned by the same repository. Workflow
+`wasmvm.yml` builds native libraries, and tags in the `lib/wasmvm/vX.Y.Z`
+namespace publish the corresponding artifacts. The chain binary consumes the
+in-tree Go package directly rather than relying on a root `replace` directive.
+([#2656](https://github.com/NibiruChain/nibiru/pull/2656),
+[#2696](https://github.com/NibiruChain/nibiru/pull/2696))
+
+These changes are primarily dependency ownership and repository architecture,
+but downstream Go users that imported fork internals or relied on old source
+paths should review their imports and module replacements.
+
+### 8 - Build, CI, and Release Reliability
+
+The release build path now uses defensive script
+`contrib/scripts/build-nibiru.sh` for local and CI builds. Release workflows use
+the same build surface, reducing differences between developer binaries and
+published artifacts. ([#2652](https://github.com/NibiruChain/nibiru/pull/2652),
+[#2654](https://github.com/NibiruChain/nibiru/pull/2654))
+
+Protobuf formatting and generation run with host-native tooling rather than the
+former Docker-based proto toolchain. Buf resolves the root, Cosmos SDK, and IBC
+proto trees as one workspace, and CI verifies that regeneration leaves a clean
+working tree. ([#2690](https://github.com/NibiruChain/nibiru/pull/2690),
+[#2694](https://github.com/NibiruChain/nibiru/pull/2694))
+
+Wasm VM builder images pin the macOS cross-compilation toolchain and retry
+transient package installation, improving reproducibility for release assets.
+([#2708](https://github.com/NibiruChain/nibiru/pull/2708))
+
+After the Cosmos SDK moved in-tree, release linker flags still targeted the
+former upstream package and produced an empty result from command
+`nibid version`. The build now injects metadata into package
+`github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version`, and a CI script
+checks the short and long version outputs before artifacts are published.
+([#2713](https://github.com/NibiruChain/nibiru/pull/2713))
+
+### 9 - Upgrade and Compatibility Notes
+
+The application registers `v2.17.0` as a vanilla software upgrade. The upgrade
+handler runs module migrations but does not contain release-specific mainnet
+state writes.
+
+Not every v2.17 behavior has the same consensus scope:
+
+- The EVM mempool index and sender limit are node-local admission and proposal
+  policy. Proposed transactions still pass consensus validation and execution
+  against chain state.
+- Wasm block-hook execution affects the state machine only after the sudo root
+  configures a registry contract.
+- SDK event rollback changes the observable event result of reverted EVM
+  execution so events match persisted state.
+- ERC-2470 default-genesis entries affect fresh or repaired genesis state, not
+  an existing network upgraded in place.
+- Removing inactive ICS-29 application wiring retains the old store-key
+  tombstone.
+
+### 10 - Appendix for v2.17.0
+
+#### For Builders
+
+- **Pending EVM transactions** - Do not assume a node accepts an arbitrary
+  number of future nonces from one sender. Keep submitted nonce chains
+  contiguous and account for the 8-slot per-sender node limit.
+- **Same-nonce replacement** - v2.17 does not implement fee-based replacement
+  in the application mempool. A different transaction for an occupied sender
+  and nonce slot is rejected by that node.
+- **Deterministic deployment** - Fresh chains expose ERC-2470 factory address
+  `0xce0042B868300000d44A59004Da54A005ffdcf9f`.
+- **FunToken lookup errors** - Treat a revert from
+  `IFunToken.getErc20Address` as the not-mapped result; do not depend on
+  `address(0)`.
+- **Event consumers** - Events emitted after a reverted EVM snapshot should no
+  longer appear in committed transaction results.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Software upgrade to `nibid v2.17.0` with a vanilla upgrade
+  handler and normal module migrations.
+- **Mempool recheck:** Keep CometBFT setting `recheck = true` so delivered and
+  stale EVM nonce slots are reconciled automatically after each commit.
+- **Post-upgrade binary check:** Run commands `nibid version` and
+  `nibid version --long`; version and commit fields should be populated.
+- **Post-upgrade transaction check:** Submit a short contiguous EVM nonce chain
+  and verify that transactions are admitted, proposed, and removed after
+  execution.
+- **Wasm hook configuration:** An empty field `wasm_block_hooks_contract` means
+  no block-hook dispatch. If governance configures a registry, monitor
+  `wasm_block_hook/*` events and review the registry as chain-critical code.
+- **ERC-2470 verification:** Existing networks can query EVM JSON-RPC method
+  `eth_getCode` at the canonical factory address and compare its runtime code
+  hash with the value above.
+
+#### For Contributors / Repo Maintainers
+
+- Use in-tree package paths under directories `lib/cosmos-sdk`,
+  `lib/ibc-go`, `lib/wasmvm`, and `x/wasm`; avoid reintroducing upstream module
+  imports into generated or application code.
+- Run command `just test-ibc` for the vendored IBC suite; default fast test
+  recipes exclude the large directory `lib/ibc-go`.
+- Keep release linker flags aligned with in-tree package
+  `lib/cosmos-sdk/version`, and retain the `nibid` version-output regression
+  check.
+- Preserve original transaction bytes when changing EVM proposal selection;
+  decoded and re-encoded SDK transactions are not guaranteed to have identical
+  outer bytes.
+- Keep `ProcessProposal` and block execution independent of node-local
+  `evm.Mempool` membership.
+- Treat Wasm hook plan bounds, cache-context isolation, event taxonomy, and sudo
+  registry authority as state-machine interfaces when extending the initial
+  implementation.
+
 ## v2.15.0
 
 Nibiru v2.15 restores the legacy EVM oracle precompile path needed by MIM OFT
