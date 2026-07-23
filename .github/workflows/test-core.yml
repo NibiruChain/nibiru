@@ -174,8 +174,7 @@ jobs:
       - name: "Verify nibid binary"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: |
-          test -x build/nibid
-          build/nibid version
+          contrib/scripts/nibid-version-test.sh --bin build/nibid
 
       - name: "Upload nibid artifact"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true' && matrix.runner == 'ubuntu-latest'
