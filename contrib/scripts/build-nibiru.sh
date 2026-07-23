@@ -343,13 +343,13 @@ run_go_compile() {
     cgo_ldflags+=" -static -lm -lbz2"
   fi
 
-  ldflags="-X github.com/cosmos/cosmos-sdk/version.Name=nibiru"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.AppName=nibid"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.Version=${version}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.Commit=${commit}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.BuildTags=${build_tags_csv}"
+  ldflags="-X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Name=nibiru"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.AppName=nibid"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Version=${version}"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Commit=${commit}"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.BuildTags=${build_tags_csv}"
   ldflags+=" -X github.com/cometbft/cometbft/version.CMTSemVer=${cmt_version}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DBBackend=pebbledb"
   ldflags+=" -linkmode=external -w -s"
 
   if [[ "$just_build" == true ]]; then
