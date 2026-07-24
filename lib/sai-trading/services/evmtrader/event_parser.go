@@ -26,6 +26,7 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 		// Check if this is any trade-related event
 		isTradeEvent := strings.Contains(eventType, "register_trade") ||
 			strings.Contains(eventType, "store_trade") ||
+			strings.Contains(eventType, "update_open_order_details") ||
 			strings.Contains(eventType, "trigger_trade/register_trade") ||
 			strings.Contains(eventType, "process_opening_fees")
 
@@ -35,20 +36,21 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 
 		// Try to extract trade ID from various attributes
 		for _, attr := range event.Attributes {
-			// Method 1: Check "trade_index" attribute (in process_opening_fees events)
-			// This is the simplest - directly contains "UserTradeIndex(1)"
-			if attr.Key == "trade_index" {
-				if tradeID, err := t.parseWrappedIndex(attr.Value); err == nil {
+			key := strings.Trim(attr.Key, "\"")
+
+			// Method 1: Check "trade_index" attribute
+			if key == "trade_index" {
+				if tradeID, err := t.parseTradeIndexValue(attr.Value); err == nil {
 					return tradeID, nil
 				}
 			}
 
 			// Method 2: Check "trade" attribute (contains full trade JSON)
-			if attr.Key == "trade" {
+			if key == "trade" {
 				var trade tradeStruct
 				if err := json.Unmarshal([]byte(attr.Value), &trade); err == nil {
 					if trade.UserTradeIndex != "" {
-						if tradeID, err := t.parseWrappedIndex(trade.UserTradeIndex); err == nil {
+						if tradeID, err := t.parseTradeIndexValue(trade.UserTradeIndex); err == nil {
 							return tradeID, nil
 						}
 					}
@@ -56,11 +58,11 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 			}
 
 			// Method 3: Check "global_trade_index" attribute (in store_trade events)
-			if attr.Key == "global_trade_index" {
+			if key == "global_trade_index" {
 				var gti globalTradeIndexStruct
 				if err := json.Unmarshal([]byte(attr.Value), &gti); err == nil {
 					if gti.UserTradeIndex != "" {
-						if tradeID, err := t.parseWrappedIndex(gti.UserTradeIndex); err == nil {
+						if tradeID, err := t.parseTradeIndexValue(gti.UserTradeIndex); err == nil {
 							return tradeID, nil
 						}
 					}
@@ -70,14 +72,10 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 	}
 
 	// If not found in events, try to parse from transaction data
-	// The contract sometimes returns user_trade_index in the response data
 	if txResp.Data != "" {
-		// Try to parse as wrapped index string directly
 		if tradeID, err := t.parseWrappedIndex(txResp.Data); err == nil {
 			return tradeID, nil
 		}
-		// Try to parse as base64-encoded JSON
-		// (Cosmos SDK sometimes encodes response data as base64)
 		if decoded, err := base64.StdEncoding.DecodeString(txResp.Data); err == nil {
 			var data map[string]interface{}
 			if err := json.Unmarshal(decoded, &data); err == nil {
@@ -85,10 +83,9 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 					return int(idx), nil
 				}
 			}
-			// Try as string
 			var dataStr string
 			if err := json.Unmarshal(decoded, &dataStr); err == nil {
-				if tradeID, err := t.parseWrappedIndex(dataStr); err == nil {
+				if tradeID, err := t.parseTradeIndexValue(dataStr); err == nil {
 					return tradeID, nil
 				}
 			}
@@ -96,6 +93,15 @@ func (t *EVMTrader) parseTradeID(txResp *sdk.TxResponse) (int, error) {
 	}
 
 	return -1, fmt.Errorf("user_trade_index not found in events, height=%d, event_count=%d", txResp.Height, len(txResp.Events))
+}
+
+// parseTradeIndexValue parses trade index from "UserTradeIndex(N)" or plain "N".
+func (t *EVMTrader) parseTradeIndexValue(s string) (int, error) {
+	s = strings.Trim(s, "\"")
+	if strings.Contains(s, "(") {
+		return t.parseWrappedIndex(s)
+	}
+	return strconv.Atoi(s)
 }
 
 // parseWrappedIndex extracts number from strings like "MarketIndex(123)" or "TokenIndex(456)"
