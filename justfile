@@ -210,7 +210,7 @@ passkey-demo:
 fmt:
     gofumpt -w evm x app gosdk eth
 
-# Format and lint
+# Go mod tidying, format, and proto gen
 tidy:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -226,7 +226,6 @@ tidy:
         done
 
     just proto gen
-    just lint
     just fmt
 
 test-release:
