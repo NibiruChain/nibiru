@@ -333,22 +333,18 @@ func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[st
 	pnl := getStr("realized_pnl")
 
 	// Markets: prefer precomputed market_pairs; else fall back to market_indices.
-	marketLines := ""
+	var marketLines []string
 	if mp, ok := fields["market_pairs"]; ok {
 		switch vv := mp.(type) {
 		case []string:
-			tmp := make([]string, 0, len(vv))
-			for _, p := range vv {
-				tmp = append(tmp, "• "+p)
-			}
-			marketLines = strings.Join(tmp, "\n")
+			marketLines = vv
 		case string:
-			marketLines = "• " + vv
+			marketLines = []string{vv}
 		default:
-			marketLines = "• " + fmt.Sprintf("%v", vv)
+			marketLines = []string{fmt.Sprintf("%v", vv)}
 		}
 	} else {
-		marketLines = "• " + getStr("market_indices")
+		marketLines = []string{getStr("market_indices")}
 	}
 
 	// Balances: list any fields named balance_<denom>
@@ -370,69 +366,117 @@ func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[st
 		balanceLines = []string{"(no balances)"}
 	}
 
-	reportText := buildStatusReportText(
-		opened+closed,
+	blocks, fallbackText := buildStatusReportBlocks(
+		opened,
+		closed,
 		volume,
 		pnl,
 		failed,
 		failedReasonsBlock,
 		marketLines,
-		strings.Join(balanceLines, "\n"),
+		balanceLines,
 	)
 
 	slackMsg := map[string]interface{}{
-		"text": reportText,
-		"blocks": []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": reportText,
-				},
-			},
-		},
+		"text":   fallbackText,
+		"blocks": blocks,
 	}
 
 	go t.sendSlackNotification(webhookURL, slackMsg)
 }
 
-func buildStatusReportText(
-	positionsOpenedClosed int,
+func mrkdwnField(label, value string) map[string]interface{} {
+	return map[string]interface{}{
+		"type": "mrkdwn",
+		"text": fmt.Sprintf("*%s:*\n%s", label, value),
+	}
+}
+
+func plainFields(items []string) []map[string]interface{} {
+	fields := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		if len(fields) >= 10 {
+			break
+		}
+		fields = append(fields, map[string]interface{}{
+			"type": "mrkdwn",
+			"text": item,
+		})
+	}
+	return fields
+}
+
+func buildStatusReportBlocks(
+	positionsOpened24h int,
+	positionsClosed24h int,
 	volumeGenerated string,
 	realizedPnl string,
 	failedTxs int,
 	failedReasonsBlock string,
-	marketLines string,
-	balanceBlock string,
-) string {
-	// Build the exact Slack mrkdwn text without a large fmt.Sprintf template.
-	var b strings.Builder
-	b.WriteString(":robot_face: EVM Trading Bot — Status Report\n\n")
-	b.WriteString(":white_check_mark: Status: Up and Running\n\n")
-	b.WriteString(":bar_chart: 24h Activity\n")
-	b.WriteString("• Positions opened/closed: ")
-	b.WriteString(strconv.Itoa(positionsOpenedClosed))
-	b.WriteString("\n")
-	b.WriteString("• Volume generated: ")
-	b.WriteString(volumeGenerated)
-	b.WriteString("\n")
-	b.WriteString("• Realized PnL: ")
-	b.WriteString(realizedPnl)
-	b.WriteString("\n")
-	b.WriteString("• Failed transactions: ")
-	b.WriteString(strconv.Itoa(failedTxs))
-	if failedTxs > 0 {
-		b.WriteString("\n")
-		b.WriteString("└ Reason Types:\n")
-		b.WriteString(failedReasonsBlock)
+	marketLines []string,
+	balanceLines []string,
+) ([]map[string]interface{}, string) {
+	blocks := []map[string]interface{}{
+		{
+			"type": "section",
+			"text": map[string]interface{}{
+				"type": "mrkdwn",
+				"text": ":robot_face: *EVM Trading Bot — Status Report*\n:white_check_mark: Status: Up and Running",
+			},
+		},
+		{"type": "divider"},
+		{
+			"type": "section",
+			"fields": []map[string]interface{}{
+				mrkdwnField("Positions opened", strconv.Itoa(positionsOpened24h)),
+				mrkdwnField("Positions closed", strconv.Itoa(positionsClosed24h)),
+				mrkdwnField("Volume generated", volumeGenerated),
+				mrkdwnField("Realized PnL", realizedPnl),
+				mrkdwnField("Failed transactions", strconv.Itoa(failedTxs)),
+			},
+		},
 	}
-	b.WriteString("\n\n")
 
-	b.WriteString(":chart_with_upwards_trend: Markets\n")
-	b.WriteString(marketLines)
-	b.WriteString("\n\n")
+	if failedTxs > 0 {
+		blocks = append(blocks, map[string]interface{}{
+			"type": "section",
+			"text": map[string]interface{}{
+				"type": "mrkdwn",
+				"text": ":warning: *Failure reasons:*\n" + failedReasonsBlock,
+			},
+		})
+	}
 
-	b.WriteString(":moneybag: Balances\n")
-	b.WriteString(balanceBlock)
-	return b.String()
+	blocks = append(blocks,
+		map[string]interface{}{"type": "divider"},
+		map[string]interface{}{
+			"type": "section",
+			"text": map[string]interface{}{
+				"type": "mrkdwn",
+				"text": ":chart_with_upwards_trend: *Markets*",
+			},
+		},
+		map[string]interface{}{
+			"type":   "section",
+			"fields": plainFields(marketLines),
+		},
+		map[string]interface{}{"type": "divider"},
+		map[string]interface{}{
+			"type": "section",
+			"text": map[string]interface{}{
+				"type": "mrkdwn",
+				"text": ":moneybag: *Balances*",
+			},
+		},
+		map[string]interface{}{
+			"type":   "section",
+			"fields": plainFields(balanceLines),
+		},
+	)
+
+	fallbackText := fmt.Sprintf(
+		"EVM Trading Bot Status Report — opened %d, closed %d, failed %d, volume %s, PnL %s",
+		positionsOpened24h, positionsClosed24h, failedTxs, volumeGenerated, realizedPnl,
+	)
+	return blocks, fallbackText
 }

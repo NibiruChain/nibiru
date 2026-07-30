@@ -14,9 +14,11 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	txtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // sendEVMTransaction sends an EVM transaction using ChainClient and MsgEthereumTx
@@ -125,7 +127,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		case <-tick.C:
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
-				if err := evmTxResponseError(resp.TxResponse); err != nil {
+				if err := t.evmTxResponseError(ctx, resp.TxResponse, to, value, data); err != nil {
 					t.logTransactionCSV(
 						resp.TxResponse.TxHash,
 						"failed",
@@ -210,7 +212,10 @@ func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.
 }
 
 // evmTxResponseError returns an error when an EVM transaction reverted on-chain.
-func evmTxResponseError(txResp *sdk.TxResponse) error {
+// The ABCI event's VmError is normally just the generic "execution reverted"
+// with no reason attached, so on revert we replay the call via eth_call to
+// recover the actual revert reason (require string or custom error).
+func (t *EVMTrader) evmTxResponseError(ctx context.Context, txResp *sdk.TxResponse, to common.Address, value *big.Int, data []byte) error {
 	for _, event := range txResp.Events {
 		if event.Type != evm.TypeUrlEventEthereumTx {
 			continue
@@ -222,9 +227,80 @@ func evmTxResponseError(txResp *sdk.TxResponse) error {
 		if ethTx.VmError == "" {
 			return nil
 		}
-		return fmt.Errorf("EVM execution failed: %s (tx %s)", ethTx.VmError, txResp.TxHash)
+		reason := ethTx.VmError
+		if decoded := t.decodeRevertReason(ctx, to, value, data, txResp.Height); decoded != "" {
+			reason = decoded
+		}
+		return fmt.Errorf("EVM execution failed: %s (tx %s)", reason, txResp.TxHash)
 	}
 	return nil
+}
+
+func (t *EVMTrader) decodeRevertReason(ctx context.Context, to common.Address, value *big.Int, data []byte, height int64) string {
+	if t.client == nil || height <= 1 {
+		return ""
+	}
+
+	callMsg := ethereum.CallMsg{
+		From:  t.accountAddr,
+		To:    &to,
+		Value: value,
+		Data:  data,
+	}
+	_, err := t.client.CallContract(ctx, callMsg, big.NewInt(height-1))
+	if err == nil {
+		return ""
+	}
+
+	if reason, ok := decodeRevertErrorData(err); ok {
+		return reason
+	}
+
+	if msg := err.Error(); strings.Contains(msg, "execution reverted") {
+		return strings.TrimSpace(msg)
+	}
+	return ""
+}
+
+func decodeRevertErrorData(err error) (string, bool) {
+	dataErr, ok := err.(rpc.DataError)
+	if !ok {
+		return "", false
+	}
+
+	var hexStr string
+	switch v := dataErr.ErrorData().(type) {
+	case string:
+		hexStr = v
+	case []byte:
+		hexStr = hexutil.Encode(v)
+	default:
+		return "", false
+	}
+
+	revertData, decErr := hexutil.Decode(hexStr)
+	if decErr != nil || len(revertData) < 4 {
+		return "", false
+	}
+
+	if reason, unpackErr := abi.UnpackRevert(revertData); unpackErr == nil {
+		return reason, true
+	}
+
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	selector := hexutil.Encode(revertData[:4])
+	for name, abiErr := range interfaceABI.Errors {
+		if hexutil.Encode(abiErr.ID[:4]) != selector {
+			continue
+		}
+		args, unpackErr := abiErr.Inputs.Unpack(revertData[4:])
+		if unpackErr != nil {
+			return name, true
+		}
+		return fmt.Sprintf("%s%v", name, args), true
+	}
+
+	return "", false
 }
 
 // parseContractError parses common contract errors and provides user-friendly error messages.
