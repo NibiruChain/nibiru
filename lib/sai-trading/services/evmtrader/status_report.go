@@ -98,7 +98,7 @@ func compute24hMetrics(ctx context.Context, now time.Time, logsDir string, keepe
 	out.failedReasonsBlock = formatFailedReasonsBlock(reasonCounts)
 
 	if keeper != nil && ctx != nil && ctx.Err() == nil && traderAddr != "" {
-		if stats, err := keeper.ComputeUser24hStats(ctx, traderAddr); err == nil {
+		if stats, err := keeper.ComputeUserAllTimeStats(ctx, traderAddr); err == nil {
 			out.volumeUSD = stats.VolumeUSD
 			out.realizedPnL = stats.RealizedPnL
 		}
