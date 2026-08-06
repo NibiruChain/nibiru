@@ -46,6 +46,8 @@ type Config struct {
 	TradeJSONFile string // Path to JSON file with open_trade parameters
 
 	KeeperDBDSN string
+
+	SaiKeeperGraphQLURL string
 }
 
 // ContractAddresses stores addresses/ids loaded from localnet_contracts.env
@@ -77,11 +79,12 @@ type NotificationConfig struct {
 
 // NetworkInfo contains configuration for a specific network
 type NetworkInfo struct {
-	Name      string         `toml:"name"`
-	EVMRPCUrl string         `toml:"evm_rpc_url"`
-	GrpcUrl   string         `toml:"grpc_url"`
-	ChainID   string         `toml:"chain_id"`
-	Contracts ContractConfig `toml:"contracts"`
+	Name                string         `toml:"name"`
+	EVMRPCUrl           string         `toml:"evm_rpc_url"`
+	GrpcUrl             string         `toml:"grpc_url"`
+	ChainID             string         `toml:"chain_id"`
+	SaiKeeperGraphQLURL string         `toml:"sai_keeper_graphql_url"`
+	Contracts           ContractConfig `toml:"contracts"`
 }
 
 // ContractConfig contains contract addresses

@@ -496,17 +496,24 @@ func (t *EVMTrader) runHealthCheck(ctx context.Context, cfg AutoTradingConfig, c
 		fields["balance_"+denom] = balance.String()
 	}
 
-	// 24h metrics derived from CSV logs and sai-keeper.
+	// 24h metrics from sai-keeper GraphQL
 	nowUTC := time.Now().UTC()
-	metrics := compute24hMetrics(ctx, nowUTC, "logs", t.keeper, t.ethAddrBech32)
+	metrics := compute24hMetrics(ctx, nowUTC, t.keeperGQL, t.ethAddrBech32)
 	fields["positions_opened_24h"] = metrics.positionsOpened24h
 	fields["positions_closed_24h"] = metrics.positionsClosed24h
 	fields["failed_txs_24h"] = metrics.failedTxs24h
 	fields["failed_reason_types"] = metrics.failedReasonsBlock
 	fields["failed_reason"] = metrics.failedReasonsBlock
-	if t.keeper != nil {
-		fields["volume_generated"] = fmt.Sprintf("%.2f USD", metrics.volumeUSD)
-		fields["realized_pnl"] = fmt.Sprintf("%.2f USD", metrics.realizedPnL)
+	if metrics.graphQLError != "" {
+		t.logWarn("Health metrics GraphQL unavailable",
+			"error", metrics.graphQLError,
+			"account", t.ethAddrBech32,
+			"graphql_configured", t.keeperGQL != nil,
+		)
+	}
+	if metrics.hasVolumePnL {
+		fields["volume_generated"] = formatUSDAmount(metrics.volumeUSD)
+		fields["realized_pnl"] = formatUSDAmount(metrics.realizedPnL)
 	} else {
 		fields["volume_generated"] = "N/A"
 		fields["realized_pnl"] = "N/A"
@@ -541,6 +548,24 @@ func flattenHealthFields(m map[string]any) []any {
 		out = append(out, k, v)
 	}
 	return out
+}
+
+// formatUSDAmount renders small testnet volumes/PnL without rounding everything to 0.00.
+func formatUSDAmount(v float64) string {
+	av := v
+	if av < 0 {
+		av = -av
+	}
+	switch {
+	case av == 0:
+		return "0 USD"
+	case av < 0.01:
+		return fmt.Sprintf("%.6f USD", v)
+	case av < 1:
+		return fmt.Sprintf("%.4f USD", v)
+	default:
+		return fmt.Sprintf("%.2f USD", v)
+	}
 }
 
 // randomUint64 returns a random uint64 between min and max (inclusive)

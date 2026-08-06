@@ -521,6 +521,9 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 				}
 				grpcUrl = netInfo.GrpcUrl
 				chainID = netInfo.ChainID
+				if netInfo.SaiKeeperGraphQLURL != "" {
+					cfg.SaiKeeperGraphQLURL = netInfo.SaiKeeperGraphQLURL
+				}
 
 				// Load contract addresses from TOML
 				contractAddrs := evmtrader.ContractAddressesFromNetworkInfo(netInfo)
@@ -614,6 +617,12 @@ func setupConfig(requireAuth bool) (evmtrader.Config, error) {
 
 	// Optional
 	cfg.KeeperDBDSN = os.Getenv("KEEPER_DB_DSN")
+	if v := os.Getenv("SAI_KEEPER_GRAPHQL_URL"); v != "" {
+		cfg.SaiKeeperGraphQLURL = v
+	}
+	if cfg.SaiKeeperGraphQLURL == "" {
+		cfg.SaiKeeperGraphQLURL = evmtrader.DefaultKeeperGraphQLURL(networkMode)
+	}
 
 	return cfg, nil
 }

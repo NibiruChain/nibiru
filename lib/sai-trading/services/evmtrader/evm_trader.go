@@ -47,7 +47,8 @@ type EVMTrader struct {
 
 	csvLogMu sync.Mutex
 
-	keeper *KeeperClient
+	keeper    *KeeperClient
+	keeperGQL *KeeperGraphQLClient
 }
 
 // tradeLifecycle stores metadata about an open trade so that when it closes,
@@ -172,6 +173,19 @@ func New(ctx context.Context, cfg Config) (*EVMTrader, error) {
 		} else {
 			trader.keeper = kc
 		}
+	}
+
+	gqlURL := strings.TrimSpace(cfg.SaiKeeperGraphQLURL)
+	if gqlURL == "" {
+		switch cfg.ChainID {
+		case "nibiru-testnet-2":
+			gqlURL = DefaultKeeperGraphQLURLTestnet
+		case "cataclysm-1", "nibiru-mainnet-1":
+			gqlURL = DefaultKeeperGraphQLURLMainnet
+		}
+	}
+	if gqlURL != "" {
+		trader.keeperGQL = NewKeeperGraphQLClient(gqlURL)
 	}
 
 	return trader, nil

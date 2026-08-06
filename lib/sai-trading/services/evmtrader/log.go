@@ -325,6 +325,7 @@ func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[st
 	opened := getInt("positions_opened_24h")
 	closed := getInt("positions_closed_24h")
 	failed := getInt("failed_txs_24h")
+	openNow := getInt("open_positions")
 	failedReasonsBlock := getStr("failed_reason_types")
 	if failedReasonsBlock == "" {
 		failedReasonsBlock = getStr("failed_reason")
@@ -369,6 +370,7 @@ func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[st
 	blocks, fallbackText := buildStatusReportBlocks(
 		opened,
 		closed,
+		openNow,
 		volume,
 		pnl,
 		failed,
@@ -409,6 +411,7 @@ func plainFields(items []string) []map[string]interface{} {
 func buildStatusReportBlocks(
 	positionsOpened24h int,
 	positionsClosed24h int,
+	openPositionsNow int,
 	volumeGenerated string,
 	realizedPnl string,
 	failedTxs int,
@@ -428,8 +431,9 @@ func buildStatusReportBlocks(
 		{
 			"type": "section",
 			"fields": []map[string]interface{}{
-				mrkdwnField("Positions opened", strconv.Itoa(positionsOpened24h)),
-				mrkdwnField("Positions closed", strconv.Itoa(positionsClosed24h)),
+				mrkdwnField("Positions opened (24h)", strconv.Itoa(positionsOpened24h)),
+				mrkdwnField("Positions closed (24h)", strconv.Itoa(positionsClosed24h)),
+				mrkdwnField("Open positions (now)", strconv.Itoa(openPositionsNow)),
 				mrkdwnField("Volume generated", volumeGenerated),
 				mrkdwnField("Realized PnL", realizedPnl),
 				mrkdwnField("Failed transactions", strconv.Itoa(failedTxs)),
@@ -475,8 +479,8 @@ func buildStatusReportBlocks(
 	)
 
 	fallbackText := fmt.Sprintf(
-		"EVM Trading Bot Status Report — opened %d, closed %d, failed %d, volume %s, PnL %s",
-		positionsOpened24h, positionsClosed24h, failedTxs, volumeGenerated, realizedPnl,
+		"EVM Trading Bot Status Report — opened %d, closed %d, open_now %d, failed %d, volume %s, PnL %s",
+		positionsOpened24h, positionsClosed24h, openPositionsNow, failedTxs, volumeGenerated, realizedPnl,
 	)
 	return blocks, fallbackText
 }
