@@ -101,7 +101,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 			reason = strings.TrimSpace(reason[:idx])
 		}
 
-		t.logTransactionCSV(
+		t.logTxResult(
 			grpcRes.TxResponse.TxHash,
 			"failed",
 			reason,
@@ -128,7 +128,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
 				if err := t.evmTxResponseError(ctx, resp.TxResponse, to, value, data); err != nil {
-					t.logTransactionCSV(
+					t.logTxResult(
 						resp.TxResponse.TxHash,
 						"failed",
 						err.Error(),
@@ -139,7 +139,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 					)
 					return nil, err
 				}
-				t.logTransactionCSV(
+				t.logTxResult(
 					resp.TxResponse.TxHash,
 					"success",
 					"",
@@ -151,7 +151,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 				return resp.TxResponse, nil
 			}
 		case <-timeout.C:
-			t.logTransactionCSV(
+			t.logTxResult(
 				txHash,
 				"failed",
 				"timeout waiting for tx",
@@ -164,7 +164,7 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		}
 	}
 
-	t.logTransactionCSV(
+	t.logTxResult(
 		txHash,
 		"failed",
 		fmt.Sprintf("tx not found after %d retries", maxRetries),

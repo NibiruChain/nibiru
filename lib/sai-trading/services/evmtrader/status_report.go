@@ -8,8 +8,6 @@ import (
 type status24hMetrics struct {
 	positionsOpened24h int
 	positionsClosed24h int
-	failedTxs24h       int
-	failedReasonsBlock string
 	volumeUSD          float64
 	realizedPnL        float64
 	hasVolumePnL       bool
@@ -17,16 +15,14 @@ type status24hMetrics struct {
 }
 
 // compute24hMetrics loads 24h open/close/volume/PnL from sai-keeper GraphQL only.
-// Local CSV is not used for health reporting.
+// Failed txs come from in-memory bot tracking, not GraphQL.
 func compute24hMetrics(
 	ctx context.Context,
 	now time.Time,
 	gql *KeeperGraphQLClient,
 	traderAddr string,
 ) status24hMetrics {
-	out := status24hMetrics{
-		failedReasonsBlock: "unknown",
-	}
+	out := status24hMetrics{}
 
 	if gql == nil {
 		out.graphQLError = "graphql client not configured"

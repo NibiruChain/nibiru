@@ -45,14 +45,15 @@ type EVMTrader struct {
 	tradeLogMu sync.Mutex
 	openTrades map[uint64]*tradeLifecycle
 
-	csvLogMu sync.Mutex
+	failedTxMu sync.Mutex
+	failedTxs  []failedTxEvent
 
 	keeper    *KeeperClient
 	keeperGQL *KeeperGraphQLClient
 }
 
 // tradeLifecycle stores metadata about an open trade so that when it closes,
-// we can log a single lifecycle row (open+close) to CSV.
+// we can emit a single trade_lifecycle log (open+close).
 type tradeLifecycle struct {
 	OpenTimeUTC      time.Time
 	OpenBlock        int64
@@ -395,12 +396,12 @@ func (t *EVMTrader) CloseTrade(ctx context.Context, tradeIndex uint64) error {
 				}
 			}
 
-			// Best-effort lifecycle CSV log: one row per trade.
+			// Best-effort lifecycle log: one structured event per trade.
 			t.tradeLogMu.Lock()
 			lc := t.openTrades[tradeIndex]
 			delete(t.openTrades, tradeIndex)
 			t.tradeLogMu.Unlock()
-			t.logTradeLifecycleCSV(tradeIndex, lc, trade, closeHeight, closePrice)
+			t.logTradeLifecycle(tradeIndex, lc, trade, closeHeight, closePrice)
 			break
 		}
 	}
@@ -423,7 +424,7 @@ func (t *EVMTrader) resolveCloseMeta(ctx context.Context, tradeIndex uint64, txH
 			return p, closeHeight
 		}
 	}
-	t.logWarn("Close price unresolved; leaving trades.csv close_price empty", "trade_index", tradeIndex)
+	t.logWarn("Close price unresolved; leaving close_price empty", "trade_index", tradeIndex)
 	return "", closeHeight
 }
 

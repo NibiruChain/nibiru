@@ -501,9 +501,10 @@ func (t *EVMTrader) runHealthCheck(ctx context.Context, cfg AutoTradingConfig, c
 	metrics := compute24hMetrics(ctx, nowUTC, t.keeperGQL, t.ethAddrBech32)
 	fields["positions_opened_24h"] = metrics.positionsOpened24h
 	fields["positions_closed_24h"] = metrics.positionsClosed24h
-	fields["failed_txs_24h"] = metrics.failedTxs24h
-	fields["failed_reason_types"] = metrics.failedReasonsBlock
-	fields["failed_reason"] = metrics.failedReasonsBlock
+	failedCount, failedReasons := t.failedTxs24h(nowUTC)
+	fields["failed_txs_24h"] = failedCount
+	fields["failed_reason_types"] = failedReasons
+	fields["failed_reason"] = failedReasons
 	if metrics.graphQLError != "" {
 		t.logWarn("Health metrics GraphQL unavailable",
 			"error", metrics.graphQLError,

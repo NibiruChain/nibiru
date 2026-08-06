@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mattn/go-colorable"
 )
 
 type LogLevel string
@@ -23,111 +21,46 @@ const (
 	LogLevelError LogLevel = "error"
 )
 
-const (
-	colorReset = "\033[0m"
-	colorBold  = "\033[1m"
-	colorDim   = "\033[2m"
+var logWriter io.Writer = os.Stdout
 
-	colorRed     = "\033[31m"
-	colorGreen   = "\033[32m"
-	colorYellow  = "\033[33m"
-	colorBlue    = "\033[34m"
-	colorMagenta = "\033[35m"
-	colorCyan    = "\033[36m"
-	colorWhite   = "\033[37m"
-	colorGray    = "\033[90m"
-)
-
-func (t *EVMTrader) log(level LogLevel, msg string, kv ...any) {
-	fields := map[string]any{
-		"level": string(level),
-		"msg":   msg,
-		"ts":    time.Now().UTC().Format(time.RFC3339),
-	}
-
-	fieldOrder := make([]string, 0, len(kv)/2)
-	for i := 0; i+1 < len(kv); i += 2 {
-		k, _ := kv[i].(string)
-		fields[k] = kv[i+1]
-		fieldOrder = append(fieldOrder, k)
-	}
-
-	t.logColored(level, msg, fields, fieldOrder)
-}
-
-func (t *EVMTrader) logColored(level LogLevel, msg string, fields map[string]any, fieldOrder []string) {
-	out := colorable.NewColorable(os.Stdout)
-
-	var levelColor, levelLabel, msgColor string
+func gcpSeverity(level LogLevel) string {
 	switch level {
 	case LogLevelDebug:
-		levelColor = colorCyan
-		levelLabel = "DEBUG"
-		msgColor = colorCyan
+		return "DEBUG"
 	case LogLevelInfo:
-		levelColor = colorGreen
-		levelLabel = "INFO "
-		msgColor = colorWhite
+		return "INFO"
 	case LogLevelWarn:
-		levelColor = colorYellow
-		levelLabel = "WARN "
-		msgColor = colorYellow
+		return "WARNING"
 	case LogLevelError:
-		levelColor = colorRed
-		levelLabel = "ERROR"
-		msgColor = colorRed
+		return "ERROR"
 	default:
-		levelColor = colorReset
-		levelLabel = string(level)
-		msgColor = colorReset
+		return strings.ToUpper(string(level))
 	}
+}
 
-	// Format timestamp
-	ts := fields["ts"].(string)
-	tsShort := ts[11:19] // Extract time part (HH:MM:SS)
-
-	// Build the log line with improved formatting
-	var buf strings.Builder
-
-	// Timestamp in dim gray
-	buf.WriteString(fmt.Sprintf("%s%s[%s]%s ",
-		colorDim, colorGray, tsShort, colorReset))
-
-	// Level badge with bold and background-like effect
-	buf.WriteString(fmt.Sprintf("%s%s%s%s ",
-		colorBold, levelColor, levelLabel, colorReset))
-
-	// Message in prominent color
-	buf.WriteString(fmt.Sprintf("%s%s%s%s",
-		colorBold, msgColor, msg, colorReset))
-
-	for _, k := range fieldOrder {
-		if v, exists := fields[k]; exists {
-			// Use different colors for keys and values
-			keyColor := colorGray
-			valColor := colorWhite
-
-			// Special coloring for important fields
-			switch k {
-			case "error", "tx_hash", "trade_index", "balance", "required", "fund_this_address":
-				keyColor = colorCyan
-				valColor = colorWhite
-			case "trade_size", "leverage", "market_index", "collateral_index":
-				keyColor = colorBlue
-				valColor = colorWhite
-			case "current_positions", "max", "count":
-				keyColor = colorMagenta
-				valColor = colorWhite
-			}
-
-			buf.WriteString(fmt.Sprintf(" %s%s%s=%s%v%s",
-				keyColor, k, colorReset,
-				valColor, v, colorReset))
+func buildLogFields(level LogLevel, msg string, kv ...any) map[string]any {
+	fields := map[string]any{
+		"severity": gcpSeverity(level),
+		"message":  msg,
+		"ts":       time.Now().UTC().Format(time.RFC3339),
+	}
+	for i := 0; i+1 < len(kv); i += 2 {
+		k, ok := kv[i].(string)
+		if !ok || k == "" || k == "severity" || k == "message" || k == "ts" {
+			continue
 		}
+		fields[k] = kv[i+1]
 	}
-	buf.WriteString("\n")
+	return fields
+}
 
-	fmt.Fprint(out, buf.String())
+func (t *EVMTrader) log(level LogLevel, msg string, kv ...any) {
+	fields := buildLogFields(level, msg, kv...)
+	enc := json.NewEncoder(logWriter)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(fields); err != nil {
+		fmt.Fprintf(os.Stderr, "log encode error: %v\n", err)
+	}
 }
 
 // logInfo is a convenience method that logs at info level (backward compatibility)

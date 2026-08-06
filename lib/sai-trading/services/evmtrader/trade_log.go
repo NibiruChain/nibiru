@@ -1,70 +1,51 @@
 package evmtrader
 
 import (
-	"encoding/csv"
-	"os"
-	"path/filepath"
-	"strconv"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 )
 
-// logTradeLifecycleCSV writes a single row per trade lifecycle (open+close) to logs/trades.csv.
-// It is called when a trade closes, using the stored open metadata (lc) plus the final close trade.
-func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, closeTrade ParsedTrade, closeHeight int64, closePrice string) {
-	t.csvLogMu.Lock()
-	defer t.csvLogMu.Unlock()
+const failedTxWindow = 24 * time.Hour
 
-	logDir := "logs"
-	logPath := filepath.Join(logDir, "trades.csv")
+type failedTxEvent struct {
+	ts     time.Time
+	reason string
+}
 
-	if err := os.MkdirAll(logDir, 0o755); err != nil {
-		t.logWarn("Failed to create logs directory", "path", logDir, "error", err.Error())
+// logTxResult emits a structured tx_result log and records failures for Slack health.
+func (t *EVMTrader) logTxResult(txHash string, status string, reason string, recipient string, height int64, gasWanted, gasUsed uint64) {
+	kv := []any{
+		"tx_hash", txHash,
+		"status", status,
+		"recipient", recipient,
+		"height", height,
+		"gas_wanted", gasWanted,
+		"gas_used", gasUsed,
+		"chain_id", t.cfg.ChainID,
+	}
+	if reason != "" {
+		kv = append(kv, "reason", reason)
+	}
+	if status == "failed" {
+		t.recordFailedTx(reason)
+		t.logWarn("tx_result", kv...)
 		return
 	}
+	t.logInfo("tx_result", kv...)
+}
 
-	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		t.logWarn("Failed to open trade lifecycle CSV", "path", logPath, "error", err.Error())
-		return
-	}
-	defer f.Close()
-
-	// If file was just created and is empty, write header.
-	if fi, err := f.Stat(); err == nil && fi.Size() == 0 {
-		w := csv.NewWriter(f)
-		_ = w.Write([]string{
-			"trade_id",
-			"market_index",
-			"direction",
-			"trade_type",
-			"collateral_index",
-			"collateral_amount",
-			"collateral_denom",
-			"leverage",
-			"open_time_utc",
-			"open_block_height",
-			"open_price",
-			"close_time_utc",
-			"close_block_height",
-			"close_price",
-			"tp",
-			"sl",
-		})
-		w.Flush()
-	}
-
-	w := csv.NewWriter(f)
-	defer w.Flush()
-
-	// Defaults from open lifecycle metadata, if present.
+// logTradeLifecycle emits a structured trade_lifecycle log when a trade closes.
+func (t *EVMTrader) logTradeLifecycle(tradeID uint64, lc *tradeLifecycle, closeTrade ParsedTrade, closeHeight int64, closePrice string) {
 	var (
 		openTime  string
-		openBlock string
+		openBlock int64
 		openPrice string
-		marketIdx string
+		marketIdx uint64
 		direction string
 		tradeType string
-		collIdx   string
+		collIdx   uint64
 		collAmt   string
 		collDenom string
 		leverage  string
@@ -74,12 +55,12 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 
 	if lc != nil {
 		openTime = lc.OpenTimeUTC.Format(time.RFC3339)
-		openBlock = strconv.FormatInt(lc.OpenBlock, 10)
+		openBlock = lc.OpenBlock
 		openPrice = lc.OpenPrice
-		marketIdx = strconv.FormatUint(lc.MarketIndex, 10)
+		marketIdx = lc.MarketIndex
 		direction = lc.Direction
 		tradeType = lc.TradeType
-		collIdx = strconv.FormatUint(lc.CollateralIndex, 10)
+		collIdx = lc.CollateralIndex
 		collAmt = lc.CollateralAmount
 		collDenom = lc.CollateralDenom
 		leverage = lc.Leverage
@@ -87,9 +68,8 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 		sl = lc.SL
 	}
 
-	// Overlay with close trade info where relevant / available.
 	if closeTrade.MarketIndex != 0 {
-		marketIdx = strconv.FormatUint(closeTrade.MarketIndex, 10)
+		marketIdx = closeTrade.MarketIndex
 	}
 	if closeTrade.TradeType != "" {
 		tradeType = closeTrade.TradeType
@@ -98,7 +78,7 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 		leverage = closeTrade.Leverage
 	}
 	if closeTrade.CollateralIndex != 0 {
-		collIdx = strconv.FormatUint(closeTrade.CollateralIndex, 10)
+		collIdx = closeTrade.CollateralIndex
 	}
 	if closeTrade.CollateralAmount != "" {
 		collAmt = closeTrade.CollateralAmount
@@ -106,110 +86,105 @@ func (t *EVMTrader) logTradeLifecycleCSV(tradeID uint64, lc *tradeLifecycle, clo
 	if cd := t.GetCollateralDenom(closeTrade.CollateralIndex); cd != "" {
 		collDenom = cd
 	}
-	// Direction from close trade if missing.
 	if direction == "" {
-		if closeTrade.Long {
-			direction = "LONG"
-		} else {
-			direction = "SHORT"
-		}
+		direction = boolToDirection(closeTrade.Long)
 	}
-	// TP/SL from close trade if present.
 	if closeTrade.TP != "" {
 		tp = closeTrade.TP
 	}
 	if closeTrade.SL != nil && *closeTrade.SL != "" {
 		sl = *closeTrade.SL
 	}
-	// Prefer entry open_price from chain when lifecycle metadata is missing.
 	if openPrice == "" && closeTrade.OpenPrice != "" {
 		openPrice = closeTrade.OpenPrice
 	}
 
-	closeTime := time.Now().UTC().Format(time.RFC3339)
-	closeBlock := strconv.FormatInt(closeHeight, 10)
+	t.logInfo("trade_lifecycle",
+		"trade_id", tradeID,
+		"market_index", marketIdx,
+		"direction", direction,
+		"trade_type", tradeType,
+		"collateral_index", collIdx,
+		"collateral_amount", collAmt,
+		"collateral_denom", collDenom,
+		"leverage", leverage,
+		"open_time_utc", openTime,
+		"open_block_height", openBlock,
+		"open_price", openPrice,
+		"close_time_utc", time.Now().UTC().Format(time.RFC3339),
+		"close_block_height", closeHeight,
+		"close_price", closePrice,
+		"tp", tp,
+		"sl", sl,
+	)
+}
 
-	record := []string{
-		strconv.FormatUint(tradeID, 10),
-		marketIdx,
-		direction,
-		tradeType,
-		collIdx,
-		collAmt,
-		collDenom,
-		leverage,
-		openTime,
-		openBlock,
-		openPrice,
-		closeTime,
-		closeBlock,
-		closePrice,
-		tp,
-		sl,
+func (t *EVMTrader) recordFailedTx(reason string) {
+	reason = normalizeFailedReason(reason)
+	now := time.Now().UTC()
+	t.failedTxMu.Lock()
+	defer t.failedTxMu.Unlock()
+	t.failedTxs = append(t.failedTxs, failedTxEvent{ts: now, reason: reason})
+	t.pruneFailedTxsLocked(now)
+}
+
+func (t *EVMTrader) pruneFailedTxsLocked(now time.Time) {
+	cutoff := now.Add(-failedTxWindow)
+	i := 0
+	for i < len(t.failedTxs) && t.failedTxs[i].ts.Before(cutoff) {
+		i++
 	}
-
-	if err := w.Write(record); err != nil {
-		t.logWarn("Failed to write trade lifecycle CSV record", "path", logPath, "error", err.Error())
+	if i > 0 {
+		t.failedTxs = append([]failedTxEvent(nil), t.failedTxs[i:]...)
 	}
 }
 
-// logTransactionCSV appends a single on-chain EVM transaction row to logs/transactions.csv.
-// It is best-effort and should never cause trading to fail.
-func (t *EVMTrader) logTransactionCSV(txHash string, status string, reason string, recipient string, height int64, gasWanted, gasUsed uint64) {
-	t.csvLogMu.Lock()
-	defer t.csvLogMu.Unlock()
-
-	logDir := "logs"
-	logPath := filepath.Join(logDir, "transactions.csv")
-
-	if err := os.MkdirAll(logDir, 0o755); err != nil {
-		t.logWarn("Failed to create logs directory for transactions", "path", logDir, "error", err.Error())
-		return
+// failedTxs24h returns count and a Slack-friendly reason summary for the last 24h.
+func (t *EVMTrader) failedTxs24h(now time.Time) (count int, reasonsBlock string) {
+	t.failedTxMu.Lock()
+	defer t.failedTxMu.Unlock()
+	t.pruneFailedTxsLocked(now.UTC())
+	count = len(t.failedTxs)
+	if count == 0 {
+		return 0, ""
 	}
 
-	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		t.logWarn("Failed to open transactions CSV", "path", logPath, "error", err.Error())
-		return
+	freq := map[string]int{}
+	for _, ev := range t.failedTxs {
+		freq[ev.reason]++
 	}
-	defer f.Close()
-
-	if fi, err := f.Stat(); err == nil && fi.Size() == 0 {
-		w := csv.NewWriter(f)
-		_ = w.Write([]string{
-			"timestamp_utc",
-			"tx_hash",
-			"status",
-			"reason",
-			"chain_id",
-			"block_height",
-			"gas_wanted",
-			"gas_used",
-			"recipient",
-		})
-		w.Flush()
+	type pair struct {
+		reason string
+		n      int
 	}
-
-	w := csv.NewWriter(f)
-	defer w.Flush()
-
-	ts := time.Now().UTC().Format(time.RFC3339)
-
-	record := []string{
-		ts,
-		txHash,
-		status,
-		reason,
-		t.cfg.ChainID,
-		strconv.FormatInt(height, 10),
-		strconv.FormatUint(gasWanted, 10),
-		strconv.FormatUint(gasUsed, 10),
-		recipient,
+	pairs := make([]pair, 0, len(freq))
+	for reason, n := range freq {
+		pairs = append(pairs, pair{reason: reason, n: n})
 	}
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].n != pairs[j].n {
+			return pairs[i].n > pairs[j].n
+		}
+		return pairs[i].reason < pairs[j].reason
+	})
 
-	if err := w.Write(record); err != nil {
-		t.logWarn("Failed to write transactions CSV record", "path", logPath, "error", err.Error())
+	lines := make([]string, 0, len(pairs))
+	for _, p := range pairs {
+		lines = append(lines, fmt.Sprintf("• %s (%d)", p.reason, p.n))
 	}
+	return count, strings.Join(lines, "\n")
 }
 
-
+func normalizeFailedReason(reason string) string {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return "unknown"
+	}
+	if idx := strings.Index(reason, "\n"); idx >= 0 {
+		reason = strings.TrimSpace(reason[:idx])
+	}
+	if len(reason) > 120 {
+		return reason[:117] + "..."
+	}
+	return reason
+}
