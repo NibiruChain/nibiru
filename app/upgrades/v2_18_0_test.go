@@ -1,6 +1,7 @@
 package upgrades_test
 
 import (
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -83,7 +84,7 @@ func TestV218IncidentRecovery(t *testing.T) {
 			BankTo:  cw3,
 			ERC20To: safe,
 		}
-		runRecoveryUpgradeV218(t, &deps, cfg, false)
+		runRecoveryUpgradeV218(t, &deps, cfg)
 
 		require.Empty(t, deps.App.BankKeeper.GetAllBalances(deps.Ctx(), eth.EthAddrToNibiruAddr(eoaSource)))
 		require.Empty(t, deps.App.BankKeeper.GetAllBalances(deps.Ctx(), eth.EthAddrToNibiruAddr(contractSource)))
@@ -114,7 +115,7 @@ func TestV218IncidentRecovery(t *testing.T) {
 		require.Equal(t, 14, recoveryEvents, "12 ERC20 recoveries and 2 Bank recoveries")
 	})
 
-	t.Run("rolls back every change when one token transfer runs out of gas", func(t *testing.T) {
+	t.Run("continues after an unexpected token transfer failure", func(t *testing.T) {
 		deps := evmtest.NewTestDeps()
 		deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 
@@ -122,6 +123,7 @@ func TestV218IncidentRecovery(t *testing.T) {
 		safe := gethcommon.HexToAddress("0x6000000000000000000000000000000000000006")
 		cw3 := testutil.NewAccAddress()
 		validToken := deployRecoveryTokensV218(t, &deps, []gethcommon.Address{source}, 1)[0]
+		validTokenAfterFailure := deployRecoveryTokensV218(t, &deps, []gethcommon.Address{source}, 1)[0]
 		requireERC20BalanceV218(t, &deps, validToken, source, big.NewInt(100))
 		failingToken, err := evmtest.DeployContract(
 			&deps,
@@ -140,17 +142,20 @@ func TestV218IncidentRecovery(t *testing.T) {
 		cfg := upgrades.RecoveryConfigV218{
 			ChainID: appconst.SDK_CHAIN_ID_MAINNET,
 			Sources: []gethcommon.Address{source},
-			ERC20s:  []gethcommon.Address{validToken, failingToken.ContractAddr},
+			ERC20s:  []gethcommon.Address{validToken, failingToken.ContractAddr, validTokenAfterFailure},
 			BankTo:  cw3,
 			ERC20To: safe,
 		}
-		runRecoveryUpgradeV218(t, &deps, cfg, true)
+		runRecoveryUpgradeV218(t, &deps, cfg)
 
-		requireERC20BalanceV218(t, &deps, validToken, source, big.NewInt(100))
-		requireERC20BalanceV218(t, &deps, validToken, safe, new(big.Int))
+		requireERC20BalanceV218(t, &deps, validToken, source, new(big.Int))
+		requireERC20BalanceV218(t, &deps, validToken, safe, big.NewInt(100))
 		requireERC20BalanceV218(t, &deps, failingToken.ContractAddr, source, failingBalance)
-		require.True(t, bankBefore.IsEqual(deps.App.BankKeeper.GetAllBalances(deps.Ctx(), eth.EthAddrToNibiruAddr(source))))
-		require.Empty(t, deps.App.BankKeeper.GetAllBalances(deps.Ctx(), cw3))
+		requireERC20BalanceV218(t, &deps, validTokenAfterFailure, source, new(big.Int))
+		requireERC20BalanceV218(t, &deps, validTokenAfterFailure, safe, big.NewInt(100))
+		require.Empty(t, deps.App.BankKeeper.GetAllBalances(deps.Ctx(), eth.EthAddrToNibiruAddr(source)))
+		require.True(t, bankBefore.IsEqual(deps.App.BankKeeper.GetAllBalances(deps.Ctx(), cw3)))
+		requireRecoveryFailureEventsV218(t, deps.Ctx().EventManager().Events(), source.Hex(), failingToken.ContractAddr.Hex())
 	})
 
 	t.Run("runs migrations but skips recovery outside mainnet", func(t *testing.T) {
@@ -173,12 +178,25 @@ func TestV218IncidentRecovery(t *testing.T) {
 		}
 		// A successful real handler invocation proves RunMigrations completed.
 		// The chain ID mismatch must bypass only the forced recovery portion.
-		runRecoveryUpgradeV218(t, &deps, cfg, false)
+		runRecoveryUpgradeV218(t, &deps, cfg)
 
 		requireERC20BalanceV218(t, &deps, token, source, big.NewInt(100))
 		requireERC20BalanceV218(t, &deps, token, safe, new(big.Int))
 		require.True(t, bankFunds.IsEqual(deps.App.BankKeeper.GetAllBalances(deps.Ctx(), eth.EthAddrToNibiruAddr(source))))
 		require.Empty(t, deps.App.BankKeeper.GetAllBalances(deps.Ctx(), cw3))
+	})
+
+	t.Run("reports an invalid configuration and still runs migrations", func(t *testing.T) {
+		deps := evmtest.NewTestDeps()
+		upgrade := upgrades.Upgrade{
+			UpgradeName: "v2.18.0-invalid-config-test",
+			Handler: upgrades.Handler_v2_18{
+				Recovery: &upgrades.RecoveryConfigV218{},
+			},
+		}
+
+		require.NoError(t, deps.RunUpgrade(upgrade))
+		requireUpgradeFailureEventV218(t, deps.Ctx().EventManager().Events())
 	})
 }
 
@@ -225,7 +243,6 @@ func runRecoveryUpgradeV218(
 	t *testing.T,
 	deps *evmtest.TestDeps,
 	cfg upgrades.RecoveryConfigV218,
-	wantError bool,
 ) {
 	t.Helper()
 	upgrade := upgrades.Upgrade{
@@ -234,12 +251,47 @@ func runRecoveryUpgradeV218(
 			Recovery: &cfg,
 		},
 	}
-	err := deps.RunUpgrade(upgrade)
-	if wantError {
-		require.ErrorContains(t, err, "transfer VM error")
-		return
+	require.NoError(t, deps.RunUpgrade(upgrade))
+}
+
+func requireRecoveryFailureEventsV218(
+	t *testing.T,
+	events sdk.Events,
+	source, token string,
+) {
+	t.Helper()
+	var gotDetailed, gotUpgradeFailure bool
+	for _, event := range events {
+		switch event.Type {
+		case "upgrade_failure":
+			upgrade, ok := event.GetAttribute("upgrade")
+			gotUpgradeFailure = ok && upgrade.Value == "v2.18.0"
+		case "incident_fund_recovery_failure":
+			details, ok := event.GetAttribute("details")
+			if !ok {
+				continue
+			}
+			var payload map[string]string
+			require.NoError(t, json.Unmarshal([]byte(details.Value), &payload))
+			gotDetailed = payload["operation"] == "erc20" && payload["source"] == source && payload["asset"] == token
+		}
 	}
-	require.NoError(t, err)
+	require.True(t, gotDetailed, "missing detailed ERC20 recovery failure event")
+	require.True(t, gotUpgradeFailure, "missing v2.18.0 upgrade failure event")
+}
+
+func requireUpgradeFailureEventV218(t *testing.T, events sdk.Events) {
+	t.Helper()
+	for _, event := range events {
+		if event.Type != "upgrade_failure" {
+			continue
+		}
+		upgrade, ok := event.GetAttribute("upgrade")
+		if ok && upgrade.Value == "v2.18.0" {
+			return
+		}
+	}
+	t.Fatal("missing v2.18.0 upgrade failure event")
 }
 
 func requireERC20BalanceV218(

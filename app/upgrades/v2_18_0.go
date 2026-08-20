@@ -1,6 +1,8 @@
 package upgrades
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -74,26 +76,26 @@ func (h Handler_v2_18) Handler(
 		plan upgradetypes.Plan,
 		fromVM module.VersionMap,
 	) (module.VersionMap, error) {
-		cacheCtx, writeCache := ctx.CacheContext()
-
-		toVM, err := mm.RunMigrations(cacheCtx, cfg, fromVM)
-		if err != nil {
-			return fromVM, fmt.Errorf("v2.18.0 module migrations failed: %w", err)
+		if err := h.runUpgrade2_18_0(nibiru, ctx); err != nil {
+			ctx.Logger().Error("v2.18.0 upgrade failure", "err", err)
+			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.18.0", err))
 		}
-
-		recoveryCfg, err := h.config()
-		if err != nil {
-			return fromVM, fmt.Errorf("v2.18.0 recovery configuration: %w", err)
-		}
-		if cacheCtx.ChainID() == recoveryCfg.ChainID {
-			if err := recoverIncidentFundsV218(nibiru, cacheCtx, recoveryCfg); err != nil {
-				return fromVM, fmt.Errorf("v2.18.0 incident recovery failed: %w", err)
-			}
-		}
-
-		writeCache()
-		return toVM, nil
+		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
+}
+
+func (h Handler_v2_18) runUpgrade2_18_0(
+	nibiru *keepers.PublicKeepers,
+	ctx sdk.Context,
+) error {
+	recoveryCfg, err := h.config()
+	if err != nil {
+		return fmt.Errorf("recovery configuration: %w", err)
+	}
+	if ctx.ChainID() != recoveryCfg.ChainID {
+		return nil
+	}
+	return recoverIncidentFundsV218(nibiru, ctx, recoveryCfg)
 }
 
 func (h Handler_v2_18) config() (RecoveryConfigV218, error) {
@@ -158,45 +160,64 @@ func recoverIncidentFundsV218(
 		}
 	}
 
-	// Keep all EVM changes inside one StateDB rooted in the upgrade's cached
-	// context. A later error leaves both the EVM and Bank changes uncommitted.
-	sdb := nibiru.EvmKeeper.NewSDB(
-		ctx,
-		nibiru.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}),
-	)
-	for _, source := range cfg.Sources {
-		for _, token := range cfg.ERC20s {
-			if err := recoverERC20V218(nibiru.EvmKeeper, sdb, source, cfg.ERC20To, token); err != nil {
-				return fmt.Errorf("source %s token %s: %w", source.Hex(), token.Hex(), err)
-			}
-		}
-	}
-	sdb.Commit()
+	var recoveryErrors []error
 
+	// Bank transfers are simpler than EVM calls, so finish them first. Each
+	// source is independent: an unexpected failure must not discard recovery
+	// work that already completed or block the remaining sources.
 	for _, source := range cfg.Sources {
 		bankSource := eth.EthAddrToNibiruAddr(source)
-		allBalances := nibiru.BankKeeper.GetAllBalances(ctx, bankSource)
-		spendable := nibiru.BankKeeper.SpendableCoins(ctx, bankSource)
-		if !allBalances.IsEqual(spendable) {
-			return fmt.Errorf(
-				"source %s has locked Bank coins: all=%s spendable=%s",
-				bankSource, allBalances, spendable,
-			)
+		if err := recoverBankV218(nibiru, ctx, bankSource, cfg.BankTo); err != nil {
+			recoveryErrors = append(recoveryErrors, err)
+			ctx.EventManager().EmitEvent(newRecoveryFailureEventV218(
+				"bank", bankSource.String(), cfg.BankTo.String(), "bank", err,
+			))
 		}
-		if allBalances.Empty() {
-			continue
-		}
-		if err := nibiru.BankKeeper.SendCoins(ctx, bankSource, cfg.BankTo, allBalances); err != nil {
-			return fmt.Errorf("Bank transfer from %s: %w", bankSource, err)
-		}
-		if remaining := nibiru.BankKeeper.GetAllBalances(ctx, bankSource); !remaining.Empty() {
-			return fmt.Errorf("source %s retains Bank coins: %s", bankSource, remaining)
-		}
-		ctx.EventManager().EmitEvent(newRecoveryEventV218(
-			bankSource.String(), cfg.BankTo.String(), "bank", allBalances.String(),
-		))
 	}
 
+	for _, source := range cfg.Sources {
+		for _, token := range cfg.ERC20s {
+			sdb := nibiru.EvmKeeper.NewSDB(
+				ctx,
+				nibiru.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}),
+			)
+			if err := recoverERC20V218(nibiru.EvmKeeper, sdb, source, cfg.ERC20To, token); err != nil {
+				err = fmt.Errorf("source %s token %s: %w", source.Hex(), token.Hex(), err)
+				recoveryErrors = append(recoveryErrors, err)
+				ctx.EventManager().EmitEvent(newRecoveryFailureEventV218(
+					"erc20", source.Hex(), cfg.ERC20To.Hex(), token.Hex(), err,
+				))
+				continue
+			}
+			sdb.Commit()
+		}
+	}
+
+	return errors.Join(recoveryErrors...)
+}
+
+func recoverBankV218(
+	nibiru *keepers.PublicKeepers,
+	ctx sdk.Context,
+	source, destination sdk.AccAddress,
+) error {
+	allBalances := nibiru.BankKeeper.GetAllBalances(ctx, source)
+	spendable := nibiru.BankKeeper.SpendableCoins(ctx, source)
+	if !allBalances.IsEqual(spendable) {
+		return fmt.Errorf("source %s has locked Bank coins: all=%s spendable=%s", source, allBalances, spendable)
+	}
+	if allBalances.Empty() {
+		return nil
+	}
+	if err := nibiru.BankKeeper.SendCoins(ctx, source, destination, allBalances); err != nil {
+		return fmt.Errorf("Bank transfer from %s: %w", source, err)
+	}
+	if remaining := nibiru.BankKeeper.GetAllBalances(ctx, source); !remaining.Empty() {
+		return fmt.Errorf("source %s retains Bank coins: %s", source, remaining)
+	}
+	ctx.EventManager().EmitEvent(newRecoveryEventV218(
+		source.String(), destination.String(), "bank", allBalances.String(),
+	))
 	return nil
 }
 
@@ -367,5 +388,34 @@ func newRecoveryEventV218(source, destination, asset, amount string) sdk.Event {
 		sdk.NewAttribute("destination", destination),
 		sdk.NewAttribute("asset", asset),
 		sdk.NewAttribute("amount", amount),
+	)
+}
+
+type recoveryFailureV218 struct {
+	Operation   string `json:"operation"`
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+	Asset       string `json:"asset"`
+	Error       string `json:"error"`
+}
+
+func newRecoveryFailureEventV218(
+	operation, source, destination, asset string,
+	err error,
+) sdk.Event {
+	details, marshalErr := json.Marshal(recoveryFailureV218{
+		Operation:   operation,
+		Source:      source,
+		Destination: destination,
+		Asset:       asset,
+		Error:       err.Error(),
+	})
+	if marshalErr != nil {
+		details = []byte(fmt.Sprintf(`{"error":%q}`, marshalErr.Error()))
+	}
+	return sdk.NewEvent(
+		"incident_fund_recovery_failure",
+		sdk.NewAttribute("upgrade", "v2.18.0"),
+		sdk.NewAttribute("details", string(details)),
 	)
 }
