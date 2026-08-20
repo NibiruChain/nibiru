@@ -57,6 +57,7 @@ func NewAnteHandlerNonEVM(
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1915
 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
+		ante.AnteDecIncidentQuarantine{},
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
 		ante.AnteDecEnsureSinglePostPriceMessage{},
