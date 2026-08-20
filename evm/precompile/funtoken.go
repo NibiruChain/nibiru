@@ -57,20 +57,32 @@ const (
 
 func (p precompileFunToken) Run(
 	evmObj *vm.EVM,
-	sender gethcommon.Address,
+	// trueCaller is the address whose account a mutable precompile may act for.
+	//
+	//   - A top-level call sets trueCaller to the transaction sender.
+	//   - An ordinary CALL resets trueCaller to the called contract.
+	//   - DELEGATECALL copies the already-resolved trueCaller from the calling
+	//     frame, so delegation cannot reach back across an earlier CALL boundary.
+	trueCaller gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
-	bz, _, err = p.DynamicRun(evmObj, sender, contract, readonly, isDelegatedCall)
+	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
 	return bz, err
 }
 
 // DynamicRun runs the precompiled contract and returns the gas cost.
 func (p precompileFunToken) DynamicRun(
 	evmObj *vm.EVM,
-	sender gethcommon.Address,
+	// trueCaller is the address whose account a mutable precompile may act for.
+	//
+	//   - A top-level call sets trueCaller to the transaction sender.
+	//   - An ordinary CALL resets trueCaller to the called contract.
+	//   - DELEGATECALL copies the already-resolved trueCaller from the calling
+	//     frame, so delegation cannot reach back across an earlier CALL boundary.
+	trueCaller gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
@@ -110,7 +122,7 @@ func (p precompileFunToken) DynamicRun(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, sender, readonly, evmObj)
+		bz, err = p.sendToBank(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evmObj)
 	case FunTokenMethod_bankBalance:
@@ -118,9 +130,9 @@ func (p precompileFunToken) DynamicRun(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, sender, readonly, evmObj)
+		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evmObj)
 	case FunTokenMethod_bankMsgSend:
-		bz, err = p.bankMsgSend(startResult, sender, readonly)
+		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
 	case FunTokenMethod_getErc20Address:
 		bz, err = p.getErc20Address(startResult, contract)
 	default:

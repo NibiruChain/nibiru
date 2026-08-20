@@ -48,19 +48,19 @@ const (
 // Run runs the precompiled contract
 func (p precompileOracle) Run(
 	evmObj *vm.EVM,
-	sender gethcommon.Address,
+	trueCaller gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
-	bz, _, err = p.DynamicRun(evmObj, sender, contract, readonly, isDelegatedCall)
+	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
 	return bz, err
 }
 
 func (p precompileOracle) DynamicRun(
 	evmObj *vm.EVM,
-	sender gethcommon.Address,
+	trueCaller gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls

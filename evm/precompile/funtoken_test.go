@@ -361,6 +361,11 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 }
 
+// TestDelegatedFunTokenMutationsPreserveTransactionSender protects the normal
+// adapter path. An EOA calls a router that delegates into the FunToken
+// precompile, so sendToBank, sendToEvm, and bankMsgSend must use the EOA's
+// authority. The v2.18 fix must keep this path working while closing the
+// callback impersonation path tested below.
 func (s *FuntokenSuite) TestDelegatedFunTokenMutationsPreserveTransactionSender() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "delegate-denom", &s.Suite)
@@ -461,7 +466,11 @@ func (s *FuntokenSuite) TestDelegatedFunTokenMutationsPreserveTransactionSender(
 	)
 }
 
-func (s *FuntokenSuite) TestDelegatedSenderStopsCallbackImpersonation() {
+// TestTrueCallerStopsCallbackImpersonation models the pool-drain call
+// shape: EOA -> router -> funded pool -> router callback -> DELEGATECALL into
+// FunToken. The callback may spend the router's balance, but it must not inherit
+// the pool's authority merely because the pool made the callback.
+func (s *FuntokenSuite) TestTrueCallerStopsCallbackImpersonation() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "callback-denom", &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address
@@ -522,7 +531,11 @@ func (s *FuntokenSuite) TestDelegatedSenderStopsCallbackImpersonation() {
 	)
 }
 
-func (s *FuntokenSuite) TestDelegatedSenderSurvivesProxy() {
+// TestTrueCallerSurvivesProxy covers the Sai-compatible proxy path. An EOA
+// calls a proxy, the proxy delegates into its implementation, and the
+// implementation delegates into FunToken. Both delegate calls must preserve
+// the EOA as the account authorized to fund sendToBank.
+func (s *FuntokenSuite) TestTrueCallerSurvivesProxy() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "proxy-denom", &s.Suite)
 	erc20 := funtoken.Erc20Addr.Address

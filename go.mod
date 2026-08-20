@@ -9,7 +9,7 @@ require (
 
 	// Cosmos-SDK and IBC
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/ethereum/go-ethereum v1.14.13
+	github.com/ethereum/go-ethereum v1.14.13-nibiru.5
 )
 
 require (
