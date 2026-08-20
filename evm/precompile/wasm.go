@@ -38,26 +38,20 @@ const (
 
 func (p precompileWasm) Run(
 	evmObj *vm.EVM,
-	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
+	sender gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
-	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
+	bz, _, err = p.DynamicRun(evmObj, sender, contract, readonly, isDelegatedCall)
 	return bz, err
 }
 
 // Run runs the precompiled contract
 func (p precompileWasm) DynamicRun(
 	evmObj *vm.EVM,
-	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
+	sender gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
@@ -96,13 +90,13 @@ func (p precompileWasm) DynamicRun(
 
 	switch PrecompileMethod(startResult.Method.Name) {
 	case WasmMethod_execute:
-		bz, err = p.execute(startResult, trueCaller, readonly)
+		bz, err = p.execute(startResult, sender, readonly)
 	case WasmMethod_query:
 		bz, err = p.query(startResult, contract)
 	case WasmMethod_instantiate:
-		bz, err = p.instantiate(startResult, trueCaller, readonly)
+		bz, err = p.instantiate(startResult, sender, readonly)
 	case WasmMethod_executeMulti:
-		bz, err = p.executeMulti(startResult, trueCaller, readonly)
+		bz, err = p.executeMulti(startResult, sender, readonly)
 	case WasmMethod_queryRaw:
 		bz, err = p.queryRaw(startResult, contract)
 	default:

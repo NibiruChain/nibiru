@@ -60,6 +60,12 @@ var (
 	testDirtyStateAttack5 []byte
 	//go:embed artifacts/contracts/TestOracleAsLZNativeFeeHandler.sol/TestOracleAsLZNativeFeeHandler.json
 	testOracleAsLZNativeFeeHandler []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestDelegatePrecompile.json
+	testDelegatePrecompile []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestCallbackCaller.json
+	testCallbackCaller []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestDelegateProxy.json
+	testDelegateProxy []byte
 )
 
 var (
@@ -205,6 +211,18 @@ var (
 		Name:      "TestOracleAsLZNativeFeeHandler.sol",
 		EmbedJSON: testOracleAsLZNativeFeeHandler,
 	}
+	SmartContract_TestDelegatePrecompile = CompiledEvmContract{
+		Name:      "TestDelegatePrecompile.sol",
+		EmbedJSON: testDelegatePrecompile,
+	}
+	SmartContract_TestCallbackCaller = CompiledEvmContract{
+		Name:      "TestCallbackCaller.sol",
+		EmbedJSON: testCallbackCaller,
+	}
+	SmartContract_TestDelegateProxy = CompiledEvmContract{
+		Name:      "TestDelegateProxy.sol",
+		EmbedJSON: testDelegateProxy,
+	}
 )
 
 func init() {
@@ -228,6 +246,9 @@ func init() {
 	SmartContract_TestBytes32Metadata.MustLoad()
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
+	SmartContract_TestDelegatePrecompile.MustLoad()
+	SmartContract_TestCallbackCaller.MustLoad()
+	SmartContract_TestDelegateProxy.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
 	SmartContract_TestOracleAsLZNativeFeeHandler.MustLoad()
 }

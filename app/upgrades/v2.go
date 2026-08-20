@@ -94,6 +94,8 @@ var (
 	}
 
 	Upgrade2_17_0 = NewVanillaUpgrade("v2.17.0")
+
+	Upgrade2_18_0 = NewVanillaUpgrade("v2.18.0")
 )
 
 var _ HandlerImpl = (*Handler_v2_16)(nil)

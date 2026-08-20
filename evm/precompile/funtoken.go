@@ -57,26 +57,20 @@ const (
 
 func (p precompileFunToken) Run(
 	evmObj *vm.EVM,
-	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
+	sender gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
 	isDelegatedCall bool,
 ) (bz []byte, err error) {
-	bz, _, err = p.DynamicRun(evmObj, trueCaller, contract, readonly, isDelegatedCall)
+	bz, _, err = p.DynamicRun(evmObj, sender, contract, readonly, isDelegatedCall)
 	return bz, err
 }
 
 // DynamicRun runs the precompiled contract and returns the gas cost.
 func (p precompileFunToken) DynamicRun(
 	evmObj *vm.EVM,
-	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
+	sender gethcommon.Address,
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
@@ -116,7 +110,7 @@ func (p precompileFunToken) DynamicRun(
 	method := startResult.Method
 	switch PrecompileMethod(method.Name) {
 	case FunTokenMethod_sendToBank:
-		bz, err = p.sendToBank(startResult, trueCaller, readonly, evmObj)
+		bz, err = p.sendToBank(startResult, sender, readonly, evmObj)
 	case FunTokenMethod_balance:
 		bz, err = p.balance(startResult, contract, evmObj)
 	case FunTokenMethod_bankBalance:
@@ -124,9 +118,9 @@ func (p precompileFunToken) DynamicRun(
 	case FunTokenMethod_whoAmI:
 		bz, err = p.whoAmI(startResult, contract)
 	case FunTokenMethod_sendToEvm:
-		bz, err = p.sendToEvm(startResult, trueCaller, readonly, evmObj)
+		bz, err = p.sendToEvm(startResult, sender, readonly, evmObj)
 	case FunTokenMethod_bankMsgSend:
-		bz, err = p.bankMsgSend(startResult, trueCaller, readonly)
+		bz, err = p.bankMsgSend(startResult, sender, readonly)
 	case FunTokenMethod_getErc20Address:
 		bz, err = p.getErc20Address(startResult, contract)
 	default:

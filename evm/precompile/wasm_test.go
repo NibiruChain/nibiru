@@ -158,6 +158,39 @@ func (s *WasmSuite) TestExecute() {
 	})
 }
 
+func (s *WasmSuite) TestDelegatedExecutePreservesTransactionSender() {
+	deps := evmtest.NewTestDeps()
+	wasmContract := test.SetupWasmContracts(&deps, &s.Suite)[1]
+	routerResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestDelegatePrecompile)
+	s.Require().NoError(err)
+	router := routerResp.ContractAddr
+
+	input, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"wasmExecute",
+		wasmContract.String(),
+		[]byte(`{"increment": {}}`),
+		[]precompile.WasmBankCoin{},
+	)
+	s.Require().NoError(err)
+	callRouter := func() (*evm.MsgEthereumTxResponse, error) {
+		evmObj, _ := deps.NewEVM()
+		return deps.EvmKeeper.CallContract(
+			evmObj,
+			deps.Sender.EthAddr,
+			&router,
+			input,
+			WasmGasLimitExecute,
+			evm.COMMIT_ETH_TX,
+			nil,
+		)
+	}
+
+	resp, err := callRouter()
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	test.AssertWasmCounterState(&s.Suite, deps, wasmContract, 1)
+}
+
 func (s *WasmSuite) TestExecuteMulti() {
 	deps := evmtest.NewTestDeps()
 	evmObj, _ := deps.NewEVM()
