@@ -685,6 +685,8 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4 h1:/ccFY4oF1LFUtBUomw0tmLNNc6qwEhNnjPKGPelV2Jg=
 github.com/NibiruChain/go-ethereum v1.14.13-nibiru.4/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
+github.com/NibiruChain/go-ethereum v1.14.13-nibiru.5 h1:crcO6lpEln8r64ku7Jlp0wNqb3Oq6PEQI8cqIg6NKLc=
+github.com/NibiruChain/go-ethereum v1.14.13-nibiru.5/go.mod h1:RAC2gVMWJ6FkxSPESfbshrcKpIokgQKsVKmAuqdekDY=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE=
