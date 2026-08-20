@@ -76,15 +76,15 @@ func (h Handler_v2_18) Handler(
 		plan upgradetypes.Plan,
 		fromVM module.VersionMap,
 	) (module.VersionMap, error) {
-		if err := h.runUpgrade2_18_0(nibiru, ctx); err != nil {
-			ctx.Logger().Error("v2.18.0 upgrade failure", "err", err)
-			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.18.0", err))
+		if err := h.runUpgrade2_18_1(nibiru, ctx); err != nil {
+			ctx.Logger().Error("v2.18.1 upgrade failure", "err", err)
+			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.18.1", err))
 		}
 		return mm.RunMigrations(ctx, cfg, fromVM)
 	}
 }
 
-func (h Handler_v2_18) runUpgrade2_18_0(
+func (h Handler_v2_18) runUpgrade2_18_1(
 	nibiru *keepers.PublicKeepers,
 	ctx sdk.Context,
 ) error {
@@ -383,7 +383,7 @@ func loadERC20ValueV218(
 func newRecoveryEventV218(source, destination, asset, amount string) sdk.Event {
 	return sdk.NewEvent(
 		"incident_fund_recovery",
-		sdk.NewAttribute("upgrade", "v2.18.0"),
+		sdk.NewAttribute("upgrade", "v2.18.1"),
 		sdk.NewAttribute("source", source),
 		sdk.NewAttribute("destination", destination),
 		sdk.NewAttribute("asset", asset),
@@ -415,7 +415,7 @@ func newRecoveryFailureEventV218(
 	}
 	return sdk.NewEvent(
 		"incident_fund_recovery_failure",
-		sdk.NewAttribute("upgrade", "v2.18.0"),
+		sdk.NewAttribute("upgrade", "v2.18.1"),
 		sdk.NewAttribute("details", string(details)),
 	)
 }

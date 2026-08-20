@@ -189,7 +189,7 @@ func TestV218IncidentRecovery(t *testing.T) {
 	t.Run("reports an invalid configuration and still runs migrations", func(t *testing.T) {
 		deps := evmtest.NewTestDeps()
 		upgrade := upgrades.Upgrade{
-			UpgradeName: "v2.18.0-invalid-config-test",
+			UpgradeName: "v2.18.1-invalid-config-test",
 			Handler: upgrades.Handler_v2_18{
 				Recovery: &upgrades.RecoveryConfigV218{},
 			},
@@ -246,7 +246,7 @@ func runRecoveryUpgradeV218(
 ) {
 	t.Helper()
 	upgrade := upgrades.Upgrade{
-		UpgradeName: "v2.18.0-test",
+		UpgradeName: "v2.18.1-test",
 		Handler: upgrades.Handler_v2_18{
 			Recovery: &cfg,
 		},
@@ -265,7 +265,7 @@ func requireRecoveryFailureEventsV218(
 		switch event.Type {
 		case "upgrade_failure":
 			upgrade, ok := event.GetAttribute("upgrade")
-			gotUpgradeFailure = ok && upgrade.Value == "v2.18.0"
+			gotUpgradeFailure = ok && upgrade.Value == "v2.18.1"
 		case "incident_fund_recovery_failure":
 			details, ok := event.GetAttribute("details")
 			if !ok {
@@ -277,7 +277,7 @@ func requireRecoveryFailureEventsV218(
 		}
 	}
 	require.True(t, gotDetailed, "missing detailed ERC20 recovery failure event")
-	require.True(t, gotUpgradeFailure, "missing v2.18.0 upgrade failure event")
+	require.True(t, gotUpgradeFailure, "missing v2.18.1 upgrade failure event")
 }
 
 func requireUpgradeFailureEventV218(t *testing.T, events sdk.Events) {
@@ -287,11 +287,11 @@ func requireUpgradeFailureEventV218(t *testing.T, events sdk.Events) {
 			continue
 		}
 		upgrade, ok := event.GetAttribute("upgrade")
-		if ok && upgrade.Value == "v2.18.0" {
+		if ok && upgrade.Value == "v2.18.1" {
 			return
 		}
 	}
-	t.Fatal("missing v2.18.0 upgrade failure event")
+	t.Fatal("missing v2.18.1 upgrade failure event")
 }
 
 func requireERC20BalanceV218(

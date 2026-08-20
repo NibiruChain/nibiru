@@ -11,7 +11,7 @@ import (
 )
 
 // AnteStepIncidentQuarantine rejects authenticated EVM transactions from an
-// account quarantined by the v2.18.0 mainnet incident response. This step must
+// account quarantined by the v2.18.1 mainnet incident response. This step must
 // run after EthSigVerification, which recovers and sets MsgEthereumTx.From.
 func AnteStepIncidentQuarantine(
 	sdb *evmstate.SDB,

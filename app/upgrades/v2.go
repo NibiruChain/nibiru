@@ -95,8 +95,8 @@ var (
 
 	Upgrade2_17_0 = NewVanillaUpgrade("v2.17.0")
 
-	Upgrade2_18_0 = Upgrade{
-		UpgradeName:   "v2.18.0",
+	Upgrade2_18_1 = Upgrade{
+		UpgradeName:   "v2.18.1",
 		Handler:       Handler_v2_18{},
 		StoreUpgrades: store.StoreUpgrades{},
 	}

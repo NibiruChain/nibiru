@@ -14,7 +14,7 @@ import (
 )
 
 // incidentQuarantinedAddresses contains the account identities quarantined by
-// the v2.18.0 mainnet incident response. Cosmos and EVM addresses share the
+// the v2.18.1 mainnet incident response. Cosmos and EVM addresses share the
 // same 20 address bytes, so callers must normalize to sdk.AccAddress before
 // checking this list.
 var incidentQuarantinedAddresses = []sdk.AccAddress{
