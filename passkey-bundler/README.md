@@ -6,7 +6,9 @@ ships with health and metrics endpoints for operations.
 
 ## Features
 - JSON-RPC: `eth_chainId`, `eth_supportedEntryPoints`, `eth_sendUserOperation`, `eth_getUserOperationReceipt`.
-- Passkey helpers: `passkey_createAccount(qx,qy,factory?)`, `passkey_getLogs(limit)`.
+- Passkey helpers: `passkey_createAccount(qx,qy,factory?,gasLimit?)`, `passkey_getLogs(limit)`. Account creation always
+  broadcasts with a bounded explicit gas limit; the optional limit is a hex quantity and defaults to `0x16e360`
+  (1,500,000 gas).
 - Validation: entry point and chain ID enforcement, userOp schema checks, rate limiting, optional API key auth
   (`x-api-key` or `Authorization: Bearer <key>`).
 - Queue + retries: in-memory FIFO queue (tie-breaker `maxPriorityFeePerGas`), configurable concurrency, retries with
