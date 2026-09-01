@@ -3,6 +3,7 @@ import Fastify, { FastifyReply, FastifyRequest } from "fastify"
 import path from "node:path"
 import { Contract, Interface, JsonRpcProvider, Wallet, toBeHex } from "ethers"
 
+import { parseAccountCreationGasLimit } from "./accountCreation"
 import { loadConfig } from "./config"
 import { BundlerLogger } from "./logger"
 import { Metrics } from "./metrics"
@@ -379,6 +380,7 @@ async function handleCreatePasskeyAccount(params: any[], wallet: Wallet): Promis
   const qx = params[0] as string | undefined
   const qy = params[1] as string | undefined
   const factoryAddr = params[2] as string | undefined
+  const gasLimit = parseAccountCreationGasLimit(params[3])
 
   if (!factoryAddr) throw new Error("Factory address missing (param[2])")
   if (!qx || !qy) throw new Error("passkey_createAccount requires qx and qy")
@@ -386,7 +388,9 @@ async function handleCreatePasskeyAccount(params: any[], wallet: Wallet): Promis
   const iface = new Interface(FACTORY_ABI)
   const factory = new Contract(factoryAddr, iface, wallet)
   const predicted = (await factory.accountAddress(qx, qy)) as string
-  const tx = await factory.createAccount(qx, qy)
+  // Some Nibiru RPCs cannot estimate this factory call before the
+  // deterministic clone exists. An explicit limit guarantees a broadcast.
+  const tx = await factory.createAccount(qx, qy, { gasLimit })
   const receipt = await tx.wait()
   const account = parseAccountCreated(receipt?.logs, iface) ?? predicted
   return { account, txHash: receipt?.hash ?? tx.hash }

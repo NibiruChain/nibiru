@@ -4,6 +4,10 @@ import os from "node:os"
 import path from "node:path"
 import { test } from "node:test"
 
+import {
+  DEFAULT_ACCOUNT_CREATION_GAS_LIMIT,
+  parseAccountCreationGasLimit,
+} from "../src/accountCreation"
 import { loadConfig } from "../src/config"
 import { RateLimiter } from "../src/rateLimiter"
 import { SqliteStore } from "../src/store"
@@ -151,6 +155,25 @@ test("preVerificationGas estimate includes calldata and overhead", () => {
     },
   })
   assert.ok(pre > 30_000n)
+})
+
+test("passkey account creation defaults to explicit gas", () => {
+  assert.equal(
+    parseAccountCreationGasLimit(undefined),
+    DEFAULT_ACCOUNT_CREATION_GAS_LIMIT,
+  )
+})
+
+test("passkey account creation accepts only bounded hex overrides", () => {
+  assert.equal(parseAccountCreationGasLimit("0x16e360"), 1_500_000n)
+  assert.throws(
+    () => parseAccountCreationGasLimit("0x989680"),
+    /must be between 1 and/,
+  )
+  assert.throws(
+    () => parseAccountCreationGasLimit("1500000"),
+    /must be a hex quantity/,
+  )
 })
 
 test("sqlite store persists userOp records and receipts", async () => {
