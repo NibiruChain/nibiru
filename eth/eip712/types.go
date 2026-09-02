@@ -4,7 +4,7 @@ package eip712
 import (
 	"bytes"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -238,8 +238,8 @@ func sortedJSONKeys(json gjson.Result) ([]string, error) {
 		i++
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		return strings.Compare(keys[i], keys[j]) > 0
+	slices.SortFunc(keys, func(a, b string) int {
+		return strings.Compare(b, a)
 	})
 
 	return keys, nil
