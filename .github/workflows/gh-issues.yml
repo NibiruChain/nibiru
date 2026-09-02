@@ -29,7 +29,7 @@ jobs:
     # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#issues
     if: "github.event.action == 'opened'"
     steps:
-      - uses: github/issue-labeler@v3.4
+      - uses: github/issue-labeler@v3.5
         if: join(github.event.issue.labels) == ''
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
