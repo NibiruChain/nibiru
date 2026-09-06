@@ -19,6 +19,11 @@ versions of the builder images.
 
 ## Changelog
 
+**Version 0019:**
+
+- Move the Debian and cross-compilation builders from end-of-life Bullseye to
+  supported Bookworm.
+
 **Version 0018:**
 
 - Update Rust to stable for Nibiru fork artifact builds.

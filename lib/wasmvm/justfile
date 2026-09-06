@@ -184,10 +184,10 @@ test-alpine:
   user_group="$(id -g)"
 
   just artifact-static
-  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine go build -tags muslc ./lib/wasmvm/...
-  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine go test -tags muslc -count=1 ./lib/wasmvm/...
-  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0018-alpine sh -c "cd lib/wasmvm && ./build_demo.sh"
-  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun/lib/wasmvm cosmwasm/go-ext-builder:0018-alpine file ./demo
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0019-alpine go build -tags muslc ./lib/wasmvm/...
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0019-alpine go test -tags muslc -count=1 ./lib/wasmvm/...
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun cosmwasm/go-ext-builder:0019-alpine sh -c "cd lib/wasmvm && ./build_demo.sh"
+  docker run --rm -u "${user_id}:${user_group}" -v "$repo_root":/mnt/testrun -w /mnt/testrun/lib/wasmvm cosmwasm/go-ext-builder:0019-alpine file ./demo
   for alpine_version in 3.18 3.17 3.16 3.15 3.14; do
     docker run --rm --read-only -v "$wasmvm_dir":/mnt/testrun -w /mnt/testrun "alpine:${alpine_version}" ./demo ./testdata/hackatom.wasm
   done
@@ -262,15 +262,15 @@ shellcheck:
 
 # Build the static musl Docker builder image.
 docker-image-static:
-  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0018-alpine -f builders/Dockerfile.alpine
+  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0019-alpine -f builders/Dockerfile.alpine
 
 # Build the Linux shared Docker builder image.
 docker-image-linux:
-  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0018-debian -f builders/Dockerfile.debian
+  docker build --pull --progress=plain --platform=linux/amd64 builders -t cosmwasm/go-ext-builder:0019-debian -f builders/Dockerfile.debian
 
 # Build the Darwin and Windows cross Docker builder image.
 docker-image-cross:
-  docker build --pull --progress=plain builders -t cosmwasm/go-ext-builder:0018-cross -f builders/Dockerfile.cross
+  docker build --pull --progress=plain builders -t cosmwasm/go-ext-builder:0019-cross -f builders/Dockerfile.cross
 
 # Build static musl release artifacts.
 artifact-static:
@@ -281,7 +281,7 @@ artifact-static:
 
   rm -rf libwasmvm/target/aarch64-unknown-linux-musl/release
   rm -rf libwasmvm/target/x86_64-unknown-linux-musl/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-alpine
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-alpine
   cp libwasmvm/artifacts/libwasmvm_muslc.a internal/api
   cp libwasmvm/artifacts/libwasmvm_muslc.aarch64.a internal/api
   just update-bindings
@@ -292,7 +292,7 @@ artifact-linux:
   set -euo pipefail
   rm -rf libwasmvm/target/x86_64-unknown-linux-gnu/release
   rm -rf libwasmvm/target/aarch64-unknown-linux-gnu/release
-  docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/libwasmvm:/code" cosmwasm/go-ext-builder:0018-debian build_linux.sh
+  docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/libwasmvm:/code" cosmwasm/go-ext-builder:0019-debian build_linux.sh
   cp libwasmvm/artifacts/libwasmvm.x86_64.so internal/api
   cp libwasmvm/artifacts/libwasmvm.aarch64.so internal/api
   just update-bindings
@@ -306,11 +306,11 @@ artifact-darwin:
 
   rm -rf libwasmvm/target/x86_64-apple-darwin/release
   rm -rf libwasmvm/target/aarch64-apple-darwin/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-cross build_macos.sh
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-cross build_macos.sh
   cp libwasmvm/artifacts/libwasmvm.dylib internal/api
   rm -rf libwasmvm/target/x86_64-apple-darwin/release
   rm -rf libwasmvm/target/aarch64-apple-darwin/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0018-cross build_macos_static.sh
+  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-cross build_macos_static.sh
   cp libwasmvm/artifacts/libwasmvmstatic_darwin.a internal/api/libwasmvmstatic_darwin.a
   just update-bindings
 
