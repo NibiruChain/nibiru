@@ -16,15 +16,18 @@ move_to_dir_with_protos() {
   echo "start_path: ${start_path}"
   echo "start_dir_name: ${start_dir_name}"
 
-  echo "Check if 'start_dir_name' is (\"nibiru\", \"nibi-chain\") (the repo)."
-  echo "Or if the immediate parent is one of those directories, move to it."
-  if [ "$start_dir_name" != "nibiru" ] && [ "$start_dir_name" != "nibi-chain" ]; then
+  echo "Check if the current directory is a Nibiru repo root (go.mod + proto/)."
+  echo "If not, try a known sibling checkout name (nibiru, nibi-chain, nibi-chain-priv)."
+  if [ ! -f go.mod ] || [ ! -d proto ]; then
     if [ -d ../nibiru ]; then
       cd ../nibiru
     elif [ -d ../nibi-chain ]; then
       cd ../nibi-chain
+    elif [ -d ../nibi-chain-priv ]; then
+      cd ../nibi-chain-priv
     else
-      echo "Not in 'nibiru' or 'nibi-chain' directory, or an immediate child. Exiting."
+      echo "Not in a Nibiru repo root, or an immediate child of a known checkout. Exiting."
+      echo "start_dir_name: ${start_dir_name}"
       return 1
     fi
   fi
