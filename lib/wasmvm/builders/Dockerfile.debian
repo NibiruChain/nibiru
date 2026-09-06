@@ -1,7 +1,7 @@
-# Use a Debian version old enough to keep glibc requirements low while still
-# having supported package repositories. Debian 11 "Bullseye" has LTS until
-# August 31, 2026.
-FROM debian:11-slim
+# Debian 12 "Bookworm" receives LTS through June 30, 2028. Bullseye reached
+# end of life on August 31, 2026, so its live security repository can no longer
+# provide a reliable builder input.
+FROM debian:12-slim
 
 RUN apt-get -o Acquire::Retries=5 update -y \
   && apt-get -o Acquire::Retries=5 install -y \
