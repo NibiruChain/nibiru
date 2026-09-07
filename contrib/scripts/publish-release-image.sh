@@ -29,7 +29,9 @@ Options:
   --dry-run             Print the planned operation and exit.
   -h, --help            Show this help.
 
-Publishing requires GHCR_TOKEN with GitHub Packages write permission. Set
+Publishing requires GHCR_TOKEN with permission to write GitHub Packages. For a
+local run, use a classic personal access token. In GitHub Actions, map the
+workflow GITHUB_TOKEN from a job with packages: write to GHCR_TOKEN. Set
 GHCR_USERNAME to override the authenticated GitHub username used for login.
 EOF
 }
