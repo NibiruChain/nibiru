@@ -236,6 +236,15 @@ test-release:
 release-publish:
     make release
 
+# Verify a public release's artifacts before publishing its container image.
+release-image-verify release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}'
+
+# Publish a verified public release as ghcr.io/nibiruchain/nibiru:<version>.
+[confirm]
+release-image-publish release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --push
+
 [private]
 _go-test-pkgs:
     #!/usr/bin/env bash
