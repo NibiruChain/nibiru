@@ -240,6 +240,10 @@ release-publish:
 release-image-verify release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}'
 
+# Build and execute local amd64 and arm64 images from verified public release artifacts.
+release-image-smoke release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --smoke-test
+
 # Publish a verified public release as ghcr.io/nibiruchain/nibiru:<version>.
 [confirm]
 release-image-publish release_tag version:

@@ -7,8 +7,10 @@ image="ghcr.io/nibiruchain/nibiru"
 release_tag=""
 version=""
 push=false
+smoke_test=false
 dry_run=false
 tmp_dir=""
+smoke_tags=()
 
 usage() {
   cat <<'EOF'
@@ -24,6 +26,7 @@ Required:
 
 Options:
   --push                Publish <image>:<version> to GHCR after verification.
+  --smoke-test          Build and run each Linux image locally without pushing.
   --repo <owner/repo>   GitHub release repository. Default: NibiruChain/nibiru
   --image <image>       Container image. Default: ghcr.io/nibiruchain/nibiru
   --dry-run             Print the planned operation and exit.
@@ -46,6 +49,10 @@ fail() {
 }
 
 cleanup() {
+  local tag
+  for tag in "${smoke_tags[@]}"; do
+    docker image rm --force "$tag" >/dev/null 2>&1 || true
+  done
   if [[ -n "$tmp_dir" && -d "$tmp_dir" ]]; then
     rm -rf -- "$tmp_dir"
   fi
@@ -82,6 +89,10 @@ while [[ $# -gt 0 ]]; do
       push=true
       shift
       ;;
+    --smoke-test)
+      smoke_test=true
+      shift
+      ;;
     --dry-run)
       dry_run=true
       shift
@@ -102,11 +113,15 @@ done
 [[ "$release_tag" == "v${version}" || "$release_tag" == */"v${version}" ]] || fail "release tag must end in v${version}"
 [[ "$repo" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || fail "invalid repository: $repo"
 [[ "$image" =~ ^ghcr.io/[A-Za-z0-9._/-]+$ ]] || fail "image must be a GHCR image: $image"
+[[ "$push" == false || "$smoke_test" == false ]] || fail "--push and --smoke-test cannot be used together"
 
 if [[ "$dry_run" == true ]]; then
   log "would verify release $repo@$release_tag and build $image:$version"
   if [[ "$push" == true ]]; then
     log "would publish $image:$version"
+  fi
+  if [[ "$smoke_test" == true ]]; then
+    log "would build and run local linux/amd64 and linux/arm64 smoke images"
   fi
   exit 0
 fi
@@ -117,8 +132,10 @@ require_command jq
 require_command sha256sum
 require_command tar
 
-if [[ "$push" == true ]]; then
+if [[ "$push" == true || "$smoke_test" == true ]]; then
   require_command docker
+fi
+if [[ "$push" == true ]]; then
   [[ -n "${GHCR_TOKEN:-}" ]] || fail "GHCR_TOKEN is required with --push"
 fi
 
@@ -171,6 +188,29 @@ tar -xzf "$download_dir/nibid_${version}_linux_arm64.tar.gz" -C "$source_dir/dis
 [[ -x "$source_dir/dist/arm64/nibid" ]] || fail "arm64 archive does not contain an executable nibid"
 
 log "verified release assets from $release_url"
+if [[ "$smoke_test" == true ]]; then
+  for architecture in amd64 arm64; do
+    platform="linux/$architecture"
+    smoke_tag="nibiru-release-smoke-$$:${version}-${architecture}"
+    smoke_tags+=("$smoke_tag")
+
+    log "building local $platform image from verified artifacts"
+    docker buildx build "$source_dir" \
+      --target release \
+      --build-arg src=external \
+      --platform "$platform" \
+      --tag "$smoke_tag" \
+      --load
+
+    log "running nibid version --long in local $platform image"
+    version_output="$(docker run --rm --platform "$platform" "$smoke_tag" version --long)"
+    printf '%s\n' "$version_output"
+    grep -Fx "version: $version" <<<"$version_output" >/dev/null || fail "local $platform image reports an unexpected nibid version"
+  done
+  log "local smoke test passed for linux/amd64 and linux/arm64"
+  exit 0
+fi
+
 if [[ "$push" == false ]]; then
   log "verification complete. Re-run with --push to publish $image:$version."
   exit 0
