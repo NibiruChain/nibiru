@@ -1,0 +1,131 @@
+# Publish a container from a public artifact release that was built elsewhere.
+#
+# Private-first release procedure
+# -------------------------------
+# Use this workflow only when a release must distribute tested binaries before
+# its source changes can be published. The public repository's normal Release
+# workflow is source-first: a public v<semver> tag triggers a build from that
+# tag. That is the wrong mechanism for this case because it would rebuild from
+# public source rather than package the already-tested private-release binary.
+#
+# 1. In the private release repository, merge the required public-main history
+#    into the private release line. Tag the exact private release commit as
+#    v<semver>, let private CI build the native archives, and verify its
+#    checksum manifest. The private release must contain Linux amd64 and arm64,
+#    Darwin amd64 and arm64, universal Darwin, and the checksum manifest.
+#
+# 2. In this public repository, create annotated tag hotfix/v<semver> at an
+#    appropriate public-main commit. Do not create public tag v<semver> yet.
+#    Publish a GitHub release on hotfix/v<semver>, then upload the verified
+#    private CI archives and their unchanged checksum manifest as its assets.
+#    Compare the public asset digests with the private manifest before making
+#    the public artifact release visible.
+#
+#    The hotfix tag is an artifact distribution record, not the private source
+#    commit. It deliberately avoids the v* trigger in release.yml. Publishing
+#    these release assets makes the compiled binaries available. It does not
+#    publish the private source tree or make a public-source release claim.
+#
+# 3. Merge this workflow to public main. In Actions, select this workflow, run
+#    it from main, and enter the published public release tag exactly, for
+#    example hotfix/v2.19.0. The input is the only operator-controlled value.
+#    The workflow derives image tag 2.19.0, verifies the attached Linux files,
+#    and publishes ghcr.io/nibiruchain/nibiru:2.19.0.
+#
+#    Before merging, a developer can run command `just release-image-smoke
+#    hotfix/v<semver> <semver>` on an ARM64 or AMD64 Docker host. The command
+#    builds both platform images from the same downloaded archives and runs
+#    command `nibid version --long` in each container. It does not log in to
+#    GHCR or publish an image.
+#
+# 4. Inspect the pushed manifest for linux/amd64 and linux/arm64. Do not add
+#    latest, a hotfix-prefixed image tag, or architecture-suffixed public tags.
+#    When the source is ready for public release, follow the ordinary v<semver>
+#    source-release process separately.
+#
+# This workflow reads only the public artifact release. It uses its short-lived
+# GITHUB_TOKEN with packages: write, not a personal access token. A run fails
+# before publication if the tag is not hotfix/v<semver>, the release is a draft,
+# an expected archive is missing, or either Linux archive fails SHA-256 checks.
+name: Publish Private-First Release Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Published public artifact tag, for example hotfix/v2.19.0"
+        required: true
+        type: string
+
+# The short-lived workflow token can read this repository's release assets and
+# publish its linked container package. No personal access token is required.
+permissions:
+  contents: read
+  packages: write
+
+# A second manual run for the same release waits instead of racing to move the
+# same immutable-looking image tag. Do not cancel a run that may be uploading.
+concurrency:
+  group: private-first-release-image-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Verify artifacts and publish image
+    runs-on: ubuntu-latest
+
+    steps:
+      # Dispatching from another branch would run unreviewed workflow code.
+      # Keep the publisher anchored to main, where the reviewed script lives.
+      - name: Require a main-branch dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main" || {
+            echo "::error::Run this workflow from the main branch."
+            exit 1
+          }
+
+      - name: Check out the trusted publisher
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Validate the release tag and derive its image version
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          case "$RELEASE_TAG" in
+            hotfix/v*) ;;
+            *)
+              echo "::error::release_tag must start with hotfix/v."
+              exit 1
+              ;;
+          esac
+
+          version="${RELEASE_TAG#hotfix/v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::release_tag must end in a semver version."
+            exit 1
+          fi
+
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # gh reads GH_TOKEN. Docker reads GHCR_TOKEN. Both hold the same
+      # short-lived token, scoped by the permissions block above.
+      - name: Verify release assets and publish the multi-arch image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.actor }}
+        run: |
+          contrib/scripts/publish-release-image.sh \
+            --release-tag "${{ steps.release.outputs.tag }}" \
+            --version "${{ steps.release.outputs.version }}" \
+            --push
