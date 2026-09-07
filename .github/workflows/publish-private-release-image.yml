@@ -1,13 +1,46 @@
 # Publish a container from a public artifact release that was built elsewhere.
 #
-# This workflow exists for private-first releases. The regular release workflow
-# starts from a public v* source tag and builds its own artifacts. Do not use it
-# for a hotfix/v* record, whose attached archives are the release boundary.
+# Private-first release procedure
+# -------------------------------
+# Use this workflow only when a release must distribute tested binaries before
+# its source changes can be published. The public repository's normal Release
+# workflow is source-first: a public v<semver> tag triggers a build from that
+# tag. That is the wrong mechanism for this case because it would rebuild from
+# public source rather than package the already-tested private-release binary.
 #
-# Run this workflow from main after the public hotfix/v<semver> release is
-# published. It derives the image tag from that input, verifies the uploaded
-# Linux archives, and publishes only ghcr.io/nibiruchain/nibiru:<semver>.
-# It never creates latest or architecture-suffixed public tags.
+# 1. In the private release repository, merge the required public-main history
+#    into the private release line. Tag the exact private release commit as
+#    v<semver>, let private CI build the native archives, and verify its
+#    checksum manifest. The private release must contain Linux amd64 and arm64,
+#    Darwin amd64 and arm64, universal Darwin, and the checksum manifest.
+#
+# 2. In this public repository, create annotated tag hotfix/v<semver> at an
+#    appropriate public-main commit. Do not create public tag v<semver> yet.
+#    Publish a GitHub release on hotfix/v<semver>, then upload the verified
+#    private CI archives and their unchanged checksum manifest as its assets.
+#    Compare the public asset digests with the private manifest before making
+#    the public artifact release visible.
+#
+#    The hotfix tag is an artifact distribution record, not the private source
+#    commit. It deliberately avoids the v* trigger in release.yml. Publishing
+#    these release assets makes the compiled binaries available. It does not
+#    publish the private source tree or make a public-source release claim.
+#
+# 3. Merge this workflow to public main. In Actions, select this workflow, run
+#    it from main, and enter the published public release tag exactly, for
+#    example hotfix/v2.19.0. The input is the only operator-controlled value.
+#    The workflow derives image tag 2.19.0, verifies the attached Linux files,
+#    and publishes ghcr.io/nibiruchain/nibiru:2.19.0.
+#
+# 4. Inspect the pushed manifest for linux/amd64 and linux/arm64. Do not add
+#    latest, a hotfix-prefixed image tag, or architecture-suffixed public tags.
+#    When the source is ready for public release, follow the ordinary v<semver>
+#    source-release process separately.
+#
+# This workflow reads only the public artifact release. It uses its short-lived
+# GITHUB_TOKEN with packages: write, not a personal access token. A run fails
+# before publication if the tag is not hotfix/v<semver>, the release is a draft,
+# an expected archive is missing, or either Linux archive fails SHA-256 checks.
 name: Publish Private-First Release Image
 
 on:
