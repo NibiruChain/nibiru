@@ -1,0 +1,75 @@
+[workspace]
+members = ["scripts", "packages/*", "nibiru-std", "contracts/*"]
+exclude = ["packages/msig-ez", "packages/wasmer"]
+resolver = "2"
+package.version = "0.7.0"
+package.homepage = "https://github.com/NibiruChain/nibiru-wasm"
+package.repository = "https://github.com/NibiruChain/nibiru-wasm"
+package.edition = "2021"
+
+# Dependencies can be inherited from a workspace by specifying the dependency in
+# the `[workspace.dependencies]` table. To use workspace crates, add them to the
+# `[dependencies]` table with `workspace = true`.
+# ```
+# anyhow = { workspace = true }
+# ```
+[workspace.dependencies]
+# serde
+serde = { version = "1.0.189", default-features = false, features = ["derive"] }
+serde_json = "1.0.108"
+
+# deps: Coupled packages. Each uses workspace.package.version.
+nibiru-std = { path = "nibiru-std" }
+# Macros for controlling ownership of CosmWasm smart contracts
+nibiru-ownable    = { path = "packages/nibiru-ownable" }
+nibiru-ownable-derive    = { path = "packages/nibiru-ownable-derive", version = "0.7.0" }
+
+# deps: Independent packages
+prost = "0.12.3"
+prost-types = "0.12.3"
+cw-address-like   = { path = "packages/cw-address-like" }
+easy-addr = { path = "packages/easy-addr" }
+
+# deps: CosmWasm
+cosmwasm-std    = { version = "1", features = ["stargate", "staking"] }
+cosmwasm-schema = "1"
+cw-storage-plus = { version = "1" }
+cw-multi-test   = { version = "1" }
+cw-utils        = { version = "1" }
+
+# deps: cw-plus
+cw2 = { version = "1" }
+cw3 = { version = "1" }
+cw3-fixed-multisig = { path = "contracts/core-cw3-fixed-msig", version = "2.0.0", features = ["library"] }
+cw4 = { version = "1" }
+cw20 = { version = "1" }
+cw4-group = { version = "1" }
+cw20-base = { version = "1" }
+
+# deps: core contracts
+lockup      = { path = "contracts/lockup", features = ["library"] }
+incentives  = { path = "contracts/incentives", features = ["library"] }
+
+# deps: else
+anyhow = "1"
+thiserror = "1.0.50"
+assert_cmd = "2"
+lazy_static = "1.4.0"
+schemars = "0.8.15"
+home = "0.5"
+toml = "0.8"
+quote = "1.0"
+syn = { version = "1", features = ["full"] } # NOTE: This needs to stay v1
+proc-macro2 = "1.0"
+ed25519-zebra = { version = "4.1", features = ["alloc"] }
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true

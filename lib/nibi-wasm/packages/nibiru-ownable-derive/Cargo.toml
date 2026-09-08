@@ -1,0 +1,23 @@
+[package]
+name        = "nibiru-ownable-derive"
+version    = { workspace = true }
+description = "Macros for generating code used by the `nibiru-ownable` crate"
+authors     = ["larry <gm@larry.engineer>", "Unique Divine <realuniquedivine@gmail.com>"]
+edition     = { workspace = true }
+homepage    = { workspace = true }
+repository  = { workspace = true }
+license     = "MIT" # only one of license, license-file is needed.
+
+[lib]
+doctest    = true # disable doc tests
+proc-macro = true
+
+[dependencies]
+proc-macro2 = { workspace = true }
+quote       = { workspace = true }
+syn         = { workspace = true }
+
+[dev-dependencies]
+cosmwasm-schema = { workspace = true }
+cosmwasm-std    = { workspace = true }
+nibiru-ownable  = { workspace = true }
