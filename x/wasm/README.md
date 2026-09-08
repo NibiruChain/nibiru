@@ -26,7 +26,7 @@ Related paths outside this directory:
 
 - directory [proto/cosmwasm/wasm/v1/](../../proto/cosmwasm/wasm/v1/) — protobuf definitions for msgs, queries, and genesis
 - directory [app/](../../app/) — module wiring into `NibiruApp`
-- repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) — Rust smart contracts and package `nibiru-std` (contract side, not chain module code)
+- directories [wasm-contracts/](../../wasm-contracts/) and [lib/nibiru-std/](../../lib/nibiru-std/) for Rust smart contracts and the `nibiru-std` package
 
 ## Hacking
 
@@ -285,4 +285,4 @@ Events with the same `Type` may be merged somewhere in the stack, so you might s
 | IBC contract model (one port per contract, channel handshake) | file [02-ibc.md](02-ibc.md) |
 | Governance proposals for wasm lifecycle | file [01-gov-txs.md](01-gov-txs.md) |
 | Upstream wasmd integration and upgrading notes | directory [docs-wasmd/](docs-wasmd/) |
-| Rust contracts and `nibiru-std` | repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) |
+| Rust contracts and `nibiru-std` | directories [wasm-contracts/](../../wasm-contracts/) and [lib/nibiru-std/](../../lib/nibiru-std/) |

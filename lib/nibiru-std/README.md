@@ -24,4 +24,4 @@ For detailed API documentation, visit [docs.rs/nibiru-std](https://docs.rs/nibir
 
 ## Repository
 
-This package is part of the [NibiruChain/nibiru-wasm](https://github.com/NibiruChain/nibiru-wasm) monorepo, which contains smart contract examples and additional tooling for Nibiru development.
+This package is part of the [Nibiru monorepo](https://github.com/NibiruChain/nibiru), which contains smart contract examples and additional tooling for Nibiru development.

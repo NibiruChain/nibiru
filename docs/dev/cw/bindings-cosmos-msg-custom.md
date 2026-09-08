@@ -87,7 +87,7 @@ Use crate `nibiru-std` for generated protobuf types and convenience traits:
   [`app/wasmext`](https://github.com/NibiruChain/nibiru/tree/master/app/wasmext)
   defines the Stargate query behavior exposed to contracts.
 
-The [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru-wasm/tree/main/contracts/nibi-stargate)
+The [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts/nibi-stargate)
 shows how a contract can construct token factory module messages. The
 [token factory guide](./tf.md) walks through deploying and using that contract.
 The [oracle guide](./oracle.md) shows a Stargate query that constructs protobuf
@@ -228,5 +228,5 @@ bindings:
 - [Nibiru Rust SDK](./rust-sdk.md)
 - [Querying oracle data](./oracle.md)
 - [Creating fungible tokens guide](./tf.md)
-- [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru-wasm/tree/main/contracts/nibi-stargate)
+- [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts/nibi-stargate)
 - [`app/wasmext` package](https://github.com/NibiruChain/nibiru/tree/master/app/wasmext)
