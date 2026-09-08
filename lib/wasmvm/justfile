@@ -278,10 +278,14 @@ artifact-static:
   set -euo pipefail
   user_id="$(id -u)"
   user_group="$(id -g)"
+  repo_root="$(git rev-parse --show-toplevel)"
 
   rm -rf libwasmvm/target/aarch64-unknown-linux-musl/release
   rm -rf libwasmvm/target/x86_64-unknown-linux-musl/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-alpine
+  docker run --rm -u "${user_id}:${user_group}" \
+    -v "${repo_root}":/code \
+    -w /code/lib/wasmvm/libwasmvm \
+    cosmwasm/go-ext-builder:0019-alpine
   cp libwasmvm/artifacts/libwasmvm_muslc.a internal/api
   cp libwasmvm/artifacts/libwasmvm_muslc.aarch64.a internal/api
   just update-bindings
@@ -290,9 +294,13 @@ artifact-static:
 artifact-linux:
   #!/usr/bin/env bash
   set -euo pipefail
+  repo_root="$(git rev-parse --show-toplevel)"
   rm -rf libwasmvm/target/x86_64-unknown-linux-gnu/release
   rm -rf libwasmvm/target/aarch64-unknown-linux-gnu/release
-  docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/libwasmvm:/code" cosmwasm/go-ext-builder:0019-debian build_linux.sh
+  docker run --rm -u "$(id -u):$(id -g)" \
+    -v "${repo_root}":/code \
+    -w /code/lib/wasmvm/libwasmvm \
+    cosmwasm/go-ext-builder:0019-debian build_linux.sh
   cp libwasmvm/artifacts/libwasmvm.x86_64.so internal/api
   cp libwasmvm/artifacts/libwasmvm.aarch64.so internal/api
   just update-bindings
@@ -303,14 +311,21 @@ artifact-darwin:
   set -euo pipefail
   user_id="$(id -u)"
   user_group="$(id -g)"
+  repo_root="$(git rev-parse --show-toplevel)"
 
   rm -rf libwasmvm/target/x86_64-apple-darwin/release
   rm -rf libwasmvm/target/aarch64-apple-darwin/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-cross build_macos.sh
+  docker run --rm -u "${user_id}:${user_group}" \
+    -v "${repo_root}":/code \
+    -w /code/lib/wasmvm/libwasmvm \
+    cosmwasm/go-ext-builder:0019-cross build_macos.sh
   cp libwasmvm/artifacts/libwasmvm.dylib internal/api
   rm -rf libwasmvm/target/x86_64-apple-darwin/release
   rm -rf libwasmvm/target/aarch64-apple-darwin/release
-  docker run --rm -u "${user_id}:${user_group}" -v "$PWD/libwasmvm":/code cosmwasm/go-ext-builder:0019-cross build_macos_static.sh
+  docker run --rm -u "${user_id}:${user_group}" \
+    -v "${repo_root}":/code \
+    -w /code/lib/wasmvm/libwasmvm \
+    cosmwasm/go-ext-builder:0019-cross build_macos_static.sh
   cp libwasmvm/artifacts/libwasmvmstatic_darwin.a internal/api/libwasmvmstatic_darwin.a
   just update-bindings
 
