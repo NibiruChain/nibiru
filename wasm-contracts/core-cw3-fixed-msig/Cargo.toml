@@ -1,11 +1,11 @@
 [package]
 name = "cw3-fixed-multisig"
-version = "2.0.1" # Should match contracts/core-cw3-flex-msig
+version = "2.0.1" # Should match wasm-contracts/core-cw3-flex-msig
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "Implementing cw3 with an fixed group multisig"
 license = "Apache-2.0"
-repository = "https://github.com/NibiruChain/nibiru-wasm"
+repository = "https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts/core-cw3-fixed-msig"
 homepage = { workspace = true }
 documentation = "https://docs.cosmwasm.com"
 

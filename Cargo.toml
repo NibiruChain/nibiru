@@ -7,7 +7,7 @@ members = [
   "lib/nibiru-ownable",
   "lib/nibiru-ownable-derive",
   "lib/nibiru-std",
-  "lib/nibi-wasm/contracts/*",
+  "wasm-contracts/*",
 ]
 # Wasmer and wasmvm keep independent Cargo workspaces and lockfiles.
 exclude = ["lib/wasmer", "lib/wasmvm/libwasmvm"]
@@ -50,15 +50,15 @@ cw-utils        = { version = "1" }
 # deps: cw-plus
 cw2 = { version = "1" }
 cw3 = { version = "1" }
-cw3-fixed-multisig = { path = "lib/nibi-wasm/contracts/core-cw3-fixed-msig", version = "2.0.0", features = ["library"] }
+cw3-fixed-multisig = { path = "wasm-contracts/core-cw3-fixed-msig", version = "2.0.0", features = ["library"] }
 cw4 = { version = "1" }
 cw20 = { version = "1" }
 cw4-group = { version = "1" }
 cw20-base = { version = "1" }
 
 # deps: core contracts
-lockup      = { path = "lib/nibi-wasm/contracts/lockup", features = ["library"] }
-incentives  = { path = "lib/nibi-wasm/contracts/incentives", features = ["library"] }
+lockup      = { path = "wasm-contracts/lockup", features = ["library"] }
+incentives  = { path = "wasm-contracts/incentives", features = ["library"] }
 
 # deps: else
 anyhow = "1"

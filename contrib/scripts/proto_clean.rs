@@ -291,17 +291,13 @@ mod tests {
 
     #[test]
     fn fixture_proto_clean() {
-        let dirty_path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/test/fixture_proto_dirty.rs"
-        );
+        let dirty_path =
+            concat!(env!("CARGO_MANIFEST_DIR"), "/test/fixture_proto_dirty.rs");
         let result = super::clean_file_imports(dirty_path);
         assert!(result.is_ok());
 
-        let clean_path = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/test/fixture_proto_clean.rs"
-        );
+        let clean_path =
+            concat!(env!("CARGO_MANIFEST_DIR"), "/test/fixture_proto_clean.rs");
         let want_result = fs::read_to_string(clean_path);
         assert!(want_result.is_ok());
 

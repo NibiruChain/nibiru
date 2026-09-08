@@ -1,3 +1,12 @@
+# Historical Nibiru Wasm reference
+
+The active Rust workspace now lives at the repository root. Libraries live in
+`lib/`, and contracts live in `wasm-contracts/`. This directory temporarily
+keeps the imported documentation and reference GitHub workflows while they are
+reorganized in a later documentation pass.
+
+---
+
 # NibiruChain/nibiru-wasm
 
 Wasm smart contract sandbox for Nibiru.

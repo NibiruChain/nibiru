@@ -1,4 +1,4 @@
-# nibiru-wasm/contracts/nibi-stargate
+# wasm-contracts/nibi-stargate
 
 This smart contract showcases usage examples for creating and managing fungible tokens native to Nibiru.
 
@@ -18,7 +18,7 @@ Table of Contents
 ## Guide: Using the Smart Contract
 
 A pre-built version of the Wasm bytecode for every smart contract in the
-[NibiruChain/nibiru-wasm](https://github.com/NibiruChain/nibiru-wasm) repo can be
+[NibiruChain/nibiru](https://github.com/NibiruChain/nibiru) repository can be
 found in the "artifacts" directory.
 
 ### Set environmnent vars
