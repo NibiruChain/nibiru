@@ -227,7 +227,7 @@ db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff. Keep this root-scoped so it does not hide Rust source directories
-# such as lib/nibi-wasm/packages/wasmer/lib/vm/src/instance/.
+# such as lib/wasmer/lib/vm/src/instance/.
 /instance/
 .webassets-cache
 
@@ -253,12 +253,12 @@ target/
 /lcov-wasmer.info
 
 # Contract builds create release inputs here. Do not stage them by accident.
-/lib/nibi-wasm/artifacts/
+/wasm-contracts/artifacts/
 
 # This Wasmer directory contains tracked compiler fixture inputs, not local Go
 # test data.
-!lib/nibi-wasm/packages/wasmer/tests/compilers/data/
-!lib/nibi-wasm/packages/wasmer/tests/compilers/data/**
+!lib/wasmer/tests/compilers/data/
+!lib/wasmer/tests/compilers/data/**
 
 # Jupyter Notebook
 .ipynb_checkpoints

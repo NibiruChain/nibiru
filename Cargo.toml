@@ -1,10 +1,20 @@
 [workspace]
-members = ["scripts", "packages/*", "nibiru-std", "contracts/*"]
-exclude = ["packages/msig-ez", "packages/wasmer"]
+members = [
+  "contrib/scripts",
+  "lib/cosmwasm-vm",
+  "lib/cw-address-like",
+  "lib/easy-addr",
+  "lib/nibiru-ownable",
+  "lib/nibiru-ownable-derive",
+  "lib/nibiru-std",
+  "lib/nibi-wasm/contracts/*",
+]
+# Wasmer and wasmvm keep independent Cargo workspaces and lockfiles.
+exclude = ["lib/wasmer", "lib/wasmvm/libwasmvm"]
 resolver = "2"
 package.version = "0.7.0"
-package.homepage = "https://github.com/NibiruChain/nibiru-wasm"
-package.repository = "https://github.com/NibiruChain/nibiru-wasm"
+package.homepage = "https://github.com/NibiruChain/nibiru"
+package.repository = "https://github.com/NibiruChain/nibiru"
 package.edition = "2021"
 
 # Dependencies can be inherited from a workspace by specifying the dependency in
@@ -19,16 +29,16 @@ serde = { version = "1.0.189", default-features = false, features = ["derive"] }
 serde_json = "1.0.108"
 
 # deps: Coupled packages. Each uses workspace.package.version.
-nibiru-std = { path = "nibiru-std" }
+nibiru-std = { path = "lib/nibiru-std" }
 # Macros for controlling ownership of CosmWasm smart contracts
-nibiru-ownable    = { path = "packages/nibiru-ownable" }
-nibiru-ownable-derive    = { path = "packages/nibiru-ownable-derive", version = "0.7.0" }
+nibiru-ownable    = { path = "lib/nibiru-ownable" }
+nibiru-ownable-derive    = { path = "lib/nibiru-ownable-derive", version = "0.7.0" }
 
 # deps: Independent packages
 prost = "0.12.3"
 prost-types = "0.12.3"
-cw-address-like   = { path = "packages/cw-address-like" }
-easy-addr = { path = "packages/easy-addr" }
+cw-address-like   = { path = "lib/cw-address-like" }
+easy-addr = { path = "lib/easy-addr" }
 
 # deps: CosmWasm
 cosmwasm-std    = { version = "1", features = ["stargate", "staking"] }
@@ -40,15 +50,15 @@ cw-utils        = { version = "1" }
 # deps: cw-plus
 cw2 = { version = "1" }
 cw3 = { version = "1" }
-cw3-fixed-multisig = { path = "contracts/core-cw3-fixed-msig", version = "2.0.0", features = ["library"] }
+cw3-fixed-multisig = { path = "lib/nibi-wasm/contracts/core-cw3-fixed-msig", version = "2.0.0", features = ["library"] }
 cw4 = { version = "1" }
 cw20 = { version = "1" }
 cw4-group = { version = "1" }
 cw20-base = { version = "1" }
 
 # deps: core contracts
-lockup      = { path = "contracts/lockup", features = ["library"] }
-incentives  = { path = "contracts/incentives", features = ["library"] }
+lockup      = { path = "lib/nibi-wasm/contracts/lockup", features = ["library"] }
+incentives  = { path = "lib/nibi-wasm/contracts/incentives", features = ["library"] }
 
 # deps: else
 anyhow = "1"

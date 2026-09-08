@@ -1,10 +1,7 @@
-workspaces := "./packages"
-# workspaces := "./packages ./core"
-
-# Displays available recipes by running `just -l`.
+# Displays Rust workspace recipes.
 setup:
   #!/usr/bin/env bash
-  just -l
+  just --justfile rust.just --list
 
 install:
   # https://crates.io/crates/clippy
@@ -14,12 +11,13 @@ install:
   # https://crates.io/crates/cosmwasm-check
   cargo install cosmwasm-check
 
+# TODO: Keep this compatibility recipe while artifact and CI parity move in a later change.
 wasm-all:
-  bash scripts/wasm-out.sh
+  cd wasm-contracts && bash ../contrib/scripts/wasm-out.sh
 
-# Check if a Wasm smart contract binary is ready for the blockchain
+# TODO: Validate production artifacts after their build and CI migration is specified.
 wasm-check:
-  cosmwasm-check artifacts/*.wasm
+  cosmwasm-check wasm-contracts/artifacts/*.wasm
 
 # Compiles a single CW contract to wasm bytecode.
 # wasm-single:
@@ -56,9 +54,9 @@ clippy-check:
 # Test a specific package or contract
 test *pkg:
   #!/usr/bin/env bash
-  set -e;
+  set -euo pipefail
   if [ -z "{{pkg}}" ]; then
-    just test-all
+    just --justfile rust.just test-all
   else
     RUST_BACKGTRACE="1" cargo test --package "{{pkg}}"
   fi
@@ -74,7 +72,7 @@ test-wasmer:
   # once we decide how it should interact with root-workspace `cargo test` and
   # package `cosmwasm-vm` (separate Cargo workspace, longer runtime, cache paths).
   set -euo pipefail
-  cd packages/wasmer
+  cd lib/wasmer
   cargo test -p wasmer --lib --no-default-features --features cranelift,singlepass,wat
   cargo test --lib \
     -p wasmer-vm \
@@ -92,7 +90,7 @@ test-wasmer-cov:
   set -euo pipefail
   root="$(git rev-parse --show-toplevel)"
   output="${root}/lcov-wasmer.info"
-  cd "${root}/packages/wasmer"
+  cd "${root}/lib/wasmer"
   rustup component add llvm-tools-preview --toolchain 1.81
   cargo llvm-cov clean --workspace
   cargo llvm-cov --no-report -p wasmer --lib \
@@ -118,30 +116,30 @@ alias t := tidy
 
 # Format, lint, and test
 tidy:
-  just fmt
-  just clippy
-  just wasm-check
-  just test
+  just --justfile rust.just fmt
+  just --justfile rust.just clippy
+  just --justfile rust.just wasm-check
+  just --justfile rust.just test
 
 # Format, lint, update dependencies, and test
 tidy-update: build-update
-  just tidy
+  just --justfile rust.just tidy
 
 gen-schema:
   #!/usr/bin/env bash
-  for dir in contracts/*/; do
+  for dir in wasm-contracts/*/; do
     dir_name=$(basename $dir)
 
     echo "Generating schema for $dir"
     cd $dir
     cargo schema
-    mv ./schema ../../schema/$dir_name
+    mv ./schema ../schema/$dir_name
   done
 
 # (Safe) Dry run for publishing coupled packages (default behavior)
 publish:
-  bash scripts/publish-coupled.sh
+  bash contrib/scripts/publish-coupled.sh
 
 # Publish coupled packages that share "workspace.version" to crates.io
 publish-run:
-  bash scripts/publish-coupled.sh --run
+  bash contrib/scripts/publish-coupled.sh --run

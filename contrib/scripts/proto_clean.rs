@@ -12,7 +12,10 @@
 //!    on the classification.
 //! 4. Write the modified content back to each file.
 
-pub static PROTO_PATH: &str = "../nibiru-std/src/proto/buf";
+pub static PROTO_PATH: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../lib/nibiru-std/src/proto/buf"
+);
 
 pub fn main() {
     println!("Running proto_clean.rs...");
@@ -288,11 +291,17 @@ mod tests {
 
     #[test]
     fn fixture_proto_clean() {
-        let dirty_path = "test/fixture_proto_dirty.rs";
+        let dirty_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test/fixture_proto_dirty.rs"
+        );
         let result = super::clean_file_imports(dirty_path);
         assert!(result.is_ok());
 
-        let clean_path = "test/fixture_proto_clean.rs";
+        let clean_path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/test/fixture_proto_clean.rs"
+        );
         let want_result = fs::read_to_string(clean_path);
         assert!(want_result.is_ok());
 

@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
 echo "🔍 PACKAGE COMPATIBILITY VERIFICATION"
 echo "======================================"
 
@@ -72,7 +75,7 @@ fi
 printf "\n7️⃣ Package-specific dependency analysis...\n"
 echo "Dependencies for key packages:"
 for pkg in cw-address-like easy-addr nibiru-ownable nibiru-ownable-derive; do
-  if [ -d "packages/${pkg}" ]; then
+  if [ -d "lib/${pkg}" ]; then
     echo "--- ${pkg} ---"
     cargo tree -p "${pkg}" --depth 1 2>/dev/null || echo "Package not found or has issues"
   fi

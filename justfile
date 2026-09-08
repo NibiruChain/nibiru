@@ -319,9 +319,9 @@ localnet-check:
 wasmvm *args:
     cd lib/wasmvm && just {{ args }}
 
-# Run commands from the absorbed Nibiru Rust workspace. Ex: `just rs test-all`.
+# Run root Rust workspace commands. Ex: `just rs test-all`.
 rust *args:
-    cd lib/nibi-wasm && just {{ args }}
+    just --justfile rust.just {{ args }}
 
 alias rs := rust
 
