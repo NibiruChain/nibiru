@@ -319,6 +319,12 @@ localnet-check:
 wasmvm *args:
     cd lib/wasmvm && just {{ args }}
 
+# Run root Rust workspace commands. Ex: `just rs test-all`.
+rust *args:
+    just --justfile rust.just {{ args }}
+
+alias rs := rust
+
 # Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
 sai-trading *args:
     cd lib/sai-trading && just {{ args }}

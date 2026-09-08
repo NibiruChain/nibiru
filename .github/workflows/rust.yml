@@ -1,0 +1,217 @@
+name: Rust tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "20 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # changes-rust (job): Selects Rust checks for pull requests. Main, scheduled,
+  # and manually dispatched runs always execute the full legacy suite.
+  changes-rust:
+    runs-on: ubuntu-latest
+    outputs:
+      run-workspace: ${{ steps.decision.outputs['run-workspace'] }}
+      run-wasmer: ${{ steps.decision.outputs['run-wasmer'] }}
+      workspace-reason: ${{ steps.decision.outputs['workspace-reason'] }}
+      wasmer-reason: ${{ steps.decision.outputs['wasmer-reason'] }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check for Rust changes
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            workspace:
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "justfile"
+              - "rust.just"
+              - "contrib/scripts/**"
+              - "lib/cosmwasm-vm/**"
+              - "lib/cw-address-like/**"
+              - "lib/easy-addr/**"
+              - "lib/nibiru-ownable/**"
+              - "lib/nibiru-ownable-derive/**"
+              - "lib/nibiru-std/**"
+              - "lib/wasmer/**"
+              - "wasm-contracts/**"
+              - ".github/workflows/rust.yml"
+            wasmer:
+              - "justfile"
+              - "rust.just"
+              - "lib/wasmer/**"
+              - ".github/workflows/rust.yml"
+
+      - name: Decide Rust run mode
+        id: decision
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HAS_WORKSPACE_CHANGES: ${{ steps.filter.outputs.workspace }}
+          HAS_WASMER_CHANGES: ${{ steps.filter.outputs.wasmer }}
+        run: |
+          set -euo pipefail
+
+          run_workspace=false
+          run_wasmer=false
+          workspace_reason="No root Rust workspace changes detected."
+          wasmer_reason="No Wasmer changes detected."
+
+          if [[ "$EVENT_NAME" == "push" || "$EVENT_NAME" == "schedule" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            run_workspace=true
+            run_wasmer=true
+            workspace_reason="${EVENT_NAME} runs the full legacy Rust suite."
+            wasmer_reason="${EVENT_NAME} runs the full legacy Rust suite."
+          else
+            if [[ "$HAS_WORKSPACE_CHANGES" == "true" ]]; then
+              run_workspace=true
+              workspace_reason="Root Rust workspace changes detected."
+            fi
+
+            if [[ "$HAS_WASMER_CHANGES" == "true" ]]; then
+              run_wasmer=true
+              wasmer_reason="Wasmer changes detected."
+            fi
+          fi
+
+          {
+            echo "run-workspace=$run_workspace"
+            echo "run-wasmer=$run_wasmer"
+            echo "workspace-reason=$workspace_reason"
+            echo "wasmer-reason=$wasmer_reason"
+          } >> "$GITHUB_OUTPUT"
+
+  # rust-test (job): Runs the legacy root Cargo workspace test suite.
+  rust-test:
+    needs: changes-rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: skip-rust-test
+        if: ${{ needs.changes-rust.outputs['run-workspace'] != 'true' }}
+        run: >-
+          echo "job: rust-test was skipped. ${{ needs.changes-rust.outputs['workspace-reason'] }}"
+
+      - uses: actions/checkout@v7
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+
+      - name: Install Rust
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install just
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: taiki-e/install-action@just
+
+      - name: Cache Cargo
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-rust-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-rust-
+
+      - name: Run Rust tests
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        run: just rs test-all
+
+  # rust-build (job): Builds the legacy root Cargo workspace.
+  rust-build:
+    needs: changes-rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: skip-rust-build
+        if: ${{ needs.changes-rust.outputs['run-workspace'] != 'true' }}
+        run: >-
+          echo "job: rust-build was skipped. ${{ needs.changes-rust.outputs['workspace-reason'] }}"
+
+      - uses: actions/checkout@v7
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+
+      - name: Install Rust
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install just
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: taiki-e/install-action@just
+
+      - name: Cache Cargo
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-rust-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-rust-
+
+      - name: Build Rust workspace
+        if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+        run: just rs build
+
+  # wasmer (job): Runs the vendored Wasmer compiler and WAST integration suite.
+  wasmer:
+    needs: changes-rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: skip-wasmer
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] != 'true' }}
+        run: >-
+          echo "job: wasmer was skipped. ${{ needs.changes-rust.outputs['wasmer-reason'] }}"
+
+      - uses: actions/checkout@v7
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
+
+      - name: Install Rust 1.81
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
+        uses: dtolnay/rust-toolchain@1.81
+
+      - name: Install just
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
+        uses: taiki-e/install-action@just
+
+      - name: Cache Cargo
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            lib/wasmer/target/
+          key: ${{ runner.os }}-cargo-wasmer-${{ hashFiles('lib/wasmer/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-wasmer-
+
+      - name: Run Wasmer tests
+        if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
+        run: just rs test-wasmer

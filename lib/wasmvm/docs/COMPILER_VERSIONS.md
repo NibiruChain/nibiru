@@ -64,5 +64,5 @@ We currently use the following version:
 | Type                     | Rust version | Note                              |
 | ------------------------ | ------------ | --------------------------------- |
 | Production Rust compiler | stable       | Nibiru fork artifact builders     |
-| Min Rust compiler        | stable       | Matches `nibi-wasm` dependency graph |
+| Min Rust compiler        | stable       | Matches the root Rust workspace dependency graph |
 | Tooling Rust compiler    | stable       |                                   |

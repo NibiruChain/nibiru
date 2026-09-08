@@ -226,8 +226,9 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
-instance/
+# Flask stuff. Keep this root-scoped so it does not hide Rust source directories
+# such as lib/wasmer/lib/vm/src/instance/.
+/instance/
 .webassets-cache
 
 # Scrapy stuff:
@@ -238,7 +239,26 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
+
+### Rust ###
+# Cargo uses target directories throughout nested workspaces.
 target/
+
+# rustfmt backups, MSVC debug symbols, and LLVM coverage profiling output.
+**/*.rs.bk
+*.pdb
+*.profraw
+
+# `just rs test-wasmer-cov` writes this at the monorepo root.
+/lcov-wasmer.info
+
+# Contract builds create release inputs here. Do not stage them by accident.
+/wasm-contracts/artifacts/
+
+# This Wasmer directory contains tracked compiler fixture inputs, not local Go
+# test data.
+!lib/wasmer/tests/compilers/data/
+!lib/wasmer/tests/compilers/data/**
 
 # Jupyter Notebook
 .ipynb_checkpoints

@@ -1,0 +1,180 @@
+[package]
+name = "wasmer-workspace"
+description = "Wasmer workspace"
+publish = false
+autoexamples = false
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+wasmer = { version = "=5.0.6", path = "lib/api", default-features = false }
+wasmer-compiler = { version = "=5.0.6", path = "lib/compiler", features = [
+	"compiler",
+], optional = true }
+wasmer-compiler-cranelift = { version = "=5.0.6", path = "lib/compiler-cranelift", optional = true }
+wasmer-compiler-singlepass = { version = "=5.0.6", path = "lib/compiler-singlepass", optional = true }
+wasmer-types = { version = "=5.0.6", path = "lib/types" }
+wasmer-middlewares = { version = "=5.0.6", path = "lib/middlewares", optional = true }
+
+# Third party dependencies
+cfg-if = "1.0"
+
+tokio = { version = "1.39", features = [
+	"rt",
+	"rt-multi-thread",
+	"macros",
+], optional = true }
+crossbeam-queue = "0.3.8"
+
+[workspace]
+members = [
+	"lib/api",
+	"lib/api/macro-wasmer-universal-test",
+	"lib/compiler-cranelift",
+	"lib/compiler-singlepass",
+	"lib/compiler",
+	"lib/derive",
+	"lib/types",
+	"lib/vm",
+	"tests/lib/compiler-test-derive",
+	"tests/lib/wast",
+]
+resolver = "2"
+
+[workspace.package]
+authors = ["Wasmer Engineering Team <engineering@wasmer.io>"]
+edition = "2021"
+homepage = "https://wasmer.io/"
+license = "MIT"
+repository = "https://github.com/wasmerio/wasmer"
+rust-version = "1.81"
+version = "5.0.6"
+
+[workspace.dependencies]
+# Wasmer-owned crates
+webc = { version = "8.0.0" }
+shared-buffer = "0.1.4"
+
+# Third-party crates
+dashmap = "6.0.1"
+http = "1.0.0"
+hyper = "1"
+reqwest = { version = "0.12.0", default-features = false }
+enumset = "1.1.0"
+memoffset = "0.9.0"
+wasmparser = { version = "0.216.0", default-features = false, features = [
+	"validate",
+] }
+rkyv = { version = "0.8.8", features = ["indexmap-2", "bytes-1"] }
+memmap2 = { version = "0.6.2" }
+toml = { version = "0.5.9", features = ["preserve_order"] }
+indexmap = "2"
+serde_yaml = { package = "serde_yml", version = "0.0.12" }
+libc = { version = "^0.2", default-features = false }
+gimli = { version = "0.28.1" }
+futures-util = { version = "0.3.31" }
+mio = "1"
+# MIO 1.0 starts at tokio version 1.39, hence the minimum requirement.
+tokio = { version = "1.39.0", default-features = false }
+socket2 = "0.5.7"
+pretty_assertions = "1.4.0"
+base64 = "0.22.0"
+time = "0.3.36"
+target-lexicon = { version = "0.12.2", default-features = false }
+object = "0.32.0"
+derive_more = { version = "1", features = ["debug"] }
+
+[build-dependencies]
+test-generator = { path = "tests/lib/test-generator" }
+build-deps = "0.1.4"
+anyhow = "1.0"
+glob = "0.3"
+rustc_version = "0.4"
+
+[dev-dependencies]
+wasmer = { version = "=5.0.6", path = "lib/api", features = [
+	"compiler",
+	"singlepass",
+	"sys",
+] }
+anyhow = "1.0"
+criterion = { version = "0.5", features = ["csv_output"] }
+clap = { version = "=4.4.11" }
+clap_builder = { version = "=4.4.11" }
+clap_derive = { version = "=4.4.7" }
+clap_lex = { version = "=0.6.0" }
+serial_test = { version = "2.0", default-features = false }
+compiler-test-derive = { path = "tests/lib/compiler-test-derive" }
+wasmer-wast = { version = "=5.0.6", path = "tests/lib/wast" }
+tempfile = "3.6.0"
+ureq = "2.6"
+# For logging tests using the `RUST_LOG=debug` when testing
+test-log = { version = "0.2", default-features = false, features = ["trace"] }
+tracing = { version = "0.1", default-features = false, features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+	"env-filter",
+	"fmt",
+] }
+reqwest = {workspace = true, features = ["blocking", "rustls-tls"]}
+
+[features]
+# Don't add the compiler features in default, please add them on the Makefile
+# since we might want to autoconfigure them depending on the availability on the host.
+default = ["wat", "engine", "middlewares"]
+# backend means that the `wasmer` crate will be compiled with the `wasmer-compiler` or the `jsc`.
+# That means: that is able to execute modules
+backend = []
+jsc = ["wasmer/jsc", "backend", "wat", "wasmer/std"]
+v8 = ["wasmer/v8"]
+wasmi = ["wasmer/wasmi"]
+engine = ["universal"]
+universal = []
+wat = ["wasmer/wat"]
+compiler = ["wasmer/compiler", "backend", "wasmer-compiler/translator"]
+singlepass = ["compiler", "wasmer-compiler-singlepass", "wasmer/singlepass"]
+cranelift = ["compiler", "wasmer-compiler-cranelift", "wasmer/cranelift"]
+middlewares = ["wasmer-middlewares"]
+wasmer-artifact-load = ["wasmer-compiler/wasmer-artifact-load"]
+wasmer-artifact-create = ["wasmer-compiler/wasmer-artifact-create"]
+static-artifact-load = ["wasmer-compiler/static-artifact-load"]
+static-artifact-create = ["wasmer-compiler/static-artifact-create"]
+
+# Testing features
+test-singlepass = ["singlepass"]
+test-cranelift = ["cranelift"]
+
+test-universal = ["test-generator/test-universal"]
+
+# Specifies that we're running in coverage testing mode. This disables tests
+# that raise signals because that interferes with tarpaulin.
+coverage = []
+
+#[profile.release]
+#debug = true
+
+# Enable optimizations for a few crates, even for debug builds.
+# This greatly speeds up using debug builds, because these crates are extremely
+# slow without optimizations.
+[profile.dev.package.cranelift-codegen]
+opt-level = 3
+[profile.dev.package.regalloc2]
+opt-level = 3
+[profile.dev.package.wasmparser]
+opt-level = 3
+[profile.dev.package.rkyv]
+opt-level = 3
+[profile.dev.package.wasmer-types]
+opt-level = 3
+[profile.dev.package.weezl]
+opt-level = 3
+[profile.dev.package.sha2]
+opt-level = 3
+[profile.dev.package.xxhash-rust]
+opt-level = 3
+[profile.dev.package.digest]
+opt-level = 3
