@@ -1,70 +1,99 @@
-## Token Vesting
+# Token vesting
 
-This contract implements vesting accounts for the CW20 and native tokens.
+`token-vesting` holds native-token and CW20 vesting accounts. The contract
+tracks each account by address and denomination. Its Rust message types live in
+[`src/msg.rs`](./src/msg.rs).
 
-### Master Operations
+## Messages
 
-```rust
-  RegisterVestingAccount {
-      master_address: Option<String>, // if given, the vesting account can be unregistered
-      address: String,
-      vesting_schedule: VestingSchedule,
-  },
+### Instantiate
+
+The instantiate message is empty.
+
+```json
+{}
 ```
-* RegisterVestingAccount   - register vesting account
-  * When creating vesting account, the one can specify the `master_address` to enable deregister feature.
 
-```rust
-    DeregisterVestingAccount {
-        address: String,
-        denom: Denom,
-        vested_token_recipient: Option<String>,
-        left_vesting_token_recipient: Option<String>,
-    },
-```
-* DeregisterVestingAccount  - deregister vesting account
-  * This interface only executable from the `master_address` of a vesting account.
-  * It will compute `claimable_amount` and `left_vesting_amount`. Each amount respectively sent to (`vested_token_recipient` or `vesting_account`) and (`left_vesting_token_recipient` or `master_address`).
+### Register a native-token vesting account
 
-```rust
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum Cw20HookMsg {
-    /// Register vesting account with token transfer
-    RegisterVestingAccount {
-        master_address: Option<String>, // if given, the vesting account can be unregistered
-        address: String,
-        vesting_schedule: VestingSchedule,
-    },
+The sender must attach exactly one native coin. The attached amount must match
+`vesting_amount` in the schedule. Set `master_address` when another account
+must be allowed to deregister the vesting account later.
+
+```json
+{
+  "register_vesting_account": {
+    "address": "nibi1beneficiary...",
+    "master_address": "nibi1manager...",
+    "vesting_schedule": {
+      "linear_vesting": {
+        "start_time": "1703772805",
+        "end_time": "1703872805",
+        "vesting_amount": "1000000"
+      }
+    }
+  }
 }
 ```
 
-### Vesting Account Operations
+The contract also accepts `linear_vesting_with_cliff` schedules. That variant
+adds `cliff_amount` and `cliff_time` to the fields above.
 
-* Claim - send newly vested token to the (`recipient` or `vesting_account`). The `claim_amount` is computed as (`vested_amount` - `claimed_amount`) and `claimed_amount` is updated to `vested_amount`.
+For CW20 tokens, send tokens to the contract with a CW20 `send` message. Its
+base64-encoded hook message has the same shape as this payload, under
+`register_vesting_account`.
 
-```rust
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    ////////////////////////
-    /// VestingAccount Operations ///
-    ////////////////////////
-    Claim {
-        denoms: Vec<Denom>,
-        recipient: Option<String>,
-    },
+### Deregister a vesting account
+
+Only the account recorded as `master_address` may send this message. A native
+denomination uses the `{"native":"..."}` form. A CW20 denomination uses
+`{"cw20":"<contract address>"}`.
+
+```json
+{
+  "deregister_vesting_account": {
+    "address": "nibi1beneficiary...",
+    "denom": { "native": "unibi" },
+    "vested_token_recipient": "nibi1beneficiary...",
+    "left_vesting_token_recipient": "nibi1manager..."
+  }
 }
 ```
 
-### Deployed Contract Info
+Either recipient field may be `null`. The contract then sends vested funds to
+the vesting-account owner and unvested funds to the master address.
 
-TODO for mainnet/testnet
+### Claim vested tokens
 
+The vesting-account owner claims all currently vested funds for the listed
+denominations. Set `recipient` to `null` to send funds to the owner.
 
-| Field         | Value  |
-| ------------- | ------ |
-| code_id       | ...  |
-| contract_addr | ... |
-| rpc_url       | ... |
-| chain_id      | ... |
+```json
+{
+  "claim": {
+    "denoms": [{ "native": "unibi" }],
+    "recipient": "nibi1recipient..."
+  }
+}
+```
+
+### Query vesting accounts
+
+`vesting_account` returns the caller's stored vesting data for an address. Use
+`start_after` and `limit` to paginate results.
+
+```json
+{
+  "vesting_account": {
+    "address": "nibi1beneficiary...",
+    "start_after": null,
+    "limit": 30
+  }
+}
+```
+
+## Schema
+
+From this directory, command `cargo run --example token-vesting-schema`
+generates JSON schemas in `schema/`. Treat the Rust message types and generated
+schemas as authoritative when changing these examples.

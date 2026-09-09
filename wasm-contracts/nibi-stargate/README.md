@@ -1,4 +1,4 @@
-# wasm-contracts/nibi-stargate
+# Nibi Stargate
 
 This smart contract showcases usage examples for creating and managing fungible tokens native to Nibiru.
 
@@ -17,11 +17,12 @@ Table of Contents
 
 ## Guide: Using the Smart Contract
 
-A pre-built version of the Wasm bytecode for every smart contract in the
-[NibiruChain/nibiru](https://github.com/NibiruChain/nibiru) repository can be
-found in the "artifacts" directory.
+The Rust message types for this contract live in
+[`src/msgs.rs`](./src/msgs.rs). Build the Wasm bytecode before storing it on a
+chain. Contract artifact production is separate from the normal Rust test and
+build commands.
 
-### Set environmnent vars
+### Set environment variables
 
 This guide assumes you are working with the `nibid` command-line interface. See "[https://nibiru.fi/docs/dev/cli/nibid-binary.html | Nibiru Docs](https://nibiru.fi/docs/dev/cli)" for installation instructions. Note that `nibid` currently only supports Unix systems like MacOS and Linux. We don't yet support vanilla Windows, but you can WSL Ubuntu.
 
@@ -48,12 +49,11 @@ bytecode on the blockchain. The bytecode may already be stored at a known
 If it is not, you must deploy or store the bytecode yourself like so:
 ```bash
 
-nibid tx wasm store ../../artifacts/nibi_stargate.wasm --from="$KEYNAME" --gas=2000999 -y | tx
+nibid tx wasm store <path-to-nibi_stargate.wasm> --from="$KEYNAME" --gas=2000999 -y | tx
 ```
 
-ℹ️a If smart contract bytecode is already stored, or deployed, it doesn't need to
-be redeployed to create new smart contracts. **Instantiating is what creates new
-contracts with new state and a unique address.
+If the bytecode is already stored, use its code ID to instantiate another
+contract with separate state and a new address.
 
 ```bash
 CODE_ID=1
