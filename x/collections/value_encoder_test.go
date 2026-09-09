@@ -54,7 +54,7 @@ func (s *SuiteValueEncoder) TestUint64ValueEncoder() {
 	})
 }
 
-func (s *SuiteValueEncoder) TestIntEncoder() {
+func (s *SuiteValueEncoder) TestIntKeyEncoder() {
 	// we test our assumptions around int are correct.
 	outOfBounds := new(big.Int).Lsh(big.NewInt(1), 256)       // 2^256
 	maxBigInt := new(big.Int).Sub(outOfBounds, big.NewInt(1)) // 2^256 - 1
@@ -90,15 +90,63 @@ func (s *SuiteValueEncoder) TestIntEncoder() {
 	s.Panics(func() {
 		IntKeyEncoder.Encode(sdkmath.Int{})
 	})
+}
 
-	// test value encoder
-	value := sdk.NewInt(50_000)
-	valueBytes := IntValueEncoder.Encode(value)
-	gotValue := IntValueEncoder.Decode(valueBytes)
-	s.Equal(value, gotValue)
+func (s *SuiteValueEncoder) TestIntValueEncoderSigned() {
+	cases := []sdkmath.Int{
+		sdkmath.NewInt(-1),
+		sdkmath.NewInt(-50_000),
+		sdkmath.ZeroInt(),
+		sdkmath.NewInt(1),
+		sdkmath.NewInt(50_000),
+		sdkmath.NewIntFromBigInt(new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))),
+	}
+	for _, value := range cases {
+		s.Run(value.String(), func() {
+			assertValueBijective(s.T(), IntValueEncoder, value)
+		})
+	}
+}
 
-	// panics on invalid math.Int
+func (s *SuiteValueEncoder) TestUintValueEncoderFixedWidth() {
+	outOfBounds := new(big.Int).Lsh(big.NewInt(1), 256)       // 2^256
+	maxBigInt := new(big.Int).Sub(outOfBounds, big.NewInt(1)) // 2^256 - 1
+	maxUint := sdkmath.NewUintFromBigInt(maxBigInt)
+
+	cases := []struct {
+		name  string
+		value sdkmath.Uint
+	}{
+		{"zero", sdkmath.ZeroUint()},
+		{"one", sdkmath.NewUint(1)},
+		{"small", sdkmath.NewUint(100)},
+		{"fifty_thousand", sdkmath.NewUint(50_000)},
+		{"max", maxUint},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			encoded := UintValueEncoder.Encode(tc.value)
+			s.Equal(maxIntKeyLen, len(encoded), "must preserve fixed-width 32-byte format")
+
+			legacy := IntKeyEncoder.Encode(sdkmath.NewIntFromBigInt(tc.value.BigInt()))
+			s.Equal(legacy, encoded)
+
+			got := UintValueEncoder.Decode(encoded)
+			s.True(tc.value.Equal(got))
+			s.Equal(tc.value.String(), UintValueEncoder.Stringify(got))
+			s.Equal("math.Uint", UintValueEncoder.Name())
+		})
+	}
+
+	oldBytesFor100 := make([]byte, maxIntKeyLen)
+	oldBytesFor100[maxIntKeyLen-1] = 0x64 // 100
+	s.True(sdkmath.NewUint(100).Equal(UintValueEncoder.Decode(oldBytesFor100)))
+
 	s.Panics(func() {
-		IntValueEncoder.Encode(sdkmath.Int{})
+		UintValueEncoder.Encode(sdkmath.Uint{})
+	})
+	s.Panics(func() {
+		UintValueEncoder.Decode([]byte{0x01})
 	})
 }
