@@ -228,12 +228,25 @@ func (s *NodeSuite) Test_BlockNumber() {
 // Test_BlockByNumber EVM method: eth_getBlockByNumber
 func (s *NodeSuite) Test_BlockByNumber() {
 	networkBlockNumber, err := s.cli.LatestHeight()
-	s.NoError(err)
+	s.Require().NoError(err)
 
-	ethBlock, err := s.ethAPI.GetBlockByNumber(rpc.NewBlockNumber(big.NewInt(networkBlockNumber)), true)
-	s.NoError(err)
-	s.NotNil(ethBlock)
-	s.Equal(networkBlockNumber, int64(ethBlock["number"].(hexutil.Uint64)))
+	const maxBlockLag = int64(2)
+	var ethBlock map[string]any
+	var queriedBlockNumber int64
+	for blockLag := int64(0); blockLag <= maxBlockLag; blockLag++ {
+		queriedBlockNumber = networkBlockNumber - blockLag
+		ethBlock, err = s.ethAPI.GetBlockByNumber(
+			rpc.NewBlockNumber(big.NewInt(queriedBlockNumber)),
+			true,
+		)
+		if err == nil {
+			break
+		}
+	}
+
+	s.Require().NoError(err)
+	s.Require().NotNil(ethBlock)
+	s.Equal(queriedBlockNumber, int64(ethBlock["number"].(hexutil.Uint64)))
 }
 
 // Test_BalanceAt EVM method: eth_getBalance
