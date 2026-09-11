@@ -1,0 +1,11 @@
+{
+  "name": "nibid-npm-packaging",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "stage": "bun run scripts/stage.ts",
+    "verify": "bun run scripts/verify.ts",
+    "pack": "bun run scripts/pack.ts"
+  }
+}

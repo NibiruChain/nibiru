@@ -112,7 +112,6 @@ jobs:
           filters: |
             nibiru-go:
               - "app/**/*.go"
-              - "cmd/**/*.go"
               - "eth/**/*.go"
               - "evm/**/*.go"
               - "gosdk/**/*.go"
@@ -123,7 +122,7 @@ jobs:
               - "go.sum"
               - "contrib/docker-compose/*"
               - "contrib/scripts/build-nibiru.sh"
-              - "cmd/nibid/localnet.sh"
+              - "x/cli/localnet.sh"
               - "Dockerfile"
               - "justfile"
               - ".github/workflows/test-core.yml"
@@ -220,7 +219,7 @@ jobs:
         run: |
           just test-chaosnet
 
-      - name: "Run cmd/nibid/localnet.sh"
+      - name: "Run x/cli/localnet.sh"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: |
           just localnet --no-build &

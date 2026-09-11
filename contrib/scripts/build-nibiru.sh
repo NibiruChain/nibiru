@@ -372,14 +372,14 @@ run_go_compile() {
         -tags "$build_tags" \
         -ldflags "$ldflags" \
         -o "${builddir}/" \
-        ./cmd/...
+        ./x/cli
     else
       go install \
         -mod=readonly \
         -trimpath \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        ./cmd/...
+        ./x/cli
     fi
   )
 }

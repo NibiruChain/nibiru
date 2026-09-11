@@ -28,7 +28,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
-	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
+	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 

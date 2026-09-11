@@ -5,7 +5,7 @@ import (
 
 	// Nibiru
 	"github.com/NibiruChain/nibiru/v2/app"
-	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid"
+	nibid "github.com/NibiruChain/nibiru/v2/x/cli"
 
 	// Cosmos-SDK
 	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"

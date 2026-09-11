@@ -14,7 +14,7 @@ import (
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
-	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
+	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/evm"

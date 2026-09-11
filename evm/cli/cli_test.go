@@ -7,7 +7,7 @@ import (
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
+	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/cli"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
