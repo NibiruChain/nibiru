@@ -12,13 +12,13 @@ a unique release version, or a Nibiru GitHub release URL. Exact tags avoid
 ambiguity when a hotfix and a standard release share the same version.
 
 ```bash
-bun run nibiru-dist --help
-bun run nibiru-dist list
-bun run nibiru-dist list --verify
-bun run nibiru-dist get hotfix/v2.19.0
-bun run nibiru-dist prepare hotfix/v2.19.0
-bun run nibiru-dist publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0
-bun run nibiru-dist publish --from-gh hotfix/v2.19.0 --dist-ver v2.19.0 --run
+bun run main.ts --help
+bun run main.ts list
+bun run main.ts list --verify
+bun run main.ts get hotfix/v2.19.0
+bun run main.ts prepare hotfix/v2.19.0
+bun run main.ts publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0
+bun run main.ts publish --from-gh hotfix/v2.19.0 --dist-ver v2.19.0 --run
 ```
 
 Command `list` reads `artifacts/releases/` only. Its default table shows each
@@ -43,14 +43,14 @@ Command `prepare` creates a versioned generated workspace and npm tarballs under
 
 The GitHub release and npm package describe related but different things. The
 GitHub archives identify the native binary version. For example,
-`nibid_2.19.0_linux_amd64.tar.gz` contains a binary whose command `nibid version`
-reports `2.19.0`.
+`nibid_2.19.0_linux_amd64.tar.gz` contains the native `nibid` binary. The npm
+package exposes it through `nibiru version`, which reports `2.19.0`.
 
 Flag `--dist-ver` identifies the version of the npm wrapper packages. It may use
 the same version or add a prerelease suffix for an npm-specific distribution:
 
 ```bash
-bun run nibiru-dist publish \
+bun run main.ts publish \
   --from-gh hotfix/v2.19.0 \
   --dist-ver 2.19.0-npm.1
 ```
@@ -72,3 +72,8 @@ values such as `latest`, `next`, and build metadata.
 Without `--run`, command `publish` prepares and validates the packages, checks
 that the exact npm version does not exist, then prints the ordered publish
 commands. It does not accept or pass a caller-selected npm registry tag.
+
+With `--run`, command `publish` writes to npm. Authenticate first with command
+`bunx npm login`. If the npm account requires two-factor authentication for
+writes, Bun prints the browser or one-time-password prompt in the terminal and
+waits for the operator to complete it.

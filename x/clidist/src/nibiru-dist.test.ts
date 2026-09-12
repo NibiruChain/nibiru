@@ -65,7 +65,7 @@ describe("publish arguments", () => {
   test("uses Commander commands and generated help", () => {
     const program = createProgram();
     expect(program.commands.map((command) => command.name())).toEqual(["list", "get", "prepare", "publish"]);
-    expect(program.helpInformation()).toContain("Usage: nibiru-dist [options] [command]");
+    expect(program.helpInformation()).toContain("Usage: bun run main.ts [options] [command]");
     expect(program.helpInformation()).toContain("Show locally cached release assets");
   });
 

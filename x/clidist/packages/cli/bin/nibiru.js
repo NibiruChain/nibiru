@@ -16,7 +16,7 @@ const target = `${process.platform}-${process.arch}`;
 const packageName = packages[target];
 
 if (!packageName) {
-  console.error(`nibid does not support ${target}. Supported targets: ${Object.keys(packages).join(", ")}.`);
+  console.error(`nibiru does not support ${target}. Supported targets: ${Object.keys(packages).join(", ")}.`);
   process.exit(1);
 }
 
@@ -24,7 +24,7 @@ let packageJson;
 try {
   packageJson = require.resolve(`${packageName}/package.json`);
 } catch {
-  console.error(`nibid's native package for ${target} is missing (${packageName}). Reinstall without --omit=optional.`);
+  console.error(`nibiru's native package for ${target} is missing (${packageName}). Reinstall without --omit=optional.`);
   process.exit(1);
 }
 

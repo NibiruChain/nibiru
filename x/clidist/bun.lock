@@ -12,7 +12,7 @@
       "name": "@nibiruchain/nibiru",
       "version": "0.0.0-dev",
       "bin": {
-        "nibid": "bin/nibid.js",
+        "nibiru": "bin/nibiru.js",
       },
       "optionalDependencies": {
         "@nibiruchain/nibiru-darwin-arm64": "0.0.0-dev",

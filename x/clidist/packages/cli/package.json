@@ -4,10 +4,10 @@
   "description": "Nibiru command-line client",
   "license": "Apache-2.0",
   "bin": {
-    "nibid": "bin/nibid.js"
+    "nibiru": "bin/nibiru.js"
   },
   "files": [
-    "bin/nibid.js",
+    "bin/nibiru.js",
     "README.md"
   ],
   "optionalDependencies": {

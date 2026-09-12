@@ -83,6 +83,23 @@ export const runCommand: CommandRunner = async (program, args, cwd) => {
   return { code, stdout, stderr };
 };
 
+/**
+ * Publishes through the operator's terminal instead of captured pipes. npm may
+ * require a browser confirmation or one-time password for a write. Capturing
+ * that prompt made an interactive publish appear frozen and left no way to
+ * complete the required 2FA challenge.
+ */
+async function publishInteractively(directory: string, args: string[]): Promise<void> {
+  const child = Bun.spawn(["bun", ...args], {
+    cwd: directory,
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  const code = await child.exited;
+  if (code !== 0) throw new Error(`bun ${args.join(" ")} failed with exit code ${code}`);
+}
+
 function cacheKey(release: Pick<Release, "id" | "tagName">): string {
   // Tags can be reused by people and release names can collide. The GitHub
   // release ID identifies the immutable release whose checksums we verified.
@@ -160,6 +177,7 @@ export async function resolveRelease(
   input: string,
   runner: CommandRunner = runCommand,
 ): Promise<Release> {
+  console.log(`resolving GitHub release ${input}`);
   // GitHub tags and visible release versions are different namespaces here.
   // Resolve a friendly version only when it maps to one release. Otherwise a
   // human must choose the source explicitly with a tag or release URL.
@@ -382,7 +400,9 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
   const release = await resolveRelease(input, runner);
   const { version, names } = assetsForRelease(release);
   const directory = join(artifactsRoot, cacheKey(release));
+  console.log(`checking cached assets for ${release.tagName}`);
   if (await readValidCache(directory, release, version, names)) {
+    console.log(`using verified cache for ${release.tagName}`);
     return { release, version, directory, cached: true };
   }
 
@@ -390,6 +410,7 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
   const temporary = await mkdtemp(join(artifactsRoot, ".download-"));
   try {
     for (const name of names) {
+      console.log(`downloading ${name}`);
       await mustRun(runner, "gh", [
         "release",
         "download",
@@ -402,6 +423,7 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
         name,
       ]);
     }
+    console.log(`verifying checksums for ${release.tagName}`);
     await verifyFiles(temporary, names);
     await writeFile(
       join(temporary, "release.json"),
@@ -466,7 +488,7 @@ async function setPackageVersions(workspace: string, version: string): Promise<v
 
 export async function verifyWorkspace(workspace: string, version: string): Promise<void> {
   const cli = await Bun.file(join(workspace, "cli", "package.json")).json();
-  if (cli.version !== version || !cli.bin?.nibid) throw new Error("Umbrella package version or bin is invalid");
+  if (cli.version !== version || !cli.bin?.nibiru) throw new Error("Umbrella package version or bin is invalid");
   if (Object.keys(cli.optionalDependencies).length !== Object.keys(TARGETS).length) {
     throw new Error("Umbrella optionalDependencies is incomplete");
   }
@@ -478,7 +500,7 @@ export async function verifyWorkspace(workspace: string, version: string): Promi
     if (manifest.version !== version || manifest.os?.[0] !== expected.os || manifest.cpu?.[0] !== expected.cpu) {
       throw new Error(`${target} package metadata is invalid`);
     }
-    // The umbrella package owns the public `nibid` command. Leaf packages only
+    // The umbrella package owns the public `nibiru` command. Leaf packages only
     // provide native files, so their metadata cannot replace the launcher.
     if (manifest.bin) throw new Error(`${target} must not declare a public bin`);
     const binary = join(workspace, target, "bin", "nibid");
@@ -507,11 +529,13 @@ async function prepareFetchedRelease(
 ): Promise<PreparedRelease> {
   const output = join(distRoot, cacheKey(fetched.release), distributionVersion);
   const workspace = join(output, "workspace");
+  console.log(`building ${distributionVersion} packages from ${fetched.release.tagName}`);
   await rm(output, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(templatePackages, workspace, { recursive: true, filter: (source) => !source.endsWith("/bin/nibid") });
   await setPackageVersions(workspace, distributionVersion);
   for (const [target, platform] of Object.entries(TARGETS)) {
+    console.log(`staging ${target} native binary`);
     await stageBinary(
       join(fetched.directory, `nibid_${fetched.version}_${platform.artifact}.tar.gz`),
       join(workspace, target, "bin", "nibid"),
@@ -521,6 +545,7 @@ async function prepareFetchedRelease(
   await verifyWorkspace(workspace, distributionVersion);
   const tarballs: string[] = [];
   for (const packageDir of [...Object.keys(TARGETS), "cli"]) {
+    console.log(`packing ${packageDir}`);
     await mustRun(runner, "bun", ["pm", "pack", "--destination", output], join(workspace, packageDir));
   }
   for (const entry of await readdir(output)) {
@@ -542,6 +567,7 @@ function packageDirectories(workspace: string): string[] {
 async function assertUnpublished(workspace: string, version: string, runner: CommandRunner): Promise<void> {
   for (const directory of packageDirectories(workspace)) {
     const manifest = await Bun.file(join(directory, "package.json")).json();
+    console.log(`checking npm for ${manifest.name}@${version}`);
     const result = await runner("bun", ["pm", "view", `${manifest.name}@${version}`, "version"]);
     // npm cannot replace a published version. Check every package before the
     // first upload so a known collision does not create a partial release.
@@ -580,7 +606,11 @@ export async function publishRelease(
       console.log(`[dry run] (cd ${directory} && bun ${args.join(" ")})`);
       continue;
     }
-    await mustRun(runner, "bun", args, directory);
+    const manifest = await Bun.file(join(directory, "package.json")).json();
+    console.log(`publishing ${manifest.name}@${prepared.distributionVersion}`);
+    // Publishing deliberately bypasses the captured command runner so npm can
+    // ask the operator to complete the account's write-time 2FA challenge.
+    await publishInteractively(directory, args);
   }
   return prepared;
 }
@@ -621,7 +651,7 @@ interface PublishOptions {
  */
 export function createProgram(): Command {
   const program = new Command()
-    .name("nibiru-dist")
+    .name("bun run main.ts")
     .description("Cache GitHub nibid releases and prepare native CLI distributions.")
     .showHelpAfterError();
 
@@ -637,7 +667,7 @@ export function createProgram(): Command {
     .option("--json", "write structured cache records as JSON")
     .addHelpText(
       "after",
-      "\nExamples:\n  nibiru-dist list\n  nibiru-dist list --verify\n  nibiru-dist list --json\n",
+      "\nExamples:\n  bun run main.ts list\n  bun run main.ts list --verify\n  bun run main.ts list --json\n",
     )
     .action(async (options: ListOptions) => {
       const entries = await readCachedReleases(artifactsRoot, options.verify);
@@ -677,7 +707,7 @@ export function createProgram(): Command {
     .option("--run", "publish to npm; default prints the ordered publish plan")
     .addHelpText(
       "after",
-      "\nExamples:\n  nibiru-dist publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0-npm.1\n  nibiru-dist publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0 --run\n",
+      "\nExamples:\n  bun run main.ts publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0-npm.1\n  bun run main.ts publish --from-gh hotfix/v2.19.0 --dist-ver 2.19.0 --run\n",
     )
     .action(async (options: PublishOptions) => {
       const prepared = await publishRelease(options.fromGh, options.distVer, options.run ?? false);

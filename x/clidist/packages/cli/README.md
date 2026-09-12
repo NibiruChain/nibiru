@@ -4,7 +4,7 @@ Install Nibiru's command-line client:
 
 ```bash
 npm install -g @nibiruchain/nibiru
-nibid version
+nibiru version
 ```
 
 The package supports Linux and macOS on x64 and arm64. It selects the native
