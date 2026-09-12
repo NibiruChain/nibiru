@@ -1,0 +1,19 @@
+{
+  "name": "@nibiruchain/nibiru",
+  "version": "0.0.0-dev",
+  "description": "Nibiru command-line client",
+  "license": "Apache-2.0",
+  "bin": {
+    "nibid": "bin/nibid.js"
+  },
+  "files": [
+    "bin/nibid.js",
+    "README.md"
+  ],
+  "optionalDependencies": {
+    "@nibiruchain/nibiru-linux-x64": "0.0.0-dev",
+    "@nibiruchain/nibiru-linux-arm64": "0.0.0-dev",
+    "@nibiruchain/nibiru-darwin-x64": "0.0.0-dev",
+    "@nibiruchain/nibiru-darwin-arm64": "0.0.0-dev"
+  }
+}

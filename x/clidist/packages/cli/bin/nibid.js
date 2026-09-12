@@ -6,10 +6,10 @@ const { spawn } = require("node:child_process");
 const { dirname, join } = require("node:path");
 
 const packages = {
-  "linux-x64": "@nibiruchain/nibid-linux-x64",
-  "linux-arm64": "@nibiruchain/nibid-linux-arm64",
-  "darwin-x64": "@nibiruchain/nibid-darwin-x64",
-  "darwin-arm64": "@nibiruchain/nibid-darwin-arm64",
+  "linux-x64": "@nibiruchain/nibiru-linux-x64",
+  "linux-arm64": "@nibiruchain/nibiru-linux-arm64",
+  "darwin-x64": "@nibiruchain/nibiru-darwin-x64",
+  "darwin-arm64": "@nibiruchain/nibiru-darwin-arm64",
 };
 
 const target = `${process.platform}-${process.arch}`;

@@ -1,13 +1,13 @@
 {
-  "name": "@nibiruchain/nibid-linux-x64",
+  "name": "@nibiruchain/nibiru-linux-arm64",
   "version": "0.0.0-dev",
-  "description": "Native nibid binary for Linux x64",
+  "description": "Native nibid binary for Linux arm64",
   "license": "Apache-2.0",
   "os": [
     "linux"
   ],
   "cpu": [
-    "x64"
+    "arm64"
   ],
   "files": [
     "bin/nibid"

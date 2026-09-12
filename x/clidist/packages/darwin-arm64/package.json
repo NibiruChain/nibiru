@@ -1,13 +1,13 @@
 {
-  "name": "@nibiruchain/nibid-darwin-x64",
+  "name": "@nibiruchain/nibiru-darwin-arm64",
   "version": "0.0.0-dev",
-  "description": "Native nibid binary for macOS x64",
+  "description": "Native nibid binary for macOS arm64",
   "license": "Apache-2.0",
   "os": [
     "darwin"
   ],
   "cpu": [
-    "x64"
+    "arm64"
   ],
   "files": [
     "bin/nibid"

@@ -1,9 +1,9 @@
-# @nibiruchain/nibid
+# @nibiruchain/nibiru
 
 Install Nibiru's command-line client:
 
 ```bash
-npm install -g @nibiruchain/nibid
+npm install -g @nibiruchain/nibiru
 nibid version
 ```
 
