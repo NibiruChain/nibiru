@@ -592,6 +592,13 @@ function packageDirectories(workspace: string): string[] {
   return [...Object.keys(TARGETS), "cli"].map((name) => join(workspace, name));
 }
 
+export function packageVersionIsUnpublished(result: CommandResult): boolean {
+  // Bun returns a registry 404 for a package that does not exist. Once the
+  // package exists, asking for a new version instead returns "No version ...
+  // satisfying". Both responses mean npm can accept this exact version.
+  return /404|not found|no version .* satisfying/i.test(`${result.stdout}\n${result.stderr}`);
+}
+
 async function assertUnpublished(workspace: string, version: string, runner: CommandRunner): Promise<void> {
   for (const directory of packageDirectories(workspace)) {
     const manifest = await Bun.file(join(directory, "package.json")).json();
@@ -600,7 +607,7 @@ async function assertUnpublished(workspace: string, version: string, runner: Com
     // npm cannot replace a published version. Check every package before the
     // first upload so a known collision does not create a partial release.
     if (result.code === 0) throw new Error(`${manifest.name}@${version} is already published`);
-    if (!/404|not found/i.test(`${result.stdout}\n${result.stderr}`)) {
+    if (!packageVersionIsUnpublished(result)) {
       failCommand("bun", ["pm", "view", `${manifest.name}@${version}`, "version"], result);
     }
   }

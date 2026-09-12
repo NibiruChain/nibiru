@@ -7,6 +7,7 @@ import {
   assetsForRelease,
   createProgram,
   normalizeDistributionVersion,
+  packageVersionIsUnpublished,
   parseVersion,
   readCachedReleases,
   selectReleaseTag,
@@ -79,6 +80,12 @@ describe("publish arguments", () => {
     expect(() => normalizeDistributionVersion("latest")).toThrow("--dist-ver");
     expect(() => normalizeDistributionVersion("next")).toThrow("--dist-ver");
     expect(() => normalizeDistributionVersion("2.19.0+build.1")).toThrow("--dist-ver");
+  });
+
+  test("accepts both Bun missing-package responses before publishing", () => {
+    expect(packageVersionIsUnpublished({ code: 1, stdout: "", stderr: "404 Not Found" })).toBe(true);
+    expect(packageVersionIsUnpublished({ code: 1, stdout: "", stderr: "No version of package satisfying 2.1.0 found" })).toBe(true);
+    expect(packageVersionIsUnpublished({ code: 1, stdout: "", stderr: "authentication required" })).toBe(false);
   });
 });
 
