@@ -1,14 +1,39 @@
 {
   "name": "@nibiruchain/nibiru",
   "version": "0.0.0-dev",
-  "description": "Nibiru command-line client",
-  "license": "Apache-2.0",
+  "description": "Nibiru blockchain command-line client for nodes, validators, and developers",
+  "keywords": [
+    "nibiru",
+    "nibid",
+    "blockchain",
+    "cli",
+    "validator",
+    "node",
+    "comet-bft",
+    "ethereum",
+    "evm",
+    "wasm",
+    "wasm-vm",
+    "sai",
+    "sai-perps"
+  ],
+  "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NibiruChain/nibiru.git",
+    "directory": "x/clidist"
+  },
+  "homepage": "https://nibiru.fi/docs/dev/cli",
+  "bugs": {
+    "url": "https://github.com/NibiruChain/nibiru/issues"
+  },
   "bin": {
     "nibiru": "bin/nibiru.js"
   },
   "files": [
     "bin/nibiru.js",
-    "README.md"
+    "README.md",
+    "LICENSE.md"
   ],
   "optionalDependencies": {
     "@nibiruchain/nibiru-linux-x64": "0.0.0-dev",

@@ -68,6 +68,11 @@ const root = join(import.meta.dir, "..");
 const artifactsRoot = join(root, "artifacts", "releases");
 const distRoot = join(root, "dist");
 const templatePackages = join(root, "packages");
+const repositoryRoot = join(root, "..", "..");
+const licensePath = join(repositoryRoot, "LICENSE.md");
+const packageRepository = "git+https://github.com/NibiruChain/nibiru.git";
+const packageHomepage = "https://nibiru.fi/docs/dev/cli";
+const packageBugsUrl = "https://github.com/NibiruChain/nibiru/issues";
 
 export const runCommand: CommandRunner = async (program, args, cwd) => {
   const child = Bun.spawn([program, ...args], {
@@ -486,9 +491,29 @@ async function setPackageVersions(workspace: string, version: string): Promise<v
   }
 }
 
+async function addPackageLicenses(workspace: string): Promise<void> {
+  for (const packageDir of ["cli", ...Object.keys(TARGETS)]) {
+    await cp(licensePath, join(workspace, packageDir, "LICENSE.md"));
+  }
+}
+
+async function verifyPackageDocuments(directory: string, manifest: Record<string, unknown>): Promise<void> {
+  if (manifest.license !== "BSD-2-Clause") throw new Error(`${directory} package license is invalid`);
+  const repository = manifest.repository as { url?: string } | undefined;
+  if (repository?.url !== packageRepository || manifest.homepage !== packageHomepage) {
+    throw new Error(`${directory} package repository metadata is invalid`);
+  }
+  const bugs = manifest.bugs as { url?: string } | undefined;
+  if (bugs?.url !== packageBugsUrl) throw new Error(`${directory} package issue tracker is invalid`);
+  await access(join(directory, "README.md"), constants.R_OK);
+  await access(join(directory, "LICENSE.md"), constants.R_OK);
+}
+
 export async function verifyWorkspace(workspace: string, version: string): Promise<void> {
-  const cli = await Bun.file(join(workspace, "cli", "package.json")).json();
+  const cliDirectory = join(workspace, "cli");
+  const cli = await Bun.file(join(cliDirectory, "package.json")).json();
   if (cli.version !== version || !cli.bin?.nibiru) throw new Error("Umbrella package version or bin is invalid");
+  await verifyPackageDocuments(cliDirectory, cli);
   if (Object.keys(cli.optionalDependencies).length !== Object.keys(TARGETS).length) {
     throw new Error("Umbrella optionalDependencies is incomplete");
   }
@@ -496,10 +521,12 @@ export async function verifyWorkspace(workspace: string, version: string): Promi
     if (dependencyVersion !== version) throw new Error(`${name} is not lockstep with ${version}`);
   }
   for (const [target, expected] of Object.entries(TARGETS)) {
-    const manifest = await Bun.file(join(workspace, target, "package.json")).json();
+    const directory = join(workspace, target);
+    const manifest = await Bun.file(join(directory, "package.json")).json();
     if (manifest.version !== version || manifest.os?.[0] !== expected.os || manifest.cpu?.[0] !== expected.cpu) {
       throw new Error(`${target} package metadata is invalid`);
     }
+    await verifyPackageDocuments(directory, manifest);
     // The umbrella package owns the public `nibiru` command. Leaf packages only
     // provide native files, so their metadata cannot replace the launcher.
     if (manifest.bin) throw new Error(`${target} must not declare a public bin`);
@@ -534,6 +561,7 @@ async function prepareFetchedRelease(
   await mkdir(workspace, { recursive: true });
   await cp(templatePackages, workspace, { recursive: true, filter: (source) => !source.endsWith("/bin/nibid") });
   await setPackageVersions(workspace, distributionVersion);
+  await addPackageLicenses(workspace);
   for (const [target, platform] of Object.entries(TARGETS)) {
     console.log(`staging ${target} native binary`);
     await stageBinary(
