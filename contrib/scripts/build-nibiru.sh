@@ -371,7 +371,7 @@ run_go_compile() {
         -trimpath \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        -o "${builddir}/" \
+        -o "${builddir}/nibid" \
         ./x/cli
     else
       go install \
