@@ -1,0 +1,54 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "nibiru-dist",
+      "devDependencies": {
+        "commander": "^15.0.0",
+      },
+    },
+    "packages/cli": {
+      "name": "@nibiruchain/nibiru",
+      "version": "0.0.0-dev",
+      "bin": {
+        "nibiru": "bin/nibiru.js",
+      },
+      "optionalDependencies": {
+        "@nibiruchain/nibiru-darwin-arm64": "0.0.0-dev",
+        "@nibiruchain/nibiru-darwin-x64": "0.0.0-dev",
+        "@nibiruchain/nibiru-linux-arm64": "0.0.0-dev",
+        "@nibiruchain/nibiru-linux-x64": "0.0.0-dev",
+      },
+    },
+    "packages/darwin-arm64": {
+      "name": "@nibiruchain/nibiru-darwin-arm64",
+      "version": "0.0.0-dev",
+    },
+    "packages/darwin-x64": {
+      "name": "@nibiruchain/nibiru-darwin-x64",
+      "version": "0.0.0-dev",
+    },
+    "packages/linux-arm64": {
+      "name": "@nibiruchain/nibiru-linux-arm64",
+      "version": "0.0.0-dev",
+    },
+    "packages/linux-x64": {
+      "name": "@nibiruchain/nibiru-linux-x64",
+      "version": "0.0.0-dev",
+    },
+  },
+  "packages": {
+    "@nibiruchain/nibiru": ["@nibiruchain/nibiru@workspace:packages/cli"],
+
+    "@nibiruchain/nibiru-darwin-arm64": ["@nibiruchain/nibiru-darwin-arm64@workspace:packages/darwin-arm64"],
+
+    "@nibiruchain/nibiru-darwin-x64": ["@nibiruchain/nibiru-darwin-x64@workspace:packages/darwin-x64"],
+
+    "@nibiruchain/nibiru-linux-arm64": ["@nibiruchain/nibiru-linux-arm64@workspace:packages/linux-arm64"],
+
+    "@nibiruchain/nibiru-linux-x64": ["@nibiruchain/nibiru-linux-x64@workspace:packages/linux-x64"],
+
+    "commander": ["commander@15.0.0", "", {}, "sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg=="],
+  }
+}

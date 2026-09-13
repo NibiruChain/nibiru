@@ -18,7 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	genutiltest "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/client/testutil"
 
-	nibid "github.com/NibiruChain/nibiru/v2/cmd/nibid"
+	nibid "github.com/NibiruChain/nibiru/v2/x/cli"
 )
 
 func TestBase64Decode(t *testing.T) {

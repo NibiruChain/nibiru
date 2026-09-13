@@ -1,0 +1,12 @@
+{
+  "name": "nibiru-dist",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test": "bun test src"
+  },
+  "devDependencies": {
+    "commander": "^15.0.0"
+  }
+}

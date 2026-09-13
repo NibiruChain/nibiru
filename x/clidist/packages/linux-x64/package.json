@@ -1,0 +1,26 @@
+{
+  "name": "@nibiruchain/nibiru-linux-x64",
+  "version": "0.0.0-dev",
+  "description": "Native Nibiru command-line binary for Linux x64",
+  "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NibiruChain/nibiru.git",
+    "directory": "x/clidist"
+  },
+  "homepage": "https://nibiru.fi/docs/dev/cli",
+  "bugs": {
+    "url": "https://github.com/NibiruChain/nibiru/issues"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/nibid",
+    "README.md",
+    "LICENSE.md"
+  ]
+}
