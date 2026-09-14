@@ -428,8 +428,21 @@ jobs:
 
       - name: "Install buf CLI"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        env:
+          BUF_VERSION: "1.64.0"
+          BUF_SHA256: "ce39d3b9b8cad23f75b8f6645605055fbe9760f81571c1d10a7928602bce601c"
         run: |
-          go install github.com/bufbuild/buf/cmd/buf@v1.64.0
+          set -Eeuo pipefail
+          buf_bin_dir="$RUNNER_TEMP/buf-bin"
+          install -d "$buf_bin_dir"
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 \
+            --silent --show-error \
+            "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-x86_64" \
+            --output "$buf_bin_dir/buf"
+          printf '%s  %s\n' "$BUF_SHA256" "$buf_bin_dir/buf" | sha256sum --check
+          chmod +x "$buf_bin_dir/buf"
+          echo "$buf_bin_dir" >> "$GITHUB_PATH"
+          test "$("$buf_bin_dir/buf" --version)" = "$BUF_VERSION"
 
       - name: "Setup Node & npm (for npx)"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
