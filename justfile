@@ -208,7 +208,7 @@ passkey-demo:
 
 # Runs golang formatter (gofumpt)
 fmt:
-    gofumpt -w evm x app gosdk eth
+    gofumpt -w evm x app eth
 
 # Go mod tidying, format, and proto gen
 tidy:

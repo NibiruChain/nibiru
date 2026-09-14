@@ -6,7 +6,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/lib/sai-trading/tutil"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/x/gosdk"
 )
 
 func main() {

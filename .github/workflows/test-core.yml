@@ -114,7 +114,6 @@ jobs:
               - "app/**/*.go"
               - "eth/**/*.go"
               - "evm/**/*.go"
-              - "gosdk/**/*.go"
               - "x/**/*.go"
               - "proto/**/*.proto"
               - "x/**/*.proto"

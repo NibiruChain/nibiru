@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/x/gosdk"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"

@@ -1,4 +1,4 @@
-# Nibiru Go SDK - NibiruChain/nibiru/gosdk
+# Nibiru Go SDK - NibiruChain/nibiru/x/gosdk
 
 A Golang client for interacting with the Nibiru blockchain. 
 
