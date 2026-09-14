@@ -5,4 +5,4 @@
 # Simple localnet script for testing
 .PHONY: localnet
 localnet:
-	bash ./cmd/nibid/localnet.sh --run $(FLAGS)
+	bash ./x/cli/localnet.sh --run $(FLAGS)

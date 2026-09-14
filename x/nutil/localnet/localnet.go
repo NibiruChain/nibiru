@@ -302,7 +302,6 @@ func (c CLI) ExecTxCmd(
 	renderedCmd := c.RenderTxCmd(cmd, args, opts...)
 	txArgs := c.txArgs(args, opts...)
 
-	txResp := new(sdk.TxResponse)
 	for attempt := 0; attempt < 3; attempt++ {
 		resetCmdContexts(cmd)
 		out, err := clitestutil.ExecTestCLICmd(c.ClientCtx, cmd, txArgs)
@@ -310,17 +309,33 @@ func (c CLI) ExecTxCmd(
 			return nil, fmt.Errorf("failed to execute tx %s: %w: %s", renderedCmd, err, out.String())
 		}
 
-		txResp = new(sdk.TxResponse)
+		txResp := new(sdk.TxResponse)
 		if err := c.ClientCtx.Codec.UnmarshalJSON(out.Bytes(), txResp); err != nil {
 			return nil, fmt.Errorf("failed to decode tx response for %s: %w: %s", renderedCmd, err, out.String())
 		}
+
+		failureCode := txResp.Code
+		failureLog := txResp.RawLog
 		if txResp.Code == types.CodeTypeOK {
-			break
+			if txResp.TxHash == "" {
+				return txResp, nil
+			}
+
+			deliveredResp, err := c.WaitForTx(txResp.TxHash)
+			if err != nil {
+				return nil, fmt.Errorf("failed waiting for tx %s (%s): %w", txResp.TxHash, renderedCmd, err)
+			}
+			if deliveredResp.Code == types.CodeTypeOK {
+				return deliveredResp, nil
+			}
+
+			failureCode = deliveredResp.Code
+			failureLog = deliveredResp.RawLog
 		}
 
-		expectedSeq, _, ok := nutil.ParseAccountSequenceMismatch(txResp.RawLog)
+		expectedSeq, _, ok := nutil.ParseAccountSequenceMismatch(failureLog)
 		if !ok || attempt == 2 {
-			return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, txResp.Code, txResp.RawLog)
+			return nil, fmt.Errorf("tx failed for %s with code %d: %s", renderedCmd, failureCode, failureLog)
 		}
 
 		accountNumber, _, err := c.ClientCtx.AccountRetriever.GetAccountNumberSequence(c.ClientCtx, c.FromAddr)
@@ -334,19 +349,8 @@ func (c CLI) ExecTxCmd(
 		)
 		renderedCmd = renderNibidCmd("tx", cmd, txArgs)
 	}
-	if txResp.TxHash == "" {
-		return txResp, nil
-	}
 
-	deliveredResp, err := c.WaitForTx(txResp.TxHash)
-	if err != nil {
-		return nil, fmt.Errorf("failed waiting for tx %s (%s): %w", txResp.TxHash, renderedCmd, err)
-	}
-	if deliveredResp.Code != types.CodeTypeOK {
-		return nil, fmt.Errorf("delivered tx failed for %s with code %d: %s", renderedCmd, deliveredResp.Code, deliveredResp.RawLog)
-	}
-
-	return deliveredResp, nil
+	return nil, fmt.Errorf("exhausted sequence retries for %s", renderedCmd)
 }
 
 func setTxRetryFlags(args []string, accountNumber string, sequence string) []string {

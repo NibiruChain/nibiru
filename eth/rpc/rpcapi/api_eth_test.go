@@ -35,7 +35,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	nibidcmd "github.com/NibiruChain/nibiru/v2/cmd/nibid/impl"
+	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"

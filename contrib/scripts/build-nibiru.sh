@@ -371,15 +371,15 @@ run_go_compile() {
         -trimpath \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        -o "${builddir}/" \
-        ./cmd/...
+        -o "${builddir}/nibid" \
+        ./x/cli
     else
       go install \
         -mod=readonly \
         -trimpath \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        ./cmd/...
+        ./x/cli
     fi
   )
 }
