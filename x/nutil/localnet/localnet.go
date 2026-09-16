@@ -31,7 +31,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/evm/jsonrpc"
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
 )
 
@@ -53,7 +53,7 @@ type CLI struct {
 	NodeURI       string
 	TxFee         string
 	TxGas         string
-	EthRpcBackend *rpcapi.Backend
+	EthRpcBackend *jsonrpc.Backend
 
 	EvmRpcClient *ethclient.Client
 	EvmRpc       EvmRpcAPI
@@ -68,10 +68,10 @@ type cliCloseState struct {
 }
 
 type EvmRpcAPI struct {
-	Eth     *rpcapi.EthAPI
-	Net     *rpcapi.NetAPI
-	Debug   *rpcapi.DebugAPI
-	Filters *rpcapi.FiltersAPI
+	Eth     *jsonrpc.EthAPI
+	Net     *jsonrpc.NetAPI
+	Debug   *jsonrpc.DebugAPI
+	Filters *jsonrpc.FiltersAPI
 }
 
 type TxOption func(*txOptions)
@@ -138,19 +138,19 @@ func NewCLI() (out CLI, err error) {
 	serverCtx := server.NewDefaultContext()
 	serverCtx.Logger = cmtlog.NewNopLogger()
 
-	backend := rpcapi.NewBackend(serverCtx, serverCtx.Logger, clientCtx, false, nil)
-	apis := rpcapi.GetRPCAPIs(
+	backend := jsonrpc.NewBackend(serverCtx, serverCtx.Logger, clientCtx, false, nil)
+	apis := jsonrpc.GetRPCAPIs(
 		serverCtx,
 		clientCtx,
 		tmWSClient,
 		false,
 		nil,
 		[]string{
-			rpcapi.NamespaceEth,
-			rpcapi.NamespaceNet,
-			rpcapi.NamespaceDebug,
-			rpcapi.NamespaceWeb3,
-			rpcapi.NamespaceTxPool,
+			jsonrpc.NamespaceEth,
+			jsonrpc.NamespaceNet,
+			jsonrpc.NamespaceDebug,
+			jsonrpc.NamespaceWeb3,
+			jsonrpc.NamespaceTxPool,
 		},
 	)
 	evmRpcAPI, err := buildEvmRpcAPI(apis)
@@ -193,13 +193,13 @@ func buildEvmRpcAPI(apis []gethrpc.API) (EvmRpcAPI, error) {
 
 	for _, api := range apis {
 		switch svc := api.Service.(type) {
-		case *rpcapi.EthAPI:
+		case *jsonrpc.EthAPI:
 			out.Eth = svc
-		case *rpcapi.FiltersAPI:
+		case *jsonrpc.FiltersAPI:
 			out.Filters = svc
-		case *rpcapi.NetAPI:
+		case *jsonrpc.NetAPI:
 			out.Net = svc
-		case *rpcapi.DebugAPI:
+		case *jsonrpc.DebugAPI:
 			out.Debug = svc
 		}
 	}

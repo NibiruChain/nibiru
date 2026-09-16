@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 
 	tmnode "github.com/cometbft/cometbft/node"
 	sm "github.com/cometbft/cometbft/state"

@@ -11,8 +11,8 @@ Nibiru Chain is an L1 blockchain with parallel VM support:
 Important Directories:
 - `app/` - Application wiring and integration
 - `cmd/nibid/` - Node binary entrypoints and localnet scripts
-- `evm/` - EVM module, EVM state, ante flow, precompiles, E2E, and Forge workspace
-- `eth/` - Ethereum RPC/account/encoding helpers
+- `evm/` - EVM module, state, ante flow, JSON-RPC, transaction indexer, precompiles, E2E, and Forge workspace
+- `eth/` - Shared Ethereum account, crypto, and encoding helpers
 - `x/gosdk/` - Go SDK client package
 - `lib/cosmos-sdk/` - Nibiru's in-tree Cosmos SDK packages
 - `lib/ibc-go/` - Nibiru's in-tree IBC packages
