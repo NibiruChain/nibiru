@@ -19,7 +19,7 @@ pub use cw_utils::Expiration;
 pub use nibiru_ownable_derive::{ownable_execute, ownable_query, PermPolicy};
 pub use nibiru_std::address::UserAddr;
 pub use perms::{
-    assert_message_authorized, assert_owner_or_perm, assert_perm, has_perm,
+    assert_msg_auth, assert_owner_or_perm, assert_perm, has_perm,
     perms_for_members, update_perms, validate_perm_id, MemberPerms, PermError,
     PermPolicy, PermRequirement, PermRule, PermUpdate, PermUpdateKind,
 };

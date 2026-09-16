@@ -1,7 +1,7 @@
 //! Contract-local delegated perms and generated execute-message policies.
 //!
 //! An execute-message enum implements [`PermPolicy`], usually through the
-//! `PermPolicy` derive macro. A contract calls [`assert_message_authorized`]
+//! `PermPolicy` derive macro. A contract calls [`assert_msg_auth`]
 //! before dispatch to enforce that generated policy. The owner may grant or
 //! revoke the policy's named perms through [`update_perms`]. Queries can expose
 //! both the generated policy and each member's stored perms.
@@ -211,7 +211,7 @@ pub fn assert_owner_or_perm(
 /// still perform application-specific authorization. Owner-or-perm messages
 /// delegate to [`assert_owner_or_perm`]. Contracts should call this function
 /// before dispatching the execute message.
-pub fn assert_message_authorized<P: PermPolicy>(
+pub fn assert_msg_auth<P: PermPolicy>(
     storage: &dyn Storage,
     sender: &Addr,
     msg: &P,

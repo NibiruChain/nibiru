@@ -1,6 +1,6 @@
 //! Integration tests for a contract that uses the complete perm workflow.
 //!
-//! The execute entry point calls `assert_message_authorized` once, before
+//! The execute entry point calls `assert_msg_auth` once, before
 //! dispatch. The ordinary message handlers below do not repeat sender checks.
 //! They all increment the same value. A rejected `cw-multi-test` execution
 //! therefore proves that the shared generated-policy gate rejected the caller,
@@ -14,7 +14,7 @@ use cosmwasm_std::{
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_storage_plus::Item;
 use nibiru_ownable::{
-    assert_message_authorized, get_ownership, initialize_owner, ownable_execute,
+    assert_msg_auth, get_ownership, initialize_owner, ownable_execute,
     ownable_query, perms_for_members, update_ownership, update_perms, Action,
     MemberPerms, Ownership, OwnershipError, PermError, PermPolicy, PermRule,
     PermUpdate, PermUpdateKind, UserAddr,
@@ -97,7 +97,7 @@ fn execute(
 ) -> Result<Response, ContractError> {
     // Enforce the generated policy before dispatch. The ordinary branches
     // below deliberately contain no additional sender checks.
-    assert_message_authorized(deps.storage, &info.sender, &msg)?;
+    assert_msg_auth(deps.storage, &info.sender, &msg)?;
     match msg {
         ExecuteMsg::UpdateOwnership(action) => {
             update_ownership(

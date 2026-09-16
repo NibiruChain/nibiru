@@ -480,7 +480,7 @@ fn merge_variants(
 ///
 /// This macro defines message variants. It does not enforce the policy or
 /// implement their handlers. The contract execute entry point must call
-/// `nibiru_ownable::assert_message_authorized` before dispatch, then route the
+/// `nibiru_ownable::assert_msg_auth` before dispatch, then route the
 /// injected variants to `update_ownership` and `update_perms`.
 ///
 /// With no argument, the macro retains its original behavior and appends only
