@@ -47,9 +47,9 @@ These sections of the codebase extend or augment core runtime behavior.
 
 | Module | Description |
 | --- | --- |
-| [EVM](https://github.com/NibiruChain/nibiru/tree/main/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
+| [EVM](https://github.com/NibiruChain/nibiru/tree/main/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" and includes the EVM JSON-RPC server, APIs, and transaction indexer. |
 | [Wasm][code-x-wasm]           | Implements the execution environment for WebAssembly (WASM) smart contracts. CosmWasm smart contracts are Rust-based Wasm contracts. The [Rust workspace](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts) includes the protocol's core smart contracts. |
-| [Eth][code-x-eth]             | Ethereum integration utilities: EVM JSON-RPC server (HTTP/WebSocket) and APIs (eth/net/web3/debug/txpool), EVM transaction indexer for fast lookups, EIP-155 chain IDs, and EIP-712 signing helpers. See also [server][code-app-server] for JSON-RPC bootstrap and config. |
+| [Eth][code-x-eth]             | Shared Ethereum integration utilities for accounts, address encoding, EIP-155 chain IDs, EIP-712 signing, and Ethereum-compatible cryptography. |
 | [App][code-app]               | Core application logic including custom ante handlers for transaction preprocessing, gas management, signature verification, and EVM integration. Key features include oracle gas optimization, zero-gas actors, and enhanced security guards. |
 | [x/nutil][code-x-nutil]       | Helper and utility functions to be utilized by other `x/` modules. |
 

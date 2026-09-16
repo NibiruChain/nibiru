@@ -141,7 +141,7 @@ lint:
 
 # Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-    bash cmd/nibid/localnet.sh --run {{ PASS_FLAGS }}
+    bash x/cli/localnet.sh --run {{ PASS_FLAGS }}
 
 # Clears the logs directory
 log-clear:
@@ -208,7 +208,7 @@ passkey-demo:
 
 # Runs golang formatter (gofumpt)
 fmt:
-    gofumpt -w evm x app gosdk eth
+    gofumpt -w evm x app eth
 
 # Go mod tidying, format, and proto gen
 tidy:

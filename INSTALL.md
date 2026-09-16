@@ -36,7 +36,7 @@ To install a tagged release without cloning the repository, run the command
 below and replace `v2.18.2` with the release you want:
 
 ```bash
-go install github.com/NibiruChain/nibiru/v2/cmd/nibid@v2.18.2
+go install github.com/NibiruChain/nibiru/v2/x/cli@v2.18.2
 ```
 
 ## 4) Start a Local Network

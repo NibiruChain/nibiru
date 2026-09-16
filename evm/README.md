@@ -1,26 +1,29 @@
-# Nibiru - /evm
+# Nibiru EVM
 
-Nibiru EVM: the Go implementation of Nibiru's Ethereum-compatible execution layer. This package holds the Cosmos SDK module, state keeper, ante handlers, transaction types, and Nibiru-specific EVM precompiles.
+Nibiru EVM is the Go implementation of Nibiru's Ethereum-compatible execution layer. This directory contains the Cosmos SDK module, state keeper, ante handlers, transaction types, JSON-RPC server, and Nibiru-specific EVM precompiles.
 
 ```bash
-⚡ NibiruChain/Nibiru/evm
-├── 📂 cli              # `nibid` query and tx helpers for the EVM module
-├── 📂 e2e              # JSON-RPC integration tests (ethers.js, Hardhat, Bun)
-├── 📂 embeds           # Solidity fixtures and `@nibiruchain/solidity` publish artifacts
-├── 📂 evmante          # AnteHandler steps for `MsgEthereumTx`
-├── 📂 evmmodule        # Cosmos SDK `AppModule` wiring
-├── 📂 evmstate         # EVM keeper, `StateDB` (`SDB`), and message server
-├── 📂 evmtest          # Shared Go test helpers for EVM unit and integration tests
-├── 📂 forge            # Foundry workspace for Solidity dev and passkey/P-256 tests
-├── 📂 precompile       # Nibiru custom precompiles (FunToken, Oracle, Wasm, P-256)
+NibiruChain/nibiru/evm
+├── cli              # `nibid` query and tx helpers for the EVM module
+├── e2e              # JSON-RPC integration tests with ethers.js, Hardhat, and Bun
+├── embeds           # Solidity fixtures and `@nibiruchain/solidity` publish artifacts
+├── evmante          # AnteHandler steps for `MsgEthereumTx`
+├── evmmodule        # Cosmos SDK `AppModule` wiring
+├── evmstate         # EVM keeper, `StateDB`, and message server
+├── evmtest          # Shared Go test helpers for EVM unit and integration tests
+├── forge            # Foundry workspace for Solidity development and passkey tests
+├── indexer          # EVM transaction indexer for JSON-RPC lookups
+├── jsonrpc          # JSON-RPC methods, filters, tracing, and WebSockets
+├── precompile       # Nibiru precompiles for FunToken, Oracle, Wasm, and P-256
+├── rpc              # Shared RPC types, conversions, queries, and event parsing
 ├── *.go                # Core types: txs, genesis, params, FunToken, zero-gas
 └── README.md
 ```
 
 Related paths outside this directory:
 
-- directory `eth/` — Ethereum JSON-RPC, account encoding, EIP-712 signing
-- directory `proto/eth/evm/v1/` — protobuf definitions for the EVM module
+- Directory `eth/` contains shared Ethereum accounts, cryptography, encoding, and EIP-712 signing.
+- Directory `proto/eth/evm/v1/` contains protobuf definitions for the EVM module.
 
 ## Hacking
 
