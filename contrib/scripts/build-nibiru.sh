@@ -81,7 +81,7 @@ Build or install the nibid binary.
 With no arguments, this script prints help and exits. Use --run to execute.
 
 Options:
-  --run         Install nibid to PATH using go install.
+  --run         Build and install nibid to the Go binary directory.
   --just-build  Build nibid to ./build/nibid instead of installing (requires --run).
   -h, --help    Show this help message and exit.
 
@@ -331,7 +331,7 @@ run_go_compile() {
   local wasmvm_version="${10}"
   local just_build="${11}"
 
-  local cgo_cflags cgo_ldflags ldflags
+  local cgo_cflags cgo_ldflags ldflags install_dir
 
   cgo_cflags="-I${tempdir}/rocksdb/${ROCKSDB_VERSION}/include"
   cgo_ldflags="-L${tempdir}/rocksdb/${ROCKSDB_VERSION}/lib/${os_name}_${arch_name}/"
@@ -355,7 +355,12 @@ run_go_compile() {
   if [[ "$just_build" == true ]]; then
     log_info "compiling nibid to ${builddir}/"
   else
-    log_info "installing nibid with go install"
+    install_dir="$(go env GOBIN)"
+    if [[ -z "$install_dir" ]]; then
+      install_dir="$(go env GOPATH)/bin"
+    fi
+    mkdir -p "$install_dir"
+    log_info "installing nibid to ${install_dir}/nibid"
   fi
 
   (
@@ -374,11 +379,12 @@ run_go_compile() {
         -o "${builddir}/nibid" \
         ./x/cli
     else
-      go install \
+      go build \
         -mod=readonly \
         -trimpath \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
+        -o "${install_dir}/nibid" \
         ./x/cli
     fi
   )

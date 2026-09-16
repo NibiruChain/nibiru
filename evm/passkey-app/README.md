@@ -11,7 +11,7 @@ now talks to an ERC-4337 bundler (not a custom RPC method) for passkey-signed us
 just passkey-demo        # starts localnet (if needed), deploys EntryPoint + PasskeyAccountFactory, writes .env.local, starts bundler on :4337 (logs in logs/passkey-bundler.log)
 
 # Then launch the UI
-cd passkey-app && npm install && npm run dev
+cd evm/passkey-app && bun install && bun run dev
 ```
 
 If you want to run the bundler manually instead of the background process from `just passkey-demo`, use:
@@ -22,7 +22,7 @@ ENTRY_POINT=$(jq -r .entryPoint ../.cache/passkey-demo.json) \
 FACTORY_ADDR=$(jq -r .passkeyFactory ../.cache/passkey-demo.json) \
 JSON_RPC_ENDPOINT=http://127.0.0.1:8545 \
 BUNDLER_PORT=4337 \
-npm run bundler:local
+bun run bundler:local
 ```
 
 Open http://localhost:5173. The connection panel is prefilled from `.env.local` (RPC, chain ID, factory). Add the

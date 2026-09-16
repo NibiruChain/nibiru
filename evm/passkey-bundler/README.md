@@ -19,8 +19,8 @@ ships with health and metrics endpoints for operations.
 ## Quickstart
 
 ```bash
-cd passkey-bundler
-npm install               # already run in repo; keeps package-lock.json
+cd evm/passkey-bundler
+bun install               # install dependencies from bun.lock
 
 # run in dev mode (ts)
 RPC_URL=http://127.0.0.1:8545 \
@@ -28,11 +28,11 @@ ENTRY_POINT=0x... \
 BUNDLER_PRIVATE_KEY=0x... \
 BUNDLER_PORT=4337 \
 CHAIN_ID=9000 \
-npm run dev
+bun run dev
 
 # or build then run
-npm run build
-node dist/index.js
+bun run build
+bun run start
 ```
 
 ## Configuration (env)

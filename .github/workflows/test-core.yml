@@ -167,7 +167,12 @@ jobs:
       - name: "Build the nibid binary"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: |
-          contrib/scripts/build-nibiru.sh --run --just-build
+          install_dir="$RUNNER_TEMP/nibid-bin"
+          mkdir -p "$install_dir"
+          PATH="$install_dir:$PATH" GOBIN="$install_dir" \
+            contrib/scripts/build-nibiru.sh --run
+          cp "$install_dir/nibid" build/nibid
+          chmod 0755 build/nibid
 
       - name: "Verify nibid binary"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
@@ -366,12 +371,11 @@ jobs:
           sudo install -m 0755 dist/nibid /usr/local/bin/nibid
           nibid version
 
-      - name: "Setup NodeJS with npm caching"
+      - name: "Setup Bun"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: actions/setup-node@v7
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "lts/jod"
-          cache-dependency-path: "evm/e2e/package-lock.json"
+          bun-version: 1.4.2
 
       - name: "Install E2E dependencies"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'

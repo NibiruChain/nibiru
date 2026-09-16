@@ -8,8 +8,8 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src --ext .ts",
-    "test": "npm run build && node dist/passkey-e2e.js",
-    "bundler:local": "npm run build && node dist/local-bundler.js"
+    "test": "bun run build && bun dist/passkey-e2e.js",
+    "bundler:local": "bun run build && bun dist/local-bundler.js"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",
