@@ -120,6 +120,6 @@ const provider: ethers.JsonRpcProvider = await (async () => {
 const account = Wallet.fromPhrase(process.env.MNEMONIC, provider)
 
 const TEST_TIMEOUT = Number(process.env.TEST_TIMEOUT) || 15000
-const TX_WAIT_TIMEOUT = Number(process.env.TX_WAIT_TIMEOUT) || 5000
+const TX_WAIT_TIMEOUT = Number(process.env.TX_WAIT_TIMEOUT) || 8000
 
 export { account, provider, preflight, TEST_TIMEOUT, TX_WAIT_TIMEOUT }

@@ -11,7 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/evm/jsonrpc"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -53,7 +53,7 @@ func StartEthereumJSONRPC(
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	apis := rpcapi.GetRPCAPIs(ctx, clientCtx, tmWsClientForRPCApi, allowUnprotectedTxs, indexer, rpcAPIArr)
+	apis := jsonrpc.GetRPCAPIs(ctx, clientCtx, tmWsClientForRPCApi, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
@@ -143,7 +143,7 @@ func StartEthereumJSONRPC(
 
 	// allocate separate WS connection to Tendermint
 	tmWsClientForRPCWs := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-	wsSrv := rpcapi.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClientForRPCWs, config)
+	wsSrv := jsonrpc.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClientForRPCWs, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

@@ -114,7 +114,6 @@ jobs:
               - "app/**/*.go"
               - "eth/**/*.go"
               - "evm/**/*.go"
-              - "gosdk/**/*.go"
               - "x/**/*.go"
               - "proto/**/*.proto"
               - "x/**/*.proto"
@@ -168,7 +167,12 @@ jobs:
       - name: "Build the nibid binary"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: |
-          contrib/scripts/build-nibiru.sh --run --just-build
+          install_dir="$RUNNER_TEMP/nibid-bin"
+          mkdir -p "$install_dir"
+          PATH="$install_dir:$PATH" GOBIN="$install_dir" \
+            contrib/scripts/build-nibiru.sh --run
+          cp "$install_dir/nibid" build/nibid
+          chmod 0755 build/nibid
 
       - name: "Verify nibid binary"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
@@ -367,12 +371,11 @@ jobs:
           sudo install -m 0755 dist/nibid /usr/local/bin/nibid
           nibid version
 
-      - name: "Setup NodeJS with npm caching"
+      - name: "Setup Bun"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: actions/setup-node@v7
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "lts/jod"
-          cache-dependency-path: "evm/e2e/package-lock.json"
+          bun-version: 1.4.2
 
       - name: "Install E2E dependencies"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
@@ -428,8 +431,21 @@ jobs:
 
       - name: "Install buf CLI"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        env:
+          BUF_VERSION: "1.64.0"
+          BUF_SHA256: "ce39d3b9b8cad23f75b8f6645605055fbe9760f81571c1d10a7928602bce601c"
         run: |
-          go install github.com/bufbuild/buf/cmd/buf@v1.64.0
+          set -Eeuo pipefail
+          buf_bin_dir="$RUNNER_TEMP/buf-bin"
+          install -d "$buf_bin_dir"
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 \
+            --silent --show-error \
+            "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-x86_64" \
+            --output "$buf_bin_dir/buf"
+          printf '%s  %s\n' "$BUF_SHA256" "$buf_bin_dir/buf" | sha256sum --check
+          chmod +x "$buf_bin_dir/buf"
+          echo "$buf_bin_dir" >> "$GITHUB_PATH"
+          test "$("$buf_bin_dir/buf" --version)" = "$BUF_VERSION"
 
       - name: "Setup Node & npm (for npx)"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'

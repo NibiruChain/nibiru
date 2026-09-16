@@ -23,8 +23,9 @@ returned CLI value bundles:
   - query and tx command execution through Cobra handlers
   - block and tx wait helpers for delivered-state assertions
   - the live client.Context and tx defaults used by CLI-oriented tests
-  - a local rpcapi.Backend for direct backend method calls
-  - in-process typed `rpcapi` implementations for `eth`, `net`, and `debug`
+  - a local value of type `jsonrpc.Backend` for direct backend method calls
+  - typed implementations from package `jsonrpc` for the `eth`, `net`, and
+    `debug` namespaces
   - an `ethclient.Client` for Ethereum JSON-RPC assertions
 
 This helper is used by suites that exercise CLI, SDK, and Ethereum RPC behavior
