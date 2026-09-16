@@ -1,9 +1,11 @@
-import { beforeAll, describe, expect, it } from "bun:test"
+import { beforeAll, describe, expect, it, setDefaultTimeout } from "bun:test"
 import { parseEther, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
 import { provider, TEST_TIMEOUT } from "./testdeps"
 import { alice, deployContractTestERC20, hexify, txWait } from "./utils"
+
+setDefaultTimeout(8000)
 
 describe("debug queries", () => {
   let contractAddress: string

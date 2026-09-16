@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import Database from "better-sqlite3"
+import { Database } from "bun:sqlite"
 
 import { BundlerLogEntry, BundlerReceipt, UserOpRecord, UserOpStatus } from "./types"
 
@@ -92,7 +92,7 @@ export class InMemoryStore implements BundlerStore {
 }
 
 export class SqliteStore implements BundlerStore {
-  private readonly db: Database.Database
+  private readonly db: Database
   private readonly receiptLimit: number
   private readonly maxLogs: number
 
@@ -104,26 +104,20 @@ export class SqliteStore implements BundlerStore {
     fs.mkdirSync(path.dirname(resolvedPath), { recursive: true })
 
     this.db = new Database(resolvedPath)
-    this.db.pragma("journal_mode = WAL")
-    this.db.pragma("busy_timeout = 5000")
+    this.db.exec("PRAGMA journal_mode = WAL")
+    this.db.exec("PRAGMA busy_timeout = 5000")
     this.initSchema()
   }
 
   async upsertUserOp(record: UserOpRecord): Promise<void> {
-    const stmt = this.db.prepare(`
+    const stmt = this.db.query(`
       INSERT INTO user_ops (
         user_op_hash, entry_point, sender, nonce,
         rpc_user_op_json,
         received_at, last_updated, status,
         tx_hash, actual_gas_cost, actual_gas_used,
         success, revert_reason, request_id, remote_address
-      ) VALUES (
-        @userOpHash, @entryPoint, @sender, @nonce,
-        @rpcUserOpJson,
-        @receivedAt, @lastUpdated, @status,
-        @txHash, @actualGasCost, @actualGasUsed,
-        @success, @revertReason, @requestId, @remoteAddress
-      )
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_op_hash) DO UPDATE SET
         entry_point=excluded.entry_point,
         sender=excluded.sender,
@@ -141,28 +135,28 @@ export class SqliteStore implements BundlerStore {
         remote_address=excluded.remote_address
     `)
 
-    stmt.run({
-      userOpHash: record.userOpHash,
-      entryPoint: record.entryPoint,
-      sender: record.sender,
-      nonce: record.nonce,
-      rpcUserOpJson: record.rpcUserOp ? JSON.stringify(record.rpcUserOp) : null,
-      receivedAt: record.receivedAt,
-      lastUpdated: record.lastUpdated,
-      status: record.status,
-      txHash: record.txHash ?? null,
-      actualGasCost: record.actualGasCost ?? null,
-      actualGasUsed: record.actualGasUsed ?? null,
-      success: typeof record.success === "boolean" ? (record.success ? 1 : 0) : null,
-      revertReason: record.revertReason ?? null,
-      requestId: record.requestId !== undefined && record.requestId !== null ? String(record.requestId) : null,
-      remoteAddress: record.remoteAddress ?? null,
-    })
+    stmt.run(
+      record.userOpHash,
+      record.entryPoint,
+      record.sender,
+      record.nonce,
+      record.rpcUserOp ? JSON.stringify(record.rpcUserOp) : null,
+      record.receivedAt,
+      record.lastUpdated,
+      record.status,
+      record.txHash ?? null,
+      record.actualGasCost ?? null,
+      record.actualGasUsed ?? null,
+      typeof record.success === "boolean" ? (record.success ? 1 : 0) : null,
+      record.revertReason ?? null,
+      record.requestId !== undefined && record.requestId !== null ? String(record.requestId) : null,
+      record.remoteAddress ?? null,
+    )
   }
 
   async getUserOp(hash: string): Promise<UserOpRecord | null> {
     const row = this.db
-      .prepare(`SELECT * FROM user_ops WHERE user_op_hash = ?`)
+      .query(`SELECT * FROM user_ops WHERE user_op_hash = ?`)
       .get(hash) as any
     if (!row) return null
     return this.rowToUserOp(row)
@@ -172,7 +166,7 @@ export class SqliteStore implements BundlerStore {
     if (!statuses.length || limit <= 0) return []
     const placeholders = statuses.map(() => "?").join(",")
     const rows = this.db
-      .prepare(
+      .query(
         `SELECT * FROM user_ops WHERE status IN (${placeholders}) ORDER BY last_updated ASC LIMIT ?`,
       )
       .all(...statuses, limit) as any[]
@@ -200,7 +194,7 @@ export class SqliteStore implements BundlerStore {
 
   async getReceipt(hash: string): Promise<BundlerReceipt | null> {
     const row = this.db
-      .prepare(`SELECT * FROM user_ops WHERE user_op_hash = ? AND status = 'included'`)
+      .query(`SELECT * FROM user_ops WHERE user_op_hash = ? AND status = 'included'`)
       .get(hash) as any
     if (!row) return null
     return this.rowToReceipt(row)
@@ -208,7 +202,7 @@ export class SqliteStore implements BundlerStore {
 
   async appendLog(entry: BundlerLogEntry): Promise<void> {
     this.db
-      .prepare(`INSERT INTO logs (ts, level, message, meta_json) VALUES (?, ?, ?, ?)`)
+      .query(`INSERT INTO logs (ts, level, message, meta_json) VALUES (?, ?, ?, ?)`)
       .run(entry.ts, entry.level, entry.message, entry.meta ? JSON.stringify(entry.meta) : null)
 
     this.pruneLogs()
@@ -216,7 +210,9 @@ export class SqliteStore implements BundlerStore {
 
   async getLogs(limit: number): Promise<BundlerLogEntry[]> {
     if (limit <= 0) return []
-    const rows = this.db.prepare(`SELECT ts, level, message, meta_json FROM logs ORDER BY id DESC LIMIT ?`).all(limit) as any[]
+    const rows = this.db
+      .query(`SELECT ts, level, message, meta_json FROM logs ORDER BY id DESC LIMIT ?`)
+      .all(limit) as any[]
     rows.reverse()
     return rows.map((r) => ({
       ts: r.ts,
@@ -267,23 +263,25 @@ export class SqliteStore implements BundlerStore {
   }
 
   private pruneLogs() {
-    const count = this.db.prepare(`SELECT COUNT(1) AS n FROM logs`).get() as any
+    const count = this.db.query(`SELECT COUNT(1) AS n FROM logs`).get() as any
     const n = Number(count?.n ?? 0)
     if (n <= this.maxLogs) return
     const toDelete = n - this.maxLogs
-    this.db.prepare(`DELETE FROM logs WHERE id IN (SELECT id FROM logs ORDER BY id ASC LIMIT ?)`).run(toDelete)
+    this.db
+      .query(`DELETE FROM logs WHERE id IN (SELECT id FROM logs ORDER BY id ASC LIMIT ?)`)
+      .run(toDelete)
   }
 
   private pruneIncludedReceipts() {
     if (this.receiptLimit <= 0) return
     const count = this.db
-      .prepare(`SELECT COUNT(1) AS n FROM user_ops WHERE status = 'included'`)
+      .query(`SELECT COUNT(1) AS n FROM user_ops WHERE status = 'included'`)
       .get() as any
     const n = Number(count?.n ?? 0)
     if (n <= this.receiptLimit) return
     const toDelete = n - this.receiptLimit
     this.db
-      .prepare(
+      .query(
         `DELETE FROM user_ops WHERE user_op_hash IN (
           SELECT user_op_hash FROM user_ops WHERE status = 'included' ORDER BY received_at ASC LIMIT ?
         )`,

@@ -34,12 +34,12 @@ if [ -z "$BUNDLER_ADDRESS" ]; then
 fi
 
 if [ -z "$BUNDLER_ADDRESS" ]; then
-  # Try to derive from the private key using ethers in evm/e2e/node_modules
-  BUNDLER_ADDRESS="$(NODE_PATH="$ROOT/evm/e2e/node_modules" node -e "try { const { Wallet } = require('ethers'); console.log(new Wallet(process.env.PK).address) } catch (e) { process.exit(1) }" PK="$BUNDLER_PRIVATE_KEY" 2>/dev/null || true)"
+  # Try to derive from the private key using ethers in evm/e2e/node_modules.
+  BUNDLER_ADDRESS="$(cd "$ROOT/evm/e2e" && PK="$BUNDLER_PRIVATE_KEY" bun -e "try { const { Wallet } = require('ethers'); console.log(new Wallet(process.env.PK).address) } catch (e) { process.exit(1) }" 2>/dev/null || true)"
 fi
 
 if [ -z "$BUNDLER_ADDRESS" ]; then
-  echo "Failed to derive bundler address from BUNDLER_PRIVATE_KEY. Set BUNDLER_ADDRESS explicitly or install ethers in evm/e2e/node_modules."
+  echo "Failed to derive bundler address from BUNDLER_PRIVATE_KEY. Set BUNDLER_ADDRESS explicitly or run just install in evm/e2e."
   exit 1
 fi
 
@@ -110,7 +110,7 @@ ensure_bundler_funded() {
   local balance_hex
   balance_hex="$(get_eth_balance "$BUNDLER_ADDRESS")"
   local balance_dec
-  balance_dec="$(node -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
+  balance_dec="$(bun -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
 
   if [ "$balance_dec" -ge "$BUNDLER_MIN_BALANCE_WEI" ]; then
     echo "Bundler balance is sufficient (${balance_dec} wei) for $BUNDLER_ADDRESS"
@@ -132,13 +132,13 @@ ensure_bundler_funded() {
   echo "Waiting for bundler balance to update..."
   sleep 3
   balance_hex="$(get_eth_balance "$BUNDLER_ADDRESS")"
-  balance_dec="$(node -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
+  balance_dec="$(bun -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
   echo "Bundler balance now ${balance_dec} wei"
 }
 
 if ! check_rpc; then
-  echo "Starting Nibiru localnet (make localnet --no-build)..."
-  make localnet FLAGS="--no-build" >"$LOG_DIR/passkey-localnet.log" 2>&1 &
+  echo "Starting Nibiru localnet (just localnet --no-build)..."
+  (cd "$ROOT" && just localnet --no-build) >"$LOG_DIR/passkey-localnet.log" 2>&1 &
   echo $! >"$LOCALNET_PID_FILE"
   echo "Waiting for RPC at $RPC_URL..."
   wait_for_rpc
@@ -147,14 +147,14 @@ else
 fi
 
 echo "Compiling contracts (hardhat)..."
-(cd "$ROOT/evm/e2e" && npx hardhat compile --show-stack-traces >/dev/null)
+(cd "$ROOT/evm/e2e" && just compile >/dev/null)
 
-echo "Deploying EntryPoint + PasskeyAccountFactory and writing passkey-app/.env.local"
-(cd "$ROOT/evm/e2e" && node scripts/passkey-demo-setup.js)
+echo "Deploying EntryPoint + PasskeyAccountFactory and writing evm/passkey-app/.env.local"
+(cd "$ROOT/evm/e2e" && just deploy-passkey)
 
 if [ ! -f "$PASSKEY_CACHE" ]; then
   echo "Could not find $PASSKEY_CACHE; skipping bundler start."
-  echo "Done. Start the UI with: cd passkey-app && npm run dev"
+  echo "Done. Start the UI with: cd evm/passkey-app && bun run dev"
   exit 0
 fi
 
@@ -168,7 +168,7 @@ cleanup_bundler
   cd "$ROOT/evm/e2e/passkey-sdk"
   if [ ! -d node_modules ]; then
     echo "Installing passkey-sdk dependencies..."
-    npm install >/dev/null
+    bun install >/dev/null
   fi
   ENTRY_POINT="$ENTRY_POINT" \
   FACTORY_ADDR="$FACTORY_ADDR" \
@@ -176,7 +176,7 @@ cleanup_bundler
   CHAIN_ID="$CHAIN_ID" \
   BUNDLER_PORT="$BUNDLER_PORT" \
   BUNDLER_PRIVATE_KEY="$BUNDLER_PRIVATE_KEY" \
-    npm run bundler:local >>"$BUNDLER_LOG" 2>&1 &
+    bun run bundler:local >>"$BUNDLER_LOG" 2>&1 &
   echo $! >"$BUNDLER_PID_FILE"
 )
 echo "Waiting for bundler at $BUNDLER_URL..."
@@ -184,4 +184,4 @@ wait_for_bundler
 
 ensure_bundler_funded
 
-echo "Done. Start the UI with: cd passkey-app && npm run dev"
+echo "Done. Start the UI with: cd evm/passkey-app && bun run dev"

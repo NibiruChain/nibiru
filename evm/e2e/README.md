@@ -19,9 +19,10 @@ Localnet has JSON RPC enabled by default.
 
 ### Install dependencies
 
+From `evm/e2e/`:
+
 ```bash
-npm install
-(cd passkey-sdk && npm install)
+just install
 ```
 
 ### Configure environment in `.env` file
@@ -43,7 +44,8 @@ fund other test wallets.
 ### Execute
 
 ```bash
-❯ bun test
+cd evm/e2e
+❯ just test
 bun test v1.1.12 (43f0913c)
 
 test/erc20.test.ts:
@@ -75,11 +77,12 @@ Assumes:
 - An ERC-4337 EntryPoint already deployed; pass its address via `ENTRY_POINT`.
 
 ```bash
+cd evm/e2e
 # Optional: provide QX/QY (0x-prefixed 32-byte coords) to create the first account.
 ENTRY_POINT=0xYourEntryPoint \
 QX=0x... \
 QY=0x... \
-npx hardhat run scripts/deploy-passkey.js --network localhost
+just deploy-passkey
 ```
 
 ### Run an ERC-4337 bundler against Nibiru RPC
@@ -89,22 +92,23 @@ Uses a Stackup-style Docker image with a temp config. Required env: `RPC_URL`, `
 `ghcr.io/stackup-wallet/stackup-bundler:latest`).
 
 ```bash
+cd evm/e2e
 RPC_URL=http://127.0.0.1:8545 \
 ENTRY_POINT=0x... \
 CHAIN_ID=12345 \
-npm run bundler
+just bundler
 ```
 
 ### Passkey ERC-4337 test coverage
 
-The `bun test` suite now exercises the passkey ERC-4337 flow end-to-end. During the run it:
+The E2E test suite now exercises the passkey ERC-4337 flow end-to-end. During the run it:
 
 - Builds the `passkey-sdk`, deploys a fresh `EntryPointV06` + `PasskeyAccountFactory`, and funds the dev bundler key.
 - Starts a bundler on port `14437`: by default the lightweight `passkey-sdk/dist/local-bundler.js`; set
-  `PASSKEY_BUNDLER_MODE=official` to instead build and start `passkey-bundler/dist/index.js` (ensure `npm install` in
-  `passkey-bundler/` first).
+  `PASSKEY_BUNDLER_MODE=official` to instead build and start `evm/passkey-bundler/dist/index.js` (ensure `bun install`
+  in `evm/passkey-bundler/` first).
 - Executes the CLI passkey script against that bundler to prove a full user operation.
 
-Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in `evm/e2e/`, `evm/e2e/passkey-sdk/`, and
-`passkey-bundler/` if using `PASSKEY_BUNDLER_MODE=official`) and that port `14437` is free before running `bun test` or
-`just test-e2e`.
+Ensure Bun and the package dependencies are installed with `just install` in `evm/e2e/` (and `bun install` in
+`evm/passkey-bundler/` if using `PASSKEY_BUNDLER_MODE=official`). Ensure port `14437` is free before running `just test`
+or `just test-e2e`.

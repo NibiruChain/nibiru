@@ -378,7 +378,7 @@ debug_container.dot
 AGENTS.md
 precompile.test
 tx_log.json
-passkey-bundler/.tmp
+evm/passkey-bundler/.tmp
 evm-e2e/.nibid-*/
 evm-e2e/.passkey-*-privkey.txt
 evm-e2e/.passkey-*-wallet.json
