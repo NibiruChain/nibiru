@@ -1,0 +1,7 @@
+error: every PermPolicy variant requires exactly one #[perms(...)] declaration
+ --> tests/ui/duplicate.rs:5:5
+  |
+5 | /     #[perms(public)]
+6 | |     #[perms(owner_or_any())]
+7 | |     Duplicate,
+  | |_____________^

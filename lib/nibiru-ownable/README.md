@@ -2,7 +2,9 @@
 
 > Utility for single-party ownership of CosmWasm smart contracts.
 
-`nibiru-ownable` provides a comprehensive ownership management system for CosmWasm smart contracts, inspired by OpenZeppelin's Ownable pattern for Ethereum. It implements a two-phase ownership transfer mechanism with optional expiration deadlines, designed for the CosmWasm execution model.
+`nibiru-ownable` provides single-owner management and optional delegated perms
+for CosmWasm contracts. Ownership transfer uses a two-step propose-and-accept
+flow with an optional expiration.
 
 ## How to use
 
@@ -19,7 +21,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response<Empty>, OwnershipError> {
-    nibiru_ownable::initialize_owner(deps.storage, deps.api, msg.owner.as_deref())?;
+    nibiru_ownable::initialize_owner(deps.storage, msg.owner.as_deref())?;
     Ok(Response::new())
 }
 ```
@@ -72,11 +74,78 @@ pub fn execute(
         ExecuteMsg::UpdateOwnership(action) => {
             update_ownership(deps, &env.block, &info.sender, action)?;
         }
-        _ => unimplemneted!(),
+        _ => unimplemented!(),
     }
     Ok(Response::new())
 }
 ```
+
+## Delegated perms
+
+Perm-aware contracts derive `PermPolicy` on their execute enums. Every variant
+must declare exactly one gate:
+
+- `#[perms(public)]` leaves authorization to the handler.
+- `#[perms(owner_or_any())]` allows only the owner.
+- `#[perms(owner_or_any("sai_oper", "intent_executor"))]` allows the owner or
+  a member of either listed perm.
+- `#[perms(nested = "msg")]` delegates to a named nested message.
+- `#[perms(nested)]` delegates through a one-field tuple variant.
+
+Use `#[ownable_execute(perms)]` to inject owner-only `UpdatePerms` and nested
+`UpdateOwnership` variants. This mode requires `#[derive(PermPolicy)]`:
+
+```rust
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Uint128;
+use nibiru_ownable::{ownable_execute, PermPolicy};
+
+#[cw_serde]
+#[derive(PermPolicy)]
+enum AdminExecuteMsg {
+    #[perms(owner_or_any("sai_oper"))]
+    SetMinimumPositionSize { value: Uint128 },
+}
+
+#[ownable_execute(perms)]
+#[cw_serde]
+#[derive(PermPolicy)]
+enum ExecuteMsg {
+    #[perms(public)]
+    Deposit {},
+
+    #[perms(nested = "msg")]
+    Admin { msg: AdminExecuteMsg },
+}
+```
+
+Call `assert_message_authorized` before dispatch. Apply `UpdatePerms` with
+`update_perms::<ExecuteMsg>`. The whole batch is validated before storage is
+changed, then grants and revokes are applied in listed order. Duplicate and
+empty updates are valid.
+
+```rust
+assert_message_authorized(deps.storage, &info.sender, &msg)?;
+
+if let ExecuteMsg::UpdatePerms(updates) = msg {
+    let events = update_perms::<ExecuteMsg>(deps.storage, &info.sender, updates)?;
+    return Ok(Response::new().add_events(events));
+}
+```
+
+Use `#[ownable_query(perms)]` to inject these query variants:
+
+- `Ownership {}` returns the ownership state.
+- `Perms {}` returns the compiled `Vec<PermRule>` catalog. Only gated routes
+  appear. Nested routes use serialized names, for example
+  `admin.msg.set_minimum_position_size`.
+- `PermsForMembers { members: Vec<UserAddr> }` returns each requested member's
+  delegated perms. The current owner's result also contains the virtual
+  `owner` perm.
+
+`UserAddr` is serialized as one JSON string. Input accepts either a Nibiru
+bech32 externally owned account or a `0x`-prefixed 20-byte EVM address. Output
+uses EIP-55 hex, and `to_bech32_addr()` returns the equivalent Nibiru address.
 
 Use the `#[ownable_query]` macro to extend your query message:
 
@@ -130,6 +199,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 - `nibiru_ownable::Ownership<T>` - Struct containing current owner, pending owner, and expiry
 - `nibiru_ownable::Action` - Enum for ownership management actions
 - `nibiru_ownable::OwnershipError` - Error types for ownership operations
+- `nibiru_ownable::PermPolicy` - Generated execute-message authorization policy
+- `nibiru_ownable::PermRule` - One discoverable gated execute route
+- `nibiru_ownable::PermUpdate` - One delegated membership grant or revoke
+- `nibiru_ownable::UserAddr` - Validated dual-format externally owned account
 
 ## Documentation
 

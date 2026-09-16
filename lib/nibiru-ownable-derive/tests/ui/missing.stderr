@@ -1,0 +1,5 @@
+error: every PermPolicy variant requires exactly one #[perms(...)] declaration
+ --> tests/ui/missing.rs:5:5
+  |
+5 |     Missing,
+  |     ^^^^^^^

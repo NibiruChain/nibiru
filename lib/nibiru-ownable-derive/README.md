@@ -2,7 +2,9 @@
 
 > Macros for generating code used by the `nibiru-ownable` crate.
 
-`nibiru-ownable-derive` provides procedural macros that automatically inject ownership-related message variants into your CosmWasm contract's ExecuteMsg and QueryMsg enums, eliminating boilerplate code.
+`nibiru-ownable-derive` provides the procedural macros re-exported by
+`nibiru-ownable`. Contracts normally depend on and import only
+`nibiru-ownable`.
 
 ## Macros
 
@@ -50,6 +52,19 @@ enum QueryMsg {
 }
 ```
 
+### `#[derive(PermPolicy)]`
+
+Generates runtime authorization requirements and a discoverable catalog from
+`#[perms(...)]` attributes. Every execute variant must be marked `public`,
+`owner_or_any(...)`, or `nested`. Invalid and missing policies fail at compile
+time.
+
+`#[ownable_execute(perms)]` adds `UpdateOwnership(Action)` and
+`UpdatePerms(Vec<PermUpdate>)`. It requires the same enum to derive
+`PermPolicy`. `#[ownable_query(perms)]` adds `Ownership`, `Perms`, and
+`PermsForMembers` queries. The forms without `(perms)` retain the original
+ownership-only API.
+
 Expands to:
 
 ```rust
@@ -65,19 +80,21 @@ enum QueryMsg {
 
 ## Usage
 
-Add both crates to your `Cargo.toml`:
+Add the public crate to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-nibiru-ownable = "0.7.0"
-nibiru-ownable-derive = "0.7.0"
+nibiru-ownable = "0.8.0"
 ```
 
 Import the macros from `nibiru-ownable` (they are re-exported):
 
 ```rust
-use nibiru_ownable::{ownable_execute, ownable_query};
+use nibiru_ownable::{ownable_execute, ownable_query, PermPolicy};
 ```
+
+Use a direct `nibiru-ownable-derive` dependency only when testing or developing
+the procedural macro crate itself.
 
 ## Documentation
 

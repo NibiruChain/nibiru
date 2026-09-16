@@ -9,7 +9,7 @@ cd "$repo_root"
 
 # Default values - DRY RUN BY DEFAULT for safety
 DRY_RUN=true
-PACKAGES=("nibiru-ownable-derive" "nibiru-ownable")
+PACKAGES=("nibiru-std" "nibiru-ownable-derive" "nibiru-ownable")
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -40,12 +40,14 @@ VERSION=$(grep '^package.version' Cargo.toml | sed 's/.*= *"\([^"]*\)".*/\1/')
 echo "📖 Reading workspace version from Cargo.toml: $VERSION"
 
 # Verify the workspace dependency has the correct version
-WORKSPACE_DEP_VERSION=$(grep 'nibiru-ownable-derive.*=.*{ path = "lib/nibiru-ownable-derive"' Cargo.toml | sed 's/.*version = "\([^"]*\)".*/\1/' | head -1)
-if [ "$WORKSPACE_DEP_VERSION" != "$VERSION" ]; then
-    echo "⚠️  Warning: Workspace dependency version ($WORKSPACE_DEP_VERSION) doesn't match workspace version ($VERSION)"
-    echo "   Please update the workspace dependency version in Cargo.toml to match the workspace version"
-    exit 1
-fi
+for dependency in nibiru-std nibiru-ownable-derive; do
+    workspace_dep_version=$(grep "^$dependency.*=.*{ path = \"lib/$dependency\"" Cargo.toml | sed 's/.*version = "\([^"]*\)".*/\1/' | head -1)
+    if [ "$workspace_dep_version" != "$VERSION" ]; then
+        echo "⚠️  Warning: $dependency workspace version ($workspace_dep_version) doesn't match $VERSION"
+        echo "   Please update the workspace dependency version in Cargo.toml"
+        exit 1
+    fi
+done
 
 if [ "$DRY_RUN" = true ]; then
     echo "📦 DRY RUN: Publishing coupled packages version $VERSION"

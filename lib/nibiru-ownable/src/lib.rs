@@ -1,6 +1,9 @@
 #![doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/README.md"))]
 
+extern crate self as nibiru_ownable;
+
 pub mod address_like;
+pub mod perms;
 
 use std::fmt::Display;
 
@@ -13,7 +16,13 @@ use cw_storage_plus::Item;
 
 // re-export the proc macros and the Expiration class
 pub use cw_utils::Expiration;
-pub use nibiru_ownable_derive::{ownable_execute, ownable_query};
+pub use nibiru_ownable_derive::{ownable_execute, ownable_query, PermPolicy};
+pub use nibiru_std::address::UserAddr;
+pub use perms::{
+    assert_message_authorized, assert_owner_or_perm, assert_perm, has_perm,
+    perms_for_members, update_perms, validate_perm_id, MemberPerms, PermError,
+    PermPolicy, PermRequirement, PermRule, PermUpdate, PermUpdateKind,
+};
 
 /// The contract's ownership info
 #[cw_serde]
@@ -34,6 +43,7 @@ pub struct Ownership<T: AddressLike> {
 
 /// Actions that can be taken to alter the contract's ownership
 #[cw_serde]
+#[derive(PermPolicy)]
 pub enum Action {
     /// Propose to transfer the contract's ownership to another account,
     /// optionally with an expiry time.
@@ -41,6 +51,7 @@ pub enum Action {
     /// Can only be called by the contract's current owner.
     ///
     /// Any existing pending ownership transfer is overwritten.
+    #[perms(owner_or_any())]
     TransferOwnership {
         new_owner: String,
         expiry: Option<Expiration>,
@@ -48,7 +59,10 @@ pub enum Action {
 
     /// Accept the pending ownership transfer.
     ///
-    /// Can only be called by the pending owner.
+    /// The shared perm policy treats this action as public so the pending owner
+    /// can reach the handler. Function `update_ownership` still requires the
+    /// caller to be the pending owner.
+    #[perms(public)]
     AcceptOwnership,
 
     /// Give up the contract's ownership and the possibility of appointing
@@ -57,6 +71,7 @@ pub enum Action {
     /// Can only be invoked by the contract's current owner.
     ///
     /// Any existing pending ownership transfer is canceled.
+    #[perms(owner_or_any())]
     RenounceOwnership,
 }
 

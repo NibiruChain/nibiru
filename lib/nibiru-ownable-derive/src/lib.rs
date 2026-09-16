@@ -2,8 +2,384 @@ extern crate proc_macro;
 extern crate quote;
 extern crate syn;
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, AttributeArgs, DataEnum, DeriveInput};
+use quote::{format_ident, quote};
+use syn::{
+    parse_macro_input, AttributeArgs, DataEnum, DeriveInput, Fields, Lit, Meta,
+    NestedMeta, Type, Variant,
+};
+
+enum Policy {
+    Public,
+    OwnerOrAny(Vec<syn::LitStr>),
+    Nested(Box<NestedField>),
+}
+
+enum NestedField {
+    Named(syn::Ident, String, Type),
+    Unnamed(Type),
+}
+
+fn snake_case(name: &str) -> String {
+    let mut output = String::new();
+    for (index, ch) in name.chars().enumerate() {
+        if ch.is_ascii_uppercase() {
+            if index > 0 {
+                output.push('_');
+            }
+            output.push(ch.to_ascii_lowercase());
+        } else {
+            output.push(ch);
+        }
+    }
+    output
+}
+
+fn serialized_name(variant: &Variant) -> syn::Result<String> {
+    for attr in &variant.attrs {
+        if !attr.path.is_ident("serde") {
+            continue;
+        }
+        let Meta::List(list) = attr.parse_meta()? else {
+            continue;
+        };
+        for item in list.nested {
+            if let NestedMeta::Meta(Meta::NameValue(value)) = item {
+                if value.path.is_ident("rename") {
+                    if let Lit::Str(name) = value.lit {
+                        return Ok(name.value());
+                    }
+                }
+            }
+        }
+    }
+    Ok(snake_case(&variant.ident.to_string()))
+}
+
+fn serialized_field_name(field: &syn::Field) -> syn::Result<String> {
+    for attr in &field.attrs {
+        if !attr.path.is_ident("serde") {
+            continue;
+        }
+        let Meta::List(list) = attr.parse_meta()? else {
+            continue;
+        };
+        for item in list.nested {
+            if let NestedMeta::Meta(Meta::NameValue(value)) = item {
+                if value.path.is_ident("rename") {
+                    if let Lit::Str(name) = value.lit {
+                        return Ok(name.value());
+                    }
+                }
+            }
+        }
+    }
+    Ok(field
+        .ident
+        .as_ref()
+        .expect("named fields have identifiers")
+        .to_string())
+}
+
+fn derives_perm_policy(input: &DeriveInput) -> bool {
+    input.attrs.iter().any(|attr| {
+        if !attr.path.is_ident("derive") {
+            return false;
+        }
+        let Ok(Meta::List(list)) = attr.parse_meta() else {
+            return false;
+        };
+        list.nested.iter().any(|item| {
+            let NestedMeta::Meta(Meta::Path(path)) = item else {
+                return false;
+            };
+            path.segments
+                .last()
+                .is_some_and(|segment| segment.ident == "PermPolicy")
+        })
+    })
+}
+
+fn parse_policy(variant: &Variant) -> syn::Result<Policy> {
+    let attrs: Vec<_> = variant
+        .attrs
+        .iter()
+        .filter(|attr| attr.path.is_ident("perms"))
+        .collect();
+    if attrs.len() != 1 {
+        return Err(syn::Error::new_spanned(
+            variant,
+            "every PermPolicy variant requires exactly one #[perms(...)] declaration",
+        ));
+    }
+
+    let Meta::List(list) = attrs[0].parse_meta()? else {
+        return Err(syn::Error::new_spanned(attrs[0], "expected #[perms(...)]"));
+    };
+    if list.nested.len() != 1 {
+        return Err(syn::Error::new_spanned(
+            list,
+            "perms declaration must contain exactly one policy",
+        ));
+    }
+
+    match list.nested.first().expect("checked length") {
+        NestedMeta::Meta(Meta::Path(path)) if path.is_ident("public") => {
+            Ok(Policy::Public)
+        }
+        NestedMeta::Meta(Meta::Path(path)) if path.is_ident("nested") => {
+            match &variant.fields {
+                Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
+                    Ok(Policy::Nested(Box::new(NestedField::Unnamed(
+                        fields.unnamed[0].ty.clone(),
+                    ))))
+                }
+                _ => Err(syn::Error::new_spanned(
+                    variant,
+                    "#[perms(nested)] requires a single-field tuple variant",
+                )),
+            }
+        }
+        NestedMeta::Meta(Meta::NameValue(value))
+            if value.path.is_ident("nested") =>
+        {
+            let Lit::Str(field_name) = &value.lit else {
+                return Err(syn::Error::new_spanned(
+                    &value.lit,
+                    "nested field name must be a string literal",
+                ));
+            };
+            let Fields::Named(fields) = &variant.fields else {
+                return Err(syn::Error::new_spanned(
+                    variant,
+                    "named nesting requires a struct variant",
+                ));
+            };
+            let field = fields
+                .named
+                .iter()
+                .find(|field| {
+                    field.ident.as_ref().map(ToString::to_string)
+                        == Some(field_name.value())
+                })
+                .ok_or_else(|| {
+                    syn::Error::new_spanned(
+                        variant,
+                        format!(
+                            "nested field `{}` does not exist",
+                            field_name.value()
+                        ),
+                    )
+                })?;
+            Ok(Policy::Nested(Box::new(NestedField::Named(
+                field.ident.clone().expect("named field"),
+                serialized_field_name(field)?,
+                field.ty.clone(),
+            ))))
+        }
+        NestedMeta::Meta(Meta::List(owner))
+            if owner.path.is_ident("owner_or_any") =>
+        {
+            let mut perms = Vec::new();
+            for value in &owner.nested {
+                let NestedMeta::Lit(Lit::Str(perm)) = value else {
+                    return Err(syn::Error::new_spanned(
+                        value,
+                        "owner_or_any values must be string literals",
+                    ));
+                };
+                let value = perm.value();
+                let valid = value.len() <= 64
+                    && value
+                        .chars()
+                        .next()
+                        .is_some_and(|ch| ch.is_ascii_lowercase())
+                    && value.chars().all(|ch| {
+                        ch.is_ascii_lowercase()
+                            || ch.is_ascii_digit()
+                            || ch == '_'
+                    })
+                    && value != "owner";
+                if !valid {
+                    return Err(syn::Error::new_spanned(
+                        perm,
+                        "perm must match [a-z][a-z0-9_]{0,63} and cannot be `owner`",
+                    ));
+                }
+                perms.push(perm.clone());
+            }
+            Ok(Policy::OwnerOrAny(perms))
+        }
+        value => Err(syn::Error::new_spanned(
+            value,
+            "expected public, owner_or_any(...), or nested",
+        )),
+    }
+}
+
+fn ignored_pattern(
+    enum_name: &syn::Ident,
+    variant: &Variant,
+) -> proc_macro2::TokenStream {
+    let name = &variant.ident;
+    match &variant.fields {
+        Fields::Unit => quote!(#enum_name::#name),
+        Fields::Named(_) => quote!(#enum_name::#name { .. }),
+        Fields::Unnamed(_) => quote!(#enum_name::#name ( .. )),
+    }
+}
+
+/// Implements `nibiru_ownable::PermPolicy` for an execute-message enum.
+///
+/// Every variant must declare exactly one policy:
+///
+/// ```text
+/// #[perms(public)]
+/// #[perms(owner_or_any())]
+/// #[perms(owner_or_any("writer", "auditor"))]
+/// #[perms(nested)]
+/// #[perms(nested = "msg")]
+/// ```
+///
+/// `public` skips the shared perm gate. `owner_or_any()` with no identifiers is
+/// owner-only. A non-empty `owner_or_any(...)` also accepts members of any
+/// listed perm. Perm identifiers must match `[a-z][a-z0-9_]{0,63}` and cannot
+/// be `owner`.
+///
+/// Use `nested` on a single-field tuple variant. Use `nested = "field"` on a
+/// struct variant to delegate policy to that field's type. Nested types must
+/// also implement `PermPolicy`.
+///
+/// The generated implementation provides the requirement for each message, a
+/// catalog of gated JSON message routes, and the sorted set of referenced perm
+/// identifiers. Public variants do not appear in the catalog. Route segments
+/// use an explicit `serde(rename = "...")` when present and otherwise use the
+/// snake-case Rust variant or field name. A named nested field produces a route
+/// such as `admin.msg.intent_close_trade`. A tuple nested field omits the field
+/// segment.
+///
+/// The derive fails to compile if it is applied to a non-enum, a variant omits
+/// its policy, a variant has more than one policy, or a nested declaration does
+/// not identify a supported field shape.
+#[proc_macro_derive(PermPolicy, attributes(perms))]
+pub fn derive_perm_policy(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let enum_name = &input.ident;
+    let syn::Data::Enum(data) = &input.data else {
+        return syn::Error::new_spanned(
+            &input,
+            "PermPolicy supports enums only",
+        )
+        .to_compile_error()
+        .into();
+    };
+
+    let mut requirement_arms = Vec::new();
+    let mut catalog_steps = Vec::new();
+    let mut id_steps = Vec::new();
+
+    for (index, variant) in data.variants.iter().enumerate() {
+        let policy = match parse_policy(variant) {
+            Ok(policy) => policy,
+            Err(err) => return err.to_compile_error().into(),
+        };
+        let route = match serialized_name(variant) {
+            Ok(route) => route,
+            Err(err) => return err.to_compile_error().into(),
+        };
+        let pattern = ignored_pattern(enum_name, variant);
+
+        match policy {
+            Policy::Public => {
+                requirement_arms.push(quote! {
+                    #pattern => ::nibiru_ownable::PermRequirement::Public
+                });
+            }
+            Policy::OwnerOrAny(perms) => {
+                requirement_arms.push(quote! {
+                    #pattern => ::nibiru_ownable::PermRequirement::OwnerOrAny(
+                        vec![#(#perms),*]
+                    )
+                });
+                catalog_steps.push(quote! {
+                    rules.push(::nibiru_ownable::PermRule {
+                        exec_msg: #route.to_string(),
+                        owner_or_any: vec![#(#perms.to_string()),*],
+                    });
+                });
+                if !perms.is_empty() {
+                    id_steps.push(quote! {
+                        ids.extend([#(#perms),*]);
+                    });
+                }
+            }
+            Policy::Nested(nested) => match *nested {
+                NestedField::Named(field, field_route, ty) => {
+                    let variant_name = &variant.ident;
+                    let binding = format_ident!("__nested_{index}");
+                    requirement_arms.push(quote! {
+                    #enum_name::#variant_name { #field: #binding, .. } =>
+                        ::nibiru_ownable::PermPolicy::perm_requirement(#binding)
+                });
+                    catalog_steps.push(quote! {
+                    for mut rule in <#ty as ::nibiru_ownable::PermPolicy>::perm_rules() {
+                        rule.exec_msg = format!("{}.{}.{}", #route, #field_route, rule.exec_msg);
+                        rules.push(rule);
+                    }
+                });
+                    id_steps.push(quote! {
+                    ids.extend(<#ty as ::nibiru_ownable::PermPolicy>::perm_ids());
+                });
+                }
+                NestedField::Unnamed(ty) => {
+                    let variant_name = &variant.ident;
+                    let binding = format_ident!("__nested_{index}");
+                    requirement_arms.push(quote! {
+                    #enum_name::#variant_name(#binding) =>
+                        ::nibiru_ownable::PermPolicy::perm_requirement(#binding)
+                });
+                    catalog_steps.push(quote! {
+                    for mut rule in <#ty as ::nibiru_ownable::PermPolicy>::perm_rules() {
+                        rule.exec_msg = format!("{}.{}", #route, rule.exec_msg);
+                        rules.push(rule);
+                    }
+                });
+                    id_steps.push(quote! {
+                    ids.extend(<#ty as ::nibiru_ownable::PermPolicy>::perm_ids());
+                });
+                }
+            },
+        }
+    }
+
+    let (impl_generics, ty_generics, where_clause) =
+        input.generics.split_for_impl();
+    quote! {
+        impl #impl_generics ::nibiru_ownable::PermPolicy
+            for #enum_name #ty_generics #where_clause
+        {
+            fn perm_requirement(&self) -> ::nibiru_ownable::PermRequirement {
+                match self {
+                    #(#requirement_arms),*
+                }
+            }
+
+            fn perm_rules() -> Vec<::nibiru_ownable::PermRule> {
+                let mut rules = Vec::new();
+                #(#catalog_steps)*
+                rules
+            }
+
+            fn perm_ids() -> Vec<&'static str> {
+                let mut ids = Vec::new();
+                #(#id_steps)*
+                ids.sort_unstable();
+                ids.dedup();
+                ids
+            }
+        }
+    }
+    .into()
+}
 
 /// Merges the variants of two enums.
 ///
@@ -91,26 +467,87 @@ fn merge_variants(
 /// let _msg = ExecuteMsg::Foo{};
 /// ```
 ///
+/// Pass `perms` to append these variants:
+///
+/// ```text
+/// UpdateOwnership(nibiru_ownable::Action)
+/// UpdatePerms(Vec<nibiru_ownable::PermUpdate>)
+/// ```
+///
+/// Perm mode requires the enum to derive `PermPolicy`. The macro marks
+/// `UpdateOwnership` as a nested policy and `UpdatePerms` as owner-only, so the
+/// derive includes both in the generated policy.
+///
+/// This macro defines message variants. It does not enforce the policy or
+/// implement their handlers. The contract execute entry point must call
+/// `nibiru_ownable::assert_message_authorized` before dispatch, then route the
+/// injected variants to `update_ownership` and `update_perms`.
+///
+/// With no argument, the macro retains its original behavior and appends only
+/// `UpdateOwnership`.
+///
 /// Note: `#[ownable_execute]` must be applied _before_ `#[cw_serde]`.
 #[proc_macro_attribute]
 pub fn ownable_execute(
     metadata: TokenStream,
     input: TokenStream,
 ) -> TokenStream {
-    merge_variants(
-        metadata,
-        input,
+    let args = parse_macro_input!(metadata as AttributeArgs);
+    let perms_enabled = match args.as_slice() {
+        [] => false,
+        [NestedMeta::Meta(Meta::Path(path))] if path.is_ident("perms") => true,
+        [arg] => {
+            return syn::Error::new_spanned(
+                arg,
+                "expected `perms` or no argument",
+            )
+            .to_compile_error()
+            .into()
+        }
+        _ => {
+            return syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "expected `perms` or no argument",
+            )
+            .to_compile_error()
+            .into()
+        }
+    };
+    let derives_perm_policy = syn::parse::<DeriveInput>(input.clone())
+        .map(|input| derives_perm_policy(&input))
+        .unwrap_or(false);
+    if perms_enabled && !derives_perm_policy {
+        return syn::Error::new(
+            proc_macro2::Span::call_site(),
+            "#[ownable_execute(perms)] requires #[derive(PermPolicy)]",
+        )
+        .to_compile_error()
+        .into();
+    }
+    let variants = if perms_enabled && derives_perm_policy {
         quote! {
             enum Right {
                 /// Update the contract's ownership. The `action` to be provided
                 /// can be either to propose transferring ownership to an account,
                 /// accept a pending ownership transfer, or renounce the ownership
                 /// permanently.
+                #[perms(nested)]
+                UpdateOwnership(::nibiru_ownable::Action),
+
+                /// Grant or revoke delegated contract perms.
+                #[perms(owner_or_any())]
+                UpdatePerms(Vec<::nibiru_ownable::PermUpdate>),
+            }
+        }
+    } else {
+        quote! {
+            enum Right {
+                /// Update the contract's ownership.
                 UpdateOwnership(::nibiru_ownable::Action),
             }
         }
-        .into(),
-    )
+    };
+    merge_variants(TokenStream::new(), input, variants.into())
 }
 
 /// Append ownership-related query message variant(s) to an enum.
@@ -168,12 +605,63 @@ pub fn ownable_execute(
 /// let _msg = QueryMsg::Bar{};
 /// ```
 ///
+/// Pass `perms` to append these queries in addition to `Ownership`:
+///
+/// - `Perms {}` returns `Vec<nibiru_ownable::PermRule>`.
+/// - `PermsForMembers { members }` accepts
+///   `Vec<nibiru_ownable::UserAddr>` and returns
+///   `Vec<nibiru_ownable::MemberPerms>`.
+///
+/// This macro defines query variants and their response types. The contract
+/// query entry point must route them to `ExecuteMsg::perm_rules()` and
+/// `nibiru_ownable::perms_for_members`, respectively.
+///
+/// With no argument, the macro retains its original behavior and appends only
+/// `Ownership`.
+///
 /// Note: `#[ownable_query]` must be applied _before_ `#[cw_serde]`.
 #[proc_macro_attribute]
 pub fn ownable_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    merge_variants(
-        metadata,
-        input,
+    let args = parse_macro_input!(metadata as AttributeArgs);
+    let perms_enabled = match args.as_slice() {
+        [] => false,
+        [NestedMeta::Meta(Meta::Path(path))] if path.is_ident("perms") => true,
+        [arg] => {
+            return syn::Error::new_spanned(
+                arg,
+                "expected `perms` or no argument",
+            )
+            .to_compile_error()
+            .into()
+        }
+        _ => {
+            return syn::Error::new(
+                proc_macro2::Span::call_site(),
+                "expected `perms` or no argument",
+            )
+            .to_compile_error()
+            .into()
+        }
+    };
+    let variants = if perms_enabled {
+        quote! {
+            enum Right {
+                /// Query the contract's ownership information
+                #[returns(::nibiru_ownable::Ownership<String>)]
+                Ownership {},
+
+                /// Query the compiled execute-message perm catalog.
+                #[returns(Vec<::nibiru_ownable::PermRule>)]
+                Perms {},
+
+                /// Query delegated perms for a supplied set of members.
+                #[returns(Vec<::nibiru_ownable::MemberPerms>)]
+                PermsForMembers {
+                    members: Vec<::nibiru_ownable::UserAddr>,
+                },
+            }
+        }
+    } else {
         quote! {
             enum Right {
                 /// Query the contract's ownership information
@@ -181,6 +669,6 @@ pub fn ownable_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
                 Ownership {},
             }
         }
-        .into(),
-    )
+    };
+    merge_variants(TokenStream::new(), input, variants.into())
 }
