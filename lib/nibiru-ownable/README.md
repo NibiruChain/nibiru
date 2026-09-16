@@ -26,21 +26,20 @@ rules before calling function `update_ownership`.
 
 ## Delegated permissions
 
-Permission-aware contracts derive trait `PermPolicy` and annotate every execute
-variant. Use `#[ownable_execute(perms)]` to add owner-only
-`UpdatePerms(Vec<PermUpdate>)` and nested ownership handling.
+Permission-aware contracts derive trait `PermPolicy` on the message enum passed
+to `assert_msg_auth`. Use `#[ownable_execute(perms)]` to add owner-only
+`UpdatePerms(Vec<PermUpdate>)` and ownership actions.
 
 ```rust
-#[ownable_execute(perms)]
 #[cw_serde]
-#[derive(PermPolicy)]
 enum ExecuteMsg {
-    #[perms(nested = "msg")]
     Admin { msg: AdminExecuteMsg },
 }
 
+#[ownable_execute(perms)]
 #[cw_serde]
 #[derive(PermPolicy)]
+#[perms(namespace = "admin")]
 enum AdminExecuteMsg {
     #[perms(owner_or_any("operator"))]
     Reconcile {},
@@ -53,15 +52,19 @@ before it changes storage, then applies grants and revokes in order. Empty and
 duplicate updates are valid, and each update produces a `perm_update` event.
 
 ```rust
-nibiru_ownable::assert_msg_auth(deps.storage, &info.sender, &msg)?;
+match msg {
+    ExecuteMsg::Admin { msg } => {
+        nibiru_ownable::assert_msg_auth(deps.storage, &info.sender, &msg)?;
 
-if let ExecuteMsg::UpdatePerms(updates) = msg {
-    let events = nibiru_ownable::update_perms::<ExecuteMsg>(
-        deps.storage,
-        &info.sender,
-        updates,
-    )?;
-    return Ok(Response::new().add_events(events));
+        if let AdminExecuteMsg::UpdatePerms(updates) = msg {
+            let events = nibiru_ownable::update_perms::<AdminExecuteMsg>(
+                deps.storage,
+                &info.sender,
+                updates,
+            )?;
+            return Ok(Response::new().add_events(events));
+        }
+    }
 }
 ```
 
@@ -74,7 +77,9 @@ application-specific authority.
 Attribute macro `#[ownable_query(perms)]` adds these query variants:
 
 - `Ownership {}` returns the stored ownership state.
-- `Perms {}` returns the compiled `Vec<PermRule>` policy catalog.
+- `Perms {}` returns the compiled `Vec<PermRule>` policy catalog. An enum-level
+  `#[perms(namespace = "admin")]` prefix produces identifiers such as
+  `admin.reconcile`.
 - `PermsForMembers { members }` returns delegated membership for supplied
   `UserAddr` values. The owner receives virtual `owner` membership.
 

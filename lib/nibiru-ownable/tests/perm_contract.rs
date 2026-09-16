@@ -27,17 +27,10 @@ struct InstantiateMsg {
     owner: String,
 }
 
-#[cw_serde]
-#[derive(PermPolicy)]
-enum NestedMsg {
-    #[serde(rename = "record")]
-    #[perms(owner_or_any("writer"))]
-    Write {},
-}
-
 #[ownable_execute(perms)]
 #[cw_serde]
 #[derive(PermPolicy)]
+#[perms(namespace = "admin")]
 enum ExecuteMsg {
     #[perms(public)]
     Public {},
@@ -50,12 +43,6 @@ enum ExecuteMsg {
 
     #[perms(owner_or_any("writer", "auditor"))]
     WriteOrAudit {},
-
-    #[perms(nested = "msg")]
-    Nested {
-        #[serde(rename = "payload")]
-        msg: NestedMsg,
-    },
 }
 
 #[ownable_query(perms)]
@@ -114,10 +101,7 @@ fn execute(
         ExecuteMsg::Public {}
         | ExecuteMsg::OwnerOnly {}
         | ExecuteMsg::Write {}
-        | ExecuteMsg::WriteOrAudit {}
-        | ExecuteMsg::Nested {
-            msg: NestedMsg::Write {},
-        } => {
+        | ExecuteMsg::WriteOrAudit {} => {
             VALUE.update(deps.storage, |value| -> StdResult<_> {
                 Ok(value + 1)
             })?;
@@ -285,9 +269,9 @@ fn external_contract_exercises_membership_and_owner_inheritance() {
 
 /// Confirms that discovery queries report the generated policy and memberships.
 ///
-/// The catalog includes owner-only, any-of, nested, and macro-injected routes
-/// with the intended JSON field names. The member query returns both address
-/// forms and adds `owner` to the owner's stored delegated perms.
+/// The catalog includes owner-only, any-of, and macro-injected routes with the
+/// intended namespace. The member query returns both address forms and adds
+/// `owner` to the owner's stored delegated perms.
 #[test]
 fn catalog_and_member_queries_match_generated_policy() {
     let (mut app, contract) = setup();
@@ -303,8 +287,7 @@ fn catalog_and_member_queries_match_generated_policy() {
     )
     .unwrap();
 
-    // Query the derive-generated catalog, including the nested route assembled
-    // from serialized variant and field names.
+    // Query the derive-generated catalog with its enum-level namespace.
     let rules: Vec<PermRule> = app
         .wrap()
         .query_wasm_smart(&contract, &QueryMsg::Perms {})
@@ -313,31 +296,29 @@ fn catalog_and_member_queries_match_generated_policy() {
         rules,
         vec![
             PermRule {
-                exec_msg: "owner_only".to_string(),
+                exec_msg: "admin.owner_only".to_string(),
                 owner_or_any: vec![],
             },
             PermRule {
-                exec_msg: "write".to_string(),
+                exec_msg: "admin.write".to_string(),
                 owner_or_any: vec!["writer".to_string()],
             },
             PermRule {
-                exec_msg: "write_or_audit".to_string(),
+                exec_msg: "admin.write_or_audit".to_string(),
                 owner_or_any: vec!["writer".to_string(), "auditor".to_string(),],
             },
             PermRule {
-                exec_msg: "nested.payload.record".to_string(),
-                owner_or_any: vec!["writer".to_string()],
-            },
-            PermRule {
-                exec_msg: "update_ownership.transfer_ownership".to_string(),
+                exec_msg: "admin.update_ownership.transfer_ownership"
+                    .to_string(),
                 owner_or_any: vec![],
             },
             PermRule {
-                exec_msg: "update_ownership.renounce_ownership".to_string(),
+                exec_msg: "admin.update_ownership.renounce_ownership"
+                    .to_string(),
                 owner_or_any: vec![],
             },
             PermRule {
-                exec_msg: "update_perms".to_string(),
+                exec_msg: "admin.update_perms".to_string(),
                 owner_or_any: vec![],
             },
         ]

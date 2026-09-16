@@ -43,7 +43,6 @@ pub struct Ownership<T: AddressLike> {
 
 /// Actions that can be taken to alter the contract's ownership
 #[cw_serde]
-#[derive(PermPolicy)]
 pub enum Action {
     /// Propose to transfer the contract's ownership to another account,
     /// optionally with an expiry time.
@@ -51,7 +50,6 @@ pub enum Action {
     /// Can only be called by the contract's current owner.
     ///
     /// Any existing pending ownership transfer is overwritten.
-    #[perms(owner_or_any())]
     TransferOwnership {
         new_owner: String,
         expiry: Option<Expiration>,
@@ -59,10 +57,8 @@ pub enum Action {
 
     /// Accept the pending ownership transfer.
     ///
-    /// The shared perm policy treats this action as public so the pending owner
-    /// can reach the handler. Function `update_ownership` still requires the
-    /// caller to be the pending owner.
-    #[perms(public)]
+    /// The pending owner may call this action. Function `update_ownership`
+    /// checks that sender before changing ownership.
     AcceptOwnership,
 
     /// Give up the contract's ownership and the possibility of appointing
@@ -71,7 +67,6 @@ pub enum Action {
     /// Can only be invoked by the contract's current owner.
     ///
     /// Any existing pending ownership transfer is canceled.
-    #[perms(owner_or_any())]
     RenounceOwnership,
 }
 

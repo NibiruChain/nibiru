@@ -28,10 +28,13 @@ pub enum PermRequirement {
     OwnerOrAny(Vec<&'static str>),
 }
 
-/// One discoverable owner-or-perm execute gate.
+/// One discoverable owner-or-perm policy gate.
 #[cw_serde]
 pub struct PermRule {
-    /// Dot-separated JSON route to the gated execute message.
+    /// Dot-separated policy-message identifier.
+    ///
+    /// An enum-level `#[perms(namespace = "...")]` declaration prefixes this
+    /// value. It does not describe the contract's serialized execute JSON.
     pub exec_msg: String,
     /// Perms that may execute the message in place of the owner.
     ///

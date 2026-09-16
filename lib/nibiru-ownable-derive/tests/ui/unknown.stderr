@@ -1,4 +1,4 @@
-error: expected public, owner_or_any(...), or nested
+error: expected public, owner_or_any(...), or ownership
  --> tests/ui/unknown.rs:5:13
   |
 5 |     #[perms(all_of("sai_oper"))]

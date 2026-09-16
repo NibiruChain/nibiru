@@ -26,6 +26,7 @@ catalog from a `#[perms(...)]` declaration on every enum variant:
 
 ```rust
 #[derive(PermPolicy)]
+#[perms(namespace = "admin")]
 enum AdminExecuteMsg {
     #[perms(owner_or_any())]
     SetOwnerOnlyValue {},
@@ -43,11 +44,13 @@ enum AdminExecuteMsg {
 - `owner_or_any()` requires the stored owner.
 - `owner_or_any("operator")` accepts the stored owner or a member of that
   delegated perm.
-- `nested = "field"` delegates to the policy of a named enum field.
-- `nested` delegates through a one-field tuple variant.
+- `namespace = "admin"` applies to the enum and prefixes catalog identifiers,
+  producing values such as `admin.set_operator_value`.
 
 `#[ownable_execute(perms)]` also adds owner-only
-`UpdatePerms(Vec<PermUpdate>)` and nested `UpdateOwnership` variants.
+`UpdatePerms(Vec<PermUpdate>)`. Its `UpdateOwnership` variant preserves the
+action-specific ownership rules: transfer and renunciation require the owner,
+while acceptance requires the pending owner.
 `#[ownable_query(perms)]` adds `Ownership`, `Perms`, and `PermsForMembers`
 query variants. Permission mode requires `#[derive(PermPolicy)]` on the same
 enum. The forms without `(perms)` retain the ownership-only API.
