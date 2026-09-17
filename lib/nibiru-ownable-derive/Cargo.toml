@@ -21,3 +21,4 @@ syn         = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cosmwasm-std    = { workspace = true }
 nibiru-ownable  = { workspace = true }
+trybuild        = "1"

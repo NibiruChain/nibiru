@@ -166,7 +166,7 @@ impl fmt::Display for DecimalExt {
 
 /// SdkDec: Decimal string representing the protobuf string for
 /// `"cosmossdk.io/math".LegacyDec`.
-/// See https://pkg.go.dev/cosmossdk.io/math@v1.2.0#LegacyDec.
+/// See ["cosmossdk.io/math".LegacyDec](https://pkg.go.dev/cosmossdk.io/math@v1.2.0#LegacyDec).
 pub struct SdkDec {
     protobuf_repr: String,
 }
@@ -197,7 +197,7 @@ impl FromStr for SdkDec {
 
     /// Converts the decimal string to an `SdkDec` compatible for use with
     /// protobuf strings corresponding to `"cosmossdk.io/math".LegacyDec`
-    /// See https://pkg.go.dev/cosmossdk.io/math@v1.2.0#LegacyDec.
+    /// See ["cosmossdk.io/math".LegacyDec](https://pkg.go.dev/cosmossdk.io/math@v1.2.0#LegacyDec).
     ///
     /// Possible inputs: "-69", "-420.69", "1.23", "1", "0012", "1.123000",
     /// Disallowed: "", ".23"

@@ -10,8 +10,10 @@
 
 - [**core-token-vesting**](./core-token-vesting/README.md)
 - [**core-token-vesting-v2**](./core-token-vesting-v2/README.md)
-- [**core-compounder**](./core-compounder): Simple contract to allow third parties
-  to stake funds without being able to withdraw/unstake them.
+Each maintained contract owns its usage reference in its package `README.md`.
+Keep instantiate, execute, and query examples beside the Rust message types
+they document. Put public Nibiru website content in [`docs/`](../docs/) only
+when it is ready to publish.
 
 ## Example Contracts
 

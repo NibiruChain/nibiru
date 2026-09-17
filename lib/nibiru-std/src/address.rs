@@ -1,8 +1,187 @@
 //! Address conversion utilities for Nibiru
 
-use bech32::{self, FromBase32, ToBase32};
+use std::{fmt, str::FromStr};
+
+use bech32::{self, FromBase32, ToBase32, Variant};
+use cosmwasm_schema::schemars::{
+    gen::SchemaGenerator, schema::Schema, JsonSchema,
+};
+use cosmwasm_std::Addr;
+use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
+use tiny_keccak::{Hasher, Keccak};
 
 use crate::errors::{NibiruError, NibiruResult};
+
+/// Byte length shared by Nibiru and EVM externally owned accounts.
+pub const USER_ADDR_LEN: usize = 20;
+
+/// A validated Nibiru externally owned account.
+///
+/// JSON input is a Nibiru bech32 address or a `0x`-prefixed 20-byte EVM
+/// address. JSON output is canonical EIP-55 hex. CosmWasm contract addresses
+/// are deliberately excluded because they use a different byte length.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct UserAddr([u8; USER_ADDR_LEN]);
+
+impl UserAddr {
+    /// Returns the canonical EIP-55 representation.
+    pub fn to_hex(self) -> String {
+        eip55_checksum_hex(&self.0)
+    }
+
+    /// Returns the equivalent canonical Nibiru bech32 address.
+    pub fn to_bech32_addr(self) -> Addr {
+        let encoded =
+            bech32::encode("nibi", self.0.to_base32(), Variant::Bech32)
+                .expect("fixed Nibiru HRP and 20-byte payload are valid");
+        Addr::unchecked(encoded)
+    }
+
+    /// Returns the underlying 20-byte account identity.
+    pub fn as_bytes(&self) -> &[u8; USER_ADDR_LEN] {
+        &self.0
+    }
+
+    fn from_bech32(input: &str) -> NibiruResult<Self> {
+        let (hrp, data, variant) = bech32::decode(input)?;
+        if hrp != "nibi" {
+            return Err(NibiruError::InvalidBech32Prefix {
+                expected: "nibi".to_string(),
+                actual: hrp,
+            });
+        }
+        if variant != Variant::Bech32 {
+            return Err(NibiruError::InvalidEthAddress(
+                "Nibiru user address must use the Bech32 checksum variant"
+                    .to_string(),
+            ));
+        }
+
+        let bytes = Vec::<u8>::from_base32(&data)?;
+        let bytes: [u8; USER_ADDR_LEN] = bytes.try_into().map_err(
+            |bytes: Vec<u8>| {
+                NibiruError::InvalidEthAddress(format!(
+                    "Nibiru user address must decode to {USER_ADDR_LEN} bytes, got {}",
+                    bytes.len()
+                ))
+            },
+        )?;
+        Ok(Self(bytes))
+    }
+
+    fn from_hex(input: &str) -> NibiruResult<Self> {
+        let hex = input
+            .strip_prefix("0x")
+            .or_else(|| input.strip_prefix("0X"))
+            .ok_or_else(|| {
+                NibiruError::InvalidEthAddress(
+                    "EVM user address must start with 0x".to_string(),
+                )
+            })?;
+        if hex.len() != USER_ADDR_LEN * 2 {
+            return Err(NibiruError::InvalidEthAddress(format!(
+                "EVM user address must contain 40 hex characters, got {}",
+                hex.len()
+            )));
+        }
+        let bytes = hex::decode(hex)?;
+        let bytes: [u8; USER_ADDR_LEN] = bytes.try_into().map_err(
+            |bytes: Vec<u8>| {
+                NibiruError::InvalidEthAddress(format!(
+                    "EVM user address must decode to {USER_ADDR_LEN} bytes, got {}",
+                    bytes.len()
+                ))
+            },
+        )?;
+        Ok(Self(bytes))
+    }
+}
+
+impl FromStr for UserAddr {
+    type Err = NibiruError;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let input = input.trim();
+        if input.is_empty() {
+            return Err(NibiruError::InvalidEthAddress(
+                "user address is empty".to_string(),
+            ));
+        }
+
+        if input.to_ascii_lowercase().starts_with("nibi1") {
+            Self::from_bech32(input)
+        } else {
+            Self::from_hex(input)
+        }
+    }
+}
+
+impl fmt::Display for UserAddr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.to_hex())
+    }
+}
+
+impl Serialize for UserAddr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_hex())
+    }
+}
+
+impl<'de> Deserialize<'de> for UserAddr {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(D::Error::custom)
+    }
+}
+
+impl JsonSchema for UserAddr {
+    fn schema_name() -> String {
+        "UserAddr".to_string()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        let mut schema = String::json_schema(generator);
+        if let Schema::Object(object) = &mut schema {
+            object.metadata().description = Some(
+                "A Nibiru externally owned account. Input accepts a Nibiru bech32 address or a 0x-prefixed 20-byte EVM address; output uses EIP-55 hex."
+                    .to_string(),
+            );
+        }
+        schema
+    }
+}
+
+fn eip55_checksum_hex(bytes: &[u8; USER_ADDR_LEN]) -> String {
+    let lowercase = hex::encode(bytes);
+    let mut hash = [0u8; 32];
+    let mut hasher = Keccak::v256();
+    hasher.update(lowercase.as_bytes());
+    hasher.finalize(&mut hash);
+
+    let mut output = String::with_capacity(42);
+    output.push_str("0x");
+    for (index, ch) in lowercase.chars().enumerate() {
+        let nibble = if index % 2 == 0 {
+            hash[index / 2] >> 4
+        } else {
+            hash[index / 2] & 0x0f
+        };
+        if ch.is_ascii_alphabetic() && nibble >= 8 {
+            output.push(ch.to_ascii_uppercase());
+        } else {
+            output.push(ch);
+        }
+    }
+    output
+}
 
 /// Converts a Nibiru bech32 address to an Ethereum hex address.
 ///
@@ -292,5 +471,75 @@ mod tests {
                 "Round trip failed for address"
             );
         }
+    }
+
+    #[test]
+    fn user_addr_accepts_equivalent_forms_and_serializes_eip55() {
+        let bech32 = "nibi1gc24lt74ses9swkq6g7cug4e5y72p7e34jqgul";
+        let hex = "0x46155fafd58660583ac0d23d8e22b9a13ca0fb31";
+        let from_bech32: UserAddr = bech32.parse().unwrap();
+        let from_hex: UserAddr = format!("  {hex}  ").parse().unwrap();
+
+        assert_eq!(from_bech32, from_hex);
+        assert_eq!(from_hex.to_bech32_addr(), Addr::unchecked(bech32));
+        assert_eq!(
+            from_hex.to_hex(),
+            "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31"
+        );
+        assert_eq!(
+            serde_json::to_string(&from_hex).unwrap(),
+            "\"0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31\""
+        );
+        assert_eq!(
+            "0X46155FAFD58660583AC0D23D8E22B9A13CA0FB31"
+                .parse::<UserAddr>()
+                .unwrap(),
+            from_hex
+        );
+        let zero = "0x0000000000000000000000000000000000000000"
+            .parse::<UserAddr>()
+            .unwrap();
+        assert_eq!(zero.as_bytes(), &[0; USER_ADDR_LEN]);
+    }
+
+    #[test]
+    fn user_addr_serde_accepts_bech32_and_rejects_non_string_json() {
+        let encoded = "\"nibi1gc24lt74ses9swkq6g7cug4e5y72p7e34jqgul\"";
+        let parsed: UserAddr = serde_json::from_str(encoded).unwrap();
+        assert_eq!(
+            parsed.to_hex(),
+            "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31"
+        );
+        assert!(serde_json::from_str::<UserAddr>("[0, 1]").is_err());
+    }
+
+    #[test]
+    fn user_addr_rejects_invalid_encodings_and_contract_addresses() {
+        assert!("46155fafd58660583ac0d23d8e22b9a13ca0fb31"
+            .parse::<UserAddr>()
+            .is_err());
+        assert!("0x1234".parse::<UserAddr>().is_err());
+        assert!("0xzz155fafd58660583ac0d23d8e22b9a13ca0fb31"
+            .parse::<UserAddr>()
+            .is_err());
+        assert!("cosmos1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqnrql8a"
+            .parse::<UserAddr>()
+            .is_err());
+        assert!("nibi1gc24lt74ses9swkq6g7cug4e5y72p7e34jqgum"
+            .parse::<UserAddr>()
+            .is_err());
+
+        let contract =
+            bech32::encode("nibi", [7u8; 32].to_base32(), Variant::Bech32)
+                .unwrap();
+        assert!(contract.parse::<UserAddr>().is_err());
+    }
+
+    #[test]
+    fn user_addr_schema_is_a_string() {
+        let schema = cosmwasm_schema::schema_for!(UserAddr);
+        let json = serde_json::to_value(schema).unwrap();
+        assert_eq!(json["type"], "string");
+        assert!(json["description"].as_str().unwrap().contains("EIP-55"));
     }
 }

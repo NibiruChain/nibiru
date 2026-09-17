@@ -1,88 +1,69 @@
 # nibiru-ownable-derive
 
-> Macros for generating code used by the `nibiru-ownable` crate.
+`nibiru-ownable-derive` implements the procedural macros re-exported by
+`nibiru-ownable`. Contract crates should depend on `nibiru-ownable`, not this
+crate directly.
 
-`nibiru-ownable-derive` provides procedural macros that automatically inject ownership-related message variants into your CosmWasm contract's ExecuteMsg and QueryMsg enums, eliminating boilerplate code.
+## Ownership macros
 
-## Macros
-
-### `#[ownable_execute]`
-
-Adds an `UpdateOwnership(nibiru_ownable::Action)` variant to your ExecuteMsg enum:
+Attribute macro `#[ownable_execute]` adds an
+`UpdateOwnership(nibiru_ownable::Action)` execute variant. Attribute macro
+`#[ownable_query]` adds an `Ownership {}` query variant. Apply either macro
+before `#[cw_serde]`.
 
 ```rust
-use cosmwasm_schema::cw_serde;
-use nibiru_ownable::ownable_execute;
-
-#[ownable_execute]  // Must be applied before #[cw_serde]
+#[ownable_execute]
 #[cw_serde]
 enum ExecuteMsg {
-    Foo {},
-    Bar {},
+    Ping {},
 }
 ```
 
-Expands to:
+## Permission macros
+
+Derive macro `PermPolicy` builds authorization requirements and a queryable
+catalog from a `#[perms(...)]` declaration on every enum variant:
 
 ```rust
-#[cw_serde]
-enum ExecuteMsg {
-    UpdateOwnership(::nibiru_ownable::Action),
-    Foo {},
-    Bar {},
+#[derive(PermPolicy)]
+#[perms(namespace = "admin")]
+enum AdminExecuteMsg {
+    #[perms(owner_or_any())]
+    SetOwnerOnlyValue {},
+
+    #[perms(owner_or_any("operator"))]
+    SetOperatorValue {},
+
+    #[perms(public)]
+    HandlerAuthorizesThis {},
 }
 ```
 
-### `#[ownable_query]`
+- `public` makes no shared authorization decision. The handler remains
+  responsible for any caller checks.
+- `owner_or_any()` requires the stored owner.
+- `owner_or_any("operator")` accepts the stored owner or a member of that
+  delegated perm.
+- `namespace = "admin"` applies to the enum and prefixes catalog identifiers,
+  producing values such as `admin.set_operator_value`.
 
-Adds an `Ownership {}` variant to your QueryMsg enum:
+`#[ownable_execute(perms)]` also adds owner-only
+`UpdatePerms(Vec<PermUpdate>)`. Its `UpdateOwnership` variant preserves the
+action-specific ownership rules: transfer and renunciation require the owner,
+while acceptance requires the pending owner.
+`#[ownable_query(perms)]` adds `Ownership`, `Perms`, and `PermsForMembers`
+query variants. Permission mode requires `#[derive(PermPolicy)]` on the same
+enum. The forms without `(perms)` retain the ownership-only API.
 
-```rust
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use nibiru_ownable::ownable_query;
+The generated policy does not enforce authorization by itself. The contract
+entry point calls function `nibiru_ownable::assert_msg_auth` before dispatch.
 
-#[ownable_query]  // Must be applied before #[cw_serde]
-#[cw_serde]
-#[derive(QueryResponses)]
-enum QueryMsg {
-    #[returns(FooResponse)]
-    Foo {},
-}
-```
+## Documentation and license
 
-Expands to:
+- [Public crate documentation](https://docs.rs/nibiru-ownable)
+- [Macro crate documentation](https://docs.rs/nibiru-ownable-derive)
+- [Nibiru source repository](https://github.com/NibiruChain/nibiru)
 
-```rust
-#[cw_serde]
-#[derive(QueryResponses)]
-enum QueryMsg {
-    #[returns(::nibiru_ownable::Ownership<String>)]
-    Ownership {},
-    #[returns(FooResponse)]
-    Foo {},
-}
-```
-
-## Usage
-
-Add both crates to your `Cargo.toml`:
-
-```toml
-[dependencies]
-nibiru-ownable = "0.7.0"
-nibiru-ownable-derive = "0.7.0"
-```
-
-Import the macros from `nibiru-ownable` (they are re-exported):
-
-```rust
-use nibiru_ownable::{ownable_execute, ownable_query};
-```
-
-## Documentation
-
-For detailed API documentation, visit [docs.rs/nibiru-ownable-derive](https://docs.rs/nibiru-ownable-derive).
-
-## License
-
-Contents of this crate at or prior to version `0.5.0` are published under [GNU Affero General Public License v3](https://github.com/steak-enjoyers/cw-plus-plus/blob/9c8fcf1c95b74dd415caf5602068c558e9d16ecc/LICENSE) or later; contents after the said version are published under [Apache-2.0](../../../LICENSE) license.
+Contents of this crate at or before version `0.5.0` are licensed under AGPL-3.0
+or later. Later contents are Apache-2.0. See the repository license for the
+full terms.

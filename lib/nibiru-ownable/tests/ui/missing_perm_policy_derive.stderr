@@ -1,0 +1,15 @@
+error: #[ownable_execute(perms)] requires #[derive(PermPolicy)]
+ --> tests/ui/missing_perm_policy_derive.rs:4:1
+  |
+4 | #[ownable_execute(perms)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `ownable_execute` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `cosmwasm_schema::cw_serde`
+ --> tests/ui/missing_perm_policy_derive.rs:1:5
+  |
+1 | use cosmwasm_schema::cw_serde;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default

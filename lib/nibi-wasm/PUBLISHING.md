@@ -1,100 +1,58 @@
-# Publishing Guide for Coupled Packages
+# Publishing the coupled Rust crates
 
-This document explains how to publish the coupled packages `nibiru-ownable-derive` and `nibiru-ownable` that share the same version.
+Version `0.8.0` publishes three coupled crates:
 
-## The Problem
-
-When publishing packages that depend on each other, Cargo requires:
-1. Dependencies to be published first
-2. Exact version numbers (not just `{ workspace = true }`)
-
-## Solution: Automated Publishing Script
-
-We've created a script that handles the publishing order automatically.
-
-### Quick Commands
-
-```bash
-# Dry run (default - safe to run anytime)
-just publish
-
-# Actually publish to crates.io
-just publish-run
+```text
+nibiru-std -> nibiru-ownable-derive -> nibiru-ownable
 ```
 
-### Manual Usage
+`nibiru-ownable` exposes type `UserAddr` from `nibiru-std` and depends on the
+procedural macros in `nibiru-ownable-derive`. Publish all three at the same
+workspace version, in that order.
+
+## Before publishing
+
+1. Set `workspace.package.version` and the `nibiru-std` and
+   `nibiru-ownable-derive` workspace dependency versions in root file
+   `Cargo.toml` to the release version.
+2. Run the focused crate tests, documentation build, format check, and Clippy.
+3. Commit the release changes and push the reviewed commit.
+4. Confirm that the target version does not already exist on crates.io.
+
+## Dry run
+
+From the repository root, run:
 
 ```bash
-# Dry run (default behavior - safe)
-./scripts/publish-coupled.sh
-
-# Actually publish to crates.io
-./scripts/publish-coupled.sh --run
-
-# Show help
-./scripts/publish-coupled.sh --help
+just rs publish
 ```
 
-## Workflow for New Versions
+The command runs file `contrib/scripts/publish-coupled.sh`. It dry-runs
+`nibiru-std` and `nibiru-ownable-derive`, then lists the
+`nibiru-ownable` package contents. Cargo cannot dry-run the final crate until
+its unpublished 0.8.0 derive dependency is available from crates.io.
 
-### 1. Update Workspace Version
+## Publish
+
+After the dry run and CI pass, use a Cargo session authenticated for the Nibiru
+crates.io owner account:
 
 ```bash
-# Edit Cargo.toml and update:
-package.version = "X.Y.Z"
+just rs publish-run
 ```
 
-### 2. Update Workspace Dependency Version
+This command invokes `cargo publish --allow-dirty` for `nibiru-std`,
+`nibiru-ownable-derive`, then `nibiru-ownable`. The script waits for each
+dependency version to appear on crates.io before it publishes the dependent
+crate. Publishing cannot be undone.
+
+## Verify
 
 ```bash
-# Also update the workspace dependency version to match:
-nibiru-ownable-derive = { path = "packages/nibiru-ownable-derive", version = "X.Y.Z" }
+cargo search nibiru-std --limit 1
+cargo search nibiru-ownable-derive --limit 1
+cargo search nibiru-ownable --limit 1
 ```
 
-### 3. Publish Coupled Packages
-
-```bash
-# Test first (dry run is default - safe to run)
-just publish
-
-# If everything looks good, actually publish
-just publish-run
-```
-
-### 4. Verify Publication
-
-Check that both packages are published on crates.io:
-- https://crates.io/crates/nibiru-ownable-derive
-- https://crates.io/crates/nibiru-ownable
-
-## Alternative: Using cargo-workspaces
-
-If you prefer a more general solution:
-
-```bash
-# Install the tool
-cargo install cargo-workspaces
-
-# Publish all workspace packages in dependency order
-cargo workspaces publish --from-git
-```
-
-## How It Works
-
-The script:
-1. Reads the workspace version from `Cargo.toml`
-2. Verifies the workspace dependency version matches the workspace version
-3. Publishes `nibiru-ownable-derive` first (the dependency)
-4. Publishes `nibiru-ownable` second (the dependent package)
-5. Uses dry-run by default for safety
-
-## Troubleshooting
-
-### "Package already exists"
-If you get this error, you need to bump the version number.
-
-### "Dependency not found"
-Make sure `nibiru-ownable-derive` is published before `nibiru-ownable`.
-
-### "Version mismatch"
-Ensure both packages use the same version in their `Cargo.toml` files.
+Then update downstream contracts from local path dependencies to the published
+version and rerun their focused tests.

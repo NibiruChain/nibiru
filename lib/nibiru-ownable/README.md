@@ -1,140 +1,97 @@
 # nibiru-ownable
 
-> Utility for single-party ownership of CosmWasm smart contracts.
+`nibiru-ownable` provides two-step CosmWasm ownership and optional,
+contract-local delegated permissions. The stored owner always passes an
+owner-or-perm gate. Delegated membership never makes an account an owner.
 
-`nibiru-ownable` provides a comprehensive ownership management system for CosmWasm smart contracts, inspired by OpenZeppelin's Ownable pattern for Ethereum. It implements a two-phase ownership transfer mechanism with optional expiration deadlines, designed for the CosmWasm execution model.
+## Ownership
 
-## How to use
-
-Initialize the owner during instantiation using the `initialize_owner` method provided by this crate:
+Initialize ownership during instantiation, then dispatch the variant injected
+by attribute macro `#[ownable_execute]` to function `update_ownership`.
 
 ```rust
-use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response};
-use nibiru_ownable::OwnershipError;
+nibiru_ownable::initialize_owner(deps.storage, msg.owner.as_deref())?;
 
-#[entry_point]
-pub fn instantiate(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    msg: InstantiateMsg,
-) -> Result<Response<Empty>, OwnershipError> {
-    nibiru_ownable::initialize_owner(deps.storage, deps.api, msg.owner.as_deref())?;
-    Ok(Response::new())
+match msg {
+    ExecuteMsg::UpdateOwnership(action) => {
+        nibiru_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
+    }
+    _ => {}
 }
 ```
 
-Use the `#[ownable_execute]` macro to extend your execute message:
+Type `Action` supports transfer proposal, pending-owner acceptance, and
+renunciation. A contract may reject actions that do not fit its own safety
+rules before calling function `update_ownership`.
 
-```rust
-use cosmwasm_schema::cw_serde;
-use nibiru_ownable::ownable_execute;
+## Delegated permissions
 
-#[ownable_execute]
-#[cw_serde]
-enum ExecuteMsg {
-    Foo {},
-    Bar {},
-}
-```
-
-The macro inserts a new variant, `UpdateOwnership` to the enum:
+Permission-aware contracts derive trait `PermPolicy` on the message enum passed
+to `assert_msg_auth`. Use `#[ownable_execute(perms)]` to add owner-only
+`UpdatePerms(Vec<PermUpdate>)` and ownership actions.
 
 ```rust
 #[cw_serde]
 enum ExecuteMsg {
-    UpdateOwnership(nibiru_ownable::Action),
-    Foo {},
-    Bar {},
+    Admin { msg: AdminExecuteMsg },
+}
+
+#[ownable_execute(perms)]
+#[cw_serde]
+#[derive(PermPolicy)]
+#[perms(namespace = "admin")]
+enum AdminExecuteMsg {
+    #[perms(owner_or_any("operator"))]
+    Reconcile {},
 }
 ```
 
-Where `nibiru_ownable::Action` is an enum with three variants:
-
-- `Action::TransferOwnership { new_owner: String, expiry: Option<Expiration> }` - Propose to transfer ownership with optional deadline
-- `Action::AcceptOwnership` - Accept the proposed ownership transfer
-- `Action::RenounceOwnership` - Renounce ownership permanently, setting the contract's owner to None
-
-Handle the messages using the `update_ownership` function provided by this crate:
+Call function `assert_msg_auth` before dispatching the covered message. It
+checks the generated policy. Function `update_perms` validates the full batch
+before it changes storage, then applies grants and revokes in order. Empty and
+duplicate updates are valid, and each update produces a `perm_update` event.
 
 ```rust
-use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response};
-use nibiru_ownable::{cw_serde, update_ownership, OwnershipError};
+match msg {
+    ExecuteMsg::Admin { msg } => {
+        nibiru_ownable::assert_msg_auth(deps.storage, &info.sender, &msg)?;
 
-#[entry_point]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, OwnershipError> {
-    match msg {
-        ExecuteMsg::UpdateOwnership(action) => {
-            update_ownership(deps, &env.block, &info.sender, action)?;
+        if let AdminExecuteMsg::UpdatePerms(updates) = msg {
+            let events = nibiru_ownable::update_perms::<AdminExecuteMsg>(
+                deps.storage,
+                &info.sender,
+                updates,
+            )?;
+            return Ok(Response::new().add_events(events));
         }
-        _ => unimplemneted!(),
-    }
-    Ok(Response::new())
-}
-```
-
-Use the `#[ownable_query]` macro to extend your query message:
-
-```rust
-use cosmwasm_schema::{cw_serde, QueryResponses};
-use nibiru_ownable::ownable_query;
-
-#[ownable_query]
-#[cw_serde]
-#[derive(QueryResponses)]
-pub enum QueryMsg {
-    #[returns(FooResponse)]
-    Foo {},
-    #[returns(BarResponse)]
-    Bar {},
-}
-```
-
-The macro inserts a new variant, `Ownership`:
-
-```rust
-#[cw_serde]
-#[derive(QueryResponses)]
-enum QueryMsg {
-    #[returns(Ownership<String>)]
-    Ownership {},
-    #[returns(FooResponse)]
-    Foo {},
-    #[returns(BarResponse)]
-    Bar {},
-}
-```
-
-Handle the message using the `get_ownership` function provided by this crate:
-
-```rust
-use cosmwasm_std::{entry_point, Deps, Env, Binary};
-use nibiru_ownable::get_ownership;
-
-#[entry_point]
-pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::Ownership {} => to_binary(&get_ownership(deps.storage)?),
-        _ => unimplemented!(),
     }
 }
 ```
 
-## Core Types
+Owner-or-perm policy does not replace application checks. A public policy route
+can still restrict its handler to a contract, a route operator, or another
+application-specific authority.
 
-- `nibiru_ownable::Ownership<T>` - Struct containing current owner, pending owner, and expiry
-- `nibiru_ownable::Action` - Enum for ownership management actions
-- `nibiru_ownable::OwnershipError` - Error types for ownership operations
+## Queries and addresses
 
-## Documentation
+Attribute macro `#[ownable_query(perms)]` adds these query variants:
 
-For detailed API documentation, visit [docs.rs/nibiru-ownable](https://docs.rs/nibiru-ownable).
+- `Ownership {}` returns the stored ownership state.
+- `Perms {}` returns the compiled `Vec<PermRule>` policy catalog. An enum-level
+  `#[perms(namespace = "admin")]` prefix produces identifiers such as
+  `admin.reconcile`.
+- `PermsForMembers { members }` returns delegated membership for supplied
+  `UserAddr` values. The owner receives virtual `owner` membership.
 
-## License
+Type `UserAddr` accepts Nibiru bech32 and `0x`-prefixed EVM addresses in JSON.
+It serializes as canonical EIP-55 hex and represents only 20-byte externally
+owned accounts.
 
-Contents of this crate at or prior to version `0.5.0` are published under [GNU Affero General Public License v3](https://github.com/steak-enjoyers/cw-plus-plus/blob/9c8fcf1c95b74dd415caf5602068c558e9d16ecc/LICENSE) or later; contents after the said version are published under [Apache-2.0](../../LICENSE) license.
+## Documentation and license
+
+- [API documentation](https://docs.rs/nibiru-ownable)
+- [Nibiru source repository](https://github.com/NibiruChain/nibiru)
+
+Contents of this crate at or before version `0.5.0` are licensed under AGPL-3.0
+or later. Later contents are Apache-2.0. See the repository license for the
+full terms.

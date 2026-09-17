@@ -1,0 +1,5 @@
+error: perm must match [a-z][a-z0-9_]{0,63} and cannot be `owner`
+ --> tests/ui/invalid_id.rs:5:26
+  |
+5 |     #[perms(owner_or_any("Sai-Oper"))]
+  |                          ^^^^^^^^^^

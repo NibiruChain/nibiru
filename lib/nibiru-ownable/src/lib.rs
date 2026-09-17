@@ -1,6 +1,9 @@
 #![doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/README.md"))]
 
+extern crate self as nibiru_ownable;
+
 pub mod address_like;
+pub mod perms;
 
 use std::fmt::Display;
 
@@ -13,7 +16,13 @@ use cw_storage_plus::Item;
 
 // re-export the proc macros and the Expiration class
 pub use cw_utils::Expiration;
-pub use nibiru_ownable_derive::{ownable_execute, ownable_query};
+pub use nibiru_ownable_derive::{ownable_execute, ownable_query, PermPolicy};
+pub use nibiru_std::address::UserAddr;
+pub use perms::{
+    assert_msg_auth, assert_owner_or_perm, assert_perm, has_perm,
+    perms_for_members, update_perms, validate_perm_id, MemberPerms, PermError,
+    PermPolicy, PermRequirement, PermRule, PermUpdate, PermUpdateKind,
+};
 
 /// The contract's ownership info
 #[cw_serde]
@@ -48,7 +57,8 @@ pub enum Action {
 
     /// Accept the pending ownership transfer.
     ///
-    /// Can only be called by the pending owner.
+    /// The pending owner may call this action. Function `update_ownership`
+    /// checks that sender before changing ownership.
     AcceptOwnership,
 
     /// Give up the contract's ownership and the possibility of appointing
