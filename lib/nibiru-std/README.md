@@ -24,8 +24,10 @@ assert_eq!(
 # Ok::<(), nibiru_std::errors::NibiruError>(())
 ```
 
-`UserAddr` serializes as canonical EIP-55 hex. It does not accept 32-byte
-CosmWasm contract addresses.
+`UserAddr` serializes as canonical EIP-55 hex. It models the 20-byte identity
+used by EVM-compatible user flows. It is not a generic CosmWasm account type.
+Use a validated `cosmwasm_std::Addr` for contract callers, CW3 multisigs, and
+permission members.
 
 ## Stargate support
 

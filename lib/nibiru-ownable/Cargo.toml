@@ -15,7 +15,6 @@ doctest = false # disable doc tests
 cosmwasm-schema   = { workspace = true }
 cosmwasm-std      = { workspace = true }
 nibiru-ownable-derive = { workspace = true }
-nibiru-std       = { workspace = true }
 cw-storage-plus   = { workspace = true }
 cw-utils          = { workspace = true }
 thiserror         = { workspace = true }
