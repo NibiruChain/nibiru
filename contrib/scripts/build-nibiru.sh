@@ -349,7 +349,7 @@ run_go_compile() {
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Commit=${commit}"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.BuildTags=${build_tags_csv}"
   ldflags+=" -X github.com/cometbft/cometbft/version.CMTSemVer=${cmt_version}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types.DBBackend=pebbledb"
   ldflags+=" -linkmode=external -w -s"
 
   if [[ "$just_build" == true ]]; then
