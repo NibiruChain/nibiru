@@ -4,8 +4,6 @@
 
 StableSwap contains the logic for exchanging tokens
 
-Based on: <https://github.com/NibiruChain/nibiru/blob/master/contrib/scripts/testing/stableswap_model.py>
-
 Constructor:
 
 | Parameter          | Type          | Description                                          |

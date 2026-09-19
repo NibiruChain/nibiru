@@ -1,7 +1,7 @@
 # Displays Rust workspace recipes.
 setup:
   #!/usr/bin/env bash
-  just --justfile rust.just --list
+  just rs --list
 
 install:
   # https://crates.io/crates/clippy
@@ -56,7 +56,7 @@ test *pkg:
   #!/usr/bin/env bash
   set -euo pipefail
   if [ -z "{{pkg}}" ]; then
-    just --justfile rust.just test-all
+    just rs test-all
   else
     RUST_BACKGTRACE="1" cargo test --package "{{pkg}}"
   fi
@@ -116,14 +116,14 @@ alias t := tidy
 
 # Format, lint, and test
 tidy:
-  just --justfile rust.just fmt
-  just --justfile rust.just clippy
-  just --justfile rust.just wasm-check
-  just --justfile rust.just test
+  just rs fmt
+  just rs clippy
+  just rs wasm-check
+  just rs test
 
 # Format, lint, update dependencies, and test
 tidy-update: build-update
-  just --justfile rust.just tidy
+  just rs tidy
 
 gen-schema:
   #!/usr/bin/env bash
