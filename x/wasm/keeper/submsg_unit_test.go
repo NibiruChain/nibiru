@@ -564,9 +564,13 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 	}
 }
 
+// TestInstantiateGovSubMsgAuthzPropagated verifies that existing governance
+// authorization still propagates to instantiate submessages. Sudo-root status
+// belongs to the calling actor and does not propagate to a created contract.
 func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
+	rootSource := &stubSudoRootSource{}
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
 	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
@@ -589,21 +593,22 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 		}, 0, nil
 	}
 
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
+	ctx, keepers := CreateTestInput(
+		t,
+		false,
+		AvailableCapabilities,
+		WithWasmEngine(mockWasmVM),
+		WithWasmDeployerGuard(guardedChainID, rootSource),
+	)
 	k := keepers.WasmKeeper
-
-	// make chain restricted so that nobody can create instances
-	newParams := types.DefaultParams()
-	newParams.InstantiateDefaultPermission = types.AccessTypeNobody
-	require.NoError(t, k.SetParams(ctx, newParams))
-
 	example1 := StoreRandomContract(t, ctx, keepers, mockWasmVM)
+	rootSource.root = example1.CreatorAddr
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
 		expErr *sdkioerrors.Error
 	}{
-		"default policy - rejected": {
+		"sudo root authorization is not propagated": {
 			policy: DefaultAuthorizationPolicy{},
 			expErr: sdkerrors.ErrUnauthorized,
 		},
@@ -625,7 +630,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			tCtx, _ := ctx.CacheContext()
+			tCtx, _ := ctx.WithChainID(guardedChainID).CacheContext()
 			instanceLevel = 0
 
 			_, _, gotErr := k.instantiate(tCtx, example1.CodeID, example1.CreatorAddr, nil, []byte(`{"first":{}}`), "from ext msg", nil, k.ClassicAddressGenerator(), spec.policy)
@@ -645,14 +650,25 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	}
 }
 
+// TestMigrateGovSubMsgAuthzPropagated verifies the existing action-specific
+// governance behavior for migration submessages. Sudo-root status does not
+// authorize a migration emitted later by another contract.
 func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
-	ctx, keepers := CreateTestInput(t, false, AvailableCapabilities, WithWasmEngine(mockWasmVM))
+	rootSource := &stubSudoRootSource{}
+	ctx, keepers := CreateTestInput(
+		t,
+		false,
+		AvailableCapabilities,
+		WithWasmEngine(mockWasmVM),
+		WithWasmDeployerGuard(guardedChainID, rootSource),
+	)
 	k := keepers.WasmKeeper
 
 	example1 := InstantiateHackatomExampleContract(t, ctx, keepers)
 	example2 := InstantiateIBCReflectContract(t, ctx, keepers)
+	rootSource.root = example1.CreatorAddr
 
 	var instanceLevel int
 	// mock wasvm to return new migrate msgs with the response
@@ -680,10 +696,12 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
+		caller sdk.AccAddress
 		expErr *sdkioerrors.Error
 	}{
-		"default policy - rejected": {
+		"sudo root authorization is not propagated": {
 			policy: DefaultAuthorizationPolicy{},
+			caller: example1.CreatorAddr,
 			expErr: sdkerrors.ErrUnauthorized,
 		},
 		"propagating gov policy - accepted": {
@@ -704,10 +722,14 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 	}
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
-			tCtx, _ := ctx.CacheContext()
+			tCtx, _ := ctx.WithChainID(guardedChainID).CacheContext()
 			instanceLevel = 0
+			caller := spec.caller
+			if caller == nil {
+				caller = RandomAccountAddress(t)
+			}
 
-			_, gotErr := k.migrate(tCtx, example1.Contract, RandomAccountAddress(t), example2.CodeID, []byte(`{}`), spec.policy)
+			_, gotErr := k.migrate(tCtx, example1.Contract, caller, example2.CodeID, []byte(`{}`), spec.policy)
 			if spec.expErr != nil {
 				assert.ErrorIs(t, gotErr, spec.expErr)
 				return

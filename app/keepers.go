@@ -54,6 +54,7 @@ import (
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/evm"
@@ -288,7 +289,13 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		supportedWasmVMFeatures,
 		app.SudoKeeper,
 		govModuleAddr,
-		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
+		append(
+			GetWasmOpts(*app, appOpts, wmha),
+			wasmkeeper.WithWasmEngine(wasmVM),
+			// The EVM Wasm precompile wraps this same keeper in a default-permission
+			// keeper, so its instantiate path reaches the shared admission guard.
+			wasmkeeper.WithWasmDeployerGuard(appconst.SDK_CHAIN_ID_MAINNET, app.SudoKeeper),
+		)...,
 	)
 
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
