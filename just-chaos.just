@@ -34,7 +34,7 @@ destroy:
 
 # Print logs from every Chaosnet service.
 logs:
-    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml logs
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc --profile heartmonitor logs
 
 # Print logs from the Heart Monitor service.
 logs-hm:
