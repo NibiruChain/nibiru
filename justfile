@@ -255,6 +255,68 @@ _go-test-pkgs:
     set -euo pipefail
     go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib)/'
 
+[private]
+test-sim-nondeterminism:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running non-determinism test..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppStateDeterminism \
+      -Enabled=true \
+      -Params=params.json \
+      -NumBlocks=100 \
+      -BlockSize=200 \
+      -Commit=true \
+      -Period=0 \
+      -Verbose=true \
+      -timeout 30m
+
+[private]
+test-sim-default-genesis-fast:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running default genesis simulation..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestFullAppSimulation \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=100 \
+      -BlockSize=200 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=0 \
+      -timeout 30m
+
+[private]
+test-sim-import-export:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running application import/export simulation. This may take several minutes..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppImportExport \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=100 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=5 \
+      -timeout 30m
+
+[private]
+test-sim-after-import:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running application simulation-after-import. This may take several minutes..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppSimulationAfterImport \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=50 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=5 \
+      -timeout 30m
+
 # Run Go tests without cached test results
 test:
     #!/usr/bin/env bash
