@@ -24,8 +24,8 @@ const (
 // Keeping the chain ID and root source in the keeper makes the policy apply to
 // message-server, contract-submessage, authz, and direct keeper callers.
 //
-// NOTE: This v2.20 mainnet policy is temporary. Remove or replace it in the
-// planned follow-up upgrade.
+// NOTE: [Temporary v2.20 Wasm deployment policy](https://github.com/NibiruChain/nibiru/pull/2762).
+// Remove or replace it in the planned follow-up upgrade.
 type wasmDeployerGuard struct {
 	chainID        string
 	sudoRootSource types.SudoRootSource
