@@ -229,14 +229,6 @@ tidy:
     just proto gen
     just go-fmt
 
-test-release:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    make release-snapshot
-
-release-publish:
-    make release
-
 # Verify a public release's artifacts before publishing its container image.
 release-image-verify release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}'
