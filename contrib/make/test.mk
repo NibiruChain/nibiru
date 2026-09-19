@@ -2,18 +2,6 @@
 # Tests
 #########################################################################
 
-.PHONY: test-unit
-test-unit:
-	go test ./... -short
-
-.PHONY: test-coverage-unit
-test-coverage-unit:
-	go test ./... -short \
-		-tags=pebbledb \
-		-coverprofile=coverage.txt \
-		-covermode=atomic \
-		-race
-
 # NOTE: Using the verbose flag breaks the coverage reporting in CI.
 # Used for CI by Codecov
 .PHONY: test-coverage-integration
