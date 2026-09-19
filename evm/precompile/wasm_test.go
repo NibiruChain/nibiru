@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
@@ -77,6 +78,100 @@ func (s *WasmSuite) TestInstantiate() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(vals[0].(string))
 	evmObj.StateDB.(*evmstate.SDB).Commit()
+}
+
+// TestInstantiateRejectedByMainnetWasmDeployerGuard proves that the precompile's
+// default-permission keeper reaches the shared guard in Keeper.instantiate.
+func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
+	deps := evmtest.NewTestDeps()
+	test.SetupWasmContracts(&deps, &s.Suite)
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
+	evmObj, _ := deps.NewEVM()
+
+	contractInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_instantiate),
+		"",
+		uint64(1),
+		[]byte(`{}`),
+		"denied on mainnet",
+		[]precompile.WasmBankCoin{},
+	)
+	s.Require().NoError(err)
+
+	_, err = deps.EvmKeeper.CallContract(
+		evmObj,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		contractInput,
+		WasmGasLimitExecute,
+		evm.COMMIT_ETH_TX,
+		nil,
+	)
+	s.Require().ErrorContains(err, "is not authorized")
+}
+
+// TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard verifies that the guard
+// is limited to bytecode deployment and migration. Existing contracts remain
+// executable and queryable through the EVM precompile.
+func (s *WasmSuite) TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard() {
+	deps := evmtest.NewTestDeps()
+	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
+	wasmContract := wasmContracts[1]
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
+	evmObj, _ := deps.NewEVM()
+
+	executeInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_execute),
+		wasmContract.String(),
+		[]byte(`{"increment": {}}`),
+		[]precompile.WasmBankCoin{},
+	)
+	s.Require().NoError(err)
+	_, err = deps.EvmKeeper.CallContract(
+		evmObj,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		executeInput,
+		WasmGasLimitExecute,
+		evm.COMMIT_ETH_TX,
+		nil,
+	)
+	s.Require().NoError(err)
+	test.IncrementWasmCounterWithExecuteMulti(
+		&s.Suite,
+		&deps,
+		evmObj,
+		wasmContract,
+		2,
+		true,
+	)
+
+	queryInput, err := embeds.SmartContract_Wasm.ABI.Pack(
+		string(precompile.WasmMethod_query),
+		wasmContract.String(),
+		[]byte(`{"count": {}}`),
+	)
+	s.Require().NoError(err)
+	queryResp, err := deps.EvmKeeper.CallContract(
+		evmObj,
+		deps.Sender.EthAddr,
+		&precompile.PrecompileAddr_Wasm,
+		queryInput,
+		WasmGasLimitQuery,
+		evm.COMMIT_READONLY,
+		nil,
+	)
+	s.Require().NoError(err)
+
+	var responseBytes []byte
+	s.Require().NoError(embeds.SmartContract_Wasm.ABI.UnpackIntoInterface(
+		&responseBytes,
+		string(precompile.WasmMethod_query),
+		queryResp.Ret,
+	))
+	var response test.QueryMsgCountResp
+	s.Require().NoError(json.Unmarshal(responseBytes, &response))
+	s.Require().EqualValues(3, response.Count)
 }
 
 func (s *WasmSuite) TestExecute() {

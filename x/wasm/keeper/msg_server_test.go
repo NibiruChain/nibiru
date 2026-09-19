@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 	"time"
@@ -12,10 +13,13 @@ import (
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtestdata "github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
@@ -25,6 +29,195 @@ var (
 	wasmContract     = wasmtestdata.ReflectContractWasm
 	hackatomContract = wasmtestdata.HackatomContractWasm
 )
+
+// TestMainnetWasmDeployerGuardRejectsNonRootMessages covers every protobuf
+// message that can upload, instantiate, or migrate Wasm code. Combined messages
+// must reject before allocating a code ID or storing code.
+func TestMainnetWasmDeployerGuardRejectsNonRootMessages(t *testing.T) {
+	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+
+	root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
+	actor := sdk.AccAddress(bytes.Repeat([]byte{2}, types.ContractAddrLen))
+	wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+
+	messages := map[string]sdk.Msg{
+		"store code": &types.MsgStoreCode{
+			Sender:       actor.String(),
+			WASMByteCode: wasmContract,
+		},
+		"instantiate": &types.MsgInstantiateContract{
+			Sender: actor.String(),
+			CodeID: 1,
+			Label:  "denied",
+			Msg:    []byte(`{}`),
+		},
+		"instantiate2": &types.MsgInstantiateContract2{
+			Sender: actor.String(),
+			CodeID: 1,
+			Label:  "denied",
+			Msg:    []byte(`{}`),
+			Salt:   []byte("salt"),
+		},
+		"migrate": &types.MsgMigrateContract{
+			Sender:   actor.String(),
+			Contract: root.String(),
+			CodeID:   1,
+			Msg:      []byte(`{}`),
+		},
+		"store and instantiate": &types.MsgStoreAndInstantiateContract{
+			Authority:             actor.String(),
+			WASMByteCode:          wasmContract,
+			InstantiatePermission: &types.AllowEverybody,
+			Admin:                 actor.String(),
+			Label:                 "denied",
+			Msg:                   []byte(`{}`),
+		},
+		"store and migrate": &types.MsgStoreAndMigrateContract{
+			Authority:             actor.String(),
+			WASMByteCode:          wasmContract,
+			InstantiatePermission: &types.AllowEverybody,
+			Contract:              root.String(),
+			Msg:                   []byte(`{}`),
+		},
+	}
+
+	initialCodeSequence := wasmApp.WasmKeeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID)
+	for name, msg := range messages {
+		t.Run(name, func(t *testing.T) {
+			handler := wasmApp.MsgServiceRouter().Handler(msg)
+			require.NotNil(t, handler)
+
+			result, err := handler(ctx, msg)
+			require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+			require.Nil(t, result)
+			require.Equal(
+				t,
+				initialCodeSequence,
+				wasmApp.WasmKeeper.PeekAutoIncrementID(ctx, types.KeySequenceCodeID),
+			)
+			require.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, 1))
+		})
+	}
+}
+
+// TestMainnetWasmDeployerGuardAllowsRootAndGovernance verifies both intended
+// recovery paths. The current sudo root may perform ordinary deployment, while
+// existing governance authorization does not depend on readable sudo state.
+// Passing the guard still leaves the ordinary Wasm permission checks in force.
+func TestMainnetWasmDeployerGuardAllowsRootAndGovernance(t *testing.T) {
+	t.Run("sudo root lifecycle", func(t *testing.T) {
+		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+
+		root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
+		wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+		initMsg, err := json.Marshal(keeper.HackatomExampleInitMsg{
+			Verifier:    root,
+			Beneficiary: root,
+		})
+		require.NoError(t, err)
+		storeAndInstantiate := &types.MsgStoreAndInstantiateContract{
+			Authority:             root.String(),
+			WASMByteCode:          hackatomContract,
+			InstantiatePermission: &types.AllowEverybody,
+			Admin:                 root.String(),
+			Label:                 "root lifecycle",
+			Msg:                   initMsg,
+		}
+
+		result, err := wasmApp.MsgServiceRouter().Handler(storeAndInstantiate)(ctx, storeAndInstantiate)
+		require.NoError(t, err)
+		var instantiateResponse types.MsgStoreAndInstantiateContractResponse
+		require.NoError(t, wasmApp.AppCodec().Unmarshal(result.Data, &instantiateResponse))
+
+		migrateMsg, err := json.Marshal(struct {
+			Verifier sdk.AccAddress `json:"verifier"`
+		}{Verifier: root})
+		require.NoError(t, err)
+		migrate := &types.MsgMigrateContract{
+			Sender:   root.String(),
+			Contract: instantiateResponse.Address,
+			CodeID:   1,
+			Msg:      migrateMsg,
+		}
+		_, err = wasmApp.MsgServiceRouter().Handler(migrate)(ctx, migrate)
+		require.NoError(t, err)
+	})
+
+	t.Run("sudo root", func(t *testing.T) {
+		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+
+		root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
+		wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+		msg := &types.MsgStoreCode{Sender: root.String(), WASMByteCode: wasmContract}
+
+		_, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+		require.NoError(t, err)
+		require.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, 1))
+		instantiate := &types.MsgInstantiateContract{
+			Sender: root.String(),
+			CodeID: 1,
+			Label:  "root instantiate",
+			Msg:    []byte(`{}`),
+		}
+		_, err = wasmApp.MsgServiceRouter().Handler(instantiate)(ctx, instantiate)
+		require.NoError(t, err)
+		instantiate2 := &types.MsgInstantiateContract2{
+			Sender: root.String(),
+			CodeID: 1,
+			Label:  "root instantiate2",
+			Msg:    []byte(`{}`),
+			Salt:   []byte("root-salt"),
+		}
+		_, err = wasmApp.MsgServiceRouter().Handler(instantiate2)(ctx, instantiate2)
+		require.NoError(t, err)
+
+		params := wasmApp.WasmKeeper.GetParams(ctx)
+		params.CodeUploadAccess = types.AllowNobody
+		require.NoError(t, wasmApp.WasmKeeper.SetParams(ctx, params))
+		_, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+		require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+		require.Nil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, 2))
+	})
+
+	t.Run("governance with unreadable sudo root", func(t *testing.T) {
+		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+
+		wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: "not-an-address"})
+		authority := wasmApp.WasmKeeper.GetAuthority()
+		initMsg, err := json.Marshal(keeper.HackatomExampleInitMsg{
+			Verifier:    sdk.MustAccAddressFromBech32(authority),
+			Beneficiary: sdk.MustAccAddressFromBech32(authority),
+		})
+		require.NoError(t, err)
+		msg := &types.MsgStoreAndInstantiateContract{
+			Authority:             authority,
+			WASMByteCode:          hackatomContract,
+			InstantiatePermission: &types.AllowNobody,
+			Admin:                 authority,
+			Label:                 "governance lifecycle",
+			Msg:                   initMsg,
+		}
+
+		result, err := wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+		require.NoError(t, err)
+		require.NotNil(t, wasmApp.WasmKeeper.GetCodeInfo(ctx, 1))
+		var instantiateResponse types.MsgStoreAndInstantiateContractResponse
+		require.NoError(t, wasmApp.AppCodec().Unmarshal(result.Data, &instantiateResponse))
+
+		migrate := &types.MsgMigrateContract{
+			Sender:   authority,
+			Contract: instantiateResponse.Address,
+			CodeID:   1,
+			Msg:      []byte(`{"verifier":"` + authority + `"}`),
+		}
+		_, err = wasmApp.MsgServiceRouter().Handler(migrate)(ctx, migrate)
+		require.NoError(t, err)
+	})
+}
 
 func TestStoreCode(t *testing.T) {
 	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()

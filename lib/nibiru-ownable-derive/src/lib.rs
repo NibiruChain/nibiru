@@ -598,7 +598,7 @@ pub fn ownable_execute(
 ///
 /// - `Perms {}` returns `Vec<nibiru_ownable::PermRule>`.
 /// - `PermsForMembers { members }` accepts
-///   `Vec<nibiru_ownable::UserAddr>` and returns
+///   `Vec<String>` of validated Nibiru Bech32 addresses and returns
 ///   `Vec<nibiru_ownable::MemberPerms>`.
 ///
 /// This macro defines query variants and their response types. The contract
@@ -647,7 +647,7 @@ pub fn ownable_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
                 /// Query delegated perms for a supplied set of members.
                 #[returns(Vec<::nibiru_ownable::MemberPerms>)]
                 PermsForMembers {
-                    members: Vec<::nibiru_ownable::UserAddr>,
+                    members: Vec<String>,
                 },
             }
         }
