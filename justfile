@@ -95,7 +95,8 @@ gen-proto-rs:
 gen-proto-openapi:
     bun run proto/buf-gen-swagger.ts 2>&1 | tee out.txt
 
-lint:
+# Run Go linting with golangci-lint.
+go-lint:
     #!/usr/bin/env bash
     set -euo pipefail
     source contrib/bashlib.sh
@@ -206,8 +207,8 @@ passkey-demo:
     #!/usr/bin/env bash
     contrib/scripts/passkey-demo.sh
 
-# Runs golang formatter (gofumpt)
-fmt:
+# Run Go formatting with gofumpt.
+go-fmt:
     gofumpt -w evm x app eth
 
 # Go mod tidying, format, and proto gen
@@ -226,7 +227,7 @@ tidy:
         done
 
     just proto gen
-    just fmt
+    just go-fmt
 
 test-release:
     #!/usr/bin/env bash
@@ -383,7 +384,7 @@ wasmvm *args:
 
 # Run root Rust workspace commands. Ex: `just rs test-all`.
 rust *args:
-    just --justfile rust.just {{ args }}
+    just --justfile just-rs.just {{ args }}
 
 alias rs := rust
 
