@@ -11,8 +11,3 @@ test-coverage-integration:
 		-coverprofile=coverage.txt \
 		-covermode=atomic \
 		-race
-
-# Require Python3
-.PHONY: test-create-test-cases
-test-create-test-cases:
-	@python scripts/testing/stableswap_model.py
