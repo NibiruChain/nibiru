@@ -387,6 +387,10 @@ rust *args:
 
 alias rs := rust
 
+# Run Chaosnet commands. Ex: `just chaos up`.
+chaos *args:
+    just --justfile just-chaos.just {{ args }}
+
 # Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
 sai-trading *args:
     cd lib/sai-trading && just {{ args }}

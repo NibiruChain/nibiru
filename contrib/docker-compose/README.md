@@ -30,28 +30,33 @@ Features:
 ### Single validator node
 
 ```sh
-docker compose -f docker-compose-chaosnet.yml up
+just chaos up
 ```
 
 ### Two validator nodes + IBC relayer
 
 ```sh
-docker compose -f docker-compose-chaosnet.yml --profile ibc up 
+just chaos up-ibc
 ```
 
 ### Single validator node + heartmonitor
 
 ```sh
-docker compose -f docker-compose-chaosnet.yml --profile heartmonitor up
+just chaos up-hm
 ```
 
-### Other Commands
+### Other commands
 
-- `docker compose up`: Start the services.
-- `docker compose down`: Stop the services.
-- `docker compose restart`: Restart all services.
-- `docker compose ps`: List containers, their status, ports, etc.
-- `docker compose logs`: View std output from containers
+- Command `just chaos down` stops every Chaosnet profile and preserves named
+  volumes.
+- Command `just chaos destroy` stops every Chaosnet profile and removes named
+  volumes after confirmation.
+- Command `just chaos logs` prints logs for every service. Command `just chaos
+  logs-hm` prints logs for service `heartmonitor`.
+- Commands `just chaos sh-nibiru-0`, `just chaos sh-nibiru-1`, and `just chaos
+  sh-go-hm` open service shells.
+- Run command `just chaos` to list the full command group. Use Docker Compose
+  directly for operations that the command group does not cover.
 
 ## Services Overview
 
