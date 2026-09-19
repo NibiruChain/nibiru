@@ -28,6 +28,7 @@
 - [Complete Golang reference docs](https://pkg.go.dev/github.com/NibiruChain/nibiru/v2#section-readme): (`pkg.go.dev`) For the blockchain implementation.
 - [Nibiru RPC Endpoints](https://nibiru.fi/docs/dev/networks/)
 - [Core Tools and Language Clients](https://nibiru.fi/docs/dev/#core-tools-and-language-clients)
+- [Repository specifications](./spec/README.md): Internal technical records for this source repository.
 
 ## Community
 
@@ -124,7 +125,7 @@ just install  # to build the node software to make a Nibiru binary
 just localnet # to run a local instance of Nibiru as a live network
 ```
 
-For installation instructions from scratch, please see [INSTALL.md](./INSTALL.md).
+For source-build instructions, see [Building Nibiru from source](./spec/01-building-nibiru-from-source.md).
 
 Usage instructions for the `nibid` CLI are available at [nibiru.fi/docs/dev/cli](https://nibiru.fi/docs/dev/cli) and the [Nibiru Module Reference](https://nibiru.fi/docs/concepts/arch/#modules-%E2%80%94-nibiru).
 
