@@ -65,7 +65,7 @@ require (
 	github.com/cosmos/ledger-cosmos-go v1.0.0
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/docker/distribution v2.8.2+incompatible
+	github.com/distribution/reference v0.6.0
 	github.com/google/btree v1.1.3
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.3
