@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 
 	sdkioerrors "cosmossdk.io/errors"
 )
