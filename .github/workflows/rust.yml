@@ -190,11 +190,14 @@ jobs:
       - uses: actions/checkout@v7
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
 
+      # Pin rustc 1.81 for reproducible wasmer builds. Tag `@1.81` is the
+      # toolchain. Do not use `@stable`, `@master`, or another moving ref.
+      # Dependabot treats this tag as Action semver (PR 2755 used `@1.120`);
+      # that installs a nonexistent rustc. Wasmer's minimum supported Rust
+      # version is rustc 1.81.
       - name: Install Rust 1.81
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
-        uses: dtolnay/rust-toolchain@1.120
-        with:
-          toolchain: 1.81
+        uses: dtolnay/rust-toolchain@1.81
 
       - name: Install just
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
