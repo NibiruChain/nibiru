@@ -41,7 +41,7 @@ jobs:
               - "Cargo.toml"
               - "Cargo.lock"
               - "justfile"
-              - "rust.just"
+              - "just-rs.just"
               - "contrib/scripts/**"
               - "lib/cosmwasm-vm/**"
               - "lib/cw-address-like/**"
@@ -54,7 +54,7 @@ jobs:
               - ".github/workflows/rust.yml"
             wasmer:
               - "justfile"
-              - "rust.just"
+              - "just-rs.just"
               - "lib/wasmer/**"
               - ".github/workflows/rust.yml"
 
