@@ -6,6 +6,13 @@
 
 ---
 
+## Workspace guide
+
+This directory contains Nibiru CosmWasm contracts. The root Cargo workspace
+also includes reusable Rust crates under `lib/`. See the
+[Rust contract workspace specification](../spec/04-rust-contract-workspace.md)
+for the workspace map and root Rust commands.
+
 ## Core Contracts
 
 - [**core-token-vesting**](./core-token-vesting/README.md)

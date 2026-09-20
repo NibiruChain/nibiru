@@ -1,3 +1,0 @@
-.PHONY: mock-gen
-mock-gen:
-	go generate ./...
