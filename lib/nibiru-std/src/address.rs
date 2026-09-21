@@ -18,8 +18,9 @@ pub const USER_ADDR_LEN: usize = 20;
 /// A validated Nibiru externally owned account.
 ///
 /// JSON input is a Nibiru bech32 address or a `0x`-prefixed 20-byte EVM
-/// address. JSON output is canonical EIP-55 hex. CosmWasm contract addresses
-/// are deliberately excluded because they use a different byte length.
+/// address. JSON output is canonical EIP-55 hex. Use [`cosmwasm_std::Addr`]
+/// for generic CosmWasm account identities, including permission members and
+/// contract callers.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct UserAddr([u8; USER_ADDR_LEN]);
 

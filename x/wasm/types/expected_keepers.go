@@ -56,6 +56,13 @@ type WasmBlockHooksContractSource interface {
 	GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool)
 }
 
+// SudoRootSource resolves the current x/sudo root for the temporary Wasm
+// deployer guard. The guard reads the root for each protected operation so a
+// root rotation takes effect without restarting the app or changing Wasm state.
+type SudoRootSource interface {
+	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
+}
+
 // DistributionKeeper defines a subset of methods implemented by the cosmos-sdk distribution keeper
 type DistributionKeeper interface {
 	DelegatorWithdrawAddress(c context.Context, req *distrtypes.QueryDelegatorWithdrawAddressRequest) (*distrtypes.QueryDelegatorWithdrawAddressResponse, error)

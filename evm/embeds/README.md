@@ -5,8 +5,8 @@ Nibiru EVM solidity contracts and ABIs for Nibiru-specific precompiles and core 
 ## Install
 
 ```bash
-yarn add @nibiruchain/solidity
-# OR npm install OR bun install
+bun add @nibiruchain/solidity
+# OR npm install
 ```
 
 Solidity code is in "`@nibiruchain/solidity/contracts/*`", and 

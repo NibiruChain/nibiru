@@ -1,6 +1,8 @@
 import { config } from "dotenv"
 import { ethers, Wallet } from "ethers"
 
+import { NonceRetryingSigner } from "../passkey-sdk/src/nonce-retry"
+
 config()
 
 const JSON_RPC_ENDPOINT =
@@ -117,7 +119,16 @@ const provider: ethers.JsonRpcProvider = await (async () => {
  * funded in genesis and can deploy contracts, pay gas, and fund
  * other test wallets.
  */
-const account = Wallet.fromPhrase(process.env.MNEMONIC, provider)
+const account = new NonceRetryingSigner(
+  Wallet.fromPhrase(process.env.MNEMONIC, provider),
+  {
+    onRetry: ({ attempt, maxAttempts, rejectedNonce, retryNonce }) => {
+      console.log(
+        `[nonceRetry:account] rejected nonce ${rejectedNonce}; retrying with ${retryNonce} after attempt ${attempt}/${maxAttempts}`,
+      )
+    },
+  },
+)
 
 const TEST_TIMEOUT = Number(process.env.TEST_TIMEOUT) || 15000
 const TX_WAIT_TIMEOUT = Number(process.env.TX_WAIT_TIMEOUT) || 8000

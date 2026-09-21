@@ -10,6 +10,12 @@ setup:
 # Install all dependencies
 install:
     #!/usr/bin/env bash
+    set -Eeuo pipefail
+    command -v bun >/dev/null 2>&1 || {
+        echo "bun is required to install EVM E2E dependencies" >&2
+        exit 1
+    }
+
     bun install --frozen-lockfile
     (cd passkey-sdk && bun install --frozen-lockfile)
     just gen-types

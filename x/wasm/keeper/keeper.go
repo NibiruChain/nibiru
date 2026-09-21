@@ -99,6 +99,7 @@ type Keeper struct {
 	// propagate gov authZ to sub-messages
 	propagateGovAuthorization    map[types.AuthorizationPolicyAction]struct{}
 	wasmBlockHooksContractSource types.WasmBlockHooksContractSource
+	wasmDeployerGuard            *wasmDeployerGuard
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -157,6 +158,10 @@ func (k Keeper) create(
 ) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
+	}
+	// Check admission before reading upload policy or compiling and storing code.
+	if err := k.requireActorIsAuthedDeployer(ctx, creator, authZ, wasmDeploymentUpload); err != nil {
+		return 0, checksum, err
 	}
 
 	// figure out proper instantiate access
@@ -259,6 +264,10 @@ func (k Keeper) instantiate(
 
 	if creator == nil {
 		return nil, nil, types.ErrEmpty.Wrap("creator")
+	}
+	// Check admission before charging VM setup gas or reading the target code.
+	if err := k.requireActorIsAuthedDeployer(ctx, creator, authPolicy, wasmDeploymentInstantiate); err != nil {
+		return nil, nil, err
 	}
 	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(ctx, codeID), len(initMsg))
 	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
@@ -431,6 +440,10 @@ func (k Keeper) migrate(
 	authZ types.AuthorizationPolicy,
 ) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
+	// Check admission before loading the replacement code or invoking the VM.
+	if err := k.requireActorIsAuthedDeployer(ctx, caller, authZ, wasmDeploymentMigrate); err != nil {
+		return nil, err
+	}
 	migrateSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, newCodeID), len(msg))
 	ctx.GasMeter().ConsumeGas(migrateSetupCosts, "Loading CosmWasm module: migrate")
 

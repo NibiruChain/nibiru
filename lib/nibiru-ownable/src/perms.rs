@@ -9,9 +9,8 @@
 use std::collections::BTreeSet;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Event, Order, StdError, Storage};
+use cosmwasm_std::{Addr, Api, Event, Order, StdError, Storage};
 use cw_storage_plus::Map;
-use nibiru_std::address::UserAddr;
 
 use crate::{get_ownership, is_owner, OwnershipError};
 
@@ -63,10 +62,12 @@ pub struct PermUpdate {
     pub kind: PermUpdateKind,
     /// Perm identifier whose membership will change.
     pub perm: String,
-    /// Account whose membership will change.
+    /// Nibiru Bech32 account address whose membership will change.
     ///
-    /// JSON accepts either a Nibiru Bech32 address or an EVM hex address.
-    pub member: UserAddr,
+    /// The contract validates this value with [`Api::addr_validate`] before
+    /// reading or writing membership state. This accepts both externally owned
+    /// accounts and CosmWasm contract addresses.
+    pub member: String,
 }
 
 /// Operation applied to one delegated perm membership.
@@ -81,10 +82,8 @@ pub enum PermUpdateKind {
 /// Delegated perms held by one requested member.
 #[cw_serde]
 pub struct MemberPerms {
-    /// Requested member, serialized as an EIP-55 EVM hex address.
-    pub member: UserAddr,
-    /// The same member encoded as a Nibiru Bech32 address.
-    pub member_bech32: Addr,
+    /// Requested member, serialized as a canonical Nibiru Bech32 address.
+    pub member: Addr,
     /// Sorted, deduplicated delegated perms held by the member.
     ///
     /// The current owner's result also contains the virtual `owner` perm.
@@ -107,6 +106,13 @@ pub enum PermError {
     InvalidPermId {
         /// Invalid perm identifier supplied by the caller.
         perm: String,
+    },
+
+    /// A permission member is not a supported Cosmos address.
+    #[error("Invalid permission member address: {member}")]
+    InvalidMemberAddress {
+        /// Invalid member address supplied by the caller.
+        member: String,
     },
 
     /// An update named a valid perm that the message policy does not define.
@@ -151,6 +157,15 @@ pub fn validate_perm_id(perm: &str) -> Result<(), PermError> {
             perm: perm.to_string(),
         })
     }
+}
+
+fn validate_member(api: &dyn Api, member: &str) -> Result<Addr, PermError> {
+    if member.starts_with("0x") || member.starts_with("0X") {
+        return Err(PermError::InvalidMemberAddress {
+            member: member.to_string(),
+        });
+    }
+    Ok(api.addr_validate(member)?)
 }
 
 /// Returns whether `member` holds the stored delegated `perm`.
@@ -235,6 +250,7 @@ pub fn assert_msg_auth<P: PermPolicy>(
 /// attribute reports whether that item changed storage.
 pub fn update_perms<P: PermPolicy>(
     storage: &mut dyn Storage,
+    api: &dyn Api,
     sender: &Addr,
     updates: Vec<PermUpdate>,
 ) -> Result<Vec<Event>, PermError> {
@@ -243,26 +259,27 @@ pub fn update_perms<P: PermPolicy>(
     }
 
     let known: BTreeSet<_> = P::perm_ids().into_iter().collect();
-    for update in &updates {
+    let mut validated_updates = Vec::with_capacity(updates.len());
+    for update in updates {
         validate_perm_id(&update.perm)?;
         if !known.contains(update.perm.as_str()) {
             return Err(PermError::UnknownPerm {
                 perm: update.perm.clone(),
             });
         }
+        let member = validate_member(api, &update.member)?;
+        validated_updates.push((update, member));
     }
 
-    let mut events = Vec::with_capacity(updates.len());
-    for update in updates {
-        let member_bech32 = update.member.to_bech32_addr();
-        let existed =
-            PERM_MEMBERS.has(storage, (&member_bech32, update.perm.as_str()));
+    let mut events = Vec::with_capacity(validated_updates.len());
+    for (update, member) in validated_updates {
+        let existed = PERM_MEMBERS.has(storage, (&member, update.perm.as_str()));
         let (action, changed) = match update.kind {
             PermUpdateKind::Grant => {
                 if !existed {
                     PERM_MEMBERS.save(
                         storage,
-                        (&member_bech32, update.perm.as_str()),
+                        (&member, update.perm.as_str()),
                         &(),
                     )?;
                 }
@@ -271,7 +288,7 @@ pub fn update_perms<P: PermPolicy>(
             PermUpdateKind::Revoke => {
                 if existed {
                     PERM_MEMBERS
-                        .remove(storage, (&member_bech32, update.perm.as_str()));
+                        .remove(storage, (&member, update.perm.as_str()));
                 }
                 ("revoke", existed)
             }
@@ -281,8 +298,7 @@ pub fn update_perms<P: PermPolicy>(
             Event::new("perm_update")
                 .add_attribute("action", action)
                 .add_attribute("perm", update.perm)
-                .add_attribute("member", update.member.to_hex())
-                .add_attribute("member_bech32", member_bech32)
+                .add_attribute("member", member)
                 .add_attribute("changed", changed.to_string()),
         );
     }
@@ -296,27 +312,27 @@ pub fn update_perms<P: PermPolicy>(
 /// `owner` perm, which is not stored in the delegated membership map.
 pub fn perms_for_members(
     storage: &dyn Storage,
-    members: Vec<UserAddr>,
+    api: &dyn Api,
+    members: Vec<String>,
 ) -> Result<Vec<MemberPerms>, PermError> {
     let owner = get_ownership(storage)?.owner;
+    let members: Vec<Addr> = members
+        .into_iter()
+        .map(|member| validate_member(api, &member))
+        .collect::<Result<_, _>>()?;
     members
         .into_iter()
         .map(|member| {
-            let member_bech32 = member.to_bech32_addr();
             let mut perms: Vec<String> = PERM_MEMBERS
-                .prefix(&member_bech32)
+                .prefix(&member)
                 .keys(storage, None, None, Order::Ascending)
                 .collect::<Result<_, _>>()?;
-            if owner.as_deref() == Some(member_bech32.as_str()) {
+            if owner.as_deref() == Some(member.as_str()) {
                 perms.push("owner".to_string());
             }
             perms.sort();
             perms.dedup();
-            Ok(MemberPerms {
-                member,
-                member_bech32,
-                perms,
-            })
+            Ok(MemberPerms { member, perms })
         })
         .collect()
 }

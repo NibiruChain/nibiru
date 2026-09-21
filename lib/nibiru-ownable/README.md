@@ -33,7 +33,7 @@ to `assert_msg_auth`. Use `#[ownable_execute(perms)]` to add owner-only
 ```rust
 #[cw_serde]
 enum ExecuteMsg {
-    Admin { msg: AdminExecuteMsg },
+    Admin(AdminExecuteMsg),
 }
 
 #[ownable_execute(perms)]
@@ -53,12 +53,13 @@ duplicate updates are valid, and each update produces a `perm_update` event.
 
 ```rust
 match msg {
-    ExecuteMsg::Admin { msg } => {
+    ExecuteMsg::Admin(msg) => {
         nibiru_ownable::assert_msg_auth(deps.storage, &info.sender, &msg)?;
 
         if let AdminExecuteMsg::UpdatePerms(updates) = msg {
             let events = nibiru_ownable::update_perms::<AdminExecuteMsg>(
                 deps.storage,
+                deps.api,
                 &info.sender,
                 updates,
             )?;
@@ -80,12 +81,14 @@ Attribute macro `#[ownable_query(perms)]` adds these query variants:
 - `Perms {}` returns the compiled `Vec<PermRule>` policy catalog. An enum-level
   `#[perms(namespace = "admin")]` prefix produces identifiers such as
   `admin.reconcile`.
-- `PermsForMembers { members }` returns delegated membership for supplied
-  `UserAddr` values. The owner receives virtual `owner` membership.
+- `PermsForMembers { members }` accepts Nibiru Bech32 address strings and
+  returns delegated membership for each validated account. The owner receives
+  virtual `owner` membership.
 
-Type `UserAddr` accepts Nibiru bech32 and `0x`-prefixed EVM addresses in JSON.
-It serializes as canonical EIP-55 hex and represents only 20-byte externally
-owned accounts.
+Permission updates and member queries use Bech32 strings because CosmWasm
+validates them through the chain API. This supports externally owned accounts
+and contract addresses, including CW3 multisigs. EVM hex is not a permission
+member format.
 
 ## Documentation and license
 

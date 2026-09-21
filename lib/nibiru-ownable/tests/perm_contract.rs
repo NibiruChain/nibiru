@@ -8,8 +8,8 @@
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    entry_point, to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo,
-    Response, StdError, StdResult,
+    entry_point, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env,
+    MessageInfo, Response, StdError, StdResult, WasmMsg,
 };
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 use cw_storage_plus::Item;
@@ -17,7 +17,7 @@ use nibiru_ownable::{
     assert_msg_auth, get_ownership, initialize_owner, ownable_execute,
     ownable_query, perms_for_members, update_ownership, update_perms, Action,
     MemberPerms, Ownership, OwnershipError, PermError, PermPolicy, PermRule,
-    PermUpdate, PermUpdateKind, UserAddr,
+    PermUpdate, PermUpdateKind,
 };
 
 const VALUE: Item<u64> = Item::new("value");
@@ -95,9 +95,14 @@ fn execute(
             )?;
             Ok(Response::new())
         }
-        ExecuteMsg::UpdatePerms(updates) => Ok(Response::new().add_events(
-            update_perms::<ExecuteMsg>(deps.storage, &info.sender, updates)?,
-        )),
+        ExecuteMsg::UpdatePerms(updates) => {
+            Ok(Response::new().add_events(update_perms::<ExecuteMsg>(
+                deps.storage,
+                deps.api,
+                &info.sender,
+                updates,
+            )?))
+        }
         ExecuteMsg::Public {}
         | ExecuteMsg::OwnerOnly {}
         | ExecuteMsg::Write {}
@@ -116,7 +121,7 @@ fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Ownership {} => to_json_binary(&get_ownership(deps.storage)?),
         QueryMsg::Perms {} => to_json_binary(&ExecuteMsg::perm_rules()),
         QueryMsg::PermsForMembers { members } => to_json_binary(
-            &perms_for_members(deps.storage, members)
+            &perms_for_members(deps.storage, deps.api, members)
                 .map_err(|err| StdError::generic_err(err.to_string()))?,
         ),
         QueryMsg::Value {} => to_json_binary(&VALUE.load(deps.storage)?),
@@ -125,6 +130,49 @@ fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 fn contract() -> Box<dyn Contract<Empty>> {
     Box::new(ContractWrapper::new(execute, instantiate, query))
+}
+
+#[cw_serde]
+enum ForwardMsg {
+    Forward { target: String, msg: ExecuteMsg },
+}
+
+#[entry_point]
+fn forward_instantiate(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: Empty,
+) -> StdResult<Response> {
+    Ok(Response::new())
+}
+
+#[entry_point]
+fn forward_execute(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: ForwardMsg,
+) -> StdResult<Response> {
+    match msg {
+        ForwardMsg::Forward { target, msg } => Ok(Response::new().add_message(
+            CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: target,
+                msg: to_json_binary(&msg)?,
+                funds: vec![],
+            }),
+        )),
+    }
+}
+
+fn forward_contract() -> Box<dyn Contract<Empty>> {
+    Box::new(ContractWrapper::new(
+        forward_execute,
+        forward_instantiate,
+        |_, _, _: Empty| -> StdResult<Binary> {
+            Err(StdError::generic_err("no queries"))
+        },
+    ))
 }
 
 const OWNER: &str = "nibi1gc24lt74ses9swkq6g7cug4e5y72p7e34jqgul";
@@ -153,46 +201,38 @@ fn update(kind: PermUpdateKind, perm: &str, member: &str) -> PermUpdate {
     PermUpdate {
         kind,
         perm: perm.to_string(),
-        member: member.parse().unwrap(),
+        member: member.to_string(),
     }
 }
 
-/// Confirms that perm-update JSON accepts both address encodings.
-///
-/// The Bech32 and EVM inputs must resolve to the same `UserAddr`, serialization
-/// must use canonical EIP-55 hex, and malformed input must fail to deserialize.
+/// Permission JSON carries an address string. The contract validates it before
+/// mutating storage, so EVM hex is not a valid permission member.
 #[test]
-fn perm_update_json_accepts_both_user_address_forms() {
+fn perm_update_json_uses_bech32_strings() {
     let bech32: ExecuteMsg = serde_json::from_str(
         r#"{"update_perms":[{"kind":"grant","perm":"writer","member":"nibi1gc24lt74ses9swkq6g7cug4e5y72p7e34jqgul"}]}"#,
     )
     .unwrap();
-    let evm: ExecuteMsg = serde_json::from_str(
+    let hex: ExecuteMsg = serde_json::from_str(
         r#"{"update_perms":[{"kind":"grant","perm":"writer","member":"0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31"}]}"#,
     )
     .unwrap();
     let ExecuteMsg::UpdatePerms(bech32) = bech32 else {
         panic!("expected update_perms")
     };
-    let ExecuteMsg::UpdatePerms(evm) = evm else {
+    let ExecuteMsg::UpdatePerms(hex) = hex else {
         panic!("expected update_perms")
     };
 
-    assert_eq!(bech32[0].member, evm[0].member);
-    assert_eq!(
-        serde_json::to_value(&bech32[0]).unwrap()["member"],
-        "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31"
-    );
-    assert!(serde_json::from_str::<ExecuteMsg>(
-        r#"{"update_perms":[{"kind":"grant","perm":"writer","member":"not_an_address"}]}"#,
-    )
-    .is_err());
+    assert_eq!(bech32[0].member, OWNER);
+    assert_eq!(serde_json::to_value(&bech32[0]).unwrap()["member"], OWNER);
+    assert_eq!(hex[0].member, "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31");
 }
 
 fn member_perms(
     app: &App,
     contract: &cosmwasm_std::Addr,
-    members: Vec<UserAddr>,
+    members: Vec<String>,
 ) -> Vec<MemberPerms> {
     app.wrap()
         .query_wasm_smart(contract, &QueryMsg::PermsForMembers { members })
@@ -267,11 +307,51 @@ fn external_contract_exercises_membership_and_owner_inheritance() {
     .unwrap();
 }
 
+/// A delegated permission may belong to a contract address. The target sees
+/// that contract as `info.sender`, exactly as it would for a CW3 execute.
+#[test]
+fn contract_member_passes_the_generated_permission_gate() {
+    let (mut app, target) = setup();
+    let forwarder_code = app.store_code(forward_contract());
+    let forwarder = app
+        .instantiate_contract(
+            forwarder_code,
+            cosmwasm_std::Addr::unchecked(OWNER),
+            &Empty {},
+            &[],
+            "permission-forwarder",
+            None,
+        )
+        .unwrap();
+
+    app.execute_contract(
+        cosmwasm_std::Addr::unchecked(OWNER),
+        target.clone(),
+        &ExecuteMsg::UpdatePerms(vec![update(
+            PermUpdateKind::Grant,
+            "writer",
+            forwarder.as_str(),
+        )]),
+        &[],
+    )
+    .unwrap();
+    app.execute_contract(
+        cosmwasm_std::Addr::unchecked(OTHER),
+        forwarder,
+        &ForwardMsg::Forward {
+            target: target.to_string(),
+            msg: ExecuteMsg::Write {},
+        },
+        &[],
+    )
+    .unwrap();
+}
+
 /// Confirms that discovery queries report the generated policy and memberships.
 ///
 /// The catalog includes owner-only, any-of, and macro-injected routes with the
-/// intended namespace. The member query returns both address forms and adds
-/// `owner` to the owner's stored delegated perms.
+/// intended namespace. The member query returns the canonical Bech32 address
+/// and adds `owner` to the owner's stored delegated perms.
 #[test]
 fn catalog_and_member_queries_match_generated_policy() {
     let (mut app, contract) = setup();
@@ -332,18 +412,16 @@ fn catalog_and_member_queries_match_generated_policy() {
     }));
 
     // Ownership appears as a virtual perm alongside the stored `writer` perm.
-    let owner: UserAddr = OWNER.parse().unwrap();
     let members: Vec<MemberPerms> = app
         .wrap()
         .query_wasm_smart(
             &contract,
             &QueryMsg::PermsForMembers {
-                members: vec![owner],
+                members: vec![OWNER.to_string()],
             },
         )
         .unwrap();
-    assert_eq!(members[0].member, owner);
-    assert_eq!(members[0].member_bech32.as_str(), OWNER);
+    assert_eq!(members[0].member.as_str(), OWNER);
     assert_eq!(members[0].perms, vec!["owner", "writer"]);
 }
 
@@ -383,8 +461,8 @@ fn pending_owner_can_accept_without_owner_perm_gate() {
 /// Covers the update batch's owner check, ordering, idempotency, and validation.
 ///
 /// Empty batches are valid. Repeated grants and revokes execute in input order
-/// and report whether each item changed storage. An unknown perm invalidates
-/// the full batch before its earlier valid update reaches storage.
+/// and report whether each item changed storage. Invalid perms or members
+/// invalidate the full batch before its earlier valid update reaches storage.
 #[test]
 fn batches_are_atomic_ordered_idempotent_and_may_be_empty() {
     let (mut app, contract) = setup();
@@ -454,12 +532,40 @@ fn batches_are_atomic_ordered_idempotent_and_may_be_empty() {
         &[],
     );
     assert!(error.is_err());
+
+    // Address validation also scans the full batch before any mutation. The
+    // EVM hex member is not a valid Nibiru permission subject.
+    let error = app.execute_contract(
+        cosmwasm_std::Addr::unchecked(OWNER),
+        contract.clone(),
+        &ExecuteMsg::UpdatePerms(vec![
+            update(PermUpdateKind::Grant, "writer", WRITER),
+            update(
+                PermUpdateKind::Grant,
+                "auditor",
+                "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31",
+            ),
+        ]),
+        &[],
+    );
+    assert!(error.is_err());
     let members = member_perms(
         &app,
         &contract,
-        vec![WRITER.parse().unwrap(), OTHER.parse().unwrap()],
+        vec![WRITER.to_string(), OTHER.to_string()],
     );
     assert!(members.iter().all(|member| member.perms.is_empty()));
+    assert!(app
+        .wrap()
+        .query_wasm_smart::<Vec<MemberPerms>>(
+            &contract,
+            &QueryMsg::PermsForMembers {
+                members: vec![
+                    "0x46155fAfd58660583ac0d23d8E22B9A13Ca0fb31".to_string()
+                ],
+            },
+        )
+        .is_err());
 }
 
 /// Exercises public, any-of, query-order, and ownership-transfer semantics.
@@ -519,7 +625,7 @@ fn public_any_of_queries_and_owner_transfer_keep_their_semantics() {
     let repeated = member_perms(
         &app,
         &contract,
-        vec![OTHER.parse().unwrap(), OTHER.parse().unwrap()],
+        vec![OTHER.to_string(), OTHER.to_string()],
     );
     assert_eq!(repeated.len(), 2);
     assert_eq!(repeated[0].perms, vec!["auditor"]);

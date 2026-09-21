@@ -153,8 +153,8 @@ echo "Deploying EntryPoint + PasskeyAccountFactory and writing evm/passkey-app/.
 (cd "$ROOT/evm/e2e" && just deploy-passkey)
 
 if [ ! -f "$PASSKEY_CACHE" ]; then
-  echo "Could not find $PASSKEY_CACHE; skipping bundler start."
-  echo "Done. Start the UI with: cd evm/passkey-app && bun run dev"
+echo "Could not find $PASSKEY_CACHE; skipping bundler start."
+echo "Done. Start the UI with: cd evm/passkey-app && bun run dev"
   exit 0
 fi
 
@@ -168,7 +168,7 @@ cleanup_bundler
   cd "$ROOT/evm/e2e/passkey-sdk"
   if [ ! -d node_modules ]; then
     echo "Installing passkey-sdk dependencies..."
-    bun install >/dev/null
+    bun install --frozen-lockfile >/dev/null
   fi
   ENTRY_POINT="$ENTRY_POINT" \
   FACTORY_ADDR="$FACTORY_ADDR" \
