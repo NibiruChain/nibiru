@@ -5,15 +5,17 @@
   `lib/nibiru-ownable-derive/`, and `lib/nibiru-ownable/`
 - Source of truth: script `contrib/scripts/publish-coupled.sh`
 
-Three crates share the root workspace version and must publish in dependency
-order:
+Three crates share the root workspace version, and the publishing script
+releases them together in this order:
 
 ```text
-nibiru-std -> nibiru-ownable-derive -> nibiru-ownable
+nibiru-std
+nibiru-ownable-derive -> nibiru-ownable
 ```
 
-Crate `nibiru-ownable` exposes type `UserAddr` from crate `nibiru-std` and
-depends on the procedural macros in crate `nibiru-ownable-derive`.
+Crate `nibiru-std` is part of the coupled release set but is not a dependency
+of the other two crates. Crate `nibiru-ownable` depends on the procedural
+macros in crate `nibiru-ownable-derive`.
 
 ## Before publishing
 
