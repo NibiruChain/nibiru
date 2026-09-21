@@ -53,7 +53,7 @@ require (
 	cosmossdk.io/log v1.3.1
 	github.com/99designs/keyring v1.2.2
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816
-	github.com/btcsuite/btcd/btcec/v2 v2.3.5
+	github.com/btcsuite/btcd/btcec/v2 v2.5.0
 	github.com/chzyer/readline v1.5.1
 	github.com/cockroachdb/errors v1.12.0
 	github.com/coinbase/rosetta-sdk-go v0.7.9
