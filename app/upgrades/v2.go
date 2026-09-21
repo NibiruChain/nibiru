@@ -100,6 +100,7 @@ var (
 		Handler:       Handler_v2_18{},
 		StoreUpgrades: store.StoreUpgrades{},
 	}
+	Upgrade2_19_0 = NewVanillaUpgrade("v2.19.0")
 
 	// Upgrade2_20_0 runs normal module migrations without changing Wasm state.
 	// The v2.20 binary activates its temporary Wasm policy through app wiring.

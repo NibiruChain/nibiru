@@ -57,6 +57,7 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_16_0,
 	Upgrade2_17_0,
 	Upgrade2_18_1,
+	Upgrade2_19_0,
 	Upgrade2_20_0,
 }
 

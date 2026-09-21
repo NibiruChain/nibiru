@@ -25,6 +25,10 @@ From `evm/e2e/`:
 just install
 ```
 
+Run this recipe from the repository root. It installs the locked Bun
+dependencies in both `evm/e2e` and `evm/e2e/passkey-sdk`, then generates the
+Hardhat types.
+
 ### Configure environment in `.env` file
 
 Use [env.sample](./.env_sample) as a reference.

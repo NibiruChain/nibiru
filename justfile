@@ -38,12 +38,12 @@ gen-embeds:
 
     embeds_dir="evm/embeds"
     log_info "Begin to compile Solidity in $embeds_dir"
-    which_ok yarn
-    log_info "Using system node version: $(yarn exec -- node -v)"
+    which_ok bun
+    log_info "Using Bun version: $(bun --version)"
 
     cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit 1)
-    yarn --check-files
-    yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
+    bun install --frozen-lockfile
+    bun run compile
     log_success "Compiled Solidity in $embeds_dir"
 
     go run "gen-abi/main.go"
@@ -166,6 +166,16 @@ log-e2e:
     #!/usr/bin/env bash
     set -euo pipefail
     just test-e2e 2>&1 | tee -a logs/e2e.txt
+
+# Install the Bun dependencies required by the EVM E2E tests.
+install-e2e:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    source contrib/bashlib.sh
+    which_ok bun
+
+    cd evm/e2e
+    just install
 
 # Runs the EVM E2E tests
 test-e2e:

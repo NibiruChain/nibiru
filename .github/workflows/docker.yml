@@ -32,8 +32,8 @@ jobs:
         run: |
           OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
           ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
-          echo "OS=$OS" >> $GITHUB_ENV
-          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "OS=$OS" >> "$GITHUB_ENV"
+          echo "ARCH=$ARCH" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -68,7 +68,7 @@ jobs:
         with:
           context: .
           target: release
-          push: true
+          push: ${{ vars.PUBLISH_CONTAINERS == 'true' }}
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -77,6 +77,7 @@ jobs:
     name: Create multi-arch image
     needs:
       - build
+    if: ${{ vars.PUBLISH_CONTAINERS == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
@@ -125,8 +126,8 @@ jobs:
         run: |
           OS=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 1)
           ARCH=$(echo "${{ matrix.build.platform }}" | cut -d '/' -f 2)
-          echo "OS=$OS" >> $GITHUB_ENV
-          echo "ARCH=$ARCH" >> $GITHUB_ENV
+          echo "OS=$OS" >> "$GITHUB_ENV"
+          echo "ARCH=$ARCH" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -160,7 +161,7 @@ jobs:
         with:
           context: .
           target: chaosnet
-          push: true
+          push: ${{ vars.PUBLISH_CONTAINERS == 'true' }}
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -169,6 +170,7 @@ jobs:
     name: Create multi-arch image
     needs:
       - build-chaosnet
+    if: ${{ vars.PUBLISH_CONTAINERS == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
