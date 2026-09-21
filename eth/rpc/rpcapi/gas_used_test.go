@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc"
 	"github.com/NibiruChain/nibiru/v2/eth/rpc/rpcapi"
+	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/evm/precompile"
@@ -48,10 +49,10 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 
 	// Start with new block
 	s.Require().NoError(s.cli.WaitForNextBlock())
-	balanceBefore := s.getUnibiBalance(s.evmSenderEthAddr)
 
 	// Send 2 similar transfers
 	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
+	recipientBalanceBefore := s.getUnibiBalance(randomEthAddr)
 	txHash1 := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
 	txHash2 := s.SendNibiViaEthTransfer(randomEthAddr, amountToSend, false)
 
@@ -77,11 +78,16 @@ func (s *BackendSuite) TestGasUsedTransfers() {
 	s.Require().NotNil(block["gasUsed"])
 	s.Require().GreaterOrEqual(block["gasUsed"].(*hexutil.Big).ToInt().Uint64(), receipt1.GasUsed+receipt2.GasUsed)
 
-	// Balance after should be equal to balance before minus gas used and amount sent
-	balanceAfter := s.getUnibiBalance(s.evmSenderEthAddr)
+	// The sender is shared with other localnet tests. Check the fresh recipient
+	// instead, so unrelated debits cannot affect this transfer-value assertion.
+	recipientBalanceAfter := s.getUnibiBalance(randomEthAddr)
+	expectedRecipientBalance := new(big.Int).Add(
+		recipientBalanceBefore,
+		new(big.Int).Mul(evm.WeiToNative(amountToSend), big.NewInt(2)),
+	)
 	s.Require().Equal(
-		receipt1.GasUsed+receipt2.GasUsed+2,
-		balanceBefore.Uint64()-balanceAfter.Uint64(),
+		expectedRecipientBalance,
+		recipientBalanceAfter,
 	)
 }
 

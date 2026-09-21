@@ -110,7 +110,7 @@ ensure_bundler_funded() {
   local balance_hex
   balance_hex="$(get_eth_balance "$BUNDLER_ADDRESS")"
   local balance_dec
-  balance_dec="$(node -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
+  balance_dec="$(bun -e "console.log(BigInt('$balance_hex').toString())" 2>/dev/null || echo "0")"
 
   if [ "$balance_dec" -ge "$BUNDLER_MIN_BALANCE_WEI" ]; then
     echo "Bundler balance is sufficient (${balance_dec} wei) for $BUNDLER_ADDRESS"
@@ -147,14 +147,14 @@ else
 fi
 
 echo "Compiling contracts (hardhat)..."
-(cd "$ROOT/evm/e2e" && npx hardhat compile --show-stack-traces >/dev/null)
+(cd "$ROOT/evm/e2e" && bunx hardhat compile --show-stack-traces >/dev/null)
 
 echo "Deploying EntryPoint + PasskeyAccountFactory and writing passkey-app/.env.local"
-(cd "$ROOT/evm/e2e" && node scripts/passkey-demo-setup.js)
+(cd "$ROOT/evm/e2e" && bun scripts/passkey-demo-setup.js)
 
 if [ ! -f "$PASSKEY_CACHE" ]; then
   echo "Could not find $PASSKEY_CACHE; skipping bundler start."
-  echo "Done. Start the UI with: cd passkey-app && npm run dev"
+  echo "Done. Start the UI with: cd passkey-app && bun run dev"
   exit 0
 fi
 
@@ -168,7 +168,7 @@ cleanup_bundler
   cd "$ROOT/evm/e2e/passkey-sdk"
   if [ ! -d node_modules ]; then
     echo "Installing passkey-sdk dependencies..."
-    npm install >/dev/null
+    bun install --frozen-lockfile >/dev/null
   fi
   ENTRY_POINT="$ENTRY_POINT" \
   FACTORY_ADDR="$FACTORY_ADDR" \
@@ -176,7 +176,7 @@ cleanup_bundler
   CHAIN_ID="$CHAIN_ID" \
   BUNDLER_PORT="$BUNDLER_PORT" \
   BUNDLER_PRIVATE_KEY="$BUNDLER_PRIVATE_KEY" \
-    npm run bundler:local >>"$BUNDLER_LOG" 2>&1 &
+    bun run bundler:local >>"$BUNDLER_LOG" 2>&1 &
   echo $! >"$BUNDLER_PID_FILE"
 )
 echo "Waiting for bundler at $BUNDLER_URL..."
@@ -184,4 +184,4 @@ wait_for_bundler
 
 ensure_bundler_funded
 
-echo "Done. Start the UI with: cd passkey-app && npm run dev"
+echo "Done. Start the UI with: cd passkey-app && bun run dev"

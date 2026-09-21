@@ -12,23 +12,26 @@ describe("debug queries", () => {
   let blockNumber: number
   let blockHash: string
 
-  beforeAll(async () => {
-    // Deploy ERC-20 contract
-    const contract = await deployContractTestERC20()
-    contractAddress = await contract.getAddress()
+  beforeAll(
+    async () => {
+      // Deploy ERC-20 contract
+      const contract = await deployContractTestERC20()
+      contractAddress = await contract.getAddress()
 
-    // Execute some contract TX
-    const txResponse = await contract.transfer(alice, parseEther("0.01"))
-    await txWait(txResponse, { label: "debug_queries transfer" })
+      // Execute some contract TX
+      const txResponse = await contract.transfer(alice, parseEther("0.01"))
+      await txWait(txResponse, { label: "debug_queries transfer" })
 
-    const receipt: TransactionReceipt = await provider.getTransactionReceipt(
-      txResponse.hash,
-    )
-    txHash = txResponse.hash
-    txIndex = txResponse.index
-    blockNumber = receipt.blockNumber
-    blockHash = receipt.blockHash
-  })
+      const receipt: TransactionReceipt = await provider.getTransactionReceipt(
+        txResponse.hash,
+      )
+      txHash = txResponse.hash
+      txIndex = txResponse.index
+      blockNumber = receipt.blockNumber
+      blockHash = receipt.blockHash
+    },
+    TEST_TIMEOUT,
+  )
 
   it("debug_traceBlockByNumber", async () => {
     const traceResult = await provider.send("debug_traceBlockByNumber", [

@@ -20,7 +20,7 @@ const PASSKEY_BUNDLER_DIR = path.resolve(
   "..",
   "passkey-bundler",
 )
-const NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm"
+const BUN_BIN = process.platform === "win32" ? "bun.exe" : "bun"
 const NODE_BIN = "node"
 const JSON_RPC_ENDPOINT =
   process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
@@ -62,7 +62,7 @@ describe("passkey ERC-4337 flow", () => {
 })
 
 async function buildPasskeySdk() {
-  await runCommand(NPM_BIN, ["run", "build"], {
+  await runCommand(BUN_BIN, ["run", "build"], {
     cwd: PASSKEY_SDK_DIR,
     env: process.env,
   })
@@ -70,11 +70,11 @@ async function buildPasskeySdk() {
 
 async function buildPasskeyBundlerIfNeeded() {
   if (PASSKEY_BUNDLER_MODE !== "official") return
-  await runCommand(NPM_BIN, ["install"], {
+  await runCommand(BUN_BIN, ["install"], {
     cwd: PASSKEY_BUNDLER_DIR,
     env: process.env,
   })
-  await runCommand(NPM_BIN, ["run", "build"], {
+  await runCommand(BUN_BIN, ["run", "build"], {
     cwd: PASSKEY_BUNDLER_DIR,
     env: process.env,
   })

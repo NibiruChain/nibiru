@@ -20,9 +20,12 @@ Localnet has JSON RPC enabled by default.
 ### Install dependencies
 
 ```bash
-npm install
-(cd passkey-sdk && npm install)
+just install-e2e
 ```
+
+Run this recipe from the repository root. It installs the locked Bun
+dependencies in both `evm/e2e` and `evm/e2e/passkey-sdk`, then generates the
+Hardhat types.
 
 ### Configure environment in `.env` file
 
@@ -79,7 +82,7 @@ Assumes:
 ENTRY_POINT=0xYourEntryPoint \
 QX=0x... \
 QY=0x... \
-npx hardhat run scripts/deploy-passkey.js --network localhost
+bunx hardhat run scripts/deploy-passkey.js --network localhost
 ```
 
 ### Run an ERC-4337 bundler against Nibiru RPC
@@ -92,7 +95,7 @@ Uses a Stackup-style Docker image with a temp config. Required env: `RPC_URL`, `
 RPC_URL=http://127.0.0.1:8545 \
 ENTRY_POINT=0x... \
 CHAIN_ID=12345 \
-npm run bundler
+bun run bundler
 ```
 
 ### Passkey ERC-4337 test coverage
@@ -101,10 +104,10 @@ The `bun test` suite now exercises the passkey ERC-4337 flow end-to-end. During 
 
 - Builds the `passkey-sdk`, deploys a fresh `EntryPointV06` + `PasskeyAccountFactory`, and funds the dev bundler key.
 - Starts a bundler on port `14437`: by default the lightweight `passkey-sdk/dist/local-bundler.js`; set
-  `PASSKEY_BUNDLER_MODE=official` to instead build and start `passkey-bundler/dist/index.js` (ensure `npm install` in
+  `PASSKEY_BUNDLER_MODE=official` to instead build and start `passkey-bundler/dist/index.js` (ensure `bun install` in
   `passkey-bundler/` first).
 - Executes the CLI passkey script against that bundler to prove a full user operation.
 
-Ensure `node`, `npm`, and `tsup` dependencies are installed (`npm install` in `evm/e2e/`, `evm/e2e/passkey-sdk/`, and
-`passkey-bundler/` if using `PASSKEY_BUNDLER_MODE=official`) and that port `14437` is free before running `bun test` or
-`just test-e2e`.
+Run `just install-e2e` from the repository root first. If using
+`PASSKEY_BUNDLER_MODE=official`, also run `bun install` in `passkey-bundler/`.
+Port `14437` must be free before running `bun test` or `just test-e2e`.

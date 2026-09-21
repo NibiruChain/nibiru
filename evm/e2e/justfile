@@ -10,29 +10,40 @@ setup:
 # Install all dependencies
 install:
   #!/usr/bin/env bash
-  npm install
-  (cd passkey-sdk && npm install)
-  npx hardhat typechain
+  set -Eeuo pipefail
+  command -v bun >/dev/null 2>&1 || {
+    echo "bun is required to install EVM E2E dependencies" >&2
+    exit 1
+  }
+
+  if [[ ! -e .env ]]; then
+    cp .env_sample .env
+    echo "Created evm/e2e/.env from .env_sample"
+  fi
+
+  bun install --frozen-lockfile
+  (cd passkey-sdk && bun install --frozen-lockfile)
+  bunx hardhat typechain
 
 # Runs the E2E tests
 test *args:
   #!/usr/bin/env bash
   set -euo pipefail
-  npx bun test {{args}}
+  bun test {{args}}
 
 # Runs tx receipt tests. Used for testnet quick check.
 test-basic:
   #!/usr/bin/env bash
   set -euo pipefail
-  npx bun test -- tx_receipt.test.ts
+  bun test -- tx_receipt.test.ts
 
 # Format
 fmt: 
-  npx prettier --write . --config prettier.config.js
+  bunx prettier --write . --config prettier.config.js
 
 # Format (check only)
 fmt-check:
-  npx prettier --check . --config prettier.config.js
+  bunx prettier --check . --config prettier.config.js
 
 gen-types:
-  npx hardhat typechain
+  bunx hardhat typechain

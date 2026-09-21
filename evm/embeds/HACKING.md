@@ -15,8 +15,8 @@ just gen-embeds
 
 From inside the "Nibiru/evm/embeds" directory
 ```bash
-yarn --check-files
-yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
+bun install --frozen-lockfile
+bun run compile
 ```
 
 ## Publishing
