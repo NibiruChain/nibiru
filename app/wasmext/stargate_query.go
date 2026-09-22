@@ -1,6 +1,8 @@
 package wasmext
 
 import (
+	"github.com/NibiruChain/nibiru/v2/evm"
+
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -120,6 +122,11 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		// nibiru sudo
 		"/nibiru.sudo.v1.Query/QuerySudoers":       new(sudo.QuerySudoersResponse),
 		"/nibiru.sudo.v1.Query/QueryZeroGasActors": new(sudo.QueryZeroGasActorsResponse),
+
+		// nibiru evm
+		// EthCall returns MsgEthereumTxResponse. Field ret holds the
+		// eth_call bytes. The response name does not follow QueryXResponse.
+		"/eth.evm.v1.Query/EthCall": new(evm.MsgEthereumTxResponse),
 
 		// nibiru devgas
 		"/nibiru.devgas.v1.Query/FeeShares":             new(devgas.QueryFeeSharesResponse),
