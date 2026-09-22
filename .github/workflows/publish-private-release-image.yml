@@ -17,11 +17,10 @@
 #    2.20.0-rc.1, verifies the attached Linux files, and publishes
 #    ghcr.io/nibiruchain/nibiru:2.20.0-rc.1.
 #
-#    Before dispatching, a developer can run command `just release-image-smoke
-#    v<semver> <semver>` on an ARM64 or AMD64 Docker host. The command builds
-#    both platform images from the same downloaded archives and runs command
-#    `nibid version --long` in each container. It does not log in to GHCR or
-#    publish an image.
+#    Before dispatching, a developer can run command `just release-image-verify
+#    v<semver> <semver>`. It downloads the release assets, checks the Linux
+#    archive digests, and checks that each archive contains an executable nibid.
+#    It does not build or publish a container.
 #
 # 3. Inspect the pushed manifest for linux/amd64 and linux/arm64. Do not add
 #    latest, a hotfix-prefixed image tag, or architecture-suffixed public tags.

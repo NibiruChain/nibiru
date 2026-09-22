@@ -17,8 +17,9 @@ usage() {
 Usage:
   publish-release-image.sh --release-tag <tag> --version <version> [options]
 
-Download and verify Linux release artifacts, then optionally publish them as a
-multi-architecture image. Verification is the default and never changes GHCR.
+Download and verify prebuilt Linux release binaries, then optionally package
+them as a multi-architecture image. Verification is the default and never
+changes GHCR. This script does not compile nibid.
 
 Required:
   --release-tag <tag>   Published GitHub release tag, such as v2.20.0-rc.1
@@ -117,7 +118,7 @@ done
 [[ "$push" == false || "$smoke_test" == false ]] || fail "--push and --smoke-test cannot be used together"
 
 if [[ "$dry_run" == true ]]; then
-  log "would verify release $repo@$release_tag and build $image:$version"
+  log "would verify release $repo@$release_tag for $image:$version"
   if [[ "$push" == true ]]; then
     log "would publish $image:$version"
   fi
