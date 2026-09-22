@@ -1,4 +1,4 @@
-package main
+package impl
 
 import (
 	"encoding/hex"
@@ -25,26 +25,17 @@ type TxHash interface {
 	isTxHash()
 }
 
-// Compile-time checks that both backend-specific representations implement
-// the transaction-hash interface.
 var (
 	_ TxHash = CometBFTTxHash{}
 	_ TxHash = EVMTxHash{}
 )
 
 // CometBFTTxHash is the fixed-size digest returned by types.Tx.Hash.
-//
-// CometBFT exposes transaction hashes as []byte rather than a named hash
-// type. This wrapper stores the digest at the size defined by tmhash.Size and
-// formats it with the repository's CometBFT hash formatter.
 type CometBFTTxHash struct {
 	bytes [tmhash.Size]byte
 }
 
 // EVMTxHash is an Ethereum transaction hash backed by geth's common.Hash.
-//
-// Keeping the geth type here lets EVM query code pass the validated hash to
-// indexers without decoding or normalizing the string a second time.
 type EVMTxHash struct {
 	hash gethcommon.Hash
 }
@@ -100,33 +91,23 @@ func (h CometBFTTxHash) Bytes() []byte {
 }
 
 // Canonical returns uppercase hexadecimal without a 0x prefix, matching the
-// repository's eth.TmTxHashToString formatter.
+// repository's CometBFT hash formatter.
 func (h CometBFTTxHash) Canonical() string {
 	return eth.TmTxHashToString(h.bytes[:])
 }
 
-// String returns the canonical CometBFT transaction-hash spelling.
-func (h CometBFTTxHash) String() string {
-	return h.Canonical()
-}
+func (h CometBFTTxHash) String() string { return h.Canonical() }
 
 func (h EVMTxHash) isTxHash() {}
 
 // Hash returns the validated geth common.Hash value.
-func (h EVMTxHash) Hash() gethcommon.Hash {
-	return h.hash
-}
+func (h EVMTxHash) Hash() gethcommon.Hash { return h.hash }
 
 // Canonical returns the 0x-prefixed lowercase hexadecimal spelling generated
 // by geth's common.Hash.Hex method.
-func (h EVMTxHash) Canonical() string {
-	return h.hash.Hex()
-}
+func (h EVMTxHash) Canonical() string { return h.hash.Hex() }
 
-// String returns the canonical EVM transaction-hash spelling.
-func (h EVMTxHash) String() string {
-	return h.Canonical()
-}
+func (h EVMTxHash) String() string { return h.Canonical() }
 
 func invalidTxHash(reason string) error {
 	return fmt.Errorf("%w: %s; %s", ErrInvalidTxHash, reason, txHashFormat)
