@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bytes"
 	"testing"
 
 	// Nibiru
@@ -15,11 +16,29 @@ import (
 )
 
 func TestRootCmdConfig(t *testing.T) {
+	home := t.TempDir()
 	rootCmd, _ := nibid.NewRootCmd()
-	cmds := []string{
+	rootCmd.SetArgs([]string{
 		"config",
-	}
-	rootCmd.SetArgs(cmds)
+		"query-mode",
+		"direct",
+		"--home",
+		home,
+	})
+	require.NoError(t, svrcmd.Execute(rootCmd, "", app.DefaultNodeHome))
+
+	rootCmd, _ = nibid.NewRootCmd()
+	output := bytes.NewBuffer(nil)
+	rootCmd.SetOut(output)
+	rootCmd.SetArgs([]string{
+		"config",
+		"query-mode",
+		"--home",
+		home,
+	})
+
+	require.Contains(t, rootCmd.Aliases, "nibiru")
 
 	require.NoError(t, svrcmd.Execute(rootCmd, "", app.DefaultNodeHome))
+	require.Equal(t, "direct\n", output.String())
 }
