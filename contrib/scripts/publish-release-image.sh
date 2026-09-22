@@ -21,8 +21,9 @@ Download and verify Linux release artifacts, then optionally publish them as a
 multi-architecture image. Verification is the default and never changes GHCR.
 
 Required:
-  --release-tag <tag>   Published GitHub release tag, such as hotfix/v2.19.0
-  --version <version>   Image version, such as 2.19.0
+  --release-tag <tag>   Published GitHub release tag, such as v2.20.0-rc.1
+                         or hotfix/v2.19.0
+  --version <version>   Image version, such as 2.20.0-rc.1
 
 Options:
   --push                Publish <image>:<version> to GHCR after verification.
