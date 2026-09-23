@@ -239,11 +239,11 @@ tidy:
     just proto gen
     just go-fmt
 
-# Verify a public release's artifacts before publishing its container image.
+# Verify a published release's artifacts before publishing its container image.
 release-image-verify release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}'
 
-# Build and execute local amd64 and arm64 images from verified public release artifacts.
+# Build AMD64 and ARM64 images from verified release artifacts, then run the host-native one.
 release-image-smoke release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --smoke-test
 

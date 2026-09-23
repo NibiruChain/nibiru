@@ -17,16 +17,19 @@ usage() {
 Usage:
   publish-release-image.sh --release-tag <tag> --version <version> [options]
 
-Download and verify Linux release artifacts, then optionally publish them as a
-multi-architecture image. Verification is the default and never changes GHCR.
+Download and verify prebuilt Linux release binaries, then optionally package
+them as a multi-architecture image. Verification is the default and never
+changes GHCR. This script does not compile nibid.
 
 Required:
-  --release-tag <tag>   Published GitHub release tag, such as hotfix/v2.19.0
-  --version <version>   Image version, such as 2.19.0
+  --release-tag <tag>   Published GitHub release tag, such as v2.20.0-rc.1
+                         or hotfix/v2.19.0
+  --version <version>   Image version, such as 2.20.0-rc.1
 
 Options:
   --push                Publish <image>:<version> to GHCR after verification.
-  --smoke-test          Build and run each Linux image locally without pushing.
+  --smoke-test          Build both Linux images and run the host-native image
+                         locally without pushing.
   --repo <owner/repo>   GitHub release repository. Default: NibiruChain/nibiru
   --image <image>       Container image. Default: ghcr.io/nibiruchain/nibiru
   --dry-run             Print the planned operation and exit.
@@ -116,12 +119,12 @@ done
 [[ "$push" == false || "$smoke_test" == false ]] || fail "--push and --smoke-test cannot be used together"
 
 if [[ "$dry_run" == true ]]; then
-  log "would verify release $repo@$release_tag and build $image:$version"
+  log "would verify release $repo@$release_tag for $image:$version"
   if [[ "$push" == true ]]; then
     log "would publish $image:$version"
   fi
   if [[ "$smoke_test" == true ]]; then
-    log "would build and run local linux/amd64 and linux/arm64 smoke images"
+    log "would build local linux/amd64 and linux/arm64 images, then run the host-native image"
   fi
   exit 0
 fi
@@ -189,6 +192,16 @@ tar -xzf "$download_dir/nibid_${version}_linux_arm64.tar.gz" -C "$source_dir/dis
 
 log "verified release assets from $release_url"
 if [[ "$smoke_test" == true ]]; then
+  # Go's static Linux binaries can build for either target under buildx, but
+  # executing a foreign-architecture image depends on the host's QEMU setup.
+  # Verify the native runtime here and let native CI runners cover the other
+  # architecture's runtime path.
+  case "$(docker version --format '{{.Server.Arch}}')" in
+    amd64|x86_64) native_architecture="amd64" ;;
+    arm64|aarch64) native_architecture="arm64" ;;
+    *) fail "unsupported Docker server architecture for smoke test" ;;
+  esac
+
   for architecture in amd64 arm64; do
     platform="linux/$architecture"
     smoke_tag="nibiru-release-smoke-$$:${version}-${architecture}"
@@ -202,12 +215,17 @@ if [[ "$smoke_test" == true ]]; then
       --tag "$smoke_tag" \
       --load
 
+    if [[ "$architecture" != "$native_architecture" ]]; then
+      log "built local $platform image; skipping foreign-architecture execution"
+      continue
+    fi
+
     log "running nibid version --long in local $platform image"
     version_output="$(docker run --rm --platform "$platform" "$smoke_tag" version --long)"
     printf '%s\n' "$version_output"
     grep -Fx "version: $version" <<<"$version_output" >/dev/null || fail "local $platform image reports an unexpected nibid version"
   done
-  log "local smoke test passed for linux/amd64 and linux/arm64"
+  log "built local linux/amd64 and linux/arm64 images; verified linux/$native_architecture runtime"
   exit 0
 fi
 
