@@ -1,96 +1,89 @@
 module github.com/NibiruChain/nibiru/v2
 
-go 1.25.0
-
-require (
-	// Consenus Engine
-	github.com/cometbft/cometbft v0.37.18
-	github.com/cometbft/cometbft-db v0.11.0
-
-	// Cosmos-SDK and IBC
-	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/ethereum/go-ethereum v1.14.13-nibiru.5
-)
+go 1.27.0
 
 require (
 	cosmossdk.io/api v1.0.0
-	cosmossdk.io/errors v1.1.0
-	cosmossdk.io/math v1.5.3
-	github.com/MakeNowJust/heredoc/v2 v2.0.1
-	github.com/armon/go-metrics v0.4.1
-	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcutil v1.2.0
-	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/gogoproto v1.7.2
-	github.com/gogo/protobuf v1.3.3
-	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.4
-	github.com/google/gofuzz v1.2.0
-	github.com/gorilla/mux v1.8.1
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
-	github.com/holiman/uint256 v1.3.2
-	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.23.2
-	github.com/rakyll/statik v0.1.8
-	github.com/spf13/cast v1.10.0
-	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
-	github.com/spf13/viper v1.21.0
-	github.com/stretchr/testify v1.11.1
-	github.com/tidwall/gjson v1.19.0
-	github.com/tidwall/sjson v1.2.5
-	github.com/tyler-smith/go-bip39 v1.1.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260706201446-f0a921348800
-	google.golang.org/grpc v1.84.0
-	google.golang.org/protobuf v1.36.12
-	gopkg.in/yaml.v2 v2.4.0
-)
-
-require (
 	cosmossdk.io/core v1.1.0
 	cosmossdk.io/depinject v1.2.1
+	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/log v1.3.1
+	cosmossdk.io/math v1.5.3
 	github.com/99designs/keyring v1.2.2
+	github.com/MakeNowJust/heredoc/v2 v2.0.1
+	github.com/armon/go-metrics v0.4.1
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816
+	github.com/btcsuite/btcd v0.24.2
 	github.com/btcsuite/btcd/btcec/v2 v2.5.0
+	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/chzyer/readline v1.5.1
 	github.com/cockroachdb/errors v1.12.0
 	github.com/coinbase/rosetta-sdk-go v0.7.9
+	// Consenus Engine
+	github.com/cometbft/cometbft v0.37.18
+	github.com/cometbft/cometbft-db v0.11.0
 	github.com/confio/ics23/go v0.9.0
 	github.com/cosmos/btcutil v1.0.5
+
+	// Cosmos-SDK and IBC
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5
+	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/gogogateway v1.2.0
+	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/iavl v0.21.0-beta.1
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/ledger-cosmos-go v1.0.0
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/distribution/reference v0.6.0
+	github.com/ethereum/go-ethereum v1.14.13-nibiru.5
+	github.com/gogo/protobuf v1.3.3
+	github.com/golang/mock v1.6.0
+	github.com/golang/protobuf v1.5.4
 	github.com/google/btree v1.1.3
+	github.com/google/gofuzz v1.2.0
 	github.com/gorilla/handlers v1.5.2
+	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/go-getter v1.7.9
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/hdevalence/ed25519consensus v0.2.0
+	github.com/holiman/uint256 v1.3.2
 	github.com/huandu/skiplist v1.2.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jhump/protoreflect v1.18.1
 	github.com/magiconair/properties v1.18.11
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.20
+	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5
+	github.com/rakyll/statik v0.1.8
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.35.1
+	github.com/spf13/cast v1.10.0
+	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.10
+	github.com/spf13/viper v1.21.0
 	github.com/status-im/keycard-go v0.3.3
+	github.com/stretchr/testify v1.11.1
 	github.com/tendermint/go-amino v0.16.0
 	github.com/tidwall/btree v1.8.1
+	github.com/tidwall/gjson v1.19.0
+	github.com/tidwall/sjson v1.2.5
+	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/crypto v0.54.0
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/mod v0.38.0
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	golang.org/x/text v0.40.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20260706201446-f0a921348800
+	google.golang.org/grpc v1.84.0
+	google.golang.org/protobuf v1.36.12
+	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools/v3 v3.5.2
 	pgregory.net/rapid v1.3.0
 	sigs.k8s.io/yaml v1.6.0
@@ -171,6 +164,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/gsterjov/go-libsecret v0.0.0-20161001094733-a6f4afe4910c // indirect
 	github.com/gtank/merlin v0.1.1 // indirect
 	github.com/gtank/ristretto255 v0.1.2 // indirect

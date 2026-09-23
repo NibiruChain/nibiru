@@ -105,7 +105,7 @@ lint-go *args:
   #!/usr/bin/env bash
   set -euo pipefail
 
-  image_version="v2.6.1"
+  image_version="v2.13.2"
   lint_args=({{args}})
   if [ "${#lint_args[@]}" -eq 0 ]; then
     lint_args=(--fix)

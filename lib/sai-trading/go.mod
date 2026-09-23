@@ -1,21 +1,10 @@
 module github.com/NibiruChain/nibiru/lib/sai-trading
 
-go 1.25.8
+go 1.27.0
 
 require (
 	github.com/NibiruChain/nibiru/v2 v2.8.0
-
-	// Consenus Engine
-	github.com/cometbft/cometbft v0.37.18 // indirect
-	github.com/cometbft/cometbft-db v0.11.0 // indirect
-
-	// Cosmos-SDK and IBC
-	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
-	github.com/cosmos/gogoproto v1.7.2 // indirect
 	github.com/ethereum/go-ethereum v1.14.13
-)
-
-require (
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
@@ -89,11 +78,19 @@ require (
 	github.com/cockroachdb/redact v1.1.6 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20250429170803-42689b6311bb // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
+
+	// Consenus Engine
+	github.com/cometbft/cometbft v0.37.18 // indirect
+	github.com/cometbft/cometbft-db v0.11.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/consensys/gnark-crypto v0.19.2 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
+
+	// Cosmos-SDK and IBC
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
+	github.com/cosmos/gogoproto v1.7.2 // indirect
 	github.com/cosmos/iavl v0.21.0-beta.1 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v1.0.0 // indirect

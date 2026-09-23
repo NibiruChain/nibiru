@@ -101,7 +101,7 @@ go-lint:
     set -euo pipefail
     source contrib/bashlib.sh
 
-    image_version="v2.6.1"
+    image_version="v2.13.2"
     # Cap golangci-lint parallelism so lint stays responsive on developer machines.
     # On a 12-CPU WSL host, -j 4 benchmarked faster than -j 6 while using much
     # less CPU, and was materially faster than -j 2 or -j 3.

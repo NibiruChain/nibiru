@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
@@ -29,7 +28,7 @@ func main() {
 	}
 
 	fmt.Printf("Running %s...\n", file)
-	bz, err := ioutil.ReadFile(file)
+	bz, err := os.ReadFile(file)
 	if err != nil {
 		panic(err)
 	}
