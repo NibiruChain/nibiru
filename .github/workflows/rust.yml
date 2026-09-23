@@ -196,7 +196,7 @@ jobs:
       # and proposed `@1.120`, which tries to install a nonexistent rustc.
       - name: Install Rust 1.81
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
-        uses: dtolnay/rust-toolchain@1.81
+        uses: dtolnay/rust-toolchain@1.120
 
       - name: Install just
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
