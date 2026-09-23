@@ -155,14 +155,14 @@ func (k Keeper) Mint(
 	}
 
 	return &types.MsgMintResponse{
-			MintTo: txMsg.MintTo,
-		}, ctx.EventManager().EmitTypedEvent(
-			&types.EventMint{
-				Coin:   txMsg.Coin,
-				ToAddr: txMsg.MintTo,
-				Caller: txMsg.Sender,
-			},
-		)
+		MintTo: txMsg.MintTo,
+	}, ctx.EventManager().EmitTypedEvent(
+		&types.EventMint{
+			Coin:   txMsg.Coin,
+			ToAddr: txMsg.MintTo,
+			Caller: txMsg.Sender,
+		},
+	)
 }
 
 func (k Keeper) mint(

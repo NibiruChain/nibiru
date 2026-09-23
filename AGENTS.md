@@ -63,8 +63,8 @@ document one specific exported symbol.
 ```bash
 just tidy        # go mod tidy + proto gen + lint + fmt
 just proto gen
-just lint        # golangci-lint
-just fmt         # gofumpt
+just go-lint     # golangci-lint
+just go-fmt      # gofumpt
 ```
 
 ## Environment and Requirements

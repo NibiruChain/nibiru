@@ -183,7 +183,7 @@ func ParseAPIMethods(api rpc.API) map[string]MethodInfo {
 		if hasCtx && nOut == 2 {
 			t0 := sig.Out(0)
 			// strip pointer
-			for t0.Kind() == reflect.Ptr {
+			for t0.Kind() == reflect.Pointer {
 				t0 = t0.Elem()
 			}
 			if t0 == subscriptionType {
