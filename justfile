@@ -109,10 +109,6 @@ go-lint:
 
     if which_ok golangci-lint >/dev/null 2>&1; then
       local_version="$(golangci-lint version --short 2>/dev/null || true)"
-      image_major="${image_version#v}"
-      image_major="${image_major%%.*}"
-      local_major="${local_version#v}"
-      local_major="${local_major%%.*}"
 
       if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
         log_info "Running local golangci-lint $local_version"
@@ -120,13 +116,7 @@ go-lint:
         exit 0
       fi
 
-      if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
-        log_warning "Running local golangci-lint ${local_version:-unknown}; repo pins $image_version"
-        GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
-        exit 0
-      fi
-
-      log_warning "Local golangci-lint version ${local_version:-unknown} does not match major version $image_major; using Docker"
+      log_warning "Local golangci-lint version ${local_version:-unknown} is not $image_version; using Docker"
     else
       log_info "golangci-lint not found locally; using Docker"
     fi
