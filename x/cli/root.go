@@ -72,8 +72,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 				return err
 			}
 
-			queryMode := nibidcmd.QueryModeGQL
-			initClientCtx, queryMode, err = nibidcmd.ReadFromClientConfig(initClientCtx)
+			initClientCtx, queryMode, err := nibidcmd.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
 			}
