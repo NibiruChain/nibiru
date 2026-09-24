@@ -42,30 +42,26 @@ var publicEVMRPCEndpoints = map[string]string{
 	"nibiru-testnet-2":            "https://evm-rpc.testnet-2.nibiru.fi",
 }
 
-// TransactionSummary is the compact, JSON-only response for transaction hash
-// lookups. It keeps chain-level execution data together with optional EVM
-// transaction fields without exposing the encoded Cosmos transaction by
-// default.
+// TransactionSummary preserves the native TxResponse fields for committed
+// transactions and adds message types and EVM transaction information.
 type TransactionSummary struct {
-	QueryHash string                 `json:"query_hash"`
-	CometHash *string                `json:"comet_hash,omitempty"`
-	EVMHash   *string                `json:"evm_hash,omitempty"`
-	Height    *int64                 `json:"height,omitempty"`
+	TxHash    string                 `json:"txhash"`
+	EthHash   string                 `json:"eth_hash"`
+	Height    *string                `json:"height,omitempty"`
 	Timestamp string                 `json:"timestamp,omitempty"`
 	Code      *uint32                `json:"code,omitempty"`
 	Codespace string                 `json:"codespace,omitempty"`
-	GasWanted *int64                 `json:"gas_wanted,omitempty"`
-	GasUsed   *int64                 `json:"gas_used,omitempty"`
-	Messages  []TransactionMessage   `json:"messages,omitempty"`
+	Data      string                 `json:"data"`
+	Info      string                 `json:"info"`
+	GasWanted *string                `json:"gas_wanted,omitempty"`
+	GasUsed   *string                `json:"gas_used,omitempty"`
+	Messages  []string               `json:"messages,omitempty"`
+	RawLog    string                 `json:"raw_log"`
+	Logs      json.RawMessage        `json:"logs"`
+	Events    json.RawMessage        `json:"events"`
+	Tx        json.RawMessage        `json:"tx,omitempty"`
 	EVM       *EVMTransactionSummary `json:"evm,omitempty"`
 	Pending   bool                   `json:"pending,omitempty"`
-}
-
-// TransactionMessage identifies a message in its containing Cosmos
-// transaction. Detailed message bytes remain available through --details.
-type TransactionMessage struct {
-	Index int    `json:"index"`
-	Type  string `json:"type"`
 }
 
 // EVMTransactionSummary contains the EVM fields users commonly inspect while
@@ -88,9 +84,9 @@ type EVMTransactionSummary struct {
 }
 
 type transactionDetails struct {
-	Summary TransactionSummary   `json:"summary"`
-	Cosmos  json.RawMessage      `json:"cosmos"`
-	EVM     *evmrpc.EthTxJsonRPC `json:"evm,omitempty"`
+	TransactionSummary
+	Comet  json.RawMessage      `json:"comet,omitempty"`
+	EVMRPC *evmrpc.EthTxJsonRPC `json:"evm_rpc,omitempty"`
 }
 
 type ethereumJSONRPCResponse struct {
@@ -110,7 +106,8 @@ func QueryTxCmd() *cobra.Command {
 		Short: "Query a transaction by CometBFT hash or EVM transaction hash",
 		Long: strings.TrimSpace(`Query a transaction by a bare CometBFT hash or a 0x-prefixed EVM hash.
 
-Hash lookups always print JSON. Use --details for the complete Cosmos transaction record.
+By default, hash lookups print the native Comet transaction fields with eth_hash and message types.
+Use --details for the complete Comet transaction under comet and the native EVM transaction under evm_rpc when available.
 Use --evm with an EVM hash to print the native eth_getTransactionByHash JSON response.`),
 		Example: strings.TrimSpace(`
 nibid q tx 624CAA0738E95CE04C22D4D012FF67AD86521FB93B2F64CE9967A8FE31EAB3A1
@@ -125,7 +122,7 @@ nibid q tx --evm 0x66ef47cf9bda9bfb9c5e465a44e9a825bf1d8f013ed9b4abaf6960c02e9d8
 	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().String(queryTxTypeFlag, queryTxTypeHash, "The type to use when querying tx: hash, acc_seq, or signature")
 	cmd.Flags().Bool(flagEVMView, false, "Print the native eth_getTransactionByHash JSON response; requires a 0x-prefixed EVM hash")
-	cmd.Flags().Bool(flagDetails, false, "Include the complete Cosmos transaction response")
+	cmd.Flags().Bool(flagDetails, false, "Include the complete Comet transaction response and native EVM transaction when available")
 	cmd.Flags().String(flagEVMRPC, "", "EVM JSON-RPC endpoint for --evm and pending EVM transaction lookup")
 
 	return cmd
@@ -194,14 +191,17 @@ func runQueryTxCmd(cmd *cobra.Command, args []string) error {
 		return printJSON(cmd, resolved.summary)
 	}
 
-	cosmosJSON, err := clientCtx.Codec.MarshalJSON(resolved.cosmos)
-	if err != nil {
-		return err
+	var cometJSON json.RawMessage
+	if resolved.cosmos != nil {
+		cometJSON, err = clientCtx.Codec.MarshalJSON(resolved.cosmos)
+		if err != nil {
+			return err
+		}
 	}
 	return printJSON(cmd, transactionDetails{
-		Summary: resolved.summary,
-		Cosmos:  cosmosJSON,
-		EVM:     resolved.evm,
+		TransactionSummary: resolved.summary,
+		Comet:              cometJSON,
+		EVMRPC:             resolved.evm,
 	})
 }
 
@@ -276,7 +276,7 @@ func resolveCometTransaction(ctx context.Context, clientCtx client.Context, hash
 	if cosmos.Empty() {
 		return resolvedTransaction{}, fmt.Errorf("no transaction found with hash %s", hash.Canonical())
 	}
-	summary, err := summaryFromResult(clientCtx, hash.Canonical(), result, cosmos, nil)
+	summary, err := summaryFromResult(clientCtx, result, cosmos, nil)
 	if err != nil {
 		return resolvedTransaction{}, err
 	}
@@ -297,7 +297,7 @@ func resolveEVMTransaction(ctx context.Context, cmd *cobra.Command, clientCtx cl
 		if pendingErr != nil {
 			return resolvedTransaction{}, pendingErr
 		}
-		return resolvedTransaction{summary: evmRPCTransactionSummary(hash.Canonical(), pendingTx)}, nil
+		return resolvedTransaction{summary: evmRPCTransactionSummary(pendingTx), evm: pendingTx}, nil
 	}
 
 	cometHash := eth.TmTxHashToString(result.Hash)
@@ -309,12 +309,11 @@ func resolveEVMTransaction(ctx context.Context, cmd *cobra.Command, clientCtx cl
 	if err != nil {
 		return resolvedTransaction{}, err
 	}
-	summary, err := summaryFromResult(clientCtx, hash.Canonical(), result, cosmos, evmTx)
+	summary, err := summaryFromResult(clientCtx, result, cosmos, evmTx)
 	if err != nil {
 		return resolvedTransaction{}, err
 	}
-	evmHash := hash.Canonical()
-	summary.EVMHash = &evmHash
+	summary.EthHash = hash.Canonical()
 	summary.EVM = summaryEVMTransaction(evmTx)
 	return resolvedTransaction{summary: summary, cosmos: cosmos, evm: evmTx}, nil
 }
@@ -400,26 +399,39 @@ func evmTransactionIndex(result *coretypes.ResultTx, wanted gethcommon.Hash) (in
 	return 0, fmt.Errorf("committed transaction does not expose an EVM index for %s", wanted.Hex())
 }
 
-func summaryFromResult(clientCtx client.Context, queryHash string, result *coretypes.ResultTx, response *sdk.TxResponse, evmTx *evmrpc.EthTxJsonRPC) (TransactionSummary, error) {
-	cometHash := response.TxHash
-	height := response.Height
+func summaryFromResult(clientCtx client.Context, result *coretypes.ResultTx, response *sdk.TxResponse, evmTx *evmrpc.EthTxJsonRPC) (TransactionSummary, error) {
+	height := fmt.Sprint(response.Height)
 	code := response.Code
-	gasWanted := response.GasWanted
-	gasUsed := response.GasUsed
-	messages, err := transactionMessages(clientCtx, result.Tx)
+	gasWanted := fmt.Sprint(response.GasWanted)
+	gasUsed := fmt.Sprint(response.GasUsed)
+	nativeJSON, err := clientCtx.Codec.MarshalJSON(response)
+	if err != nil {
+		return TransactionSummary{}, err
+	}
+	var nativeFields map[string]json.RawMessage
+	if err := json.Unmarshal(nativeJSON, &nativeFields); err != nil {
+		return TransactionSummary{}, err
+	}
+	messages, ethHash, err := transactionMessages(clientCtx, result.Tx)
 	if err != nil {
 		return TransactionSummary{}, err
 	}
 	summary := TransactionSummary{
-		QueryHash: queryHash,
-		CometHash: &cometHash,
+		TxHash:    response.TxHash,
+		EthHash:   ethHash,
 		Height:    &height,
 		Timestamp: response.Timestamp,
 		Code:      &code,
 		Codespace: response.Codespace,
+		Data:      response.Data,
+		Info:      response.Info,
 		GasWanted: &gasWanted,
 		GasUsed:   &gasUsed,
 		Messages:  messages,
+		RawLog:    response.RawLog,
+		Logs:      nativeFields["logs"],
+		Events:    nativeFields["events"],
+		Tx:        nativeFields["tx"],
 	}
 	if evmTx != nil {
 		summary.EVM = summaryEVMTransaction(evmTx)
@@ -427,16 +439,28 @@ func summaryFromResult(clientCtx client.Context, queryHash string, result *coret
 	return summary, nil
 }
 
-func transactionMessages(clientCtx client.Context, txBytes []byte) ([]TransactionMessage, error) {
+func transactionMessages(clientCtx client.Context, txBytes []byte) ([]string, string, error) {
 	tx, err := clientCtx.TxConfig.TxDecoder()(txBytes)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	messages := make([]TransactionMessage, 0, len(tx.GetMsgs()))
-	for index, msg := range tx.GetMsgs() {
-		messages = append(messages, TransactionMessage{Index: index, Type: sdk.MsgTypeURL(msg)})
+	return describeTransactionMessages(tx.GetMsgs())
+}
+
+func describeTransactionMessages(txMsgs []sdk.Msg) ([]string, string, error) {
+	messages := make([]string, 0, len(txMsgs))
+	var ethHash string
+	for _, msg := range txMsgs {
+		messages = append(messages, sdk.MsgTypeURL(msg))
+		if evmMsg, ok := msg.(*evm.MsgEthereumTx); ok && ethHash == "" {
+			ethTx, err := evmMsg.AsTransactionSafe()
+			if err != nil {
+				return nil, "", err
+			}
+			ethHash = ethTx.Hash().Hex()
+		}
 	}
-	return messages, nil
+	return messages, ethHash, nil
 }
 
 func summaryEVMTransaction(tx *evmrpc.EthTxJsonRPC) *EVMTransactionSummary {
@@ -464,13 +488,13 @@ func summaryEVMTransaction(tx *evmrpc.EthTxJsonRPC) *EVMTransactionSummary {
 // evmRPCTransactionSummary handles an EVM RPC result that has no matching
 // CometBFT transaction-index record. A missing index record does not prove a
 // transaction is pending, so Pending follows the EVM RPC block-hash rule.
-func evmRPCTransactionSummary(queryHash string, tx *evmrpc.EthTxJsonRPC) TransactionSummary {
-	evmHash := tx.Hash.Hex()
+func evmRPCTransactionSummary(tx *evmrpc.EthTxJsonRPC) TransactionSummary {
 	return TransactionSummary{
-		QueryHash: queryHash,
-		EVMHash:   &evmHash,
-		EVM:       summaryEVMTransaction(tx),
-		Pending:   tx.BlockHash == nil,
+		EthHash: tx.Hash.Hex(),
+		Logs:    json.RawMessage(`[]`),
+		Events:  json.RawMessage(`[]`),
+		EVM:     summaryEVMTransaction(tx),
+		Pending: tx.BlockHash == nil,
 	}
 }
 
