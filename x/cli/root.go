@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/config"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/debug"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/pruning"
@@ -73,7 +72,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 				return err
 			}
 
-			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
+			initClientCtx, queryMode, err := nibidcmd.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
 			}
@@ -83,6 +82,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 			); err != nil {
 				return err
 			}
+			nibidcmd.SetQueryMode(cmd, queryMode)
 
 			customAppTemplate, customAppConfig := srvconfig.AppConfig("unibi")
 			tmCfg := appconst.NewDefaultTendermintConfig()
@@ -124,7 +124,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		cmtcli.NewCompletionCmd(rootCmd, true),
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
-		config.Cmd(),
+		nibidcmd.ConfigCmd(),
 		pruning.Cmd(a.newApp, app.DefaultNodeHome),
 	)
 

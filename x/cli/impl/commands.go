@@ -27,7 +27,7 @@ func QueryCmd() *cobra.Command {
 		rpc.ValidatorCommand(),
 		rpc.BlockCommand(),
 		authcmd.QueryTxsByEventsCmd(),
-		authcmd.QueryTxCmd(),
+		QueryTxCmd(),
 	)
 
 	app.ModuleBasics.AddQueryCommands(rootQueryCmd)
