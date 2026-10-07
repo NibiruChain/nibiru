@@ -82,7 +82,7 @@ test-wasmer:
     -p wasmer-compiler-singlepass \
     -p wasmer-compiler-cranelift
   # WAST spectests + hand-written compiler integration (~452 pass, ~119 ignored).
-  cargo test --test compilers --features 'cranelift,singlepass'
+  cargo test --test compilers --no-default-features --features 'cranelift,singlepass,wat,wast,middlewares'
 
 # Wasmer coverage: same three test passes as test-wasmer, merged lcov at repo root.
 test-wasmer-cov:
@@ -91,7 +91,7 @@ test-wasmer-cov:
   root="$(git rev-parse --show-toplevel)"
   output="${root}/lcov-wasmer.info"
   cd "${root}/lib/wasmer"
-  rustup component add llvm-tools-preview --toolchain 1.81
+  rustup component add llvm-tools-preview --toolchain 1.95.0
   cargo llvm-cov clean --workspace
   cargo llvm-cov --no-report -p wasmer --lib \
     --no-default-features --features cranelift,singlepass,wat
@@ -102,7 +102,7 @@ test-wasmer-cov:
     -p wasmer-compiler \
     -p wasmer-compiler-singlepass \
     -p wasmer-compiler-cranelift
-  cargo llvm-cov --no-report --test compilers --features 'cranelift,singlepass'
+  cargo llvm-cov --no-report --test compilers --no-default-features --features 'cranelift,singlepass,wat,wast,middlewares'
   cargo llvm-cov report --lcov --output-path "${output}" --no-default-ignore-filename-regex
   echo "Wrote ${output}"
 

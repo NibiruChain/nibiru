@@ -13,12 +13,12 @@ export LIBZ_SYS_STATIC=1
 echo "Starting aarch64-apple-darwin build"
 export CC=aarch64-apple-darwin20.4-clang
 export CXX=aarch64-apple-darwin20.4-clang++
-cargo build --release --target aarch64-apple-darwin --example wasmvmstatic
+cargo build --locked --release --target aarch64-apple-darwin --example wasmvmstatic
 
 echo "Starting x86_64-apple-darwin build"
 export CC=o64-clang
 export CXX=o64-clang++
-cargo build --release --target x86_64-apple-darwin --example wasmvmstatic
+cargo build --locked --release --target x86_64-apple-darwin --example wasmvmstatic
 
 # Create a universal library with both archs
 lipo -output artifacts/libwasmvmstatic_darwin.a -create \

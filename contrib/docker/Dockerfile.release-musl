@@ -3,6 +3,8 @@
 # Build the Linux release candidate with the musl toolchain. The output stage
 # contains only /nibid so `docker buildx build --output type=local` exports the
 # exact binary that passed the in-container ELF check.
+FROM rust:1.95.0-alpine@sha256:606fd313a0f49743ee2a7bd49a0914bab7deedb12791f3a846a34a4711db7ed2 AS rust-toolchain
+
 FROM golang:1.27.0-alpine3.24@sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc AS build
 
 ARG VERSION
@@ -14,19 +16,37 @@ RUN apk add --no-cache \
     git \
     jq \
     linux-headers \
-    wget
+    wget \
+    perl \
+    clang-dev \
+    clang-static \
+    llvm-dev \
+    llvm-static
+
+ENV RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo PATH=/usr/local/cargo/bin:$PATH
+COPY --from=rust-toolchain /usr/local/rustup /usr/local/rustup
+COPY --from=rust-toolchain /usr/local/cargo /usr/local/cargo
+
+RUN ln -s /usr/lib/llvm*/bin/llvm-config /usr/local/bin/llvm-config
 
 WORKDIR /nibiru
 COPY . .
 
-RUN BUILDDIR=/out \
+RUN --mount=type=cache,id=wasmvm-registry,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=wasmvm-static-${TARGETARCH},target=/nibiru/lib/wasmvm/libwasmvm/target \
+    --mount=type=cache,id=go-modules,target=/go/pkg/mod \
+    --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
+    BUILDDIR=/out \
     TEMPDIR=/tmp/nibiru-temp \
+    NIBIRU_WASMVM_NATIVE=true \
     NIBID_STATIC_PIE=true \
     VERSION="$VERSION" \
     contrib/scripts/build-nibiru.sh --run --just-build \
+    && mkdir -p /out/wasmvm \
+    && cp /tmp/nibiru-temp/wasmvm/source/lib/linux_${TARGETARCH}/*.txt /tmp/nibiru-temp/wasmvm/source/lib/linux_${TARGETARCH}/source-id /out/wasmvm/ \
     && sha256sum \
         /out/nibid \
-        "/tmp/nibiru-temp/wasmvm/v1.12.0/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
+        "/tmp/nibiru-temp/wasmvm/source/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
 
 FROM scratch AS artifact
-COPY --from=build /out/nibid /nibid
+COPY --from=build /out/ /

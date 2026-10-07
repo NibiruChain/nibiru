@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+FROM rust:1.95.0-alpine@sha256:606fd313a0f49743ee2a7bd49a0914bab7deedb12791f3a846a34a4711db7ed2 AS build
+RUN apk add --no-cache build-base clang-dev clang-static llvm-dev llvm-static
+RUN ln -s /usr/lib/llvm*/bin/llvm-config /usr/local/bin/llvm-config
+
+WORKDIR /nibiru
+COPY lib/wasmer lib/wasmer
+COPY lib/cosmwasm-vm lib/cosmwasm-vm
+COPY lib/wasmvm/libwasmvm lib/wasmvm/libwasmvm
+COPY rust-toolchain.toml rust-toolchain.toml
+ARG TARGETARCH
+ENV RUSTFLAGS="-C relocation-model=pic"
+RUN --mount=type=cache,id=wasmvm-registry,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=wasmvm-static-${TARGETARCH},target=/nibiru/lib/wasmvm/libwasmvm/target \
+    cargo build --locked --release --manifest-path lib/wasmvm/libwasmvm/Cargo.toml \
+    --example wasmvmstatic \
+    && mkdir /out \
+    && cp lib/wasmvm/libwasmvm/target/release/examples/libwasmvmstatic.a /out/libwasmvm_muslc.a
+FROM scratch AS artifact
+COPY --from=build /out/ /

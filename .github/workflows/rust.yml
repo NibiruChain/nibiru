@@ -40,6 +40,7 @@ jobs:
             workspace:
               - "Cargo.toml"
               - "Cargo.lock"
+              - "rust-toolchain.toml"
               - "justfile"
               - "just-rs.just"
               - "contrib/scripts/**"
@@ -99,7 +100,11 @@ jobs:
   # rust-test (job): Runs the legacy root Cargo workspace test suite.
   rust-test:
     needs: changes-rust
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
     timeout-minutes: 45
     steps:
       - name: skip-rust-test
@@ -112,7 +117,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Install just
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -128,9 +133,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-rust-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-rust-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-
 
       - name: Run Rust tests
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -152,7 +157,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Install just
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -168,9 +173,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-rust-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-rust-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-
 
       - name: Build Rust workspace
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -190,13 +195,10 @@ jobs:
       - uses: actions/checkout@v7
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
 
-      # Keep Wasmer on rustc 1.81.0. The generated `@1.81` action branch
-      # selects that compiler version; do not replace it with `@stable` or
-      # `@master`. Dependabot treated the branch as Action semver in PR 2755
-      # and proposed `@1.120`, which tries to install a nonexistent rustc.
-      - name: Install Rust 1.81
+      # Pin the compiler used by all runtime and FFI builds.
+      - name: Install Rust 1.95.0
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
-        uses: dtolnay/rust-toolchain@1.81
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Install just
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
@@ -212,9 +214,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             lib/wasmer/target/
-          key: ${{ runner.os }}-cargo-wasmer-${{ hashFiles('lib/wasmer/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmer-${{ hashFiles('lib/wasmer/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmer-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmer-
 
       - name: Run Wasmer tests
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
