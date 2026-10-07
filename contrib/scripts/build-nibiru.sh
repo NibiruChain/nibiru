@@ -6,6 +6,7 @@
 #   VERSION   Release version string (default: latest git tag, or branch-commit)
 #   BUILDDIR  Output directory (default: $REPO_ROOT/build)
 #   TEMPDIR   WasmVM artifact cache (default: $REPO_ROOT/temp)
+#   NIBIRU_WASMVM_BUILD_FROM_SOURCE  Build the vendored runtime (default: false).
 #   GOARCH    Target GOARCH for cross-compilation
 #   GOOS      Target GOOS for cross-compilation
 #   NIBID_STATIC_PIE  Build a Linux static PIE (default: false). Requires a
@@ -162,14 +163,14 @@ compute_version() {
     return 0
   fi
 
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown-version"
     return 0
   fi
 
   branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || printf '%s' "unknown")"
   commit="$(git -C "$REPO_ROOT" log -1 --format='%H' 2>/dev/null || printf '%s' "unknown")"
-  described="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null || true)"
+  described="$(git -C "$REPO_ROOT" describe --tags --match 'v[0-9]*' --abbrev=0 2>/dev/null || true)"
   if [[ -z "$described" ]]; then
     printf '%s-%s' "$branch" "$commit"
   else
@@ -179,7 +180,7 @@ compute_version() {
 
 # compute_commit: Return the git commit hash, or "unknown" outside git checkouts.
 compute_commit() {
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown"
     return 0
   fi
@@ -213,12 +214,44 @@ ensure_temp_dir() {
   mkdir -p "$tempdir"
 }
 
-# ensure_wasmvm_lib: Build the vendored runtime and validate its source cache.
-ensure_wasmvm_lib() {
+# ensure_wasmvm_lib: Download a pinned, checksum-verified static runtime.
+ensure_wasmvm_lib() (
   local tempdir="$1" os_name="$2" arch_name="$3" wasmvm_version="$4"
-  "$SCRIPT_DIR/build-wasmvm-source.sh" "$os_name" "$arch_name" \
-    "$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-}
+  local libdir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
+  if [[ "$wasmvm_version" == source ]]; then
+    "$SCRIPT_DIR/build-wasmvm-source.sh" "$os_name" "$arch_name" "$libdir"
+    return
+  fi
+
+  local artifact library digest actual download_dir
+  case "$os_name:$arch_name" in
+    linux:amd64) artifact="libwasmvm_muslc.x86_64.a"; library="libwasmvm_muslc.a" ;;
+    linux:arm64) artifact="libwasmvm_muslc.aarch64.a"; library="libwasmvm_muslc.a" ;;
+    darwin:*) artifact="libwasmvmstatic_darwin.a"; library="$artifact" ;;
+    *) log_error "unsupported WasmVM platform: $os_name/$arch_name"; return 1 ;;
+  esac
+  digest="$(awk -v name="$artifact" '$2 == name {print $1}' "$SCRIPT_DIR/wasmvm-checksums.txt")"
+  [[ "$digest" =~ ^[a-f0-9]{64}$ ]] || { log_error "missing pinned checksum for $artifact"; return 1; }
+  hash_library() {
+    if command -v sha256sum >/dev/null 2>&1; then
+      sha256sum "$1" | awk '{print $1}'
+    else
+      shasum -a 256 "$1" | awk '{print $1}'
+    fi
+  }
+  mkdir -p "$libdir"
+  if [[ -f "$libdir/$library" ]] && [[ "$(hash_library "$libdir/$library")" == "$digest" ]]; then
+    log_info "using verified WasmVM $wasmvm_version cache"
+    return
+  fi
+  download_dir="$(mktemp -d "$libdir/download.XXXXXX")"
+  trap 'rm -rf -- "$download_dir"' EXIT
+  log_info "downloading WasmVM $wasmvm_version $artifact"
+  wget -q -O "$download_dir/$library" "https://github.com/NibiruChain/nibiru/releases/download/lib/wasmvm/$wasmvm_version/$artifact"
+  actual="$(hash_library "$download_dir/$library")"
+  [[ "$actual" == "$digest" ]] || { log_error "WasmVM checksum mismatch: $artifact"; return 1; }
+  mv "$download_dir/$library" "$libdir/$library"
+)
 
 verify_go_modules() {
   log_info "verifying go modules"
@@ -325,7 +358,12 @@ main() {
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="source" # source-hash-validated native library cache
+  wasmvm_version="v1.13.0"
+  case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
+    true) wasmvm_version="source" ;;
+    false) ;;
+    *) log_error "NIBIRU_WASMVM_BUILD_FROM_SOURCE must be true or false"; exit 1 ;;
+  esac
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
   static_pie="${NIBID_STATIC_PIE:-false}"
@@ -372,4 +410,6 @@ main() {
   fi
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
