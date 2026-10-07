@@ -318,6 +318,9 @@ main() {
   local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv static_pie
 
   os_name="$(detect_os_name)"
+  if [[ "$os_name" == darwin ]]; then
+    export MACOSX_DEPLOYMENT_TARGET=14.5
+  fi
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"

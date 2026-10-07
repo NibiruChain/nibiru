@@ -32,6 +32,9 @@ darwin/arm64)
   exit 2
   ;;
 esac
+if [[ "$os_name" == darwin ]]; then
+  export MACOSX_DEPLOYMENT_TARGET=14.5
+fi
 mkdir -p "$output_dir"
 output_dir="$(cd "$output_dir" && pwd -P)"
 
