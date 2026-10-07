@@ -20,6 +20,17 @@ func (k Keeper) UpdateRoleMembers(goCtx context.Context, msg *sudo.MsgUpdateRole
 	if err := k.CheckPermissions(msg.GetSigners()[0], ctx, ""); err != nil {
 		return nil, err
 	}
+	add, err := sudo.NormalizeRoleMembers(msg.Add)
+	if err != nil {
+		return nil, err
+	}
+	remove, err := sudo.NormalizeRoleMembers(msg.Remove)
+	if err != nil {
+		return nil, err
+	}
+	if err := state.NormalizeRoles(); err != nil {
+		return nil, err
+	}
 	index := -1
 	for i, entry := range state.Roles {
 		if entry.Role == msg.Role {
@@ -35,10 +46,10 @@ func (k Keeper) UpdateRoleMembers(goCtx context.Context, msg *sudo.MsgUpdateRole
 	for _, member := range state.Roles[index].Members {
 		members[member] = true
 	}
-	for _, member := range msg.Add {
+	for _, member := range add {
 		members[member] = true
 	}
-	for _, member := range msg.Remove {
+	for _, member := range remove {
 		delete(members, member)
 	}
 	state.Roles[index].Members = make([]string, 0, len(members))
@@ -48,7 +59,9 @@ func (k Keeper) UpdateRoleMembers(goCtx context.Context, msg *sudo.MsgUpdateRole
 	if len(members) == 0 {
 		state.Roles = append(state.Roles[:index], state.Roles[index+1:]...)
 	}
-	state.NormalizeRoles()
+	if err := state.NormalizeRoles(); err != nil {
+		return nil, err
+	}
 	k.Sudoers.Set(ctx, state)
 	if err := ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{Sudoers: state, Action: "update_role_members"}); err != nil {
 		return nil, err

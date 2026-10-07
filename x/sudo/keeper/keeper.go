@@ -132,7 +132,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState sudo.GenesisState) {
 	if err := genState.Validate(); err != nil {
 		panic(err)
 	}
-	genState.Sudoers.NormalizeRoles()
+	if err := genState.Sudoers.NormalizeRoles(); err != nil {
+		panic(err)
+	}
 	k.Sudoers.Set(ctx, genState.Sudoers)
 	if genState.ZeroGasActors != nil {
 		k.ZeroGasActors.Set(ctx, *genState.ZeroGasActors)

@@ -32,6 +32,11 @@ nibid query sudo state
 }
 ```
 
+Role member inputs accept Bech32 and EVM hexadecimal addresses through
+`eth.NibiruAddrFromStr`. State stores canonical lowercase Bech32 addresses.
+Different spellings of the same account identify one member for grants,
+revocations, genesis normalization, and add/remove overlap checks.
+
 Members cannot appear in both `add` and `remove`. Repeated additions or removals
 are idempotent. Empty roles are rejected. Members and roles are stored in sorted
 order with unique members; removing every member removes the role entry.

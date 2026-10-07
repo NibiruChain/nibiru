@@ -206,17 +206,19 @@ func (m MsgUpdateRoleMembers) ValidateBasic() error {
 	if err := ValidateRole(m.Role); err != nil {
 		return err
 	}
+	add, err := NormalizeRoleMembers(m.Add)
+	if err != nil {
+		return err
+	}
+	remove, err := NormalizeRoleMembers(m.Remove)
+	if err != nil {
+		return err
+	}
 	additions := make(map[string]bool)
-	for _, member := range m.Add {
-		if _, err := sdk.AccAddressFromBech32(member); err != nil {
-			return err
-		}
+	for _, member := range add {
 		additions[member] = true
 	}
-	for _, member := range m.Remove {
-		if _, err := sdk.AccAddressFromBech32(member); err != nil {
-			return err
-		}
+	for _, member := range remove {
 		if additions[member] {
 			return fmt.Errorf("member %s cannot be added and removed together", member)
 		}

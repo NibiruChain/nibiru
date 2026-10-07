@@ -3,11 +3,13 @@ package keeper_test
 import (
 	"bytes"
 	"encoding/binary"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protowire"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
@@ -109,4 +111,102 @@ func TestMigrateLegacySudoStatePreservesHooksAndZeroGas(t *testing.T) {
 	fresh.InitGenesis(newCtx, *exported)
 	require.Equal(t, hook, fresh.WasmBlockHooksContract.GetOr(newCtx, ""))
 	require.Equal(t, zeroGas, fresh.ZeroGasActors.GetOr(newCtx, sudo.ZeroGasActors{}))
+}
+
+func TestRoleGrantAndRevokeAcrossAddressFormats(t *testing.T) {
+	root, member := testutil.NewAccAddress(), testutil.NewAccAddress()
+	hex := eth.NibiruAddrToEthAddr(member).Hex()
+	formats := []struct{ name, address string }{
+		{"bech32", member.String()},
+		{"uppercase-bech32", strings.ToUpper(member.String())},
+		{"evm-checksum", hex},
+		{"evm-lowercase", strings.ToLower(hex)},
+	}
+	for _, grant := range formats {
+		for _, revoke := range formats {
+			t.Run(grant.name+"/"+revoke.name, func(t *testing.T) {
+				_, k, ctx := setup()
+				k.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+				_, err := k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+					Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{grant.address},
+				})
+				require.NoError(t, err)
+				state, err := k.Sudoers.Get(ctx)
+				require.NoError(t, err)
+				require.Equal(t, []string{member.String()}, state.Roles[0].Members)
+				require.NoError(t, k.CheckPermissions(member, ctx, sudo.RoleWasmDeployer))
+				_, err = k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+					Sender: root.String(), Role: sudo.RoleWasmDeployer, Remove: []string{revoke.address},
+				})
+				require.NoError(t, err)
+				require.ErrorIs(t, k.CheckPermissions(member, ctx, sudo.RoleWasmDeployer), sudo.ErrUnauthorized)
+			})
+		}
+	}
+}
+
+func TestRoleAddressAliasesDeduplicateAndRejectOverlap(t *testing.T) {
+	_, k, ctx := setup()
+	root, member := testutil.NewAccAddress(), testutil.NewAccAddress()
+	contract := sdk.AccAddress(bytes.Repeat([]byte{9}, 32))
+	aliases := []string{member.String(), strings.ToUpper(member.String()), eth.NibiruAddrToEthAddr(member).Hex()}
+	k.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+	_, err := k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+		Sender: root.String(), Role: sudo.RoleWasmDeployer,
+		Add: append(append([]string{}, aliases...), strings.ToUpper(contract.String())),
+	})
+	require.NoError(t, err)
+	original, err := k.Sudoers.Get(ctx)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{member.String(), contract.String()}, original.Roles[0].Members)
+	require.NoError(t, k.CheckPermissions(contract, ctx, sudo.RoleWasmDeployer))
+	for _, add := range aliases {
+		for _, remove := range aliases {
+			_, err := k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+				Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{add}, Remove: []string{remove},
+			})
+			require.ErrorContains(t, err, "cannot be added and removed together")
+			state, err := k.Sudoers.Get(ctx)
+			require.NoError(t, err)
+			require.Equal(t, original, state)
+		}
+	}
+	for _, invalid := range []string{"0x1234", "0x" + strings.Repeat("z", 40), "invalid"} {
+		for _, edit := range []*sudo.MsgUpdateRoleMembers{
+			{Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{member.String(), invalid}},
+			{Sender: root.String(), Role: sudo.RoleWasmDeployer, Remove: []string{member.String(), invalid}},
+		} {
+			_, err := k.UpdateRoleMembers(ctx, edit)
+			require.Error(t, err)
+			state, err := k.Sudoers.Get(ctx)
+			require.NoError(t, err)
+			require.Equal(t, original, state)
+		}
+	}
+}
+
+func TestGenesisNormalizesRoleAddressFormats(t *testing.T) {
+	_, k, ctx := setup()
+	root, member := testutil.NewAccAddress(), testutil.NewAccAddress()
+	contract := sdk.AccAddress(bytes.Repeat([]byte{6}, 32))
+	genesis := sudo.GenesisState{Sudoers: sudo.Sudoers{
+		Root: root.String(), Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{
+			strings.ToUpper(member.String()), eth.NibiruAddrToEthAddr(member).Hex(), member.String(),
+			strings.ToUpper(contract.String()), contract.String(),
+		}}},
+	}}
+	require.NoError(t, genesis.Validate())
+	k.InitGenesis(ctx, genesis)
+	state, err := k.Sudoers.Get(ctx)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{member.String(), contract.String()}, state.Roles[0].Members)
+	require.NoError(t, k.CheckPermissions(member, ctx, sudo.RoleWasmDeployer))
+	require.NoError(t, k.CheckPermissions(contract, ctx, sudo.RoleWasmDeployer))
+	_, err = k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+		Sender: root.String(), Role: sudo.RoleWasmDeployer, Remove: []string{eth.NibiruAddrToEthAddr(member).Hex()},
+	})
+	require.NoError(t, err)
+	require.ErrorIs(t, k.CheckPermissions(member, ctx, sudo.RoleWasmDeployer), sudo.ErrUnauthorized)
+	require.NoError(t, k.CheckPermissions(contract, ctx, sudo.RoleWasmDeployer))
+	require.NoError(t, k.ExportGenesis(ctx).Validate())
 }

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
@@ -32,7 +33,7 @@ func (state Sudoers) Validate() error {
 		}
 		seen[entry.Role] = true
 		for _, member := range entry.Members {
-			if _, err := sdk.AccAddressFromBech32(member); err != nil {
+			if _, err := eth.NibiruAddrFromStr(member); err != nil {
 				return ErrSudoers("role member addr: " + err.Error())
 			}
 		}
@@ -40,20 +41,36 @@ func (state Sudoers) Validate() error {
 	return nil
 }
 
-// NormalizeRoles gives role state a deterministic encoding with unique members.
-func (state *Sudoers) NormalizeRoles() {
+// NormalizeRoleMembers parses Bech32 or EVM addresses into unique, sorted
+// canonical Nibiru account strings.
+func NormalizeRoleMembers(inputs []string) ([]string, error) {
+	members := make(map[string]bool)
+	for _, input := range inputs {
+		addr, err := eth.NibiruAddrFromStr(input)
+		if err != nil {
+			return nil, err
+		}
+		members[addr.String()] = true
+	}
+	result := make([]string, 0, len(members))
+	for member := range members {
+		result = append(result, member)
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
+// NormalizeRoles gives role state a deterministic encoding with canonical members.
+func (state *Sudoers) NormalizeRoles() error {
 	for i := range state.Roles {
-		members := make(map[string]bool)
-		for _, member := range state.Roles[i].Members {
-			members[member] = true
+		members, err := NormalizeRoleMembers(state.Roles[i].Members)
+		if err != nil {
+			return err
 		}
-		state.Roles[i].Members = make([]string, 0, len(members))
-		for member := range members {
-			state.Roles[i].Members = append(state.Roles[i].Members, member)
-		}
-		sort.Strings(state.Roles[i].Members)
+		state.Roles[i].Members = members
 	}
 	sort.Slice(state.Roles, func(i, j int) bool { return state.Roles[i].Role < state.Roles[j].Role })
+	return nil
 }
 
 type SudoersJson = Sudoers
