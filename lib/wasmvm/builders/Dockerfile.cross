@@ -2,7 +2,7 @@ FROM rust:1.95.0-bookworm
 
 # Install build dependencies
 RUN apt-get update \
-  && apt install -y clang gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev build-essential cmake \
+  && apt install -y clang llvm gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev build-essential cmake \
   # Support for Windows cross-compile
   mingw-w64
 
