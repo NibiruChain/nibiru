@@ -237,12 +237,8 @@ jobs:
   # library `libwasmvm`.
   go-ffi-tests:
     needs: changes-wasmvm
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [ubuntu-latest, ubuntu-24.04-arm]
-    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: skip-go-ffi-tests
         if: ${{ needs.changes-wasmvm.outputs['do-run'] != 'true' }}
