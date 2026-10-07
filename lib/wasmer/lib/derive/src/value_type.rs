@@ -1,33 +1,23 @@
-use proc_macro2::TokenStream;
 use proc_macro_error2::abort;
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Member, Meta, MetaList, NestedMeta};
+use syn::{Data, DeriveInput, Fields, Member};
 
 /// We can only validate types that have a well defined layout.
 fn check_repr(input: &DeriveInput) {
-    let reprs = input
-        .attrs
-        .iter()
-        .filter_map(|attr| {
-            if let Meta::List(MetaList { path, nested, .. }) =
-                attr.parse_meta().unwrap()
-            {
-                if path.is_ident("repr") {
-                    return Some(nested.into_iter().collect::<Vec<_>>());
+    if input.attrs.iter().any(|attr| {
+        attr.path().is_ident("repr") && {
+            let mut valid = false;
+            let _ = attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("C") || meta.path.is_ident("transparent") {
+                    valid = true;
                 }
-            }
-            None
-        })
-        .flatten();
-
-    // We require either repr(C) or repr(transparent) to ensure fields are in
-    // source code order.
-    for meta in reprs {
-        if let NestedMeta::Meta(Meta::Path(path)) = meta {
-            if path.is_ident("C") || path.is_ident("transparent") {
-                return;
-            }
+                Ok(())
+            });
+            valid
         }
+    }) {
+        return;
     }
 
     abort!(
@@ -94,8 +84,7 @@ pub fn impl_value_type(input: &DeriveInput) -> TokenStream {
     check_repr(input);
 
     let struct_name = &input.ident;
-    let (impl_generics, ty_generics, where_clause) =
-        input.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let fields = match &input.data {
         Data::Struct(ds) => &ds.fields,
         _ => abort!(input, "ValueType can only be derived for structs"),

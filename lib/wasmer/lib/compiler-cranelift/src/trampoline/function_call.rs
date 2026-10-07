@@ -8,28 +8,34 @@
 //! let my_func = instance.exports.get("func");
 //! my_func.call([1, 2])
 //! ```
-use crate::translator::{
-    compiled_function_unwind_info, signature_to_cranelift_ir,
+use crate::{
+    CraneliftCallbacks, abi,
+    translator::{compiled_function_unwind_info, signature_to_cranelift_ir},
 };
 use cranelift_codegen::{
+    Context,
     ir::{self, InstBuilder},
     isa::TargetIsa,
-    Context,
 };
 use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext};
 use std::mem;
-use wasmer_compiler::types::function::FunctionBody;
+use target_lexicon::Architecture;
+use wasmer_compiler::{misc::CompiledKind, types::function::FunctionBody};
 use wasmer_types::{CompileError, FunctionType};
 
 /// Create a trampoline for invoking a WebAssembly function.
 pub fn make_trampoline_function_call(
+    callbacks: &Option<CraneliftCallbacks>,
     isa: &dyn TargetIsa,
+    arch: Architecture,
     fn_builder_ctx: &mut FunctionBuilderContext,
+    kind: &CompiledKind,
     func_type: &FunctionType,
+    module_hash: &Option<String>,
 ) -> Result<FunctionBody, CompileError> {
     let pointer_type = isa.pointer_type();
     let frontend_config = isa.frontend_config();
-    let signature = signature_to_cranelift_ir(func_type, frontend_config);
+    let signature = signature_to_cranelift_ir(func_type, frontend_config, arch);
     let mut wrapper_sig = ir::Signature::new(frontend_config.default_call_conv);
 
     // Add the callee `vmctx` parameter.
@@ -45,15 +51,11 @@ pub fn make_trampoline_function_call(
     wrapper_sig.params.push(ir::AbiParam::new(pointer_type));
 
     let mut context = Context::new();
-    context.func = ir::Function::with_name_signature(
-        ir::UserFuncName::user(0, 0),
-        wrapper_sig,
-    );
+    context.func = ir::Function::with_name_signature(ir::UserFuncName::user(0, 0), wrapper_sig);
 
     let value_size = mem::size_of::<u128>();
     {
-        let mut builder =
-            FunctionBuilder::new(&mut context.func, fn_builder_ctx);
+        let mut builder = FunctionBuilder::new(&mut context.func, fn_builder_ctx);
         let block0 = builder.create_block();
 
         builder.append_block_params_for_function_params(block0);
@@ -65,61 +67,87 @@ pub fn make_trampoline_function_call(
             (params[0], params[1], params[2])
         };
 
-        // Load the argument values out of `values_vec`.
-        let mflags = ir::MemFlags::trusted();
+        // Load the argument values out of `values_vec` and add special ABI arguments.
+        let return_abi = abi::classify_returns(arch, func_type.results());
+        let sret = match &return_abi {
+            wasmer_compiler::abi::ReturnAbi::Sret(types) => Some(abi::allocate_return_area(
+                &mut builder,
+                types,
+                frontend_config,
+            )),
+            _ => None,
+        };
+        let mflags = ir::MemFlagsData::trusted();
+        let mut wasm_param = 0usize;
         let callee_args = signature
             .params
             .iter()
-            .enumerate()
-            .map(|(i, r)| {
-                match i {
-                    0 => vmctx_ptr_val,
-                    _ =>
-                    // i - 1 because vmctx is not passed through `values_vec`.
-                    {
-                        builder.ins().load(
-                            r.value_type,
-                            mflags,
-                            values_vec_ptr_val,
-                            ((i - 1) * value_size) as i32,
-                        )
-                    }
+            .map(|r| match r.purpose {
+                ir::ArgumentPurpose::StructReturn => sret.as_ref().unwrap().0,
+                ir::ArgumentPurpose::VMContext => vmctx_ptr_val,
+                ir::ArgumentPurpose::Normal => {
+                    let value = builder.ins().load(
+                        r.value_type,
+                        mflags,
+                        values_vec_ptr_val,
+                        (wasm_param * value_size) as i32,
+                    );
+                    wasm_param += 1;
+                    value
                 }
+                _ => unreachable!("unexpected WebAssembly ABI parameter"),
             })
             .collect::<Vec<_>>();
 
         let new_sig = builder.import_signature(signature);
 
-        let call =
-            builder
-                .ins()
-                .call_indirect(new_sig, callee_value, &callee_args);
+        let call = builder
+            .ins()
+            .call_indirect(new_sig, callee_value, &callee_args);
 
-        let results = builder.func.dfg.inst_results(call).to_vec();
+        let carriers = builder.func.dfg.inst_results(call).to_vec();
+        let results = match (&return_abi, sret) {
+            (wasmer_compiler::abi::ReturnAbi::Sret(types), Some((ptr, layout))) => {
+                abi::load_sret(&mut builder, ptr, &layout, types, frontend_config)
+            }
+            _ => {
+                abi::unpack_register_returns(&mut builder, &return_abi, &carriers, frontend_config)
+            }
+        };
 
         // Store the return values into `values_vec`.
-        let mflags = ir::MemFlags::trusted();
+        let mflags = ir::MemFlagsData::trusted();
         for (i, r) in results.iter().enumerate() {
-            builder.ins().store(
-                mflags,
-                *r,
-                values_vec_ptr_val,
-                (i * value_size) as i32,
-            );
+            builder
+                .ins()
+                .store(mflags, *r, values_vec_ptr_val, (i * value_size) as i32);
         }
 
         builder.ins().return_(&[]);
-        builder.finalize()
+        builder.finalize(frontend_config)
+    }
+
+    if let Some(callbacks) = callbacks.as_ref() {
+        callbacks.preopt_ir(
+            kind,
+            module_hash,
+            context.func.display().to_string().as_bytes(),
+        );
     }
 
     let mut code_buf = Vec::new();
-
-    context
-        .compile_and_emit(isa, &mut code_buf, &mut Default::default())
+    let mut ctrl_plane = Default::default();
+    let compiled = context
+        .compile(isa, &mut ctrl_plane)
         .map_err(|error| CompileError::Codegen(error.inner.to_string()))?;
+    code_buf.extend_from_slice(compiled.code_buffer());
 
-    let unwind_info = compiled_function_unwind_info(isa, &context)?
-        .maybe_into_to_windows_unwind();
+    if let Some(callbacks) = callbacks.as_ref() {
+        callbacks.obj_memory_buffer(kind, module_hash, &code_buf);
+        callbacks.asm_memory_buffer(kind, module_hash, arch, &code_buf)?;
+    }
+
+    let unwind_info = compiled_function_unwind_info(isa, &context)?.maybe_into_to_windows_unwind();
 
     Ok(FunctionBody {
         body: code_buf,

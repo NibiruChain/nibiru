@@ -5,24 +5,23 @@
 //!
 //! `Memory` is to WebAssembly linear memories what `Table` is to WebAssembly tables.
 
-use crate::mmap::MmapType;
 use crate::threadconditions::ThreadConditions;
 pub use crate::threadconditions::{NotifyLocation, WaiterError};
 use crate::trap::Trap;
 use crate::{
-    mmap::Mmap, store::MaybeInstanceOwned, vmcontext::VMMemoryDefinition,
+    mmap::{Mmap, MmapType},
+    store::MaybeInstanceOwned,
+    threadconditions::ExpectedValue,
+    vmcontext::VMMemoryDefinition,
 };
 use more_asserts::assert_ge;
 use std::cell::UnsafeCell;
 use std::convert::TryInto;
 use std::ptr::NonNull;
-use std::rc::Rc;
 use std::slice;
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use wasmer_types::{
-    Bytes, MemoryError, MemoryStyle, MemoryType, Pages, WASM_PAGE_SIZE,
-};
+use wasmer_types::{Bytes, MemoryError, MemoryStyle, MemoryType, Pages, WASM_PAGE_SIZE};
 
 // The memory mapped area
 #[derive(Debug)]
@@ -34,6 +33,13 @@ struct WasmMmap {
     /// The owned memory definition used by the generated code
     vm_memory_definition: MaybeInstanceOwned<VMMemoryDefinition>,
 }
+
+/// # SAFETY: Not safe by rust standards, since guest code may do weird things
+/// with its memory. However, this is still safe to send across threads as
+/// far as the WASM spec is concerned.
+unsafe impl Send for WasmMmap {}
+/// # SAFETY: see above.
+unsafe impl Sync for WasmMmap {}
 
 impl WasmMmap {
     fn get_vm_memory_definition(&self) -> NonNull<VMMemoryDefinition> {
@@ -48,38 +54,34 @@ impl WasmMmap {
         }
     }
 
-    fn grow(
-        &mut self,
-        delta: Pages,
-        conf: VMMemoryConfig,
-    ) -> Result<Pages, MemoryError> {
+    fn grow(&mut self, delta: Pages, conf: VMMemoryConfig) -> Result<Pages, MemoryError> {
         // Optimization of memory.grow 0 calls.
         if delta.0 == 0 {
             return Ok(self.size);
         }
 
-        let new_pages =
-            self.size
-                .checked_add(delta)
-                .ok_or(MemoryError::CouldNotGrow {
-                    current: self.size,
-                    attempted_delta: delta,
-                })?;
+        let new_pages = self
+            .size
+            .checked_add(delta)
+            .ok_or(MemoryError::CouldNotGrow {
+                current: self.size,
+                attempted_delta: delta,
+            })?;
         let prev_pages = self.size;
 
-        if let Some(maximum) = conf.maximum {
-            if new_pages > maximum {
-                return Err(MemoryError::CouldNotGrow {
-                    current: self.size,
-                    attempted_delta: delta,
-                });
-            }
+        if let Some(maximum) = conf.maximum
+            && new_pages > maximum
+        {
+            return Err(MemoryError::CouldNotGrow {
+                current: self.size,
+                attempted_delta: delta,
+            });
         }
 
         // Wasm linear memories are never allowed to grow beyond what is
         // indexable. If the memory has no maximum, enforce the greatest
         // limit here.
-        if new_pages >= Pages::max_value() {
+        if new_pages > Pages::max_value() {
             // Linear memory size would exceed the index range.
             return Err(MemoryError::CouldNotGrow {
                 current: self.size,
@@ -96,24 +98,19 @@ impl WasmMmap {
             // have on hand, it's a dynamic heap and it can move.
             let guard_bytes = conf.offset_guard_size;
             let request_bytes =
-                new_bytes.checked_add(guard_bytes).ok_or_else(|| {
-                    MemoryError::CouldNotGrow {
+                new_bytes
+                    .checked_add(guard_bytes)
+                    .ok_or_else(|| MemoryError::CouldNotGrow {
                         current: new_pages,
                         attempted_delta: Bytes(guard_bytes).try_into().unwrap(),
-                    }
-                })?;
+                    })?;
 
-            let mut new_mmap = Mmap::accessible_reserved(
-                new_bytes,
-                request_bytes,
-                None,
-                MmapType::Private,
-            )
-            .map_err(MemoryError::Region)?;
+            let mut new_mmap =
+                Mmap::accessible_reserved(new_bytes, request_bytes, None, MmapType::Private)
+                    .map_err(MemoryError::Region)?;
 
             let copy_len = self.alloc.len() - conf.offset_guard_size;
-            new_mmap.as_mut_slice()[..copy_len]
-                .copy_from_slice(&self.alloc.as_slice()[..copy_len]);
+            new_mmap.as_mut_slice()[..copy_len].copy_from_slice(&self.alloc.as_slice()[..copy_len]);
 
             self.alloc = new_mmap;
         } else if delta_bytes > 0 {
@@ -138,11 +135,7 @@ impl WasmMmap {
 
     /// Grows the memory to at least a minimum size. If the memory is already big enough
     /// for the min size then this function does nothing
-    fn grow_at_least(
-        &mut self,
-        min_size: u64,
-        conf: VMMemoryConfig,
-    ) -> Result<(), MemoryError> {
+    fn grow_at_least(&mut self, min_size: u64, conf: VMMemoryConfig) -> Result<(), MemoryError> {
         let cur_size = self.size.bytes().0 as u64;
         if cur_size < min_size {
             let growth = min_size - cur_size;
@@ -156,12 +149,18 @@ impl WasmMmap {
     /// Resets the memory down to a zero size
     fn reset(&mut self) -> Result<(), MemoryError> {
         self.size.0 = 0;
+        // update memory definition
+        unsafe {
+            let mut md_ptr = self.vm_memory_definition.as_ptr();
+            let md = md_ptr.as_mut();
+            md.current_length = 0;
+        }
         Ok(())
     }
 
     /// Copies the memory
     /// (in this case it performs a copy-on-write to save memory)
-    pub fn copy(&mut self) -> Result<Self, MemoryError> {
+    pub fn copy(&self) -> Result<Self, MemoryError> {
         let mem_length = self.size.bytes().0;
         let mut alloc = self
             .alloc
@@ -169,12 +168,12 @@ impl WasmMmap {
             .map_err(MemoryError::Generic)?;
         let base_ptr = alloc.as_mut_ptr();
         Ok(Self {
-            vm_memory_definition: MaybeInstanceOwned::Host(Box::new(
-                UnsafeCell::new(VMMemoryDefinition {
+            vm_memory_definition: MaybeInstanceOwned::Host(Box::new(UnsafeCell::new(
+                VMMemoryDefinition {
                     base: base_ptr,
                     current_length: mem_length,
-                }),
-            )),
+                },
+            ))),
             alloc,
             size: self.size,
         })
@@ -225,17 +224,12 @@ impl VMOwnedMemory {
     ///
     /// This creates a `Memory` with owned metadata: this can be used to create a memory
     /// that will be imported into Wasm modules.
-    pub fn new(
-        memory: &MemoryType,
-        style: &MemoryStyle,
-    ) -> Result<Self, MemoryError> {
-        unsafe {
-            Self::new_internal(memory, style, None, None, MmapType::Private)
-        }
+    pub fn new(memory: &MemoryType, style: &MemoryStyle) -> Result<Self, MemoryError> {
+        unsafe { Self::new_internal(memory, style, None, None, MmapType::Private) }
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages
-    /// that is backed by a memory file. When set to private the file will be remaing in memory and
+    /// that is backed by a memory file. When set to private the file will be remaining in memory and
     /// never flush to disk, when set to shared the memory will be flushed to disk.
     ///
     /// This creates a `Memory` with owned metadata: this can be used to create a memory
@@ -246,15 +240,7 @@ impl VMOwnedMemory {
         backing_file: std::path::PathBuf,
         memory_type: MmapType,
     ) -> Result<Self, MemoryError> {
-        unsafe {
-            Self::new_internal(
-                memory,
-                style,
-                None,
-                Some(backing_file),
-                memory_type,
-            )
-        }
+        unsafe { Self::new_internal(memory, style, None, Some(backing_file), memory_type) }
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages.
@@ -269,17 +255,19 @@ impl VMOwnedMemory {
         style: &MemoryStyle,
         vm_memory_location: NonNull<VMMemoryDefinition>,
     ) -> Result<Self, MemoryError> {
-        Self::new_internal(
-            memory,
-            style,
-            Some(vm_memory_location),
-            None,
-            MmapType::Private,
-        )
+        unsafe {
+            Self::new_internal(
+                memory,
+                style,
+                Some(vm_memory_location),
+                None,
+                MmapType::Private,
+            )
+        }
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages
-    /// that is backed by a file. When set to private the file will be remaing in memory and
+    /// that is backed by a file. When set to private the file will be remaining in memory and
     /// never flush to disk, when set to shared the memory will be flushed to disk.
     ///
     /// This creates a `Memory` with metadata owned by a VM, pointed to by
@@ -294,13 +282,15 @@ impl VMOwnedMemory {
         backing_file: Option<std::path::PathBuf>,
         memory_type: MmapType,
     ) -> Result<Self, MemoryError> {
-        Self::new_internal(
-            memory,
-            style,
-            Some(vm_memory_location),
-            backing_file,
-            memory_type,
-        )
+        unsafe {
+            Self::new_internal(
+                memory,
+                style,
+                Some(vm_memory_location),
+                backing_file,
+                memory_type,
+            )
+        }
     }
 
     /// Build a `Memory` with either self-owned or VM owned metadata.
@@ -311,102 +301,100 @@ impl VMOwnedMemory {
         backing_file: Option<std::path::PathBuf>,
         memory_type: MmapType,
     ) -> Result<Self, MemoryError> {
-        if memory.minimum > Pages::max_value() {
-            return Err(MemoryError::MinimumMemoryTooLarge {
-                min_requested: memory.minimum,
-                max_allowed: Pages::max_value(),
-            });
-        }
-        // `maximum` cannot be set to more than `65536` pages.
-        if let Some(max) = memory.maximum {
-            if max > Pages::max_value() {
-                return Err(MemoryError::MaximumMemoryTooLarge {
-                    max_requested: max,
+        unsafe {
+            if memory.minimum > Pages::max_value() {
+                return Err(MemoryError::MinimumMemoryTooLarge {
+                    min_requested: memory.minimum,
                     max_allowed: Pages::max_value(),
                 });
             }
-            if max < memory.minimum {
-                return Err(MemoryError::InvalidMemory {
-                    reason: format!(
-                        "the maximum ({} pages) is less than the minimum ({} pages)",
-                        max.0, memory.minimum.0
-                    ),
-                });
-            }
-        }
-
-        let offset_guard_bytes = style.offset_guard_size() as usize;
-
-        let minimum_pages = match style {
-            MemoryStyle::Dynamic { .. } => memory.minimum,
-            MemoryStyle::Static { bound, .. } => {
-                assert_ge!(*bound, memory.minimum);
-                *bound
-            }
-        };
-        let minimum_bytes = minimum_pages.bytes().0;
-        let request_bytes =
-            minimum_bytes.checked_add(offset_guard_bytes).unwrap();
-        let mapped_pages = memory.minimum;
-        let mapped_bytes = mapped_pages.bytes();
-
-        let mut alloc = Mmap::accessible_reserved(
-            mapped_bytes.0,
-            request_bytes,
-            backing_file,
-            memory_type,
-        )
-        .map_err(MemoryError::Region)?;
-
-        let base_ptr = alloc.as_mut_ptr();
-        let mem_length = memory
-            .minimum
-            .bytes()
-            .0
-            .max(alloc.as_slice_accessible().len());
-        let mmap = WasmMmap {
-            vm_memory_definition: if let Some(mem_loc) = vm_memory_location {
-                {
-                    let mut ptr = mem_loc;
-                    let md = ptr.as_mut();
-                    md.base = base_ptr;
-                    md.current_length = mem_length;
+            // `maximum` cannot be set to more than `65536` pages.
+            if let Some(max) = memory.maximum {
+                if max > Pages::max_value() {
+                    return Err(MemoryError::MaximumMemoryTooLarge {
+                        max_requested: max,
+                        max_allowed: Pages::max_value(),
+                    });
                 }
-                MaybeInstanceOwned::Instance(mem_loc)
-            } else {
-                MaybeInstanceOwned::Host(Box::new(UnsafeCell::new(
-                    VMMemoryDefinition {
+                if max < memory.minimum {
+                    return Err(MemoryError::InvalidMemory {
+                        reason: format!(
+                            "the maximum ({} pages) is less than the minimum ({} pages)",
+                            max.0, memory.minimum.0
+                        ),
+                    });
+                }
+            }
+
+            let offset_guard_bytes = usize::try_from(style.offset_guard_size()).map_err(|e| {
+                MemoryError::Generic(format!("cannot install memory guard page: {e}"))
+            })?;
+
+            let minimum_pages = match style {
+                MemoryStyle::Dynamic { .. } => memory.minimum,
+                MemoryStyle::Static => {
+                    let bound = MemoryStyle::static_bound();
+                    assert_ge!(bound, memory.minimum);
+                    bound
+                }
+            };
+            let minimum_bytes = minimum_pages.bytes().0;
+            let request_bytes = minimum_bytes.checked_add(offset_guard_bytes).unwrap();
+            let mapped_pages = memory.minimum;
+            let mapped_bytes = mapped_pages.bytes();
+
+            let mut alloc =
+                Mmap::accessible_reserved(mapped_bytes.0, request_bytes, backing_file, memory_type)
+                    .map_err(MemoryError::Region)?;
+
+            let base_ptr = alloc.as_mut_ptr();
+            let mem_length = memory
+                .minimum
+                .bytes()
+                .0
+                .max(alloc.as_slice_accessible().len());
+            let mmap = WasmMmap {
+                vm_memory_definition: if let Some(mem_loc) = vm_memory_location {
+                    {
+                        let mut ptr = mem_loc;
+                        let md = ptr.as_mut();
+                        md.base = base_ptr;
+                        md.current_length = mem_length;
+                    }
+                    MaybeInstanceOwned::Instance(mem_loc)
+                } else {
+                    MaybeInstanceOwned::Host(Box::new(UnsafeCell::new(VMMemoryDefinition {
                         base: base_ptr,
                         current_length: mem_length,
-                    },
-                )))
-            },
-            alloc,
-            size: Bytes::from(mem_length).try_into().unwrap(),
-        };
+                    })))
+                },
+                alloc,
+                size: Bytes::from(mem_length).try_into().unwrap(),
+            };
 
-        Ok(Self {
-            mmap,
-            config: VMMemoryConfig {
-                maximum: memory.maximum,
-                offset_guard_size: offset_guard_bytes,
-                memory: *memory,
-                style: *style,
-            },
-        })
+            Ok(Self {
+                mmap,
+                config: VMMemoryConfig {
+                    maximum: memory.maximum,
+                    offset_guard_size: offset_guard_bytes,
+                    memory: *memory,
+                    style: *style,
+                },
+            })
+        }
     }
 
     /// Converts this owned memory into shared memory
     pub fn to_shared(self) -> VMSharedMemory {
         VMSharedMemory {
-            mmap: Rc::new(RwLock::new(self.mmap)),
+            mmap: Arc::new(RwLock::new(self.mmap)),
             config: self.config,
             conditions: ThreadConditions::new(),
         }
     }
 
     /// Copies this memory to a new memory
-    pub fn copy(&mut self) -> Result<Self, MemoryError> {
+    pub fn copy(&self) -> Result<Self, MemoryError> {
         Ok(Self {
             mmap: self.mmap.copy()?,
             config: self.config.clone(),
@@ -414,6 +402,7 @@ impl VMOwnedMemory {
     }
 }
 
+// TODO: why doesn't this support wait/notify? wait should block indefinitely if you ask me
 impl LinearMemory for VMOwnedMemory {
     /// Returns the type for this memory.
     fn ty(&self) -> MemoryType {
@@ -421,7 +410,7 @@ impl LinearMemory for VMOwnedMemory {
         self.config.ty(minimum)
     }
 
-    /// Returns the size of hte memory in pages
+    /// Returns the size of the memory in pages
     fn size(&self) -> Pages {
         self.mmap.size()
     }
@@ -457,14 +446,19 @@ impl LinearMemory for VMOwnedMemory {
     }
 
     /// Owned memory can not be cloned (this will always return None)
-    fn try_clone(&self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    fn try_clone(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         Err(MemoryError::MemoryNotShared)
     }
 
     /// Copies this memory to a new memory
-    fn copy(&mut self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    fn copy(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         let forked = Self::copy(self)?;
         Ok(Box::new(forked))
+    }
+
+    /// Return a concrete shared memory handle for detached API sharing.
+    fn as_shared(&self) -> Result<VMSharedMemory, MemoryError> {
+        Err(MemoryError::MemoryNotShared)
     }
 }
 
@@ -472,30 +466,24 @@ impl LinearMemory for VMOwnedMemory {
 #[derive(Debug, Clone)]
 pub struct VMSharedMemory {
     // The underlying allocation.
-    mmap: Rc<RwLock<WasmMmap>>,
+    mmap: Arc<RwLock<WasmMmap>>,
     // Configuration of this memory
     config: VMMemoryConfig,
     // waiters list for this memory
     conditions: ThreadConditions,
 }
 
-unsafe impl Send for VMSharedMemory {}
-unsafe impl Sync for VMSharedMemory {}
-
 impl VMSharedMemory {
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages.
     ///
     /// This creates a `Memory` with owned metadata: this can be used to create a memory
     /// that will be imported into Wasm modules.
-    pub fn new(
-        memory: &MemoryType,
-        style: &MemoryStyle,
-    ) -> Result<Self, MemoryError> {
+    pub fn new(memory: &MemoryType, style: &MemoryStyle) -> Result<Self, MemoryError> {
         Ok(VMOwnedMemory::new(memory, style)?.to_shared())
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages
-    /// that is backed by a file. When set to private the file will be remaing in memory and
+    /// that is backed by a file. When set to private the file will be remaining in memory and
     /// never flush to disk, when set to shared the memory will be flushed to disk.
     ///
     /// This creates a `Memory` with owned metadata: this can be used to create a memory
@@ -506,13 +494,7 @@ impl VMSharedMemory {
         backing_file: std::path::PathBuf,
         memory_type: MmapType,
     ) -> Result<Self, MemoryError> {
-        Ok(VMOwnedMemory::new_with_file(
-            memory,
-            style,
-            backing_file,
-            memory_type,
-        )?
-        .to_shared())
+        Ok(VMOwnedMemory::new_with_file(memory, style, backing_file, memory_type)?.to_shared())
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages.
@@ -527,14 +509,13 @@ impl VMSharedMemory {
         style: &MemoryStyle,
         vm_memory_location: NonNull<VMMemoryDefinition>,
     ) -> Result<Self, MemoryError> {
-        Ok(
-            VMOwnedMemory::from_definition(memory, style, vm_memory_location)?
-                .to_shared(),
-        )
+        unsafe {
+            Ok(VMOwnedMemory::from_definition(memory, style, vm_memory_location)?.to_shared())
+        }
     }
 
     /// Create a new linear memory instance with specified minimum and maximum number of wasm pages
-    /// that is backed by a file. When set to private the file will be remaing in memory and
+    /// that is backed by a file. When set to private the file will be remaining in memory and
     /// never flush to disk, when set to shared the memory will be flushed to disk.
     ///
     /// This creates a `Memory` with metadata owned by a VM, pointed to by
@@ -549,21 +530,23 @@ impl VMSharedMemory {
         backing_file: Option<std::path::PathBuf>,
         memory_type: MmapType,
     ) -> Result<Self, MemoryError> {
-        Ok(VMOwnedMemory::from_definition_with_file(
-            memory,
-            style,
-            vm_memory_location,
-            backing_file,
-            memory_type,
-        )?
-        .to_shared())
+        unsafe {
+            Ok(VMOwnedMemory::from_definition_with_file(
+                memory,
+                style,
+                vm_memory_location,
+                backing_file,
+                memory_type,
+            )?
+            .to_shared())
+        }
     }
 
     /// Copies this memory to a new memory
-    pub fn copy(&mut self) -> Result<Self, MemoryError> {
-        let mut guard = self.mmap.write().unwrap();
+    pub fn copy(&self) -> Result<Self, MemoryError> {
+        let guard = self.mmap.read().unwrap();
         Ok(Self {
-            mmap: Rc::new(RwLock::new(guard.copy()?)),
+            mmap: Arc::new(RwLock::new(guard.copy()?)),
             config: self.config.clone(),
             conditions: ThreadConditions::new(),
         })
@@ -580,7 +563,7 @@ impl LinearMemory for VMSharedMemory {
         self.config.ty(minimum)
     }
 
-    /// Returns the size of hte memory in pages
+    /// Returns the size of the memory in pages
     fn size(&self) -> Pages {
         let guard = self.mmap.read().unwrap();
         guard.size()
@@ -621,27 +604,37 @@ impl LinearMemory for VMSharedMemory {
     }
 
     /// Shared memory can always be cloned
-    fn try_clone(&self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    fn try_clone(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         Ok(Box::new(self.clone()))
     }
 
     /// Copies this memory to a new memory
-    fn copy(&mut self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    fn copy(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         let forked = Self::copy(self)?;
         Ok(Box::new(forked))
     }
 
+    /// Return a concrete shared memory handle for detached API sharing.
+    fn as_shared(&self) -> Result<VMSharedMemory, MemoryError> {
+        Ok(self.clone())
+    }
+
     // Add current thread to waiter list
-    fn do_wait(
+    unsafe fn do_wait(
         &mut self,
-        dst: NotifyLocation,
+        dst: u32,
+        expected: ExpectedValue,
         timeout: Option<Duration>,
     ) -> Result<u32, WaiterError> {
-        self.conditions.do_wait(dst, timeout)
+        let dst = NotifyLocation {
+            address: dst,
+            memory_base: self.mmap.read().unwrap().alloc.as_ptr() as *mut _,
+        };
+        unsafe { self.conditions.do_wait(dst, expected, timeout) }
     }
 
     /// Notify waiters from the wait list. Return the number of waiters notified
-    fn do_notify(&mut self, dst: NotifyLocation, count: u32) -> u32 {
+    fn do_notify(&mut self, dst: u32, count: u32) -> u32 {
         self.conditions.do_notify(dst, count)
     }
 
@@ -664,10 +657,10 @@ impl From<VMSharedMemory> for VMMemory {
 
 /// Represents linear memory that can be either owned or shared
 #[derive(Debug)]
-pub struct VMMemory(pub Box<dyn LinearMemory + 'static>);
+pub struct VMMemory(pub Box<dyn LinearMemory + Send + Sync + 'static>);
 
-impl From<Box<dyn LinearMemory + 'static>> for VMMemory {
-    fn from(mem: Box<dyn LinearMemory + 'static>) -> Self {
+impl From<Box<dyn LinearMemory + Send + Sync + 'static>> for VMMemory {
+    fn from(mem: Box<dyn LinearMemory + Send + Sync + 'static>) -> Self {
         Self(mem)
     }
 }
@@ -678,7 +671,7 @@ impl LinearMemory for VMMemory {
         self.0.ty()
     }
 
-    /// Returns the size of hte memory in pages
+    /// Returns the size of the memory in pages
     fn size(&self) -> Pages {
         self.0.size()
     }
@@ -713,36 +706,37 @@ impl LinearMemory for VMMemory {
         self.0.vmmemory()
     }
 
-    /// Attempts to clone this memory (if its clonable)
-    fn try_clone(&self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    /// Attempts to clone this memory (if its cloneable)
+    fn try_clone(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         self.0.try_clone()
     }
 
     /// Initialize memory with data
-    unsafe fn initialize_with_data(
-        &self,
-        start: usize,
-        data: &[u8],
-    ) -> Result<(), Trap> {
-        self.0.initialize_with_data(start, data)
+    unsafe fn initialize_with_data(&self, start: usize, data: &[u8]) -> Result<(), Trap> {
+        unsafe { self.0.initialize_with_data(start, data) }
     }
 
     /// Copies this memory to a new memory
-    fn copy(&mut self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    fn copy(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         self.0.copy()
     }
 
+    fn as_shared(&self) -> Result<VMSharedMemory, MemoryError> {
+        self.0.as_shared()
+    }
+
     // Add current thread to waiter list
-    fn do_wait(
+    unsafe fn do_wait(
         &mut self,
-        dst: NotifyLocation,
+        dst: u32,
+        expected: ExpectedValue,
         timeout: Option<Duration>,
     ) -> Result<u32, WaiterError> {
-        self.0.do_wait(dst, timeout)
+        unsafe { self.0.do_wait(dst, expected, timeout) }
     }
 
     /// Notify waiters from the wait list. Return the number of waiters notified
-    fn do_notify(&mut self, dst: NotifyLocation, count: u32) -> u32 {
+    fn do_notify(&mut self, dst: u32, count: u32) -> u32 {
         self.0.do_notify(dst, count)
     }
 
@@ -757,10 +751,7 @@ impl VMMemory {
     ///
     /// This creates a `Memory` with owned metadata: this can be used to create a memory
     /// that will be imported into Wasm modules.
-    pub fn new(
-        memory: &MemoryType,
-        style: &MemoryStyle,
-    ) -> Result<Self, MemoryError> {
+    pub fn new(memory: &MemoryType, style: &MemoryStyle) -> Result<Self, MemoryError> {
         Ok(if memory.shared {
             Self(Box::new(VMSharedMemory::new(memory, style)?))
         } else {
@@ -785,19 +776,21 @@ impl VMMemory {
         style: &MemoryStyle,
         vm_memory_location: NonNull<VMMemoryDefinition>,
     ) -> Result<Self, MemoryError> {
-        Ok(if memory.shared {
-            Self(Box::new(VMSharedMemory::from_definition(
-                memory,
-                style,
-                vm_memory_location,
-            )?))
-        } else {
-            Self(Box::new(VMOwnedMemory::from_definition(
-                memory,
-                style,
-                vm_memory_location,
-            )?))
-        })
+        unsafe {
+            Ok(if memory.shared {
+                Self(Box::new(VMSharedMemory::from_definition(
+                    memory,
+                    style,
+                    vm_memory_location,
+                )?))
+            } else {
+                Self(Box::new(VMOwnedMemory::from_definition(
+                    memory,
+                    style,
+                    vm_memory_location,
+                )?))
+            })
+        }
     }
 
     /// Creates VMMemory from a custom implementation - the following into implementations
@@ -812,10 +805,13 @@ impl VMMemory {
     }
 
     /// Copies this memory to a new memory
-    pub fn copy(
-        &mut self,
-    ) -> Result<Box<dyn LinearMemory + 'static>, MemoryError> {
+    pub fn copy(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError> {
         LinearMemory::copy(self)
+    }
+
+    /// Attempts to clone this memory handle.
+    pub fn try_clone(&self) -> Result<Self, MemoryError> {
+        LinearMemory::try_clone(self).map(Self)
     }
 }
 
@@ -826,16 +822,17 @@ pub unsafe fn initialize_memory_with_data(
     start: usize,
     data: &[u8],
 ) -> Result<(), Trap> {
-    let mem_slice =
-        slice::from_raw_parts_mut(memory.base, memory.current_length);
-    let end = start + data.len();
-    let to_init = &mut mem_slice[start..end];
-    to_init.copy_from_slice(data);
+    unsafe {
+        let mem_slice = slice::from_raw_parts_mut(memory.base, memory.current_length);
+        let end = start + data.len();
+        let to_init = &mut mem_slice[start..end];
+        to_init.copy_from_slice(data);
 
-    Ok(())
+        Ok(())
+    }
 }
 
-/// Represents memory that is used by the WebAsssembly module
+/// Represents memory that is used by the WebAssembly module
 pub trait LinearMemory
 where
     Self: std::fmt::Debug + Send,
@@ -843,7 +840,7 @@ where
     /// Returns the type for this memory.
     fn ty(&self) -> MemoryType;
 
-    /// Returns the size of hte memory in pages
+    /// Returns the size of the memory in pages
     fn size(&self) -> Pages;
 
     /// Returns the memory style for this memory.
@@ -873,38 +870,48 @@ where
     /// Return a `VMMemoryDefinition` for exposing the memory to compiled wasm code.
     fn vmmemory(&self) -> NonNull<VMMemoryDefinition>;
 
-    /// Attempts to clone this memory (if its clonable)
-    fn try_clone(&self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError>;
+    /// Attempts to clone this memory (if its cloneable)
+    fn try_clone(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError>;
 
     #[doc(hidden)]
     /// # Safety
     /// This function is unsafe because WebAssembly specification requires that data is always set at initialization time.
     /// It should be the implementors responsibility to make sure this respects the spec
-    unsafe fn initialize_with_data(
-        &self,
-        start: usize,
-        data: &[u8],
-    ) -> Result<(), Trap> {
-        let memory = self.vmmemory().as_ref();
+    unsafe fn initialize_with_data(&self, start: usize, data: &[u8]) -> Result<(), Trap> {
+        unsafe {
+            let memory = self.vmmemory().as_ref();
 
-        initialize_memory_with_data(memory, start, data)
+            initialize_memory_with_data(memory, start, data)
+        }
     }
 
     /// Copies this memory to a new memory
-    fn copy(&mut self) -> Result<Box<dyn LinearMemory + 'static>, MemoryError>;
+    fn copy(&self) -> Result<Box<dyn LinearMemory + Send + Sync + 'static>, MemoryError>;
 
-    /// Add current thread to the waiter hash, and wait until notified or timout.
-    /// Return 0 if the waiter has been notified, 2 if the timeout occured, or None if en error happened
-    fn do_wait(
+    /// Returns a concrete shared memory handle if this memory is shared.
+    fn as_shared(&self) -> Result<VMSharedMemory, MemoryError> {
+        Err(MemoryError::MemoryNotShared)
+    }
+
+    /// Add current thread to the waiter hash, and wait until notified or timeout.
+    /// Return 0 if the waiter has been notified, 1 if there was a value mismatch,
+    /// or 2 if the timeout occurred.
+    ///
+    /// # Safety
+    /// the destination address must be a valid offset within this memory. It must also
+    /// be properly aligned for the expected value type; either 4-byte aligned for
+    /// `ExpectedValue::U32` or 8-byte aligned for `ExpectedValue::u64`.
+    unsafe fn do_wait(
         &mut self,
-        _dst: NotifyLocation,
+        _dst: u32,
+        _expected: ExpectedValue,
         _timeout: Option<Duration>,
     ) -> Result<u32, WaiterError> {
         Err(WaiterError::Unimplemented)
     }
 
     /// Notify waiters from the wait list. Return the number of waiters notified
-    fn do_notify(&mut self, _dst: NotifyLocation, _count: u32) -> u32 {
+    fn do_notify(&mut self, _dst: u32, _count: u32) -> u32 {
         0
     }
 

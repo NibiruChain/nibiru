@@ -1,19 +1,21 @@
 use crate::{
-    VMExternObj, VMFunction, VMFunctionEnvironment, VMGlobal, VMInstance,
-    VMMemory, VMTable,
+    VMExceptionObj, VMExternObj, VMFunction, VMFunctionEnvironment, VMGlobal, VMInstance, VMMemory,
+    VMTable, VMTag,
 };
 use core::slice::Iter;
-use std::{
-    cell::UnsafeCell, fmt, marker::PhantomData, num::NonZeroUsize, ptr::NonNull,
-};
+use std::{cell::UnsafeCell, fmt, marker::PhantomData, num::NonZeroUsize, ptr::NonNull};
 use wasmer_types::StoreId;
 
 /// Trait to represent an object managed by a context. This is implemented on
 /// the VM types managed by the context.
 pub trait StoreObject: Sized {
+    /// List the objects in the store.
     fn list(ctx: &StoreObjects) -> &Vec<Self>;
+
+    /// List the objects in the store, mutably.
     fn list_mut(ctx: &mut StoreObjects) -> &mut Vec<Self>;
 }
+
 macro_rules! impl_context_object {
     ($($field:ident => $ty:ty,)*) => {
         $(
@@ -28,6 +30,7 @@ macro_rules! impl_context_object {
         )*
     };
 }
+
 impl_context_object! {
     functions => VMFunction,
     tables => VMTable,
@@ -35,6 +38,8 @@ impl_context_object! {
     instances => VMInstance,
     memories => VMMemory,
     extern_objs => VMExternObj,
+    exceptions => VMExceptionObj,
+    tags => VMTag,
     function_environments => VMFunctionEnvironment,
 }
 
@@ -48,10 +53,40 @@ pub struct StoreObjects {
     functions: Vec<VMFunction>,
     instances: Vec<VMInstance>,
     extern_objs: Vec<VMExternObj>,
+    exceptions: Vec<VMExceptionObj>,
+    tags: Vec<VMTag>,
     function_environments: Vec<VMFunctionEnvironment>,
 }
 
 impl StoreObjects {
+    /// Create a new instance of [`Self`]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        id: StoreId,
+        memories: Vec<VMMemory>,
+        tables: Vec<VMTable>,
+        globals: Vec<VMGlobal>,
+        functions: Vec<VMFunction>,
+        instances: Vec<VMInstance>,
+        extern_objs: Vec<VMExternObj>,
+        exceptions: Vec<VMExceptionObj>,
+        tags: Vec<VMTag>,
+        function_environments: Vec<VMFunctionEnvironment>,
+    ) -> Self {
+        Self {
+            id,
+            memories,
+            tables,
+            globals,
+            functions,
+            instances,
+            extern_objs,
+            function_environments,
+            exceptions,
+            tags,
+        }
+    }
+
     /// Returns the ID of this context.
     pub fn id(&self) -> StoreId {
         self.id
@@ -82,7 +117,7 @@ impl StoreObjects {
     }
 
     /// Return an immutable iterator over all globals
-    pub fn iter_globals(&self) -> Iter<VMGlobal> {
+    pub fn iter_globals(&self) -> Iter<'_, VMGlobal> {
         self.globals.iter()
     }
 
@@ -94,7 +129,7 @@ impl StoreObjects {
     }
 
     /// Set a global, at index idx. Will panic if idx is out of range
-    /// Safety: the caller should check taht the raw value is compatible
+    /// Safety: the caller should check that the raw value is compatible
     /// with destination VMGlobal type
     pub fn set_global_unchecked(&self, idx: usize, val: u128) {
         assert!(idx < self.globals.len());
@@ -187,10 +222,7 @@ impl<T: StoreObject> StoreHandle<T> {
     ///
     /// # Safety
     /// Handling `InternalStoreHandle` values is unsafe because they do not track context ID.
-    pub unsafe fn from_internal(
-        id: StoreId,
-        internal: InternalStoreHandle<T>,
-    ) -> Self {
+    pub unsafe fn from_internal(id: StoreId, internal: InternalStoreHandle<T>) -> Self {
         Self { id, internal }
     }
 }
@@ -208,11 +240,8 @@ pub struct InternalStoreHandle<T> {
 
 #[cfg(feature = "artifact-size")]
 impl<T> loupe::MemoryUsage for InternalStoreHandle<T> {
-    fn size_of_val(
-        &self,
-        _tracker: &mut dyn loupe::MemoryUsageTracker,
-    ) -> usize {
-        std::mem::size_of_val(&self)
+    fn size_of_val(&self, _tracker: &mut dyn loupe::MemoryUsageTracker) -> usize {
+        std::mem::size_of_val(self)
     }
 }
 

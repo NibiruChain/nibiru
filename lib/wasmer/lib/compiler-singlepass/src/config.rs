@@ -1,19 +1,97 @@
 // Allow unused imports while developing
 #![allow(unused_imports, dead_code)]
 
-use crate::compiler::SinglepassCompiler;
-use std::sync::Arc;
-use wasmer_compiler::{
-    types::target::{CpuFeature, Target},
-    Compiler, CompilerConfig, Engine, EngineBuilder, ModuleMiddleware,
+use crate::{compiler::SinglepassCompiler, machine::AssemblyComment};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{self, Write},
+    num::NonZero,
+    path::PathBuf,
+    sync::Arc,
 };
-use wasmer_types::Features;
+use target_lexicon::Architecture;
+use wasmer_compiler::{
+    Compiler, CompilerConfig, Debugger, Engine, EngineBuilder, ModuleMiddleware,
+    misc::{CompiledKind, function_kind_to_filename, save_assembly_to_file},
+};
+use wasmer_types::{
+    Features,
+    target::{CpuFeature, Target},
+};
+
+/// Callbacks to the different Cranelift compilation phases.
+#[derive(Debug, Clone)]
+pub struct SinglepassCallbacks {
+    debug_dir: PathBuf,
+}
+
+impl SinglepassCallbacks {
+    /// Creates a new instance of `SinglepassCallbacks` with the specified debug directory.
+    pub fn new(debug_dir: PathBuf) -> Result<Self, io::Error> {
+        // Create the debug dir in case it doesn't exist
+        std::fs::create_dir_all(&debug_dir)?;
+        Ok(Self { debug_dir })
+    }
+
+    /// Returns the debug directory used to dump compilation artifacts.
+    pub fn debug_dir(&self) -> &PathBuf {
+        &self.debug_dir
+    }
+
+    fn base_path(&self, module_hash: &Option<String>) -> PathBuf {
+        let mut path = self.debug_dir.clone();
+        if let Some(hash) = module_hash {
+            path.push(hash);
+        }
+        std::fs::create_dir_all(&path)
+            .unwrap_or_else(|_| panic!("cannot create debug directory: {}", path.display()));
+        path
+    }
+
+    /// Writes the object file memory buffer to a debug file.
+    pub fn obj_memory_buffer(
+        &self,
+        kind: &CompiledKind,
+        module_hash: &Option<String>,
+        mem_buffer: &[u8],
+    ) {
+        let mut path = self.base_path(module_hash);
+        path.push(function_kind_to_filename(kind, ".o"));
+        let mut file =
+            File::create(path).expect("Error while creating debug file from Cranelift object");
+        file.write_all(mem_buffer).unwrap();
+    }
+
+    /// Writes the assembly memory buffer to a debug file.
+    pub fn asm_memory_buffer(
+        &self,
+        kind: &CompiledKind,
+        module_hash: &Option<String>,
+        arch: Architecture,
+        mem_buffer: &[u8],
+        assembly_comments: HashMap<usize, AssemblyComment>,
+    ) -> Result<(), wasmer_types::CompileError> {
+        let mut path = self.base_path(module_hash);
+        path.push(function_kind_to_filename(kind, ".s"));
+        save_assembly_to_file(arch, path, mem_buffer, assembly_comments)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Singlepass {
     pub(crate) enable_nan_canonicalization: bool,
+    pub(crate) allow_experimental_unaligned_memory_accesses: bool,
+    pub(crate) debugger: Option<Debugger>,
+    pub(crate) experimental_artifact: bool,
+
     /// The middleware chain.
     pub(crate) middlewares: Vec<Arc<dyn ModuleMiddleware>>,
+
+    pub(crate) callbacks: Option<SinglepassCallbacks>,
+
+    /// The number of threads to use for compilation.
+    pub num_threads: NonZero<usize>,
 }
 
 impl Singlepass {
@@ -22,20 +100,63 @@ impl Singlepass {
     pub fn new() -> Self {
         Self {
             enable_nan_canonicalization: true,
+            allow_experimental_unaligned_memory_accesses: false,
+            debugger: None,
+            experimental_artifact: false,
             middlewares: vec![],
+            callbacks: None,
+            num_threads: std::thread::available_parallelism().unwrap_or(NonZero::new(1).unwrap()),
         }
+    }
+
+    /// Enable the experimental artifact format.
+    pub fn experimental_artifact(&mut self, enable: bool) -> &mut Self {
+        self.experimental_artifact = enable;
+        self
     }
 
     pub fn canonicalize_nans(&mut self, enable: bool) -> &mut Self {
         self.enable_nan_canonicalization = enable;
         self
     }
+
+    /// Enable run-time handling of potentially unaligned memory accesses.
+    /// Unaligned memory accesses occur when you try to read N bytes of data starting
+    /// from an address that is not evenly divisible by N.
+    ///
+    /// This feature is experimental and currently supports only Cranelift scalar types
+    /// and Singlepass on RISC-V for integral types.
+    pub fn allow_experimental_unaligned_memory_accesses(&mut self, enable: bool) -> &mut Self {
+        self.allow_experimental_unaligned_memory_accesses = enable;
+        self
+    }
+
+    /// Callbacks that will triggered in the different compilation
+    /// phases in Singlepass.
+    pub fn callbacks(&mut self, callbacks: Option<SinglepassCallbacks>) -> &mut Self {
+        self.callbacks = callbacks;
+        self
+    }
+
+    /// Set the number of threads to use for compilation.
+    pub fn num_threads(&mut self, num_threads: NonZero<usize>) -> &mut Self {
+        self.num_threads = num_threads;
+        self
+    }
 }
 
 impl CompilerConfig for Singlepass {
+    fn experimental_artifact(&mut self, enable: bool) {
+        self.experimental_artifact = enable;
+    }
+
     fn enable_pic(&mut self) {
         // Do nothing, since singlepass already emits
         // PIC code.
+    }
+
+    fn enable_debugger(&mut self, debugger: Debugger) {
+        self.debugger = Some(debugger);
     }
 
     /// Transform it into the compiler
@@ -43,11 +164,9 @@ impl CompilerConfig for Singlepass {
         Box::new(SinglepassCompiler::new(*self))
     }
 
-    /// Gets the default features for this compiler in the given target
-    fn default_features_for_target(&self, _target: &Target) -> Features {
-        let mut features = Features::default();
-        features.multi_value(false);
-        features
+    /// Gets the supported features for this compiler in the given target
+    fn supported_features_for_target(&self, _target: &Target) -> Features {
+        Features::default()
     }
 
     /// Pushes a middleware onto the back of the middleware chain.
