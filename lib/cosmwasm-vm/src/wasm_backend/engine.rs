@@ -152,10 +152,11 @@ mod tests {
 
     #[test]
     fn large_integer_division_function_compiles_and_traps() {
-        // ARM64 conditional branch range is smaller than a large compiled function.
+        // This exceeds ARM64 CBZ range: restoring the short branch produces
+        // ImpossibleRelocation during assembler finalization.
         let mut body =
             String::from("local.get 0 local.get 1 i64.div_u local.set 0 ");
-        for _ in 0..20000 {
+        for _ in 0..100000 {
             body.push_str("local.get 0 i64.const 1 i64.add local.set 0 ");
         }
         body.push_str("local.get 0");
@@ -165,9 +166,9 @@ mod tests {
             .exports
             .get_typed_function::<(i64, i64), i64>(&store, "divide")
             .unwrap();
-        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 20050);
+        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 100050);
         assert!(divide.call(&mut store, 100, 0).is_err());
-        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 20050);
+        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 100050);
     }
 
     #[test]
