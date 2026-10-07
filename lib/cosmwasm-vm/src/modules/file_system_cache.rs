@@ -295,7 +295,19 @@ mod tests {
         let wasm = wat::parse_str(SOME_WAT).unwrap();
         let checksum = Checksum::generate(&wasm);
 
-        // Module does not exist
+        // A previous runtime's compiled artifact must never be deserialized.
+        let old_dir = tmp_dir
+            .path()
+            .join("v14-wasmer8")
+            .join(target_id(&Target::default()));
+        fs::create_dir_all(&old_dir).unwrap();
+        fs::write(
+            old_dir.join(format!("{checksum}.module")),
+            b"old compiled artifact",
+        )
+        .unwrap();
+
+        // The new namespace misses, allowing recompilation from the original Wasm.
         let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_none());
 
