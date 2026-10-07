@@ -1,6 +1,5 @@
 temp/
 build/
-*.md
 go-pkg
 **/go-pkg
 **/target/
