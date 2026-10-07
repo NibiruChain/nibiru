@@ -18,24 +18,24 @@ func (s *Suite) TestQuerySudoers() {
 		{
 			name: "happy 1",
 			state: sudo.Sudoers{
-				Root:      "alice",
-				Contracts: []string{"contractA", "contractB"},
+				Root:  "alice",
+				Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{"contractA", "contractB"}}},
 			},
 		},
 
 		{
 			name: "happy 2 (empty)",
 			state: sudo.Sudoers{
-				Root:      "",
-				Contracts: []string(nil),
+				Root:  "",
+				Roles: nil,
 			},
 		},
 
 		{
 			name: "happy 3",
 			state: sudo.Sudoers{
-				Root:      "",
-				Contracts: []string{"boop", "blap"},
+				Root:  "",
+				Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{"boop", "blap"}}},
 			},
 		},
 	} {

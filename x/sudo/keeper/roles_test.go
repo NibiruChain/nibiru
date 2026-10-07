@@ -1,0 +1,112 @@
+package keeper_test
+
+import (
+	"bytes"
+	"encoding/binary"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protowire"
+
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+)
+
+func TestRoleMembershipLifecycle(t *testing.T) {
+	_, k, ctx := setup()
+	root, eoa, stranger := testutil.NewAccAddress(), testutil.NewAccAddress(), testutil.NewAccAddress()
+	contract := sdk.AccAddress(bytes.Repeat([]byte{7}, 32))
+	k.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+	edit := &sudo.MsgUpdateRoleMembers{Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{eoa.String(), contract.String(), eoa.String()}}
+	_, err := k.UpdateRoleMembers(ctx, edit)
+	require.NoError(t, err)
+	state, err := k.Sudoers.Get(ctx)
+	require.NoError(t, err)
+	require.Len(t, state.Roles, 1)
+	require.Len(t, state.Roles[0].Members, 2)
+	for _, actor := range []sdk.AccAddress{root, eoa, contract} {
+		require.NoError(t, k.CheckPermissions(actor, ctx, sudo.RoleWasmDeployer))
+	}
+	require.NoError(t, k.CheckPermissions(root, ctx, "unassigned"))
+	require.Error(t, k.CheckPermissions(eoa, ctx, ""))
+	require.Error(t, k.CheckPermissions(eoa, ctx, "unassigned"))
+	require.Error(t, k.CheckPermissions(stranger, ctx, sudo.RoleWasmDeployer))
+	_, err = k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{Sender: eoa.String(), Role: sudo.RoleWasmDeployer, Add: []string{stranger.String()}})
+	require.Error(t, err)
+	_, err = k.EditZeroGasActors(ctx, &sudo.MsgEditZeroGasActors{Sender: eoa.String()})
+	require.Error(t, err)
+	_, err = k.EditSudoers(ctx, &sudo.MsgEditSudoers{Sender: eoa.String(), Action: string(sudo.EditWasmBlockHooksContract), Contracts: []string{contract.String()}})
+	require.Error(t, err)
+	_, err = k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{Sender: root.String(), Role: sudo.RoleWasmDeployer, Remove: []string{eoa.String()}})
+	require.NoError(t, err)
+	require.Error(t, k.CheckPermissions(eoa, ctx, sudo.RoleWasmDeployer))
+	require.NoError(t, k.CheckPermissions(contract, ctx, sudo.RoleWasmDeployer))
+	_, err = k.ChangeRoot(ctx, &sudo.MsgChangeRoot{Sender: root.String(), NewRoot: stranger.String()})
+	require.NoError(t, err)
+	require.Error(t, k.CheckPermissions(root, ctx, ""))
+	require.NoError(t, k.CheckPermissions(stranger, ctx, ""))
+	_, err = k.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{Sender: stranger.String(), Role: sudo.RoleWasmDeployer, Remove: []string{contract.String()}})
+	require.NoError(t, err)
+	state, err = k.Sudoers.Get(ctx)
+	require.NoError(t, err)
+	require.Empty(t, state.Roles)
+}
+
+func TestRoleEditValidationIsAtomic(t *testing.T) {
+	_, k, ctx := setup()
+	root, member := testutil.NewAccAddress(), testutil.NewAccAddress()
+	original := sudo.Sudoers{Root: root.String()}
+	k.Sudoers.Set(ctx, original)
+	for _, edit := range []*sudo.MsgUpdateRoleMembers{
+		{Sender: root.String(), Role: "", Add: []string{member.String()}},
+		{Sender: root.String(), Role: " spaced "},
+		{Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{member.String(), "invalid"}},
+		{Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{member.String()}, Remove: []string{member.String()}},
+	} {
+		_, err := k.UpdateRoleMembers(ctx, edit)
+		require.Error(t, err)
+		state, err := k.Sudoers.Get(ctx)
+		require.NoError(t, err)
+		require.Equal(t, original, state)
+	}
+	for _, action := range []string{"add_contracts", "remove_contracts"} {
+		_, err := k.EditSudoers(ctx, &sudo.MsgEditSudoers{Sender: root.String(), Action: action, Contracts: []string{member.String()}})
+		require.ErrorContains(t, err, "retired")
+	}
+}
+
+func TestMigrateLegacySudoStatePreservesHooksAndZeroGas(t *testing.T) {
+	_, k, ctx := setup()
+	root, former := testutil.NewAccAddress(), testutil.NewAccAddress()
+	hook := sdk.AccAddress(bytes.Repeat([]byte{4}, 32)).String()
+	zeroGas := sudo.ZeroGasActors{Senders: []string{former.String()}, Contracts: []string{hook}}
+	k.ZeroGasActors.Set(ctx, zeroGas)
+	k.WasmBlockHooksContract.Set(ctx, hook)
+	// Exact old wire layout: root at tag 1, broad contracts at tag 2.
+	legacy := protowire.AppendTag(nil, 1, protowire.BytesType)
+	legacy = protowire.AppendString(legacy, root.String())
+	legacy = protowire.AppendTag(legacy, 2, protowire.BytesType)
+	legacy = protowire.AppendString(legacy, former.String())
+	key := make([]byte, 8)
+	binary.BigEndian.PutUint64(key, 0)
+	rawStore := collections.Map[uint64, sudo.Sudoers](k.Sudoers).GetStore(ctx)
+	rawStore.Set(key, legacy)
+	require.NoError(t, k.Migrate1To2(ctx))
+	state, err := k.Sudoers.Get(ctx)
+	require.NoError(t, err)
+	require.Equal(t, root.String(), state.Root)
+	require.Empty(t, state.Roles)
+	require.NotEqual(t, legacy, rawStore.Get(key))
+	require.Error(t, k.CheckPermissions(former, ctx, sudo.RoleWasmDeployer))
+	require.NoError(t, k.CheckPermissions(root, ctx, ""))
+	require.Equal(t, hook, k.WasmBlockHooksContract.GetOr(ctx, ""))
+	require.Equal(t, zeroGas, k.ZeroGasActors.GetOr(ctx, sudo.ZeroGasActors{}))
+	exported := k.ExportGenesis(ctx)
+	require.NoError(t, exported.Validate())
+	_, fresh, newCtx := setup()
+	fresh.InitGenesis(newCtx, *exported)
+	require.Equal(t, hook, fresh.WasmBlockHooksContract.GetOr(newCtx, ""))
+	require.Equal(t, zeroGas, fresh.ZeroGasActors.GetOr(newCtx, sudo.ZeroGasActors{}))
+}

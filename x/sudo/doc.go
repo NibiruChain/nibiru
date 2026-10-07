@@ -1,20 +1,14 @@
 /*
-Package sudo provides a simple way to manage, verify, and run smart contracts
-with elevated permissions, mimicking the functionality of a Unix-based sudoers
-file.
+Package sudo manages a root account and named role memberships.
 
-In the context of Unix-based operating systems, such as Linux and macOS,
-"sudoers" refers to a configuration file that defines which users have the
-privilege to execute commands with elevated (superuser) permissions using the
-"sudo" command.
+Root can rotate itself, grant or revoke roles for accounts and contracts,
+configure zero-gas actors, and configure the Wasm block-hook registry.
+Other addresses receive only permissions whose callers explicitly check a role.
+The wasm_deployer role permits guarded Wasm uploads and migrations, subject to
+normal Wasm access and contract admin checks.
 
-The superuser, also known as the root user, has full
-administrative access to the system, allowing them to perform tasks that regular
-users cannot do, such as installing system-wide software, and modifying system
-files.
-
-Note that this package does not provide actual system integration or execute
-commands with elevated privileges. It only offers a way to manage and verify
-permissions in a sudoers-like manner within your application.
+An empty role passed to CheckPermissions requires root. Membership is resolved
+from current state on every call, so revocation and root rotation take effect
+immediately. Native governance authorization is handled by each calling module.
 */
 package sudo

@@ -13,15 +13,13 @@ import (
 // Ensure the interface is properly implemented at compile time
 var _ sudo.MsgServer = (*Keeper)(nil)
 
-// EditSudoers adds or removes sudo contracts from state.
+// EditSudoers configures the Wasm block-hook registry.
 func (k Keeper) EditSudoers(
 	goCtx context.Context, msg *sudo.MsgEditSudoers,
 ) (*sudo.MsgEditSudoersResponse, error) {
 	switch msg.RootAction() {
-	case sudo.AddContracts:
-		return k.AddContracts(goCtx, msg)
-	case sudo.RemoveContracts:
-		return k.RemoveContracts(goCtx, msg)
+	case sudo.AddContracts, sudo.RemoveContracts:
+		return nil, fmt.Errorf("%s is retired; use UpdateRoleMembers", msg.Action)
 	case sudo.EditWasmBlockHooksContract:
 		return k.EditWasmBlockHooksContract(goCtx, msg)
 	default:
@@ -34,6 +32,9 @@ func (k Keeper) ChangeRoot(
 	msg *sudo.MsgChangeRoot,
 ) (*sudo.MsgChangeRootResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	pbSudoers, err := k.Sudoers.Get(ctx)
 	if err != nil {
@@ -83,7 +84,7 @@ func (k Keeper) EditZeroGasActors(
 		return nil, err
 	}
 
-	err = k.CheckPermissions(msg.GetSigners()[0], ctx)
+	err = k.CheckPermissions(msg.GetSigners()[0], ctx, "")
 	if err != nil {
 		return nil, err
 	}
@@ -117,52 +118,4 @@ func (k Keeper) EditZeroGasActors(
 	k.ZeroGasActors.Set(ctx, actors)
 
 	return &sudo.MsgEditZeroGasActorsResponse{}, nil
-}
-
-// ————————————————————————————————————————————————————————————————————————————
-// Encoder for the Sudoers type
-// ————————————————————————————————————————————————————————————————————————————
-
-type Sudoers struct {
-	Root      string          `json:"root"`
-	Contracts set.Set[string] `json:"contracts"`
-}
-
-func (sudoers Sudoers) String() string {
-	r := sudoers.ToPb()
-	return r.String()
-}
-
-func (sudoers Sudoers) ToPb() sudo.Sudoers {
-	return sudo.Sudoers{
-		Root:      sudoers.Root,
-		Contracts: sudoers.Contracts.ToSlice(),
-	}
-}
-
-func SudoersFromPb(pbSudoers sudo.Sudoers) Sudoers {
-	return Sudoers{
-		Root:      pbSudoers.Root,
-		Contracts: set.New[string](pbSudoers.Contracts...),
-	}
-}
-
-// AddContracts adds contract addresses to the sudoer set.
-func (sudoers *Sudoers) AddContracts(
-	contracts []string,
-) (out set.Set[string], err error) {
-	for _, contractStr := range contracts {
-		contract, err := sdk.AccAddressFromBech32(contractStr)
-		if err != nil {
-			return out, err
-		}
-		sudoers.Contracts.Add(contract.String())
-	}
-	return sudoers.Contracts, err
-}
-
-func (sudoers *Sudoers) RemoveContracts(contracts []string) {
-	for _, contract := range contracts {
-		sudoers.Contracts.Remove(contract)
-	}
 }

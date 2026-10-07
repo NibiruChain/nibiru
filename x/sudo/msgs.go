@@ -197,3 +197,42 @@ func (m MsgEditZeroGasActors) GetSigners() []sdk.AccAddress {
 	}
 	return []sdk.AccAddress{signer}
 }
+
+// ValidateBasic validates every membership change before state is touched.
+func (m MsgUpdateRoleMembers) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return err
+	}
+	if err := ValidateRole(m.Role); err != nil {
+		return err
+	}
+	additions := make(map[string]bool)
+	for _, member := range m.Add {
+		if _, err := sdk.AccAddressFromBech32(member); err != nil {
+			return err
+		}
+		additions[member] = true
+	}
+	for _, member := range m.Remove {
+		if _, err := sdk.AccAddressFromBech32(member); err != nil {
+			return err
+		}
+		if additions[member] {
+			return fmt.Errorf("member %s cannot be added and removed together", member)
+		}
+	}
+	return nil
+}
+
+func (m MsgUpdateRoleMembers) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Sender)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+func (m MsgUpdateRoleMembers) Route() string { return ModuleName }
+func (m MsgUpdateRoleMembers) Type() string  { return "update_role_members" }
+func (m MsgUpdateRoleMembers) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
+}

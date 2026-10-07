@@ -53,12 +53,12 @@ func (k Keeper) checkCreateDenomPermission(ctx sdk.Context, sender string) error
 	if err != nil {
 		return err
 	}
-	if err := k.sudoKeeper.CheckPermissions(senderAddr, ctx); err == nil {
+	if err := k.sudoKeeper.CheckPermissions(senderAddr, ctx, ""); err == nil {
 		return nil
 	}
 
 	return govtypes.ErrInvalidSigner.Wrapf(
-		"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+		"invalid signing authority, expected governance account %s or the x/sudo root. Sender was %s",
 		k.authority, sender,
 	)
 }
@@ -345,7 +345,7 @@ func (k Keeper) BurnNative(
 
 // SudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
 // bank metadata.
-// [SUDO] Only callable by sudoers.
+// [SUDO] Only callable by root.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought
@@ -369,7 +369,7 @@ func (k Keeper) SudoSetDenomMetadata(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// Stateless field validation was already performed in msg.ValidateBasic()
 	senderAddr, _ := sdk.AccAddressFromBech32(txMsg.Sender)
-	if err = k.sudoKeeper.CheckPermissions(senderAddr, ctx); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(senderAddr, ctx, ""); err != nil {
 		return resp, err
 	}
 

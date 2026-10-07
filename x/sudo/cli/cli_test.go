@@ -109,53 +109,20 @@ func (s *TestSuite) SetupSuite() {
 // IntegrationSuite - Tests
 // ———————————————————————————————————————————————————————————————————
 
-func (s *TestSuite) TestCmdEditSudoers() {
-	initialState := s.querySudoers()
-	initialContracts := set.New(initialState.Sudoers.Contracts...)
-	contracts := s.newContracts(3, initialContracts)
-	sender := s.root
-
-	pbMsg := sudo.MsgEditSudoers{
-		Action:    "add_contracts",
-		Contracts: contracts,
-		Sender:    sender.String(),
+func (s *TestSuite) TestCmdUpdateRoleMembers() {
+	initial := s.querySudoers()
+	members := s.newContracts(3, set.New[string]())
+	for _, edit := range []sudo.MsgUpdateRoleMembers{
+		{Role: "cli_test", Add: members},
+		{Role: "cli_test", Remove: members},
+	} {
+		contents, err := json.Marshal(edit)
+		s.Require().NoError(err)
+		path := s.T().TempDir() + "/role.json"
+		s.Require().NoError(os.WriteFile(path, contents, 0o600))
+		s.Require().NoError(s.execLocalTx("update-role-members", path))
 	}
-
-	msg := MsgEditSudoersPlus{pbMsg}
-	_, fileName := msg.ToJson(s.T())
-
-	s.T().Log("happy - add_contracts exec tx")
-	s.Require().NoError(s.execLocalTx("edit-sudoers", fileName))
-
-	state := s.querySudoers()
-	gotRoot := state.Sudoers.Root
-	s.Equal(s.root.String(), gotRoot)
-
-	gotContracts := set.New(state.Sudoers.Contracts...)
-	for _, contract := range contracts {
-		s.True(gotContracts.Has(contract))
-	}
-
-	pbMsg = sudo.MsgEditSudoers{
-		Action:    "remove_contracts",
-		Contracts: contracts,
-		Sender:    sender.String(),
-	}
-
-	msg = MsgEditSudoersPlus{pbMsg}
-	_, fileName = msg.ToJson(s.T())
-
-	s.T().Log("happy - remove_contracts exec tx")
-	s.Require().NoError(s.execLocalTx("edit-sudoers", fileName))
-
-	state = s.querySudoers()
-	gotRoot = state.Sudoers.Root
-	s.Equal(s.root.String(), gotRoot)
-	gotContracts = set.New(state.Sudoers.Contracts...)
-	s.Require().Equal(initialContracts.Len(), gotContracts.Len())
-	for _, contract := range initialState.Sudoers.Contracts {
-		s.True(gotContracts.Has(contract))
-	}
+	s.Require().Equal(initial.Sudoers, s.querySudoers().Sudoers)
 }
 
 // TestMarshal_EditSudoers verifies that the expected proto.Message for
@@ -165,15 +132,10 @@ func (s *Suite) TestMarshal_EditSudoers() {
 	t := s.T()
 
 	t.Log("create valid example json for the message")
-	_, addrs := testutil.PrivKeyAddressPairs(4)
-	var contracts []string
-	sender := addrs[0]
-	for _, addr := range addrs[1:] {
-		contracts = append(contracts, addr.String())
-	}
+	sender := testutil.NewAccAddress()
 	msg := sudo.MsgEditSudoers{
-		Action:    "add_contracts",
-		Contracts: contracts,
+		Action:    string(sudo.EditWasmBlockHooksContract),
+		Contracts: []string{""},
 		Sender:    sender.String(),
 	}
 	require.NoError(t, msg.ValidateBasic())
@@ -269,22 +231,22 @@ func (s *Suite) TestCliCmdEditSudoers() {
 
 	testCases := []TestCase{
 		{
-			name: "happy: edit sudoers add contracts",
+			name: "sad: retired add contracts",
 			args: []string{
 				"edit-sudoers",
 				addContractsJSON,
 			},
 			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
-			wantErr:   "",
+			wantErr:   "invalid action type",
 		},
 		{
-			name: "happy: edit sudoers remove contracts",
+			name: "sad: retired remove contracts",
 			args: []string{
 				"edit-sudoers",
 				removeContractsJSON,
 			},
 			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
-			wantErr:   "",
+			wantErr:   "invalid action type",
 		},
 		{
 			name: "sad: invalid action type",
@@ -302,7 +264,7 @@ func (s *Suite) TestCliCmdEditSudoers() {
 				invalidAddressJSON,
 			},
 			extraArgs: []string{fmt.Sprintf("--from=%s", testVars.TestAcc.Address)},
-			wantErr:   "decoding bech32 failed",
+			wantErr:   "invalid action type",
 		},
 		{
 			name: "sad: file not found",
@@ -507,4 +469,25 @@ func (s *Suite) createTempJSONFile(tempDir string, data any) string {
 
 	// Return the file path
 	return tmpFile.Name()
+}
+
+func (s *Suite) TestCliCmdUpdateRoleMembers() {
+	vars := SetupTestVars(s.T())
+	dir := s.T().TempDir()
+	member := testutil.NewAccAddress().String()
+	edits := []struct {
+		name    string
+		edit    sudo.MsgUpdateRoleMembers
+		wantErr string
+	}{
+		{name: "grant", edit: sudo.MsgUpdateRoleMembers{Role: sudo.RoleWasmDeployer, Add: []string{member}}},
+		{name: "revoke", edit: sudo.MsgUpdateRoleMembers{Role: sudo.RoleWasmDeployer, Remove: []string{member}}},
+		{name: "empty role", edit: sudo.MsgUpdateRoleMembers{Add: []string{member}}, wantErr: "role must be nonempty"},
+		{name: "invalid member", edit: sudo.MsgUpdateRoleMembers{Role: sudo.RoleWasmDeployer, Add: []string{"invalid"}}, wantErr: "decoding bech32"},
+		{name: "conflicting change", edit: sudo.MsgUpdateRoleMembers{Role: sudo.RoleWasmDeployer, Add: []string{member}, Remove: []string{member}}, wantErr: "cannot be added and removed together"},
+	}
+	for _, item := range edits {
+		path := s.createTempJSONFile(dir, item.edit)
+		TestCase{name: item.name, args: []string{"update-role-members", path}, extraArgs: []string{fmt.Sprintf("--from=%s", vars.TestAcc.Address)}, wantErr: item.wantErr}.RunTxCmd(s, vars)
+	}
 }

@@ -28,7 +28,7 @@ func (k sudoExtension) EditInflationParams(
 	ctx sdk.Context, newParams mint.MsgEditInflationParams,
 	sender sdk.AccAddress,
 ) (err error) {
-	if err = k.sudoKeeper.CheckPermissions(sender, ctx); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(sender, ctx, ""); err != nil {
 		return
 	}
 
@@ -49,7 +49,7 @@ func (k sudoExtension) EditInflationParams(
 func (k sudoExtension) ToggleInflation(
 	ctx sdk.Context, enabled bool, sender sdk.AccAddress,
 ) (err error) {
-	if err = k.sudoKeeper.CheckPermissions(sender, ctx); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(sender, ctx, ""); err != nil {
 		return
 	}
 

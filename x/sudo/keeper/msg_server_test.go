@@ -9,7 +9,6 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -40,11 +39,11 @@ func (s *Suite) TestGenesis() {
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
 					Root: testutil.NewAccAddress().String(),
-					Contracts: []string{
+					Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{
 						testutil.NewAccAddress().String(),
 						testutil.NewAccAddress().String(),
 						testutil.NewAccAddress().String(),
-					},
+					}}},
 				},
 			},
 			empty: false,
@@ -58,8 +57,8 @@ func (s *Suite) TestGenesis() {
 			name: "invalid genesis (panic)",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      "root",
-					Contracts: []string{"contract"},
+					Root:  "root",
+					Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{"contract"}}},
 				},
 			},
 			panic: true,
@@ -112,63 +111,6 @@ func (s *Suite) TestGenesis() {
 			jsonBz := appModule.ExportGenesis(ctx, cdc)
 			err := appModule.ValidateGenesis(cdc, nil, jsonBz)
 			s.Require().NoErrorf(err, "exportedGenesis: %s", jsonBz)
-		})
-	}
-}
-
-func (s *Suite) TestSudo_AddContracts() {
-	exampleAddrs := []string{
-		"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-		"nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",
-		"nibi1x5zknk8va44th5vjpg0fagf0lxx0rvurpmp8gs",
-	}
-
-	for _, tc := range []struct {
-		name        string
-		start       []string
-		delta       []string
-		end         []string
-		shouldError bool
-	}{
-		{
-			name:  "happy - add 1",
-			start: []string{exampleAddrs[0]},
-			delta: []string{exampleAddrs[1]},
-			end:   []string{exampleAddrs[0], exampleAddrs[1]},
-		},
-		{
-			name:  "happy - add multiple",
-			start: []string{exampleAddrs[0]},
-			delta: []string{exampleAddrs[1], exampleAddrs[2]},
-			end:   []string{exampleAddrs[0], exampleAddrs[1], exampleAddrs[2]},
-		},
-		{
-			name:        "sad - invalid addr",
-			start:       []string{exampleAddrs[0]},
-			delta:       []string{"not-an-address"},
-			shouldError: true,
-		},
-		{
-			name:  "empty start",
-			start: []string{},
-			delta: []string{exampleAddrs[1], exampleAddrs[2]},
-			end:   []string{exampleAddrs[1], exampleAddrs[2]},
-		},
-	} {
-		s.Run(tc.name, func() {
-			_, _, _ = setup()
-			root := testutil.NewAccAddress().String()
-			sudoers := keeper.Sudoers{
-				Root:      root,
-				Contracts: set.New(tc.start...),
-			}
-
-			newContractsState, err := sudoers.AddContracts(tc.delta)
-			if tc.shouldError {
-				s.Require().Error(err)
-				return
-			}
-			s.Require().NoErrorf(err, "newState: %s", newContractsState.ToSlice())
 		})
 	}
 }
@@ -279,8 +221,8 @@ func (s *Suite) TestMsgServer_EditWasmBlockHooksContract() {
 		s.Run(tc.name, func() {
 			_, k, ctx := setup()
 			k.Sudoers.Set(ctx, sudo.Sudoers{
-				Root:      root,
-				Contracts: []string{},
+				Root:  root,
+				Roles: []sudo.RoleMembers{},
 			})
 			if tc.want == "existing" {
 				k.WasmBlockHooksContract.Set(ctx, contract)
@@ -342,277 +284,6 @@ func eventAttributeValue(events sdk.Events, eventType, key string) (string, bool
 		}
 	}
 	return "", false
-}
-
-func (s *Suite) TestSudo_FromPbSudoers() {
-	for _, tc := range []struct {
-		name string
-		in   sudo.Sudoers
-		out  keeper.Sudoers
-	}{
-		{
-			name: "empty",
-			in:   sudo.Sudoers{},
-			out: keeper.Sudoers{
-				Root:      "",
-				Contracts: set.Set[string]{},
-			},
-		},
-		{
-			name: "happy",
-			in:   sudo.Sudoers{Root: "root", Contracts: []string{"contractA", "contractB"}},
-			out: keeper.Sudoers{
-				Root:      "root",
-				Contracts: set.New[string]("contractA", "contractB"),
-			},
-		},
-	} {
-		s.Run(tc.name, func() {
-			out := keeper.SudoersFromPb(tc.in)
-			s.EqualValuesf(tc.out.Contracts, out.Contracts, "out: %s", out.String())
-			s.EqualValuesf(tc.out.Root, out.Root, "out: %s", out.String())
-
-			pbSudoers := out.ToPb()
-			for _, contract := range tc.in.Contracts {
-				s.True(set.New(pbSudoers.Contracts...).Has(contract))
-			}
-		})
-	}
-}
-
-func (s *Suite) TestKeeper_AddContracts() {
-	root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rdafn6qa"
-	exampleAddrs := []string{
-		"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-		"nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",
-		"nibi1x5zknk8va44th5vjpg0fagf0lxx0rvurpmp8gs",
-	}
-
-	testCases := []struct {
-		name            string
-		contractsBefore []string
-		msg             *sudo.MsgEditSudoers
-		contractsAfter  []string
-		shouldFail      bool
-	}{
-		{
-			name: "happy",
-			contractsBefore: []string{
-				exampleAddrs[0],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: string(sudo.AddContracts),
-				Contracts: []string{
-					exampleAddrs[1],
-					exampleAddrs[2],
-				},
-				Sender: root,
-			},
-			contractsAfter: []string{
-				exampleAddrs[0],
-				exampleAddrs[1],
-				exampleAddrs[2],
-			},
-		},
-
-		{
-			name: "rotten address",
-			contractsBefore: []string{
-				exampleAddrs[0],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: string(sudo.AddContracts),
-				Contracts: []string{
-					exampleAddrs[1],
-					"rotten address",
-					exampleAddrs[2],
-				},
-				Sender: root,
-			},
-			shouldFail: true,
-		},
-
-		{
-			name: "wrong action type",
-			contractsBefore: []string{
-				exampleAddrs[0],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: "not an action type",
-				Sender: root,
-			},
-			shouldFail: true,
-		},
-
-		{
-			name: "sent by non-sudo user",
-			contractsBefore: []string{
-				exampleAddrs[0],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: string(sudo.AddContracts),
-				Sender: exampleAddrs[1],
-				Contracts: []string{
-					exampleAddrs[1],
-					exampleAddrs[2],
-				},
-			},
-			contractsAfter: []string{
-				exampleAddrs[0],
-				exampleAddrs[1],
-				exampleAddrs[2],
-			},
-			shouldFail: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			_, k, ctx := setup()
-
-			s.T().Log("Set starting contracts state")
-			stateBefore := sudo.Sudoers{
-				Root:      root,
-				Contracts: tc.contractsBefore,
-			}
-			k.Sudoers.Set(ctx, stateBefore)
-			gotStateBefore, err := k.Sudoers.Get(ctx)
-			s.Require().NoError(err)
-			s.Require().EqualValues(stateBefore, gotStateBefore)
-
-			s.T().Log("Execute message")
-			// Check via message handler directly
-			msgServer := k
-			res, err := msgServer.EditSudoers(sdk.WrapSDKContext(ctx), tc.msg)
-			// Check via Keeper
-			res2, err2 := k.AddContracts(sdk.WrapSDKContext(ctx), tc.msg)
-			if tc.shouldFail {
-				s.Require().Errorf(err, "resp: %s", res)
-				s.Require().Errorf(err2, "resp: %s", res2)
-				return
-			}
-			s.Require().NoError(err)
-
-			s.T().Log("Check correctness of state updates")
-			contractsAfter := set.New(tc.contractsAfter...)
-			stateAfter, err := k.Sudoers.Get(ctx)
-			s.Require().NoError(err)
-			got := set.New(stateAfter.Contracts...)
-			// Checking cardinality (length) and iterating to check if one set
-			// contains the other is equivalent to set equality in math.
-			s.EqualValues(contractsAfter.Len(), got.Len())
-			for member := range got {
-				s.True(contractsAfter.Has(member))
-			}
-		})
-	}
-}
-
-func (s *Suite) TestKeeper_RemoveContracts() {
-	root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rdafn6qa"
-	// root := "nibi1ggpg3vluy09qmfkgwsgkumhmmv2z44rd2vhrfw"
-	exampleAddrs := []string{
-		"nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl",
-		"nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v",
-		"nibi1x5zknk8va44th5vjpg0fagf0lxx0rvurpmp8gs",
-	}
-
-	for _, tc := range []struct {
-		name            string
-		contractsBefore []string
-		msg             *sudo.MsgEditSudoers
-		contractsAfter  []string
-		shouldFail      bool
-	}{
-		{
-			name: "happy",
-			contractsBefore: []string{
-				exampleAddrs[0],
-				exampleAddrs[1],
-				exampleAddrs[2],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: string(sudo.RemoveContracts),
-				Contracts: []string{
-					exampleAddrs[1],
-					exampleAddrs[2],
-				},
-				Sender: root,
-			},
-			contractsAfter: []string{
-				exampleAddrs[0],
-			},
-		},
-
-		{
-			name: "wrong action type",
-			contractsBefore: []string{
-				exampleAddrs[0],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: "not an action type",
-				Sender: root,
-			},
-			shouldFail: true,
-		},
-
-		{
-			name: "happy - no op",
-			contractsBefore: []string{
-				exampleAddrs[0],
-				exampleAddrs[2],
-			},
-			msg: &sudo.MsgEditSudoers{
-				Action: string(sudo.RemoveContracts),
-				Contracts: []string{
-					exampleAddrs[1],
-				},
-				Sender: root,
-			},
-			contractsAfter: []string{
-				exampleAddrs[0],
-				exampleAddrs[2],
-			},
-		},
-	} {
-		s.Run(tc.name, func() {
-			_, k, ctx := setup()
-
-			s.T().Log("Set starting contracts state")
-			stateBefore := sudo.Sudoers{
-				Root:      root,
-				Contracts: tc.contractsBefore,
-			}
-			k.Sudoers.Set(ctx, stateBefore)
-			gotStateBefore, err := k.Sudoers.Get(ctx)
-			s.Require().NoError(err)
-			s.Require().EqualValues(stateBefore, gotStateBefore)
-
-			s.T().Log("Execute message")
-			// Check via message handler directly
-			msgServer := k
-			res, err := msgServer.EditSudoers(ctx, tc.msg)
-			// Check via Keeper
-			res2, err2 := k.RemoveContracts(sdk.WrapSDKContext(ctx), tc.msg)
-			if tc.shouldFail {
-				s.Require().Errorf(err, "resp: %s", res)
-				s.Require().Errorf(err2, "resp: %s", res2)
-				return
-			}
-
-			s.T().Log("Check correctness of state updates")
-			contractsAfter := set.New(tc.contractsAfter...)
-			stateAfter, err := k.Sudoers.Get(ctx)
-			s.Require().NoError(err)
-			got := set.New(stateAfter.Contracts...)
-			// Checking cardinality (length) and iterating to check if one set
-			// contains the other is equivalent to set equality in math.
-			s.EqualValues(contractsAfter.Len(), got.Len())
-			for member := range got {
-				s.True(contractsAfter.Has(member))
-			}
-		})
-	}
 }
 
 func (s *Suite) TestEditZeroGasActors() {

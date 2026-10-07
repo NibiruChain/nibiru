@@ -32,8 +32,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "valid - complete state",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{addrStrs[1], addrStrs[2]},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{addrStrs[1], addrStrs[2]}}},
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders:   []string{addrStrs[3]},
@@ -46,8 +46,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "valid - minimal (root only)",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 			},
 		},
@@ -55,8 +55,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "valid - with ZeroGasActors only",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders:   []string{addrStrs[1]},
@@ -68,28 +68,27 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - empty root",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      "",
-					Contracts: []string{addrStrs[1]},
+					Root:  "",
+					Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{addrStrs[1]}}},
 				},
 			},
 			wantErr: "root addr",
 		},
 		{
-			name: "invalid - nil contracts",
+			name: "valid - empty roles",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: nil,
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 			},
-			wantErr: "nil contract state",
 		},
 		{
 			name: "invalid - bad root address",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      "invalid",
-					Contracts: []string{},
+					Root:  "invalid",
+					Roles: []sudo.RoleMembers{},
 				},
 			},
 			wantErr: "root addr",
@@ -98,18 +97,18 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - bad contract address",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{"invalid"},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{"invalid"}}},
 				},
 			},
-			wantErr: "contract addr",
+			wantErr: "role member addr",
 		},
 		{
 			name: "invalid - ZeroGasActors bad sender",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders: []string{"invalid"},
@@ -121,8 +120,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - ZeroGasActors bad contract",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Contracts: []string{"0xBAD"},
@@ -134,8 +133,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - ZeroGasActors with empty senders and contracts",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				ZeroGasActors: &sudo.ZeroGasActors{
 					Senders:   []string{},
@@ -147,8 +146,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - wasm block hooks contract bad bech32",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				WasmBlockHooksContract: "invalid",
 			},
@@ -158,8 +157,8 @@ func (s *Suite) TestGenesisState_Validate() {
 			name: "invalid - wasm block hooks contract sdk address length",
 			genState: &sudo.GenesisState{
 				Sudoers: sudo.Sudoers{
-					Root:      addrStrs[0],
-					Contracts: []string{},
+					Root:  addrStrs[0],
+					Roles: []sudo.RoleMembers{},
 				},
 				WasmBlockHooksContract: addrStrs[1],
 			},
