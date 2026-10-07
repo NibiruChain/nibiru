@@ -38,6 +38,167 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.20.0
+
+Nibiru v2.20 adds a temporary mainnet guard for Wasm code upload, contract instantiation, and contract migration. It continues the response to the privately disclosed Wasm vulnerability after v2.19's binary hardening.
+
+The release also lets Wasm contracts query EVM state, lets the CLI look up transactions by either CometBFT or EVM hash, and adds shared contract-permission and release-distribution tooling.
+
+- [Release link: v2.20.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.20.0).
+- Public release: September 24, 2026.
+- Source range: `v2.19.0` through `v2.20.0`.
+
+### 1 - Main highlights
+
+- Mainnet Wasm deployment operations require the current sudo root for ordinary requests, with existing governance authorization preserved.
+- The guard covers shared keeper entrypoints, including contract submessages and the EVM Wasm precompile.
+- Wasm contracts can read EVM accounts, balances, storage, code, and simulated call results through Stargate queries.
+- The CLI accepts CometBFT and EVM transaction hashes, reducing the need to switch tools when investigating cross-VM activity.
+- Shared Rust contract libraries add owner-controlled delegated permissions.
+- CLI packaging and container publication reuse verified release binaries, while the Rust workspace and its tests move into the chain repository.
+
+### 2 - Why mainnet Wasm deployment was restricted
+
+The security response began with static PIE hardening in [v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.19.0). v2.20 adds a second measure: limiting who can introduce Wasm code or change a contract's code on mainnet while the runtime repair was prepared.
+
+The guard permits ordinary upload, instantiation, and migration requests only from the current root of the `x/sudo` module. It reads that root dynamically, so root rotation does not require a hard-coded address change. Existing governance authorization remains available, and existing Wasm permission and migration-admin checks still apply.
+
+The check sits at the shared keeper boundary. A request cannot bypass it merely by arriving through a contract submessage or the EVM Wasm precompile instead of a protobuf message handler. The rule applies to mainnet chain ID `cataclysm-1`; other networks retain their existing admission behavior. [PR #2762](https://github.com/NibiruChain/nibiru/pull/2762)
+
+This is a temporary incident-response guard. It does not disable ordinary contract execution or queries, change Wasm parameters, or rewrite per-code permissions.
+
+### 3 - What the guard could not repair
+
+[CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md), published after this release, explains the Singlepass compiler defect. Restricting deployment reduces opportunities to introduce malicious code. It cannot neutralize malicious code already stored on-chain or replace the runtime patch.
+
+The later [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788) upgrades the vendored runtime to Wasmer 7.4.2 and rebuilds it for Nibiru's existing CosmWasm v1 fork. That is the runtime repair phase of the response. v2.20 contains the deployment guard, not that later compiler repair. Activating the repaired runtime requires a coordinated chain upgrade, and removing the temporary guard is a separate policy decision.
+
+### 4 - Wasm contracts can read EVM state
+
+Nibiru already exposed EVM read methods through its query service, but the Wasm Stargate allowlist rejected those requests before they reached the service. v2.20 admits the EVM query routes, allowing a Wasm contract to inspect accounts, token balances, storage, code, parameters, and other EVM query results.
+
+Contracts can also use `EthCall` to simulate an EVM call and read its return data without committing state. This gives Wasm applications a way to consume information exposed by EVM contracts. It does not grant them permission to submit Ethereum transaction messages through the Wasm message dispatcher. [PR #2775](https://github.com/NibiruChain/nibiru/pull/2775)
+
+### 5 - Transaction lookup across both VMs
+
+A Cosmos transaction has a CometBFT hash, while an Ethereum transaction has an EVM hash. Users investigating the same activity should not need to know which index their tool expects before they can find it.
+
+Command `nibid q tx` accepts either a bare CometBFT hash or a `0x`-prefixed EVM hash. For indexed EVM activity, it connects the EVM transaction to its CometBFT record. If that index entry is absent, it falls back to the configured EVM JSON-RPC endpoint. An absent index entry alone does not mean a transaction is pending.
+
+The default response stays compact. Option `--details` includes the full records, and `--evm` returns the native EVM transaction response. [PR #2783](https://github.com/NibiruChain/nibiru/pull/2783)
+
+### 6 - Delegated contract permissions
+
+The shared contract libraries add owner-controlled memberships for selected execution routes. A contract can delegate a specific action without transferring ownership or granting migration authority, and its policy catalog describes the rules used for authorization.
+
+The release also validates permission members as Nibiru Bech32 addresses through the CosmWasm API. Contract addresses remain valid members, allowing delegated execution by contracts such as a CW3 multisig. These contract-local permissions are separate from the chain's temporary mainnet deployment guard. [PR #2758](https://github.com/NibiruChain/nibiru/pull/2758), [PR #2762](https://github.com/NibiruChain/nibiru/pull/2762)
+
+### 7 - Distribution and source ownership
+
+The npm distribution tooling packages verified GitHub release binaries into platform-specific CLI packages and a launcher. It gives users an npm installation path without rebuilding the node or downloading executables from lifecycle hooks. [PR #2756](https://github.com/NibiruChain/nibiru/pull/2756)
+
+Container publication likewise packages checksum-verified release artifacts into AMD64 and ARM64 images. This supports the private-first release process without silently substituting a different source build for the binary validators received. [PR #2751](https://github.com/NibiruChain/nibiru/pull/2751), [PR #2775](https://github.com/NibiruChain/nibiru/pull/2775)
+
+The Rust workspace and legacy runtime tests move into the chain repository, bringing contracts, Wasm libraries, and their checks under the same source ownership. EVM tooling moves to Bun, the repository retires its root Make commands in favor of Just, and the Go baseline moves to 1.27. [PR #2754](https://github.com/NibiruChain/nibiru/pull/2754), [PR #2757](https://github.com/NibiruChain/nibiru/pull/2757), [PR #2763](https://github.com/NibiruChain/nibiru/pull/2763), [PR #2776](https://github.com/NibiruChain/nibiru/pull/2776)
+
+## v2.19.0
+
+Nibiru v2.19 changes the Linux release build to a static position-independent executable, or static PIE, in response to a privately disclosed CosmWasm vulnerability. Published node builds use PebbleDB and omit RocksDB to keep the native linking requirements manageable during the security response.
+
+This was an interim mitigation release. It hardened the executable while the underlying Wasm runtime still required a source repair.
+
+- [Release link: v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.19.0).
+- Original binary distribution: September 7, 2026, through [hotfix/v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/hotfix/v2.19.0).
+- Public source-parity release: September 21, 2026.
+- [Public source-parity change](https://github.com/NibiruChain/nibiru/commit/970841fec40fbf23b92cfb0e6dfd493ce9726bac).
+
+### 1 - Main highlights
+
+- Linux release executables use static PIE so the operating system can randomize the executable's load address.
+- Release checks verify the resulting binary's properties rather than relying only on compiler flags.
+- Published node builds use PebbleDB and exclude RocksDB support.
+- The public source release carries the build changes behind the earlier artifact-distribution release.
+- WasmVM release builders move to Debian Bookworm, alongside dependency and test-tooling maintenance.
+
+### 2 - The Wasm disclosure and interim hardening
+
+The issue became public as [CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md) on September 28, 2026. A defect in Wasmer's Singlepass compiler allows a crafted contract to escape the Wasm sandbox and execute native instructions inside a node process. The advisory describes unauthorized native-token minting and permanent fund loss.
+
+Nibiru's earlier Linux build was statically linked but used a fixed executable layout. Static linking alone does not make an executable position-independent. v2.19 changes the final Go and native link to produce static PIE, allowing address-space randomization to protect the executable.
+
+This hardening does not remove the compiler defect. The security response continued with the temporary mainnet Wasm deployment guard in [v2.20.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.20.0), followed by the runtime repair described below.
+
+### 3 - Why the published builds use PebbleDB
+
+Static PIE places requirements on every native archive linked into the executable. RocksDB brings a C++ library into the node through CGO. Retaining it would have required a separate native-library build path and position-independent compilation work during a time-sensitive release.
+
+PebbleDB was already Nibiru's default database backend and the backend used by the mainnet snapshot and state-sync infrastructure. The published builds therefore use PebbleDB and omit RocksDB support. This choice reduced the native-code work required to ship the mitigation.
+
+Selecting a different backend does not convert an existing database. A node using RocksDB or GoLevelDB needs state restored into PebbleDB rather than a configuration change over its existing files. [Release build implementation](https://github.com/NibiruChain/nibiru/blob/v2.19.0/contrib/scripts/build-nibiru.sh)
+
+### 4 - Artifact distribution and public source
+
+The `hotfix/v2.19.0` record distributed the original verified binaries while the response was private. That tag identifies the artifact-distribution record, not the source tree used to build those binaries.
+
+The later regular `v2.19.0` source release restores the corresponding build changes to the public repository. Its September 21 publication date should not be mistaken for the date validators first received the mitigation binaries.
+
+The surrounding release work also moves WasmVM artifact builders to Bookworm and refreshes dependencies and test tooling. [PR #2750](https://github.com/NibiruChain/nibiru/pull/2750), [PR #2749](https://github.com/NibiruChain/nibiru/pull/2749)
+
+### 5 - The later runtime repair
+
+[PR #2788](https://github.com/NibiruChain/nibiru/pull/2788), merged on October 7, 2026, upgrades Nibiru's vendored runtime to Wasmer 7.4.2 and adapts the existing CosmWasm v1 fork. It replaces the defective compiler path and carries the repair into source-built `libwasmvm` and `nibid`.
+
+That repair belongs to a later coordinated chain upgrade. It is not part of v2.19, and merging it into main is separate from activating it on the live chain.
+
+## v2.18.1
+
+Nibiru v2.18.1 repairs a cross-VM authorization bug in delegated EVM calls. It also adds consensus-enforced restrictions for incident accounts and a mainnet upgrade handler to recover remaining assets from configured incident accounts.
+
+This release responds to the FunToken pool-drain incident. It is separate from the Wasmer sandbox vulnerability addressed by the later v2.19, v2.20, and runtime repair work.
+
+- [Release link: v2.18.1](https://github.com/NibiruChain/nibiru/releases/tag/v2.18.1).
+- Incident binary distribution: August 20, 2026, through [hotfix/v2.18.1](https://github.com/NibiruChain/nibiru/releases/tag/hotfix/v2.18.1).
+- Public source release: September 6, 2026.
+- [Source publication and repair: PR #2748](https://github.com/NibiruChain/nibiru/pull/2748).
+
+### 1 - Main highlights
+
+- Mutable FunToken and Wasm precompiles use authority derived from the current EVM call frame. Delegation cannot borrow authority from a caller across an intervening ordinary call.
+- Direct router delegation and proxy-to-implementation delegation remain supported.
+- Incident-account restrictions apply during transaction admission and block execution, so enforcement does not depend on one node's RPC policy.
+- The mainnet upgrade handler processes configured Bank and ERC20 recovery operations independently and records failures without discarding successful work.
+- The release also improves passkey account creation and adds regression evidence for a separate inter-block cache race.
+
+### 2 - Why delegated-call authority needed repair
+
+FunToken precompiles move assets between ERC20 balances and Cosmos Bank balances. Their authorization therefore has to identify the account the current call frame may act for.
+
+The old delegated-precompile path could retain an earlier caller's identity across an ordinary contract call. A callback could then reach a mutable precompile through delegation and act for an account whose authority it should no longer possess.
+
+The repair makes that boundary explicit:
+
+```text
+root call       -> transaction sender
+ordinary CALL   -> authority of the called contract
+DELEGATECALL    -> preserves the current frame's authority
+```
+
+Nibiru pins geth fork version `v1.14.13-nibiru.5`, which supplies these call-frame rules. The precompiles consume the resolved authority rather than reconstructing it from a parent caller. This preserves legitimate proxy and router patterns while preventing delegation from reaching back across an ordinary call boundary. [PR #2748](https://github.com/NibiruChain/nibiru/pull/2748)
+
+### 3 - Containment and recovery
+
+Repairing authorization prevents the same identity confusion from authorizing another transfer. The release also restricts configured incident accounts in the Cosmos and EVM transaction paths. These checks run in both `CheckTx` and `DeliverTx`, making them part of validator-enforced behavior.
+
+The mainnet upgrade handler attempts to transfer remaining Bank coins and configured ERC20 balances from incident accounts to designated recovery recipients. Each source and token is handled independently. A failed operation emits a failure event and does not stop the remaining operations or normal module migrations.
+
+This describes what the handler can recover. It does not establish that all stolen assets remained on Nibiru or that every recovery operation succeeded. [Public upgrade implementation](https://github.com/NibiruChain/nibiru/blob/v2.18.1/app/upgrades/v2_18_1.go)
+
+### 4 - Other release work
+
+Passkey account creation supplies an explicit bounded gas limit instead of relying on an estimation step that could fail before the transaction was broadcast. This addresses a first-connect failure where no account bytecode could appear because account creation never reached the chain. [PR #2735](https://github.com/NibiruChain/nibiru/pull/2735)
+
+The release source also includes tests reproducing stale reads in the inter-block store cache. Those tests document a separate consensus failure mechanism; their inclusion is not a claim that this release repairs that cache race. [PR #2727](https://github.com/NibiruChain/nibiru/pull/2727)
+
 ## v2.17.0
 
 Nibiru v2.17 hardens EVM transaction admission and proposal construction,
