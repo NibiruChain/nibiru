@@ -1,8 +1,6 @@
 //! Helper functions and structures for the translation.
 use crate::entity::entity_impl;
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +35,7 @@ use serde::{Deserialize, Serialize};
 )]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[rkyv(derive(Debug), compare(PartialOrd, PartialEq))]
+#[rkyv(derive(Debug, Hash, PartialEq, Eq), compare(PartialOrd, PartialEq))]
 pub struct LocalFunctionIndex(u32);
 entity_impl!(LocalFunctionIndex);
 
@@ -54,6 +52,26 @@ entity_impl!(LocalTableIndex);
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub struct LocalMemoryIndex(u32);
 entity_impl!(LocalMemoryIndex);
+
+/// Index type of a tag defined locally inside the WebAssembly module.
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Debug,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Archive,
+)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
+#[rkyv(derive(Debug), compare(PartialOrd, PartialEq))]
+pub struct LocalTagIndex(u32);
+entity_impl!(LocalTagIndex);
 
 /// Index type of a global defined locally inside the WebAssembly module.
 #[derive(
@@ -92,7 +110,7 @@ entity_impl!(LocalGlobalIndex);
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
 #[rkyv(
-    derive(Debug, PartialOrd, Ord, PartialEq, Eq),
+    derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash),
     compare(PartialOrd, PartialEq)
 )]
 pub struct FunctionIndex(u32);
@@ -120,6 +138,29 @@ entity_impl!(FunctionIndex);
 )]
 pub struct TableIndex(u32);
 entity_impl!(TableIndex);
+
+/// Index type of an event inside the WebAssembly module.
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Debug,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Archive,
+)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
+#[rkyv(
+    derive(Debug, PartialOrd, Ord, PartialEq, Eq),
+    compare(PartialOrd, PartialEq)
+)]
+pub struct TagIndex(u32);
+entity_impl!(TagIndex);
 
 /// Index type of a global variable (imported or local) inside the WebAssembly module.
 #[derive(
@@ -180,6 +221,37 @@ entity_impl!(MemoryIndex);
 #[rkyv(derive(Debug), compare(PartialOrd, PartialEq))]
 pub struct SignatureIndex(u32);
 entity_impl!(SignatureIndex);
+
+/// A function signature hash based on the signature.
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Debug,
+    RkyvSerialize,
+    RkyvDeserialize,
+    Archive,
+)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
+#[rkyv(derive(Debug), compare(PartialOrd, PartialEq))]
+pub struct SignatureHash(pub u32);
+
+impl SignatureHash {
+    /// Create a new `SignatureHash`.
+    pub fn new(value: u32) -> Self {
+        Self(value)
+    }
+
+    /// Get the inner hash value.
+    pub fn as_u32(self) -> u32 {
+        self.0
+    }
+}
 
 /// Index type of a passive data segment inside the WebAssembly module.
 #[derive(
@@ -272,22 +344,15 @@ pub enum ExportIndex {
     Table(TableIndex),
     /// Memory export.
     Memory(MemoryIndex),
+    /// An event definition.
+    Tag(TagIndex),
     /// Global export.
     Global(GlobalIndex),
 }
 
 /// An entity to import.
 #[derive(
-    Clone,
-    Debug,
-    Hash,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Archive,
+    Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, RkyvSerialize, RkyvDeserialize, Archive,
 )]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
@@ -300,6 +365,20 @@ pub enum ImportIndex {
     Table(TableIndex),
     /// Memory import.
     Memory(MemoryIndex),
+    /// Tag import.
+    Tag(TagIndex),
     /// Global import.
     Global(GlobalIndex),
+}
+
+/// WebAssembly event.
+#[derive(
+    Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord, RkyvSerialize, RkyvDeserialize, Archive,
+)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
+#[rkyv(derive(Debug), compare(PartialOrd, PartialEq))]
+pub struct Tag {
+    /// The event signature type.
+    pub ty: u32,
 }

@@ -1,7 +1,5 @@
-use wasmer_compiler::types::address_map::{
-    FunctionAddressMap, InstructionAddressMap,
-};
 use wasmer_compiler::FunctionBodyData;
+use wasmer_compiler::types::address_map::{FunctionAddressMap, InstructionAddressMap};
 use wasmer_types::SourceLoc;
 
 pub fn get_function_address_map(
@@ -12,8 +10,7 @@ pub fn get_function_address_map(
     // Generate source loc for a function start/end to identify boundary within module.
     // It will wrap around if byte code is larger than 4 GB.
     let start_srcloc = SourceLoc::new(data.module_offset as u32);
-    let end_srcloc =
-        SourceLoc::new((data.module_offset + data.data.len()) as u32);
+    let end_srcloc = SourceLoc::new((data.module_offset + data.data.len() as u64) as u32);
 
     FunctionAddressMap {
         instructions,

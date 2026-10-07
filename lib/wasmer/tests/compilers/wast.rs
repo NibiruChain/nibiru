@@ -2,44 +2,56 @@ use ::wasmer::sys::Features;
 use std::path::Path;
 use wasmer_wast::Wast;
 
-// The generated tests (from build.rs) look like:
-// #[cfg(test)]
-// mod [compiler] {
-//     mod [spec] {
-//         mod [vfs] {
-//             #[test]
-//             fn [test_name]() -> anyhow::Result<()> {
-//                 crate::run_wasi("tests/spectests/[test_name].wast", "[compiler]", WasiFileSystemKind::[vfs])
-//             }
-//         }
-//     }
-// }
 include!(concat!(env!("OUT_DIR"), "/generated_spectests.rs"));
 
-pub fn run_wast(
-    mut config: crate::Config,
-    wast_path: &str,
-) -> anyhow::Result<()> {
-    println!("Running wast `{}`", wast_path);
+pub fn run_wast(mut config: crate::Config, wast_path: &str) -> anyhow::Result<()> {
+    println!("Running wast `{wast_path}`");
     let try_nan_canonicalization = wast_path.contains("nan-canonicalization");
     let mut features = Features::default();
     let is_bulkmemory = wast_path.contains("bulk-memory");
     let is_simd = wast_path.contains("simd");
+    let is_relaxed_simd = wast_path.contains("relaxed_");
     let is_threads = wast_path.contains("threads");
+    let is_exception_handling = wast_path.contains("exceptions")
+        || wast_path.contains("exception-handling")
+        || wast_path.ends_with("exports.wast")
+        || wast_path.ends_with("imports.wast")
+        || wast_path.ends_with("try_table.wast")
+        || wast_path.ends_with("tag.wast")
+        || wast_path.ends_with("throw.wast")
+        || wast_path.ends_with("throw_ref.wast")
+        || wast_path.ends_with("imports.wast");
+    let is_wide_arithmetic = wast_path.contains("wide-arithmetic");
+    let is_unaligned_memory = wast_path.contains("unaligned-memory");
+
+    let is_tail_call = wast_path.contains("return_call") || wast_path.ends_with("try_table.wast");
+
     if is_bulkmemory {
         features.bulk_memory(true);
     }
     if is_simd {
         features.simd(true);
     }
+    if is_relaxed_simd {
+        features.relaxed_simd(true);
+    }
     if is_threads {
         features.threads(true);
     }
-    if config.compiler == crate::Compiler::Singlepass {
-        features.multi_value(false);
+    if is_exception_handling {
+        features.exceptions(true);
+    }
+    if is_wide_arithmetic {
+        features.wide_arithmetic(true);
+    }
+    if is_tail_call {
+        features.tail_call(true);
     }
     config.set_features(features);
     config.set_nan_canonicalization(try_nan_canonicalization);
+    if is_unaligned_memory {
+        config.set_allow_unaligned_memory_accesses(true);
+    }
 
     let store = config.store();
     let mut wast = Wast::new_with_spectest(store);
@@ -48,35 +60,116 @@ pub fn run_wast(
     // shepherd that information out.
     wast.allow_trap_message("uninitialized element 2", "uninitialized element");
     // `liking.wast` has different wording but the same meaning
+    wast.allow_trap_message("out of bounds memory access", "memory out of bounds");
+    // V8-specific
     wast.allow_trap_message(
-        "out of bounds memory access",
-        "memory out of bounds",
+        "uninitialized element",
+        "null function or function signature mismatch",
     );
+    wast.allow_trap_message("out of bounds table access", "table index is out of bounds");
+    wast.allow_trap_message("out of bounds memory access", "memory access out of bounds");
+    wast.allow_trap_message("out of bounds memory access", "is out of bounds");
+    wast.allow_trap_message(
+        "out of bounds table access",
+        "element segment out of bounds",
+    );
+    wast.allow_trap_message(
+        "indirect call type mismatch",
+        "null function or function signature mismatch",
+    );
+    wast.allow_trap_message("undefined element", "table index is out of bounds");
+    wast.allow_trap_message(
+        "unaligned atomic",
+        "operation does not support unaligned accesses",
+    );
+    wast.allow_trap_message(
+        "invalid conversion to integer",
+        "float unrepresentable in integer range",
+    );
+    wast.allow_trap_message("integer divide by zero", "remainder by zero");
+    wast.allow_trap_message("integer divide by zero", "divide by zero");
+    wast.allow_trap_message("integer overflow", "divide result unrepresentable");
+    wast.allow_trap_message("integer overflow", "float unrepresentable in integer range");
+    wast.allow_trap_message("call stack exhausted", "Maximum call stack size exceeded");
+    wast.allow_trap_message("cast failure", "illegal cast");
+    wast.allow_trap_message(
+        "uninitialized element 2",
+        "null function or function signature mismatch",
+    );
+
     if cfg!(feature = "coverage") {
         wast.disable_assert_and_exhaustion();
     }
-    if is_simd {
-        // We allow this, so tests can be run properly for `simd_const` test.
-        wast.allow_instantiation_failures(&[
-            "Validation error: multiple tables",
-            "Validation error: unknown memory 0",
-            "Validation error: Invalid var_u32",
-        ]);
-    }
-    if is_threads {
-        // We allow this, so tests can be run properly for `simd_const` test.
-        wast.allow_instantiation_failures(&[
-            "Validation error: multiple tables",
-        ]);
-    }
-    if config.compiler == crate::Compiler::Singlepass {
-        // We don't support multivalue yet in singlepass
-        wast.allow_instantiation_failures(&[
-            "Validation error: invalid result arity: func type returns multiple values",
-            "Validation error: blocks, loops, and ifs may only produce a resulttype when multi-value is not enabled",
-            "Validation error: func type returns multiple values but the multi-value feature is not enabled",
-        ]);
-    }
+
+    wast.allow_instantiation_failures(&[
+        "Validation error: memory size must be at most",
+        "Validation error: function references",
+        "Validation error: tables with expression initializers require the function-references proposal",
+        "Validation error: heap types not supported without the gc feature",
+        "Validation error: rec group usage requires `gc` proposal to be enabled",
+        "Validation error: gc proposal must be enabled to use subtypes",
+        "Validation error: array indexed types not supported without the gc feature",
+        "Validation error: struct indexed types not supported without the gc feature",
+        // TODO: remove once added for Cranelift
+        "Unsupported feature: proposed tail-call operator ReturnCallIndirect",
+        "Validation error: multiple tables",
+        "Validation error: unknown memory 0",
+        "Validation error: invalid var_u32",
+        "Validation error: SIMD index out of bounds",
+        // Still needed as it requires GC feature!
+        "Validation error: constant expression required",
+        "Validation error: memory64 must be enabled for 64-bit memories",
+        "Validation error: memory64 must be enabled for 64-bit tables",
+        "Unsupported feature: unsupported init expr in element section",
+        "Insufficient resources: Table minimum",
+        "Insufficient resources: Table maximum",
+        // V8-specific
+        "Validation error: only numeric types are supported in function signatures: Unsupported ref type:",
+        "Validation error: Unsupported ref type:",
+        "Validation error: GC is not implemented yet",
+        "Validation error: 64bit memory not implemented yet",
+        "constant expression required",
+        "Validation error: exported names can't be made of digits only",
+        "Validation error: imported functions cannot be used as start functions",
+        "Validation error: ExternRef is not supported by this backend yet",
+    ]);
+    // V8 rejects creation of large table and memories.
+    wast.allow_directive_failures_at_line(
+        9,
+        "tests/wast/spec/table.wast",
+        "Validation error: Failed to create V8 module: null module reference returned from V8",
+    );
+    wast.allow_directive_failures_at_line(
+        8,
+        "tests/wast/spec/memory64.wast",
+        "Validation error: Failed to create V8 module: null module reference returned from V8",
+    );
+    wast.allow_directive_failures_at_line(
+        9,
+        "tests/wast/spec/memory64.wast",
+        "Validation error: Failed to create V8 module: null module reference returned from V8",
+    );
+    // V8 already supports Multi Memories extension
+    wast.allow_directive_failures_at_line(
+        317,
+        "tests/wast/spec/proposals/threads/imports.wast",
+        "expected module to fail to build",
+    );
+    wast.allow_directive_failures_at_line(
+        412,
+        "tests/wast/spec/proposals/threads/imports.wast",
+        "expected module to fail to build",
+    );
+    wast.allow_directive_failures_at_line(
+        14,
+        "tests/wast/spec/proposals/threads/memory.wast",
+        "expected module to fail to build",
+    );
+    wast.allow_directive_failures_at_line(
+        15,
+        "tests/wast/spec/proposals/threads/memory.wast",
+        "expected module to fail to build",
+    );
     wast.fail_fast = false;
     let path = Path::new(wast_path);
     wast.run_file(path)

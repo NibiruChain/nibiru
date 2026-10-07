@@ -13,9 +13,9 @@ use std::fmt;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::{BlockType as WpTypeOrFuncType, Operator};
 use wasmer::{
-    AsStoreMut, ExportIndex, FunctionMiddleware, GlobalInit, GlobalType,
-    Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware, Mutability, Type,
+    AsStoreMut, ExportIndex, GlobalInit, GlobalType, Instance, LocalFunctionIndex, Mutability,
+    Type,
+    sys::{FunctionMiddleware, MiddlewareError, MiddlewareReaderState, ModuleMiddleware},
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
@@ -60,7 +60,7 @@ impl fmt::Debug for MeteringGlobalIndexes {
 ///
 /// ```rust
 /// use std::sync::Arc;
-/// use wasmer::{wasmparser::Operator, CompilerConfig};
+/// use wasmer::{wasmparser::Operator, sys::CompilerConfig};
 /// use wasmer_middlewares::Metering;
 ///
 /// fn create_metering_middleware(compiler_config: &mut dyn CompilerConfig) {
@@ -148,14 +148,12 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> fmt::Debug for Metering<F> {
     }
 }
 
-impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware
-    for Metering<F>
-{
+impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware for Metering<F> {
     /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionMetering {
             cost_function: self.cost_function.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
@@ -164,14 +162,13 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware
     }
 
     /// Transforms a `ModuleInfo` struct in-place. This is called before application on functions begins.
-    fn transform_module_info(
-        &self,
-        module_info: &mut ModuleInfo,
-    ) -> Result<(), MiddlewareError> {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         if global_indexes.is_some() {
-            panic!("Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules.");
+            panic!(
+                "Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules."
+            );
         }
 
         // Append a global for remaining points and initialize it.
@@ -256,10 +253,8 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> fmt::Debug for FunctionMetering<F> {
     }
 }
 
-impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
-    for FunctionMetering<F>
-{
-    fn feed<'a>(
+impl<'a, F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware<'a> for FunctionMetering<F> {
+    fn feed(
         &mut self,
         operator: Operator<'a>,
         state: &mut MiddlewareReaderState<'a>,
@@ -274,10 +269,7 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
             state.extend(&[
                 // if unsigned(globals[remaining_points_index]) < unsigned(self.accumulated_cost) { throw(); }
                 Operator::GlobalGet {
-                    global_index: self
-                        .global_indexes
-                        .remaining_points()
-                        .as_u32(),
+                    global_index: self.global_indexes.remaining_points().as_u32(),
                 },
                 Operator::I64Const {
                     value: self.accumulated_cost as i64,
@@ -288,29 +280,20 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
                 },
                 Operator::I32Const { value: 1 },
                 Operator::GlobalSet {
-                    global_index: self
-                        .global_indexes
-                        .points_exhausted()
-                        .as_u32(),
+                    global_index: self.global_indexes.points_exhausted().as_u32(),
                 },
                 Operator::Unreachable,
                 Operator::End,
                 // globals[remaining_points_index] -= self.accumulated_cost;
                 Operator::GlobalGet {
-                    global_index: self
-                        .global_indexes
-                        .remaining_points()
-                        .as_u32(),
+                    global_index: self.global_indexes.remaining_points().as_u32(),
                 },
                 Operator::I64Const {
                     value: self.accumulated_cost as i64,
                 },
                 Operator::I64Sub,
                 Operator::GlobalSet {
-                    global_index: self
-                        .global_indexes
-                        .remaining_points()
-                        .as_u32(),
+                    global_index: self.global_indexes.remaining_points().as_u32(),
                 },
             ]);
 
@@ -322,14 +305,14 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
     }
 }
 
-/// Get the remaining points in an [`Instance`][wasmer::Instance].
+/// Get the remaining points in an [`Instance`].
 ///
 /// Note: This can be used in a headless engine after an ahead-of-time
 /// compilation as all required state lives in the instance.
 ///
 /// # Panic
 ///
-/// The [`Instance`][wasmer::Instance) must have been processed with
+/// The [`Instance`] must have been processed with
 /// the [`Metering`] middleware at compile time, otherwise this will
 /// panic.
 ///
@@ -346,19 +329,14 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
 ///     matches!(get_remaining_points(store, instance), MeteringPoints::Remaining(points) if points > 0)
 /// }
 /// ```
-pub fn get_remaining_points(
-    ctx: &mut impl AsStoreMut,
-    instance: &Instance,
-) -> MeteringPoints {
+pub fn get_remaining_points(ctx: &mut impl AsStoreMut, instance: &Instance) -> MeteringPoints {
     let exhausted: i32 = instance
         .exports
         .get_global("wasmer_metering_points_exhausted")
         .expect("Can't get `wasmer_metering_points_exhausted` from Instance")
         .get(ctx)
         .try_into()
-        .expect(
-            "`wasmer_metering_points_exhausted` from Instance has wrong type",
-        );
+        .expect("`wasmer_metering_points_exhausted` from Instance has wrong type");
 
     if exhausted > 0 {
         return MeteringPoints::Exhausted;
@@ -370,22 +348,19 @@ pub fn get_remaining_points(
         .expect("Can't get `wasmer_metering_remaining_points` from Instance")
         .get(ctx)
         .try_into()
-        .expect(
-            "`wasmer_metering_remaining_points` from Instance has wrong type",
-        );
+        .expect("`wasmer_metering_remaining_points` from Instance has wrong type");
 
     MeteringPoints::Remaining(points)
 }
 
-/// Set the new provided remaining points in an
-/// [`Instance`][wasmer::Instance].
+/// Set the new provided remaining points in an [`Instance`].
 ///
 /// Note: This can be used in a headless engine after an ahead-of-time
 /// compilation as all required state lives in the instance.
 ///
 /// # Panic
 ///
-/// The given [`Instance`][wasmer::Instance] must have been processed
+/// The given [`Instance`] must have been processed
 /// with the [`Metering`] middleware at compile time, otherwise this
 /// will panic.
 ///
@@ -403,11 +378,7 @@ pub fn get_remaining_points(
 ///     set_remaining_points(store, instance, new_limit);
 /// }
 /// ```
-pub fn set_remaining_points(
-    ctx: &mut impl AsStoreMut,
-    instance: &Instance,
-    points: u64,
-) {
+pub fn set_remaining_points(ctx: &mut impl AsStoreMut, instance: &Instance, points: u64) {
     instance
         .exports
         .get_global("wasmer_metering_remaining_points")
@@ -423,15 +394,18 @@ pub fn set_remaining_points(
         .expect("Can't set `wasmer_metering_points_exhausted` in Instance");
 }
 
-#[cfg(test)]
+// These tests exercise compiler middleware support, which the V8 backend used
+// by the Windows test configuration does not provide.
+#[cfg(all(test, not(target_os = "windows")))]
 mod tests {
     use super::*;
 
     use std::sync::Arc;
     use wasmer::sys::EngineBuilder;
     use wasmer::{
-        imports, wat2wasm, CompilerConfig, Cranelift, Module, Store,
-        TypedFunction,
+        Module, Store, TypedFunction, imports,
+        sys::{CompilerConfig, Cranelift},
+        wat2wasm,
     };
 
     fn cost_function(operator: &Operator) -> u64 {
@@ -617,8 +591,7 @@ mod tests {
             .unwrap();
         short_loop.call(&mut store).unwrap();
 
-        let points_used: u64 = match get_remaining_points(&mut store, &instance)
-        {
+        let points_used: u64 = match get_remaining_points(&mut store, &instance) {
             MeteringPoints::Exhausted => panic!("Unexpected exhausted"),
             MeteringPoints::Remaining(remaining) => INITIAL_POINTS - remaining,
         };

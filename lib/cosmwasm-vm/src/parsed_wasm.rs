@@ -137,7 +137,8 @@ impl<'a> ParsedWasm<'a> {
                                     );
                                 }
                                 CompositeInnerType::Array(_)
-                                | CompositeInnerType::Struct(_) => {
+                                | CompositeInnerType::Struct(_)
+                                | CompositeInnerType::Cont(_) => {
                                     // ignoring these for now, as they are only available with the GC
                                     // proposal and we explicitly disabled that above
                                 }
@@ -164,7 +165,7 @@ impl<'a> ParsedWasm<'a> {
                 Payload::Version { num, .. } => this.version = num,
                 Payload::ImportSection(i) => {
                     this.imports =
-                        i.into_iter().collect::<Result<Vec<_>, _>>()?;
+                        i.into_imports().collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::TableSection(t) => {
                     this.tables = t

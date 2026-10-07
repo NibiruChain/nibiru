@@ -141,11 +141,6 @@ detect_os_name() {
 
 # detect_arch_name: Platform lib directory suffix used by build.mk.
 detect_arch_name() {
-  local os_name="$1"
-  if [[ "$os_name" == "darwin" ]]; then
-    printf '%s' "all"
-    return 0
-  fi
   local arch
   if [[ -n "${GOARCH:-}" ]]; then
     arch="$GOARCH"
@@ -218,37 +213,11 @@ ensure_temp_dir() {
   mkdir -p "$tempdir"
 }
 
-# ensure_wasmvm_lib: Download wasmvm static lib if missing.
+# ensure_wasmvm_lib: Build the vendored runtime and validate its source cache.
 ensure_wasmvm_lib() {
-  local tempdir="$1"
-  local os_name="$2"
-  local arch_name="$3"
-  local wasmvm_version="$4"
-
-  local lib_dir wasmvm_gh_tag wasmvm_gh_tag_url base_url
-  lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-  wasmvm_gh_tag="lib/wasmvm/${wasmvm_version}"
-  wasmvm_gh_tag_url=$(jq -nr --arg s "$wasmvm_gh_tag" '$s|@uri')
-  base_url="https://github.com/NibiruChain/nibiru/releases/download/${wasmvm_gh_tag_url}"
-
-  mkdir -p "$lib_dir"
-
-  # shellcheck disable=SC2086
-  if compgen -G "$lib_dir/libwasmvm*.a" >/dev/null; then
-    return 0
-  fi
-
-  log_info "downloading wasmvm v$wasmvm_version (${os_name}_${arch_name})"
-  if [[ "$os_name" == "darwin" ]]; then
-    wget "${base_url}/libwasmvmstatic_darwin.a" \
-      -O "$lib_dir/libwasmvmstatic_darwin.a"
-  elif [[ "$arch_name" == "amd64" ]]; then
-    wget "${base_url}/libwasmvm_muslc.x86_64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
-  else
-    wget "${base_url}/libwasmvm_muslc.aarch64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
-  fi
+  local tempdir="$1" os_name="$2" arch_name="$3" wasmvm_version="$4"
+  "$SCRIPT_DIR/build-wasmvm-source.sh" "$os_name" "$arch_name" \
+    "$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
 }
 
 verify_go_modules() {
@@ -349,11 +318,14 @@ main() {
   local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv static_pie
 
   os_name="$(detect_os_name)"
+  if [[ "$os_name" == darwin ]]; then
+    export MACOSX_DEPLOYMENT_TARGET=14.5
+  fi
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="v1.12.0" # tag name `lib/wasmvm/v*`
+  wasmvm_version="source" # source-hash-validated native library cache
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
   static_pie="${NIBID_STATIC_PIE:-false}"

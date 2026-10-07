@@ -1,21 +1,22 @@
 // This file contains code from external sources.
 // Attributions: https://github.com/wasmerio/wasmer/blob/main/docs/ATTRIBUTIONS.md
 use super::state::ModuleTranslationState;
-use crate::lib::std::string::ToString;
-use crate::lib::std::{boxed::Box, string::String, vec::Vec};
 use crate::translate_module;
 use crate::wasmparser::{Operator, ValType};
+use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
 use std::ops::Range;
-use wasmer_types::entity::PrimaryMap;
+use std::string::ToString;
+use std::{boxed::Box, string::String, sync::Arc, vec::Vec};
 use wasmer_types::FunctionType;
-use wasmer_types::WasmResult;
+use wasmer_types::entity::PrimaryMap;
 use wasmer_types::{
-    CustomSectionIndex, DataIndex, DataInitializer, DataInitializerLocation,
-    ElemIndex, ExportIndex, FunctionIndex, GlobalIndex, GlobalInit, GlobalType,
-    ImportIndex, LocalFunctionIndex, MemoryIndex, MemoryType, ModuleInfo,
-    SignatureIndex, TableIndex, TableInitializer, TableType,
+    CustomSectionIndex, DataIndex, DataInitializer, DataInitializerLocation, ElemIndex,
+    ExportIndex, FunctionIndex, GlobalIndex, GlobalInit, GlobalType, ImportIndex, InitExpr,
+    LocalFunctionIndex, MemoryIndex, MemoryType, ModuleInfo, SignatureHash, SignatureIndex,
+    TableIndex, TableInitializer, TableType,
 };
+use wasmer_types::{TagIndex, WasmResult};
 
 /// Contains function data: bytecode and its offset in the module.
 #[derive(Hash)]
@@ -24,7 +25,7 @@ pub struct FunctionBodyData<'a> {
     pub data: &'a [u8],
 
     /// Body offset relative to the module file.
-    pub module_offset: usize,
+    pub module_offset: u64,
 }
 
 /// Trait for iterating over the operators of a Wasm Function
@@ -63,8 +64,7 @@ pub struct ModuleEnvironment<'data> {
     pub module: ModuleInfo,
 
     /// References to the function bodies.
-    pub function_body_inputs:
-        PrimaryMap<LocalFunctionIndex, FunctionBodyData<'data>>,
+    pub function_body_inputs: PrimaryMap<LocalFunctionIndex, FunctionBodyData<'data>>,
 
     /// References to the data initializers.
     pub data_initializers: Vec<DataInitializer<'data>>,
@@ -89,16 +89,13 @@ impl<'data> ModuleEnvironment<'data> {
     pub fn translate(mut self, data: &'data [u8]) -> WasmResult<Self> {
         assert!(self.module_translation_state.is_none());
         let module_translation_state = translate_module(data, &mut self)?;
+        self.module.validate_signature_hashes()?;
         self.module_translation_state = Some(module_translation_state);
 
         Ok(self)
     }
 
-    pub(crate) fn declare_export(
-        &mut self,
-        export: ExportIndex,
-        name: &str,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_export(&mut self, export: ExportIndex, name: &str) -> WasmResult<()> {
         self.module.exports.insert(String::from(name), export);
         Ok(())
     }
@@ -128,12 +125,11 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
-    pub(crate) fn declare_signature(
-        &mut self,
-        sig: FunctionType,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_signature(&mut self, sig: FunctionType) -> WasmResult<()> {
         // TODO: Deduplicate signatures.
+        let signature_hash = SignatureHash::new(sig.signature_hash());
         self.module.signatures.push(sig);
+        self.module.signature_hashes.push(signature_hash);
         Ok(())
     }
 
@@ -160,6 +156,39 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
+    pub(crate) fn declare_tag_import(
+        &mut self,
+        t: wasmparser::TagType,
+        module_name: &str,
+        field_name: &str,
+    ) -> WasmResult<()> {
+        debug_assert_eq!(
+            self.module.tags.len(),
+            self.module.num_imported_tags,
+            "Imported tags must be declared first"
+        );
+
+        let tag = SignatureIndex::from_u32(t.func_type_idx);
+        debug_assert!(
+            self.module
+                .signatures
+                .get(SignatureIndex::from_u32(t.func_type_idx))
+                .is_some(),
+            "Imported tags must mach a declared signature!"
+        );
+
+        self.declare_import(
+            ImportIndex::Tag(TagIndex::from_u32(self.module.num_imported_tags as _)),
+            module_name,
+            field_name,
+        )?;
+
+        self.module.num_imported_tags += 1;
+        self.module.tags.push(tag);
+
+        Ok(())
+    }
+
     pub(crate) fn declare_table_import(
         &mut self,
         table: TableType,
@@ -172,9 +201,7 @@ impl<'data> ModuleEnvironment<'data> {
             "Imported tables must be declared first"
         );
         self.declare_import(
-            ImportIndex::Table(TableIndex::from_u32(
-                self.module.num_imported_tables as _,
-            )),
+            ImportIndex::Table(TableIndex::from_u32(self.module.num_imported_tables as _)),
             module,
             field,
         )?;
@@ -218,9 +245,7 @@ impl<'data> ModuleEnvironment<'data> {
             "Imported globals must be declared first"
         );
         self.declare_import(
-            ImportIndex::Global(GlobalIndex::from_u32(
-                self.module.num_imported_globals as _,
-            )),
+            ImportIndex::Global(GlobalIndex::from_u32(self.module.num_imported_globals as _)),
             module,
             field,
         )?;
@@ -242,10 +267,7 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
-    pub(crate) fn declare_func_type(
-        &mut self,
-        sig_index: SignatureIndex,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_func_type(&mut self, sig_index: SignatureIndex) -> WasmResult<()> {
         self.module.functions.push(sig_index);
         Ok(())
     }
@@ -269,11 +291,20 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
-    pub(crate) fn declare_memory(
-        &mut self,
-        memory: MemoryType,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_memory(&mut self, memory: MemoryType) -> WasmResult<()> {
         self.module.memories.push(memory);
+        Ok(())
+    }
+
+    pub(crate) fn reserve_tags(&mut self, num: u32) -> WasmResult<()> {
+        self.module
+            .tags
+            .reserve_exact(usize::try_from(num).unwrap());
+        Ok(())
+    }
+
+    pub(crate) fn declare_tag(&mut self, tag: SignatureIndex) -> WasmResult<()> {
+        self.module.tags.push(tag);
         Ok(())
     }
 
@@ -323,6 +354,10 @@ impl<'data> ModuleEnvironment<'data> {
         self.declare_export(ExportIndex::Memory(memory_index), name)
     }
 
+    pub(crate) fn declare_tag_export(&mut self, tag_index: TagIndex, name: &str) -> WasmResult<()> {
+        self.declare_export(ExportIndex::Tag(tag_index), name)
+    }
+
     pub(crate) fn declare_global_export(
         &mut self,
         global_index: GlobalIndex,
@@ -331,19 +366,13 @@ impl<'data> ModuleEnvironment<'data> {
         self.declare_export(ExportIndex::Global(global_index), name)
     }
 
-    pub(crate) fn declare_start_function(
-        &mut self,
-        func_index: FunctionIndex,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_start_function(&mut self, func_index: FunctionIndex) -> WasmResult<()> {
         debug_assert!(self.module.start_function.is_none());
         self.module.start_function = Some(func_index);
         Ok(())
     }
 
-    pub(crate) fn reserve_table_initializers(
-        &mut self,
-        num: u32,
-    ) -> WasmResult<()> {
+    pub(crate) fn reserve_table_initializers(&mut self, num: u32) -> WasmResult<()> {
         self.module
             .table_initializers
             .reserve_exact(usize::try_from(num).unwrap());
@@ -353,14 +382,12 @@ impl<'data> ModuleEnvironment<'data> {
     pub(crate) fn declare_table_initializers(
         &mut self,
         table_index: TableIndex,
-        base: Option<GlobalIndex>,
-        offset: usize,
+        offset_expr: InitExpr,
         elements: Box<[FunctionIndex]>,
     ) -> WasmResult<()> {
         self.module.table_initializers.push(TableInitializer {
             table_index,
-            base,
-            offset,
+            offset_expr,
             elements,
         });
         Ok(())
@@ -384,7 +411,7 @@ impl<'data> ModuleEnvironment<'data> {
         &mut self,
         _module_translation_state: &ModuleTranslationState,
         body_bytes: &'data [u8],
-        body_offset: usize,
+        body_offset: u64,
     ) -> WasmResult<()> {
         self.function_body_inputs.push(FunctionBodyData {
             data: body_bytes,
@@ -393,10 +420,7 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
-    pub(crate) fn reserve_data_initializers(
-        &mut self,
-        num: u32,
-    ) -> WasmResult<()> {
+    pub(crate) fn reserve_data_initializers(&mut self, num: u32) -> WasmResult<()> {
         self.data_initializers
             .reserve_exact(usize::try_from(num).unwrap());
         Ok(())
@@ -405,24 +429,22 @@ impl<'data> ModuleEnvironment<'data> {
     pub(crate) fn declare_data_initialization(
         &mut self,
         memory_index: MemoryIndex,
-        base: Option<GlobalIndex>,
-        offset: usize,
+        offset_expr: InitExpr,
         data: &'data [u8],
     ) -> WasmResult<()> {
         self.data_initializers.push(DataInitializer {
             location: DataInitializerLocation {
                 memory_index,
-                base,
-                offset,
+                offset_expr,
             },
             data,
         });
         Ok(())
     }
 
-    pub(crate) fn reserve_passive_data(&mut self, count: u32) -> WasmResult<()> {
-        let count = usize::try_from(count).unwrap();
-        self.module.passive_data.reserve(count);
+    pub(crate) fn reserve_passive_data(&mut self, _count: u32) -> WasmResult<()> {
+        // `passive_data` is a `BTreeMap`, which does not require reserving
+        // capacity before insertion.
         Ok(())
     }
 
@@ -431,7 +453,7 @@ impl<'data> ModuleEnvironment<'data> {
         data_index: DataIndex,
         data: &'data [u8],
     ) -> WasmResult<()> {
-        let old = self.module.passive_data.insert(data_index, Box::from(data));
+        let old = self.module.passive_data.insert(data_index, Arc::from(data));
         debug_assert!(
             old.is_none(),
             "a module can't have duplicate indices, this would be a wasmer-compiler bug"
@@ -439,22 +461,16 @@ impl<'data> ModuleEnvironment<'data> {
         Ok(())
     }
 
-    pub(crate) fn declare_module_name(
-        &mut self,
-        name: &'data str,
-    ) -> WasmResult<()> {
+    pub(crate) fn declare_module_name(&mut self, name: &'data str) -> WasmResult<()> {
         self.module.name = Some(name.to_string());
         Ok(())
     }
 
-    pub(crate) fn declare_function_name(
+    pub(crate) fn declare_function_names(
         &mut self,
-        func_index: FunctionIndex,
-        name: &'data str,
+        functions: HashMap<FunctionIndex, String>,
     ) -> WasmResult<()> {
-        self.module
-            .function_names
-            .insert(func_index, name.to_string());
+        self.module.function_names = functions;
         Ok(())
     }
 
@@ -470,11 +486,7 @@ impl<'data> ModuleEnvironment<'data> {
     }
 
     /// Indicates that a custom section has been found in the wasm file
-    pub(crate) fn custom_section(
-        &mut self,
-        name: &'data str,
-        data: &'data [u8],
-    ) -> WasmResult<()> {
+    pub(crate) fn custom_section(&mut self, name: &'data str, data: &'data [u8]) -> WasmResult<()> {
         let custom_section = CustomSectionIndex::from_u32(
             self.module.custom_sections_data.len().try_into().unwrap(),
         );

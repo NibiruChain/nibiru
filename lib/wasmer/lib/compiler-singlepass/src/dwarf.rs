@@ -1,13 +1,12 @@
 use gimli::{
-    write::{Address, EndianVec, Result, Writer},
     RunTimeEndian, SectionId,
+    write::{Address, EndianVec, Result, Writer},
 };
 use wasmer_compiler::types::{
     relocation::{Relocation, RelocationKind, RelocationTarget},
     section::{CustomSection, CustomSectionProtection, SectionBody},
-    target::Endianness,
 };
-use wasmer_types::{entity::EntityRef, LocalFunctionIndex};
+use wasmer_types::{LocalFunctionIndex, entity::EntityRef, target::Endianness};
 
 #[derive(Clone, Debug)]
 pub struct WriterRelocate {
@@ -36,6 +35,7 @@ impl WriterRelocate {
         let data = self.writer.into_vec();
         CustomSection {
             protection: CustomSectionProtection::Read,
+            alignment: None,
             bytes: SectionBody::new_with_vec(data),
             relocations: self.relocs,
         }
@@ -69,15 +69,11 @@ impl Writer for WriterRelocate {
                 if symbol == Self::FUNCTION_SYMBOL {
                     // We use the addend to detect the function index
                     let function_index = LocalFunctionIndex::new(addend as _);
-                    let reloc_target =
-                        RelocationTarget::LocalFunc(function_index);
+                    let reloc_target = RelocationTarget::LocalFunc(function_index);
                     let offset = self.len() as u32;
                     let kind = match size {
                         8 => RelocationKind::Abs8,
-                        _ => unimplemented!(
-                            "dwarf relocation size not yet supported: {}",
-                            size
-                        ),
+                        _ => unimplemented!("dwarf relocation size not yet supported: {}", size),
                     };
                     let addend = 0;
                     self.relocs.push(Relocation {
@@ -94,12 +90,7 @@ impl Writer for WriterRelocate {
         }
     }
 
-    fn write_offset(
-        &mut self,
-        _val: usize,
-        _section: SectionId,
-        _size: u8,
-    ) -> Result<()> {
+    fn write_offset(&mut self, _val: usize, _section: SectionId, _size: u8) -> Result<()> {
         unimplemented!("write_offset not yet implemented");
     }
 

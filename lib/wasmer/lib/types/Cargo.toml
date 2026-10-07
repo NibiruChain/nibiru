@@ -1,7 +1,7 @@
 [package]
 name = "wasmer-types"
 description = "Wasmer Common Types"
-categories = ["wasm", "no-std", "data-structures"]
+categories = ["wasm", "data-structures"]
 keywords = ["wasm", "webassembly", "types"]
 license = "MIT OR Apache-2.0 WITH LLVM-exception"
 readme = "README.md"
@@ -13,33 +13,35 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-serde = { version = "1.0", features = [
-	"derive",
-	"rc",
-], optional = true, default-features = false }
-serde_bytes = { version = "0.11", optional = true }
-thiserror = "1.0"
-more-asserts = "0.2"
-indexmap = { workspace = true }
-rkyv = { workspace = true }
-enum-iterator = "0.7.0"
-target-lexicon = { workspace = true}
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+serde_bytes = { workspace = true, optional = true }
+thiserror.workspace = true
+more-asserts.workspace = true
+indexmap.workspace = true
+rkyv.workspace = true
+enum-iterator.workspace = true
+target-lexicon = { workspace = true }
 enumset.workspace = true
-bytecheck = "0.6.8"
-xxhash-rust = { version = "0.8.8", features = ["xxh64"] }
-sha2 = { version = "0.10" }
-hex = { version = "^0.4" }
-loupe = { version = "0.1.3", optional = true }
-
+bytecheck.workspace = true
+sha2.workspace = true
+hex.workspace = true
+loupe = { workspace = true, optional = true }
+wasmparser = { workspace = true, default-features = false, optional = true }
+itertools.workspace = true
+crc32fast.workspace = true
 
 # `rand` uses `getrandom` transitively, and to be able to
 # compile the project for `js`, we need to enable this feature
 [dependencies.getrandom]
-version = "0.2.14"
-features = ["js"]
+workspace = true
+features = ["wasm_js"]
 
 [dev-dependencies]
-memoffset.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "store_id_alloc"
+harness = false
 
 [features]
 default = ["std"]
@@ -47,6 +49,7 @@ std = []
 core = []
 enable-serde = ["serde", "serde/std", "serde_bytes", "indexmap/serde"]
 artifact-size = ["dep:loupe"]
+detect-wasm-features = ["dep:wasmparser"]
 
 [package.metadata.docs.rs]
 rustc-args = ["--cfg", "docsrs"]

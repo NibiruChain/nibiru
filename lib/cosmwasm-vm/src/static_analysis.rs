@@ -75,7 +75,7 @@ mod tests {
     use crate::VmError;
 
     use super::*;
-    use wasmer::{Cranelift, Store};
+    use wasmer::{sys::Cranelift, Store};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");

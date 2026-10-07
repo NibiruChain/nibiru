@@ -36,31 +36,41 @@ fn compiler_test_impl(attrs: TokenStream, input: TokenStream) -> TokenStream {
 
     let ignores = crate::ignores::Ignores::build_from_path(ignores_txt_path);
 
-    let should_ignore =
-        |test_name: &str, compiler_name: &str, engine_name: &str| {
-            let compiler_name = compiler_name.to_lowercase();
-            let engine_name = engine_name.to_lowercase();
-            // We construct the path manually because we can't get the
-            // source_file location from the `Span` (it's only available in nightly)
-            let full_path = format!(
-                "{}::{}::{}::{}",
-                quote! { #path },
-                test_name,
-                compiler_name,
-                engine_name
-            )
-            .replace(' ', "");
+    let should_ignore = |test_name: &str, compiler_name: &str, engine_name: &str| {
+        let compiler_name = compiler_name.to_lowercase();
+        let engine_name = engine_name.to_lowercase();
+        // We construct the path manually because we can't get the
+        // source_file location from the `Span` (it's only available in nightly)
+        let full_path = format!(
+            "{}::{}::{}::{}",
+            quote! { #path },
+            test_name,
+            compiler_name,
+            engine_name
+        )
+        .replace(' ', "");
 
-            // println!("{} -> Should ignore: {}", full_path, should_ignore);
-            ignores.should_ignore_host(&engine_name, &compiler_name, &full_path)
-        };
+        // println!("{} -> Should ignore: {}", full_path, should_ignore);
+        ignores.should_ignore_host(&engine_name, &compiler_name, &full_path)
+    };
     let construct_engine_test = |func: &::syn::ItemFn,
                                  compiler_name: &str,
                                  engine_name: &str,
-                                 engine_feature_name: &str|
+                                 engine_feature_name: &str,
+                                 experimental_artifact: bool|
      -> ::proc_macro2::TokenStream {
         let config_compiler = ::quote::format_ident!("{}", compiler_name);
         let test_name = ::quote::format_ident!("{}", engine_name.to_lowercase());
+        let config = if experimental_artifact {
+            quote! {
+                crate::Config::new(crate::Compiler::#config_compiler)
+                    .with_experimental_artifact()
+            }
+        } else {
+            quote! { crate::Config::new(crate::Compiler::#config_compiler) }
+        };
+        let experimental_artifact_cfg =
+            experimental_artifact.then(|| quote! { #[cfg(target_os = "linux")] });
         let mut new_sig = func.sig.clone();
         let attrs = func
             .attrs
@@ -73,8 +83,9 @@ fn compiler_test_impl(attrs: TokenStream, input: TokenStream) -> TokenStream {
             #[test_log::test]
             #attrs
             #[cfg(feature = #engine_feature_name)]
+            #experimental_artifact_cfg
             #new_sig {
-                #fn_name(crate::Config::new(crate::Compiler::#config_compiler))
+                #fn_name(#config)
             }
         };
         if should_ignore(
@@ -92,28 +103,42 @@ fn compiler_test_impl(attrs: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
-    let construct_compiler_test = |func: &::syn::ItemFn,
-                                   compiler_name: &str|
-     -> ::proc_macro2::TokenStream {
-        let mod_name =
-            ::quote::format_ident!("{}", compiler_name.to_lowercase());
-        let universal_engine_test =
-            construct_engine_test(func, compiler_name, "Universal", "universal");
-        let compiler_name_lowercase = compiler_name.to_lowercase();
+    let construct_compiler_test =
+        |func: &::syn::ItemFn, compiler_name: &str| -> ::proc_macro2::TokenStream {
+            let mod_name = ::quote::format_ident!("{}", compiler_name.to_lowercase());
+            let engine_test = construct_engine_test(
+                func,
+                compiler_name,
+                compiler_name,
+                &compiler_name.to_lowercase(),
+                false,
+            );
+            let experimental_artifact_test = (compiler_name != "V8").then(|| {
+                construct_engine_test(
+                    func,
+                    compiler_name,
+                    &format!("{compiler_name}_exp_artifact"),
+                    &compiler_name.to_lowercase(),
+                    true,
+                )
+            });
+            let compiler_name_lowercase = compiler_name.to_lowercase();
 
-        quote! {
-            #[cfg(feature = #compiler_name_lowercase)]
-            mod #mod_name {
-                use super::*;
+            quote! {
+                #[cfg(feature = #compiler_name_lowercase)]
+                mod #mod_name {
+                    use super::*;
 
-                #universal_engine_test
+                    #engine_test
+                    #experimental_artifact_test
+                }
             }
-        }
-    };
+        };
 
     let singlepass_compiler_test = construct_compiler_test(&my_fn, "Singlepass");
     let cranelift_compiler_test = construct_compiler_test(&my_fn, "Cranelift");
     let llvm_compiler_test = construct_compiler_test(&my_fn, "LLVM");
+    let v8_compiler_test = construct_compiler_test(&my_fn, "V8");
 
     // We remove the method decorators
     my_fn.attrs = vec![];
@@ -129,6 +154,7 @@ fn compiler_test_impl(attrs: TokenStream, input: TokenStream) -> TokenStream {
             #singlepass_compiler_test
             #cranelift_compiler_test
             #llvm_compiler_test
+            #v8_compiler_test
         }
     };
 

@@ -5,7 +5,7 @@ FROM debian:12-slim
 
 RUN apt-get -o Acquire::Retries=5 update -y \
   && apt-get -o Acquire::Retries=5 install -y \
-    gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu wget clang
+    gcc make gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu wget clang llvm
 
 ENV RUSTUP_HOME=/usr/local/rustup \
   CARGO_HOME=/usr/local/cargo \
@@ -13,7 +13,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 
 RUN wget --no-verbose "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init" \
   && chmod +x rustup-init \
-  && ./rustup-init -y --no-modify-path --profile minimal --default-toolchain stable \
+  && ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.95.0 \
   && rm rustup-init \
   && chmod -R a+w $RUSTUP_HOME $CARGO_HOME \
   && rustup --version \
