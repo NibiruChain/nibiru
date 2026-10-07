@@ -17,13 +17,14 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 	}
 
 	openTradeMsgData := map[string]interface{}{
-		"market_index":     fmt.Sprintf("MarketIndex(%d)", params.MarketIndex),
-		"leverage":         strconv.FormatUint(params.Leverage, 10),
-		"long":             params.Long,
-		"collateral_index": fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
-		"trade_type":       params.TradeType,
-		"slippage_p":       params.SlippageP,
-		"is_evm_origin":    true, // Required when calling from EVM
+		"market_index":      fmt.Sprintf("MarketIndex(%d)", params.MarketIndex),
+		"leverage":          strconv.FormatUint(params.Leverage, 10),
+		"long":              params.Long,
+		"collateral_index":  fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
+		"collateral_amount": params.CollateralAmt.String(),
+		"trade_type":        params.TradeType,
+		"slippage_p":        params.SlippageP,
+		"is_evm_origin":     true, // Required when calling from EVM
 	}
 
 	// open_price is required by the contract for all trade types
@@ -357,14 +358,14 @@ func parsePositiveFloat(value, fieldName string) (float64, error) {
 	return parsed, nil
 }
 
-// buildCloseTradeMessage builds the close_trade_market message from trade index
+// buildCloseTradeMessage builds the close_trade message from trade index
 func (t *EVMTrader) buildCloseTradeMessage(tradeIndex uint64) ([]byte, error) {
 	closeTradeMsgData := map[string]interface{}{
 		"trade_index": fmt.Sprintf("UserTradeIndex(%d)", tradeIndex),
 	}
 
 	closeTradeMsg := map[string]interface{}{
-		"close_trade_market": closeTradeMsgData,
+		"close_trade": closeTradeMsgData,
 	}
 
 	return json.Marshal(closeTradeMsg)

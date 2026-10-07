@@ -117,6 +117,9 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		case <-tick.C:
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
+				if err := validateEVMResult(resp.TxResponse); err != nil {
+					return nil, err
+				}
 				return resp.TxResponse, nil
 			}
 		case <-timeout.C:
@@ -155,13 +158,13 @@ func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.I
 	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
 }
 
-// sendCloseTradeTransaction sends the close_trade_market transaction
+// sendCloseTradeTransaction sends the close_trade transaction
 func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte) (*sdk.TxResponse, error) {
 	// Build WASM execute call
 	wasmABI := getWasmPrecompileABI()
 	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
 
-	// No funds needed for close_trade_market
+	// No funds needed for close_trade
 	funds := []struct {
 		Denom  string
 		Amount *big.Int
@@ -223,4 +226,27 @@ Error code: %d`, currentOI, maxOI, pctUsed, code)
 
 	// Default error (show raw log)
 	return fmt.Errorf("transaction failed (code=%d)\n\nContract error:\n%s\n\nTip: Run 'trader list' to check market status", code, rawLog)
+}
+
+// Cosmos code zero does not imply EVM success. A reverted EVM call records its
+// failure in EventEthereumTx, even when the enclosing Cosmos transaction succeeds.
+func validateEVMResult(resp *sdk.TxResponse) error {
+	if resp.Code != 0 {
+		return parseContractError(resp.Code, resp.RawLog)
+	}
+	for _, event := range resp.Events {
+		if event.Type != "eth.evm.v1.EventEthereumTx" {
+			continue
+		}
+		parsed, err := sdk.ParseTypedEvent(event)
+		if err != nil {
+			return fmt.Errorf("parse EVM result: %w", err)
+		}
+		result := parsed.(*evm.EventEthereumTx)
+		if result.VmError != "" {
+			return fmt.Errorf("EVM execution failed: %s", result.VmError)
+		}
+		return nil
+	}
+	return fmt.Errorf("EVM result event missing for transaction %s", resp.TxHash)
 }
