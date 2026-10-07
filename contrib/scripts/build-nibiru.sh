@@ -141,11 +141,6 @@ detect_os_name() {
 
 # detect_arch_name: Platform lib directory suffix used by build.mk.
 detect_arch_name() {
-  local os_name="$1"
-  if [[ "$os_name" == "darwin" ]]; then
-    printf '%s' "all"
-    return 0
-  fi
   local arch
   if [[ -n "${GOARCH:-}" ]]; then
     arch="$GOARCH"

@@ -383,3 +383,7 @@ evm/passkey-bundler/.tmp
 evm-e2e/.nibid-*/
 evm-e2e/.passkey-*-privkey.txt
 evm-e2e/.passkey-*-wallet.json
+
+# Wasmer function environments are source code, not Python virtualenvs.
+!lib/wasmer/lib/api/src/entities/function/env/
+!lib/wasmer/lib/api/src/entities/function/env/*.rs
