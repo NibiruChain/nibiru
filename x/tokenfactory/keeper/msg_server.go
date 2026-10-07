@@ -3,6 +3,8 @@ package keeper
 import (
 	"context"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 
@@ -53,12 +55,12 @@ func (k Keeper) checkCreateDenomPermission(ctx sdk.Context, sender string) error
 	if err != nil {
 		return err
 	}
-	if err := k.sudoKeeper.CheckPermissions(senderAddr, ctx, ""); err == nil {
+	if err := k.sudoKeeper.CheckPermissions(senderAddr, ctx, sudo.RoleTFOper); err == nil {
 		return nil
 	}
 
 	return govtypes.ErrInvalidSigner.Wrapf(
-		"invalid signing authority, expected governance account %s or the x/sudo root. Sender was %s",
+		"invalid signing authority, expected governance account %s or x/sudo root/tf_oper member. Sender was %s",
 		k.authority, sender,
 	)
 }
@@ -345,7 +347,7 @@ func (k Keeper) BurnNative(
 
 // SudoSetDenomMetadata: sdk.Msg (TxMsg) enabling Nibiru's "sudoers" to change
 // bank metadata.
-// [SUDO] Only callable by root.
+// [SUDO] Only callable by root or a tf_oper member.
 //
 // Use Cases:
 //   - To define metadata for ICS20 assets brought
@@ -369,7 +371,7 @@ func (k Keeper) SudoSetDenomMetadata(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// Stateless field validation was already performed in msg.ValidateBasic()
 	senderAddr, _ := sdk.AccAddressFromBech32(txMsg.Sender)
-	if err = k.sudoKeeper.CheckPermissions(senderAddr, ctx, ""); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(senderAddr, ctx, sudo.RoleTFOper); err != nil {
 		return resp, err
 	}
 

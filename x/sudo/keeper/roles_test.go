@@ -99,7 +99,9 @@ func TestMigrateLegacySudoStatePreservesHooksAndZeroGas(t *testing.T) {
 	state, err := k.Sudoers.Get(ctx)
 	require.NoError(t, err)
 	require.Equal(t, root.String(), state.Root)
-	require.Empty(t, state.Roles)
+	require.Len(t, state.Roles, 2)
+	require.NoError(t, k.CheckPermissions(former, ctx, sudo.RoleTFOper))
+	require.NoError(t, k.CheckPermissions(former, ctx, sudo.RoleChainParams))
 	require.NotEqual(t, legacy, rawStore.Get(key))
 	require.Error(t, k.CheckPermissions(former, ctx, sudo.RoleWasmDeployer))
 	require.NoError(t, k.CheckPermissions(root, ctx, ""))
@@ -209,4 +211,65 @@ func TestGenesisNormalizesRoleAddressFormats(t *testing.T) {
 	require.ErrorIs(t, k.CheckPermissions(member, ctx, sudo.RoleWasmDeployer), sudo.ErrUnauthorized)
 	require.NoError(t, k.CheckPermissions(contract, ctx, sudo.RoleWasmDeployer))
 	require.NoError(t, k.ExportGenesis(ctx).Validate())
+}
+
+func TestLegacyMigrationNormalizesAndRejectsInvalidState(t *testing.T) {
+	root, eoa := testutil.NewAccAddress(), testutil.NewAccAddress()
+	contract := sdk.AccAddress(bytes.Repeat([]byte{9}, 32))
+	for _, members := range [][]string{
+		nil,
+		{root.String()},
+		{root.String(), eoa.String(), strings.ToUpper(eoa.String()), eth.NibiruAddrToEthAddr(eoa).Hex(), contract.String()},
+	} {
+		_, k, ctx := setup()
+		raw := protowire.AppendString(protowire.AppendTag(nil, 1, protowire.BytesType), root.String())
+		for _, member := range members {
+			raw = protowire.AppendString(protowire.AppendTag(raw, 2, protowire.BytesType), member)
+		}
+		key := make([]byte, 8)
+		store := collections.Map[uint64, sudo.Sudoers](k.Sudoers).GetStore(ctx)
+		store.Set(key, raw)
+		require.NoError(t, k.Migrate1To2(ctx))
+		state, err := k.Sudoers.Get(ctx)
+		require.NoError(t, err)
+		normalized, err := sudo.NormalizeRoleMembers(members)
+		require.NoError(t, err)
+		if len(members) == 0 {
+			require.Empty(t, state.Roles)
+		} else {
+			require.Len(t, state.Roles, 2)
+			for _, role := range state.Roles {
+				require.Equal(t, normalized, role.Members)
+			}
+		}
+		require.Error(t, k.CheckPermissions(eoa, ctx, sudo.RoleWasmDeployer))
+		exported := k.ExportGenesis(ctx)
+		_, fresh, freshCtx := setup()
+		fresh.InitGenesis(freshCtx, *exported)
+		require.Equal(t, state, fresh.Sudoers.GetOr(freshCtx, sudo.Sudoers{}))
+		for _, member := range normalized {
+			if member != root.String() {
+				continue
+			}
+			replacement := testutil.NewAccAddress()
+			_, err := k.ChangeRoot(ctx, &sudo.MsgChangeRoot{Sender: root.String(), NewRoot: replacement.String()})
+			require.NoError(t, err)
+			require.NoError(t, k.CheckPermissions(root, ctx, sudo.RoleTFOper))
+			require.NoError(t, k.CheckPermissions(root, ctx, sudo.RoleChainParams))
+			require.Error(t, k.CheckPermissions(root, ctx, sudo.RoleWasmDeployer))
+		}
+	}
+	for _, invalid := range [][]byte{
+		{0x0a, 0xff},
+		{0x08, 0x01},
+		protowire.AppendString(protowire.AppendTag(nil, 1, protowire.BytesType), "invalid"),
+		protowire.AppendString(protowire.AppendTag(protowire.AppendString(protowire.AppendTag(nil, 1, protowire.BytesType), root.String()), 2, protowire.BytesType), "invalid"),
+	} {
+		_, k, ctx := setup()
+		store := collections.Map[uint64, sudo.Sudoers](k.Sudoers).GetStore(ctx)
+		key := make([]byte, 8)
+		store.Set(key, invalid)
+		require.Error(t, k.Migrate1To2(ctx))
+		require.Equal(t, invalid, store.Get(key))
+	}
 }

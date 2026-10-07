@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/mint"
@@ -12,7 +14,7 @@ import (
 //
 // These sudo functions should:
 // 1. Not be called in other methods in the module.
-// 2. Only be callable by the x/sudo root or sudo contracts.
+// 2. Only be callable by the x/sudo root or chain_params members.
 //
 // The intention behind "[Keeper.Sudo]" is to make it more obvious to the
 // developer that an unsafe function is being used when it's called.
@@ -28,7 +30,7 @@ func (k sudoExtension) EditInflationParams(
 	ctx sdk.Context, newParams mint.MsgEditInflationParams,
 	sender sdk.AccAddress,
 ) (err error) {
-	if err = k.sudoKeeper.CheckPermissions(sender, ctx, ""); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(sender, ctx, sudo.RoleChainParams); err != nil {
 		return
 	}
 
@@ -49,7 +51,7 @@ func (k sudoExtension) EditInflationParams(
 func (k sudoExtension) ToggleInflation(
 	ctx sdk.Context, enabled bool, sender sdk.AccAddress,
 ) (err error) {
-	if err = k.sudoKeeper.CheckPermissions(sender, ctx, ""); err != nil {
+	if err = k.sudoKeeper.CheckPermissions(sender, ctx, sudo.RoleChainParams); err != nil {
 		return
 	}
 

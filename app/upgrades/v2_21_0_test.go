@@ -43,15 +43,19 @@ func TestUpgrade2_21_0MigratesAndSeedsEveryChain(t *testing.T) {
 			state, err := app.SudoKeeper.Sudoers.Get(ctx)
 			require.NoError(t, err)
 			require.Equal(t, root.String(), state.Root)
-			require.Len(t, state.Roles, 1)
-			require.Equal(t, sudo.RoleWasmDeployer, state.Roles[0].Role)
+			require.Len(t, state.Roles, 3)
+			require.Equal(t, sudo.RoleChainParams, state.Roles[0].Role)
+			require.Equal(t, sudo.RoleTFOper, state.Roles[1].Role)
+			require.Equal(t, []string{former.String()}, state.Roles[0].Members)
+			require.Equal(t, []string{former.String()}, state.Roles[1].Members)
+			require.Equal(t, sudo.RoleWasmDeployer, state.Roles[2].Role)
 			require.ElementsMatch(t, []string{
 				"nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l",
 				"nibi1ss0s7fmw8n8t093mqt5was5c76k9amu0d7a5u0",
 				"nibi1ljhfmddrxt3axx2y0f5dvt0mxhxkkvs3pewdmq",
 				"nibi1372pyz4cctz4ns434gdt82qc46a0eh48jqprr7",
 				"nibi137c35e2mdjucjzzu3vs6kpzwcxtgt9pdnvj5ll",
-			}, state.Roles[0].Members)
+			}, state.Roles[2].Members)
 			require.Error(t, app.SudoKeeper.CheckPermissions(former, ctx, sudo.RoleWasmDeployer))
 			require.Equal(t, hook, app.SudoKeeper.WasmBlockHooksContract.GetOr(ctx, ""))
 			require.Equal(t, zeroGas, app.SudoKeeper.ZeroGasActors.GetOr(ctx, sudo.ZeroGasActors{}))

@@ -84,7 +84,7 @@ func (k Keeper) EditZeroGasActors(
 		return nil, err
 	}
 
-	err = k.CheckPermissions(msg.GetSigners()[0], ctx, "")
+	err = k.CheckPermissions(msg.GetSigners()[0], ctx, sudo.RoleChainParams)
 	if err != nil {
 		return nil, err
 	}

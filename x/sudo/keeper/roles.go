@@ -2,7 +2,12 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
+
+	"google.golang.org/protobuf/encoding/protowire"
+
+	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
@@ -69,17 +74,67 @@ func (k Keeper) UpdateRoleMembers(goCtx context.Context, msg *sudo.MsgUpdateRole
 	return &sudo.MsgUpdateRoleMembersResponse{}, nil
 }
 
-// Migrate1To2 rewrites legacy state. Root keeps wire tag 1; the retired tag 2
-// is skipped by the new protobuf decoder and never becomes a role grant.
+// Migrate1To2 preserves the broad legacy authority as the two scoped roles.
+// Decode tag 2 before the current Sudoers decoder discards the retired field.
 func (k Keeper) Migrate1To2(ctx sdk.Context) error {
-	state, err := k.Sudoers.Get(ctx)
+	key := make([]byte, 8)
+	binary.BigEndian.PutUint64(key, 0)
+	raw := collections.Map[uint64, sudo.Sudoers](k.Sudoers).GetStore(ctx).Get(key)
+	if raw == nil {
+		return fmt.Errorf("legacy sudo state not found")
+	}
+	state, members, err := decodeLegacySudoers(raw)
 	if err != nil {
 		return fmt.Errorf("read legacy sudo state: %w", err)
 	}
-	state.Roles = []sudo.RoleMembers{}
+	members, err = sudo.NormalizeRoleMembers(members)
+	if err != nil {
+		return fmt.Errorf("legacy sudo members: %w", err)
+	}
+	if len(members) > 0 {
+		state.Roles = []sudo.RoleMembers{
+			{Role: sudo.RoleTFOper, Members: members},
+			{Role: sudo.RoleChainParams, Members: append([]string(nil), members...)},
+		}
+	}
 	if err := state.Validate(); err != nil {
+		return err
+	}
+	if err := state.NormalizeRoles(); err != nil {
 		return err
 	}
 	k.Sudoers.Set(ctx, state)
 	return nil
+}
+
+func decodeLegacySudoers(raw []byte) (state sudo.Sudoers, members []string, err error) {
+	for len(raw) > 0 {
+		field, typ, n := protowire.ConsumeTag(raw)
+		if n < 0 {
+			return state, nil, protowire.ParseError(n)
+		}
+		raw = raw[n:]
+		if field == 1 || field == 2 {
+			if typ != protowire.BytesType {
+				return state, nil, fmt.Errorf("legacy sudo field %d has wire type %d", field, typ)
+			}
+			value, n := protowire.ConsumeString(raw)
+			if n < 0 {
+				return state, nil, protowire.ParseError(n)
+			}
+			if field == 1 {
+				state.Root = value
+			} else {
+				members = append(members, value)
+			}
+			raw = raw[n:]
+		} else {
+			n := protowire.ConsumeFieldValue(field, typ, raw)
+			if n < 0 {
+				return state, nil, protowire.ParseError(n)
+			}
+			raw = raw[n:]
+		}
+	}
+	return state, members, nil
 }

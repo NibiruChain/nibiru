@@ -1,7 +1,7 @@
 # x/sudo permissions
 
-Root owns the module. It can rotate the root address, edit named roles, configure
-zero-gas actors, and configure the Wasm block-hook registry. A role can contain
+Root owns the module. It can rotate the root address, edit named roles, and
+configure the Wasm block-hook registry. A role can contain
 EOA or contract addresses. Role membership only grants access where a caller
 explicitly checks that role.
 
@@ -40,14 +40,19 @@ revocations, genesis normalization, and add/remove overlap checks.
 Members cannot appear in both `add` and `remove`. Repeated additions or removals
 are idempotent. Empty roles are rejected. Members and roles are stored in sorted
 order with unique members; removing every member removes the role entry.
-Inflation, tokenfactory, EVM configuration, and zero-gas configuration remain
-root-only, subject to each caller's existing governance authorization.
+`tf_oper` permits tokenfactory denom creation and sudo metadata edits.
+`chain_params` permits inflation edits and toggling, EVM parameter updates,
+mainnet FunToken creation, and zero-gas actor edits. Existing governance
+exceptions and chain-specific checks still apply. Root rotation, role management,
+and the block-hook registry remain root-only.
 
 ## v2.21.0 migration
 
 The module migrates consensus version 1 to 2. The `Sudoers.root` wire field
 remains tag 1. The retired `contracts` field's tag 2 and name are reserved;
-`roles` uses tag 3. Legacy members receive no implicit role grants.
+`roles` uses tag 3. Legacy members receive both `tf_oper` and `chain_params`,
+preserving their previous authority on each chain. They receive no `wasm_deployer` grant from
+legacy membership.
 
 The v2.21.0 upgrade preserves root, zero-gas configuration, and the Wasm
 block-hook registry. It seeds `wasm_deployer` on every chain with the reviewed

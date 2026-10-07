@@ -9,7 +9,11 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )
 
-const RoleWasmDeployer = "wasm_deployer"
+const (
+	RoleWasmDeployer = "wasm_deployer"
+	RoleTFOper       = "tf_oper"
+	RoleChainParams  = "chain_params"
+)
 
 // ValidateRole rejects the empty role reserved for root-only checks.
 func ValidateRole(role string) error {

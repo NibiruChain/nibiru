@@ -2,7 +2,9 @@
 Package sudo manages a root account and named role memberships.
 
 Root can rotate itself, grant or revoke roles for accounts and contracts,
-configure zero-gas actors, and configure the Wasm block-hook registry.
+configure the Wasm block-hook registry. The chain_params role can edit
+zero-gas actors, inflation, and EVM configuration. The tf_oper role can
+create tokenfactory denoms and edit their metadata.
 Other addresses receive only permissions whose callers explicitly check a role.
 The wasm_deployer role permits guarded Wasm uploads and migrations, subject to
 normal Wasm access and contract admin checks.
