@@ -10,8 +10,8 @@ COPY lib/wasmvm/libwasmvm lib/wasmvm/libwasmvm
 COPY rust-toolchain.toml rust-toolchain.toml
 ARG TARGETARCH
 ENV RUSTFLAGS="-C relocation-model=pic"
-RUN --mount=type=cache,id=wasmvm-registry,target=/usr/local/cargo/registry \
-    --mount=type=cache,id=wasmvm-static-${TARGETARCH},target=/nibiru/lib/wasmvm/libwasmvm/target \
+RUN --mount=type=cache,id=wasmvm-registry,sharing=locked,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=wasmvm-static-${TARGETARCH},sharing=locked,target=/nibiru/lib/wasmvm/libwasmvm/target \
     cargo build --locked --release --manifest-path lib/wasmvm/libwasmvm/Cargo.toml \
     --example wasmvmstatic \
     && mkdir /out \

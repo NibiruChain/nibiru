@@ -32,8 +32,8 @@ RUN ln -s /usr/lib/llvm*/bin/llvm-config /usr/local/bin/llvm-config
 WORKDIR /nibiru
 COPY . .
 
-RUN --mount=type=cache,id=wasmvm-registry,target=/usr/local/cargo/registry \
-    --mount=type=cache,id=wasmvm-static-${TARGETARCH},target=/nibiru/lib/wasmvm/libwasmvm/target \
+RUN --mount=type=cache,id=wasmvm-registry,sharing=locked,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=wasmvm-static-${TARGETARCH},sharing=locked,target=/nibiru/lib/wasmvm/libwasmvm/target \
     --mount=type=cache,id=go-modules,target=/go/pkg/mod \
     --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
     BUILDDIR=/out \
