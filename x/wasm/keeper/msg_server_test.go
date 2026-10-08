@@ -31,7 +31,7 @@ var (
 )
 
 // TestMainnetWasmDeployerGuardRejectsNonRootMessages covers every protobuf
-// message that can upload, instantiate, or migrate Wasm code. Combined messages
+// message that can upload or migrate Wasm code. Combined messages
 // must reject before allocating a code ID or storing code.
 func TestMainnetWasmDeployerGuardRejectsNonRootMessages(t *testing.T) {
 	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
@@ -45,19 +45,6 @@ func TestMainnetWasmDeployerGuardRejectsNonRootMessages(t *testing.T) {
 		"store code": &types.MsgStoreCode{
 			Sender:       actor.String(),
 			WASMByteCode: wasmContract,
-		},
-		"instantiate": &types.MsgInstantiateContract{
-			Sender: actor.String(),
-			CodeID: 1,
-			Label:  "denied",
-			Msg:    []byte(`{}`),
-		},
-		"instantiate2": &types.MsgInstantiateContract2{
-			Sender: actor.String(),
-			CodeID: 1,
-			Label:  "denied",
-			Msg:    []byte(`{}`),
-			Salt:   []byte("salt"),
 		},
 		"migrate": &types.MsgMigrateContract{
 			Sender:   actor.String(),
@@ -1412,5 +1399,96 @@ func TestUpdateContractLabel(t *testing.T) {
 				require.Equal(t, spec.newLabel, wasmApp.WasmKeeper.GetContractInfo(ctx, contractAddr).Label)
 			}
 		})
+	}
+}
+
+// TestMainnetWasmRoleAndAdminChecks exercises actual SDK and direct keeper paths.
+func TestMainnetWasmRoleAndAdminChecks(t *testing.T) {
+	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+	root := sdk.AccAddress(bytes.Repeat([]byte{1}, 32))
+	deployer := sdk.AccAddress(bytes.Repeat([]byte{2}, 20))
+	stranger := sdk.AccAddress(bytes.Repeat([]byte{3}, 20))
+	wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: root.String()})
+	_, err := wasmApp.SudoKeeper.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+		Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{deployer.String()},
+	})
+	require.NoError(t, err)
+	store := &types.MsgStoreCode{Sender: deployer.String(), WASMByteCode: hackatomContract, InstantiatePermission: &types.AllowEverybody}
+	result, err := wasmApp.MsgServiceRouter().Handler(store)(ctx, store)
+	require.NoError(t, err)
+	var stored types.MsgStoreCodeResponse
+	require.NoError(t, wasmApp.AppCodec().Unmarshal(result.Data, &stored))
+	access := keeper.NewDefaultPermissionKeeper(wasmApp.WasmKeeper)
+	// Same guard applies without a message-server call.
+	secondID, _, err := access.Create(ctx, deployer, hackatomContract, &types.AllowEverybody)
+	require.NoError(t, err)
+	initMsg, err := json.Marshal(keeper.HackatomExampleInitMsg{Verifier: stranger, Beneficiary: stranger})
+	require.NoError(t, err)
+	// An unprivileged actor can instantiate and instantiate2.
+	for _, msg := range []sdk.Msg{
+		&types.MsgInstantiateContract{Sender: stranger.String(), Admin: root.String(), CodeID: stored.CodeID, Label: "ordinary", Msg: initMsg},
+		&types.MsgInstantiateContract2{Sender: stranger.String(), Admin: root.String(), CodeID: stored.CodeID, Label: "ordinary2", Msg: initMsg, Salt: []byte("ordinary")},
+	} {
+		_, err = wasmApp.MsgServiceRouter().Handler(msg)(ctx, msg)
+		require.NoError(t, err)
+	}
+	contract, _, err := access.Instantiate(ctx, stored.CodeID, stranger, root, initMsg, "direct ordinary", nil)
+	require.NoError(t, err)
+	migrateMsg := []byte(`{"verifier":"` + stranger.String() + `"}`)
+	// Passing the deployment check does not grant the contract's admin authority.
+	_, err = access.Migrate(ctx, contract, deployer, secondID, migrateMsg)
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+	require.Equal(t, stored.CodeID, wasmApp.WasmKeeper.GetContractInfo(ctx, contract).CodeID)
+	migrate := &types.MsgMigrateContract{Sender: root.String(), Contract: contract.String(), CodeID: secondID, Msg: migrateMsg}
+	_, err = wasmApp.MsgServiceRouter().Handler(migrate)(ctx, migrate)
+	require.NoError(t, err)
+	// A role member who is also admin can migrate.
+	own, _, err := access.Instantiate(ctx, stored.CodeID, stranger, deployer, initMsg, "deployer admin", nil)
+	require.NoError(t, err)
+	_, err = access.Migrate(ctx, own, deployer, secondID, migrateMsg)
+	require.NoError(t, err)
+	_, err = wasmApp.SudoKeeper.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{Sender: root.String(), Role: sudo.RoleWasmDeployer, Remove: []string{deployer.String()}})
+	require.NoError(t, err)
+	_, err = access.Migrate(ctx, own, deployer, stored.CodeID, migrateMsg)
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+	_, err = wasmApp.MsgServiceRouter().Handler(store)(ctx, store)
+	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
+}
+
+// TestContractRootManagesRolesThroughStargate exercises the path used by CW3.
+func TestContractRootManagesRolesThroughStargate(t *testing.T) {
+	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+	_, _, wallet := testdata.KeyTestPubAddr()
+	member := sdk.AccAddress(bytes.Repeat([]byte{9}, 20))
+	wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: wallet.String()})
+	access := keeper.NewDefaultPermissionKeeper(wasmApp.WasmKeeper)
+	codeID, _, err := access.Create(ctx, wallet, wasmContract, &types.AllowEverybody)
+	require.NoError(t, err)
+	contract, _, err := access.Instantiate(ctx, codeID, wallet, nil, []byte(`{}`), "contract root", nil)
+	require.NoError(t, err)
+	_, err = wasmApp.SudoKeeper.ChangeRoot(ctx, &sudo.MsgChangeRoot{Sender: wallet.String(), NewRoot: contract.String()})
+	require.NoError(t, err)
+	for _, edit := range []*sudo.MsgUpdateRoleMembers{
+		{Sender: contract.String(), Role: sudo.RoleWasmDeployer, Add: []string{member.String()}},
+		{Sender: contract.String(), Role: sudo.RoleWasmDeployer, Remove: []string{member.String()}},
+	} {
+		payload := wasmApp.AppCodec().MustMarshal(edit)
+		executeMsg, err := json.Marshal(wasmtestdata.ReflectHandleMsg{
+			Reflect: &wasmtestdata.ReflectPayload{Msgs: []wvm.CosmosMsg{
+				{Stargate: &wvm.StargateMsg{TypeURL: sdk.MsgTypeURL(edit), Value: payload}},
+			}},
+		})
+		require.NoError(t, err)
+		execute := &types.MsgExecuteContract{Sender: wallet.String(), Contract: contract.String(), Msg: executeMsg}
+		_, err = wasmApp.MsgServiceRouter().Handler(execute)(ctx, execute)
+		require.NoError(t, err)
+		permission := wasmApp.SudoKeeper.CheckPermissions(member, ctx, sudo.RoleWasmDeployer)
+		if len(edit.Add) > 0 {
+			require.NoError(t, permission)
+		} else {
+			require.Error(t, permission)
+		}
 	}
 }

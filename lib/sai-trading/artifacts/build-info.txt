@@ -6,3 +6,15 @@ dpkg --print-architecture: "amd64"
 
 IMAGE_VERSION: "0.17.0"
 IMAGE: "cosmwasm/optimizer"
+
+## Build Metadata
+
+- Source branch: main
+- Source commit: 29ecf0196e75bcdcec4335f0746011fd70c6d682
+- Commit subject: feat(perp)!: Execute each trade intent id at most once (#426)
+
+## Release Metadata
+
+- Release tag: [`wasm-contracts/v1.42.0`](https://github.com/NibiruChain/sai-perps/releases/tag/wasm-contracts/v1.42.0)
+- Source commit: `29ecf01` feat(perp)!: Execute each trade intent id at most once (#426)
+- Workflow run: https://github.com/NibiruChain/sai-perps/actions/runs/37282733213

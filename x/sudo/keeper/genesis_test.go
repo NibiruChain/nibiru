@@ -32,8 +32,8 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 
 	// Set Sudoers state
 	sudoers := sudo.Sudoers{
-		Root:      rootAddr.String(),
-		Contracts: []string{contractAddrs[0].String(), contractAddrs[1].String(), contractAddrs[2].String()},
+		Root:  rootAddr.String(),
+		Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{contractAddrs[0].String(), contractAddrs[1].String(), contractAddrs[2].String()}}},
 	}
 	k.Sudoers.Set(ctx, sudoers)
 
@@ -47,14 +47,14 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 
 	// Verify initial state works
 	// CheckPermissions should succeed for root and contracts
-	s.NoError(k.CheckPermissions(rootAddr, ctx))
+	s.NoError(k.CheckPermissions(rootAddr, ctx, sudo.RoleWasmDeployer))
 	for _, contractAddr := range contractAddrs {
-		s.NoError(k.CheckPermissions(contractAddr, ctx))
+		s.NoError(k.CheckPermissions(contractAddr, ctx, sudo.RoleWasmDeployer))
 	}
 
 	// CheckPermissions should fail for non-sudoer
 	nonSudoer := testutil.NewAccAddress()
-	s.Error(k.CheckPermissions(nonSudoer, ctx))
+	s.Error(k.CheckPermissions(nonSudoer, ctx, sudo.RoleWasmDeployer))
 
 	// Export Phase: Export genesis and verify it's valid
 	exported := k.ExportGenesis(ctx)
@@ -74,8 +74,8 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	s.Equal(exported.WasmBlockHooksContract, reExported.WasmBlockHooksContract)
 
 	// Compare contracts using set equality (order-independent)
-	originalContracts := set.New(exported.Sudoers.Contracts...)
-	reExportedContracts := set.New(reExported.Sudoers.Contracts...)
+	originalContracts := set.New(exported.Sudoers.Roles[0].Members...)
+	reExportedContracts := set.New(reExported.Sudoers.Roles[0].Members...)
 	s.True(originalContracts.Equals(reExportedContracts))
 
 	// Compare ZeroGasActors (handle nil case)
@@ -88,11 +88,11 @@ func (s *Suite) TestExportInitGenesis_Roundtrip() {
 	}
 
 	// Functional verification: CheckPermissions still works
-	s.NoError(nibiru2.SudoKeeper.CheckPermissions(rootAddr, ctx2))
+	s.NoError(nibiru2.SudoKeeper.CheckPermissions(rootAddr, ctx2, sudo.RoleWasmDeployer))
 	for _, contractAddr := range contractAddrs {
-		s.NoError(nibiru2.SudoKeeper.CheckPermissions(contractAddr, ctx2))
+		s.NoError(nibiru2.SudoKeeper.CheckPermissions(contractAddr, ctx2, sudo.RoleWasmDeployer))
 	}
-	s.Error(nibiru2.SudoKeeper.CheckPermissions(nonSudoer, ctx2))
+	s.Error(nibiru2.SudoKeeper.CheckPermissions(nonSudoer, ctx2, sudo.RoleWasmDeployer))
 
 	// Functional verification: Query ZeroGasActors returns correct data
 	queryResp, err := nibiru2.SudoKeeper.QueryZeroGasActors(sdk.WrapSDKContext(ctx2), nil)

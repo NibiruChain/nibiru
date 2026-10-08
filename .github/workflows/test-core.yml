@@ -43,13 +43,15 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: Install runtime toolchain
+      - name: "Setup Bun"
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: dtolnay/rust-toolchain@1.95.0
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
 
-      - name: Build linked runtime from source
+      - name: Check release library cache behavior
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        run: just wasmvm build-rust
+        run: bun test ./contrib/scripts/build-wasmvm-release.test.ts
 
       - name: Check source library cache behavior
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
@@ -295,7 +297,7 @@ jobs:
     # Job that runs all tests and publishes code coverage reports.
     needs: [changes-nibiru-go, build]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - name: skip-heavy-tests
         if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
@@ -362,14 +364,6 @@ jobs:
           echo "Localnet is running in the background { pid=$pid_localnet }"
           sleep 12
 
-      - name: Install runtime toolchain
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: dtolnay/rust-toolchain@1.95.0
-
-      - name: Build linked runtime from source
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        run: just wasmvm build-rust
-
       - name: "Run all tests."
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: just test-cover
@@ -408,14 +402,6 @@ jobs:
       - name: "Install just"
         if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
         uses: taiki-e/install-action@just
-
-      - name: Install runtime toolchain
-        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
-        uses: dtolnay/rust-toolchain@1.95.0
-
-      - name: Build linked runtime from source
-        if: needs.changes-nibiru-go.outputs.ibc-go == 'true'
-        run: just wasmvm build-rust
 
       - name: "Run IBC tests"
         if: needs.changes-nibiru-go.outputs.ibc-go == 'true'

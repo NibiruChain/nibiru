@@ -83,8 +83,8 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 	encoding.Codec.MustUnmarshalJSON(gen[sudo.ModuleName], &sudoGen)
 	if err := sudoGen.Validate(); err != nil {
 		sudoGen.Sudoers = sudo.Sudoers{
-			Root:      testutil.ADDR_SUDO_ROOT,
-			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+			Root:  testutil.ADDR_SUDO_ROOT,
+			Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{testutil.ADDR_SUDO_ROOT}}},
 		}
 		gen[sudo.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
 	}
@@ -116,8 +116,8 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	// Set happy genesis: sudo
 	sudoGenesis := sudo.GenesisState{
 		Sudoers: sudo.Sudoers{
-			Root:      testutil.ADDR_SUDO_ROOT,
-			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+			Root:  testutil.ADDR_SUDO_ROOT,
+			Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{testutil.ADDR_SUDO_ROOT}}},
 		},
 	}
 	gen[sudo.ModuleName] = app.AppCodec().MustMarshalJSON(&sudoGenesis)

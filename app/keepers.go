@@ -292,8 +292,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		append(
 			GetWasmOpts(*app, appOpts, wmha),
 			wasmkeeper.WithWasmEngine(wasmVM),
-			// The EVM Wasm precompile wraps this same keeper in a default-permission
-			// keeper, so its instantiate path reaches the shared admission guard.
+			// Guard uploads and migrations at the shared keeper boundary.
 			wasmkeeper.WithWasmDeployerGuard(appconst.SDK_CHAIN_ID_MAINNET, app.SudoKeeper),
 		)...,
 	)

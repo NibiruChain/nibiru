@@ -16,8 +16,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 
 	genState := sudo.GenesisState{
 		Sudoers: sudo.Sudoers{
-			Root:      rootAddress.String(),
-			Contracts: []string{},
+			Root:  rootAddress.String(),
+			Roles: []sudo.RoleMembers{},
 		},
 	}
 

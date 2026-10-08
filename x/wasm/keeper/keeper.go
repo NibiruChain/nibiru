@@ -265,10 +265,6 @@ func (k Keeper) instantiate(
 	if creator == nil {
 		return nil, nil, types.ErrEmpty.Wrap("creator")
 	}
-	// Check admission before charging VM setup gas or reading the target code.
-	if err := k.requireActorIsAuthedDeployer(ctx, creator, authPolicy, wasmDeploymentInstantiate); err != nil {
-		return nil, nil, err
-	}
 	instanceCosts := k.gasRegister.NewContractInstanceCosts(k.IsPinnedCode(ctx, codeID), len(initMsg))
 	ctx.GasMeter().ConsumeGas(instanceCosts, "Loading CosmWasm module: instantiate")
 

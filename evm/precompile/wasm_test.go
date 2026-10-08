@@ -80,9 +80,8 @@ func (s *WasmSuite) TestInstantiate() {
 	evmObj.StateDB.(*evmstate.SDB).Commit()
 }
 
-// TestInstantiateRejectedByMainnetWasmDeployerGuard proves that the precompile's
-// default-permission keeper reaches the shared guard in Keeper.instantiate.
-func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
+// TestInstantiateAllowedOnMainnet verifies ordinary EVM precompile instantiation.
+func (s *WasmSuite) TestInstantiateAllowedOnMainnet() {
 	deps := evmtest.NewTestDeps()
 	test.SetupWasmContracts(&deps, &s.Suite)
 	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
@@ -93,7 +92,7 @@ func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
 		"",
 		uint64(1),
 		[]byte(`{}`),
-		"denied on mainnet",
+		"ordinary on mainnet",
 		[]precompile.WasmBankCoin{},
 	)
 	s.Require().NoError(err)
@@ -107,7 +106,7 @@ func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
 		evm.COMMIT_ETH_TX,
 		nil,
 	)
-	s.Require().ErrorContains(err, "is not authorized")
+	s.Require().NoError(err)
 }
 
 // TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard verifies that the guard
@@ -182,7 +181,7 @@ func (s *WasmSuite) TestExecute() {
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 	sudoers, err := deps.App.SudoKeeper.Sudoers.Get(deps.Ctx())
 	s.Require().NoError(err)
-	sudoers.Contracts = append(sudoers.Contracts, wasmContract.String())
+	sudoers.Root = wasmContract.String()
 	deps.App.SudoKeeper.Sudoers.Set(deps.Ctx(), sudoers)
 
 	s.Run("create denom", func() {

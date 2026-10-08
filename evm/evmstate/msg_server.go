@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+
 	sdkioerrors "cosmossdk.io/errors"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -606,11 +608,11 @@ func (k *Keeper) CreateFunToken(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if k.EthChainID(ctx).Cmp(big.NewInt(appconst.ETH_CHAIN_ID_MAINNET)) == 0 {
 		sender := sdk.MustAccAddressFromBech32(msg.Sender)
-		sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+		sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx, sudo.RoleChainParams)
 		havePerms := (sudoPermsErr == nil) || (k.authority.String() == msg.Sender)
 		if !havePerms {
 			return nil, fmt.Errorf(
-				"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+				"invalid signing authority, expected governance account %s or x/sudo root/chain_params member. Sender was %s",
 				k.authority, msg.Sender,
 			)
 		}
@@ -806,11 +808,11 @@ func (k *Keeper) UpdateParams(
 	sender := sdk.MustAccAddressFromBech32(req.Authority)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx)
+	sudoPermsErr := k.SudoKeeper.CheckPermissions(sender, ctx, sudo.RoleChainParams)
 	havePerms := (sudoPermsErr == nil) || (k.authority.String() == req.Authority)
 	if !havePerms {
 		return resp, fmt.Errorf(
-			"invalid signing authority, expected governance account %s or one of the sudoers defined by the x/sudo module. Sender was %s",
+			"invalid signing authority, expected governance account %s or x/sudo root/chain_params member. Sender was %s",
 			k.authority, req.Authority,
 		)
 	}

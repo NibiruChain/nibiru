@@ -32,22 +32,21 @@ func WithWasmEngine(x types.WasmEngine) Option {
 	})
 }
 
-// WithWasmDeployerGuard restricts ordinary code upload, contract instantiation,
-// and contract migration on one exact chain to the current x/sudo root. The
-// option leaves the guard disabled by default, preserves existing governance
-// authorization, and does not modify Wasm parameters or access configurations.
-func WithWasmDeployerGuard(chainID string, sudoRootSource types.SudoRootSource) Option {
+// WithWasmDeployerGuard restricts ordinary upload and migration on one exact
+// chain to root or wasm_deployer members, preserving governance authorization.
+// Instantiation follows normal Wasm permissions.
+func WithWasmDeployerGuard(chainID string, sudoPermissions types.SudoPermissionSource) Option {
 	if chainID == "" {
 		panic("wasm deployer guard chain ID must not be empty")
 	}
-	if sudoRootSource == nil {
-		panic("wasm deployer guard sudo root source must not be nil")
+	if sudoPermissions == nil {
+		panic("wasm deployer guard sudo permission source must not be nil")
 	}
 
 	return optsFn(func(k *Keeper) {
 		k.wasmDeployerGuard = &wasmDeployerGuard{
-			chainID:        chainID,
-			sudoRootSource: sudoRootSource,
+			chainID:         chainID,
+			sudoPermissions: sudoPermissions,
 		}
 	})
 }

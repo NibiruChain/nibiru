@@ -4,7 +4,23 @@ Rough notes (for now)
 
 ## Plan
 
-- [ ] Use sai-perps version for both the EVM interface and Wasm contracts.
+The four Wasm fixtures are pinned to `wasm-contracts/v1.42.0`. Their source
+commit and the retained Solidity fixture hashes are recorded separately in
+`artifacts-lock.toml`. Verify the Wasm files with:
+
+```sh
+(cd artifacts && sha256sum --check checksums.txt)
+```
+
+The deployer grants the predicted vault-token-minter address `tf_oper` before
+instantiation so its tokenfactory create-denom message is authorized. The localnet
+validator is already sudo root. Perp markets are configured at instantiation;
+subsequent setup uses the v1.42 admin message format. The trader supplies an
+explicit collateral amount, calls `close_trade`, and lists positions through
+`list_trades_for_user` in pages of 100 scanned indices. Listing reads the pinned
+v1.42 `user_trade_index` storage counter and continues across empty pages.
+A mined EVM revert is reported as an error even when
+the enclosing Cosmos transaction has code zero.
 
 ---
 

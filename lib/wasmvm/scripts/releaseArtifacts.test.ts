@@ -81,7 +81,7 @@ describe("publishing", () => {
 
     expect(plan.commands).toEqual([
       "test -d tmp-artifacts",
-      'gh release create lib/wasmvm/v1.12.0 tmp-artifacts/libwasmvm_muslc.x86_64.a tmp-artifacts/libwasmvm_muslc.aarch64.a tmp-artifacts/libwasmvm.x86_64.so tmp-artifacts/libwasmvm.aarch64.so tmp-artifacts/libwasmvm.dylib tmp-artifacts/libwasmvmstatic_darwin.a --repo NibiruChain/nibiru --title "lib/wasmvm/v1.12.0" --notes-file <release-body.md>',
+      'gh release create lib/wasmvm/v1.12.0 tmp-artifacts/libwasmvm_muslc.x86_64.a tmp-artifacts/libwasmvm_muslc.aarch64.a tmp-artifacts/libwasmvm.x86_64.so tmp-artifacts/libwasmvm.aarch64.so tmp-artifacts/libwasmvm.dylib tmp-artifacts/libwasmvmstatic_darwin.a tmp-artifacts/checksums.txt --repo NibiruChain/nibiru --target abc123 --latest=false --title "lib/wasmvm/v1.12.0" --notes-file <release-body.md>',
     ]);
     expect(plan.commands.join("\n")).not.toContain("git tag");
     expect(plan.commands.join("\n")).not.toContain("git push");
@@ -115,6 +115,10 @@ describe("publishing", () => {
 
       expect(commands.some((command) => command.startsWith("gh release create"))).toBe(
         true,
+      );
+      expect(commands.find((command) => command.startsWith("gh release create"))).toContain("--target 'abc123' --latest=false");
+      expect(await Bun.file(join(artifactsDir, "checksums.txt")).text()).toContain(
+        new Bun.CryptoHasher("sha256").update("libwasmvm.dylib").digest("hex") + "  libwasmvm.dylib",
       );
       expect(commands.some((command) => command.startsWith("git tag"))).toBe(false);
       expect(commands.some((command) => command.startsWith("git push"))).toBe(false);
