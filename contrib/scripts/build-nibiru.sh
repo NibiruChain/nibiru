@@ -358,7 +358,7 @@ main() {
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="v1.13.0"
+  wasmvm_version="v1.13.1"
   case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
     true) wasmvm_version="source" ;;
     false) ;;

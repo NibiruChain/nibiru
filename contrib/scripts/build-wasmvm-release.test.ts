@@ -15,7 +15,7 @@ test("release cache downloads, reuses, repairs, and rejects corrupt archives", (
   const fixtureDir = mkdtempSync(join(tmpdir(), "wasmvm-release-cache-"));
   try {
     const archive = "verified archive\n";
-    const libDir = join(fixtureDir, "cache/wasmvm/v1.13.0/lib/linux_arm64");
+    const libDir = join(fixtureDir, "cache/wasmvm/v1.13.1/lib/linux_arm64");
     const library = join(libDir, "libwasmvm_muslc.a");
     mkdirSync(join(fixtureDir, "scripts"));
     writeFileSync(join(fixtureDir, "archive"), archive);
@@ -33,7 +33,7 @@ test("release cache downloads, reuses, repairs, and rejects corrupt archives", (
         cp "$CACHE_FIXTURE/archive" "$3"
         printf '%s\n' "$4" >> "$CACHE_FIXTURE/downloads"
       }
-      ensure_wasmvm_lib "$CACHE_FIXTURE/cache" linux arm64 v1.13.0
+      ensure_wasmvm_lib "$CACHE_FIXTURE/cache" linux arm64 v1.13.1
     `], {
       env: {
         ...process.env,
@@ -51,7 +51,7 @@ test("release cache downloads, reuses, repairs, and rejects corrupt archives", (
     };
     const downloads = () =>
       readFileSync(join(fixtureDir, "downloads"), "utf8").trim().split("\n");
-    const url = "https://github.com/NibiruChain/nibiru/releases/download/lib/wasmvm/v1.13.0/libwasmvm_muslc.aarch64.a";
+    const url = "https://github.com/NibiruChain/nibiru/releases/download/lib/wasmvm/v1.13.1/libwasmvm_muslc.aarch64.a";
 
     // 1. Download and verify an empty cache.
     ensureLibrary();

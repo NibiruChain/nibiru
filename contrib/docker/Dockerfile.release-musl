@@ -31,7 +31,7 @@ RUN --mount=type=cache,id=go-modules,target=/go/pkg/mod \
     && cp contrib/scripts/wasmvm-checksums.txt /out/wasmvm/checksums.txt \
     && sha256sum \
         /out/nibid \
-        "/tmp/nibiru-temp/wasmvm/v1.13.0/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
+        "/tmp/nibiru-temp/wasmvm/v1.13.1/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
 
 FROM scratch AS artifact
 COPY --from=build /out/ /

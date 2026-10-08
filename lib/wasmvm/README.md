@@ -1,6 +1,6 @@
 # wasmvm
 
-Nibiru node builds download the static runtime from `lib/wasmvm/v1.13.0`.
+Nibiru node builds download the static runtime from `lib/wasmvm/v1.13.1`.
 `contrib/scripts/wasmvm-checksums.txt` pins the SHA-256 digests, including for
 cached archives. Set `NIBIRU_WASMVM_BUILD_FROM_SOURCE=true` to test changes to
 the vendored Rust runtime locally. Ordinary Go CI uses the bundled shared
