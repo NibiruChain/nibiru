@@ -8,15 +8,32 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use test_generator::{
-    test_directory, test_directory_module, wast_processor, with_test_module,
-    Testsuite,
-};
+use test_generator::test_directory_module;
+use test_generator::{Testsuite, test_directory, wast_processor, with_test_module};
 
 fn main() -> anyhow::Result<()> {
+    println!(
+        "cargo:rustc-env=CFG_TARGET_OS={}",
+        std::env::var("CARGO_CFG_TARGET_OS")
+            .expect("CARGO_CFG_TARGET_OS must be provided by cargo")
+    );
+    println!(
+        "cargo:rustc-env=CFG_TARGET_ARCH={}",
+        std::env::var("CARGO_CFG_TARGET_ARCH")
+            .expect("CARGO_CFG_TARGET_ARCH must be provided by cargo")
+    );
+    println!(
+        "cargo:rustc-env=CFG_TARGET_ENV={}",
+        std::env::var("CARGO_CFG_TARGET_ENV")
+            .expect("CARGO_CFG_TARGET_ENV must be provided by cargo")
+    );
+
+    // As rerun-if-changed doesn't support globs, we use another crate
+    // to check changes in directories.
+    build_deps::rerun_if_changed_paths("tests/wast/spec/proposals/*").expect("Can't get directory");
+
     let out_dir = PathBuf::from(
-        env::var_os("OUT_DIR")
-            .expect("The OUT_DIR environment variable must be set"),
+        env::var_os("OUT_DIR").expect("The OUT_DIR environment variable must be set"),
     );
 
     // Spectests test generation
@@ -27,16 +44,10 @@ fn main() -> anyhow::Result<()> {
         };
 
         with_test_module(&mut spectests, "spec", |spectests| {
-            let _spec_tests =
-                test_directory(spectests, "tests/wast/spec", wast_processor)?;
+            test_directory(spectests, "tests/wast/spec", wast_processor)?;
             test_directory_module(
                 spectests,
-                "tests/wast/spec/proposals/multi-value",
-                wast_processor,
-            )?;
-            test_directory_module(
-                spectests,
-                "tests/wast/spec/proposals/simd",
+                "tests/wast/spec/proposals/wide-arithmetic",
                 wast_processor,
             )?;
             test_directory_module(
@@ -44,12 +55,10 @@ fn main() -> anyhow::Result<()> {
                 "tests/wast/spec/proposals/threads",
                 wast_processor,
             )?;
-            // test_directory_module(spectests, "tests/wast/spec/proposals/bulk-memory-operations", wast_processor)?;
             Ok(())
         })?;
         with_test_module(&mut spectests, "wasmer", |spectests| {
-            let _spec_tests =
-                test_directory(spectests, "tests/wast/wasmer", wast_processor)?;
+            test_directory(spectests, "tests/wast/wasmer", wast_processor)?;
             Ok(())
         })?;
 

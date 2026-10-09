@@ -2,6 +2,8 @@ use anyhow::Result;
 use std::panic::{self, AssertUnwindSafe};
 use wasmer::*;
 
+use crate::Compiler;
+
 #[compiler_test(traps)]
 fn test_trap_return(config: crate::Config) -> Result<()> {
     let mut store = config.store();
@@ -63,19 +65,21 @@ fn test_trap_trace(config: crate::Config) -> Result<()> {
         .call(&mut store, &[])
         .expect_err("error calling function");
 
-    let trace = e.trace();
-    assert_eq!(trace.len(), 2);
-    assert_eq!(trace[0].module_name(), "hello_mod");
-    assert_eq!(trace[0].func_index(), 1);
-    assert_eq!(trace[0].function_name(), Some("hello"));
-    assert_eq!(trace[1].module_name(), "hello_mod");
-    assert_eq!(trace[1].func_index(), 0);
-    assert_eq!(trace[1].function_name(), None);
-    assert!(
-        e.message().contains("unreachable"),
-        "wrong message: {}",
-        e.message()
-    );
+    if !matches!(config.compiler, Compiler::V8) {
+        let trace = e.trace();
+        assert_eq!(trace.len(), 2);
+        assert_eq!(trace[0].module_name(), "hello_mod");
+        assert_eq!(trace[0].func_index(), 1);
+        assert_eq!(trace[0].function_name(), Some("hello"));
+        assert_eq!(trace[1].module_name(), "hello_mod");
+        assert_eq!(trace[1].func_index(), 0);
+        assert_eq!(trace[1].function_name(), None);
+        assert!(
+            e.message().contains("unreachable"),
+            "wrong message: {}",
+            e.message()
+        );
+    }
 
     Ok(())
 }
@@ -92,9 +96,7 @@ fn test_trap_trace_cb(config: crate::Config) -> Result<()> {
     "#;
 
     let fn_type = FunctionType::new(vec![], vec![]);
-    let fn_func = Function::new(&mut store, &fn_type, |_| {
-        Err(RuntimeError::new("cb throw"))
-    });
+    let fn_func = Function::new(&mut store, &fn_type, |_| Err(RuntimeError::new("cb throw")));
 
     let module = Module::new(&store, wat)?;
     let instance = Instance::new(
@@ -116,7 +118,7 @@ fn test_trap_trace_cb(config: crate::Config) -> Result<()> {
         .expect_err("error calling function");
 
     let trace = e.trace();
-    println!("Trace {:?}", trace);
+    println!("Trace {trace:?}");
     // TODO: Reenable this (disabled as it was not working with llvm/singlepass)
     // assert_eq!(trace.len(), 2);
     // assert_eq!(trace[0].module_name(), "hello_mod");
@@ -152,7 +154,15 @@ fn test_trap_stack_overflow(config: crate::Config) -> Result<()> {
     // We specifically don't check the stack trace here: stack traces after
     // stack overflows are not generally possible due to unreliable unwinding
     // information.
-    assert!(e.message().contains("call stack exhausted"));
+
+    if matches!(config.compiler, Compiler::V8) {
+        assert_eq!(
+            e.message(),
+            "wasm-c-api trap: Uncaught RangeError: Maximum call stack size exceeded"
+        );
+    } else {
+        assert!(e.message().contains("call stack exhausted"));
+    }
 
     Ok(())
 }
@@ -180,15 +190,23 @@ fn trap_display_pretty(config: crate::Config) -> Result<()> {
     let e = run_func
         .call(&mut store, &[])
         .expect_err("error calling function");
-    assert_eq!(
-        e.to_string(),
-        "\
+
+    if matches!(config.compiler, Compiler::V8) {
+        assert_eq!(
+            format!("{e}"),
+            "RuntimeError: wasm-c-api trap: Uncaught RuntimeError: unreachable"
+        );
+    } else {
+        assert_eq!(
+            e.to_string(),
+            "\
 RuntimeError: unreachable
     at die (m[0]:0x23)
     at <unnamed> (m[1]:0x27)
     at foo (m[2]:0x2c)
     at <unnamed> (m[3]:0x31)"
-    );
+        );
+    }
     Ok(())
 }
 
@@ -234,9 +252,16 @@ fn trap_display_multi_module(config: crate::Config) -> Result<()> {
     let e = bar2
         .call(&mut store, &[])
         .expect_err("error calling function");
-    assert_eq!(
-        e.to_string(),
-        "\
+
+    if matches!(config.compiler, Compiler::V8) {
+        assert_eq!(
+            e.to_string(),
+            "RuntimeError: wasm-c-api trap: Uncaught RuntimeError: unreachable"
+        );
+    } else {
+        assert_eq!(
+            e.to_string(),
+            "\
 RuntimeError: unreachable
     at die (a[0]:0x23)
     at <unnamed> (a[1]:0x27)
@@ -244,12 +269,18 @@ RuntimeError: unreachable
     at <unnamed> (a[3]:0x31)
     at middle (b[1]:0x29)
     at <unnamed> (b[2]:0x2e)"
-    );
+        );
+    }
     Ok(())
 }
 
 #[compiler_test(traps)]
 fn trap_start_function_import(config: crate::Config) -> Result<()> {
+    // V8: imported functions used as a start function are unsupported: #6568
+    if matches!(config.compiler, Compiler::V8) {
+        return Ok(());
+    }
+
     let mut store = config.store();
     let binary = r#"
         (module $a
@@ -260,8 +291,7 @@ fn trap_start_function_import(config: crate::Config) -> Result<()> {
 
     let module = Module::new(&store, binary)?;
     let sig = FunctionType::new(vec![], vec![]);
-    let func =
-        Function::new(&mut store, &sig, |_| Err(RuntimeError::new("user trap")));
+    let func = Function::new(&mut store, &sig, |_| Err(RuntimeError::new("user trap")));
     let err = Instance::new(
         &mut store,
         &module,
@@ -290,6 +320,11 @@ fn trap_start_function_import(config: crate::Config) -> Result<()> {
 
 #[compiler_test(traps)]
 fn rust_panic_import(config: crate::Config) -> Result<()> {
+    // Unsupported by V8 right now
+    if matches!(config.compiler, Compiler::V8) {
+        return Ok(());
+    }
+
     let mut store = config.store();
     let binary = r#"
         (module $a
@@ -303,7 +338,10 @@ fn rust_panic_import(config: crate::Config) -> Result<()> {
     let module = Module::new(&store, binary)?;
     let sig = FunctionType::new(vec![], vec![]);
     let func = Function::new(&mut store, &sig, |_| panic!("this is a panic"));
-    let f0 = Function::new_typed(&mut store, || panic!("this is another panic"));
+    #[allow(clippy::unused_unit)]
+    let f0 = Function::new_typed(&mut store, || -> () {
+        panic!("this is another panic");
+    });
     let instance = Instance::new(
         &mut store,
         &module,
@@ -337,6 +375,11 @@ fn rust_panic_import(config: crate::Config) -> Result<()> {
 
 #[compiler_test(traps)]
 fn rust_panic_start_function(config: crate::Config) -> Result<()> {
+    // V8: imported functions used as a start function are unsupported: #6568
+    if matches!(config.compiler, Compiler::V8) {
+        return Ok(());
+    }
+
     let mut store = config.store();
     let binary = r#"
         (module $a
@@ -362,8 +405,10 @@ fn rust_panic_start_function(config: crate::Config) -> Result<()> {
     .unwrap_err();
     assert_eq!(err.downcast_ref::<&'static str>(), Some(&"this is a panic"));
 
-    let func =
-        Function::new_typed(&mut store, || panic!("this is another panic"));
+    #[allow(clippy::unused_unit)]
+    let func = Function::new_typed(&mut store, || -> () {
+        panic!("this is another panic");
+    });
     let err = panic::catch_unwind(AssertUnwindSafe(|| {
         drop(Instance::new(
             &mut store,
@@ -432,15 +477,22 @@ fn call_signature_mismatch(config: crate::Config) -> Result<()> {
     "#;
 
     let module = Module::new(&store, binary)?;
-    let err = Instance::new(&mut store, &module, &imports! {})
-        .expect_err("expected error");
-    assert_eq!(
-        format!("{}", err),
-        "\
+    let err = Instance::new(&mut store, &module, &imports! {}).expect_err("expected error");
+
+    if matches!(config.compiler, Compiler::V8) {
+        assert_eq!(
+            format!("{err}"),
+            "RuntimeError: wasm-c-api trap: Uncaught RuntimeError: null function or function signature mismatch"
+        );
+    } else {
+        assert_eq!(
+            format!("{err}"),
+            "\
 RuntimeError: indirect call type mismatch
     at foo (a[0]:0x30)\
 "
-    );
+        );
+    }
     Ok(())
 }
 
@@ -459,19 +511,25 @@ fn start_trap_pretty(config: crate::Config) -> Result<()> {
     "#;
 
     let module = Module::new(&store, wat)?;
-    let err = Instance::new(&mut store, &module, &imports! {})
-        .expect_err("expected error");
+    let err = Instance::new(&mut store, &module, &imports! {}).expect_err("expected error");
 
-    assert_eq!(
-        format!("{}", err),
-        "\
+    if matches!(config.compiler, Compiler::V8) {
+        assert_eq!(
+            format!("{err}"),
+            "RuntimeError: wasm-c-api trap: Uncaught RuntimeError: unreachable"
+        );
+    } else {
+        assert_eq!(
+            format!("{err}"),
+            "\
 RuntimeError: unreachable
     at die (m[0]:0x1d)
     at <unnamed> (m[1]:0x21)
     at foo (m[2]:0x26)
     at start (m[3]:0x2b)\
 "
-    );
+        );
+    }
     Ok(())
 }
 
@@ -491,7 +549,7 @@ fn present_after_module_drop(config: crate::Config) -> Result<()> {
     return Ok(());
 
     fn assert_trap(t: RuntimeError) {
-        println!("{}", t);
+        println!("{t}");
         // assert_eq!(t.trace().len(), 1);
         // assert_eq!(t.trace()[0].func_index(), 0);
     }

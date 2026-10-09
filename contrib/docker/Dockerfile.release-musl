@@ -14,19 +14,24 @@ RUN apk add --no-cache \
     git \
     jq \
     linux-headers \
-    wget
+    wget \
+    perl
 
 WORKDIR /nibiru
 COPY . .
 
-RUN BUILDDIR=/out \
+RUN --mount=type=cache,id=go-modules,target=/go/pkg/mod \
+    --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
+    BUILDDIR=/out \
     TEMPDIR=/tmp/nibiru-temp \
     NIBID_STATIC_PIE=true \
     VERSION="$VERSION" \
     contrib/scripts/build-nibiru.sh --run --just-build \
+    && mkdir -p /out/wasmvm \
+    && cp contrib/scripts/wasmvm-checksums.txt /out/wasmvm/checksums.txt \
     && sha256sum \
         /out/nibid \
-        "/tmp/nibiru-temp/wasmvm/v1.12.0/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
+        "/tmp/nibiru-temp/wasmvm/v1.13.1/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
 
 FROM scratch AS artifact
-COPY --from=build /out/nibid /nibid
+COPY --from=build /out/ /

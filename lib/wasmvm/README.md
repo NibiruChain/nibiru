@@ -1,5 +1,18 @@
 # wasmvm
 
+Nibiru node builds download the static runtime from `lib/wasmvm/v1.13.1`.
+`contrib/scripts/wasmvm-checksums.txt` pins the SHA-256 digests, including for
+cached archives. Set `NIBIRU_WASMVM_BUILD_FROM_SOURCE=true` to test changes to
+the vendored Rust runtime locally. Ordinary Go CI uses the bundled shared
+libraries; the WasmVM workflow builds and tests the Rust sources.
+
+To publish prebuilt libraries, place the six platform artifacts in
+`dist/libwasmvm`, create the next library tag at the source commit on `main`,
+and run `just wasmvm release publish <tag> --run`. The helper pins the GitHub
+tag to that commit and uploads a generated `checksums.txt` with the assets.
+Update the node build version, pinned checksums, and bundled shared
+libraries together.
+
 This is a wrapper around the
 [CosmWasm VM](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm). It
 allows you to compile, initialize and execute CosmWasm smart contracts from Go

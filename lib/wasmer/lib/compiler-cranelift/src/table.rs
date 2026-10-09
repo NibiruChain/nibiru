@@ -1,8 +1,8 @@
 use cranelift_codegen::cursor::FuncCursor;
-use cranelift_codegen::ir::{
-    self, condcodes::IntCC, immediates::Imm64, InstBuilder,
-};
+use cranelift_codegen::ir::{self, InstBuilder, condcodes::IntCC, immediates::Imm64};
 use cranelift_frontend::FunctionBuilder;
+
+use crate::translator::{MemoryAliasRegion, materialize_global_value, set_memflags_alias_region};
 
 /// Size of a WebAssembly table, in elements.
 #[derive(Clone, Debug)]
@@ -24,12 +24,8 @@ impl TableSize {
     /// Get a CLIF value representing the current bounds of this table.
     pub fn bound(&self, mut pos: FuncCursor, index_ty: ir::Type) -> ir::Value {
         match *self {
-            Self::Static { bound } => {
-                pos.ins().iconst(index_ty, Imm64::new(i64::from(bound)))
-            }
-            Self::Dynamic { bound_gv } => {
-                pos.ins().global_value(index_ty, bound_gv)
-            }
+            Self::Static { bound } => pos.ins().iconst(index_ty, Imm64::new(i64::from(bound))),
+            Self::Dynamic { bound_gv } => materialize_global_value(&mut pos, index_ty, bound_gv),
         }
     }
 }
@@ -40,11 +36,17 @@ pub struct TableData {
     /// Global value giving the address of the start of the table.
     pub base_gv: ir::GlobalValue,
 
+    /// Constant offset to apply to `base_gv` to get the start of the table.
+    pub base_offset: i32,
+
     /// The size of the table, in elements.
     pub bound: TableSize,
 
     /// The size of a table element, in bytes.
     pub element_size: u32,
+
+    /// Whether table entries are inline `VMCallerCheckedAnyfunc` values.
+    pub inline_anyfunc: bool,
 }
 
 impl TableData {
@@ -56,19 +58,19 @@ impl TableData {
         mut index: ir::Value,
         addr_ty: ir::Type,
         enable_table_access_spectre_mitigation: bool,
-    ) -> (ir::Value, ir::MemFlags) {
+    ) -> (ir::Value, ir::MemFlagsData) {
         let index_ty = pos.func.dfg.value_type(index);
 
         // Start with the bounds check. Trap if `index + 1 > bound`.
         let bound = self.bound.bound(pos.cursor(), index_ty);
 
         // `index > bound - 1` is the same as `index >= bound`.
-        let oob =
-            pos.ins()
-                .icmp(IntCC::UnsignedGreaterThanOrEqual, index, bound);
+        let oob = pos
+            .ins()
+            .icmp(IntCC::UnsignedGreaterThanOrEqual, index, bound);
 
         if !enable_table_access_spectre_mitigation {
-            pos.ins().trapnz(oob, ir::TrapCode::TableOutOfBounds);
+            pos.ins().trapnz(oob, crate::TRAP_TABLE_OUT_OF_BOUNDS);
         }
 
         // Convert `index` to `addr_ty`.
@@ -77,23 +79,25 @@ impl TableData {
         }
 
         // Add the table base address base
-        let base = pos.ins().global_value(addr_ty, self.base_gv);
+        let mut base = materialize_global_value(&mut pos.cursor(), addr_ty, self.base_gv);
+        if self.base_offset != 0 {
+            base = pos.ins().iadd_imm_s(base, i64::from(self.base_offset));
+        }
 
         let element_size = self.element_size;
         let offset = if element_size == 1 {
             index
         } else if element_size.is_power_of_two() {
             pos.ins()
-                .ishl_imm(index, i64::from(element_size.trailing_zeros()))
+                .ishl_imm_u(index, i64::from(element_size.trailing_zeros()))
         } else {
-            pos.ins().imul_imm(index, element_size as i64)
+            pos.ins().imul_imm_u(index, element_size as i64)
         };
 
         let element_addr = pos.ins().iadd(base, offset);
 
-        let base_flags = ir::MemFlags::new()
-            .with_aligned()
-            .with_alias_region(Some(ir::AliasRegion::Table));
+        let mut base_flags = ir::MemFlagsData::new().with_aligned();
+        set_memflags_alias_region(pos.func, &mut base_flags, MemoryAliasRegion::Table);
         if enable_table_access_spectre_mitigation {
             // Short-circuit the computed table element address to a null pointer
             // when out-of-bounds. The consumer of this address will trap when
@@ -101,7 +105,7 @@ impl TableData {
             let zero = pos.ins().iconst(addr_ty, 0);
             (
                 pos.ins().select_spectre_guard(oob, zero, element_addr),
-                base_flags.with_trap_code(Some(ir::TrapCode::TableOutOfBounds)),
+                base_flags.with_trap_code(Some(crate::TRAP_TABLE_OUT_OF_BOUNDS)),
             )
         } else {
             (element_addr, base_flags.with_trap_code(None))

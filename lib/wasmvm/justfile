@@ -50,7 +50,7 @@ build-rust:
       ;;
   esac
 
-  (cd libwasmvm && cargo build --release)
+  (cd libwasmvm && cargo build --locked --release)
   cp "libwasmvm/target/release/${shared_lib_src}" "internal/api/${shared_lib_dst}"
   just update-bindings
 

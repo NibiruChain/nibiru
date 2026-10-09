@@ -1,7 +1,7 @@
 [package]
 name = "wasmer-compiler"
 description = "Base compiler abstraction for Wasmer WebAssembly runtime"
-categories = ["wasm", "no-std"]
+categories = ["wasm"]
 keywords = ["wasm", "webassembly", "compiler"]
 readme = "README.md"
 authors.workspace = true
@@ -12,46 +12,59 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
+[build-dependencies]
+cc.workspace = true
+
 [dependencies]
-wasmer-types = { path = "../types", version = "=5.0.6", default-features = false }
-wasmparser = { workspace = true, optional = true, default-features = false }
+wasmer-types = { path = "../types", version = "=7.4.2", default-features = false }
+wasmparser = { workspace = true, default-features = false, optional = true }
 enumset.workspace = true
-hashbrown = { version = "0.11", optional = true }
-serde = { version = "1.0", features = ["derive"], optional = true }
-thiserror = "1.0"
-serde_bytes = { version = "0.11", optional = true }
-smallvec = "1.6"
-xxhash-rust = { version = "0.8.10", features = ["xxh64"] }
-loupe = { version = "0.1.3", optional = true, features = [
-	"indexmap",
-	"enable-indexmap",
+serde = { workspace = true, optional = true }
+thiserror.workspace = true
+serde_bytes = { workspace = true, optional = true }
+smallvec.workspace = true
+strum = { workspace = true, optional = true }
+loupe = { workspace = true, optional = true, features = [
+  "indexmap",
+  "enable-indexmap",
 ] }
 
+backtrace.workspace = true
+memmap2.workspace = true
+more-asserts.workspace = true
 
-backtrace = "0.3"
-memmap2 = "0.6"
-more-asserts = "0.2"
+leb128.workspace = true
+enum-iterator.workspace = true
 
-cfg-if = "1.0"
-leb128 = "0.2"
-enum-iterator = "0.7.0"
-
-bytes = "1.0"
-self_cell = "1.0"
-rkyv = { workspace = true }
-shared-buffer = { workspace = true }
-libc = { workspace = true }
-target-lexicon = { workspace = true }
-object = { workspace = true, features = ["write"] }
+bytes.workspace = true
+self_cell.workspace = true
+rkyv.workspace = true
+shared-buffer.workspace = true
+libc.workspace = true
+target-lexicon.workspace = true
+object.workspace = true
+addr2line.workspace = true
+gimli.workspace = true
+itertools.workspace = true
+tempfile.workspace = true
+rangemap.workspace = true
+phf = { workspace = true, features = ["macros"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-wasmer-vm = { path = "../vm", version = "=5.0.6" }
-region = { version = "3.0" }
+libwild.workspace = true
+wasmer-vm = { path = "../vm", version = "=7.4.2" }
+region.workspace = true
+which.workspace = true
+rayon.workspace = true
+crossbeam-channel.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-sys = { version = "0.59", features = [
-	"Win32_System_Diagnostics_Debug",
+windows-sys = { workspace = true, features = [
+  "Win32_System_Diagnostics_Debug",
 ] }
+
+[target.'cfg(all(target_os = "macos", target_arch = "aarch64"))'.dependencies]
+macho-unwind-info.workspace = true
 
 [features]
 default = ["std"]
@@ -59,24 +72,27 @@ default = ["std"]
 # `CompilerConfig`, as well as the included wasmparser.
 # Disable this feature if you just want a headless engine.
 translator = ["wasmparser"]
-compiler = ["translator"]
+compiler = ["translator", "dep:strum"]
 wasmer-artifact-load = []
 wasmer-artifact-create = []
 static-artifact-load = []
-static-artifact-create = []
-std = ["wasmer-types/std"]
-core = ["hashbrown", "wasmer-types/core"]
+static-artifact-create = ["translator", "compiler"]
+# Keep for backward compatibility.
+std = []
+core = []
 enable-serde = ["serde", "serde_bytes", "wasmer-types/enable-serde"]
 artifact-size = ["dep:loupe"]
+# Signal-free trap-handler backend; see wasmer-vm's baremetal feature for details.
+baremetal = ["wasmer-vm/baremetal"]
 
 [badges]
 maintenance = { status = "experimental" }
 
 [package.metadata.docs.rs]
 features = [
-	"static-artifact-create",
-	"static-artifact-load",
-	"wasmer-artifact-create",
-	"wasmer-artifact-load",
+  "static-artifact-create",
+  "static-artifact-load",
+  "wasmer-artifact-create",
+  "wasmer-artifact-load",
 ]
 rustc-args = ["--cfg", "docsrs"]

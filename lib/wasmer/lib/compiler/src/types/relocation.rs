@@ -17,21 +17,15 @@
 
 use super::section::SectionIndex;
 use crate::{Addend, CodeOffset};
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
-use wasmer_types::{
-    entity::PrimaryMap, lib::std::fmt, LibCall, LocalFunctionIndex,
-};
+use wasmer_types::{FunctionIndex, LibCall, LocalFunctionIndex, entity::PrimaryMap};
 
 /// Relocation kinds for every ISA.
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Copy, Clone, Debug, PartialEq, Eq,
-)]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Copy, Clone, Debug, PartialEq, Eq)]
 #[rkyv(derive(Debug), compare(PartialEq))]
 #[repr(u8)]
 pub enum RelocationKind {
@@ -39,10 +33,12 @@ pub enum RelocationKind {
     Abs4,
     /// absolute 8-byte
     Abs8,
-    /// x86 PC-relative 4-byte
-    X86PCRel4,
-    /// x86 PC-relative 8-byte
-    X86PCRel8,
+
+    /// PC-relative 4-byte
+    PCRel4,
+    /// PC-relative 8-byte
+    PCRel8,
+
     /// x86 call to PC-relative 4-byte
     X86CallPCRel4,
     /// x86 call to PLT-relative 4-byte
@@ -105,57 +101,101 @@ pub enum RelocationKind {
     ElfX86_64TlsGd,
     // /// Mach-O x86_64 32 bit signed PC relative offset to a `__thread_vars` entry.
     // MachOX86_64Tlv,
+
+    // -- Mach-O-specific relocations
+    //
+    // --- Arm64
+    // (MACHO_ARM64_RELOC_UNSIGNED) for pointers
+    MachoArm64RelocUnsigned,
+    // (MACHO_ARM64_RELOC_SUBTRACTOR) must be followed by a ARM64_RELOC_UNSIGNED
+    MachoArm64RelocSubtractor,
+    // (MACHO_ARM64_RELOC_BRANCH26) a B/BL instruction with 26-bit displacement
+    MachoArm64RelocBranch26,
+    // (MACHO_ARM64_RELOC_PAGE21) pc-rel distance to page of target
+    MachoArm64RelocPage21,
+    // (MACHO_ARM64_RELOC_PAGEOFF12) offset within page, scaled by r_length
+    MachoArm64RelocPageoff12,
+    // (MACHO_ARM64_RELOC_GOT_LOAD_PAGE21) pc-rel distance to page of GOT slot
+    MachoArm64RelocGotLoadPage21,
+    // (MACHO_ARM64_RELOC_GOT_LOAD_PAGEOFF12) offset within page of GOT slot, scaled by r_length
+    MachoArm64RelocGotLoadPageoff12,
+    // (MACHO_ARM64_RELOC_POINTER_TO_GOT) for pointers to GOT slots
+    MachoArm64RelocPointerToGot,
+    // (MACHO_ARM64_RELOC_TLVP_LOAD_PAGE21) pc-rel distance to page of TLVP slot
+    MachoArm64RelocTlvpLoadPage21,
+    // (MACHO_ARM64_RELOC_TLVP_LOAD_PAGEOFF12) offset within page of TLVP slot, scaled by r_length
+    MachoArm64RelocTlvpLoadPageoff12,
+    // (MACHO_ARM64_RELOC_ADDEND) must be followed by PAGE21 or PAGEOFF12
+    MachoArm64RelocAddend,
+
+    // --- X86_64
+    // (MACHO_X86_64_RELOC_UNSIGNED) for absolute addresses
+    MachoX86_64RelocUnsigned,
+    // (MACHO_X86_64_RELOC_SIGNED) for signed 32-bit displacement
+    MachoX86_64RelocSigned,
+    // (MACHO_X86_64_RELOC_BRANCH) a CALL/JMP instruction with 32-bit displacement
+    MachoX86_64RelocBranch,
+    // (MACHO_X86_64_RELOC_GOT_LOAD) a MOVQ load of a GOT entry
+    MachoX86_64RelocGotLoad,
+    // (MACHO_X86_64_RELOC_GOT) other GOT references
+    MachoX86_64RelocGot,
+    // (MACHO_X86_64_RELOC_SUBTRACTOR) must be followed by a X86_64_RELOC_UNSIGNED
+    MachoX86_64RelocSubtractor,
+    // (MACHO_X86_64_RELOC_SIGNED_1) for signed 32-bit displacement with a -1 addend
+    MachoX86_64RelocSigned1,
+    // (MACHO_X86_64_RELOC_SIGNED_2) for signed 32-bit displacement with a -2 addend
+    MachoX86_64RelocSigned2,
+    // (MACHO_X86_64_RELOC_SIGNED_4) for signed 32-bit displacement with a -4 addend
+    MachoX86_64RelocSigned4,
+    // (MACHO_X86_64_RELOC_TLV) for thread local variables
+    MachoX86_64RelocTlv,
+
+    // TODO: sort the items when we bump the rkyv version
+    /// absolute 6 bits
+    Abs6Bits,
+    /// absolute 1-byte
+    Abs,
+    /// absolute 2-byte
+    Abs2,
+
+    /// addition at the place of the relocation (1-byte)
+    Add,
+    /// addition at the place of the relocation (2-bytes)
+    Add2,
+    /// addition at the place of the relocation (4-bytes)
+    Add4,
+    /// addition at the place of the relocation (8-bytes)
+    Add8,
+
+    /// subtraction at the place of the relocation (6 bits)
+    Sub6Bits,
+    /// subtraction at the place of the relocation (1-byte)
+    Sub,
+    /// subtraction at the place of the relocation (2-bytes)
+    Sub2,
+    /// subtraction at the place of the relocation (4-bytes)
+    Sub4,
+    /// subtraction at the place of the relocation (8-bytes)
+    Sub8,
 }
 
-impl fmt::Display for RelocationKind {
-    /// Display trait implementation drops the arch, since its used in contexts where the arch is
-    /// already unambiguous, e.g. clif syntax with isa specified. In other contexts, use Debug.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::Abs4 => write!(f, "Abs4"),
-            Self::Abs8 => write!(f, "Abs8"),
-            Self::X86PCRel4 => write!(f, "PCRel4"),
-            Self::X86PCRel8 => write!(f, "PCRel8"),
-            Self::X86CallPCRel4 => write!(f, "CallPCRel4"),
-            Self::X86CallPLTRel4 => write!(f, "CallPLTRel4"),
-            Self::X86GOTPCRel4 => write!(f, "GOTPCRel4"),
-            Self::Arm32Call | Self::Arm64Call | Self::RiscvCall => {
-                write!(f, "Call")
-            }
-            Self::Arm64Movw0 => write!(f, "Arm64MovwG0"),
-            Self::Arm64Movw1 => write!(f, "Arm64MovwG1"),
-            Self::Arm64Movw2 => write!(f, "Arm64MovwG2"),
-            Self::Arm64Movw3 => write!(f, "Arm64MovwG3"),
-            Self::ElfX86_64TlsGd => write!(f, "ElfX86_64TlsGd"),
-            Self::RiscvPCRelHi20 => write!(f, "RiscvPCRelHi20"),
-            Self::RiscvPCRelLo12I => write!(f, "RiscvPCRelLo12I"),
-            Self::LArchAbsHi20 => write!(f, "LArchAbsHi20"),
-            Self::LArchAbsLo12 => write!(f, "LArchAbsLo12"),
-            Self::LArchAbs64Hi12 => write!(f, "LArchAbs64Hi12"),
-            Self::LArchAbs64Lo20 => write!(f, "LArchAbs64Lo20"),
-            Self::LArchCall36 => write!(f, "LArchCall36"),
-            Self::LArchPCAlaHi20 => write!(f, "LArchPCAlaHi20"),
-            Self::LArchPCAlaLo12 => write!(f, "LArchPCAlaLo12"),
-            Self::LArchPCAla64Hi12 => write!(f, "LArchPCAla64Hi12"),
-            Self::LArchPCAla64Lo20 => write!(f, "LArchPCAla64Lo20"),
-            Self::Aarch64AdrPrelLo21 => write!(f, "Aarch64AdrPrelLo21"),
-            Self::Aarch64AdrPrelPgHi21 => write!(f, "Aarch64AdrPrelPgHi21"),
-            Self::Aarch64AddAbsLo12Nc => write!(f, "Aarch64AddAbsLo12Nc"),
-            Self::Aarch64Ldst128AbsLo12Nc => {
-                write!(f, "Aarch64Ldst128AbsLo12Nc")
-            }
-            Self::Aarch64Ldst64AbsLo12Nc => write!(f, "Aarch64Ldst64AbsLo12Nc"),
-            // Self::MachOX86_64Tlv => write!(f, "MachOX86_64Tlv"),
-        }
+impl RelocationKind {
+    pub fn needs_got(&self) -> bool {
+        matches!(
+            self,
+            Self::MachoArm64RelocGotLoadPage21
+                | Self::MachoArm64RelocGotLoadPageoff12
+                | Self::MachoArm64RelocPointerToGot
+                | Self::MachoX86_64RelocGotLoad
+                | Self::MachoX86_64RelocGot
+        )
     }
 }
 
 /// A record of a relocation to perform.
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq,
-)]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq)]
 #[rkyv(derive(Debug), compare(PartialEq))]
 pub struct Relocation {
     /// The relocation kind.
@@ -190,13 +230,13 @@ pub trait RelocationLike {
     // * Page(expr) is the page address of the expression expr, defined as (expr & ~0xFFF). (This applies even if the machine page size supported by the platform has a different value.)
     //
     // [1]: https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst
-    fn for_address(
-        &self,
-        start: usize,
-        target_func_address: u64,
-    ) -> (usize, u64) {
+    fn for_address(&self, start: usize, target_func_address: u64) -> (usize, u64) {
         match self.kind() {
-            RelocationKind::Abs8
+            RelocationKind::Abs6Bits
+            | RelocationKind::Abs
+            | RelocationKind::Abs2
+            | RelocationKind::Abs4
+            | RelocationKind::Abs8
             | RelocationKind::Arm64Movw0
             | RelocationKind::Arm64Movw1
             | RelocationKind::Arm64Movw2
@@ -204,11 +244,24 @@ pub trait RelocationLike {
             | RelocationKind::RiscvPCRelLo12I
             | RelocationKind::Aarch64Ldst128AbsLo12Nc
             | RelocationKind::Aarch64Ldst64AbsLo12Nc
+            | RelocationKind::MachoArm64RelocUnsigned
+            | RelocationKind::MachoX86_64RelocUnsigned
+            | RelocationKind::MachoArm64RelocSubtractor
+            | RelocationKind::MachoX86_64RelocSubtractor
             | RelocationKind::LArchAbsHi20
             | RelocationKind::LArchAbsLo12
             | RelocationKind::LArchAbs64Lo20
             | RelocationKind::LArchAbs64Hi12
-            | RelocationKind::LArchPCAlaLo12 => {
+            | RelocationKind::LArchPCAlaLo12
+            | RelocationKind::Add
+            | RelocationKind::Add2
+            | RelocationKind::Add4
+            | RelocationKind::Add8
+            | RelocationKind::Sub6Bits
+            | RelocationKind::Sub
+            | RelocationKind::Sub2
+            | RelocationKind::Sub4
+            | RelocationKind::Sub8 => {
                 let reloc_address = start + self.offset() as usize;
                 let reloc_addend = self.addend() as isize;
                 let reloc_abs = target_func_address
@@ -216,7 +269,7 @@ pub trait RelocationLike {
                     .unwrap();
                 (reloc_address, reloc_abs)
             }
-            RelocationKind::X86PCRel4 => {
+            RelocationKind::PCRel4 => {
                 let reloc_address = start + self.offset() as usize;
                 let reloc_addend = self.addend() as isize;
                 let reloc_delta_u32 = (target_func_address as u32)
@@ -225,7 +278,7 @@ pub trait RelocationLike {
                     .unwrap();
                 (reloc_address, reloc_delta_u32 as u64)
             }
-            RelocationKind::X86PCRel8 => {
+            RelocationKind::PCRel8 => {
                 let reloc_address = start + self.offset() as usize;
                 let reloc_addend = self.addend() as isize;
                 let reloc_delta = target_func_address
@@ -267,14 +320,23 @@ pub trait RelocationLike {
                     .wrapping_add(reloc_addend as u64);
                 (reloc_address, reloc_delta_u32)
             }
-            RelocationKind::Aarch64AdrPrelPgHi21 => {
+            RelocationKind::Aarch64AdrPrelPgHi21
+            | RelocationKind::MachoArm64RelocGotLoadPage21
+            | RelocationKind::MachoArm64RelocPage21 => {
                 let reloc_address = start + self.offset() as usize;
                 let reloc_addend = self.addend() as isize;
-                let target_page = (target_func_address
-                    .wrapping_add(reloc_addend as u64)
-                    & !(0xFFF)) as usize;
+                let target_page =
+                    (target_func_address.wrapping_add(reloc_addend as u64) & !(0xFFF)) as usize;
                 let pc_page = reloc_address & !(0xFFF);
                 (reloc_address, target_page.wrapping_sub(pc_page) as u64)
+            }
+            RelocationKind::MachoArm64RelocGotLoadPageoff12
+            | RelocationKind::MachoArm64RelocPageoff12 => {
+                let reloc_address = start + self.offset() as usize;
+                let reloc_addend = self.addend() as isize;
+                let target_offset =
+                    (target_func_address.wrapping_add(reloc_addend as u64) & (0xFFF)) as usize;
+                (reloc_address, target_offset as u64)
             }
             RelocationKind::LArchCall36 => {
                 let reloc_address = start + self.offset() as usize;
@@ -297,8 +359,7 @@ pub trait RelocationLike {
                 let pc_page = reloc_address & !(0xFFF);
                 (reloc_address, target_page.wrapping_sub(pc_page) as u64)
             }
-            RelocationKind::LArchPCAla64Hi12
-            | RelocationKind::LArchPCAla64Lo20 => {
+            RelocationKind::LArchPCAla64Hi12 | RelocationKind::LArchPCAla64Lo20 => {
                 let reloc_address = start + self.offset() as usize;
                 let reloc_addend = self.addend() as isize;
                 let reloc_offset = match self.kind() {
@@ -306,17 +367,21 @@ pub trait RelocationLike {
                     RelocationKind::LArchPCAla64Hi12 => 12,
                     _ => 0,
                 };
-                let target_func_address =
-                    target_func_address.wrapping_add(reloc_addend as u64);
+                let target_func_address = target_func_address.wrapping_add(reloc_addend as u64);
                 let target_page = (target_func_address & !(0xFFF)) as usize;
                 let pc_page = (reloc_address - reloc_offset) & !(0xFFF);
                 let mut reloc_delta = target_page.wrapping_sub(pc_page) as u64;
                 reloc_delta = reloc_delta
                     .wrapping_add((target_func_address & 0x800) << 1)
                     .wrapping_sub((target_func_address & 0x800) << 21);
-                reloc_delta =
-                    reloc_delta.wrapping_add((reloc_delta & 0x80000000) << 1);
+                reloc_delta = reloc_delta.wrapping_add((reloc_delta & 0x80000000) << 1);
                 (reloc_address, reloc_delta)
+            }
+            RelocationKind::MachoArm64RelocPointerToGot => {
+                let reloc_address = start + self.offset() as usize;
+                let reloc_delta =
+                    (target_func_address as isize).wrapping_sub(reloc_address as isize);
+                (reloc_address, reloc_delta as u64)
             }
             _ => panic!("Relocation kind unsupported"),
         }
@@ -362,14 +427,14 @@ impl RelocationLike for ArchivedRelocation {
 /// Destination function. Can be either user function or some special one, like `memory.grow`.
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Debug, Copy, Clone, PartialEq, Eq,
-)]
-#[rkyv(derive(Debug), compare(PartialEq))]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[rkyv(derive(Debug, Hash, PartialEq, Eq), compare(PartialEq))]
 #[repr(u8)]
 pub enum RelocationTarget {
     /// A relocation to a function defined locally in the wasm (not an imported one).
     LocalFunc(LocalFunctionIndex),
+    /// A relocation to a dynamic trampoline.
+    DynamicTrampoline(FunctionIndex),
     /// A compiler-generated libcall.
     LibCall(LibCall),
     /// Custom sections generated by the compiler

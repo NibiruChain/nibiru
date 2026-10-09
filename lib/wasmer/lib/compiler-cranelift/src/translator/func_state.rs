@@ -9,13 +9,16 @@
 //! The `FuncTranslationState` struct defined in this module is used to keep track of the WebAssembly
 //! value and control stacks during the translation of a single function.
 
-use super::func_environ::{FuncEnvironment, GlobalVariable};
+use crate::func_environ::{FuncEnvironment, GlobalVariable};
 use crate::heap::Heap;
+use crate::translator::code_translator::CatchClause;
 use crate::{HashMap, Occupied, Vacant};
 use cranelift_codegen::ir::{self, Block, Inst, Value};
+use cranelift_frontend::FunctionBuilder;
+use itertools::Itertools;
 use std::vec::Vec;
 use wasmer_types::{
-    FunctionIndex, GlobalIndex, MemoryIndex, SignatureIndex, WasmResult,
+    CATCH_ALL_TAG_VALUE, FunctionIndex, GlobalIndex, MemoryIndex, SignatureIndex, WasmResult,
 };
 
 /// Information about the presence of an associated `else` for an `if`, or the
@@ -86,6 +89,9 @@ pub enum ControlStackFrame {
         num_return_values: usize,
         original_stack_size: usize,
         exit_is_branched_to: bool,
+        /// When this block corresponds to a try-table, keep the handler state
+        /// checkpoint and the list of catch blocks to seal once the scope ends.
+        try_table_info: Option<(HandlerStateCheckpoint, Vec<Block>)>,
     },
     Loop {
         destination: Block,
@@ -133,9 +139,7 @@ impl ControlStackFrame {
     }
     pub fn br_destination(&self) -> Block {
         match *self {
-            Self::If { destination, .. } | Self::Block { destination, .. } => {
-                destination
-            }
+            Self::If { destination, .. } | Self::Block { destination, .. } => destination,
             Self::Loop { header, .. } => header,
         }
     }
@@ -206,7 +210,7 @@ impl ControlStackFrame {
         // (see also `FuncTranslationState::push_if`).
         // Yet, the original_stack_size member accounts for them only once, so that the else
         // block can see the same number of parameters as the consequent block. As a matter of
-        // fact, we need to substract an extra number of parameter values for if blocks.
+        // fact, we need to subtract an extra number of parameter values for if blocks.
         let num_duplicated_params = match self {
             &Self::If {
                 num_param_values, ..
@@ -217,6 +221,25 @@ impl ControlStackFrame {
             _ => 0,
         };
         stack.truncate(self.original_stack_size() - num_duplicated_params);
+    }
+
+    /// Restore exception handler state and seal catch blocks when exiting a
+    /// try-table scope.
+    pub fn restore_catch_handlers(
+        &self,
+        handlers: &mut HandlerState,
+        builder: &mut FunctionBuilder,
+    ) {
+        if let Self::Block {
+            try_table_info: Some((checkpoint, catch_blocks)),
+            ..
+        } = self
+        {
+            handlers.restore_checkpoint(*checkpoint);
+            for block in catch_blocks {
+                builder.seal_block(*block);
+            }
+        }
     }
 }
 
@@ -231,6 +254,8 @@ pub struct FuncTranslationState {
     pub(crate) stack: Vec<Value>,
     /// A stack of active control flow operations at this point in the input wasm function.
     pub(crate) control_stack: Vec<ControlStackFrame>,
+    /// Exception handler state used to attach catch blocks to try-calls.
+    pub(crate) handlers: HandlerState,
     /// Is the current translation state still reachable? This is false when translating operators
     /// like End, Return, or Unreachable.
     pub(crate) reachable: bool,
@@ -262,6 +287,72 @@ impl FuncTranslationState {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct HandlerStateCheckpoint(usize, usize);
+
+#[derive(Default)]
+pub(crate) struct HandlerState {
+    handlers: Vec<Block>,
+    clauses: Vec<CatchClause>,
+}
+
+#[derive(Debug)]
+pub(crate) struct LandingPad {
+    pub(crate) block: Block,
+    pub(crate) clauses: Vec<CatchClause>,
+}
+
+impl HandlerState {
+    pub fn add_handler(&mut self, block: Block) {
+        self.handlers.push(block);
+    }
+
+    pub fn add_clause(&mut self, clause: CatchClause) {
+        self.clauses.push(clause);
+    }
+
+    pub fn take_checkpoint(&self) -> HandlerStateCheckpoint {
+        HandlerStateCheckpoint(self.handlers.len(), self.clauses.len())
+    }
+
+    pub fn restore_checkpoint(&mut self, checkpoint: HandlerStateCheckpoint) {
+        debug_assert!(checkpoint.0 <= self.handlers.len());
+        debug_assert!(checkpoint.1 <= self.clauses.len());
+        self.handlers.truncate(checkpoint.0);
+        self.clauses.truncate(checkpoint.1);
+    }
+
+    /// Get the latest landing pad block including all the tags covered by it.
+    pub fn landing_pad(&self) -> Option<LandingPad> {
+        self.handlers.last().copied().map(|block| LandingPad {
+            block,
+            clauses: self.unique_clauses(),
+        })
+    }
+
+    /// Returns an iterator over the catch clauses in reverse order, with duplicates removed.
+    pub fn unique_clauses(&self) -> Vec<CatchClause> {
+        self.clauses
+            .iter()
+            // Starting with the inner-most try_table catch clauses.
+            .rev()
+            .unique_by(|c| c.tag_value)
+            // We can ignore every tag followed by the CatchAll.
+            .take_while_inclusive(|c| c.tag_value != CATCH_ALL_TAG_VALUE)
+            .cloned()
+            .collect()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.handlers.is_empty()
+    }
+
+    pub fn clear(&mut self) {
+        self.handlers.clear();
+        self.clauses.clear();
+    }
+}
+
 impl FuncTranslationState {
     /// Construct a new, empty, `FuncTranslationState`
     pub(crate) fn new() -> Self {
@@ -270,6 +361,7 @@ impl FuncTranslationState {
             // TODO(reftypes):
             //metadata_stack: Vec::new(),
             control_stack: Vec::new(),
+            handlers: HandlerState::default(),
             reachable: true,
             globals: HashMap::new(),
             heaps: HashMap::new(),
@@ -281,7 +373,9 @@ impl FuncTranslationState {
     fn clear(&mut self) {
         debug_assert!(self.stack.is_empty());
         debug_assert!(self.control_stack.is_empty());
+        debug_assert!(self.handlers.is_empty());
         self.reachable = true;
+        self.handlers.clear();
         self.globals.clear();
         self.heaps.clear();
         self.signatures.clear();
@@ -292,16 +386,14 @@ impl FuncTranslationState {
     ///
     /// This resets the state to containing only a single block representing the whole function.
     /// The exit block is the last block in the function which will contain the return instruction.
-    pub(crate) fn initialize(&mut self, sig: &ir::Signature, exit_block: Block) {
+    pub(crate) fn initialize(
+        &mut self,
+        _sig: &ir::Signature,
+        exit_block: Block,
+        result_count: usize,
+    ) {
         self.clear();
-        self.push_block(
-            exit_block,
-            0,
-            sig.returns
-                .iter()
-                .filter(|arg| arg.purpose == ir::ArgumentPurpose::Normal)
-                .count(),
-        );
+        self.push_block(exit_block, 0, result_count);
     }
 
     /// Push a value.
@@ -378,12 +470,12 @@ impl FuncTranslationState {
         &mut self.stack[len - n..]
     }
 
-    /// Push a block on the control stack.
-    pub(crate) fn push_block(
+    fn push_block_impl(
         &mut self,
         following_code: Block,
         num_param_types: usize,
         num_result_types: usize,
+        try_table_info: Option<(HandlerStateCheckpoint, Vec<Block>)>,
     ) {
         debug_assert!(num_param_types <= self.stack.len());
         self.control_stack.push(ControlStackFrame::Block {
@@ -392,7 +484,35 @@ impl FuncTranslationState {
             num_param_values: num_param_types,
             num_return_values: num_result_types,
             exit_is_branched_to: false,
+            try_table_info,
         });
+    }
+
+    /// Push a block on the control stack.
+    pub(crate) fn push_block(
+        &mut self,
+        following_code: Block,
+        num_param_types: usize,
+        num_result_types: usize,
+    ) {
+        self.push_block_impl(following_code, num_param_types, num_result_types, None);
+    }
+
+    /// Push a try-table block on the control stack.
+    pub(crate) fn push_try_table_block(
+        &mut self,
+        following_code: Block,
+        catch_blocks: Vec<Block>,
+        num_param_types: usize,
+        num_result_types: usize,
+        checkpoint: HandlerStateCheckpoint,
+    ) {
+        self.push_block_impl(
+            following_code,
+            num_param_types,
+            num_result_types,
+            Some((checkpoint, catch_blocks)),
+        );
     }
 
     /// Push a loop on the control stack.
@@ -454,28 +574,26 @@ impl FuncTranslationState {
     /// Get the `GlobalVariable` reference that should be used to access the global variable
     /// `index`. Create the reference if necessary.
     /// Also return the WebAssembly type of the global.
-    pub(crate) fn get_global<FE: FuncEnvironment + ?Sized>(
+    pub(crate) fn get_global(
         &mut self,
         func: &mut ir::Function,
         index: u32,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
     ) -> WasmResult<GlobalVariable> {
         let index = GlobalIndex::from_u32(index);
         match self.globals.entry(index) {
             Occupied(entry) => Ok(*entry.get()),
-            Vacant(entry) => {
-                Ok(*entry.insert(environ.make_global(func, index)?))
-            }
+            Vacant(entry) => Ok(*entry.insert(environ.make_global(func, index)?)),
         }
     }
 
     /// Get the `Heap` reference that should be used to access linear memory `index`.
     /// Create the reference if necessary.
-    pub(crate) fn get_heap<FE: FuncEnvironment + ?Sized>(
+    pub(crate) fn get_heap(
         &mut self,
         func: &mut ir::Function,
         index: u32,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
     ) -> WasmResult<Heap> {
         let index = MemoryIndex::from_u32(index);
         match self.heaps.entry(index) {
@@ -488,21 +606,18 @@ impl FuncTranslationState {
     /// `index`. Also return the number of WebAssembly arguments in the signature.
     ///
     /// Create the signature if necessary.
-    pub(crate) fn get_indirect_sig<FE: FuncEnvironment + ?Sized>(
+    pub(crate) fn get_indirect_sig(
         &mut self,
         func: &mut ir::Function,
         index: u32,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
     ) -> WasmResult<(ir::SigRef, usize)> {
         let index = SignatureIndex::from_u32(index);
         match self.signatures.entry(index) {
             Occupied(entry) => Ok(*entry.get()),
             Vacant(entry) => {
                 let sig = environ.make_indirect_sig(func, index)?;
-                Ok(*entry.insert((
-                    sig,
-                    num_wasm_parameters(environ, &func.dfg.signatures[sig]),
-                )))
+                Ok(*entry.insert((sig, num_wasm_parameters(environ, &func.dfg.signatures[sig]))))
             }
         }
     }
@@ -511,11 +626,11 @@ impl FuncTranslationState {
     /// `index`. Also return the number of WebAssembly arguments in the signature.
     ///
     /// Create the function reference if necessary.
-    pub(crate) fn get_direct_func<FE: FuncEnvironment + ?Sized>(
+    pub(crate) fn get_direct_func(
         &mut self,
         func: &mut ir::Function,
         index: u32,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
     ) -> WasmResult<(ir::FuncRef, usize)> {
         let index = FunctionIndex::from_u32(index);
         match self.functions.entry(index) {
@@ -532,10 +647,7 @@ impl FuncTranslationState {
     }
 }
 
-fn num_wasm_parameters<FE: FuncEnvironment + ?Sized>(
-    environ: &FE,
-    signature: &ir::Signature,
-) -> usize {
+fn num_wasm_parameters(environ: &FuncEnvironment<'_>, signature: &ir::Signature) -> usize {
     (0..signature.params.len())
         .filter(|index| environ.is_wasm_parameter(signature, *index))
         .count()

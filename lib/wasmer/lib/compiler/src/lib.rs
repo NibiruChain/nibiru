@@ -7,7 +7,6 @@
 
 #![deny(missing_docs, trivial_numeric_casts, unused_extern_crates)]
 #![warn(unused_import_braces)]
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::new_without_default, clippy::upper_case_acronyms)]
 #![warn(
     clippy::float_arithmetic,
@@ -18,38 +17,15 @@
     clippy::unicode_not_nfc,
     clippy::use_self
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-
-#[cfg(all(feature = "std", feature = "core"))]
-compile_error!(
-    "The `std` and `core` features are both enabled, which is an error. Please enable only once."
-);
-
-#[cfg(all(not(feature = "std"), not(feature = "core")))]
-compile_error!("Both the `std` and `core` features are disabled. Please enable one of them.");
-
-#[cfg(feature = "core")]
-extern crate alloc;
-
-#[allow(unused_imports)]
-mod lib {
-    #[cfg(feature = "core")]
-    pub mod std {
-        pub use alloc::{borrow, boxed, str, string, sync, vec};
-        pub use core::fmt;
-        pub use hashbrown as collections;
-    }
-
-    #[cfg(feature = "std")]
-    pub mod std {
-        pub use std::{borrow, boxed, collections, fmt, str, string, sync, vec};
-    }
-}
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod engine;
 mod traits;
 
+pub mod abi;
+pub mod misc;
 pub mod object;
+pub mod progress;
 pub mod serialize;
 pub mod types;
 
@@ -60,20 +36,37 @@ mod artifact_builders;
 
 pub use self::artifact_builders::*;
 
-#[cfg(feature = "translator")]
+#[cfg(feature = "compiler")]
 mod compiler;
+#[cfg(feature = "compiler")]
+pub use crate::compiler::{
+    ArtifactFormat, CompiledFunction, CompiledObjects, Compiler, CompilerConfig, Debugger,
+    DeterministicIdComponent, FuncTranslator, FunctionBucket, WASM_LARGE_FUNCTION_THRESHOLD,
+    WASM_TRAMPOLINE_ESTIMATED_BODY_SIZE, build_function_buckets, emit_metadata_and_link,
+    translate_function_buckets,
+};
+
+#[cfg(feature = "compiler")]
+pub mod dwarf;
+#[cfg(feature = "compiler")]
+pub mod elf;
+#[cfg(feature = "compiler")]
+mod source_map;
+#[cfg(feature = "compiler")]
+pub use source_map::{SourceLocation, WasmSourceMap};
+
+mod constants;
+pub use crate::constants::*;
 
 #[cfg(feature = "translator")]
 #[macro_use]
 mod translator;
 #[cfg(feature = "translator")]
-pub use crate::compiler::{Compiler, CompilerConfig};
-#[cfg(feature = "translator")]
 pub use crate::translator::{
-    from_binaryreadererror_wasmerror, translate_module, wpheaptype_to_type,
-    wptype_to_type, FunctionBinaryReader, FunctionBodyData, FunctionMiddleware,
-    MiddlewareBinaryReader, MiddlewareReaderState, ModuleEnvironment,
-    ModuleMiddleware, ModuleMiddlewareChain, ModuleTranslationState,
+    FunctionBinaryReader, FunctionBodyData, FunctionMiddleware, MiddlewareBinaryReader,
+    MiddlewareReaderState, ModuleEnvironment, ModuleMiddleware, ModuleMiddlewareChain,
+    ModuleTranslationState, from_binaryreadererror_wasmerror, translate_module, wpheaptype_to_type,
+    wptype_to_type,
 };
 
 pub use wasmer_types::{Addend, CodeOffset, Features};

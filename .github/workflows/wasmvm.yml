@@ -34,6 +34,13 @@ jobs:
           filters: |
             wasmvm:
               - "lib/wasmvm/**"
+              - "lib/wasmer/**"
+              - "lib/cosmwasm-vm/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "rust-toolchain.toml"
+              - "contrib/scripts/build-wasmvm-source*.sh"
+              - "contrib/docker/Dockerfile.wasmvm-source"
               - ".github/workflows/wasmvm.yml"
 
       # The path filter controls ordinary PR runs, while workflow dispatch and
@@ -91,7 +98,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           components: rustfmt
 
@@ -110,9 +117,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
 
       - name: Run Rust sanity checks
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -134,7 +141,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           components: clippy
 
@@ -153,9 +160,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
 
       - name: Run Clippy
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -231,7 +238,7 @@ jobs:
   go-ffi-tests:
     needs: changes-wasmvm
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - name: skip-go-ffi-tests
         if: ${{ needs.changes-wasmvm.outputs['do-run'] != 'true' }}
@@ -243,7 +250,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Install Go
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -267,9 +274,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-wasmvm-
+            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
 
       - name: Build Rust shared library
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -306,7 +313,7 @@ jobs:
 
       - name: Install Rust
         if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' && needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
 
       - name: Install cargo-audit
         if: ${{ vars.ENABLE_CARGO_AUDIT == 'true' && needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -334,7 +341,7 @@ jobs:
   #
   #     - name: Install Rust
   #       if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}
-  #       uses: dtolnay/rust-toolchain@stable
+  #       uses: dtolnay/rust-toolchain@1.95.0
   #
   #     - name: Run Rust unit tests
   #       if: ${{ vars.ENABLE_WINDOWS_RUST_SANITY == 'true' }}

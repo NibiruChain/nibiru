@@ -43,6 +43,20 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
+      - name: "Setup Bun"
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Check release library cache behavior
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: bun test ./contrib/scripts/build-wasmvm-release.test.ts
+
+      - name: Check source library cache behavior
+        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        run: contrib/scripts/build-wasmvm-source-test.sh
+
       - name: Run all unit tests.
         if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
         run: just test-unit
@@ -121,6 +135,14 @@ jobs:
               - "go.sum"
               - "contrib/docker-compose/*"
               - "contrib/scripts/build-nibiru.sh"
+              - "contrib/scripts/build-wasmvm-source*.sh"
+              - "contrib/docker/Dockerfile.wasmvm-source"
+              - "lib/wasmer/**"
+              - "lib/cosmwasm-vm/**"
+              - "lib/wasmvm/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "rust-toolchain.toml"
               - "x/cli/localnet.sh"
               - "contrib/scripts/nibid-elf-test.sh"
               - "contrib/docker/Dockerfile.release-musl"

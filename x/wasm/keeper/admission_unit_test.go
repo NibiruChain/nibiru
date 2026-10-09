@@ -17,17 +17,24 @@ import (
 
 const guardedChainID = "guarded-chain"
 
-// stubSudoRootSource records root reads so tests can prove that disabled and
+// stubSudoPermissionSource records root reads so tests can prove that disabled and
 // non-matching-chain guards do not touch sudo state.
-type stubSudoRootSource struct {
-	root  sdk.AccAddress
-	err   error
-	calls int
+type stubSudoPermissionSource struct {
+	root    sdk.AccAddress
+	err     error
+	calls   int
+	members map[string]bool
 }
 
-func (s *stubSudoRootSource) GetRootAddr(sdk.Context) (sdk.AccAddress, error) {
+func (s *stubSudoPermissionSource) CheckPermissions(actor sdk.AccAddress, _ sdk.Context, role string) error {
 	s.calls++
-	return s.root, s.err
+	if s.err != nil {
+		return s.err
+	}
+	if s.root.Equals(actor) || (role == "wasm_deployer" && s.members[actor.String()]) {
+		return nil
+	}
+	return sdkerrors.ErrUnauthorized.Wrapf("requires root %s or role %q; actor %s", s.root, role, actor)
 }
 
 // TestRequireActorIsAuthedDeployer covers chain scoping, live root lookup,
@@ -65,7 +72,7 @@ func TestRequireActorIsAuthedDeployer(t *testing.T) {
 			guardEnabled: true,
 			actor:        root,
 			authz:        DefaultAuthorizationPolicy{},
-			operation:    wasmDeploymentInstantiate,
+			operation:    wasmDeploymentUpload,
 			wantCalls:    1,
 		},
 		"non-root actor": {
@@ -94,14 +101,6 @@ func TestRequireActorIsAuthedDeployer(t *testing.T) {
 			actor:        other,
 			authz:        GovAuthorizationPolicy{},
 			operation:    wasmDeploymentUpload,
-		},
-		"matching partial instantiate policy": {
-			chainID:      guardedChainID,
-			guardEnabled: true,
-			rootErr:      rootErr,
-			actor:        other,
-			authz:        NewPartialGovAuthorizationPolicy(DefaultAuthorizationPolicy{}, types.AuthZActionInstantiate),
-			operation:    wasmDeploymentInstantiate,
 		},
 		"matching partial migrate policy": {
 			chainID:      guardedChainID,
@@ -133,12 +132,12 @@ func TestRequireActorIsAuthedDeployer(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			source := &stubSudoRootSource{root: root, err: test.rootErr}
+			source := &stubSudoPermissionSource{root: root, err: test.rootErr}
 			keeper := Keeper{}
 			if test.guardEnabled {
 				keeper.wasmDeployerGuard = &wasmDeployerGuard{
-					chainID:        guardedChainID,
-					sudoRootSource: source,
+					chainID:         guardedChainID,
+					sudoPermissions: source,
 				}
 			}
 
@@ -151,7 +150,7 @@ func TestRequireActorIsAuthedDeployer(t *testing.T) {
 			if test.wantErr == nil {
 				require.NoError(t, err)
 			} else {
-				require.ErrorIs(t, err, test.wantErr)
+				require.ErrorContains(t, err, test.wantErr.Error())
 			}
 			require.Equal(t, test.wantCalls, source.calls)
 		})
@@ -164,18 +163,18 @@ func TestRequireActorIsAuthedDeployerErrorText(t *testing.T) {
 	root := DeterministicAccountAddress(t, 1)
 	actor := DeterministicAccountAddress(t, 2)
 	keeper := Keeper{wasmDeployerGuard: &wasmDeployerGuard{
-		chainID:        guardedChainID,
-		sudoRootSource: &stubSudoRootSource{root: root},
+		chainID:         guardedChainID,
+		sudoPermissions: &stubSudoPermissionSource{root: root},
 	}}
 
 	err := keeper.requireActorIsAuthedDeployer(
 		admissionTestContext(guardedChainID),
 		actor,
 		DefaultAuthorizationPolicy{},
-		wasmDeploymentInstantiate,
+		wasmDeploymentMigrate,
 	)
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	require.ErrorContains(t, err, "contract instantiation")
+	require.ErrorContains(t, err, "contract migration")
 	require.ErrorContains(t, err, root.String())
 	require.ErrorContains(t, err, actor.String())
 }
@@ -186,10 +185,10 @@ func TestRequireActorIsAuthedDeployerErrorText(t *testing.T) {
 func TestGuardedKeeperEntrypointsRejectBeforeStateAccess(t *testing.T) {
 	root := DeterministicAccountAddress(t, 1)
 	actor := DeterministicAccountAddress(t, 2)
-	source := &stubSudoRootSource{root: root}
+	source := &stubSudoPermissionSource{root: root}
 	keeper := Keeper{wasmDeployerGuard: &wasmDeployerGuard{
-		chainID:        guardedChainID,
-		sudoRootSource: source,
+		chainID:         guardedChainID,
+		sudoPermissions: source,
 	}}
 	ctx := admissionTestContext(guardedChainID)
 	authz := DefaultAuthorizationPolicy{}
@@ -197,23 +196,20 @@ func TestGuardedKeeperEntrypointsRejectBeforeStateAccess(t *testing.T) {
 	_, _, err := keeper.create(ctx, actor, []byte("not wasm"), nil, authz)
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
 
-	_, _, err = keeper.instantiate(ctx, 1, actor, nil, nil, "label", nil, nil, authz)
-	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-
 	_, err = keeper.migrate(ctx, root, actor, 1, nil, authz)
 	require.ErrorIs(t, err, sdkerrors.ErrUnauthorized)
-	require.Equal(t, 3, source.calls)
+	require.Equal(t, 2, source.calls)
 }
 
 // TestWithWasmDeployerGuard verifies explicit configuration and rejects options
 // that could silently disable or misconfigure the guard.
 func TestWithWasmDeployerGuard(t *testing.T) {
-	source := &stubSudoRootSource{}
+	source := &stubSudoPermissionSource{}
 	keeper := Keeper{}
 
 	WithWasmDeployerGuard(guardedChainID, source).apply(&keeper)
 	require.Equal(t, guardedChainID, keeper.wasmDeployerGuard.chainID)
-	require.Same(t, source, keeper.wasmDeployerGuard.sudoRootSource)
+	require.Same(t, source, keeper.wasmDeployerGuard.sudoPermissions)
 
 	require.Panics(t, func() { WithWasmDeployerGuard("", source) })
 	require.Panics(t, func() { WithWasmDeployerGuard(guardedChainID, nil) })

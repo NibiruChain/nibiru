@@ -2,7 +2,11 @@
 # sai_trading_version: Version number for this tool (Nibiru/sai-trading)
 sai_trading_version = "0.0.1" # vX.Y.Z
 
-# sai_perps_version: This is the version number for the Wasm bytecode files and
-# the sai-perps/evm-interface Solidity contract(s).
-sai_perps_version = "wasm-contracts/v1.24.0" # vX.Y.Z
-sai_perps_commit = "https://github.com/NibiruChain/sai-perps/tree/3cbb6f9e047e5f1345b6a33e28b2b9562afe0059"
+# sai_perps_version records the four vendored Wasm artifacts.
+sai_perps_version = "wasm-contracts/v1.42.0" # vX.Y.Z
+sai_perps_commit = "https://github.com/NibiruChain/sai-perps/tree/29ecf0196e75bcdcec4335f0746011fd70c6d682"
+
+# Solidity fixtures retained byte-for-byte from the pre-refresh Nibiru branch.
+evm_fixture_nibiru_commit = "5e2e1ed9d10bc6a98a95afe20e508524a3bbab08"
+SaiEvm_sha256 = "03b921828c4f114528f1d6c16bcec9d602469e97ce62033a13c87075708aa841"
+PerpVaultEvmInterface_sha256 = "763046965e2068335b1dd2a79e39c61eac5581ab6e744b064512601ac1b0509b"

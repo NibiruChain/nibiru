@@ -6,6 +6,7 @@
 #   VERSION   Release version string (default: latest git tag, or branch-commit)
 #   BUILDDIR  Output directory (default: $REPO_ROOT/build)
 #   TEMPDIR   WasmVM artifact cache (default: $REPO_ROOT/temp)
+#   NIBIRU_WASMVM_BUILD_FROM_SOURCE  Build the vendored runtime (default: false).
 #   GOARCH    Target GOARCH for cross-compilation
 #   GOOS      Target GOOS for cross-compilation
 #   NIBID_STATIC_PIE  Build a Linux static PIE (default: false). Requires a
@@ -141,11 +142,6 @@ detect_os_name() {
 
 # detect_arch_name: Platform lib directory suffix used by build.mk.
 detect_arch_name() {
-  local os_name="$1"
-  if [[ "$os_name" == "darwin" ]]; then
-    printf '%s' "all"
-    return 0
-  fi
   local arch
   if [[ -n "${GOARCH:-}" ]]; then
     arch="$GOARCH"
@@ -167,14 +163,14 @@ compute_version() {
     return 0
   fi
 
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown-version"
     return 0
   fi
 
   branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || printf '%s' "unknown")"
   commit="$(git -C "$REPO_ROOT" log -1 --format='%H' 2>/dev/null || printf '%s' "unknown")"
-  described="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null || true)"
+  described="$(git -C "$REPO_ROOT" describe --tags --match 'v[0-9]*' --abbrev=0 2>/dev/null || true)"
   if [[ -z "$described" ]]; then
     printf '%s-%s' "$branch" "$commit"
   else
@@ -184,7 +180,7 @@ compute_version() {
 
 # compute_commit: Return the git commit hash, or "unknown" outside git checkouts.
 compute_commit() {
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown"
     return 0
   fi
@@ -218,38 +214,44 @@ ensure_temp_dir() {
   mkdir -p "$tempdir"
 }
 
-# ensure_wasmvm_lib: Download wasmvm static lib if missing.
-ensure_wasmvm_lib() {
-  local tempdir="$1"
-  local os_name="$2"
-  local arch_name="$3"
-  local wasmvm_version="$4"
-
-  local lib_dir wasmvm_gh_tag wasmvm_gh_tag_url base_url
-  lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-  wasmvm_gh_tag="lib/wasmvm/${wasmvm_version}"
-  wasmvm_gh_tag_url=$(jq -nr --arg s "$wasmvm_gh_tag" '$s|@uri')
-  base_url="https://github.com/NibiruChain/nibiru/releases/download/${wasmvm_gh_tag_url}"
-
-  mkdir -p "$lib_dir"
-
-  # shellcheck disable=SC2086
-  if compgen -G "$lib_dir/libwasmvm*.a" >/dev/null; then
-    return 0
+# ensure_wasmvm_lib: Download a pinned, checksum-verified static runtime.
+ensure_wasmvm_lib() (
+  local tempdir="$1" os_name="$2" arch_name="$3" wasmvm_version="$4"
+  local libdir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
+  if [[ "$wasmvm_version" == source ]]; then
+    "$SCRIPT_DIR/build-wasmvm-source.sh" "$os_name" "$arch_name" "$libdir"
+    return
   fi
 
-  log_info "downloading wasmvm v$wasmvm_version (${os_name}_${arch_name})"
-  if [[ "$os_name" == "darwin" ]]; then
-    wget "${base_url}/libwasmvmstatic_darwin.a" \
-      -O "$lib_dir/libwasmvmstatic_darwin.a"
-  elif [[ "$arch_name" == "amd64" ]]; then
-    wget "${base_url}/libwasmvm_muslc.x86_64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
-  else
-    wget "${base_url}/libwasmvm_muslc.aarch64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
+  local artifact library digest actual download_dir
+  case "$os_name:$arch_name" in
+    linux:amd64) artifact="libwasmvm_muslc.x86_64.a"; library="libwasmvm_muslc.a" ;;
+    linux:arm64) artifact="libwasmvm_muslc.aarch64.a"; library="libwasmvm_muslc.a" ;;
+    darwin:*) artifact="libwasmvmstatic_darwin.a"; library="$artifact" ;;
+    *) log_error "unsupported WasmVM platform: $os_name/$arch_name"; return 1 ;;
+  esac
+  digest="$(awk -v name="$artifact" '$2 == name {print $1}' "$SCRIPT_DIR/wasmvm-checksums.txt")"
+  [[ "$digest" =~ ^[a-f0-9]{64}$ ]] || { log_error "missing pinned checksum for $artifact"; return 1; }
+  hash_library() {
+    if command -v sha256sum >/dev/null 2>&1; then
+      sha256sum "$1" | awk '{print $1}'
+    else
+      shasum -a 256 "$1" | awk '{print $1}'
+    fi
+  }
+  mkdir -p "$libdir"
+  if [[ -f "$libdir/$library" ]] && [[ "$(hash_library "$libdir/$library")" == "$digest" ]]; then
+    log_info "using verified WasmVM $wasmvm_version cache"
+    return
   fi
-}
+  download_dir="$(mktemp -d "$libdir/download.XXXXXX")"
+  trap 'rm -rf -- "$download_dir"' EXIT
+  log_info "downloading WasmVM $wasmvm_version $artifact"
+  wget -q -O "$download_dir/$library" "https://github.com/NibiruChain/nibiru/releases/download/lib/wasmvm/$wasmvm_version/$artifact"
+  actual="$(hash_library "$download_dir/$library")"
+  [[ "$actual" == "$digest" ]] || { log_error "WasmVM checksum mismatch: $artifact"; return 1; }
+  mv "$download_dir/$library" "$libdir/$library"
+)
 
 verify_go_modules() {
   log_info "verifying go modules"
@@ -349,11 +351,19 @@ main() {
   local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv static_pie
 
   os_name="$(detect_os_name)"
+  if [[ "$os_name" == darwin ]]; then
+    export MACOSX_DEPLOYMENT_TARGET=14.5
+  fi
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="v1.12.0" # tag name `lib/wasmvm/v*`
+  wasmvm_version="v1.13.1"
+  case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
+    true) wasmvm_version="source" ;;
+    false) ;;
+    *) log_error "NIBIRU_WASMVM_BUILD_FROM_SOURCE must be true or false"; exit 1 ;;
+  esac
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
   static_pie="${NIBID_STATIC_PIE:-false}"
@@ -400,4 +410,6 @@ main() {
   fi
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
