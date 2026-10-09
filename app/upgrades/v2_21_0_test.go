@@ -60,6 +60,11 @@ func TestUpgrade2_21_0MigratesAndSeedsEveryChain(t *testing.T) {
 			require.Equal(t, hook, app.SudoKeeper.WasmBlockHooksContract.GetOr(ctx, ""))
 			require.Equal(t, zeroGas, app.SudoKeeper.ZeroGasActors.GetOr(ctx, sudo.ZeroGasActors{}))
 			require.NoError(t, app.SudoKeeper.ExportGenesis(ctx).Validate())
+			if chainID != "cataclysm-1" {
+				for _, event := range ctx.EventManager().Events() {
+					require.NotEqual(t, "eris_recovery", event.Type)
+				}
+			}
 		})
 	}
 }

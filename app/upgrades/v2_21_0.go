@@ -39,6 +39,7 @@ func (h Handler_v2_21) Handler(mm *module.Manager, cfg module.Configurator, nibi
 		if err != nil {
 			return nil, fmt.Errorf("seed Wasm deployers: %w", err)
 		}
+		recoverErisV221(ctx, nibiru)
 		return versions, nil
 	}
 }
