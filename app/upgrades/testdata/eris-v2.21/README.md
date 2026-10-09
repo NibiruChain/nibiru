@@ -74,8 +74,16 @@ which yields `51100662747260 unibi`, or `51,100,662.747260 NIBI`.
 
 The other request retains `40795903` shares and `64545507 unibi`. If that user
 withdraws first, the attacker's payout becomes `51100662747261 unibi` because
-Eris truncates each withdrawal separately. The handler computes the payout
-from activation-time state rather than hardcoding either amount.
+Eris truncates each withdrawal separately. The contract computes the payout
+from activation-time state rather than the handler hardcoding either amount.
+
+The handler queries only the native configuration and reviewed request before
+execution to decide whether this withdrawal is appropriate. After those checks,
+it executes the contract and relies on Eris and the Bank keeper for settlement.
+Balance deltas, supply, request removal, and remaining batch arithmetic are
+assertions in the replay tests. The handler performs no bank balance reads or
+post-execution queries. Its recovery event copies the payout from Eris's event
+when available; missing payout metadata does not reject a successful execute.
 
 The replay checks the destination balance, native supply, unchanged attacker
 balances, and all unrelated contract storage. It also exercises repeated
@@ -102,7 +110,7 @@ after a failed deployer seed and the outer failure event for failed recovery.
 - `go test ./app/upgrades ./app/ante -count=1 -v` passed both full packages.
 - The Alpine musl command above passed both full packages with the pinned
   WasmVM v1.13.1 static library on Linux ARM64.
-- The successful recovery consumed `400424` SDK gas with either test runtime.
+- The simplified recovery consumed `263263` SDK gas under the release runtime.
 - `just build` completed and `just go-lint` reported zero issues.
 
 An earlier static test run linked with the workstation's glibc toolchain

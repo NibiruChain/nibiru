@@ -14,8 +14,8 @@ import (
 )
 
 // The checksum pins contract behavior even if a different code ID contains the
-// same bytecode. Incident shares identify the reviewed request; the payout and
-// remaining batch shares must stay dynamic because another user can claim first.
+// same bytecode. Incident shares identify the reviewed request. Eris computes
+// the payout from its own batch state, including changes from another user claiming.
 const (
 	erisRecoveryContract = "nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m"
 	erisRecoveryCaller   = "nibi1j3a73n3q72mdalp7mpvn4t4lt6vhfpqm00fup8"
@@ -24,14 +24,12 @@ const (
 	erisRecoveryBatchID  = uint64(172)
 )
 
-// erisRecoveryBatch projects the fields needed to verify Eris's proportional
-// withdrawal. Integer fields preserve CosmWasm's exact truncation arithmetic.
+// erisRecoveryBatch projects only the fields that decide whether the reviewed
+// claim is eligible. Payout calculation and batch accounting belong to Eris.
 type erisRecoveryBatch struct {
-	ID          uint64      `json:"id"`
-	Reconciled  bool        `json:"reconciled"`
-	TotalShares sdkmath.Int `json:"total_shares"`
-	Unclaimed   sdkmath.Int `json:"utoken_unclaimed"`
-	EndTime     uint64      `json:"est_unbond_end_time"`
+	ID         uint64 `json:"id"`
+	Reconciled bool   `json:"reconciled"`
+	EndTime    uint64 `json:"est_unbond_end_time"`
 }
 
 // erisRecoveryRequest includes the batch returned by the user-details query,
@@ -50,19 +48,32 @@ func (h Handler_v2_21) recoverErisV221(ctx sdk.Context, nibiru *keepers.PublicKe
 	if ctx.ChainID() != appconst.SDK_CHAIN_ID_MAINNET {
 		return nil
 	}
-	amount := sdkmath.ZeroInt()
+	amount := "0"
+	executed := false
 	var gasUsed uint64
 	err := h.runCachedUpgradeStep(ctx, func(cached sdk.Context) error {
 		defer func() { gasUsed = cached.GasMeter().GasConsumed() }()
 		var err error
-		amount, err = h.attemptErisRecoveryV221(cached, nibiru)
+		executed, err = h.attemptErisRecoveryV221(cached, nibiru)
+		if err == nil && executed {
+			// Report Eris's own payout event without another query or assertion.
+			// Missing event metadata must not reject a successful withdrawal.
+			amount = ""
+			for _, event := range cached.EventManager().Events() {
+				if event.Type == "wasm-erishub/unbonded_withdrawn" {
+					if attr, ok := event.GetAttribute("utoken_refunded"); ok {
+						amount = attr.Value
+					}
+				}
+			}
+		}
 		return err
 	})
 	status := "skipped"
 	if err != nil {
-		amount = sdkmath.ZeroInt()
+		amount = "0"
 		status = "failed"
-	} else if amount.IsPositive() {
+	} else if executed {
 		status = "success"
 	}
 	attrs := []sdk.Attribute{
@@ -73,8 +84,10 @@ func (h Handler_v2_21) recoverErisV221(ctx sdk.Context, nibiru *keepers.PublicKe
 		sdk.NewAttribute("recipient", IncidentRecoveryCW3_v2_18),
 		sdk.NewAttribute("batch_id", "172"),
 		sdk.NewAttribute("denom", appconst.DENOM_UNIBI),
-		sdk.NewAttribute("amount", amount.String()),
 		sdk.NewAttribute("gas_used", fmt.Sprint(gasUsed)),
+	}
+	if amount != "" {
+		attrs = append(attrs, sdk.NewAttribute("amount", amount))
 	}
 	if err != nil {
 		attrs = append(attrs, sdk.NewAttribute("error", err.Error()))
@@ -87,66 +100,51 @@ func (h Handler_v2_21) recoverErisV221(ctx sdk.Context, nibiru *keepers.PublicKe
 // owner. The receiver directs the native payout to Treasury without granting
 // public transaction authority back to the attacker. Its caller must provide a
 // cached context because contract writes can precede a failed Bank dispatch.
-func (h Handler_v2_21) attemptErisRecoveryV221(ctx sdk.Context, nibiru *keepers.PublicKeepers) (sdkmath.Int, error) {
-	amount := sdkmath.ZeroInt()
+// After eligibility checks, successful keeper execution is sufficient to commit:
+// Eris owns payout arithmetic, request removal, and the Bank send. Assertions
+// about resulting balances, supply, and storage stay in the deployed-code replay.
+func (h Handler_v2_21) attemptErisRecoveryV221(ctx sdk.Context, nibiru *keepers.PublicKeepers) (bool, error) {
 	contract := sdk.MustAccAddressFromBech32(erisRecoveryContract)
 	caller := sdk.MustAccAddressFromBech32(erisRecoveryCaller)
 	recipient := sdk.MustAccAddressFromBech32(IncidentRecoveryCW3_v2_18)
 	info := nibiru.WasmKeeper.GetContractInfo(ctx, contract)
 	if info == nil {
-		return amount, fmt.Errorf("Eris contract not found")
+		return false, fmt.Errorf("Eris contract not found")
 	}
 	code := nibiru.WasmKeeper.GetCodeInfo(ctx, info.CodeID)
 	if code == nil || hex.EncodeToString(code.CodeHash) != erisRecoveryCodeHash {
-		return amount, fmt.Errorf("unexpected Eris bytecode for code %d", info.CodeID)
+		return false, fmt.Errorf("unexpected Eris bytecode for code %d", info.CodeID)
 	}
 	if !nibiru.WasmKeeper.HasContractInfo(ctx, recipient) {
-		return amount, fmt.Errorf("Treasury CW3 contract not found")
+		return false, fmt.Errorf("Treasury CW3 contract not found")
 	}
 	var config struct {
 		Denom string `json:"utoken"`
 	}
 	if err := h.queryErisV221(ctx, nibiru, `{"config":{}}`, &config); err != nil {
-		return amount, err
+		return false, err
 	}
 	if config.Denom != appconst.DENOM_UNIBI {
-		return amount, fmt.Errorf("unexpected Eris denom %q", config.Denom)
+		return false, fmt.Errorf("unexpected Eris denom %q", config.Denom)
 	}
 	requests, err := h.erisRequestsV221(ctx, nibiru)
 	if err != nil || len(requests) == 0 {
-		return amount, err
+		return false, err
 	}
 	// Eris withdraws all matured requests for its caller. Reject additional
 	// requests instead of unintentionally recovering unrelated claims.
 	if len(requests) != 1 || requests[0].ID != erisRecoveryBatchID {
-		return amount, fmt.Errorf("expected only Eris batch 172 request")
+		return false, fmt.Errorf("expected only Eris batch 172 request")
 	}
 	request := requests[0]
 	expectedShares, _ := sdkmath.NewIntFromString(erisRecoveryShares)
 	if request.Shares.IsNil() || !request.Shares.Equal(expectedShares) {
-		return amount, fmt.Errorf("unexpected attacker shares")
+		return false, fmt.Errorf("unexpected attacker shares")
 	}
 	batch := request.Batch
 	if batch == nil || batch.ID != erisRecoveryBatchID || !batch.Reconciled ||
 		ctx.BlockTime().Unix() <= 0 || uint64(ctx.BlockTime().Unix()) <= batch.EndTime {
-		return amount, fmt.Errorf("Eris batch 172 is not reconciled and matured")
-	}
-	if batch.TotalShares.IsNil() || batch.TotalShares.LT(request.Shares) ||
-		batch.Unclaimed.IsNil() || !batch.Unclaimed.IsPositive() {
-		return amount, fmt.Errorf("invalid Eris batch accounting")
-	}
-	// CosmWasm Uint128.multiply_ratio truncates. sdkmath.Int also provides exact
-	// integer division, including the one-unibi difference if the other user claims first.
-	expected := batch.Unclaimed.Mul(request.Shares).Quo(batch.TotalShares)
-	if !expected.IsPositive() {
-		return amount, fmt.Errorf("zero Eris payout")
-	}
-	beforeContract := nibiru.BankKeeper.GetBalance(ctx, contract, config.Denom)
-	beforeRecipient := nibiru.BankKeeper.GetBalance(ctx, recipient, config.Denom)
-	beforeCaller := nibiru.BankKeeper.GetAllBalances(ctx, caller)
-	beforeSupply := nibiru.BankKeeper.GetSupply(ctx, config.Denom)
-	if beforeContract.Amount.LT(expected) {
-		return amount, fmt.Errorf("insufficient Eris balance for %s unibi", expected)
+		return false, fmt.Errorf("Eris batch 172 is not reconciled and matured")
 	}
 	// Internal keeper execution intentionally supplies the quarantined caller
 	// without entering public transaction ante handlers. The contract performs
@@ -156,38 +154,9 @@ func (h Handler_v2_21) attemptErisRecoveryV221(ctx sdk.Context, nibiru *keepers.
 		ctx, contract, caller, msg, sdk.Coins{},
 	)
 	if err != nil {
-		return amount, fmt.Errorf("withdraw Eris batch 172: %w", err)
+		return false, fmt.Errorf("withdraw Eris batch 172: %w", err)
 	}
-	afterRequests, err := h.erisRequestsV221(ctx, nibiru)
-	if err != nil {
-		return amount, err
-	}
-	if len(afterRequests) != 0 {
-		return amount, fmt.Errorf("attacker still has Eris requests")
-	}
-	if !nibiru.BankKeeper.GetBalance(ctx, contract, config.Denom).Amount.Equal(beforeContract.Amount.Sub(expected)) ||
-		!nibiru.BankKeeper.GetBalance(ctx, recipient, config.Denom).Amount.Equal(beforeRecipient.Amount.Add(expected)) ||
-		!nibiru.BankKeeper.GetAllBalances(ctx, caller).IsEqual(beforeCaller) ||
-		!nibiru.BankKeeper.GetSupply(ctx, config.Denom).IsEqual(beforeSupply) {
-		return amount, fmt.Errorf("unexpected recovery balance or supply changes")
-	}
-	var remaining []erisRecoveryBatch
-	if err := h.queryErisV221(ctx, nibiru, `{"previous_batches":{"start_after":171,"limit":1}}`, &remaining); err != nil {
-		return amount, err
-	}
-	remainingShares := batch.TotalShares.Sub(request.Shares)
-	if remainingShares.IsZero() {
-		if len(remaining) > 0 && remaining[0].ID == erisRecoveryBatchID {
-			return amount, fmt.Errorf("empty batch 172 still exists")
-		}
-	} else if len(remaining) != 1 || remaining[0].ID != erisRecoveryBatchID ||
-		remaining[0].TotalShares.IsNil() || remaining[0].Unclaimed.IsNil() ||
-		!remaining[0].TotalShares.Equal(remainingShares) ||
-		!remaining[0].Unclaimed.Equal(batch.Unclaimed.Sub(expected)) ||
-		remaining[0].Reconciled != batch.Reconciled || remaining[0].EndTime != batch.EndTime {
-		return amount, fmt.Errorf("unexpected remaining Eris batch accounting")
-	}
-	return expected, nil
+	return true, nil
 }
 
 // erisRequestsV221 requests two entries to detect an additional claim. Eris
