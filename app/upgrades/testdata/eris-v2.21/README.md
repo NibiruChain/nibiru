@@ -63,7 +63,7 @@ docker run --rm \
   "apk add --no-cache build-base linux-headers && \
    go test -buildmode=pie -tags 'netgo osusergo ledger static pebbledb muslc' \
    -ldflags \"-linkmode=external -extldflags '-Wl,-z,muldefs -static-pie -z noexecstack'\" \
-   ./app/upgrades ./app/ante -count=1 -v"
+   ./app/upgrades ./app/ante ./evm/evmtest -count=1 -v"
 ```
 
 ## Recovery expectations
@@ -89,28 +89,29 @@ The replay checks the destination balance, native supply, unchanged attacker
 balances, and all unrelated contract storage. It also exercises repeated
 execution, a prior legitimate withdrawal, non-mainnet exclusion, unexpected
 code and additional claims, immaturity, unreconciled state, insufficient funds,
-failed Bank dispatch, and gas exhaustion. Failed recovery attempts discard
+and failed Bank dispatch. Failed recovery attempts discard
 contract writes and events while preserving successful deployment grants.
 
 Custom steps are private methods on `Handler_v2_21`. Deployment seeding and
-Eris recovery use separate cached stores and gas meters, and both returned
+Eris recovery use separate cached stores, and both returned
 errors and recoverable Go panics reach the outer handler's `upgrade_failure`
 event. A failed seed still allows recovery to run. Failure reports use the
 parent context so discarding a step preserves its diagnostic events. Required
 module migration errors still propagate because the binary needs the migrated
 schema.
 
-The cached-step regression test writes state and emits an event before injecting
-an error, panic, or gas exhaustion. It verifies rollback, unchanged parent gas,
-and successful execution of a later step. The Eris replay also verifies recovery
-after a failed deployer seed and the outer failure event for failed recovery.
+All v2.21 tests live in `app/upgrades/v2_21_0_test.go` and run the full handler
+through `evmtest.TestDeps.RunUpgrade`. A store wrapper injects a panic after the
+real sudo write to verify seed rollback, a surviving failure event, and successful
+Eris recovery afterward. The Bank dispatch failure checks rollback after Eris
+mutates its claim state. No standalone cache-store test or custom gas budget is
+needed for these handler scenarios.
 
 ## Validation recorded on 2026-10-09
 
-- `go test ./app/upgrades ./app/ante -count=1 -v` passed both full packages.
+- `go test ./app/upgrades ./app/ante ./evm/evmtest -count=1 -v` passed both full packages.
 - The Alpine musl command above passed both full packages with the pinned
   WasmVM v1.13.1 static library on Linux ARM64.
-- The simplified recovery consumed `263263` SDK gas under the release runtime.
 - `just build` completed and `just go-lint` reported zero issues.
 
 An earlier static test run linked with the workstation's glibc toolchain

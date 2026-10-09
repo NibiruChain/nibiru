@@ -17,10 +17,6 @@ var Upgrade2_21_0 = Upgrade{UpgradeName: "v2.21.0", Handler: Handler_v2_21{}}
 // A failed custom step must leave the migrated chain usable and report its failure.
 type Handler_v2_21 struct{}
 
-// upgradeStepGasLimitV221 gives each custom step its own budget so exhaustion
-// cannot consume the parent context's gas and prevent later steps from running.
-const upgradeStepGasLimitV221 = uint64(10_000_000)
-
 // Reviewed Sai operator snapshot. Seed on every chain running this upgrade.
 var wasmDeployerSeed = []string{
 	"nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l", // ud-prod
@@ -75,7 +71,6 @@ func (h Handler_v2_21) runCachedUpgradeStep(ctx sdk.Context, run func(sdk.Contex
 		}
 	}()
 	cached, commit := ctx.CacheContext()
-	cached = cached.WithGasMeter(sdk.NewGasMeter(upgradeStepGasLimitV221))
 	if err := run(cached); err != nil {
 		return err
 	}
@@ -100,8 +95,5 @@ func (h Handler_v2_21) seedWasmDeployers(ctx sdk.Context, nibiru *keepers.Public
 // upgradePanicError converts recoverable Go panics to the same reporting path as
 // returned errors. Fatal process faults remain outside Go panic recovery.
 func (h Handler_v2_21) upgradePanicError(step string, value any) error {
-	if gas, ok := value.(sdk.ErrorOutOfGas); ok {
-		return fmt.Errorf("%s out of gas: %s", step, gas.Descriptor)
-	}
 	return fmt.Errorf("%s panic (%T): %v", step, value, value)
 }

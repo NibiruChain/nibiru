@@ -50,9 +50,7 @@ func (h Handler_v2_21) recoverErisV221(ctx sdk.Context, nibiru *keepers.PublicKe
 	}
 	amount := "0"
 	executed := false
-	var gasUsed uint64
 	err := h.runCachedUpgradeStep(ctx, func(cached sdk.Context) error {
-		defer func() { gasUsed = cached.GasMeter().GasConsumed() }()
 		var err error
 		executed, err = h.attemptErisRecoveryV221(cached, nibiru)
 		if err == nil && executed {
@@ -84,7 +82,6 @@ func (h Handler_v2_21) recoverErisV221(ctx sdk.Context, nibiru *keepers.PublicKe
 		sdk.NewAttribute("recipient", IncidentRecoveryCW3_v2_18),
 		sdk.NewAttribute("batch_id", "172"),
 		sdk.NewAttribute("denom", appconst.DENOM_UNIBI),
-		sdk.NewAttribute("gas_used", fmt.Sprint(gasUsed)),
 	}
 	if amount != "" {
 		attrs = append(attrs, sdk.NewAttribute("amount", amount))
@@ -170,8 +167,8 @@ func (h Handler_v2_21) erisRequestsV221(ctx sdk.Context, nibiru *keepers.PublicK
 }
 
 // queryErisV221 queries the deployed contract against the upgrade context.
-// These reads use activation-time state and consume the recovery step's gas;
-// the JSON response is contract output without the CLI's outer data wrapper.
+// These reads use activation-time state. The JSON response is contract output
+// without the CLI's outer data wrapper.
 func (h Handler_v2_21) queryErisV221(ctx sdk.Context, nibiru *keepers.PublicKeepers, msg string, result any) error {
 	bz, err := nibiru.WasmKeeper.QuerySmart(ctx, sdk.MustAccAddressFromBech32(erisRecoveryContract), []byte(msg))
 	if err != nil {
