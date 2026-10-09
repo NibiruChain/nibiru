@@ -82,7 +82,20 @@ balances, and all unrelated contract storage. It also exercises repeated
 execution, a prior legitimate withdrawal, non-mainnet exclusion, unexpected
 code and additional claims, immaturity, unreconciled state, insufficient funds,
 failed Bank dispatch, and gas exhaustion. Failed recovery attempts discard
-contract writes and events while v2.21 completes its sudo changes.
+contract writes and events while preserving successful deployment grants.
+
+Custom steps are private methods on `Handler_v2_21`. Deployment seeding and
+Eris recovery use separate cached stores and gas meters, and both returned
+errors and recoverable Go panics reach the outer handler's `upgrade_failure`
+event. A failed seed still allows recovery to run. Failure reports use the
+parent context so discarding a step preserves its diagnostic events. Required
+module migration errors still propagate because the binary needs the migrated
+schema.
+
+The cached-step regression test writes state and emits an event before injecting
+an error, panic, or gas exhaustion. It verifies rollback, unchanged parent gas,
+and successful execution of a later step. The Eris replay also verifies recovery
+after a failed deployer seed and the outer failure event for failed recovery.
 
 ## Validation recorded on 2026-10-09
 

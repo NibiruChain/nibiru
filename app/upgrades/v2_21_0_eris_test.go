@@ -238,6 +238,32 @@ func TestUpgrade221ErisOtherUserClaimsFirst(t *testing.T) {
 	require.NotContains(t, string(queryErisReplay(t, a, ctx, `{"previous_batches":{"start_after":171,"limit":1}}`)), `"id":172`)
 }
 
+func TestUpgrade221ErisRecoversAfterSeedFailure(t *testing.T) {
+	a, ctx := setupErisReplay(t)
+	// Use the migrated schema with an invalid root to force the custom grant
+	// step to fail. Recovery must still execute against the real Eris fixture.
+	a.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: "invalid-root"})
+	before := a.SudoKeeper.Sudoers.GetOr(ctx, sudo.Sudoers{})
+	handler := upgrades.Upgrade2_21_0.Handler.Handler(a.ModuleManager, a.Configurator(), &a.PublicKeepers)
+	versions, err := handler(ctx, upgradetypes.Plan{Name: "v2.21.0"}, a.ModuleManager.GetVersionMap())
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), versions[sudo.ModuleName])
+	require.Equal(t, before, a.SudoKeeper.Sudoers.GetOr(ctx, sudo.Sudoers{}))
+	var recovery, failure sdk.Event
+	for _, event := range ctx.EventManager().Events() {
+		switch event.Type {
+		case "eris_recovery":
+			recovery = event
+		case "upgrade_failure":
+			failure = event
+		}
+	}
+	require.Equal(t, "success", erisEventAttribute(t, recovery, "status"))
+	require.Equal(t, erisTestPayout, erisEventAttribute(t, recovery, "amount"))
+	require.Equal(t, "v2.21.0", erisEventAttribute(t, failure, "upgrade"))
+	require.Contains(t, erisEventAttribute(t, failure, "error"), "seed Wasm deployers")
+}
+
 func mutateErisBatch(t *testing.T, a *app.NibiruApp, ctx sdk.Context, field string, value any) {
 	t.Helper()
 	key := append([]byte{0, 16}, []byte("previous_batches")...)
@@ -317,6 +343,14 @@ func TestUpgrade221ErisFailuresRollbackAndContinue(t *testing.T) {
 			for _, e := range ctx.EventManager().Events() {
 				require.NotEqual(t, "wasm-erishub/unbonded_withdrawn", e.Type)
 			}
+			var failure sdk.Event
+			for _, e := range ctx.EventManager().Events() {
+				if e.Type == "upgrade_failure" {
+					failure = e
+				}
+			}
+			require.Equal(t, "v2.21.0", erisEventAttribute(t, failure, "upgrade"))
+			require.Contains(t, erisEventAttribute(t, failure, "error"), erisEventAttribute(t, event, "error"))
 		})
 	}
 }
