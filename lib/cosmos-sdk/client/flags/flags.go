@@ -15,7 +15,7 @@ const (
 	// DefaultGasAdjustment is applied to gas estimates to avoid tx execution
 	// failures due to state changes that might occur between the tx simulation
 	// and the actual run.
-	DefaultGasAdjustment = 1.0
+	DefaultGasAdjustment = 1.05
 	DefaultGasLimit      = 200000
 	GasFlagAuto          = "auto"
 
@@ -116,7 +116,7 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	f.Uint64P(FlagSequence, "s", 0, "The sequence number of the signing account (offline mode only)")
 	f.String(FlagNote, "", "Note to add a description to the transaction (previously --memo)")
 	f.String(FlagFees, "", "Fees to pay along with transaction; eg: 10uatom")
-	f.String(FlagGasPrices, "", "Gas prices in decimal format to determine the transaction fee (e.g. 0.1uatom)")
+	f.String(FlagGasPrices, "", "Gas prices in decimal format to determine the transaction fee (default 0.025unibi when fees are omitted; set an empty or zero price to opt out)")
 	f.String(FlagNode, "tcp://localhost:26657", "<host>:<port> to tendermint rpc interface for this chain")
 	f.Bool(FlagUseLedger, false, "Use a connected Ledger device")
 	f.Float64(FlagGasAdjustment, DefaultGasAdjustment, "adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored ")
@@ -133,8 +133,8 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	f.Bool(FlagAux, false, "Generate aux signer data instead of sending a tx")
 	f.String(FlagChainID, "", "The network chain ID")
 	// --gas can accept integers and "auto"
-	f.String(FlagGas, "", fmt.Sprintf("gas limit to set per-transaction; set to %q to calculate sufficient gas automatically. Note: %q option doesn't always report accurate results. Set a valid coin value to adjust the result. Can be used instead of %q. (default %d)",
-		GasFlagAuto, GasFlagAuto, FlagFees, DefaultGasLimit))
+	f.String(FlagGas, "", fmt.Sprintf("gas limit per transaction; set to %q to estimate automatically (default %d)",
+		GasFlagAuto, DefaultGasLimit))
 
 	AddKeyringFlags(f)
 }

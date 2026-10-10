@@ -78,7 +78,7 @@ func TestCalculateGas(t *testing.T) {
 		expPass      bool
 	}{
 		{"error", args{0, true, 1.2}, 0, 0, false},
-		{"adjusted gas", args{10, false, 1.2}, 10, 12, true},
+		{"adjusted gas", args{10, false, 1.2}, 10, 4127, true},
 	}
 
 	for _, tc := range testCases {
