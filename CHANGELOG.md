@@ -38,6 +38,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.21.0
+
+Nibiru v2.21 repairs the disclosed Wasmer Singlepass sandbox vulnerability and replaces v2.20's temporary root-only Wasm deployment policy with scoped deployment permissions. It also adds mainnet recovery of a quarantined Eris unbonding claim to the Foundation Treasury.
+
+- [Release link: v2.21.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.21.0).
+- Public release: October 9, 2026.
+- Source range: `v2.20.0` through `v2.21.0`.
+- [Full source comparison](https://github.com/NibiruChain/nibiru/compare/v2.20.0...v2.21.0).
+
+### 1 - Main highlights
+
+- Wasmer 7.4.2 supplies the runtime repair for the disclosed Singlepass sandbox escape.
+- Existing CosmWasm v1 contract interfaces and gas policy are preserved. Stored bytecode is recompiled under a separate compiled-artifact cache.
+- Contract instantiation returns to normal Wasm permission checks. Mainnet uploads and migrations require sudo root or membership in role `wasm_deployer`, alongside existing Wasm authorization.
+- Scoped sudo roles replace broad legacy membership while preserving existing tokenfactory and chain-parameter authority.
+- The mainnet upgrade handler attempts recovery of the quarantined Eris batch 172 claim through the deployed contract's withdrawal logic.
+- Chain builds pin checksum-verified WasmVM v1.13.1 native libraries containing the runtime repair and cleanup fixes.
+
+### 2 - Wasm runtime repair
+
+[CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md) describes a compiler defect that lets a crafted contract escape the Wasm sandbox and execute native instructions inside a node process.
+
+v2.19 introduced static PIE binary hardening. v2.20 restricted mainnet Wasm deployment while the runtime repair was prepared. v2.21 carries the repaired compiler into Nibiru's maintained CosmWasm v1 implementation. [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788)
+
+Existing contracts retain their interfaces and gas policy. The runtime rejects unsupported WebAssembly proposals and uses compiled-artifact cache namespace `v15-wasmer24`, preventing reuse of artifacts compiled by the previous runtime.
+
+The release also fixes an ELF cleanup race by removing frame metadata before unmapping compiled code. A separate synchronization fix addresses the TLS test race. [PR #2790](https://github.com/NibiruChain/nibiru/pull/2790)
+
+### 3 - Wasm deployment and scoped sudo permissions
+
+v2.21 removes the temporary root-only instantiation guard. Instantiation follows the existing Wasm module and per-code access checks.
+
+On mainnet, ordinary code uploads and contract migrations require sudo root or role `wasm_deployer`. The check applies at shared keeper entrypoints, including contract submessages and the EVM Wasm precompile. Existing governance authorization remains available.
+
+Deployment membership does not replace upload permissions or contract-admin requirements. A deployer cannot migrate a Treasury-administered contract merely by holding the deployment role.
+
+The sudo migration grants legacy members roles `tf_oper` and `chain_params` to preserve their previous authority. Legacy membership alone grants no deployment role. The upgrade separately seeds the reviewed deployment accounts, and root can grant or revoke membership afterward. [PR #2790](https://github.com/NibiruChain/nibiru/pull/2790)
+
+### 4 - Eris claim recovery
+
+The mainnet upgrade handler attempts to withdraw the quarantined account's matured Eris batch 172 claim to the Foundation Treasury CW3 contract.
+
+The handler verifies the deployed bytecode, native denomination, and intended claim before calling Eris's existing withdrawal logic. Eris calculates the payout and updates its batch accounting. Public transaction restrictions on the quarantined account remain enforced.
+
+Recovery runs in an isolated cached context. A failed recovery discards its writes and emits event `eris_recovery` with status `failed`. An absent claim emits `skipped`. Recovery failure does not undo completed module migrations or deployment grants.
+
+The release includes replay tests using the deployed Eris bytecode and captured contract state. Recovery success and the final amount must be verified at activation. [PR #2791](https://github.com/NibiruChain/nibiru/pull/2791)
+
+### 5 - Client and platform compatibility
+
+Clients reading sudo state or exported genesis must replace field `Sudoers.contracts` with `Sudoers.roles`. The retired field name and protobuf tag remain reserved.
+
+Legacy membership actions `add_contracts` and `remove_contracts` are rejected. Manage scoped memberships through message `/nibiru.sudo.v1.MsgUpdateRoleMembers` or command:
+
+```sh
+nibid tx sudo update-role-members edit.json --from ROOT
+```
+
+Root rotation and Wasm block-hook configuration remain root-controlled. The block-hook configuration message retains its `contracts` payload field. [Sudo module documentation](https://github.com/NibiruChain/nibiru/blob/v2.21.0/x/sudo/README.md)
+
+Darwin native artifacts require macOS 14.5 or later. WasmVM artifact version `v1.13.1` and FFI ABI identifier `1.5.10-nibiru.1` identify different compatibility layers. [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788), [native-library pin](https://github.com/NibiruChain/nibiru/commit/1dcdc05ece1feaade4e995408d84890f5bdd8593)
+
 ## v2.20.0
 
 Nibiru v2.20 adds a temporary mainnet guard for Wasm code upload, contract instantiation, and contract migration. It continues the response to the privately disclosed Wasm vulnerability after v2.19's binary hardening.
