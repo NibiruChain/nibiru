@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -18,6 +19,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/telemetry"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
@@ -627,6 +629,19 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context
 // returned if the tx does not run out of gas and if all the messages are valid
 // and execute successfully. An error is returned otherwise.
 func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, result *sdk.Result, anteEvents []abci.Event, priority int64, err error) {
+	var msgs []sdk.Msg
+	if mode == runTxModeDeliver && telemetry.ExecutionMetricsEnabled() {
+		start := time.Now()
+		// Registered first so recovery and gas accounting run before observation.
+		defer func() {
+			telemetry.ObserveTxExecution(start, err == nil)
+			for _, msg := range msgs {
+				if msg != nil {
+					telemetry.CountTxMessage(sdk.MsgTypeURL(msg), err == nil)
+				}
+			}
+		}()
+	}
 	// NOTE: GasWanted should be returned by the AnteHandler. GasUsed is
 	// determined by the GasMeter. We need access to the context to get the gas
 	// meter, so we initialize upfront.
@@ -679,7 +694,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 		return sdk.GasInfo{}, nil, nil, 0, err
 	}
 
-	msgs := tx.GetMsgs()
+	msgs = tx.GetMsgs()
 	if err := validateBasicTxMsgs(msgs); err != nil {
 		return sdk.GasInfo{}, nil, nil, 0, err
 	}
