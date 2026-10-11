@@ -10,37 +10,55 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	if len(os.Args) != 2 {
 		fmt.Println("Usage: go run upgrade-handler-check.go <semver>")
 		os.Exit(1)
 	}
 
-	input := os.Args[1]
-	coreVersion := extractCoreVersion(input)
-
-	found := false
+	var handlers []string
 	for _, upgrade := range app.Upgrades {
-		if upgrade.UpgradeName == coreVersion {
-			found = true
-			break
-		}
+		handlers = append(handlers, upgrade.UpgradeName)
 	}
-
-	if found {
-		fmt.Printf("Upgrade handler for version %s exists ✅\n", coreVersion)
-	} else {
-		fmt.Printf("Upgrade handler for version %s does not exist ❌\n", coreVersion)
+	handler, err := upgradeHandlerForVersion(os.Args[1], handlers)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	fmt.Printf("Release %s uses upgrade handler %s.\n", os.Args[1], handler)
 }
 
-// extractCoreVersion strips any pre-release or build metadata from a semver string
-func extractCoreVersion(version string) string {
-	// Trim possible build/pre-release suffix using a simple regex
-	re := regexp.MustCompile(`^v\d+\.\d+\.\d+`)
-	match := re.FindString(version)
-	if match != "" {
-		return match
+var releaseVersionPattern = regexp.MustCompile(
+	`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)` +
+		`(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?` +
+		`(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`,
+)
+
+// upgradeHandlerForVersion assumes patch releases preserve consensus behavior.
+// Exact handlers take precedence to support historical patch upgrades.
+func upgradeHandlerForVersion(version string, handlers []string) (string, error) {
+	parts := releaseVersionPattern.FindStringSubmatch(version)
+	if parts == nil {
+		return "", fmt.Errorf("invalid release version %q: expected vMAJOR.MINOR.PATCH with optional prerelease and build metadata", version)
 	}
-	return strings.SplitN(version, "-", 2)[0] // Fallback just in case
+	for _, identifier := range strings.Split(parts[4], ".") {
+		if len(identifier) > 1 && identifier[0] == '0' && strings.Trim(identifier, "0123456789") == "" {
+			return "", fmt.Errorf("invalid release version %q: numeric prerelease identifiers must not have leading zeroes", version)
+		}
+	}
+	core := "v" + strings.Join(parts[1:4], ".")
+	for _, handler := range handlers {
+		if handler == core {
+			return handler, nil
+		}
+	}
+	if parts[3] == "0" {
+		return "", fmt.Errorf("release %s requires upgrade handler %s", version, core)
+	}
+	base := "v" + parts[1] + "." + parts[2] + ".0"
+	for _, handler := range handlers {
+		if handler == base {
+			return handler, nil
+		}
+	}
+	return "", fmt.Errorf("compatible patch %s requires existing upgrade handler %s", version, base)
 }
