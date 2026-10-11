@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/distribution/reference"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/internal/conv"
 )
 
@@ -18,7 +20,8 @@ type Info struct {
 	Binaries BinaryDownloadURLMap `json:"binaries"`
 }
 
-// BinaryDownloadURLMap is a map of os/architecture stings to a URL where the binary can be downloaded.
+// BinaryDownloadURLMap maps os/architecture keys or "any" to binary download URLs.
+// The optional "docker" entry contains a tagged or digested container image reference.
 type BinaryDownloadURLMap map[string]string
 
 // ParseInfo parses an info string into a map of os/arch strings to URL string.
@@ -66,10 +69,8 @@ func (m Info) ValidateFull(daemonName string) error {
 
 // ValidateBasic does stateless validation of this BinaryDownloadURLMap.
 // It validates that:
-//   - This has at least one entry.
-//   - All entry keys have the format "os/arch" or are "any".
-//   - All entry values are valid URLs.
-//   - All URLs contain a checksum query parameter.
+//   - At least one entry has an "os/arch" or "any" key and a checksummed URL.
+//   - The optional "docker" entry is an image reference with an explicit tag or digest.
 func (m BinaryDownloadURLMap) ValidateBasic() error {
 	// Make sure there's at least one.
 	if len(m) == 0 {
@@ -77,19 +78,43 @@ func (m BinaryDownloadURLMap) ValidateBasic() error {
 	}
 
 	osArchRx := regexp.MustCompile(`[a-zA-Z0-9]+/[a-zA-Z0-9]+`)
+	platforms := 0
 	for key, val := range m {
+		if key == "docker" {
+			if err := validateDockerReference(val); err != nil {
+				return fmt.Errorf("invalid docker image reference %q in binaries[docker]: %w", val, err)
+			}
+			continue
+		}
 		if key != "any" && !osArchRx.MatchString(key) {
 			return fmt.Errorf("invalid os/arch format in key \"%s\"", key)
 		}
 		if err := ValidateIsURLWithChecksum(val); err != nil {
 			return fmt.Errorf("invalid url \"%s\" in binaries[%s]: %v", val, key, err)
 		}
+		platforms++
+	}
+	if platforms == 0 {
+		return errors.New("no platform binary entries found: provide an os/arch or any entry")
 	}
 
 	return nil
 }
 
-// CheckURLs checks that all entries have valid URLs that return expected data.
+// validateDockerReference checks syntax without contacting the registry or adding a default tag.
+func validateDockerReference(value string) error {
+	image, err := reference.ParseNormalizedNamed(value)
+	if err != nil {
+		return err
+	}
+	if reference.IsNameOnly(image) {
+		return errors.New("an explicit tag or digest is required")
+	}
+	return nil
+}
+
+// CheckURLs checks that platform entries have valid URLs that return expected data.
+// It skips the "docker" entry; ValidateBasic checks its syntax.
 // The provided daemonName is the name of the executable file expected in all downloaded directories.
 // Warning: This is an expensive process.
 // It will make an HTTP GET request to each URL and download the response.
@@ -100,6 +125,9 @@ func (m BinaryDownloadURLMap) CheckURLs(daemonName string) error {
 	}
 	defer os.RemoveAll(tempDir)
 	for osArch, url := range m {
+		if osArch == "docker" {
+			continue
+		}
 		dstRoot := filepath.Join(tempDir, strings.ReplaceAll(osArch, "/", "-"))
 		if err = DownloadUpgrade(dstRoot, url, daemonName); err != nil {
 			return fmt.Errorf("error downloading binary for os/arch %s: %v", osArch, err)

@@ -55,6 +55,37 @@ type Plan struct {
 }
 ```
 
+#### Binary metadata validation
+
+The legacy command `tx gov submit-legacy-proposal software-upgrade` validates
+the JSON metadata in the plan's `info` field before generating or broadcasting
+the transaction. Its `binaries` map must contain at least one `os/arch` or
+`any` entry with a checksummed binary download URL.
+
+The optional `binaries.docker` field contains a container image reference with
+an explicit tag or digest, such as `ghcr.io/nibiruchain/nibiru:2.21.0` or
+`ghcr.io/nibiruchain/nibiru@sha256:<64 hexadecimal characters>`.
+The CLI checks image-reference syntax without contacting the registry.
+It does not verify that the image exists or inspect its contents. A Docker entry
+alone does not satisfy the platform binary requirement.
+
+The CLI downloads each platform entry, verifies its checksum, and checks that
+the extracted archive contains the executable named by `--daemon-name`.
+It skips the Docker entry during these download checks. Archive-only metadata
+remains supported.
+
+Flag `--no-validate` bypasses metadata parsing and all image and binary checks.
+Use it when deliberately submitting metadata that cannot pass these checks.
+Including a valid Docker reference does not require this flag.
+The generic command `tx gov submit-proposal proposal.json` does not perform
+these metadata download checks.
+
+Cosmovisor is a separate executable with its own upgrade implementation.
+[Cosmovisor v1.7.1](https://github.com/cosmos/cosmos-sdk/blob/cosmovisor/v1.7.1/tools/cosmovisor/upgrade.go)
+selects the host's `os/arch` entry, with `any` as a fallback, and ignores
+`docker`. Version 1.7.0 validates the entire map before selection and rejects
+the Docker key. Updating Nibiru's CLI does not update installed Cosmovisor binaries.
+
 ### Handler
 
 The `x/upgrade` module facilitates upgrading from major version X to major version Y. To
