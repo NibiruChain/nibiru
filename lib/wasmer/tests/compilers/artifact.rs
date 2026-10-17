@@ -1,0 +1,81 @@
+use std::{fs, path::PathBuf};
+
+use anyhow::Result;
+
+use wasmer::Module;
+use wasmer_types::Features;
+
+const ARTIFACT_FILES: [&str; 3] = ["bash.wasm", "cowsay.wasm", "python-3.11.3.wasm"];
+
+#[compiler_test(artifact)]
+fn artifact_serialization_roundtrip(config: crate::Config) -> Result<()> {
+    for file_name in ARTIFACT_FILES {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("wasmer-test-files/integration/wasm")
+            .join(file_name);
+        let wasm_module = fs::read(path).unwrap();
+        let store = config.store();
+        let module = Module::new(&store, wasm_module).unwrap();
+        let serialized_bytes = module.serialize().unwrap();
+        let deserialized_module =
+            unsafe { Module::deserialize(&store, serialized_bytes.clone()) }.unwrap();
+        let reserialized_bytes = deserialized_module.serialize().unwrap();
+        // Do not use `assert_eq!`; it produces excessively long console output.
+        assert!(serialized_bytes == reserialized_bytes);
+    }
+    Ok(())
+}
+
+// This test is just here to update the compiled objects to their
+// latest version, so we can commit them to the repo.
+#[test]
+#[ignore = "Please enable it when tests fail, so we can generate new versions of the .wasmu files"]
+fn artifact_serialization_build() {
+    use std::str::FromStr;
+    use wasmer::{
+        Engine, Module,
+        sys::{
+            CpuFeature, Target, Triple,
+            engine::{NativeEngineExt, get_default_compiler_config},
+        },
+    };
+
+    let triple = Triple::from_str("x86_64-linux").unwrap();
+    let mut cpu_feature = CpuFeature::set();
+    cpu_feature.insert(CpuFeature::from_str("sse2").unwrap());
+    let target = Target::new(triple, cpu_feature);
+    for file_name in ARTIFACT_FILES {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("wasmer-test-files/integration/wasm")
+            .join(file_name);
+        let wasm_module = fs::read(path).unwrap();
+        let config = get_default_compiler_config().unwrap();
+        let engine = Engine::new(config, target.clone(), Features::default());
+
+        let module = Module::new(&engine, wasm_module).unwrap();
+        let serialized_bytes = module.serialize().unwrap();
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("wasmer-test-files/compilers/linux")
+            .join(format!("{file_name}u"));
+        std::fs::write(path, serialized_bytes).unwrap();
+    }
+}
+
+#[test]
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+fn artifact_deserialization_roundtrip() {
+    // This test is included to make sure we don't break the serialized format
+    // by mistake. Otherwise, everything in this test is already tested in
+    // `artifact_serialization_roundtrip`.
+    for file_name in ARTIFACT_FILES {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("wasmer-test-files/compilers/linux")
+            .join(format!("{file_name}u"));
+        let wasm_module_bytes = fs::read(path).unwrap();
+        let engine = wasmer::Engine::default();
+        let module = unsafe { Module::deserialize(&engine, wasm_module_bytes.clone()) }.unwrap();
+        let reserialized_bytes = module.serialize().unwrap();
+        // Do not use `assert_eq!`; it produces excessively long console output.
+        assert!(wasm_module_bytes.to_vec() == reserialized_bytes);
+    }
+}

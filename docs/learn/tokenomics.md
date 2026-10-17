@@ -67,7 +67,6 @@ rewards.
 ### Community - Community Pool
 
 - **Usage Incentives**: (Subject to decentralized governance) Likely used to incentivize liquidity provision or dApp usage on Nibiru Chain.
-- **Builder Grants**: See [Nibiru Grants](https://nibiru.fi/ecosystem/grants).
 
 ### Community - Strategic Reserve
 

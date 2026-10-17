@@ -29,14 +29,14 @@ func (s *Suite) TestCheckPermissions() {
 
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 	nibiru.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
-		Root:      "mockroot",
-		Contracts: mockContractAddrStrs,
+		Root:  "mockroot",
+		Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: mockContractAddrStrs}},
 	})
 
-	err := nibiru.SudoKeeper.CheckPermissions(sdk.AccAddress("addrbbb"), ctx)
+	err := nibiru.SudoKeeper.CheckPermissions(sdk.AccAddress("addrbbb"), ctx, sudo.RoleWasmDeployer)
 	s.Require().Error(err)
 	for _, mockAddr := range mockContractAddrs {
-		err := nibiru.SudoKeeper.CheckPermissions(mockAddr, ctx)
+		err := nibiru.SudoKeeper.CheckPermissions(mockAddr, ctx, sudo.RoleWasmDeployer)
 		s.Require().NoError(err)
 	}
 }

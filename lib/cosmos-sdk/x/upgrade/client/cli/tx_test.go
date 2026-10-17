@@ -2,8 +2,12 @@ package cli_test
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"testing"
 
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
@@ -14,10 +18,74 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
 	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
+	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradecli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client/cli"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/plan"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
+
+func TestSubmitLegacyUpgradeDockerMetadata(t *testing.T) {
+	binary := []byte("binary fixture")
+	path := filepath.Join(t.TempDir(), "nibid")
+	require.NoError(t, os.WriteFile(path, binary, 0o600))
+	url := fmt.Sprintf("file://%s?checksum=sha256:%x", path, sha256.Sum256(binary))
+	encCfg := testutilmod.MakeTestEncodingConfig(upgrade.AppModuleBasic{})
+	govtypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	clientCtx := client.Context{}.
+		WithTxConfig(encCfg.TxConfig).
+		WithCodec(encCfg.Codec).
+		WithFrom(sdk.AccAddress(make([]byte, 20)).String()).
+		WithFromAddress(sdk.AccAddress(make([]byte, 20))).
+		WithGenerateOnly(true).
+		WithChainID("test-chain")
+
+	for _, tc := range []struct {
+		name       string
+		image      string
+		binaryURL  string
+		noValidate bool
+		err        string
+	}{
+		{"valid Docker", "registry.invalid/nibiru:2.21.0", url, false, ""},
+		{"archive only", "", url, false, ""},
+		{"invalid Docker", "https://ghcr.io/nibiruchain/nibiru:2.21.0", url, false, "invalid docker image reference"},
+		{"missing archive checksum", "ghcr.io/nibiruchain/nibiru:2.21.0", "file://" + path, false, "missing checksum"},
+		{"explicit bypass", "invalid image", "file://" + path, true, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			info := plan.Info{Binaries: plan.BinaryDownloadURLMap{"any": tc.binaryURL}}
+			if tc.image != "" {
+				info.Binaries["docker"] = tc.image
+			}
+			infoJSON, err := json.Marshal(info)
+			require.NoError(t, err)
+			cmd := upgradecli.NewCmdSubmitLegacyUpgradeProposal()
+			flags.AddTxFlagsToCmd(cmd)
+			args := []string{
+				"test-upgrade", "--upgrade-height=100", "--title=Upgrade", "--description=Upgrade",
+				"--daemon-name=nibid", "--deposit=1stake", "--upgrade-info=" + string(infoJSON),
+			}
+			if tc.noValidate {
+				args = append(args, "--no-validate")
+			}
+			out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+			if tc.err != "" {
+				require.ErrorContains(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			tx, err := encCfg.TxConfig.TxJSONDecoder()(out.Bytes())
+			require.NoError(t, err)
+			require.Len(t, tx.GetMsgs(), 1)
+			proposal := tx.GetMsgs()[0].(*govtypes.MsgSubmitProposal).GetContent().(*upgradetypes.SoftwareUpgradeProposal)
+			require.Equal(t, string(infoJSON), proposal.Plan.Info)
+			require.Equal(t, "test-upgrade", proposal.Plan.Name)
+		})
+	}
+}
 
 func TestModuleVersionsCLI(t *testing.T) {
 	cmd := upgradecli.GetModuleVersionsCmd()

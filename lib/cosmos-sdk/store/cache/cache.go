@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
@@ -28,6 +29,7 @@ type (
 	CommitKVStoreCache struct {
 		types.CommitKVStore
 		cache *lru.ARCCache
+		mtx   sync.RWMutex
 	}
 
 	// CommitKVStoreCacheManager maintains a mapping from a StoreKey to a
@@ -100,6 +102,9 @@ func (ckv *CommitKVStoreCache) CacheWrap() types.CacheWrap {
 func (ckv *CommitKVStoreCache) Get(key []byte) []byte {
 	types.AssertValidKey(key)
 
+	ckv.mtx.RLock()
+	defer ckv.mtx.RUnlock()
+
 	keyStr := string(key)
 	valueI, ok := ckv.cache.Get(keyStr)
 	if ok {
@@ -120,6 +125,9 @@ func (ckv *CommitKVStoreCache) Set(key, value []byte) {
 	types.AssertValidKey(key)
 	types.AssertValidValue(value)
 
+	ckv.mtx.Lock()
+	defer ckv.mtx.Unlock()
+
 	ckv.cache.Add(string(key), value)
 	ckv.CommitKVStore.Set(key, value)
 }
@@ -127,6 +135,9 @@ func (ckv *CommitKVStoreCache) Set(key, value []byte) {
 // Delete removes a key/value pair from both the write-through cache and the
 // underlying CommitKVStore.
 func (ckv *CommitKVStoreCache) Delete(key []byte) {
+	ckv.mtx.Lock()
+	defer ckv.mtx.Unlock()
+
 	ckv.cache.Remove(string(key))
 	ckv.CommitKVStore.Delete(key)
 }

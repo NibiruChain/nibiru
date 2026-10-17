@@ -3,7 +3,7 @@
 # This script is used in tandem with `contrib/docker/chaosnet.Dockerfile` to
 # run nodes for Nibiru Chain networks inside docker containers.
 #
-# See CHAOSNET.md for usage instructions.
+# See spec/02-chaosnet.md for usage instructions.
 #
 # How chaosnet.sh works:
 # - Parameterizes env vars for Docker Compose multi-node use.

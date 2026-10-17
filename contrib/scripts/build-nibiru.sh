@@ -5,9 +5,12 @@
 # Optional environment variables (inherited when set):
 #   VERSION   Release version string (default: latest git tag, or branch-commit)
 #   BUILDDIR  Output directory (default: $REPO_ROOT/build)
-#   TEMPDIR   RocksDB/wasmvm cache (default: $REPO_ROOT/temp)
+#   TEMPDIR   WasmVM artifact cache (default: $REPO_ROOT/temp)
+#   NIBIRU_WASMVM_BUILD_FROM_SOURCE  Build the vendored runtime (default: false).
 #   GOARCH    Target GOARCH for cross-compilation
 #   GOOS      Target GOOS for cross-compilation
+#   NIBID_STATIC_PIE  Build a Linux static PIE (default: false). Requires a
+#                     supported musl toolchain such as the release container.
 #
 # Usage:
 #   contrib/scripts/build-nibiru.sh
@@ -20,8 +23,6 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 SCRIPT_NAME="$(basename -- "${BASH_SOURCE[0]}")"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
-
-readonly ROCKSDB_VERSION="8.9.1"
 
 RUN=false
 JUST_BUILD=false
@@ -81,12 +82,12 @@ Build or install the nibid binary.
 With no arguments, this script prints help and exits. Use --run to execute.
 
 Options:
-  --run         Install nibid to PATH using go install.
+  --run         Build and install nibid to the Go binary directory.
   --just-build  Build nibid to ./build/nibid instead of installing (requires --run).
   -h, --help    Show this help message and exit.
 
 Environment:
-  VERSION, BUILDDIR, TEMPDIR, GOARCH, GOOS - see script header comment.
+  VERSION, BUILDDIR, TEMPDIR, GOARCH, GOOS, NIBID_STATIC_PIE - see script header comment.
 EOF
 }
 
@@ -141,11 +142,6 @@ detect_os_name() {
 
 # detect_arch_name: Platform lib directory suffix used by build.mk.
 detect_arch_name() {
-  local os_name="$1"
-  if [[ "$os_name" == "darwin" ]]; then
-    printf '%s' "all"
-    return 0
-  fi
   local arch
   if [[ -n "${GOARCH:-}" ]]; then
     arch="$GOARCH"
@@ -167,14 +163,14 @@ compute_version() {
     return 0
   fi
 
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown-version"
     return 0
   fi
 
   branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || printf '%s' "unknown")"
   commit="$(git -C "$REPO_ROOT" log -1 --format='%H' 2>/dev/null || printf '%s' "unknown")"
-  described="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 2>/dev/null || true)"
+  described="$(git -C "$REPO_ROOT" describe --tags --match 'v[0-9]*' --abbrev=0 2>/dev/null || true)"
   if [[ -z "$described" ]]; then
     printf '%s-%s' "$branch" "$commit"
   else
@@ -184,7 +180,7 @@ compute_version() {
 
 # compute_commit: Return the git commit hash, or "unknown" outside git checkouts.
 compute_commit() {
-  if [[ ! -d "$REPO_ROOT/.git" ]] || ! command -v git >/dev/null 2>&1; then
+  if ! command -v git >/dev/null 2>&1 || ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
     printf '%s' "unknown"
     return 0
   fi
@@ -196,9 +192,9 @@ compute_commit() {
 build_tags_for_os() {
   local os_name="$1"
   if [[ "$os_name" == "darwin" ]]; then
-    printf '%s' "netgo osusergo ledger static rocksdb pebbledb static_wasm grocksdb_no_link"
+    printf '%s' "netgo osusergo ledger static pebbledb static_wasm grocksdb_no_link"
   else
-    printf '%s' "netgo osusergo ledger static rocksdb pebbledb muslc"
+    printf '%s' "netgo osusergo ledger static pebbledb muslc"
   fi
 }
 
@@ -218,100 +214,44 @@ ensure_temp_dir() {
   mkdir -p "$tempdir"
 }
 
-# ensure_rocksdb_lib: Download RocksDB headers and static lib if missing.
-ensure_rocksdb_lib() {
-  local tempdir="$1"
-  local os_name="$2"
-  local arch_name="$3"
-
-  local include_dir="$tempdir/rocksdb/$ROCKSDB_VERSION/include"
-  local lib_dir="$tempdir/rocksdb/$ROCKSDB_VERSION/lib/${os_name}_${arch_name}"
-
-  mkdir -p "$include_dir" "$lib_dir"
-
-  if [[ ! -d "$include_dir/rocksdb" ]]; then
-    log_info "downloading RocksDB headers v$ROCKSDB_VERSION"
-    wget "https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/include.${ROCKSDB_VERSION}.tar.gz" \
-      -O - | tar -xz -C "$include_dir"
+# ensure_wasmvm_lib: Download a pinned, checksum-verified static runtime.
+ensure_wasmvm_lib() (
+  local tempdir="$1" os_name="$2" arch_name="$3" wasmvm_version="$4"
+  local libdir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
+  if [[ "$wasmvm_version" == source ]]; then
+    "$SCRIPT_DIR/build-wasmvm-source.sh" "$os_name" "$arch_name" "$libdir"
+    return
   fi
 
-  if [[ ! -f "$lib_dir/librocksdb.a" ]]; then
-    log_info "downloading RocksDB static lib v$ROCKSDB_VERSION (${os_name}_${arch_name})"
-    wget "https://github.com/NibiruChain/gorocksdb/releases/download/v${ROCKSDB_VERSION}/librocksdb_${ROCKSDB_VERSION}_${os_name}_${arch_name}.tar.gz" \
-      -O - | tar -xz -C "$lib_dir"
-  fi
-}
-
-# ensure_wasmvm_lib: Download wasmvm static lib if missing.
-ensure_wasmvm_lib() {
-  local tempdir="$1"
-  local os_name="$2"
-  local arch_name="$3"
-  local wasmvm_version="$4"
-
-  local lib_dir wasmvm_gh_tag wasmvm_gh_tag_url base_url
-  lib_dir="$tempdir/wasmvm/$wasmvm_version/lib/${os_name}_${arch_name}"
-  wasmvm_gh_tag="lib/wasmvm/${wasmvm_version}"
-  wasmvm_gh_tag_url=$(jq -nr --arg s "$wasmvm_gh_tag" '$s|@uri')
-  base_url="https://github.com/NibiruChain/nibiru/releases/download/${wasmvm_gh_tag_url}"
-
-  mkdir -p "$lib_dir"
-
-  # shellcheck disable=SC2086
-  if compgen -G "$lib_dir/libwasmvm*.a" >/dev/null; then
-    return 0
-  fi
-
-  log_info "downloading wasmvm v$wasmvm_version (${os_name}_${arch_name})"
-  if [[ "$os_name" == "darwin" ]]; then
-    wget "${base_url}/libwasmvmstatic_darwin.a" \
-      -O "$lib_dir/libwasmvmstatic_darwin.a"
-  elif [[ "$arch_name" == "amd64" ]]; then
-    wget "${base_url}/libwasmvm_muslc.x86_64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
-  else
-    wget "${base_url}/libwasmvm_muslc.aarch64.a" \
-      -O "$lib_dir/libwasmvm_muslc.a"
-  fi
-}
-
-# ensure_linux_packages: Install debian CGO dev packages when needed.
-ensure_linux_packages() {
-  local os_name="$1"
-  local pkg
-  local -a sudo_cmd=()
-  local -a missing_packages=()
-
-  if [[ "$os_name" != "linux" ]]; then
-    return 0
-  fi
-
-  if [[ ! -f /etc/debian_version ]]; then
-    log_info "non-Debian Linux: ensure lz4, snappy, z, bz2, zstd dev libraries are installed"
-    return 0
-  fi
-
-  log_info "checking debian CGO dev packages"
-
-  for pkg in liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev; do
-    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-      missing_packages+=("$pkg")
+  local artifact library digest actual download_dir
+  case "$os_name:$arch_name" in
+    linux:amd64) artifact="libwasmvm_muslc.x86_64.a"; library="libwasmvm_muslc.a" ;;
+    linux:arm64) artifact="libwasmvm_muslc.aarch64.a"; library="libwasmvm_muslc.a" ;;
+    darwin:*) artifact="libwasmvmstatic_darwin.a"; library="$artifact" ;;
+    *) log_error "unsupported WasmVM platform: $os_name/$arch_name"; return 1 ;;
+  esac
+  digest="$(awk -v name="$artifact" '$2 == name {print $1}' "$SCRIPT_DIR/wasmvm-checksums.txt")"
+  [[ "$digest" =~ ^[a-f0-9]{64}$ ]] || { log_error "missing pinned checksum for $artifact"; return 1; }
+  hash_library() {
+    if command -v sha256sum >/dev/null 2>&1; then
+      sha256sum "$1" | awk '{print $1}'
+    else
+      shasum -a 256 "$1" | awk '{print $1}'
     fi
-  done
-
-  if [[ "${#missing_packages[@]}" -eq 0 ]]; then
-    log_info "debian CGO dev packages are already installed"
-    return 0
+  }
+  mkdir -p "$libdir"
+  if [[ -f "$libdir/$library" ]] && [[ "$(hash_library "$libdir/$library")" == "$digest" ]]; then
+    log_info "using verified WasmVM $wasmvm_version cache"
+    return
   fi
-
-  if [[ "$(id -u)" -ne 0 ]]; then
-    sudo_cmd=(sudo)
-  fi
-
-  "${sudo_cmd[@]}" apt-get update
-  log_info "installing missing packages: ${missing_packages[*]}"
-  "${sudo_cmd[@]}" apt-get install --no-install-recommends -y "${missing_packages[@]}"
-}
+  download_dir="$(mktemp -d "$libdir/download.XXXXXX")"
+  trap 'rm -rf -- "$download_dir"' EXIT
+  log_info "downloading WasmVM $wasmvm_version $artifact"
+  wget -q -O "$download_dir/$library" "https://github.com/NibiruChain/nibiru/releases/download/lib/wasmvm/$wasmvm_version/$artifact"
+  actual="$(hash_library "$download_dir/$library")"
+  [[ "$actual" == "$digest" ]] || { log_error "WasmVM checksum mismatch: $artifact"; return 1; }
+  mv "$download_dir/$library" "$libdir/$library"
+)
 
 verify_go_modules() {
   log_info "verifying go modules"
@@ -330,56 +270,71 @@ run_go_compile() {
   local build_tags_csv="$9"
   local wasmvm_version="${10}"
   local just_build="${11}"
+  local static_pie="${12}"
 
-  local cgo_cflags cgo_ldflags ldflags
+  local cgo_ldflags ldflags go_build_mode install_dir
+  go_build_mode=""
 
-  cgo_cflags="-I${tempdir}/rocksdb/${ROCKSDB_VERSION}/include"
-  cgo_ldflags="-L${tempdir}/rocksdb/${ROCKSDB_VERSION}/lib/${os_name}_${arch_name}/"
-  cgo_ldflags+=" -L${tempdir}/wasmvm/${wasmvm_version}/lib/${os_name}_${arch_name}/"
+  cgo_ldflags="-L${tempdir}/wasmvm/${wasmvm_version}/lib/${os_name}_${arch_name}/"
 
-  if [[ "$os_name" == "darwin" ]]; then
-    cgo_ldflags+=" -lrocksdb -lstdc++ -lz -lbz2"
-  else
-    cgo_ldflags+=" -static -lm -lbz2"
+  if [[ "$static_pie" == true ]]; then
+    # Keep CGO library resolution separate from the final link mode. The
+    # external linker receives -static-pie below, which makes the complete
+    # Linux executable position independent instead of producing ET_EXEC.
+    cgo_ldflags+=" -lm"
+    go_build_mode="-buildmode=pie"
+  elif [[ "$os_name" == "linux" ]]; then
+    cgo_ldflags+=" -static -lm"
   fi
 
-  ldflags="-X github.com/cosmos/cosmos-sdk/version.Name=nibiru"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.AppName=nibid"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.Version=${version}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.Commit=${commit}"
-  ldflags+=" -X github.com/cosmos/cosmos-sdk/version.BuildTags=${build_tags_csv}"
+  ldflags="-X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Name=nibiru"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.AppName=nibid"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Version=${version}"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Commit=${commit}"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.BuildTags=${build_tags_csv}"
   ldflags+=" -X github.com/cometbft/cometbft/version.CMTSemVer=${cmt_version}"
   ldflags+=" -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb"
   ldflags+=" -linkmode=external -w -s"
 
+  if [[ "$static_pie" == true ]]; then
+    ldflags+=" -extldflags '-Wl,-z,muldefs -static-pie -z noexecstack'"
+  fi
+
   if [[ "$just_build" == true ]]; then
     log_info "compiling nibid to ${builddir}/"
   else
-    log_info "installing nibid with go install"
+    install_dir="$(go env GOBIN)"
+    if [[ -z "$install_dir" ]]; then
+      install_dir="$(go env GOPATH)/bin"
+    fi
+    mkdir -p "$install_dir"
+    log_info "installing nibid to ${install_dir}/nibid"
   fi
 
   (
     cd "$REPO_ROOT"
     export GO111MODULE=on
     export CGO_ENABLED=1
-    export CGO_CFLAGS="$cgo_cflags"
     export CGO_LDFLAGS="$cgo_ldflags"
 
     if [[ "$just_build" == true ]]; then
       go build \
         -mod=readonly \
         -trimpath \
+        ${go_build_mode:+"$go_build_mode"} \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        -o "${builddir}/" \
-        ./cmd/...
+        -o "${builddir}/nibid" \
+        ./x/cli
     else
-      go install \
+      go build \
         -mod=readonly \
         -trimpath \
+        ${go_build_mode:+"$go_build_mode"} \
         -tags "$build_tags" \
         -ldflags "$ldflags" \
-        ./cmd/...
+        -o "${install_dir}/nibid" \
+        ./x/cli
     fi
   )
 }
@@ -387,31 +342,47 @@ run_go_compile() {
 main() {
   parse_args "$@"
 
-  require_cmds go wget tar
+  require_cmds go wget jq
 
   cd "$REPO_ROOT"
 
   local builddir="${BUILDDIR:-$REPO_ROOT/build}"
   local tempdir="${TEMPDIR:-$REPO_ROOT/temp}"
-  local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv
+  local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv static_pie
 
   os_name="$(detect_os_name)"
+  if [[ "$os_name" == darwin ]]; then
+    export MACOSX_DEPLOYMENT_TARGET=14.5
+  fi
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"
   cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
-  wasmvm_version="v1.12.0" # tag name `lib/wasmvm/v*`
+  wasmvm_version="v1.13.1"
+  case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
+    true) wasmvm_version="source" ;;
+    false) ;;
+    *) log_error "NIBIRU_WASMVM_BUILD_FROM_SOURCE must be true or false"; exit 1 ;;
+  esac
   build_tags="$(build_tags_for_os "$os_name")"
   tags_csv="$(build_tags_csv "$build_tags")"
+  static_pie="${NIBID_STATIC_PIE:-false}"
+
+  if [[ "$static_pie" != true && "$static_pie" != false ]]; then
+    log_error "NIBID_STATIC_PIE must be true or false, got: $static_pie"
+    exit 1
+  fi
+  if [[ "$static_pie" == true && "$os_name" != "linux" ]]; then
+    log_error "NIBID_STATIC_PIE is supported only for Linux builds"
+    exit 1
+  fi
 
   verify_go_modules
   ensure_build_dir "$builddir"
   ensure_temp_dir "$tempdir"
-  ensure_rocksdb_lib "$tempdir" "$os_name" "$arch_name"
   ensure_wasmvm_lib "$tempdir" "$os_name" "$arch_name" "$wasmvm_version"
-  ensure_linux_packages "$os_name"
   run_go_compile "$builddir" "$tempdir" "$os_name" "$arch_name" \
-    "$version" "$commit" "$cmt_version" "$build_tags" "$tags_csv" "$wasmvm_version" "$JUST_BUILD"
+    "$version" "$commit" "$cmt_version" "$build_tags" "$tags_csv" "$wasmvm_version" "$JUST_BUILD" "$static_pie"
 
   if [[ "$JUST_BUILD" == true ]]; then
     if [[ ! -x "${builddir}/nibid" ]]; then
@@ -421,6 +392,9 @@ main() {
 
     log_success "built ${builddir}/nibid"
     "${builddir}/nibid" version
+    if [[ "$static_pie" == true ]]; then
+      "$SCRIPT_DIR/nibid-elf-test.sh" --bin "${builddir}/nibid"
+    fi
   else
     local nibid_path
     nibid_path="$(command -v nibid)" || {
@@ -430,7 +404,12 @@ main() {
 
     log_success "installed $nibid_path"
     "$nibid_path" version
+    if [[ "$static_pie" == true ]]; then
+      "$SCRIPT_DIR/nibid-elf-test.sh" --bin "$nibid_path"
+    fi
   fi
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

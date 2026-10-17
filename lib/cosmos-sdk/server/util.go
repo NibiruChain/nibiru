@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
@@ -100,6 +101,11 @@ func bindFlags(basename string, cmd *cobra.Command, v *viper.Viper) (err error) 
 		// viper has a value.
 		if !f.Changed && v.IsSet(f.Name) {
 			val := v.Get(f.Name)
+			// A config table can share a name with a scalar CLI flag, such as
+			// [evm] in app.toml and the query transaction --evm flag.
+			if val != nil && reflect.ValueOf(val).Kind() == reflect.Map {
+				return
+			}
 			err = cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
 			if err != nil {
 				panic(err)

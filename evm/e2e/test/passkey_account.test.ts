@@ -1,10 +1,10 @@
+import { describe, it } from "bun:test"
 import type {
   ChildProcessWithoutNullStreams,
   SpawnOptions,
 } from "child_process"
 import { spawn } from "child_process"
 import path from "path"
-import { describe, it } from "bun:test"
 import { parseEther } from "ethers"
 
 import {
@@ -20,8 +20,7 @@ const PASSKEY_BUNDLER_DIR = path.resolve(
   "..",
   "passkey-bundler",
 )
-const NPM_BIN = process.platform === "win32" ? "npm.cmd" : "npm"
-const NODE_BIN = "node"
+const BUN_BIN = process.platform === "win32" ? "bun.exe" : "bun"
 const JSON_RPC_ENDPOINT =
   process.env.JSON_RPC_ENDPOINT ?? "http://127.0.0.1:8545"
 const MNEMONIC = process.env.MNEMONIC
@@ -62,7 +61,7 @@ describe("passkey ERC-4337 flow", () => {
 })
 
 async function buildPasskeySdk() {
-  await runCommand(NPM_BIN, ["run", "build"], {
+  await runCommand(BUN_BIN, ["run", "build"], {
     cwd: PASSKEY_SDK_DIR,
     env: process.env,
   })
@@ -70,11 +69,11 @@ async function buildPasskeySdk() {
 
 async function buildPasskeyBundlerIfNeeded() {
   if (PASSKEY_BUNDLER_MODE !== "official") return
-  await runCommand(NPM_BIN, ["install"], {
+  await runCommand(BUN_BIN, ["install", "--frozen-lockfile"], {
     cwd: PASSKEY_BUNDLER_DIR,
     env: process.env,
   })
-  await runCommand(NPM_BIN, ["run", "build"], {
+  await runCommand(BUN_BIN, ["run", "build"], {
     cwd: PASSKEY_BUNDLER_DIR,
     env: process.env,
   })
@@ -117,7 +116,7 @@ function startLocalBundler(entryPointAddr: string, chainId: bigint) {
     CHAIN_ID: chainId.toString(),
     BUNDLER_PORT: BUNDLER_PORT.toString(),
   }
-  const proc = spawn(NODE_BIN, ["dist/local-bundler.js"], {
+  const proc = spawn(BUN_BIN, ["dist/local-bundler.js"], {
     cwd: PASSKEY_SDK_DIR,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -135,7 +134,7 @@ function startOfficialBundler(entryPointAddr: string, chainId: bigint) {
     BUNDLER_PORT: BUNDLER_PORT.toString(),
     BUNDLER_PRIVATE_KEY: BUNDLER_DEV_PRIVATE_KEY,
   }
-  const proc = spawn(NODE_BIN, ["dist/index.js"], {
+  const proc = spawn(BUN_BIN, ["dist/index.js"], {
     cwd: PASSKEY_BUNDLER_DIR,
     env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -162,7 +161,7 @@ async function runPasskeyScript(opts: {
     PASSKEY_SEED,
     PASSKEY_FUND_VALUE: "2",
   }
-  await runCommand(NODE_BIN, ["dist/passkey-e2e.js"], {
+  await runCommand(BUN_BIN, ["dist/passkey-e2e.js"], {
     cwd: PASSKEY_SDK_DIR,
     env,
   })

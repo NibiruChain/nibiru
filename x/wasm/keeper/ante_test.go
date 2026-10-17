@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	clienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -231,6 +233,41 @@ func TestGasRegisterDecorator(t *testing.T) {
 
 			// then
 			require.NoError(t, gotErr)
+		})
+	}
+}
+
+// The client allowance must cover the real decorator without changing its
+// execution or simulation behavior.
+func TestCountTxGasEstimationAllowance(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		t.Run(fmt.Sprint(existing), func(t *testing.T) {
+			key := sdk.NewKVStoreKey(types.StoreKey)
+			db := dbm.NewMemDB()
+			ms := store.NewCommitMultiStore(db)
+			ms.MountStoreWithDB(key, storetypes.StoreTypeIAVL, db)
+			require.NoError(t, ms.LoadLatestVersion())
+			ctx := sdk.NewContext(ms, tmproto.Header{Height: 100}, false, log.NewNopLogger())
+			if existing {
+				ctx.KVStore(key).Set(types.TXCounterPrefix, []byte{0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 1})
+			}
+			next := func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) { return ctx, nil }
+			for _, simulate := range []bool{true, false} {
+				branch, _ := ctx.CacheContext()
+				branch = branch.WithGasMeter(sdk.NewInfiniteGasMeter())
+				result, err := keeper.NewCountTXDecorator(key).AnteHandle(branch, nil, simulate, next)
+				require.NoError(t, err)
+				if simulate {
+					require.Zero(t, result.GasMeter().GasConsumed())
+				} else {
+					allowance := clienttx.TransactionCounterGasAllowance()
+					require.EqualValues(t, 3429, allowance)
+					require.LessOrEqual(t, result.GasMeter().GasConsumed(), allowance)
+					if existing {
+						require.Equal(t, allowance, result.GasMeter().GasConsumed())
+					}
+				}
+			}
 		})
 	}
 }

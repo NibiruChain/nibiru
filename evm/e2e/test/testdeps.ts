@@ -1,6 +1,8 @@
 import { config } from "dotenv"
 import { ethers, Wallet } from "ethers"
 
+import { NonceRetryingSigner } from "../passkey-sdk/src/nonce-retry"
+
 config()
 
 const JSON_RPC_ENDPOINT =
@@ -112,14 +114,23 @@ const provider: ethers.JsonRpcProvider = await (async () => {
 /**
  * `account` is the primary funded signer for many of the EVM E2E tests.
  * The seed phrase, `process.env.MNEMONIC`, is set by
- * `cmd/nibid/localnet.sh` to create the `validator` key on
+ * `x/cli/localnet.sh` to create the `validator` key on
  * the `nibiru-localnet-0` blockchain. That validator/dev account is
  * funded in genesis and can deploy contracts, pay gas, and fund
  * other test wallets.
  */
-const account = Wallet.fromPhrase(process.env.MNEMONIC, provider)
+const account = new NonceRetryingSigner(
+  Wallet.fromPhrase(process.env.MNEMONIC, provider),
+  {
+    onRetry: ({ attempt, maxAttempts, rejectedNonce, retryNonce }) => {
+      console.log(
+        `[nonceRetry:account] rejected nonce ${rejectedNonce}; retrying with ${retryNonce} after attempt ${attempt}/${maxAttempts}`,
+      )
+    },
+  },
+)
 
 const TEST_TIMEOUT = Number(process.env.TEST_TIMEOUT) || 15000
-const TX_WAIT_TIMEOUT = Number(process.env.TX_WAIT_TIMEOUT) || 5000
+const TX_WAIT_TIMEOUT = Number(process.env.TX_WAIT_TIMEOUT) || 8000
 
 export { account, provider, preflight, TEST_TIMEOUT, TX_WAIT_TIMEOUT }

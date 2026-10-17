@@ -10,7 +10,7 @@ import (
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 )
 
 const (

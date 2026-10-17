@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/gosdk"
+	"github.com/NibiruChain/nibiru/v2/x/gosdk"
 )
 
 func EnsureLocalBlockchain() error {

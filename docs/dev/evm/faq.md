@@ -212,7 +212,7 @@ You can:
 
 ### How can projects get listed or supported by Nibiru?
 
-Submit your project or partnership request via the [Ecosystem Portal](https://nibiru.fi/ecosystem) or reach out in [Discord](https://discord.gg/nibiru). There's also a grants program underway.
+Submit your project or partnership request via the [Ecosystem Portal](https://nibiru.fi/ecosystem) or reach out in [Discord](https://discord.gg/nibiru).
 
 ---
 

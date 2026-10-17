@@ -1,0 +1,12 @@
+# Trimmed for Nibiru vendored Wasmer runtime closure (see .github/README.nibi.md).
+lib/api                            @syrusakbary
+lib/compiler                       @syrusakbary
+lib/compiler-cranelift             @syrusakbary
+lib/compiler-singlepass            @syrusakbary
+lib/derive                         @syrusakbary
+lib/middlewares                    @syrusakbary
+lib/types                          @syrusakbary
+lib/vm                             @syrusakbary
+scripts                            @syrusakbary
+tests/compilers                    @syrusakbary
+tests/wast                         @syrusakbary

@@ -21,10 +21,10 @@ func (t *EVMTrader) buildOpenTradeMessage(params *OpenTradeParams) ([]byte, erro
 		"leverage":          strconv.FormatUint(params.Leverage, 10),
 		"long":              params.Long,
 		"collateral_index":  fmt.Sprintf("TokenIndex(%d)", params.CollateralIndex),
+		"collateral_amount": params.CollateralAmt.String(),
 		"trade_type":        params.TradeType,
 		"slippage_p":        params.SlippageP,
 		"is_evm_origin":     true, // Required when calling from EVM
-		"collateral_amount": params.CollateralAmt.String(),
 	}
 
 	// open_price is required by the contract for all trade types

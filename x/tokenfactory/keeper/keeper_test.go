@@ -73,7 +73,7 @@ func (s *TestSuite) HandleMsg(txMsg sdk.Msg) (err error) {
 func (s *TestSuite) GrantSudo(addr string) {
 	sudoers, err := s.app.SudoKeeper.Sudoers.Get(s.ctx)
 	s.Require().NoError(err)
-	sudoers.Contracts = append(sudoers.Contracts, addr)
+	sudoers.Root = addr
 	s.app.SudoKeeper.Sudoers.Set(s.ctx, sudoers)
 }
 

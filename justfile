@@ -38,12 +38,12 @@ gen-embeds:
 
     embeds_dir="evm/embeds"
     log_info "Begin to compile Solidity in $embeds_dir"
-    which_ok yarn
-    log_info "Using system node version: $(yarn exec -- node -v)"
+    which_ok bun
+    log_info "Using Bun version: $(bun --version)"
 
     cd "$embeds_dir" || (log_error "path $embeds_dir not found" && exit 1)
-    yarn --check-files
-    yarn hardhat compile && echo "SUCCESS: yarn hardhat compile succeeded" || echo "Run failed"
+    bun install --frozen-lockfile
+    bun run compile
     log_success "Compiled Solidity in $embeds_dir"
 
     go run "gen-abi/main.go"
@@ -95,12 +95,13 @@ gen-proto-rs:
 gen-proto-openapi:
     bun run proto/buf-gen-swagger.ts 2>&1 | tee out.txt
 
-lint:
+# Run Go linting with golangci-lint.
+go-lint:
     #!/usr/bin/env bash
     set -euo pipefail
     source contrib/bashlib.sh
 
-    image_version="v2.6.1"
+    image_version="v2.13.2"
     # Cap golangci-lint parallelism so lint stays responsive on developer machines.
     # On a 12-CPU WSL host, -j 4 benchmarked faster than -j 6 while using much
     # less CPU, and was materially faster than -j 2 or -j 3.
@@ -108,10 +109,6 @@ lint:
 
     if which_ok golangci-lint >/dev/null 2>&1; then
       local_version="$(golangci-lint version --short 2>/dev/null || true)"
-      image_major="${image_version#v}"
-      image_major="${image_major%%.*}"
-      local_major="${local_version#v}"
-      local_major="${local_major%%.*}"
 
       if [ "$local_version" = "$image_version" ] || [ "v$local_version" = "$image_version" ]; then
         log_info "Running local golangci-lint $local_version"
@@ -119,13 +116,7 @@ lint:
         exit 0
       fi
 
-      if [ -n "$local_major" ] && [ "$local_major" = "$image_major" ]; then
-        log_warning "Running local golangci-lint ${local_version:-unknown}; repo pins $image_version"
-        GOLANGCI_LINT_CACHE="${GOLANGCI_LINT_CACHE:-/tmp/nibi-golangci-lint-cache}" "${lint_cmd[@]}"
-        exit 0
-      fi
-
-      log_warning "Local golangci-lint version ${local_version:-unknown} does not match major version $image_major; using Docker"
+      log_warning "Local golangci-lint version ${local_version:-unknown} is not $image_version; using Docker"
     else
       log_info "golangci-lint not found locally; using Docker"
     fi
@@ -141,7 +132,7 @@ lint:
 
 # Runs a Nibiru local network. Ex: "just localnet --run --help". Optional flags: --no-build --log-level [debug|info]
 localnet *PASS_FLAGS:
-    bash cmd/nibid/localnet.sh --run {{ PASS_FLAGS }}
+    bash x/cli/localnet.sh --run {{ PASS_FLAGS }}
 
 # Clears the logs directory
 log-clear:
@@ -165,6 +156,16 @@ log-e2e:
     #!/usr/bin/env bash
     set -euo pipefail
     just test-e2e 2>&1 | tee -a logs/e2e.txt
+
+# Install the Bun dependencies required by the EVM E2E tests.
+install-e2e:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    source contrib/bashlib.sh
+    which_ok bun
+
+    cd evm/e2e
+    just install
 
 # Runs the EVM E2E tests
 test-e2e:
@@ -206,11 +207,11 @@ passkey-demo:
     #!/usr/bin/env bash
     contrib/scripts/passkey-demo.sh
 
-# Runs golang formatter (gofumpt)
-fmt:
-    gofumpt -w evm x app gosdk eth
+# Run Go formatting with gofumpt.
+go-fmt:
+    gofumpt -w evm x app eth
 
-# Format and lint
+# Go mod tidying, format, and proto gen
 tidy:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -226,22 +227,88 @@ tidy:
         done
 
     just proto gen
-    just lint
-    just fmt
+    just go-fmt
 
-test-release:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    make release-snapshot
+# Verify a published release's artifacts before publishing its container image.
+release-image-verify release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}'
 
-release-publish:
-    make release
+# Build AMD64 and ARM64 images from verified release artifacts, then run the host-native one.
+release-image-smoke release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --smoke-test
+
+# Publish a verified public release as ghcr.io/nibiruchain/nibiru:<version>.
+[confirm]
+release-image-publish release_tag version:
+    contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --push
 
 [private]
 _go-test-pkgs:
     #!/usr/bin/env bash
     set -euo pipefail
     go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib)/'
+
+[private]
+test-sim-nondeterminism:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running non-determinism test..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppStateDeterminism \
+      -Enabled=true \
+      -Params=params.json \
+      -NumBlocks=100 \
+      -BlockSize=200 \
+      -Commit=true \
+      -Period=0 \
+      -Verbose=true \
+      -timeout 30m
+
+[private]
+test-sim-default-genesis-fast:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running default genesis simulation..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestFullAppSimulation \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=100 \
+      -BlockSize=200 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=0 \
+      -timeout 30m
+
+[private]
+test-sim-import-export:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running application import/export simulation. This may take several minutes..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppImportExport \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=100 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=5 \
+      -timeout 30m
+
+[private]
+test-sim-after-import:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Running application simulation-after-import. This may take several minutes..."
+    go test -mod=readonly -v ./app/simapp \
+      -run TestAppSimulationAfterImport \
+      -Params=params.json \
+      -Enabled=true \
+      -NumBlocks=50 \
+      -Commit=true \
+      -Seed=99 \
+      -Period=5 \
+      -timeout 30m
 
 # Run Go tests without cached test results
 test:
@@ -306,6 +373,16 @@ localnet-check:
 # Run commands from the wasmvm FFI subtree. Ex: `just wasmvm --list`.
 wasmvm *args:
     cd lib/wasmvm && just {{ args }}
+
+# Run root Rust workspace commands. Ex: `just rs test-all`.
+rust *args:
+    just --justfile just-rs.just {{ args }}
+
+alias rs := rust
+
+# Run Chaosnet commands. Ex: `just chaos up`.
+chaos *args:
+    just --justfile just-chaos.just {{ args }}
 
 # Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
 sai-trading *args:

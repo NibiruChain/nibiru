@@ -60,6 +60,17 @@ func TestGenesisExportImport(t *testing.T) {
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
+		seenStateKeys := make(map[string]struct{}, len(stateModels))
+		uniqueStateModels := stateModels[:0]
+		for _, model := range stateModels {
+			key := string(model.Key)
+			if _, seen := seenStateKeys[key]; seen {
+				continue
+			}
+			seenStateKeys[key] = struct{}{}
+			uniqueStateModels = append(uniqueStateModels, model)
+		}
+		stateModels = uniqueStateModels
 		f.NilChance(0).Fuzz(&history)
 		f.Fuzz(&pinned)
 		f.Fuzz(&contractExtension)

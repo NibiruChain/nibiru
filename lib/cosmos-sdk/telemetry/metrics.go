@@ -72,14 +72,21 @@ type GatherResponse struct {
 
 // New creates a new instance of Metrics
 func New(cfg Config) (_ *Metrics, rerr error) {
+	execution.Store(nil)
 	if !cfg.Enabled {
 		return nil, nil
 	}
 
+	globalLabels = nil
+	constLabels := prometheus.Labels{}
 	if numGlobalLables := len(cfg.GlobalLabels); numGlobalLables > 0 {
 		parsedGlobalLabels := make([]metrics.Label, numGlobalLables)
 		for i, gl := range cfg.GlobalLabels {
+			if len(gl) != 2 {
+				return nil, fmt.Errorf("telemetry global label %d must contain a name and value", i)
+			}
 			parsedGlobalLabels[i] = NewLabel(gl[0], gl[1])
+			constLabels[gl[0]] = gl[1]
 		}
 
 		globalLabels = parsedGlobalLabels
@@ -112,10 +119,22 @@ func New(cfg Config) (_ *Metrics, rerr error) {
 		}
 
 		fanout = append(fanout, promSink)
+		defer func() {
+			if rerr != nil {
+				prometheus.DefaultRegisterer.Unregister(promSink)
+			}
+		}()
 	}
 
 	if _, err := metrics.NewGlobal(metricsConf, fanout); err != nil {
 		return nil, err
+	}
+	if m.prometheusEnabled {
+		collectors, err := newExecutionMetrics(prometheus.DefaultRegisterer, constLabels)
+		if err != nil {
+			return nil, fmt.Errorf("register SDK execution metrics: %w", err)
+		}
+		execution.Store(collectors)
 	}
 
 	return m, nil

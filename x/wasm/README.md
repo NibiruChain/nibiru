@@ -26,7 +26,7 @@ Related paths outside this directory:
 
 - directory [proto/cosmwasm/wasm/v1/](../../proto/cosmwasm/wasm/v1/) — protobuf definitions for msgs, queries, and genesis
 - directory [app/](../../app/) — module wiring into `NibiruApp`
-- repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) — Rust smart contracts and package `nibiru-std` (contract side, not chain module code)
+- directories [wasm-contracts/](../../wasm-contracts/) and [lib/nibiru-std/](../../lib/nibiru-std/) for Rust smart contracts and the `nibiru-std` package
 
 ## Hacking
 
@@ -285,4 +285,25 @@ Events with the same `Type` may be merged somewhere in the stack, so you might s
 | IBC contract model (one port per contract, channel handshake) | file [02-ibc.md](02-ibc.md) |
 | Governance proposals for wasm lifecycle | file [01-gov-txs.md](01-gov-txs.md) |
 | Upstream wasmd integration and upgrading notes | directory [docs-wasmd/](docs-wasmd/) |
-| Rust contracts and `nibiru-std` | repo [nibi-wasm](https://github.com/NibiruChain/nibiru-wasm) |
+| Rust contracts and `nibiru-std` | directories [wasm-contracts/](../../wasm-contracts/) and [lib/nibiru-std/](../../lib/nibiru-std/) |
+
+## Deployment permissions
+
+On mainnet, code uploads and contract migrations require the current x/sudo
+root or membership in `wasm_deployer`. The guard runs inside the central keeper,
+including calls from SDK transactions and contract submessages. Existing
+native governance authorization remains valid. Code upload permissions,
+instantiation access configuration, and migration admin checks still apply.
+Instantiation uses normal Wasm permissions without a deployer role requirement.
+Other chains retain their existing deployment behavior.
+
+Root manages membership with `nibid tx sudo update-role-members edit.json`.
+The JSON file contains `role`, `add`, and `remove`. A CW3 root can submit the
+same `nibiru.sudo.v1.MsgUpdateRoleMembers` as a Stargate message. Query membership
+with `nibid query sudo state`. The v2.21.0 upgrade seeds the five reviewed Sai
+operators on every chain; subsequent membership changes are controlled by root.
+
+The Wasm block-hook registry remains separate from deployment roles. Root sets
+it with `MsgEditSudoers`, action `edit_wasm_block_hooks_contract`, and
+`contracts: ["nibi1..."]`. Passing `contracts: [""]` clears it. Deployment role
+members cannot edit the registry.

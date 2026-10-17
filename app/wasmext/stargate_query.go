@@ -1,6 +1,8 @@
 package wasmext
 
 import (
+	"github.com/NibiruChain/nibiru/v2/evm"
+
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
@@ -120,6 +122,20 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		// nibiru sudo
 		"/nibiru.sudo.v1.Query/QuerySudoers":       new(sudo.QuerySudoersResponse),
 		"/nibiru.sudo.v1.Query/QueryZeroGasActors": new(sudo.QueryZeroGasActorsResponse),
+
+		// nibiru evm
+		"/eth.evm.v1.Query/EthAccount":       new(evm.QueryEthAccountResponse),
+		"/eth.evm.v1.Query/ValidatorAccount": new(evm.QueryValidatorAccountResponse),
+		"/eth.evm.v1.Query/Balance":          new(evm.QueryBalanceResponse),
+		"/eth.evm.v1.Query/Storage":          new(evm.QueryStorageResponse),
+		"/eth.evm.v1.Query/Code":             new(evm.QueryCodeResponse),
+		"/eth.evm.v1.Query/Params":           new(evm.QueryParamsResponse),
+		// EthCall returns MsgEthereumTxResponse. Field ret holds the
+		// eth_call bytes. The response name does not follow QueryXResponse.
+		"/eth.evm.v1.Query/EthCall":         new(evm.MsgEthereumTxResponse),
+		"/eth.evm.v1.Query/EstimateGas":     new(evm.EstimateGasResponse),
+		"/eth.evm.v1.Query/BaseFee":         new(evm.QueryBaseFeeResponse),
+		"/eth.evm.v1.Query/FunTokenMapping": new(evm.QueryFunTokenMappingResponse),
 
 		// nibiru devgas
 		"/nibiru.devgas.v1.Query/FeeShares":             new(devgas.QueryFeeSharesResponse),

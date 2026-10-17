@@ -13,7 +13,7 @@ const DEFAULT_MNEMONIC =
 const DEFAULT_RPC = process.env.JSON_RPC_ENDPOINT || "http://127.0.0.1:8545"
 
 const ROOT = path.join(__dirname, "..", "..", "..")
-const PASSKEY_APP_DIR = path.join(ROOT, "passkey-app")
+const PASSKEY_APP_DIR = path.join(ROOT, "evm", "passkey-app")
 const CACHE_DIR = path.join(__dirname, "..", ".cache")
 const OUT_JSON = path.join(CACHE_DIR, "passkey-demo.json")
 const ENV_LOCAL = path.join(PASSKEY_APP_DIR, ".env.local")
@@ -22,7 +22,7 @@ function getArtifact(relPath) {
   const full = path.join(__dirname, relPath)
   if (!fs.existsSync(full)) {
     throw new Error(
-      `Missing artifact at ${relPath}. Run "npx hardhat compile" in evm/e2e first.`,
+      `Missing artifact at ${relPath}. Run "just compile" in evm/e2e first.`,
     )
   }
   return JSON.parse(fs.readFileSync(full, "utf8"))
@@ -87,7 +87,7 @@ async function main() {
 
   console.log("Wrote:", OUT_JSON)
   console.log("Wrote:", ENV_LOCAL)
-  console.log("Ready: start the UI with npm run dev in passkey-app.")
+  console.log("Ready: start the UI with bun run dev in evm/passkey-app.")
 }
 
 function getSigner(provider) {

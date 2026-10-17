@@ -19,7 +19,5 @@ const (
 
 // RootActions set[string]: The set of all root actions.
 var RootActions = set.New[RootAction](
-	AddContracts,
-	RemoveContracts,
 	EditWasmBlockHooksContract,
 )

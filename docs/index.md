@@ -68,9 +68,9 @@ Engage with Nibiru's fast-growing community or get started by accessing a wealth
 <!--   <HeroBoxes :boxes="boxesDevs" /> -->
 <!-- </template> -->
 
-- [Smart Contract Sandbox (NibiruChain/nibiru-wasm)](https://github.com/NibiruChain/nibiru-wasm/tree/main)
+- [Smart contract workspace](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts)
 - [TypeScript SDK: NibiJS](./dev/tools/kickstart.html)
-- [Rust SDK: `nibiru_std`](https://github.com/NibiruChain/nibiru-wasm/tree/main/contracts#example-contracts)
+- [Rust SDK: `nibiru-std`](https://github.com/NibiruChain/nibiru/tree/main/lib/nibiru-std)
 - [Golang SDK: Gonibi](./dev/tools/go-sdk.html)
 - [Python SDK](./dev/tools/py-sdk.html)
 
@@ -94,4 +94,3 @@ production-grade smart contracts.
 <!-- <a href="./future/"> -->
 <!-- <img style="border-radius: 1.5rem;" src="./img/2025-roadmap-nibiru.png"> -->
 <!-- </a> -->
-

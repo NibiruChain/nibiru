@@ -1,0 +1,5 @@
+error: expected public, owner_or_any(...), or ownership
+ --> tests/ui/nested_removed.rs:5:13
+  |
+5 |     #[perms(nested)]
+  |             ^^^^^^

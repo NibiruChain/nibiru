@@ -1,0 +1,191 @@
+# NIBIRU: Trimmed upstream reference. Not executed by nibi-wasm CI.
+# Nibiru gate: `just test-wasmer` (see repo-root rust-test.yml).
+# Removed jobs: lint, CLI/C-API builds, wasmi/v8, integration-cli, external integration tests.
+# LLVM backend removed from vendored tree; ENABLE_LLVM=0 below.
+name: test-sys
+
+on:
+  push:
+    branches:
+      - main
+      - 'with-ci-.*'
+      - 'v3.0.x'
+      - 'v3.1.x'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+          description: 'Make release'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: git
+  MSRV: "1.81"
+  NEXTEST_PROFILE: "ci"
+  RUSTUP_WINDOWS_PATH_ADD_BIN: 1
+  ENABLE_CRANELIFT: "1"
+  ENABLE_SINGLEPASS: "1"
+  ENABLE_LLVM: "0"
+
+jobs:
+  setup:
+    name: Set up
+    runs-on: ubuntu-22.04
+    outputs:
+      VERSION: ${{ steps.setup.outputs.VERSION }}
+      DOING_RELEASE: ${{ steps.setup.outputs.DOING_RELEASE }}
+    steps:
+      - name: Set up env vars
+        id: setup
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\//}
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+          DOING_RELEASE=$(echo "$VERSION" | grep -c '^[0-9]\+\.[0-9]\+\.[0-9]\+\(-\([a-zA-Z]\+\)\?[0-9]*\)\?$' || true)
+          echo "DOING_RELEASE=${DOING_RELEASE}" >> "$GITHUB_OUTPUT"
+          echo "$VERSION"
+          echo "$DOING_RELEASE"
+
+  cargo_deny:
+    name: cargo-deny
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          log-level: error
+
+  # Compiler/WAST stage matrix — reference for cross-OS coverage decisions.
+  # Stage 0 (full nextest WAST) and stages 2–3 (compiler nostd) overlap
+  # philosophically with `just test-wasmer` but differ in runner/release mode.
+  test:
+    name: ${{ matrix.stage.description }} on ${{ matrix.metadata.build }}
+    runs-on: ${{ matrix.metadata.os }}
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [
+          {
+            description: 'Run wast test suite for cranelift and singlepass',
+            make: 'test-stage-0-wast',
+          },
+          {
+            description: 'Unit-test cranelift on no-std',
+            make: 'test-stage-2-test-compiler-cranelift-nostd',
+          },
+          {
+            description: 'Unit-test singlepass on no-std',
+            make: 'test-stage-3-test-compiler-singlepass-nostd',
+          },
+        ]
+        metadata: [
+          {
+            build: linux-x64,
+            os: ubuntu-22.04,
+            target: x86_64-unknown-linux-gnu,
+            exe: '',
+          },
+          {
+            build: macos-x64,
+            os: macos-15-intel,
+            target: x86_64-apple-darwin,
+            exe: '',
+          },
+          {
+            build: macos-arm,
+            os: macos-14,
+            target: aarch64-apple-darwin,
+            exe: '',
+          },
+          {
+            build: windows-x64,
+            os: windows-2022,
+            target: x86_64-pc-windows-msvc,
+            exe: '.exe',
+          },
+          {
+            build: linux-musl,
+            target: x86_64-unknown-linux-musl,
+            os: ubuntu-22.04,
+            exe: '',
+            container: 'alpine:latest'
+          }
+        ]
+    container: ${{ matrix.metadata.container }}
+    env:
+      SCCACHE_AZURE_BLOB_CONTAINER: wasmerstoragesccacheblob
+      SCCACHE_AZURE_CONNECTION_STRING: ${{ secrets.SCCACHE_AZURE_CONNECTION_STRING }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up libstdc++ on Linux
+        if: matrix.metadata.build == 'linux-x64'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --allow-downgrades libstdc++6
+          sudo apt-get install --reinstall g++
+      - name: Set up base deps on musl
+        if: matrix.metadata.build == 'linux-musl'
+        run: |
+          ./scripts/alpine-linux-install-deps.sh
+      - name: Install MSVC dev-cmd (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
+        if: ${{ matrix.metadata.build == 'windows-x64' }}
+      - name: Delete unwanted link to stop it from interfering (Windows)
+        shell: bash
+        run: rm /usr/bin/link.exe
+        if: ${{ matrix.metadata.build == 'windows-x64' }}
+
+      - name: Set up dependencies for Mac OS
+        run: |
+          brew install automake
+          brew install gnu-tar
+          echo "PATH=/usr/local/opt/gnu-tar/libexec/gnubin:$PATH" >> "$GITHUB_ENV"
+        if: matrix.metadata.os == 'macos-15-intel'
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.MSRV }}
+          target: ${{ matrix.metadata.target }}
+      - name: Install Nextest
+        uses: taiki-e/install-action@nextest
+      - name: Add `brew` libs to `RUSTFLAGS`
+        if: matrix.metadata.os == 'macos-14'
+        shell: bash
+        run: |
+          echo "RUSTFLAGS=-L/opt/homebrew/lib" >> "$GITHUB_ENV"
+          echo "RUSTDOCFLAGS=-L/opt/homebrew/lib" >> "$GITHUB_ENV"
+      - name: Setup Rust target
+        shell: bash
+        run: |
+          mkdir -p .cargo
+          cat << EOF > .cargo/config.toml
+          [build]
+          target = "${{ matrix.metadata.target }}"
+          EOF
+        if: matrix.metadata.target
+      - name: Cache
+        uses: whywaita/actions-cache-s3@v2
+        with:
+          path: |
+            ~/.cargo/*
+            ./target/*
+          key: r22-${{ github.repository }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}-wasmer-make-test-stage-${{ matrix.stage.make }}-${{ matrix.metadata.build }}
+          aws-s3-bucket: wasmer-rust-artifacts-cache
+          aws-access-key-id: ${{ secrets.CLOUDFLARE_ARTIFACTS_CACHE_ACCESS_TOKEN }}
+          aws-secret-access-key: ${{ secrets.CLOUDFLARE_ARTIFACTS_CACHE_ACCESS_KEY }}
+          aws-region: auto
+          aws-endpoint: https://1541b1e8a3fc6ad155ce67ef38899700.r2.cloudflarestorage.com
+          aws-s3-bucket-endpoint: false
+          aws-s3-force-path-style: true
+      - name: ${{ matrix.stage.description }}
+        shell: bash
+        run: make ${{ matrix.stage.make }}
+        env:
+          TARGET: ${{ matrix.metadata.target }}
+          TARGET_DIR: target/${{ matrix.metadata.target }}/release
+          CARGO_TARGET: ${{ matrix.metadata.target }}

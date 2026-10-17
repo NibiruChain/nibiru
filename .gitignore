@@ -23,6 +23,7 @@ vote.json
 scratch-paper.md
 logs
 CHANGELOG-UNRELEASED.md
+gh-pr.md
 
 ### TypeScript and Friends
 
@@ -226,8 +227,9 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
-instance/
+# Flask stuff. Keep this root-scoped so it does not hide Rust source directories
+# such as lib/wasmer/lib/vm/src/instance/.
+/instance/
 .webassets-cache
 
 # Scrapy stuff:
@@ -238,7 +240,26 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
+
+### Rust ###
+# Cargo uses target directories throughout nested workspaces.
 target/
+
+# rustfmt backups, MSVC debug symbols, and LLVM coverage profiling output.
+**/*.rs.bk
+*.pdb
+*.profraw
+
+# `just rs test-wasmer-cov` writes this at the monorepo root.
+/lcov-wasmer.info
+
+# Contract builds create release inputs here. Do not stage them by accident.
+/wasm-contracts/artifacts/
+
+# This Wasmer directory contains tracked compiler fixture inputs, not local Go
+# test data.
+!lib/wasmer/tests/compilers/data/
+!lib/wasmer/tests/compilers/data/**
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -358,7 +379,11 @@ debug_container.dot
 AGENTS.md
 precompile.test
 tx_log.json
-passkey-bundler/.tmp
+evm/passkey-bundler/.tmp
 evm-e2e/.nibid-*/
 evm-e2e/.passkey-*-privkey.txt
 evm-e2e/.passkey-*-wallet.json
+
+# Wasmer function environments are source code, not Python virtualenvs.
+!lib/wasmer/lib/api/src/entities/function/env/
+!lib/wasmer/lib/api/src/entities/function/env/*.rs

@@ -11,6 +11,53 @@ const contractArtifact = JSON.parse(
 )
 
 const FUNTOKEN_PRECOMPILE = "0x0000000000000000000000000000000000000800"
+const SENDER_SLOT_LIMIT_ERROR = "EVM mempool sender slot limit reached"
+const SENDER_SLOT_RETRY_ATTEMPTS = 4
+const BLOCK_POLL_INTERVAL_MS = 250
+
+const waitForNextBlock = async (blockNumber: number): Promise<number> => {
+  const startedAt = Date.now()
+  let latestBlock = blockNumber
+
+  while (Date.now() - startedAt < TEST_TIMEOUT) {
+    await new Promise((resolve) => setTimeout(resolve, BLOCK_POLL_INTERVAL_MS))
+    latestBlock = await provider.getBlockNumber()
+    if (latestBlock > blockNumber) {
+      return latestBlock
+    }
+  }
+
+  throw new Error(
+    `timed out waiting for next block after ${blockNumber}; latestBlock=${latestBlock}`,
+  )
+}
+
+const sendWithSenderSlotRetry = async <T>(
+  send: () => Promise<T>,
+  label: string,
+): Promise<T> => {
+  for (let attempt = 1; attempt <= SENDER_SLOT_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await send()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (
+        !message.includes(SENDER_SLOT_LIMIT_ERROR) ||
+        attempt === SENDER_SLOT_RETRY_ATTEMPTS
+      ) {
+        throw error
+      }
+
+      const blockNumber = await provider.getBlockNumber()
+      console.log(
+        `[senderSlotRetry:${label}] sender slots full; waiting after block ${blockNumber} before attempt ${attempt + 1}/${SENDER_SLOT_RETRY_ATTEMPTS}`,
+      )
+      await waitForNextBlock(blockNumber)
+    }
+  }
+
+  throw new Error(`unreachable sender slot retry state for ${label}`)
+}
 
 describe("StateDB corruption test", () => {
   it(
@@ -77,10 +124,14 @@ describe("StateDB corruption test", () => {
       const txPromises = []
 
       for (let i = 0; i < TX_COUNT; i++) {
-        const tx = contract.bankMsgSend(recipient.address, "unibi", TX_AMOUNT, {
-          gasLimit: 1000000,
-          nonce: currentNonce + i,
-        })
+        const tx = sendWithSenderSlotRetry(
+          () =>
+            contract.bankMsgSend(recipient.address, "unibi", TX_AMOUNT, {
+              gasLimit: 1000000,
+              nonce: currentNonce + i,
+            }),
+          `bankMsgSend ${i}`,
+        )
 
         txPromises.push(tx)
       }

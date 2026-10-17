@@ -540,6 +540,12 @@ func (app *BaseApp) halt() {
 // Query implements the ABCI interface. It delegates to CommitMultiStore if it
 // implements Queryable.
 func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
+	route := app.queryMetricRoute(req.Path)
+	if telemetry.ExecutionMetricsEnabled() {
+		start := time.Now()
+		// Recovery below must set the response before we record its outcome.
+		defer func() { telemetry.ObserveQuery(start, route, res.Code == 0) }()
+	}
 	// Add panic recovery for all queries.
 	// ref: https://github.com/cosmos/cosmos-sdk/pull/8039
 	defer func() {
@@ -554,8 +560,8 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}
 
 	telemetry.IncrCounter(1, "query", "count")
-	telemetry.IncrCounter(1, "query", req.Path)
-	defer telemetry.MeasureSince(time.Now(), req.Path)
+	telemetry.IncrCounter(1, "query", route)
+	defer telemetry.MeasureSince(time.Now(), route)
 
 	if req.Path == "/cosmos.tx.v1beta1.Service/BroadcastTx" {
 		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "can't route a broadcast tx message"), app.trace)
@@ -585,6 +591,21 @@ func (app *BaseApp) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 	}
 
 	return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "unknown query path"), app.trace)
+}
+
+// queryMetricRoute bounds telemetry cardinality without changing query routing.
+func (app *BaseApp) queryMetricRoute(path string) string {
+	if app.grpcQueryRouter.Route(path) != nil {
+		return path
+	}
+	parts := SplitABCIQueryPath(path)
+	if len(parts) > 0 {
+		switch parts[0] {
+		case QueryPathApp, QueryPathStore, QueryPathP2P:
+			return "/" + parts[0]
+		}
+	}
+	return "unknown"
 }
 
 // ListSnapshots implements the ABCI interface. It delegates to app.snapshotManager if set.

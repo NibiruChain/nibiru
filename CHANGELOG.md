@@ -38,6 +38,699 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.21.0
+
+Nibiru v2.21 repairs the disclosed Wasmer Singlepass sandbox vulnerability and replaces v2.20's temporary root-only Wasm deployment policy with scoped deployment permissions. It also adds mainnet recovery of a quarantined Eris unbonding claim to the Foundation Treasury.
+
+- [Release link: v2.21.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.21.0).
+- Public release: October 9, 2026.
+- Source range: `v2.20.0` through `v2.21.0`.
+- [Full source comparison](https://github.com/NibiruChain/nibiru/compare/v2.20.0...v2.21.0).
+
+### 1 - Main highlights
+
+- Wasmer 7.4.2 supplies the runtime repair for the disclosed Singlepass sandbox escape.
+- Existing CosmWasm v1 contract interfaces and gas policy are preserved. Stored bytecode is recompiled under a separate compiled-artifact cache.
+- Contract instantiation returns to normal Wasm permission checks. Mainnet uploads and migrations require sudo root or membership in role `wasm_deployer`, alongside existing Wasm authorization.
+- Scoped sudo roles replace broad legacy membership while preserving existing tokenfactory and chain-parameter authority.
+- The mainnet upgrade handler attempts recovery of the quarantined Eris batch 172 claim through the deployed contract's withdrawal logic.
+- Chain builds pin checksum-verified WasmVM v1.13.1 native libraries containing the runtime repair and cleanup fixes.
+
+### 2 - Wasm runtime repair
+
+[CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md) describes a compiler defect that lets a crafted contract escape the Wasm sandbox and execute native instructions inside a node process.
+
+v2.19 introduced static PIE binary hardening. v2.20 restricted mainnet Wasm deployment while the runtime repair was prepared. v2.21 carries the repaired compiler into Nibiru's maintained CosmWasm v1 implementation. [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788)
+
+Existing contracts retain their interfaces and gas policy. The runtime rejects unsupported WebAssembly proposals and uses compiled-artifact cache namespace `v15-wasmer24`, preventing reuse of artifacts compiled by the previous runtime.
+
+The release also fixes an ELF cleanup race by removing frame metadata before unmapping compiled code. A separate synchronization fix addresses the TLS test race. [PR #2790](https://github.com/NibiruChain/nibiru/pull/2790)
+
+### 3 - Wasm deployment and scoped sudo permissions
+
+v2.21 removes the temporary root-only instantiation guard. Instantiation follows the existing Wasm module and per-code access checks.
+
+On mainnet, ordinary code uploads and contract migrations require sudo root or role `wasm_deployer`. The check applies at shared keeper entrypoints, including contract submessages and the EVM Wasm precompile. Existing governance authorization remains available.
+
+Deployment membership does not replace upload permissions or contract-admin requirements. A deployer cannot migrate a Treasury-administered contract merely by holding the deployment role.
+
+The sudo migration grants legacy members roles `tf_oper` and `chain_params` to preserve their previous authority. Legacy membership alone grants no deployment role. The upgrade separately seeds the reviewed deployment accounts, and root can grant or revoke membership afterward. [PR #2790](https://github.com/NibiruChain/nibiru/pull/2790)
+
+### 4 - Eris claim recovery
+
+The mainnet upgrade handler attempts to withdraw the quarantined account's matured Eris batch 172 claim to the Foundation Treasury CW3 contract.
+
+The handler verifies the deployed bytecode, native denomination, and intended claim before calling Eris's existing withdrawal logic. Eris calculates the payout and updates its batch accounting. Public transaction restrictions on the quarantined account remain enforced.
+
+Recovery runs in an isolated cached context. A failed recovery discards its writes and emits event `eris_recovery` with status `failed`. An absent claim emits `skipped`. Recovery failure does not undo completed module migrations or deployment grants.
+
+The release includes replay tests using the deployed Eris bytecode and captured contract state. Recovery success and the final amount must be verified at activation. [PR #2791](https://github.com/NibiruChain/nibiru/pull/2791)
+
+### 5 - Client and platform compatibility
+
+Clients reading sudo state or exported genesis must replace field `Sudoers.contracts` with `Sudoers.roles`. The retired field name and protobuf tag remain reserved.
+
+Legacy membership actions `add_contracts` and `remove_contracts` are rejected. Manage scoped memberships through message `/nibiru.sudo.v1.MsgUpdateRoleMembers` or command:
+
+```sh
+nibid tx sudo update-role-members edit.json --from ROOT
+```
+
+Root rotation and Wasm block-hook configuration remain root-controlled. The block-hook configuration message retains its `contracts` payload field. [Sudo module documentation](https://github.com/NibiruChain/nibiru/blob/v2.21.0/x/sudo/README.md)
+
+Darwin native artifacts require macOS 14.5 or later. WasmVM artifact version `v1.13.1` and FFI ABI identifier `1.5.10-nibiru.1` identify different compatibility layers. [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788), [native-library pin](https://github.com/NibiruChain/nibiru/commit/1dcdc05ece1feaade4e995408d84890f5bdd8593)
+
+## v2.20.0
+
+Nibiru v2.20 adds a temporary mainnet guard for Wasm code upload, contract instantiation, and contract migration. It continues the response to the privately disclosed Wasm vulnerability after v2.19's binary hardening.
+
+The release also lets Wasm contracts query EVM state, lets the CLI look up transactions by either CometBFT or EVM hash, and adds shared contract-permission and release-distribution tooling.
+
+- [Release link: v2.20.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.20.0).
+- Public release: September 24, 2026.
+- Source range: `v2.19.0` through `v2.20.0`.
+
+### 1 - Main highlights
+
+- Mainnet Wasm deployment operations require the current sudo root for ordinary requests, with existing governance authorization preserved.
+- The guard covers shared keeper entrypoints, including contract submessages and the EVM Wasm precompile.
+- Wasm contracts can read EVM accounts, balances, storage, code, and simulated call results through Stargate queries.
+- The CLI accepts CometBFT and EVM transaction hashes, reducing the need to switch tools when investigating cross-VM activity.
+- Shared Rust contract libraries add owner-controlled delegated permissions.
+- CLI packaging and container publication reuse verified release binaries, while the Rust workspace and its tests move into the chain repository.
+
+### 2 - Why mainnet Wasm deployment was restricted
+
+The security response began with static PIE hardening in [v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.19.0). v2.20 adds a second measure: limiting who can introduce Wasm code or change a contract's code on mainnet while the runtime repair was prepared.
+
+The guard permits ordinary upload, instantiation, and migration requests only from the current root of the `x/sudo` module. It reads that root dynamically, so root rotation does not require a hard-coded address change. Existing governance authorization remains available, and existing Wasm permission and migration-admin checks still apply.
+
+The check sits at the shared keeper boundary. A request cannot bypass it merely by arriving through a contract submessage or the EVM Wasm precompile instead of a protobuf message handler. The rule applies to mainnet chain ID `cataclysm-1`; other networks retain their existing admission behavior. [PR #2762](https://github.com/NibiruChain/nibiru/pull/2762)
+
+This is a temporary incident-response guard. It does not disable ordinary contract execution or queries, change Wasm parameters, or rewrite per-code permissions.
+
+### 3 - What the guard could not repair
+
+[CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md), published after this release, explains the Singlepass compiler defect. Restricting deployment reduces opportunities to introduce malicious code. It cannot neutralize malicious code already stored on-chain or replace the runtime patch.
+
+The later [PR #2788](https://github.com/NibiruChain/nibiru/pull/2788) upgrades the vendored runtime to Wasmer 7.4.2 and rebuilds it for Nibiru's existing CosmWasm v1 fork. That is the runtime repair phase of the response. v2.20 contains the deployment guard, not that later compiler repair. Activating the repaired runtime requires a coordinated chain upgrade, and removing the temporary guard is a separate policy decision.
+
+### 4 - Wasm contracts can read EVM state
+
+Nibiru already exposed EVM read methods through its query service, but the Wasm Stargate allowlist rejected those requests before they reached the service. v2.20 admits the EVM query routes, allowing a Wasm contract to inspect accounts, token balances, storage, code, parameters, and other EVM query results.
+
+Contracts can also use `EthCall` to simulate an EVM call and read its return data without committing state. This gives Wasm applications a way to consume information exposed by EVM contracts. It does not grant them permission to submit Ethereum transaction messages through the Wasm message dispatcher. [PR #2775](https://github.com/NibiruChain/nibiru/pull/2775)
+
+### 5 - Transaction lookup across both VMs
+
+A Cosmos transaction has a CometBFT hash, while an Ethereum transaction has an EVM hash. Users investigating the same activity should not need to know which index their tool expects before they can find it.
+
+Command `nibid q tx` accepts either a bare CometBFT hash or a `0x`-prefixed EVM hash. For indexed EVM activity, it connects the EVM transaction to its CometBFT record. If that index entry is absent, it falls back to the configured EVM JSON-RPC endpoint. An absent index entry alone does not mean a transaction is pending.
+
+The default response stays compact. Option `--details` includes the full records, and `--evm` returns the native EVM transaction response. [PR #2783](https://github.com/NibiruChain/nibiru/pull/2783)
+
+### 6 - Delegated contract permissions
+
+The shared contract libraries add owner-controlled memberships for selected execution routes. A contract can delegate a specific action without transferring ownership or granting migration authority, and its policy catalog describes the rules used for authorization.
+
+The release also validates permission members as Nibiru Bech32 addresses through the CosmWasm API. Contract addresses remain valid members, allowing delegated execution by contracts such as a CW3 multisig. These contract-local permissions are separate from the chain's temporary mainnet deployment guard. [PR #2758](https://github.com/NibiruChain/nibiru/pull/2758), [PR #2762](https://github.com/NibiruChain/nibiru/pull/2762)
+
+### 7 - Distribution and source ownership
+
+The npm distribution tooling packages verified GitHub release binaries into platform-specific CLI packages and a launcher. It gives users an npm installation path without rebuilding the node or downloading executables from lifecycle hooks. [PR #2756](https://github.com/NibiruChain/nibiru/pull/2756)
+
+Container publication likewise packages checksum-verified release artifacts into AMD64 and ARM64 images. This supports the private-first release process without silently substituting a different source build for the binary validators received. [PR #2751](https://github.com/NibiruChain/nibiru/pull/2751), [PR #2775](https://github.com/NibiruChain/nibiru/pull/2775)
+
+The Rust workspace and legacy runtime tests move into the chain repository, bringing contracts, Wasm libraries, and their checks under the same source ownership. EVM tooling moves to Bun, the repository retires its root Make commands in favor of Just, and the Go baseline moves to 1.27. [PR #2754](https://github.com/NibiruChain/nibiru/pull/2754), [PR #2757](https://github.com/NibiruChain/nibiru/pull/2757), [PR #2763](https://github.com/NibiruChain/nibiru/pull/2763), [PR #2776](https://github.com/NibiruChain/nibiru/pull/2776)
+
+## v2.19.0
+
+Nibiru v2.19 changes the Linux release build to a static position-independent executable, or static PIE, in response to a privately disclosed CosmWasm vulnerability. Published node builds use PebbleDB and omit RocksDB to keep the native linking requirements manageable during the security response.
+
+This was an interim mitigation release. It hardened the executable while the underlying Wasm runtime still required a source repair.
+
+- [Release link: v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.19.0).
+- Original binary distribution: September 7, 2026, through [hotfix/v2.19.0](https://github.com/NibiruChain/nibiru/releases/tag/hotfix/v2.19.0).
+- Public source-parity release: September 21, 2026.
+- [Public source-parity change](https://github.com/NibiruChain/nibiru/commit/970841fec40fbf23b92cfb0e6dfd493ce9726bac).
+
+### 1 - Main highlights
+
+- Linux release executables use static PIE so the operating system can randomize the executable's load address.
+- Release checks verify the resulting binary's properties rather than relying only on compiler flags.
+- Published node builds use PebbleDB and exclude RocksDB support.
+- The public source release carries the build changes behind the earlier artifact-distribution release.
+- WasmVM release builders move to Debian Bookworm, alongside dependency and test-tooling maintenance.
+
+### 2 - The Wasm disclosure and interim hardening
+
+The issue became public as [CWA-2026-006](https://github.com/CosmWasm/advisories/blob/main/CWAs/CWA-2026-006.md) on September 28, 2026. A defect in Wasmer's Singlepass compiler allows a crafted contract to escape the Wasm sandbox and execute native instructions inside a node process. The advisory describes unauthorized native-token minting and permanent fund loss.
+
+Nibiru's earlier Linux build was statically linked but used a fixed executable layout. Static linking alone does not make an executable position-independent. v2.19 changes the final Go and native link to produce static PIE, allowing address-space randomization to protect the executable.
+
+This hardening does not remove the compiler defect. The security response continued with the temporary mainnet Wasm deployment guard in [v2.20.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.20.0), followed by the runtime repair described below.
+
+### 3 - Why the published builds use PebbleDB
+
+Static PIE places requirements on every native archive linked into the executable. RocksDB brings a C++ library into the node through CGO. Retaining it would have required a separate native-library build path and position-independent compilation work during a time-sensitive release.
+
+PebbleDB was already Nibiru's default database backend and the backend used by the mainnet snapshot and state-sync infrastructure. The published builds therefore use PebbleDB and omit RocksDB support. This choice reduced the native-code work required to ship the mitigation.
+
+Selecting a different backend does not convert an existing database. A node using RocksDB or GoLevelDB needs state restored into PebbleDB rather than a configuration change over its existing files. [Release build implementation](https://github.com/NibiruChain/nibiru/blob/v2.19.0/contrib/scripts/build-nibiru.sh)
+
+### 4 - Artifact distribution and public source
+
+The `hotfix/v2.19.0` record distributed the original verified binaries while the response was private. That tag identifies the artifact-distribution record, not the source tree used to build those binaries.
+
+The later regular `v2.19.0` source release restores the corresponding build changes to the public repository. Its September 21 publication date should not be mistaken for the date validators first received the mitigation binaries.
+
+The surrounding release work also moves WasmVM artifact builders to Bookworm and refreshes dependencies and test tooling. [PR #2750](https://github.com/NibiruChain/nibiru/pull/2750), [PR #2749](https://github.com/NibiruChain/nibiru/pull/2749)
+
+### 5 - The later runtime repair
+
+[PR #2788](https://github.com/NibiruChain/nibiru/pull/2788), merged on October 7, 2026, upgrades Nibiru's vendored runtime to Wasmer 7.4.2 and adapts the existing CosmWasm v1 fork. It replaces the defective compiler path and carries the repair into source-built `libwasmvm` and `nibid`.
+
+That repair belongs to a later coordinated chain upgrade. It is not part of v2.19, and merging it into main is separate from activating it on the live chain.
+
+## v2.18.1
+
+Nibiru v2.18.1 repairs a cross-VM authorization bug in delegated EVM calls. It also adds consensus-enforced restrictions for incident accounts and a mainnet upgrade handler to recover remaining assets from configured incident accounts.
+
+This release responds to the FunToken pool-drain incident. It is separate from the Wasmer sandbox vulnerability addressed by the later v2.19, v2.20, and runtime repair work.
+
+- [Release link: v2.18.1](https://github.com/NibiruChain/nibiru/releases/tag/v2.18.1).
+- Incident binary distribution: August 20, 2026, through [hotfix/v2.18.1](https://github.com/NibiruChain/nibiru/releases/tag/hotfix/v2.18.1).
+- Public source release: September 6, 2026.
+- [Source publication and repair: PR #2748](https://github.com/NibiruChain/nibiru/pull/2748).
+
+### 1 - Main highlights
+
+- Mutable FunToken and Wasm precompiles use authority derived from the current EVM call frame. Delegation cannot borrow authority from a caller across an intervening ordinary call.
+- Direct router delegation and proxy-to-implementation delegation remain supported.
+- Incident-account restrictions apply during transaction admission and block execution, so enforcement does not depend on one node's RPC policy.
+- The mainnet upgrade handler processes configured Bank and ERC20 recovery operations independently and records failures without discarding successful work.
+- The release also improves passkey account creation and adds regression evidence for a separate inter-block cache race.
+
+### 2 - Why delegated-call authority needed repair
+
+FunToken precompiles move assets between ERC20 balances and Cosmos Bank balances. Their authorization therefore has to identify the account the current call frame may act for.
+
+The old delegated-precompile path could retain an earlier caller's identity across an ordinary contract call. A callback could then reach a mutable precompile through delegation and act for an account whose authority it should no longer possess.
+
+The repair makes that boundary explicit:
+
+```text
+root call       -> transaction sender
+ordinary CALL   -> authority of the called contract
+DELEGATECALL    -> preserves the current frame's authority
+```
+
+Nibiru pins geth fork version `v1.14.13-nibiru.5`, which supplies these call-frame rules. The precompiles consume the resolved authority rather than reconstructing it from a parent caller. This preserves legitimate proxy and router patterns while preventing delegation from reaching back across an ordinary call boundary. [PR #2748](https://github.com/NibiruChain/nibiru/pull/2748)
+
+### 3 - Containment and recovery
+
+Repairing authorization prevents the same identity confusion from authorizing another transfer. The release also restricts configured incident accounts in the Cosmos and EVM transaction paths. These checks run in both `CheckTx` and `DeliverTx`, making them part of validator-enforced behavior.
+
+The mainnet upgrade handler attempts to transfer remaining Bank coins and configured ERC20 balances from incident accounts to designated recovery recipients. Each source and token is handled independently. A failed operation emits a failure event and does not stop the remaining operations or normal module migrations.
+
+This describes what the handler can recover. It does not establish that all stolen assets remained on Nibiru or that every recovery operation succeeded. [Public upgrade implementation](https://github.com/NibiruChain/nibiru/blob/v2.18.1/app/upgrades/v2_18_1.go)
+
+### 4 - Other release work
+
+Passkey account creation supplies an explicit bounded gas limit instead of relying on an estimation step that could fail before the transaction was broadcast. This addresses a first-connect failure where no account bytecode could appear because account creation never reached the chain. [PR #2735](https://github.com/NibiruChain/nibiru/pull/2735)
+
+The release source also includes tests reproducing stale reads in the inter-block store cache. Those tests document a separate consensus failure mechanism; their inclusion is not a claim that this release repairs that cache race. [PR #2727](https://github.com/NibiruChain/nibiru/pull/2727)
+
+## v2.17.0
+
+Nibiru v2.17 hardens EVM transaction admission and proposal construction,
+introduces sudo-governed Wasm block hooks, and fixes event handling when EVM
+execution reverts. It also makes the ERC-2470 singleton factory part of default
+genesis and consolidates the Cosmos SDK, IBC Go, Wasm module, and Wasm VM into
+the Nibiru repository.
+
+- [Release Link: v2.17.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.17.0).
+- Date: 2026-07-23
+- Draft source range: non-Dependabot release work from `v2.16.0` through
+  `v2.17.0-test.5`.
+
+### 1 - Main Highlights
+
+- **Future-nonce flood protection** - Nodes use an EVM-aware, sender-and-nonce-indexed application mempool. Each authenticated sender may hold at most 8 live nonce slots, and conflicting transactions for an occupied nonce are rejected. ([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+- **Executable EVM proposals** - Proposal construction selects contiguous nonce chains that begin at each sender's committed state nonce instead of packing unusable future-nonce gaps into blocks. The index remains node-local and does not become consensus state. ([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+- **Wasm automation at block boundaries** - A sudo-configured registry contract can plan privileged Wasm `Sudo` calls during `BeginBlock` and `EndBlock`, with bounded plans, isolated execution, and structured events. ([#2667](https://github.com/NibiruChain/nibiru/pull/2667))
+- **Correct events after EVM reverts** - Reverting an EVM `StateDB` snapshot also removes Cosmos SDK events emitted after the snapshot, preventing events from reverted Bank, Wasm, or FunToken side effects from reaching indexers. ([#2696](https://github.com/NibiruChain/nibiru/pull/2696), [#2096](https://github.com/NibiruChain/nibiru/issues/2096))
+- **Canonical deterministic deployment factory** - Fresh genesis states include the ERC-2470 singleton factory at its standard address and the matching Cosmos `EthAccount`, allowing permissionless `CREATE2` deployment without a bootstrap transaction. ([#2697](https://github.com/NibiruChain/nibiru/pull/2697))
+- **First-party chain dependencies** - Nibiru's Cosmos SDK, IBC Go, Wasm module, and Wasm VM implementations now live in the repository as first-class source under directories `lib/` and `x/wasm`. ([#2656](https://github.com/NibiruChain/nibiru/pull/2656), [#2686](https://github.com/NibiruChain/nibiru/pull/2686), [#2690](https://github.com/NibiruChain/nibiru/pull/2690), [#2696](https://github.com/NibiruChain/nibiru/pull/2696))
+- **Explicit missing FunToken mappings** - EVM precompile method `IFunToken.getErc20Address` now reverts when no mapping exists instead of returning `address(0)`. ([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+- **Reliable release metadata** - Release builds inject version information into the in-tree Cosmos SDK package used by `nibid`, and CI rejects binaries with empty version fields. ([#2713](https://github.com/NibiruChain/nibiru/pull/2713))
+
+### 2 - EVM Mempool and Proposal Protection
+
+**What it fixes:** A sender could submit many transactions with random future
+nonces. The EVM ante flow accepted any nonce within its configured future
+window, CometBFT retained and gossiped those transactions, and proposers could
+include transactions that could not execute because earlier nonces were
+missing.
+
+v2.17 adds type `evm.Mempool`, a node-local Cosmos SDK mempool that indexes
+standard EVM transactions by authenticated sender, EVM nonce, and CometBFT
+transaction key. The production application allows each sender to own at most
+8 live nonce slots. An exact retransmission is idempotent, while a different
+transaction for an occupied `(sender, nonce)` slot is rejected. Fee-based
+same-nonce replacement is not part of this implementation.
+([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+
+Admission runs after EVM signature recovery so the index uses the authenticated
+sender. A slot is reserved only after the rest of the ante flow succeeds, which
+prevents an invalid transaction from consuming sender capacity.
+
+Proposal construction uses the application mempool to select only executable
+nonce chains:
+
+```txt
+committed sender nonce N
+-> select live transaction N
+-> select N+1, N+2, ... while the chain remains contiguous
+-> stop at the first missing nonce or block byte/gas limit
+```
+
+The proposer preserves the original outer Cosmos transaction bytes and keeps
+CometBFT ordering for non-EVM transactions. EVM sender heads compete by
+priority, but a higher future nonce cannot skip a missing predecessor.
+([#2702](https://github.com/NibiruChain/nibiru/pull/2702))
+
+This protection does not fork CometBFT and does not add mempool contents to
+consensus state. Different nodes may accept different same-nonce variants;
+`ProcessProposal` and block execution validate the proposed bytes against chain
+state without consulting local mempool membership.
+
+CometBFT setting `recheck = true` should remain enabled. After a block advances
+a sender's state nonce, recheck removes stale transactions and disconnected
+nonce tails from both the CometBFT and application mempools. Proposal
+construction still excludes disconnected tails if recheck is disabled, but
+those transactions can remain stored on the node.
+
+### 3 - Sudo-Governed Wasm Block Hooks
+
+**What it enables:** Chain governance can configure one registry contract to
+plan privileged Wasm calls at the beginning and end of each block. This creates
+a controlled path for protocol automation without placing recurring operations
+in the public mempool.
+
+The sudo root can set state field `wasm_block_hooks_contract`. When configured,
+the Wasm module queries that registry with one of these messages:
+
+```json
+{"begin_block_plan": {}}
+```
+
+```json
+{"end_block_plan": {}}
+```
+
+The returned plan may contain up to 32 target calls. Each call must use a valid
+32-byte contract address and a JSON object payload no larger than 16 KiB.
+Targets execute through method `Keeper.Sudo` in isolated cache contexts, so one
+failed target rolls back its own writes without blocking valid sibling calls.
+([#2667](https://github.com/NibiruChain/nibiru/pull/2667))
+
+Hook execution emits event types `wasm_block_hook/begin_block_failed`,
+`wasm_block_hook/end_block_failed`, and `wasm_block_hook/summary`. Summary
+events report the total dispatch count and, when needed, a structured list of
+individual failures for indexers and operators.
+
+The registry is a chain-critical trust surface: it can request privileged
+`Sudo` calls to arbitrary contracts every block. The default registry address
+is empty, so no contract dispatch occurs until the sudo root configures one.
+Hook execution uses the block execution context without a dedicated hook gas
+budget in this initial version; governance should review registry and target
+contracts accordingly.
+
+### 4 - EVM Snapshot and Event Rollback
+
+**What it fixes:** EVM journal snapshots previously reverted EVM state but left
+Cosmos SDK events emitted after a snapshot in the transaction event manager.
+An EVM call that invoked Bank, Wasm, or FunToken behavior and then reverted
+could therefore expose events for side effects that did not persist.
+
+v2.17 records the event count with each `StateDB` snapshot. Method `RevertToSnapshot`
+truncates the SDK event list to that count while reverting the EVM journal, so
+state and events follow the same rollback boundary.
+([#2696](https://github.com/NibiruChain/nibiru/pull/2696),
+[#2096](https://github.com/NibiruChain/nibiru/issues/2096))
+
+This is especially important for indexers and applications that derive activity
+from Cosmos event streams. They should no longer observe post-snapshot events
+from reverted EVM execution.
+
+### 5 - ERC-2470 Singleton Factory in Default Genesis
+
+Fresh Nibiru genesis states include the canonical ERC-2470 singleton factory at
+EVM address `0xce0042B868300000d44A59004Da54A005ffdcf9f`. The EVM genesis entry
+contains the canonical 308-byte runtime code, and auth genesis contains the
+matching Cosmos `EthAccount` and code hash. ([#2697](https://github.com/NibiruChain/nibiru/pull/2697))
+
+This gives localnets and future genesis-based networks a well-known,
+permissionless `CREATE2` deployment surface without requiring the standard's
+legacy, non-EIP-155 bootstrap transaction. Application-generated genesis and
+command `nibid init` use the same paired auth and EVM account state.
+
+The expected runtime code hash is:
+
+```txt
+0xc4d5542b53a8b779595a20a8ddd60e58a6c49d3c3decc2df83ced1c69c8ca807
+```
+
+This code change does not insert the factory into existing mainnet or testnet
+state during the v2.17 upgrade. Those networks already received the canonical
+factory through the separate deployment transaction recorded in the release
+work. Operators can verify the installed code with EVM JSON-RPC method
+`eth_getCode`.
+
+### 6 - IBC and EVM Compatibility Changes
+
+Nibiru now vendors IBC Go v7 and the 08-wasm light client under directory
+`lib/ibc-go`. The application imports that first-party source directly, keeping
+Nibiru-specific patches and version alignment in the same repository as the
+chain. ([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+
+Inactive ICS-29 fee middleware has been removed from application wiring and the
+vendored source. Its historical store key remains as an inert tombstone, so the
+removal does not reuse or reinterpret existing state.
+
+EVM precompile method `IFunToken.getErc20Address` now reverts with an explicit
+error if the requested bank denomination has no FunToken mapping. Contracts
+that treated `address(0)` as a not-found result must update their error handling.
+([#2686](https://github.com/NibiruChain/nibiru/pull/2686))
+
+### 7 - First-Party SDK, IBC, and Wasm Source
+
+v2.17 completes a large repository-layout transition:
+
+- The chain's Cosmos SDK fork is first-party source under directory
+  `lib/cosmos-sdk`.
+- IBC Go and the 08-wasm light client are first-party source under directory
+  `lib/ibc-go`.
+- The chain Wasm module is first-party source under directory `x/wasm`.
+- Go package `wasmvm` and its native `libwasmvm` artifacts live under directory
+  `lib/wasmvm`.
+- EVM modules, tools, embedded contracts, and end-to-end tests are grouped
+  under directory `evm`.
+
+The root Go module imports these packages through
+`github.com/NibiruChain/nibiru/v2/...` paths instead of upstream Cosmos SDK and
+IBC module paths. Local protobuf generation resolves the in-tree workspaces and
+includes regression checks against reintroducing upstream generated imports.
+Nibiru's custom inflation implementation also moves from package directory
+`x/inflation` to package directory `x/mint`.
+([#2644](https://github.com/NibiruChain/nibiru/pull/2644),
+[#2686](https://github.com/NibiruChain/nibiru/pull/2686),
+[#2690](https://github.com/NibiruChain/nibiru/pull/2690))
+
+Wasm VM builds and releases are now owned by the same repository. Workflow
+`wasmvm.yml` builds native libraries, and tags in the `lib/wasmvm/vX.Y.Z`
+namespace publish the corresponding artifacts. The chain binary consumes the
+in-tree Go package directly rather than relying on a root `replace` directive.
+([#2656](https://github.com/NibiruChain/nibiru/pull/2656),
+[#2696](https://github.com/NibiruChain/nibiru/pull/2696))
+
+These changes are primarily dependency ownership and repository architecture,
+but downstream Go users that imported fork internals or relied on old source
+paths should review their imports and module replacements.
+
+### 8 - Build, CI, and Release Reliability
+
+The release build path now uses defensive script
+`contrib/scripts/build-nibiru.sh` for local and CI builds. Release workflows use
+the same build surface, reducing differences between developer binaries and
+published artifacts. ([#2652](https://github.com/NibiruChain/nibiru/pull/2652),
+[#2654](https://github.com/NibiruChain/nibiru/pull/2654))
+
+Protobuf formatting and generation run with host-native tooling rather than the
+former Docker-based proto toolchain. Buf resolves the root, Cosmos SDK, and IBC
+proto trees as one workspace, and CI verifies that regeneration leaves a clean
+working tree. ([#2690](https://github.com/NibiruChain/nibiru/pull/2690),
+[#2694](https://github.com/NibiruChain/nibiru/pull/2694))
+
+Wasm VM builder images pin the macOS cross-compilation toolchain and retry
+transient package installation, improving reproducibility for release assets.
+([#2708](https://github.com/NibiruChain/nibiru/pull/2708))
+
+After the Cosmos SDK moved in-tree, release linker flags still targeted the
+former upstream package and produced an empty result from command
+`nibid version`. The build now injects metadata into package
+`github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version`, and a CI script
+checks the short and long version outputs before artifacts are published.
+([#2713](https://github.com/NibiruChain/nibiru/pull/2713))
+
+### 9 - Upgrade and Compatibility Notes
+
+The application registers `v2.17.0` as a vanilla software upgrade. The upgrade
+handler runs module migrations but does not contain release-specific mainnet
+state writes.
+
+Not every v2.17 behavior has the same consensus scope:
+
+- The EVM mempool index and sender limit are node-local admission and proposal
+  policy. Proposed transactions still pass consensus validation and execution
+  against chain state.
+- Wasm block-hook execution affects the state machine only after the sudo root
+  configures a registry contract.
+- SDK event rollback changes the observable event result of reverted EVM
+  execution so events match persisted state.
+- ERC-2470 default-genesis entries affect fresh or repaired genesis state, not
+  an existing network upgraded in place.
+- Removing inactive ICS-29 application wiring retains the old store-key
+  tombstone.
+
+### 10 - Appendix for v2.17.0
+
+#### For Builders
+
+- **Pending EVM transactions** - Do not assume a node accepts an arbitrary
+  number of future nonces from one sender. Keep submitted nonce chains
+  contiguous and account for the 8-slot per-sender node limit.
+- **Same-nonce replacement** - v2.17 does not implement fee-based replacement
+  in the application mempool. A different transaction for an occupied sender
+  and nonce slot is rejected by that node.
+- **Deterministic deployment** - Fresh chains expose ERC-2470 factory address
+  `0xce0042B868300000d44A59004Da54A005ffdcf9f`.
+- **FunToken lookup errors** - Treat a revert from
+  `IFunToken.getErc20Address` as the not-mapped result; do not depend on
+  `address(0)`.
+- **Event consumers** - Events emitted after a reverted EVM snapshot should no
+  longer appear in committed transaction results.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Software upgrade to `nibid v2.17.0` with a vanilla upgrade
+  handler and normal module migrations.
+- **Mempool recheck:** Keep CometBFT setting `recheck = true` so delivered and
+  stale EVM nonce slots are reconciled automatically after each commit.
+- **Post-upgrade binary check:** Run commands `nibid version` and
+  `nibid version --long`; version and commit fields should be populated.
+- **Post-upgrade transaction check:** Submit a short contiguous EVM nonce chain
+  and verify that transactions are admitted, proposed, and removed after
+  execution.
+- **Wasm hook configuration:** An empty field `wasm_block_hooks_contract` means
+  no block-hook dispatch. If governance configures a registry, monitor
+  `wasm_block_hook/*` events and review the registry as chain-critical code.
+- **ERC-2470 verification:** Existing networks can query EVM JSON-RPC method
+  `eth_getCode` at the canonical factory address and compare its runtime code
+  hash with the value above.
+
+#### For Contributors / Repo Maintainers
+
+- Use in-tree package paths under directories `lib/cosmos-sdk`,
+  `lib/ibc-go`, `lib/wasmvm`, and `x/wasm`; avoid reintroducing upstream module
+  imports into generated or application code.
+- Run command `just test-ibc` for the vendored IBC suite; default fast test
+  recipes exclude the large directory `lib/ibc-go`.
+- Keep release linker flags aligned with in-tree package
+  `lib/cosmos-sdk/version`, and retain the `nibid` version-output regression
+  check.
+- Preserve original transaction bytes when changing EVM proposal selection;
+  decoded and re-encoded SDK transactions are not guaranteed to have identical
+  outer bytes.
+- Keep `ProcessProposal` and block execution independent of node-local
+  `evm.Mempool` membership.
+- Treat Wasm hook plan bounds, cache-context isolation, event taxonomy, and sudo
+  registry authority as state-machine interfaces when extending the initial
+  implementation.
+
+## v2.16.0
+
+Nibiru v2.16 disables delegated `x/authz` execution, adds token-aware EVM
+balance queries across the Bank and ERC20 representations, and shortens the
+mainnet governance voting period from 48 hours to 24 hours. It also moves the
+build baseline to Go 1.25 and refreshes core Go, JavaScript, and CI
+dependencies.
+
+- [Release Link: v2.16.0](https://github.com/NibiruChain/nibiru/releases/tag/v2.16.0).
+- Date: 2026-07-02
+- Draft source range: non-Dependabot release work from `v2.15.0` through
+  `v2.16.0`.
+
+### 1 - Main Highlights
+
+- **Authz execution disabled** - Messages `MsgGrant`, `MsgExec`, and `MsgRevoke` deterministically fail with error `ErrAuthzDisabled`. The restriction also applies when a Wasm contract attempts to dispatch those messages through Stargate. ([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+- **Compatibility without delegated authority** - The authz module remains registered for codec and service compatibility, but authz queries return empty responses, CLI authz commands are removed, and genesis import/export no longer exposes stored grants. Existing grant state is retained rather than deleted. ([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+- **Multi-VM token balances** - EVM query `QueryBalance` accepts an optional token identifier and returns Bank-side and ERC20-side balances with base-unit and human-readable metadata. It resolves native NIBI, WNIBI, FunToken mappings, bank-only denoms, ERC20-only contracts, and supported aliases. ([#2630](https://github.com/NibiruChain/nibiru/pull/2630), [#2631](https://github.com/NibiruChain/nibiru/pull/2631), [#2551](https://github.com/NibiruChain/nibiru/issues/2551))
+- **Correct WNIBI accounting** - WNIBI balances come from the ERC20 contract's independent ledger rather than being inferred from native EVM gas balance. Token resolution also avoids treating short hex-like bank denoms as ERC20 addresses and preserves zero-decimal ERC20 metadata. ([#2631](https://github.com/NibiruChain/nibiru/pull/2631))
+- **Faster mainnet governance** - The v2.16 upgrade handler changes governance parameter `VotingPeriod` from 48 hours to 24 hours on chain `cataclysm-1`. ([#2632](https://github.com/NibiruChain/nibiru/pull/2632))
+- **Go 1.25 build baseline** - The root module and Docker builder move to Go 1.25, while CI reads the required Go version from file `go.mod`. ([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+
+### 2 - Authz Disablement and Transaction Hardening
+
+**What changes:** Applications can no longer create, execute, or revoke Cosmos
+SDK authz grants. This is a consensus and state-machine behavior change rather
+than a CLI-only restriction.
+
+The authz message server rejects message types `MsgGrant`, `MsgExec`, and
+`MsgRevoke` with module error `ErrAuthzDisabled`. The Wasm Stargate message
+encoder rejects the same message type URLs, so a contract cannot bypass the
+restriction by dispatching authz messages through `x/wasm`.
+([#2629](https://github.com/NibiruChain/nibiru/pull/2629))
+
+The module preserves enough wiring for compatibility:
+
+- Authz protobuf types, interfaces, and gRPC services remain registered.
+- Authz query methods return structurally valid empty responses.
+- Existing grant key-value state is not deleted or rewritten.
+- Genesis import ignores authz grants, and export emits default empty authz
+  genesis.
+- Begin-block pruning of expired grants no longer runs.
+- Authz query and transaction commands are removed from `nibid`.
+
+Empty query results therefore mean that authz behavior is disabled; they do not
+prove that historical grant data was erased. Because pruning is disabled,
+historical grant state can remain stored after its expiration time.
+
+This release narrows the available delegated-execution surface. It does not
+claim to complete broader rollback hardening or audits of every cross-module
+call path.
+
+### 3 - Multi-VM EVM Balance Query
+
+**What it enables:** One EVM query can describe a token balance across Nibiru's
+Cosmos Bank and ERC20 representations without requiring clients to reconstruct
+FunToken mappings and token metadata.
+
+Request type `QueryBalanceRequest` adds optional field `token`. Response type
+`QueryBalanceResponse` adds nullable sections `bank` and `erc20`. These sections
+include base-unit and human-readable balances, symbol, decimals, and the
+resolved bank denom or ERC20 contract address.
+([#2630](https://github.com/NibiruChain/nibiru/pull/2630),
+[#2551](https://github.com/NibiruChain/nibiru/issues/2551))
+
+The server resolves:
+
+- Native NIBI and wrapped token WNIBI.
+- Bank denoms and ERC20 contracts connected through FunToken mappings.
+- Bank-only denoms and ERC20-only contracts.
+- Supported aliases `WNIBI` and `USDC`.
+
+Legacy requests without field `token` continue returning native field
+`balance_wei`. If token resolution fails, the response also retains that legacy
+native-balance shape. The new protobuf fields are additive.
+
+Follow-up corrections make WNIBI read method `balanceOf` from the wrapped-token
+contract instead of equating WNIBI with native NIBI. ERC20 detection requires a
+full address, metadata calls preserve a real zero-decimal value, and the CLI
+delegates token resolution to the query server.
+([#2631](https://github.com/NibiruChain/nibiru/pull/2631))
+
+### 4 - Governance Voting Period and Upgrade Handler
+
+The v2.16 upgrade handler changes mainnet governance parameter `VotingPeriod`
+from 48 hours to 24 hours. The custom parameter write runs only when the chain
+ID is `cataclysm-1`; other networks proceed directly to normal module
+migrations. ([#2632](https://github.com/NibiruChain/nibiru/pull/2632))
+
+If the governance parameter update fails, the handler logs
+`v2.16.0 upgrade failure`, emits event type `upgrade_failure`, and still runs
+module migrations. The upgrade therefore does not halt solely because the
+voting-period write failed. Operators must query governance params after the
+upgrade rather than using continued block production as proof of success.
+
+The release adds no store upgrades. Its state-machine changes come from the
+mainnet governance parameter write and the new binary's disabled authz
+behavior.
+
+The 24-hour fixed voting period is separate from later fast-track governance
+designs. v2.16 does not add early proposal finalization, review-window
+extensions, or time-targeted software-upgrade execution.
+
+### 5 - Go 1.25, CI, and Dependency Maintenance
+
+The minimum Go version becomes 1.25.0, and the release Docker builder uses Go
+1.25. CI setup reads the required toolchain version from file `go.mod`, reducing
+version drift between local, container, and workflow builds.
+([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+
+Dependency maintenance includes:
+
+- Go packages `golang.org/x/text`, `golang.org/x/crypto`,
+  `golang.org/x/mod`, `cosmossdk.io/errors`, `btcutil`, and `tidwall/gjson`.
+  ([#2605](https://github.com/NibiruChain/nibiru/pull/2605),
+  [#2606](https://github.com/NibiruChain/nibiru/pull/2606),
+  [#2624](https://github.com/NibiruChain/nibiru/pull/2624),
+  [#2625](https://github.com/NibiruChain/nibiru/pull/2625),
+  [#2626](https://github.com/NibiruChain/nibiru/pull/2626),
+  [#2627](https://github.com/NibiruChain/nibiru/pull/2627))
+- Go gRPC and network packages, plus JavaScript packages `ws`, `viem`, `qs`,
+  `esbuild`, Vite, `form-data`, and `js-yaml`, through the synchronized
+  dependency roll-up. ([#2623](https://github.com/NibiruChain/nibiru/pull/2623))
+- GitHub Actions `actions/checkout` and Codecov action updates.
+  ([#2611](https://github.com/NibiruChain/nibiru/pull/2611),
+  [#2614](https://github.com/NibiruChain/nibiru/pull/2614))
+
+The `btcutil` update also adapts the in-tree no-CGO secp256k1 signer to the
+updated `SignCompact` function signature.
+
+### 6 - Appendix for v2.16.0
+
+#### For Builders
+
+- **Authz clients** - Remove dependencies on grant creation, revocation, and
+  delegated execution. Empty authz query results represent disabled behavior,
+  not necessarily an empty underlying store.
+- **Wasm contracts** - Do not dispatch authz messages through Stargate; the
+  encoder rejects grant, exec, and revoke message URLs.
+- **Balance queries** - Set request field `token` when querying Bank and ERC20
+  representations. Continue omitting it when only native `balance_wei` is
+  needed.
+- **WNIBI** - Treat wrapped NIBI as an ERC20 balance independent of native NIBI
+  gas balance.
+- **Governance timing** - Mainnet voting closes after 24 hours, so interfaces
+  and alerting should not assume the prior 48-hour window.
+
+#### For Operators / Validators
+
+- **Upgrade type:** Mainnet software upgrade to `nibid v2.16.0` with a custom
+  governance parameter write followed by module migrations.
+- **Governance check:** Query governance params and confirm parameter
+  `voting_period` equals `86400s`.
+- **Failure monitoring:** Check upgrade logs and event type `upgrade_failure`;
+  continued block production does not prove the parameter write succeeded.
+- **Authz check:** Confirm authz transactions reject with module error 13 and
+  queries return empty compatibility responses.
+- **EVM query check:** Smoke-test both the legacy native balance request and a
+  token-specific Bank/ERC20 balance request.
+
+#### For Contributors / Repo Maintainers
+
+- Keep authz message, CLI, Wasm Stargate, genesis, simulation, and begin-block
+  behavior aligned so delegated execution cannot be reintroduced through one
+  surface unintentionally.
+- Do not reuse or reinterpret retained authz store data without a deliberate
+  migration and compatibility review.
+- Preserve the protobuf-wire compatibility of optional token request and
+  nullable Bank/ERC20 response fields.
+- Use Go 1.25.0 or later for builds, and keep CI toolchain selection aligned
+  with file `go.mod`.
+
 ## v2.15.0
 
 Nibiru v2.15 restores the legacy EVM oracle precompile path needed by MIM OFT

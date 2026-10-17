@@ -9,6 +9,7 @@ import {
 } from "ethers"
 
 import { sendUserOp, waitForUserOpReceipt } from "./bundler"
+import { NonceRetryingSigner } from "./nonce-retry"
 import { generateNodePasskey, signUserOpHash } from "./p256-node"
 import {
   defaultUserOp,
@@ -59,12 +60,17 @@ function getSeedFromEnv(): Uint8Array | undefined {
 async function main() {
   const provider = new JsonRpcProvider(RPC_URL)
   await ensureP256Stub(provider)
-  const wallet = Wallet.fromPhrase(MNEMONIC, provider)
-  console.log("Deployer:", wallet.address)
-  let deployerNonce = await provider.getTransactionCount(
-    wallet.address,
-    "pending",
+  const wallet = new NonceRetryingSigner(
+    Wallet.fromPhrase(MNEMONIC, provider),
+    {
+      onRetry: ({ rejectedNonce, retryNonce }) => {
+        console.log(
+          `[nonceRetry:passkey] rejected nonce ${rejectedNonce}; retrying with ${retryNonce}`,
+        )
+      },
+    },
   )
+  console.log("Deployer:", wallet.address)
 
   // 1) "Register" a deterministic passkey for Node testing.
   const nodePasskey = generateNodePasskey(getSeedFromEnv())
@@ -78,9 +84,7 @@ async function main() {
   const predictedAccount = await factory.accountAddress(qxHex, qyHex)
   console.log("Predicted PasskeyAccount:", predictedAccount)
 
-  const txCreate = await factory.createAccount(qxHex, qyHex, {
-    nonce: deployerNonce++,
-  })
+  const txCreate = await factory.createAccount(qxHex, qyHex)
   console.log("createAccount tx hash:", txCreate.hash)
   await txCreate.wait()
 
@@ -90,7 +94,6 @@ async function main() {
   const fundTx = await wallet.sendTransaction({
     to: predictedAccount,
     value: parseEther(ACCOUNT_FUND_VALUE),
-    nonce: deployerNonce++,
   })
   console.log("Funding tx hash:", fundTx.hash)
   await fundTx.wait()

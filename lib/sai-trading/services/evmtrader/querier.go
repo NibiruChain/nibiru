@@ -2,6 +2,7 @@ package evmtrader
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm/precompile"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -164,24 +166,46 @@ func (t *EVMTrader) QueryTrades(ctx context.Context) ([]ParsedTrade, error) {
 	// Convert Ethereum address to Nibiru Bech32 address
 	nibiruAddr := eth.EthAddrToNibiruAddr(t.accountAddr)
 
-	// Perp QueryMsg uses list_trades_for_user for trader-scoped listings.
-	// get_trades is a different batch-by-key API and rejects {trader: ...}.
-	queryMsg := map[string]interface{}{
-		"list_trades_for_user": map[string]interface{}{
-			"trader": nibiruAddr.String(),
-		},
+	// v1.42 caps each listing at 100 scanned indices. Read the monotonic
+	// counter first so empty pages after cleanup cannot hide older positions.
+	namespace := "user_trade_index"
+	key := make([]byte, 2)
+	binary.BigEndian.PutUint16(key, uint16(len(namespace)))
+	key = append(key, []byte(namespace)...)
+	key = append(key, []byte(nibiruAddr.String())...)
+	counter, err := wasmtypes.NewQueryClient(t.grpcConn).RawContractState(ctx, &wasmtypes.QueryRawContractStateRequest{Address: t.addrs.PerpAddress, QueryData: key})
+	if err != nil {
+		return nil, fmt.Errorf("read trade index counter: %w", err)
 	}
-
-	// Execute the query using the helper method
-	responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+	var next uint64
+	if len(counter.Data) > 0 {
+		var index string
+		if err := json.Unmarshal(counter.Data, &index); err != nil {
+			return nil, fmt.Errorf("decode trade counter: %w", err)
+		}
+		if _, err := fmt.Sscanf(index, "UserTradeIndex(%d)", &next); err != nil {
+			return nil, fmt.Errorf("parse trade counter: %w", err)
+		}
+	}
+	rawTrades, err := collectTradePages(ctx, next, func(ctx context.Context, start, limit uint64) ([]Trade, error) {
+		queryMsg := map[string]interface{}{
+			"list_trades_for_user": map[string]interface{}{
+				"trader": nibiruAddr.String(), "show_closed": true, "show_conditional": true,
+				"scan_limit": limit, "start_idx": start,
+			},
+		}
+		responseBytes, err := t.queryWasmContract(ctx, t.addrs.PerpAddress, queryMsg)
+		if err != nil {
+			return nil, err
+		}
+		var trades []Trade
+		if err := json.Unmarshal(responseBytes, &trades); err != nil {
+			return nil, fmt.Errorf("unmarshal trades response: %w", err)
+		}
+		return trades, nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	// Parse JSON response - returns an array of trades with wrapped index types
-	var rawTrades []Trade
-	if err := json.Unmarshal(responseBytes, &rawTrades); err != nil {
-		return nil, fmt.Errorf("unmarshal trades response: %w, raw: %s", err, string(responseBytes))
 	}
 
 	// Parse wrapped indices to numeric values
@@ -698,4 +722,24 @@ func (t *EVMTrader) InitializeTokenDenomMap(ctx context.Context, marketIndex uin
 	}
 
 	return nil
+}
+
+func collectTradePages(ctx context.Context, next uint64, query func(context.Context, uint64, uint64) ([]Trade, error)) ([]Trade, error) {
+	var trades []Trade
+	const limit uint64 = 100
+	for next > 0 {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		page, err := query(ctx, next-1, limit)
+		if err != nil {
+			return nil, err
+		}
+		trades = append(trades, page...)
+		if next <= limit {
+			break
+		}
+		next -= limit
+	}
+	return trades, nil
 }

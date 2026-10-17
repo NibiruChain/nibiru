@@ -1,0 +1,511 @@
+use macro_wasmer_engine_test::engine_test;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsValue;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_test::wasm_bindgen_test;
+
+use wasmer::*;
+
+#[cfg(unix)]
+use std::ffi::OsStr;
+#[cfg(unix)]
+use std::os::unix::ffi::OsStrExt;
+
+async fn assert_module_new_async() -> Result<(), String> {
+    let store = Store::default();
+    let wasm =
+        wat::parse_str("(module (func (export \"run\")))").map_err(|error| format!("{error:?}"))?;
+    let module = Module::new_async(&store, wasm)
+        .await
+        .map_err(|error| format!("{error:?}"))?;
+    assert!(module.exports().any(|export| export.name() == "run"));
+    Ok(())
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[test]
+fn module_new_async() -> Result<(), String> {
+    futures::executor::block_on(assert_module_new_async())
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen_test]
+async fn module_new_async() -> Result<(), JsValue> {
+    assert_module_new_async()
+        .await
+        .map_err(|error| JsValue::from_str(&error))
+}
+
+#[cfg(all(target_arch = "wasm32", feature = "js"))]
+#[wasm_bindgen_test]
+fn imported_table_elements_preserve_function_types() {
+    let mut store = Store::default();
+    let module = Module::new(
+        &store,
+        r#"
+        (module
+          (import "env" "table" (table 8 funcref))
+          (import "env" "table_base" (global $table_base i32))
+          (type $trampoline_type (func (param i32 i32 i32) (result i32)))
+          (func $trampoline (type $trampoline_type)
+            local.get 0)
+          (elem (global.get $table_base) func $trampoline))
+        "#,
+    )
+    .unwrap();
+    let table = Table::new(
+        &mut store,
+        TableType::new(Type::FuncRef, 8, None),
+        Value::FuncRef(None),
+    )
+    .unwrap();
+    let table_base = Global::new(&mut store, Value::I32(3));
+    let imports = imports! {
+        "env" => {
+            "table" => table.clone(),
+            "table_base" => table_base,
+        }
+    };
+
+    Instance::new(&mut store, &module, &imports).unwrap();
+    let Value::FuncRef(Some(function)) = table.get(&mut store, 3).unwrap() else {
+        panic!("expected the initialized table element to be a function");
+    };
+    assert_eq!(
+        function.ty(&store),
+        FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32])
+    );
+}
+
+#[cfg(all(target_arch = "wasm32", feature = "js"))]
+#[wasm_bindgen_test]
+fn exported_table_elements_preserve_function_types() {
+    let mut store = Store::default();
+    let module = Module::new(
+        &store,
+        r#"
+        (module
+          (type $callback_type (func (param i32 i32) (result i32)))
+          (func $callback (type $callback_type)
+            local.get 0)
+          (table (export "table") 1 funcref)
+          (elem (i32.const 0) func $callback))
+        "#,
+    )
+    .unwrap();
+    let instance = Instance::new(&mut store, &module, &imports! {}).unwrap();
+    let table = instance.exports.get_table("table").unwrap();
+    let Value::FuncRef(Some(function)) = table.get(&mut store, 0).unwrap() else {
+        panic!("expected the initialized table element to be a function");
+    };
+    assert_eq!(
+        function.ty(&store),
+        FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32])
+    );
+}
+
+#[engine_test]
+fn module_get_name() -> Result<(), String> {
+    let store = Store::default();
+    let wat = r#"(module)"#;
+    let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+    assert_eq!(module.name(), None);
+
+    Ok(())
+}
+
+#[engine_test]
+fn module_set_name() -> Result<(), String> {
+    let store = Store::default();
+    let wat = r#"(module $name)"#;
+    let mut module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+    assert_eq!(module.name(), Some("name"));
+
+    module.set_name("new_name");
+    assert_eq!(module.name(), Some("new_name"));
+
+    Ok(())
+}
+
+#[engine_test]
+fn imports() -> Result<(), String> {
+    let store = Store::default();
+    let wat = r#"(module
+(import "host" "func" (func))
+(import "host" "memory" (memory 1))
+(import "host" "table" (table 1 funcref))
+(import "host" "global" (global i32))
+)"#;
+    let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+    assert_eq!(
+        module.imports().collect::<Vec<_>>(),
+        vec![
+            ImportType::new(
+                "host",
+                "func",
+                ExternType::Function(FunctionType::new(vec![], vec![]))
+            ),
+            ImportType::new(
+                "host",
+                "memory",
+                ExternType::Memory(MemoryType::new(Pages(1), None, false))
+            ),
+            ImportType::new(
+                "host",
+                "table",
+                ExternType::Table(TableType::new(Type::FuncRef, 1, None))
+            ),
+            ImportType::new(
+                "host",
+                "global",
+                ExternType::Global(GlobalType::new(Type::I32, Mutability::Const))
+            )
+        ]
+    );
+
+    // Now we test the iterators
+    assert_eq!(
+        module.imports().functions().collect::<Vec<_>>(),
+        vec![ImportType::new(
+            "host",
+            "func",
+            FunctionType::new(vec![], vec![])
+        ),]
+    );
+    assert_eq!(
+        module.imports().memories().collect::<Vec<_>>(),
+        vec![ImportType::new(
+            "host",
+            "memory",
+            MemoryType::new(Pages(1), None, false)
+        ),]
+    );
+    assert_eq!(
+        module.imports().tables().collect::<Vec<_>>(),
+        vec![ImportType::new(
+            "host",
+            "table",
+            TableType::new(Type::FuncRef, 1, None)
+        ),]
+    );
+    assert_eq!(
+        module.imports().globals().collect::<Vec<_>>(),
+        vec![ImportType::new(
+            "host",
+            "global",
+            GlobalType::new(Type::I32, Mutability::Const)
+        ),]
+    );
+    Ok(())
+}
+
+#[test]
+fn exports() -> Result<(), String> {
+    let store = Store::default();
+    let wat = r#"(module
+(func (export "func") nop)
+(memory (export "memory") 1)
+(table (export "table") 1 funcref)
+(global (export "global") i32 (i32.const 0))
+)"#;
+    let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+    assert_eq!(
+        module.exports().collect::<Vec<_>>(),
+        vec![
+            ExportType::new(
+                "func",
+                ExternType::Function(FunctionType::new(vec![], vec![]))
+            ),
+            ExportType::new(
+                "memory",
+                ExternType::Memory(MemoryType::new(Pages(1), None, false))
+            ),
+            ExportType::new(
+                "table",
+                ExternType::Table(TableType::new(Type::FuncRef, 1, None))
+            ),
+            ExportType::new(
+                "global",
+                ExternType::Global(GlobalType::new(Type::I32, Mutability::Const))
+            )
+        ]
+    );
+
+    // Now we test the iterators
+    assert_eq!(
+        module.exports().functions().collect::<Vec<_>>(),
+        vec![ExportType::new("func", FunctionType::new(vec![], vec![])),]
+    );
+    assert_eq!(
+        module.exports().memories().collect::<Vec<_>>(),
+        vec![ExportType::new(
+            "memory",
+            MemoryType::new(Pages(1), None, false)
+        ),]
+    );
+    assert_eq!(
+        module.exports().tables().collect::<Vec<_>>(),
+        vec![ExportType::new(
+            "table",
+            TableType::new(Type::FuncRef, 1, None)
+        ),]
+    );
+    assert_eq!(
+        module.exports().globals().collect::<Vec<_>>(),
+        vec![ExportType::new(
+            "global",
+            GlobalType::new(Type::I32, Mutability::Const)
+        ),]
+    );
+    Ok(())
+}
+
+#[engine_test]
+fn calling_host_functions_with_negative_values_works() -> Result<(), String> {
+    let mut store = Store::default();
+    let wat = r#"(module
+(import "host" "host_func1" (func (param i64)))
+(import "host" "host_func2" (func (param i32)))
+(import "host" "host_func3" (func (param i64)))
+(import "host" "host_func4" (func (param i32)))
+(import "host" "host_func5" (func (param i32)))
+(import "host" "host_func6" (func (param i32)))
+(import "host" "host_func7" (func (param i32)))
+(import "host" "host_func8" (func (param i32)))
+
+(func (export "call_host_func1")
+      (call 0 (i64.const -1)))
+(func (export "call_host_func2")
+      (call 1 (i32.const -1)))
+(func (export "call_host_func3")
+      (call 2 (i64.const -1)))
+(func (export "call_host_func4")
+      (call 3 (i32.const -1)))
+(func (export "call_host_func5")
+      (call 4 (i32.const -1)))
+(func (export "call_host_func6")
+      (call 5 (i32.const -1)))
+(func (export "call_host_func7")
+      (call 6 (i32.const -1)))
+(func (export "call_host_func8")
+      (call 7 (i32.const -1)))
+)"#;
+    let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+    let imports = imports! {
+        "host" => {
+            "host_func1" => Function::new_typed(&mut store, |p: u64| {
+                println!("host_func1: Found number {p}");
+                assert_eq!(p, u64::MAX);
+            }),
+            "host_func2" => Function::new_typed(&mut store, |p: u32| {
+                println!("host_func2: Found number {p}");
+                assert_eq!(p, u32::MAX);
+            }),
+            "host_func3" => Function::new_typed(&mut store, |p: i64| {
+                println!("host_func3: Found number {p}");
+                assert_eq!(p, -1);
+            }),
+            "host_func4" => Function::new_typed(&mut store, |p: i32| {
+                println!("host_func4: Found number {p}");
+                assert_eq!(p, -1);
+            }),
+            "host_func5" => Function::new_typed(&mut store, |p: i16| {
+                println!("host_func5: Found number {p}");
+                assert_eq!(p, -1);
+            }),
+            "host_func6" => Function::new_typed(&mut store, |p: u16| {
+                println!("host_func6: Found number {p}");
+                assert_eq!(p, u16::MAX);
+            }),
+            "host_func7" => Function::new_typed(&mut store, |p: i8| {
+                println!("host_func7: Found number {p}");
+                assert_eq!(p, -1);
+            }),
+            "host_func8" => Function::new_typed(&mut store, |p: u8| {
+                println!("host_func8: Found number {p}");
+                assert_eq!(p, u8::MAX);
+            }),
+        }
+    };
+    let instance = Instance::new(&mut store, &module, &imports).map_err(|e| format!("{e:?}"))?;
+
+    let f1: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func1")
+        .map_err(|e| format!("{e:?}"))?;
+    let f2: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func2")
+        .map_err(|e| format!("{e:?}"))?;
+    let f3: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func3")
+        .map_err(|e| format!("{e:?}"))?;
+    let f4: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func4")
+        .map_err(|e| format!("{e:?}"))?;
+    let f5: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func5")
+        .map_err(|e| format!("{e:?}"))?;
+    let f6: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func6")
+        .map_err(|e| format!("{e:?}"))?;
+    let f7: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func7")
+        .map_err(|e| format!("{e:?}"))?;
+    let f8: TypedFunction<(), ()> = instance
+        .exports
+        .get_typed_function(&store, "call_host_func8")
+        .map_err(|e| format!("{e:?}"))?;
+
+    f1.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f2.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f3.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f4.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f5.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f6.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f7.call(&mut store).map_err(|e| format!("{e:?}"))?;
+    f8.call(&mut store).map_err(|e| format!("{e:?}"))?;
+
+    Ok(())
+}
+
+#[engine_test]
+#[allow(unused_attributes)]
+fn module_custom_sections() -> Result<(), String> {
+    let store = Store::default();
+    let custom_section_wasm_bytes = include_bytes!("simple-name-section.wasm");
+    let module = Module::new(&store, custom_section_wasm_bytes).map_err(|e| format!("{e:?}"))?;
+    let sections = module.custom_sections("name");
+    let sections_vec: Vec<Box<[u8]>> = sections.collect();
+    assert_eq!(sections_vec.len(), 1);
+    assert_eq!(
+        sections_vec[0],
+        vec![2, 2, 36, 105, 1, 0, 0, 0].into_boxed_slice()
+    );
+    Ok(())
+}
+
+#[cfg(all(
+    not(target_arch = "wasm32"),
+    any(feature = "cranelift", feature = "llvm", feature = "singlepass")
+))]
+mod function_extents_tests {
+    use super::*;
+
+    /// Returns a [`Store`] backed by the sys engine using whatever compiler is
+    /// available. Cranelift is preferred, then Singlepass, then LLVM.
+    fn sys_store() -> Store {
+        #[cfg(feature = "cranelift")]
+        let engine: Engine = wasmer::sys::EngineBuilder::new(wasmer::sys::Cranelift::default())
+            .engine()
+            .into();
+        #[cfg(all(not(feature = "cranelift"), feature = "singlepass"))]
+        let engine: Engine = wasmer::sys::EngineBuilder::new(wasmer::sys::Singlepass::default())
+            .engine()
+            .into();
+        #[cfg(all(
+            not(feature = "cranelift"),
+            not(feature = "singlepass"),
+            feature = "llvm"
+        ))]
+        let engine: Engine = wasmer::sys::EngineBuilder::new(wasmer::sys::LLVM::default())
+            .engine()
+            .into();
+        Store::new(engine)
+    }
+
+    #[test]
+    fn returns_one_entry_per_local_function() -> Result<(), String> {
+        let store = sys_store();
+        let wat = r#"(module
+            (func $f1 (result i32) i32.const 1)
+            (func $f2 (result i32) i32.const 2)
+            (func $f3 (param i32) (result i32) local.get 0)
+        )"#;
+        let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+        let extents = module
+            .sys_artifact()
+            .expect("expected sys-backend module artifact")
+            .finished_function_extents()
+            .expect("JIT-compiled artifact must have function extents");
+
+        assert_eq!(extents.len(), 3, "expected one extent per local function");
+        let indices: Vec<u32> = extents.iter().map(|(i, _)| i.as_u32()).collect();
+        assert_eq!(
+            indices,
+            vec![0, 1, 2],
+            "indices must be sequential starting from 0"
+        );
+        for (index, extent) in &extents {
+            assert!(
+                !extent.ptr.0.is_null(),
+                "function {} has null address",
+                index.as_u32()
+            );
+            assert_ne!(
+                extent.length,
+                0,
+                "function {} has zero length",
+                index.as_u32()
+            );
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn excludes_imported_functions() -> Result<(), String> {
+        let store = sys_store();
+        let wat = r#"(module
+            (import "env" "f" (func (param i32)))
+            (func $local1 (result i32) i32.const 42)
+            (func $local2 (param i32) (result i32) local.get 0)
+        )"#;
+        let module = Module::new(&store, wat).map_err(|e| format!("{e:?}"))?;
+        let extents = module
+            .sys_artifact()
+            .expect("expected sys-backend module artifact")
+            .finished_function_extents()
+            .expect("JIT-compiled artifact must have function extents");
+
+        assert_eq!(
+            extents.len(),
+            2,
+            "imported functions must not appear in extents"
+        );
+        let indices: Vec<u32> = extents.iter().map(|(i, _)| i.as_u32()).collect();
+        assert_eq!(
+            indices,
+            vec![0, 1],
+            "indices must be local (0-based), not global function indices"
+        );
+
+        Ok(())
+    }
+}
+
+#[test]
+#[cfg(unix)]
+fn module_from_file_non_utf8_path() -> Result<(), String> {
+    let store = Store::default();
+    let wasm_bytes = wat2wasm(b"(module)").map_err(|e| format!("{e:?}"))?;
+
+    let dir = tempfile::tempdir().map_err(|e| format!("{e:?}"))?;
+    let non_utf8_name = OsStr::from_bytes(b"module_\xff\xfe.wasm");
+    let path = dir.path().join(non_utf8_name);
+
+    // Some platforms and file systems do not support non-UTF-8 paths, so skip them.
+    if std::fs::write(&path, &wasm_bytes).is_err() {
+        return Ok(());
+    }
+
+    let module = Module::from_file(&store, &path).map_err(|e| format!("{e:?}"))?;
+    let canonical = path.canonicalize().map_err(|e| format!("{e:?}"))?;
+    assert_eq!(module.name(), Some(canonical.to_string_lossy().as_ref()),);
+    Ok(())
+}

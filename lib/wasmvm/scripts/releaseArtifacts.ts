@@ -408,7 +408,7 @@ export const buildPublishDryRunPlan = (
   tag: string,
   artifactsDir: string,
 ): PublishDryRunPlan => {
-  const artifactArgs = REQUIRED_RELEASE_ARTIFACTS.map(
+  const artifactArgs = [...REQUIRED_RELEASE_ARTIFACTS, "checksums.txt"].map(
     (fileName) => `${artifactsDir}/${fileName}`,
   ).join(" ");
 
@@ -418,7 +418,7 @@ export const buildPublishDryRunPlan = (
     tag,
     commands: [
       `test -d ${artifactsDir}`,
-      `gh release create ${tag} ${artifactArgs} --repo ${GITHUB_REPO} --title "${tag}" --notes-file <release-body.md>`,
+      `gh release create ${tag} ${artifactArgs} --repo ${GITHUB_REPO} --target ${commitSha} --latest=false --title "${tag}" --notes-file <release-body.md>`,
     ],
   };
 };
@@ -468,7 +468,7 @@ export const renderReleaseMetadataMarkdown = (
     "",
     "## Release assets",
     "",
-    ...REQUIRED_RELEASE_ARTIFACTS.map((fileName) => `- \`${fileName}\``),
+    ...[...REQUIRED_RELEASE_ARTIFACTS, "checksums.txt"].map((fileName) => `- \`${fileName}\``),
   ];
 
   if (metadata.workflowRunUrl !== undefined) {
@@ -486,14 +486,15 @@ export const createGitHubRelease = async (
   artifactsDir: string,
   runner: CommandRunner = runShellCommand,
 ): Promise<void> => {
-  const artifactArgs = REQUIRED_RELEASE_ARTIFACTS.map((fileName) =>
+  const artifactArgs = [...REQUIRED_RELEASE_ARTIFACTS, "checksums.txt"].map((fileName) =>
     quoteShellArg(join(artifactsDir, fileName)),
   ).join(" ");
 
+  const artifactCommit = await getTagCommit(tag, runner);
   await runner(
     `gh release create ${quoteShellArg(
       tag,
-    )} ${artifactArgs} --repo ${GITHUB_REPO} --title ${quoteShellArg(
+    )} ${artifactArgs} --repo ${GITHUB_REPO} --target ${quoteShellArg(artifactCommit)} --latest=false --title ${quoteShellArg(
       tag,
     )} --notes-file ${quoteShellArg(releaseBodyPath)}`,
   );
@@ -533,6 +534,14 @@ export const publishArtifacts = async (
 
   await ensureGhCli(runner);
   await validateExistingArtifacts(artifactsDir);
+  const checksums: string[] = [];
+  for (const fileName of REQUIRED_RELEASE_ARTIFACTS) {
+    const digest = new Bun.CryptoHasher("sha256")
+      .update(await Bun.file(join(artifactsDir, fileName)).arrayBuffer())
+      .digest("hex");
+    checksums.push(`${digest}  ${fileName}`);
+  }
+  await Bun.write(join(artifactsDir, "checksums.txt"), `${checksums.join("\n")}\n`);
   const tagCommit = await getTagCommit(normalizedTag, runner);
   if (tagCommit !== commitSha) {
     throw new Error(

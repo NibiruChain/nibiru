@@ -216,6 +216,9 @@ func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.
 // with no reason attached, so on revert we replay the call via eth_call to
 // recover the actual revert reason (require string or custom error).
 func (t *EVMTrader) evmTxResponseError(ctx context.Context, txResp *sdk.TxResponse, to common.Address, value *big.Int, data []byte) error {
+	if txResp.Code != 0 {
+		return validateEVMResult(txResp)
+	}
 	for _, event := range txResp.Events {
 		if event.Type != evm.TypeUrlEventEthereumTx {
 			continue
@@ -233,7 +236,7 @@ func (t *EVMTrader) evmTxResponseError(ctx context.Context, txResp *sdk.TxRespon
 		}
 		return fmt.Errorf("EVM execution failed: %s (tx %s)", reason, txResp.TxHash)
 	}
-	return nil
+	return validateEVMResult(txResp)
 }
 
 func (t *EVMTrader) decodeRevertReason(ctx context.Context, to common.Address, value *big.Int, data []byte, height int64) string {
@@ -354,4 +357,27 @@ Error code: %d`, currentOI, maxOI, pctUsed, code)
 
 	// Default error (show raw log)
 	return fmt.Errorf("transaction failed (code=%d)\n\nContract error:\n%s\n\nTip: Run 'trader list' to check market status", code, rawLog)
+}
+
+// Cosmos code zero does not imply EVM success. A reverted EVM call records its
+// failure in EventEthereumTx, even when the enclosing Cosmos transaction succeeds.
+func validateEVMResult(resp *sdk.TxResponse) error {
+	if resp.Code != 0 {
+		return parseContractError(resp.Code, resp.RawLog)
+	}
+	for _, event := range resp.Events {
+		if event.Type != "eth.evm.v1.EventEthereumTx" {
+			continue
+		}
+		parsed, err := sdk.ParseTypedEvent(event)
+		if err != nil {
+			return fmt.Errorf("parse EVM result: %w", err)
+		}
+		result := parsed.(*evm.EventEthereumTx)
+		if result.VmError != "" {
+			return fmt.Errorf("EVM execution failed: %s", result.VmError)
+		}
+		return nil
+	}
+	return fmt.Errorf("EVM result event missing for transaction %s", resp.TxHash)
 }

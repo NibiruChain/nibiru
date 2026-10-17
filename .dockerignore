@@ -1,5 +1,6 @@
 temp/
 build/
-*.md
 go-pkg
 **/go-pkg
+**/target/
+**/node_modules/

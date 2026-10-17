@@ -41,10 +41,8 @@ type StakingKeeper interface {
 }
 
 type SudoKeeper interface {
-	// CheckPermissions Checks if a contract is contained within the set of sudo
-	// contracts defined in the x/sudo module. These smart contracts are able to
-	// execute certain permissioned functions.
-	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
+	// CheckPermissions accepts root or a member of role. Empty role is root-only.
+	CheckPermissions(actor sdk.AccAddress, ctx sdk.Context, role string) error
 
 	// GetZeroGasEvmContracts returns the subset of zero-gas actors that are
 	// EVM contracts as a set (map) for O(1) lookup. This method avoids

@@ -871,9 +871,16 @@ mod tests {
         assert_eq!(misses, 0);
         assert_eq!(elements_pinned_memory_cache, 1);
         assert_eq!(elements_memory_cache, 0);
+        // Singlepass machine code and serialized metadata differ by architecture.
+        // Wasmer 7.4.2's x86_64 artifact is about 3.33 MB; ARM64 remains about 2.5 MB.
+        let expected_size = if cfg!(target_arch = "x86_64") {
+            3_300_000
+        } else {
+            2_500_000
+        };
         assert_approx_eq!(
             size_pinned_memory_cache,
-            2500000,
+            expected_size,
             "0.2",
             "size_pinned_memory_cache: {size_pinned_memory_cache}"
         );

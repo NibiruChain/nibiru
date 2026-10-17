@@ -69,8 +69,8 @@ Mainnet code ID `2` is used by:
 - Hot Wallet CW3 contract
   `nibi15wd4ac2383fq65uymu72dg4u4u60t2du545fzxeakdw3kf7hd7yqtg45z7`
 
-Local source reference:
-`nibi-wasm/contracts/core-cw3-flex-msig/src/msg.rs`.
+Local source reference: file
+`wasm-contracts/core-cw3-flex-msig/src/msg.rs`.
 
 Entrypoint message types:
 

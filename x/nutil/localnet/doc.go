@@ -4,7 +4,7 @@ running Nibiru localnet.
 
 This package does not start or manage an in-process chain. Instead, it assumes a
 local validator has already been bootstrapped, typically by
-"cmd/nibid/localnet.sh", and exposes the fixed localnet contract that the
+"x/cli/localnet.sh", and exposes the fixed localnet contract that the
 test suites in this repository rely on:
 
   - chain ID: "nibiru-localnet-0"
@@ -23,8 +23,9 @@ returned CLI value bundles:
   - query and tx command execution through Cobra handlers
   - block and tx wait helpers for delivered-state assertions
   - the live client.Context and tx defaults used by CLI-oriented tests
-  - a local rpcapi.Backend for direct backend method calls
-  - in-process typed `rpcapi` implementations for `eth`, `net`, and `debug`
+  - a local value of type `jsonrpc.Backend` for direct backend method calls
+  - typed implementations from package `jsonrpc` for the `eth`, `net`, and
+    `debug` namespaces
   - an `ethclient.Client` for Ethereum JSON-RPC assertions
 
 This helper is used by suites that exercise CLI, SDK, and Ethereum RPC behavior

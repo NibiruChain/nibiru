@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# BUF_VERSION: Version installed only when Buf is missing from PATH.
+# BUF_VERSION: Buf release used for generation and lint. CI installs this
+# version before `just proto gen`. A different host Buf rewrites the Go output.
 BUF_VERSION="1.55.1"
 PROTOC_GEN_GOCOSMOS_VERSION="1.4.10"
 PROTOC_GEN_GRPC_GATEWAY_VERSION="1.16.0"
@@ -103,28 +104,36 @@ add_go_bin_to_path() {
   export PATH="${go_bin}:${PATH}"
 }
 
-# check_buf: Ensure Buf is available for `proto lint` and `proto gen`.
-# Installs BUF_VERSION with Go only when Buf is absent from PATH.
+# buf_is_pinned: Return 0 when the buf on PATH is exactly BUF_VERSION.
+buf_is_pinned() {
+  local got
+  which_ok buf >/dev/null 2>&1 || return 1
+  got="$(buf --version 2>/dev/null | awk 'NR == 1 { print $1 }')"
+  got="${got#v}"
+  [[ "${got}" == "${BUF_VERSION}" ]]
+}
+
+# check_buf: Ensure Buf BUF_VERSION is the buf used for `proto lint` and `proto gen`.
 check_buf() {
-  if which_ok buf >/dev/null 2>&1; then
+  if buf_is_pinned; then
     return 0
   fi
 
-  log_info "buf is not present; installing buf ${BUF_VERSION}"
+  log_info "Installing buf ${BUF_VERSION}"
   if ! which_ok go; then
-    log_error "buf is required for protobuf linting and generation. Install Go, then run: go install github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
+    log_error "buf ${BUF_VERSION} is required for protobuf linting and generation. Install Go, then run: go install github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
     return 1
   fi
 
   add_go_bin_to_path
-  if which_ok buf >/dev/null 2>&1; then
+  if buf_is_pinned; then
     return 0
   fi
 
   run_cmd go install "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}"
   add_go_bin_to_path
-  if ! which_ok buf >/dev/null 2>&1; then
-    log_error "buf installation completed, but its Go bin directory does not contain an executable."
+  if ! buf_is_pinned; then
+    log_error "buf ${BUF_VERSION} installation could not be verified."
     return 1
   fi
 }
@@ -140,6 +149,30 @@ go_tool_has_version() {
   go version -m "${binary_path}" 2>/dev/null | awk \
     -v module="${module}" -v version="v${version}" \
     '$1 == "mod" && $2 == module && $3 == version { found = 1 } END { exit !found }'
+}
+
+# module_go_toolchain: Print the go.mod Go version in GOTOOLCHAIN form, such as go1.27.0.
+module_go_toolchain() {
+  local go_version
+  go_version="$(go list -m -f '{{.GoVersion}}')"
+  if [[ "${go_version}" == go* ]]; then
+    printf '%s\n' "${go_version}"
+  else
+    printf 'go%s\n' "${go_version}"
+  fi
+}
+
+# go_tool_matches_toolchain: Return 0 when the binary was built by the current Go.
+# A Go upgrade keeps the module version and still needs a rebuild, because the
+# plugin embeds the compiler that emitted the generated Go.
+go_tool_matches_toolchain() {
+  local binary="$1"
+  local binary_path built_with current
+
+  binary_path="$(command -v "${binary}")" || return 1
+  built_with="$(go version -m "${binary_path}" 2>/dev/null | awk 'NR == 1 { print $NF }')"
+  current="$(go env GOVERSION 2>/dev/null || true)"
+  [[ -n "${built_with}" && "${built_with}" == "${current}" ]]
 }
 
 # check_proto_plugins: Install the pinned Buf plugins when absent or outdated.
@@ -158,13 +191,16 @@ check_proto_plugins() {
 
   for plugin_spec in "${plugin_specs[@]}"; do
     IFS='|' read -r plugin package module version <<<"${plugin_spec}"
-    if go_tool_has_version "${plugin}" "${module}" "${version}"; then
+    if go_tool_has_version "${plugin}" "${module}" "${version}" && go_tool_matches_toolchain "${plugin}"; then
       continue
     fi
 
     log_info "Installing ${plugin} v${version}"
-    run_cmd go install "${package}@v${version}"
-    if ! go_tool_has_version "${plugin}" "${module}" "${version}"; then
+    # `go install module@version` builds with the module's own Go line. These
+    # plugins are older than go.mod, so force the repository toolchain. The
+    # generated Go changes when the plugin is built with a different compiler.
+    run_cmd env "GOTOOLCHAIN=$(module_go_toolchain)" go install "${package}@v${version}"
+    if ! go_tool_has_version "${plugin}" "${module}" "${version}" || ! go_tool_matches_toolchain "${plugin}"; then
       log_error "${plugin} v${version} installation could not be verified."
       return 1
     fi

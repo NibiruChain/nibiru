@@ -7,7 +7,7 @@ This directory contains the simulation tests for the `simapp` module
 ### Non-Determinism
 
 ```sh
-make test-sim-nondeterminism
+just test-sim-nondeterminism
 ```
 
 This test case checks that the simulation is deterministic. It does so by
@@ -18,7 +18,7 @@ same.
 ### Full App
 
 ```sh
-make test-sim-default-genesis-fast
+just test-sim-default-genesis-fast
 ```
 
 This test case runs the simulation with the default genesis file. It checks that
@@ -27,7 +27,7 @@ the simulation does not panic and that the resulting state is valid.
 ### Import/Export
 
 ```sh
-make test-sim-import-export
+just test-sim-import-export
 ```
 
 This test case runs the simulation with the default genesis file. It checks that
@@ -38,7 +38,7 @@ state is the same as the exported state.
 ### Simulation After Import
 
 ```sh
-make test-sim-after-import
+just test-sim-after-import
 ```
 
 This test case runs the simulation with the default genesis file. It checks that

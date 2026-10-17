@@ -2,7 +2,6 @@ package tx
 
 import (
 	"bufio"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -76,13 +75,13 @@ func BroadcastTx(clientCtx client.Context, txf Factory, msgs ...sdk.Msg) error {
 			return errors.New("cannot estimate gas in offline mode")
 		}
 
-		_, adjusted, err := CalculateGas(clientCtx, txf, msgs...)
+		simRes, adjusted, err := CalculateGas(clientCtx, txf, msgs...)
 		if err != nil {
 			return err
 		}
 
 		txf = txf.WithGas(adjusted)
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", GasEstimateResponse{GasEstimate: txf.Gas()})
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEstimateResponse(simRes, txf, msgs...))
 	}
 
 	if clientCtx.Simulate {
@@ -137,20 +136,7 @@ func BroadcastTx(clientCtx client.Context, txf Factory, msgs ...sdk.Msg) error {
 func CalculateGas(
 	clientCtx gogogrpc.ClientConn, txf Factory, msgs ...sdk.Msg,
 ) (*tx.SimulateResponse, uint64, error) {
-	txBytes, err := txf.BuildSimTx(msgs...)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	txSvcClient := tx.NewServiceClient(clientCtx)
-	simRes, err := txSvcClient.Simulate(context.Background(), &tx.SimulateRequest{
-		TxBytes: txBytes,
-	})
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return simRes, uint64(txf.GasAdjustment() * float64(simRes.GasInfo.GasUsed)), nil
+	return calculateGas(clientCtx, txf, msgs...)
 }
 
 // SignWithPrivKey signs a given tx with the given private key, and returns the
@@ -345,11 +331,14 @@ func Sign(txf Factory, name string, txBuilder client.TxBuilder, overwriteSig boo
 
 // GasEstimateResponse defines a response definition for tx gas estimation.
 type GasEstimateResponse struct {
-	GasEstimate uint64 `json:"gas_estimate" yaml:"gas_estimate"`
+	GasEstimate         uint64  `json:"gas_estimate" yaml:"gas_estimate"`
+	GasUsed             uint64  `json:"gas_used" yaml:"gas_used"`
+	EstimationAllowance uint64  `json:"estimation_allowance" yaml:"estimation_allowance"`
+	GasAdjustment       float64 `json:"gas_adjustment" yaml:"gas_adjustment"`
 }
 
 func (gr GasEstimateResponse) String() string {
-	return fmt.Sprintf("gas estimate: %d", gr.GasEstimate)
+	return fmt.Sprintf("gas estimate: %d (measured: %d, estimation allowance: %d, adjustment: %g)", gr.GasEstimate, gr.GasUsed, gr.EstimationAllowance, gr.GasAdjustment)
 }
 
 // makeAuxSignerData generates an AuxSignerData from the client inputs.

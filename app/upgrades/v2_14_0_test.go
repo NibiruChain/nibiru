@@ -49,7 +49,8 @@ var (
 // supplied by mainnet.
 func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
+	// Build the historical pre-v2.20 Wasm state under the test chain ID. The
+	// current binary would otherwise apply the mainnet guard to fixture setup.
 	ctx := deps.Ctx()
 
 	legacyMultisig := mustAccAddress(addrLegacyMultisig)
@@ -112,6 +113,7 @@ func TestUpgrade2_14_0_HappyPath(t *testing.T) {
 		upgrades.AddrCfg_v2_14 = prevAddrCfg
 	}()
 
+	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 	eventsBeforeUpgrade := deps.Ctx().EventManager().Events()
 	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_14_0))
 	eventsInUpgrade := nutiltestutil.FilterNewEvents(eventsBeforeUpgrade, deps.Ctx().EventManager().Events())

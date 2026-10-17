@@ -92,5 +92,5 @@ func TestBlockInfoDeserialization(t *testing.T) {
 
 	// Empty string is not a valid uint64 string
 	err = json.Unmarshal([]byte(`{"height":0,"time":"","chain_id":""}`), &block)
-	require.ErrorContains(t, err, "invalid use of ,string struct tag, trying to unmarshal \"\" into uint64")
+	require.ErrorContains(t, err, "json: cannot unmarshal number  into Go struct field BlockInfo.time of type uint64")
 }

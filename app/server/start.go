@@ -15,7 +15,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/eth"
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 
 	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
 

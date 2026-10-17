@@ -1,0 +1,343 @@
+//! Implementation of Wasm to CLIF memory access translation.
+//!
+//! Given
+//!
+//! * a dynamic Wasm memory index operand,
+//! * a static offset immediate, and
+//! * a static access size,
+//!
+//! bounds check the memory access and translate it into a native memory access.
+//!
+//! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//! !!!                                                                      !!!
+//! !!!    THIS CODE IS VERY SUBTLE, HAS MANY SPECIAL CASES, AND IS ALSO     !!!
+//! !!!   ABSOLUTELY CRITICAL FOR MAINTAINING THE SAFETY OF THE WASM HEAP    !!!
+//! !!!                             SANDBOX.                                 !!!
+//! !!!                                                                      !!!
+//! !!!    A good rule of thumb is to get two reviews on any substantive     !!!
+//! !!!                         changes in here.                             !!!
+//! !!!                                                                      !!!
+//! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+use super::Reachability;
+use crate::{
+    func_environ::FuncEnvironment,
+    heap::{HeapData, HeapStyle},
+    translator::materialize_global_value,
+};
+use Reachability::*;
+use cranelift_codegen::{
+    cursor::{Cursor, FuncCursor},
+    ir::{self, InstBuilder, RelSourceLoc, condcodes::IntCC},
+};
+use cranelift_frontend::FunctionBuilder;
+use wasmer_types::WasmResult;
+
+/// Helper used to emit bounds checks (as necessary) and compute the native
+/// address of a heap access.
+///
+/// Returns the `ir::Value` holding the native address of the heap access, or
+/// `None` if the heap access will unconditionally trap.
+pub fn bounds_check_and_compute_addr(
+    builder: &mut FunctionBuilder,
+    env: &mut FuncEnvironment<'_>,
+    heap: &HeapData,
+    // Dynamic operand indexing into the heap.
+    index: ir::Value,
+    // Static immediate added to the index.
+    offset: u32,
+    // Static size of the heap access.
+    access_size: u8,
+) -> WasmResult<Reachability<ir::Value>> {
+    let index = cast_index_to_pointer_ty(
+        index,
+        heap.index_type,
+        env.pointer_type(),
+        &mut builder.cursor(),
+    );
+    let offset_and_size = offset_plus_size(offset, access_size);
+    let spectre_mitigations_enabled = env.heap_access_spectre_mitigation();
+
+    let host_page_size_log2 = env.target_config().page_size_align_log2;
+    let can_use_virtual_memory = heap.page_size_log2 >= host_page_size_log2;
+
+    let make_compare =
+        |builder: &mut FunctionBuilder, compare_kind: IntCC, lhs: ir::Value, rhs: ir::Value| {
+            builder.ins().icmp(compare_kind, lhs, rhs)
+        };
+
+    // We need to emit code that will trap (or compute an address that will trap
+    // when accessed) if
+    //
+    //     index + offset + access_size > bound
+    //
+    // or if the `index + offset + access_size` addition overflows.
+    //
+    // Note that we ultimately want a 64-bit integer (we only target 64-bit
+    // architectures at the moment) and that `offset` is a `u32` and
+    // `access_size` is a `u8`. This means that we can add the latter together
+    // as `u64`s without fear of overflow, and we only have to be concerned with
+    // whether adding in `index` will overflow.
+    //
+    // Finally, the following right-hand sides of the matches do have a little
+    // bit of duplicated code across them, but I think writing it this way is
+    // worth it for readability and seeing very clearly each of our cases for
+    // different bounds checks and optimizations of those bounds checks. It is
+    // intentionally written in a straightforward case-matching style that will
+    // hopefully make it easy to port to ISLE one day.
+    Ok(match heap.style {
+        // ====== Dynamic Memories ======
+        //
+        // 1. First special case for when `offset + access_size == 1`:
+        //
+        //            index + 1 > bound
+        //        ==> index >= bound
+        HeapStyle::Dynamic { .. } if offset_and_size == 1 => {
+            let bound = get_dynamic_heap_bound(builder, env, heap);
+            let oob = make_compare(builder, IntCC::UnsignedGreaterThanOrEqual, index, bound);
+            Reachable(explicit_check_oob_condition_and_compute_addr(
+                &mut builder.cursor(),
+                heap,
+                env.pointer_type(),
+                index,
+                offset,
+                spectre_mitigations_enabled,
+                oob,
+            ))
+        }
+
+        // 2. Second special case for when we know that there are enough guard
+        //    pages to cover the offset and access size.
+        //
+        //    The precise should-we-trap condition is
+        //
+        //        index + offset + access_size > bound
+        //
+        //    However, if we instead check only the partial condition
+        //
+        //        index > bound
+        //
+        //    then the most out of bounds that the access can be, while that
+        //    partial check still succeeds, is `offset + access_size`.
+        //
+        //    However, when we have a guard region that is at least as large as
+        //    `offset + access_size`, we can rely on the virtual memory
+        //    subsystem handling these out-of-bounds errors at
+        //    runtime. Therefore, the partial `index > bound` check is
+        //    sufficient for this heap configuration.
+        //
+        //    Additionally, this has the advantage that a series of Wasm loads
+        //    that use the same dynamic index operand but different static
+        //    offset immediates -- which is a common code pattern when accessing
+        //    multiple fields in the same struct that is in linear memory --
+        //    will all emit the same `index > bound` check, which we can GVN.
+        HeapStyle::Dynamic { .. }
+            if can_use_virtual_memory && offset_and_size <= heap.offset_guard_size =>
+        {
+            let bound = get_dynamic_heap_bound(builder, env, heap);
+            let oob = make_compare(builder, IntCC::UnsignedGreaterThan, index, bound);
+            Reachable(explicit_check_oob_condition_and_compute_addr(
+                &mut builder.cursor(),
+                heap,
+                env.pointer_type(),
+                index,
+                offset,
+                spectre_mitigations_enabled,
+                oob,
+            ))
+        }
+
+        // 3. Third special case for when `offset + access_size <= min_size`.
+        //
+        //    We know that `bound >= min_size`, so we can do the following
+        //    comparison, without fear of the right-hand side wrapping around:
+        //
+        //            index + offset + access_size > bound
+        //        ==> index > bound - (offset + access_size)
+        HeapStyle::Dynamic { .. } if offset_and_size <= heap.min_size => {
+            let bound = get_dynamic_heap_bound(builder, env, heap);
+            let adjustment = offset_and_size as i64;
+            let adjustment_value = builder.ins().iconst(env.pointer_type(), adjustment);
+            let adjusted_bound = builder.ins().isub(bound, adjustment_value);
+            let oob = make_compare(builder, IntCC::UnsignedGreaterThan, index, adjusted_bound);
+            Reachable(explicit_check_oob_condition_and_compute_addr(
+                &mut builder.cursor(),
+                heap,
+                env.pointer_type(),
+                index,
+                offset,
+                spectre_mitigations_enabled,
+                oob,
+            ))
+        }
+
+        // 4. General case for dynamic memories:
+        //
+        //        index + offset + access_size > bound
+        //
+        //    And we have to handle the overflow case in the left-hand side.
+        HeapStyle::Dynamic { .. } => {
+            let access_size_val = builder
+                .ins()
+                // Explicit cast from u64 to i64: we just want the raw
+                // bits, and iconst takes an `Imm64`.
+                .iconst(env.pointer_type(), offset_and_size as i64);
+            let adjusted_index = builder.ins().uadd_overflow_trap(
+                index,
+                access_size_val,
+                ir::TrapCode::HEAP_OUT_OF_BOUNDS,
+            );
+            let bound = get_dynamic_heap_bound(builder, env, heap);
+            let oob = make_compare(builder, IntCC::UnsignedGreaterThan, adjusted_index, bound);
+            Reachable(explicit_check_oob_condition_and_compute_addr(
+                &mut builder.cursor(),
+                heap,
+                env.pointer_type(),
+                index,
+                offset,
+                spectre_mitigations_enabled,
+                oob,
+            ))
+        }
+
+        // ====== Static Memories ======
+        //
+        // Static memories reserve the full wasm32 address space plus the offset
+        // guard up front: omit explicit bounds checks and rely on virtual memory
+        // protection to trap out-of-bounds accesses.
+        HeapStyle::Static => {
+            assert!(
+                can_use_virtual_memory,
+                "static memories require the ability to use virtual memory"
+            );
+            Reachable(compute_addr(
+                &mut builder.cursor(),
+                heap,
+                env.pointer_type(),
+                index,
+                offset,
+            ))
+        }
+    })
+}
+
+/// Get the bound of a dynamic heap as an `ir::Value`.
+fn get_dynamic_heap_bound(
+    builder: &mut FunctionBuilder,
+    env: &mut FuncEnvironment<'_>,
+    heap: &HeapData,
+) -> ir::Value {
+    match (heap.max_size, &heap.style) {
+        // The heap has a constant size, no need to actually load the bound.
+        (Some(max_size), HeapStyle::Dynamic { .. }) if heap.min_size == max_size => {
+            builder.ins().iconst(env.pointer_type(), max_size as i64)
+        }
+        // Load the heap bound from its global variable.
+        (_, HeapStyle::Dynamic { bound_gv }) => {
+            materialize_global_value(&mut builder.cursor(), env.pointer_type(), *bound_gv)
+        }
+        (_, HeapStyle::Static) => unreachable!("not a dynamic heap"),
+    }
+}
+
+fn cast_index_to_pointer_ty(
+    index: ir::Value,
+    index_ty: ir::Type,
+    pointer_ty: ir::Type,
+    pos: &mut FuncCursor,
+) -> ir::Value {
+    if index_ty == pointer_ty {
+        return index;
+    }
+    // Note that using 64-bit heaps on a 32-bit host is not currently supported,
+    // would require at least a bounds check here to ensure that the truncation
+    // from 64-to-32 bits doesn't lose any upper bits. For now though we're
+    // mostly interested in the 32-bit-heaps-on-64-bit-hosts cast.
+    assert!(index_ty.bits() < pointer_ty.bits());
+
+    // Convert `index` to `addr_ty`.
+    let extended_index = pos.ins().uextend(pointer_ty, index);
+
+    // Add debug value-label alias so that debuginfo can name the extended
+    // value as the address
+    let loc = pos.srcloc();
+    let loc = RelSourceLoc::from_base_offset(pos.func.params.base_srcloc(), loc);
+    pos.func
+        .stencil
+        .dfg
+        .add_value_label_alias(extended_index, loc, index);
+
+    extended_index
+}
+
+/// Emit explicit checks on the given out-of-bounds condition for the Wasm
+/// address and return the native address.
+///
+/// This function deduplicates explicit bounds checks and Spectre mitigations
+/// that inherently also implement bounds checking.
+#[allow(clippy::too_many_arguments)]
+fn explicit_check_oob_condition_and_compute_addr(
+    pos: &mut FuncCursor,
+    heap: &HeapData,
+    addr_ty: ir::Type,
+    index: ir::Value,
+    offset: u32,
+    // Whether Spectre mitigations are enabled for heap accesses.
+    spectre_mitigations_enabled: bool,
+    // The `i8` boolean value that is non-zero when the heap access is out of
+    // bounds (and therefore we should trap) and is zero when the heap access is
+    // in bounds (and therefore we can proceed).
+    oob_condition: ir::Value,
+) -> ir::Value {
+    if !spectre_mitigations_enabled {
+        pos.ins()
+            .trapnz(oob_condition, ir::TrapCode::HEAP_OUT_OF_BOUNDS);
+    }
+
+    let mut addr = compute_addr(pos, heap, addr_ty, index, offset);
+
+    if spectre_mitigations_enabled {
+        let null = pos.ins().iconst(addr_ty, 0);
+        addr = pos.ins().select_spectre_guard(oob_condition, null, addr);
+    }
+
+    addr
+}
+
+/// Emit code for the native address computation of a Wasm address,
+/// without any bounds checks or overflow checks.
+///
+/// It is the caller's responsibility to ensure that any necessary bounds and
+/// overflow checks are emitted, and that the resulting address is never used
+/// unless they succeed.
+fn compute_addr(
+    pos: &mut FuncCursor,
+    heap: &HeapData,
+    addr_ty: ir::Type,
+    index: ir::Value,
+    offset: u32,
+) -> ir::Value {
+    debug_assert_eq!(pos.func.dfg.value_type(index), addr_ty);
+
+    let heap_base = materialize_global_value(pos, addr_ty, heap.base);
+
+    let base_and_index = pos.ins().iadd(heap_base, index);
+
+    if offset == 0 {
+        base_and_index
+    } else {
+        // NB: The addition of the offset immediate must happen *before* the
+        // `select_spectre_guard`, if any. If it happens after, then we
+        // potentially are letting speculative execution read the whole first
+        // 4GiB of memory.
+        let offset_val = pos.ins().iconst(addr_ty, i64::from(offset));
+
+        pos.ins().iadd(base_and_index, offset_val)
+    }
+}
+
+#[inline]
+fn offset_plus_size(offset: u32, size: u8) -> u64 {
+    // Cannot overflow because we are widening to `u64`.
+    offset as u64 + size as u64
+}

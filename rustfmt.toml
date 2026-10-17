@@ -1,0 +1,10 @@
+# rustfmt.toml 
+# 
+# For full docs, run `rustfmt --help=config`
+# GitHub Repo: https://github.com/rust-lang/rustfmt
+# 
+# Commands:
+# - `rustup component add rustfmt`: Install
+# - `cargo fmt`: Run
+max_width = 81
+tab_spaces = 4

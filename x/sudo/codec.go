@@ -9,6 +9,7 @@ import (
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgEditSudoers{}, "sudo/edit_sudoers", nil)
+	cdc.RegisterConcrete(&MsgUpdateRoleMembers{}, "sudo/update_role_members", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -16,6 +17,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		/* interface */ (*sdk.Msg)(nil),
 		/* implementations */
 		&MsgEditSudoers{},
+		&MsgUpdateRoleMembers{},
+		&MsgChangeRoot{},
 		&MsgEditZeroGasActors{},
 	)
 

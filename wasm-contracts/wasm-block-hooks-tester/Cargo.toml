@@ -1,0 +1,24 @@
+[package]
+name = "wasm-block-hooks-tester"
+version = "0.1.0"
+edition = "2021"
+homepage = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+library = []
+
+[dependencies]
+anyhow = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cosmwasm-std = { workspace = true }
+cw-storage-plus = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+easy-addr = { workspace = true }

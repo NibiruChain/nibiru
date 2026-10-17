@@ -56,6 +56,11 @@ type WasmBlockHooksContractSource interface {
 	GetWasmBlockHooksContract(ctx sdk.Context) (sdk.AccAddress, bool)
 }
 
+// SudoPermissionSource checks root or scoped role membership for Wasm deployment.
+type SudoPermissionSource interface {
+	CheckPermissions(actor sdk.AccAddress, ctx sdk.Context, role string) error
+}
+
 // DistributionKeeper defines a subset of methods implemented by the cosmos-sdk distribution keeper
 type DistributionKeeper interface {
 	DelegatorWithdrawAddress(c context.Context, req *distrtypes.QueryDelegatorWithdrawAddressRequest) (*distrtypes.QueryDelegatorWithdrawAddressResponse, error)

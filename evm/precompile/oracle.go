@@ -49,9 +49,6 @@ const (
 func (p precompileOracle) Run(
 	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
@@ -64,9 +61,6 @@ func (p precompileOracle) Run(
 func (p precompileOracle) DynamicRun(
 	evmObj *vm.EVM,
 	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls

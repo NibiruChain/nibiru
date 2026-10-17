@@ -461,7 +461,7 @@ async function deployWasmContracts() {
    * the minter address before the contract exists.
    *
    * Nibiru v2.14 restricts tokenfactory denom creation to governance or x/sudo
-   * sudoers. The minter creates its share denom during instantiate via a
+   * tf_oper members. The minter creates its share denom during instantiate via a
    * submessage, so the contract address must already be in sudoers before the
    * instantiate tx runs. Predicting the address here lets the validator add that
    * exact future contract to sudoers, then instantiate the contract normally.
@@ -489,27 +489,25 @@ async function deployWasmContracts() {
     clog("\nGranting vault token minter x/sudo permission...")
     const editSudoersFile = join(
       config.cacheDir,
-      "edit_sudoers_vault_minter.json",
+      "tf_oper_vault_minter.json",
     )
     writeFileSync(
       editSudoersFile,
       JSON.stringify(
         {
-          action: "add_contracts",
-          contracts: [predictedMinterAddr],
+          role: "tf_oper",
+          add: [predictedMinterAddr],
+          remove: [],
         },
         null,
         2,
       ),
     )
-    const editSudoersCmd = `nibid tx sudo edit-sudoers ${editSudoersFile} --from validator ${TX_FLAGS}`
+    const editSudoersCmd = `nibid tx sudo update-role-members ${editSudoersFile} --from validator ${TX_FLAGS}`
     const editSudoersResult = await execValidatorTx({
       command: editSudoersCmd,
-      requireDeliveredSuccess: false,
     })
-    if (editSudoersResult.code !== 0) {
-      cerr(`edit-sudoers note: (${editSudoersResult.raw_log})`)
-    }
+    ensureTxOk(editSudoersResult)
 
     const minterInstantiateCmd = `nibid tx wasm instantiate2 ${VAULT_TOKEN_MINTER_CODE_ID} "$(cat ${config.initVaultTokenMinterFile})" ${VAULT_TOKEN_MINTER_SALT_HEX} --fix-msg --amount ${ONE_THOUSAND_UNIBI} --label "vault_token_minter" --admin ${config.signers.valAddr} --from validator ${TX_FLAGS}`
     try {
@@ -600,10 +598,9 @@ async function deployWasmContracts() {
     if (
       message.msg &&
       message.msg.admin &&
-      message.msg.admin.msg &&
-      message.msg.admin.msg.update_vault_address
+      message.msg.admin.update_vault_address
     ) {
-      message.msg.admin.msg.update_vault_address.vault_address = VAULT_ADDR
+      message.msg.admin.update_vault_address.vault_address = VAULT_ADDR
     }
   }
 

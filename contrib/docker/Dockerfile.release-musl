@@ -1,0 +1,37 @@
+# syntax=docker/dockerfile:1
+#
+# Build the Linux release candidate with the musl toolchain. The output stage
+# contains only /nibid so `docker buildx build --output type=local` exports the
+# exact binary that passed the in-container ELF check.
+FROM golang:1.27.0-alpine3.24@sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc AS build
+
+ARG VERSION
+ARG TARGETARCH
+
+RUN apk add --no-cache \
+    bash \
+    build-base \
+    git \
+    jq \
+    linux-headers \
+    wget \
+    perl
+
+WORKDIR /nibiru
+COPY . .
+
+RUN --mount=type=cache,id=go-modules,target=/go/pkg/mod \
+    --mount=type=cache,id=go-build-${TARGETARCH},target=/root/.cache/go-build \
+    BUILDDIR=/out \
+    TEMPDIR=/tmp/nibiru-temp \
+    NIBID_STATIC_PIE=true \
+    VERSION="$VERSION" \
+    contrib/scripts/build-nibiru.sh --run --just-build \
+    && mkdir -p /out/wasmvm \
+    && cp contrib/scripts/wasmvm-checksums.txt /out/wasmvm/checksums.txt \
+    && sha256sum \
+        /out/nibid \
+        "/tmp/nibiru-temp/wasmvm/v1.13.1/lib/linux_${TARGETARCH}/libwasmvm_muslc.a"
+
+FROM scratch AS artifact
+COPY --from=build /out/ /
