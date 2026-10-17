@@ -25,6 +25,10 @@ e2e-test:
 run-trader *args:
   go run ./cmd/trader {{args}}
 
+# Preview Slack messages locally; pass --case NAME or --format json.
+preview-slack *args:
+  go run ./slackmsg/demo {{args}}
+
 run-auto-trader *args:
   go run ./cmd/trader auto {{args}}
 

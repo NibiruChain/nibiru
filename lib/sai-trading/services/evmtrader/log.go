@@ -7,9 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/NibiruChain/nibiru/lib/sai-trading/slackmsg"
 )
 
 type LogLevel string
@@ -148,41 +149,10 @@ func (t *EVMTrader) logError(msg string, kv ...any) {
 		}
 	}
 
-	// Format Slack message
-	slackMsg := map[string]interface{}{
-		"text": fmt.Sprintf("🚨 Auto-Trader Error: %s", msg),
-		"blocks": []map[string]interface{}{
-			{
-				"type": "section",
-				"text": map[string]interface{}{
-					"type": "mrkdwn",
-					"text": fmt.Sprintf("*%s*\n\n*Details:*", msg),
-				},
-			},
-			{
-				"type":   "section",
-				"fields": buildSlackFields(errorFields),
-			},
-		},
-	}
+	slackMsg := slackmsg.Error(msg, errorFields)
 
 	// Send to Slack (non-blocking)
 	go t.sendSlackNotification(t.cfg.SlackWebhook, slackMsg)
-}
-
-// buildSlackFields converts error fields to Slack field format
-func buildSlackFields(fields map[string]any) []map[string]interface{} {
-	slackFields := []map[string]interface{}{}
-	for k, v := range fields {
-		slackFields = append(slackFields, map[string]interface{}{
-			"type": "mrkdwn",
-			"text": fmt.Sprintf("*%s:*\n%s", k, fmt.Sprintf("%v", v)),
-		})
-		if len(slackFields) >= 10 { // Slack has a limit on fields
-			break
-		}
-	}
-	return slackFields
 }
 
 // sendSlackNotification posts a payload to the Slack webhook.
@@ -226,194 +196,5 @@ func (t *EVMTrader) sendSlackHealthNotification(webhookURL string, fields map[st
 	if webhookURL == "" {
 		return
 	}
-	getInt := func(key string) int {
-		v, ok := fields[key]
-		if !ok || v == nil {
-			return 0
-		}
-		switch vv := v.(type) {
-		case int:
-			return vv
-		case int64:
-			return int(vv)
-		case uint64:
-			return int(vv)
-		case float64:
-			return int(vv)
-		case string:
-			i, _ := strconv.Atoi(vv)
-			return i
-		default:
-			return 0
-		}
-	}
-	getStr := func(key string) string {
-		v, ok := fields[key]
-		if !ok || v == nil {
-			return ""
-		}
-		return fmt.Sprintf("%v", v)
-	}
-
-	opened := getInt("positions_opened_24h")
-	closed := getInt("positions_closed_24h")
-	failed := getInt("failed_txs_24h")
-	openNow := getInt("open_positions")
-	failedReasonsBlock := getStr("failed_reason_types")
-	if failedReasonsBlock == "" {
-		failedReasonsBlock = getStr("failed_reason")
-	}
-	volume := getStr("volume_generated")
-	pnl := getStr("realized_pnl")
-
-	// Markets: prefer precomputed market_pairs; else fall back to market_indices.
-	var marketLines []string
-	if mp, ok := fields["market_pairs"]; ok {
-		switch vv := mp.(type) {
-		case []string:
-			marketLines = vv
-		case string:
-			marketLines = []string{vv}
-		default:
-			marketLines = []string{fmt.Sprintf("%v", vv)}
-		}
-	} else {
-		marketLines = []string{getStr("market_indices")}
-	}
-
-	// Balances: list any fields named balance_<denom>
-	balanceLines := []string{}
-	for k, v := range fields {
-		if !strings.HasPrefix(k, "balance_") {
-			continue
-		}
-		denom := strings.TrimPrefix(k, "balance_")
-		amount := fmt.Sprintf("%v", v)
-		// Try to keep symbol-like suffix (e.g. .../stnibi -> stnibi).
-		if idx := strings.LastIndex(denom, "/"); idx >= 0 && idx+1 < len(denom) {
-			denom = denom[idx+1:]
-		}
-		balanceLines = append(balanceLines, fmt.Sprintf("%s %s", amount, denom))
-	}
-
-	if len(balanceLines) == 0 {
-		balanceLines = []string{"(no balances)"}
-	}
-
-	blocks, fallbackText := buildStatusReportBlocks(
-		opened,
-		closed,
-		openNow,
-		volume,
-		pnl,
-		failed,
-		failedReasonsBlock,
-		marketLines,
-		balanceLines,
-	)
-
-	slackMsg := map[string]interface{}{
-		"text":   fallbackText,
-		"blocks": blocks,
-	}
-
-	go t.sendSlackNotification(webhookURL, slackMsg)
-}
-
-func mrkdwnField(label, value string) map[string]interface{} {
-	return map[string]interface{}{
-		"type": "mrkdwn",
-		"text": fmt.Sprintf("*%s:*\n%s", label, value),
-	}
-}
-
-func plainFields(items []string) []map[string]interface{} {
-	fields := make([]map[string]interface{}, 0, len(items))
-	for _, item := range items {
-		if len(fields) >= 10 {
-			break
-		}
-		fields = append(fields, map[string]interface{}{
-			"type": "mrkdwn",
-			"text": item,
-		})
-	}
-	return fields
-}
-
-func buildStatusReportBlocks(
-	positionsOpened24h int,
-	positionsClosed24h int,
-	openPositionsNow int,
-	volumeGenerated string,
-	realizedPnl string,
-	failedTxs int,
-	failedReasonsBlock string,
-	marketLines []string,
-	balanceLines []string,
-) ([]map[string]interface{}, string) {
-	blocks := []map[string]interface{}{
-		{
-			"type": "section",
-			"text": map[string]interface{}{
-				"type": "mrkdwn",
-				"text": ":robot_face: *EVM Trading Bot — Status Report*\n:white_check_mark: Status: Up and Running",
-			},
-		},
-		{"type": "divider"},
-		{
-			"type": "section",
-			"fields": []map[string]interface{}{
-				mrkdwnField("Positions opened (24h)", strconv.Itoa(positionsOpened24h)),
-				mrkdwnField("Positions closed (24h)", strconv.Itoa(positionsClosed24h)),
-				mrkdwnField("Open positions (now)", strconv.Itoa(openPositionsNow)),
-				mrkdwnField("Volume generated", volumeGenerated),
-				mrkdwnField("Realized PnL", realizedPnl),
-				mrkdwnField("Failed transactions", strconv.Itoa(failedTxs)),
-			},
-		},
-	}
-
-	if failedTxs > 0 {
-		blocks = append(blocks, map[string]interface{}{
-			"type": "section",
-			"text": map[string]interface{}{
-				"type": "mrkdwn",
-				"text": ":warning: *Failure reasons:*\n" + failedReasonsBlock,
-			},
-		})
-	}
-
-	blocks = append(blocks,
-		map[string]interface{}{"type": "divider"},
-		map[string]interface{}{
-			"type": "section",
-			"text": map[string]interface{}{
-				"type": "mrkdwn",
-				"text": ":chart_with_upwards_trend: *Markets*",
-			},
-		},
-		map[string]interface{}{
-			"type":   "section",
-			"fields": plainFields(marketLines),
-		},
-		map[string]interface{}{"type": "divider"},
-		map[string]interface{}{
-			"type": "section",
-			"text": map[string]interface{}{
-				"type": "mrkdwn",
-				"text": ":moneybag: *Balances*",
-			},
-		},
-		map[string]interface{}{
-			"type":   "section",
-			"fields": plainFields(balanceLines),
-		},
-	)
-
-	fallbackText := fmt.Sprintf(
-		"EVM Trading Bot Status Report — opened %d, closed %d, open_now %d, failed %d, volume %s, PnL %s",
-		positionsOpened24h, positionsClosed24h, openPositionsNow, failedTxs, volumeGenerated, realizedPnl,
-	)
-	return blocks, fallbackText
+	go t.sendSlackNotification(webhookURL, slackmsg.Health(fields))
 }
