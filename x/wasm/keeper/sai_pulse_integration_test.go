@@ -47,21 +47,22 @@ func TestSaiPulseArtifacts(t *testing.T) {
 	vaultCode := store("vault.wasm")
 	pulseCode := store("sai_pulse.wasm")
 
-	// The real minter creates a tokenfactory denom at instantiation. Give its
-	// predicted address tf_oper permission only in this fresh in-memory chain.
-	minterAddr := keeper.BuildContractAddressClassic(minterCode, 1)
-	roles := chain.SudoKeeper.Sudoers.GetOr(ctx, sudo.Sudoers{})
-	roles.Roles = append(roles.Roles, sudo.RoleMembers{
-		Role: sudo.RoleTFOper, Members: []string{minterAddr.String()},
-	})
-	chain.SudoKeeper.Sudoers.Set(ctx, roles)
-	minter := instantiatePulseArtifact(t, chain, ctx, owner, minterCode, map[string]any{
-		"denom": "pulse_shares", "owner": owner.String(),
-	})
-	require.Equal(t, minterAddr, minter)
-
+	require.NoError(t, testapp.FundAccount(chain.BankKeeper, ctx, owner,
+		sdk.NewCoins(sdk.NewInt64Coin("unibi", 3_000_000))))
 	var vaults []string
-	for range 2 {
+	for i := range 2 {
+		// Each real minter creates a tokenfactory denom at instantiation. Give
+		// its predicted address tf_oper only in this fresh in-memory chain.
+		minterAddr := keeper.BuildContractAddressClassic(minterCode, uint64(2*i+1))
+		roles := chain.SudoKeeper.Sudoers.GetOr(ctx, sudo.Sudoers{})
+		roles.Roles = append(roles.Roles, sudo.RoleMembers{
+			Role: sudo.RoleTFOper, Members: []string{minterAddr.String()},
+		})
+		chain.SudoKeeper.Sudoers.Set(ctx, roles)
+		minter := instantiatePulseArtifact(t, chain, ctx, owner, minterCode, map[string]any{
+			"denom": "pulse_shares", "owner": owner.String(),
+		})
+		require.Equal(t, minterAddr, minter)
 		vault := instantiatePulseArtifact(t, chain, ctx, owner, vaultCode, map[string]any{
 			"name": "Pulse integration vault", "symbol": "SLP", "collateral_denom": "unibi",
 			"owner": owner.String(), "manager": owner.String(), "admin": owner.String(),
@@ -72,6 +73,13 @@ func TestSaiPulseArtifacts(t *testing.T) {
 			"max_supply_increase_daily_percentage": "0.05", "losses_burn_percentage": "0.01",
 			"max_discount_percentage": "0.02", "max_discount_threshold_percentage": "1.20",
 		})
+		executePulseArtifact(t, chain, ctx, owner, minter,
+			map[string]any{"add_minter": map[string]any{"address": vault.String()}})
+		executePulseArtifact(t, chain, ctx, owner, vault,
+			map[string]any{"deposit": map[string]any{}}, sdk.NewInt64Coin("unibi", 1_000_000))
+		// Receive trading proceeds to exercise nonzero, signed accounting data.
+		executePulseArtifact(t, chain, ctx, owner, vault,
+			map[string]any{"receive_assets": map[string]any{}}, sdk.NewInt64Coin("unibi", 1_000))
 		vaults = append(vaults, vault.String())
 	}
 	pulse := instantiatePulseArtifact(t, chain, ctx, owner, pulseCode, map[string]any{
@@ -107,6 +115,9 @@ func TestSaiPulseArtifacts(t *testing.T) {
 			var data map[string]json.RawMessage
 			require.NoError(t, json.Unmarshal([]byte(attrs["data"]), &data))
 			require.Len(t, data, 3)
+			var revenue map[string]string
+			require.NoError(t, json.Unmarshal(data["revenue_info"], &revenue))
+			require.Equal(t, "-1000", revenue["liabilities"])
 			for field, query := range map[string]string{
 				"vault_snapshot":   `{"vault_snapshot":{}}`,
 				"available_assets": `{"available_assets":{}}`,
@@ -117,6 +128,11 @@ func TestSaiPulseArtifacts(t *testing.T) {
 				require.JSONEq(t, string(want), string(data[field]), field)
 			}
 			t.Logf("vault=%s event_data_bytes=%d", vaults[i], len(attrs["data"]))
+			fixture, err := json.Marshal(map[string]any{
+				"height": ctx.BlockHeight(), "phase": "end_block", "event": event,
+			})
+			require.NoError(t, err)
+			t.Logf("snapshot_fixture=%s", fixture)
 		}
 	}
 
@@ -166,12 +182,12 @@ func instantiatePulseArtifact(t *testing.T, chain *app.NibiruApp, ctx sdk.Contex
 	return sdk.MustAccAddressFromBech32(resp.Address)
 }
 
-func executePulseArtifact(t *testing.T, chain *app.NibiruApp, ctx sdk.Context, owner, contract sdk.AccAddress, execute any) {
+func executePulseArtifact(t *testing.T, chain *app.NibiruApp, ctx sdk.Context, owner, contract sdk.AccAddress, execute any, funds ...sdk.Coin) {
 	t.Helper()
 	msgJSON, err := json.Marshal(execute)
 	require.NoError(t, err)
 	msg := &wasmtypes.MsgExecuteContract{
-		Sender: owner.String(), Contract: contract.String(), Msg: msgJSON, Funds: sdk.Coins{},
+		Sender: owner.String(), Contract: contract.String(), Msg: msgJSON, Funds: sdk.NewCoins(funds...),
 	}
 	_, err = chain.MsgServiceRouter().Handler(msg)(ctx, msg)
 	require.NoError(t, err)

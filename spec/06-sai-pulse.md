@@ -130,10 +130,11 @@ just test-sai-pulse /absolute/path/to/verified/artifacts
 This opt-in Go integration test loads real Wasm into an in-memory Nibiru app and
 checks pause, aligned cadence, BeginBlock exclusion, same-state query parity,
 ordinary failure isolation, and registry clearing. It logs code hashes, consumed
-SDK gas, event payload bytes, and elapsed execution time. Setup uses real vault
-and token-minter contracts with empty vaults; it is not a populated-mainnet
-performance benchmark. Pulse's contract tests cover populated vault state and
-numeric serialization separately.
+SDK gas, event payload bytes, and elapsed execution time. Setup uses two real
+vaults with separate token minters, deposits, and trading proceeds, including
+negative liabilities. This synthetic state is not a mainnet performance
+benchmark. Pulse's contract tests cover numeric serialization separately. The
+test logs `snapshot_fixture` JSON records for the later indexer integration.
 
 ## Activation and rollback
 
