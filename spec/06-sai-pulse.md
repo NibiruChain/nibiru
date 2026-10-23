@@ -116,18 +116,21 @@ to `current_epoch`; all other existing vault-history fields come from the named
 response objects. Old history before activation still needs the existing
 historical query path.
 
-## Verify a built artifact
+## Run the integration test
 
-Use CI artifacts from the exact Sai Perps source commit under review. Preserve
-the run URL, source commit, and artifact checksums. The directory must contain
-`sai_pulse.wasm`, `vault.wasm`, and `vault_token_minter.wasm` from the same build.
-Generated Wasm is local build output and is not committed here.
+The verified `sai_pulse.wasm`, `vault.wasm`, and `vault_token_minter.wasm`
+fixtures are checked in under `x/wasm/testdata/sai-pulse`, alongside checksums
+and build provenance. A package-level cache in `_test.go` reads all three once
+and shares their immutable byte slices across tests, including parallel callers.
+Neither the cache nor the bytecode is linked into the production binary.
 
 ```bash
-just test-sai-pulse /absolute/path/to/verified/artifacts
+go test ./x/wasm/keeper -run '^TestSaiPulseArtifacts$' -count=1 -v
 ```
 
-This opt-in Go integration test loads real Wasm into an in-memory Nibiru app and
+The normal keeper package tests also run this integration test. It needs no
+environment variables or downloads, and missing fixture files fail the test.
+The test loads real Wasm into an in-memory Nibiru app and
 checks pause, aligned cadence, BeginBlock exclusion, same-state query parity,
 ordinary failure isolation, and registry clearing. It logs code hashes, consumed
 SDK gas, event payload bytes, and elapsed execution time. Setup uses two real

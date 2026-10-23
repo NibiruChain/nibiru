@@ -337,11 +337,6 @@ test-ibc:
     echo "RUN: go test ./lib/ibc-go/... # includes cache, skips localnet"
     go test ./lib/ibc-go/...
 
-# Exercise Sai Pulse ABCI hooks with verified Sai Perps Wasm artifacts
-[positional-arguments]
-test-sai-pulse artifact_dir:
-    SAI_PULSE_ARTIFACTS="$1" go test ./x/wasm/keeper -run '^TestSaiPulseArtifacts$' -count=1 -v
-
 # Run Go tests without cached test results and generate coverage.out
 test-cover:
     #!/usr/bin/env bash

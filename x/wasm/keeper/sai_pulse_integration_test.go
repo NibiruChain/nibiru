@@ -3,8 +3,6 @@ package keeper_test
 import (
 	"crypto/sha256"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -20,19 +18,16 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-// TestSaiPulseArtifacts runs real release bytecode through the application's
-// ABCI handlers. Artifact paths are explicit so tests never silently download
-// code or commit generated Wasm. Run with just test-sai-pulse <artifact-dir>.
+// TestSaiPulseArtifacts runs checked-in release bytecode through the
+// application's ABCI handlers using the package's shared fixture cache.
 func TestSaiPulseArtifacts(t *testing.T) {
-	dir := os.Getenv("SAI_PULSE_ARTIFACTS")
-	if dir == "" {
-		t.Skip("set SAI_PULSE_ARTIFACTS to a verified Sai Perps artifact directory")
-	}
+	fixtures, err := saiPulseFixtures()
+	require.NoError(t, err)
 	chain, ctx := testapp.NewNibiruTestAppAndContext()
 	owner := sdk.MustAccAddressFromBech32(testutil.ADDR_SUDO_ROOT)
 	store := func(name string) uint64 {
-		code, err := os.ReadFile(filepath.Join(dir, name))
-		require.NoError(t, err)
+		code, ok := fixtures[name]
+		require.True(t, ok, "missing cached fixture %s", name)
 		t.Logf("artifact %s sha256=%x", name, sha256.Sum256(code))
 		msg := wasmtypes.MsgStoreCodeFixture(func(m *wasmtypes.MsgStoreCode) {
 			m.Sender, m.WASMByteCode = owner.String(), code
