@@ -2,6 +2,7 @@
 members = [
   "contrib/scripts",
   "lib/cosmwasm-vm",
+  "lib/cosmwasm-optimizer",
   "lib/cw-address-like",
   "lib/easy-addr",
   "lib/nibiru-ownable",
@@ -10,7 +11,7 @@ members = [
   "wasm-contracts/*",
 ]
 # Wasmer and wasmvm keep independent Cargo workspaces and lockfiles.
-exclude = ["lib/wasmer", "lib/wasmvm/libwasmvm"]
+exclude = ["lib/wasmer", "lib/wasmvm/libwasmvm", "wasm-contracts/artifacts"]
 resolver = "2"
 package.version = "0.10.0"
 package.homepage = "https://github.com/NibiruChain/nibiru"
