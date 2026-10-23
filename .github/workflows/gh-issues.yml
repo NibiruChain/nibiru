@@ -17,7 +17,10 @@ jobs:
     name: "Add GH ticket to project"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/add-to-project@v2.0.0
+      # Rationale: https://github.com/NibiruChain/nibiru/issues/2807
+      # Unreleased upstream fix: v2.0.0 and earlier fail when parallel runs
+      # add the same issue ("Content already exists in this project").
+      - uses: actions/add-to-project@10852874378313643e82f7be4d23615b23a22d99
         with:
           project-url: https://github.com/orgs/NibiruChain/projects/8
           github-token: ${{ secrets.NIBIRU_PM }}
