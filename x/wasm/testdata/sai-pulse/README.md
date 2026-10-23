@@ -9,16 +9,18 @@ into the production binary.
 
 ## Provenance
 
+- Published release: [wasm-contracts/v1.52.0](https://github.com/NibiruChain/sai-perps/releases/tag/wasm-contracts/v1.52.0)
+
 - Contract PR: https://github.com/NibiruChain/sai-perps/pull/454
 - Follow-up issue: https://github.com/NibiruChain/sai-perps/issues/487
 - Sai Perps main source commit: `890b60831ce50749fa2c34438eeebd3e2bdd5fb8`
 - Main CI build: https://github.com/NibiruChain/sai-perps/actions/runs/39979483073
 - Optimizer image: `cosmwasm/optimizer:0.17.0`, Linux x86_64.
 
-All three binaries match the main CI artifact manifest. They also match the
+All three binaries match the published release and main CI artifact manifests. They also match the
 pre-merge CI artifacts from run `39977596123` byte-for-byte; the complete existing
 keeper package tests passed with those bytes. Pulse includes the minimal
-migration entrypoint. No migration-specific tests or simulations were added.
+migration entrypoint.
 
 To verify the files from this directory:
 

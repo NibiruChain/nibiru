@@ -144,12 +144,13 @@ negative liabilities. This synthetic state is not a mainnet performance
 benchmark. Pulse's contract tests cover numeric serialization separately. The
 test logs `snapshot_fixture` JSON records for the later indexer integration.
 
-The pinned build comes from [Sai Perps PR 454](https://github.com/NibiruChain/sai-perps/pull/454),
+The pinned build is published as [wasm-contracts/v1.52.0](https://github.com/NibiruChain/sai-perps/releases/tag/wasm-contracts/v1.52.0).
+It comes from [Sai Perps PR 454](https://github.com/NibiruChain/sai-perps/pull/454),
 merged as main commit `890b60831ce50749fa2c34438eeebd3e2bdd5fb8`, and
 [main artifact run 39979483073](https://github.com/NibiruChain/sai-perps/actions/runs/39979483073).
 Pulse SHA-256 is
 `80c9151fa298a047e7ee50cd20af7173959915f3f51f88516f3d8f20dd66a5ef`.
-All three fixtures match the main artifact manifest and the pre-merge artifacts
+All three fixtures match the published release, main artifact manifest, and pre-merge artifacts
 used for the successful keeper package tests. See the fixture README for full
 provenance. These tests validate synthetic vault state, not production load.
 
