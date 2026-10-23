@@ -54,11 +54,10 @@ func TestSaiPulseArtifacts(t *testing.T) {
 		// Each real minter creates a tokenfactory denom at instantiation. Give
 		// its predicted address tf_oper only in this fresh in-memory chain.
 		minterAddr := keeper.BuildContractAddressClassic(minterCode, uint64(2*i+1))
-		roles := chain.SudoKeeper.Sudoers.GetOr(ctx, sudo.Sudoers{})
-		roles.Roles = append(roles.Roles, sudo.RoleMembers{
-			Role: sudo.RoleTFOper, Members: []string{minterAddr.String()},
+		_, err := chain.SudoKeeper.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{
+			Sender: owner.String(), Role: sudo.RoleTFOper, Add: []string{minterAddr.String()},
 		})
-		chain.SudoKeeper.Sudoers.Set(ctx, roles)
+		require.NoError(t, err)
 		minter := instantiatePulseArtifact(t, chain, ctx, owner, minterCode, map[string]any{
 			"denom": "pulse_shares", "owner": owner.String(),
 		})
