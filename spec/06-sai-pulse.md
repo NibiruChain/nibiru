@@ -1,6 +1,6 @@
 # Sai Pulse block-hook integration
 
-Status: Initial implementation, pending artifact integration and network rollout.
+Status: Real-artifact application integration passed; network rollout pending.
 Code scope: Sai Perps `contracts/sai-pulse`, Nibiru `x/wasm/keeper` integration
 tests, and the existing root-controlled `x/sudo` registry configuration.
 
@@ -135,6 +135,16 @@ vaults with separate token minters, deposits, and trading proceeds, including
 negative liabilities. This synthetic state is not a mainnet performance
 benchmark. Pulse's contract tests cover numeric serialization separately. The
 test logs `snapshot_fixture` JSON records for the later indexer integration.
+
+The initial verified build came from [Sai Perps PR 454](https://github.com/NibiruChain/sai-perps/pull/454),
+head `49adc56e51ad7bbbb1e2a5d0029e39a107472ab5`,
+[artifact run 39880735839](https://github.com/NibiruChain/sai-perps/actions/runs/39880735839),
+tested merge commit `e95d8b9865693edcc8554fa6f7581caa5512e06b`.
+Pulse SHA-256 was
+`45f6b694ad69ce2661437d96125fcec0beac154f7024b401a6f8a18b0bffbd7f`.
+The real-artifact test passed with 1,156,911 SDK gas for the scheduled two-vault
+EndBlock, approximately 3–4 ms in the local test, and 381 bytes per JSON payload.
+These are synthetic-fixture measurements, not production acceptance results.
 
 ## Activation and rollback
 
