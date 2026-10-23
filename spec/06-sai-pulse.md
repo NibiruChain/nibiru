@@ -3,6 +3,7 @@
 Status: Real-artifact application integration passed; network rollout pending.
 Code scope: Sai Perps `contracts/sai-pulse`, Nibiru `x/wasm/keeper` integration
 tests, and the existing root-controlled `x/sudo` registry configuration.
+Follow-up tracking: [Sai Perps issue 487](https://github.com/NibiruChain/sai-perps/issues/487).
 
 Sai Pulse is a Sai Perps contract that implements both the Nibiru block-hook
 registry and a vault snapshot target. It replaces no Keeper jobs at activation.
@@ -58,6 +59,10 @@ Owner-only execute messages are `{"pause":{}}`, `{"resume":{}}`,
 and the standard `nibiru_ownable` ownership actions. Omitted update fields retain
 their values. Interval zero, duplicate or invalid addresses, and more than 32
 vaults are rejected. Pulse can dispatch only its own snapshot operation.
+
+The Wasm admin can migrate using `{}`. The migration entrypoint updates CW2
+identity and version metadata while preserving ownership, configuration, and
+pause state.
 
 The sudo handler checks pause state, schedule, and configured vault membership.
 Each call queries `vault_snapshot`, `available_assets`, and `get_revenue_info`.
@@ -139,15 +144,14 @@ negative liabilities. This synthetic state is not a mainnet performance
 benchmark. Pulse's contract tests cover numeric serialization separately. The
 test logs `snapshot_fixture` JSON records for the later indexer integration.
 
-The initial verified build came from [Sai Perps PR 454](https://github.com/NibiruChain/sai-perps/pull/454),
-head `49adc56e51ad7bbbb1e2a5d0029e39a107472ab5`,
-[artifact run 39880735839](https://github.com/NibiruChain/sai-perps/actions/runs/39880735839),
-tested merge commit `e95d8b9865693edcc8554fa6f7581caa5512e06b`.
-Pulse SHA-256 was
-`45f6b694ad69ce2661437d96125fcec0beac154f7024b401a6f8a18b0bffbd7f`.
-The real-artifact test passed with 1,156,911 SDK gas for the scheduled two-vault
-EndBlock, approximately 3–4 ms in the local test, and 381 bytes per JSON payload.
-These are synthetic-fixture measurements, not production acceptance results.
+The pinned build comes from [Sai Perps PR 454](https://github.com/NibiruChain/sai-perps/pull/454),
+merged as main commit `890b60831ce50749fa2c34438eeebd3e2bdd5fb8`, and
+[main artifact run 39979483073](https://github.com/NibiruChain/sai-perps/actions/runs/39979483073).
+Pulse SHA-256 is
+`80c9151fa298a047e7ee50cd20af7173959915f3f51f88516f3d8f20dd66a5ef`.
+All three fixtures match the main artifact manifest and the pre-merge artifacts
+used for the successful keeper package tests. See the fixture README for full
+provenance. These tests validate synthetic vault state, not production load.
 
 ## Activation and rollback
 

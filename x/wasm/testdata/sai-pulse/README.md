@@ -10,17 +10,15 @@ into the production binary.
 ## Provenance
 
 - Contract PR: https://github.com/NibiruChain/sai-perps/pull/454
-- Sai Perps source commit: `49adc56e51ad7bbbb1e2a5d0029e39a107472ab5`
-- CI build: https://github.com/NibiruChain/sai-perps/actions/runs/39880735839
-- CI tested merge commit: `e95d8b9865693edcc8554fa6f7581caa5512e06b`
-- Optimizer image: `cosmwasm/optimizer:0.17.0`
-- Independent build: homebox, Ubuntu 24.04 WSL2, x86_64, using `just wasm-all`
-  at the source commit above. All three binaries match CI byte-for-byte.
+- Follow-up issue: https://github.com/NibiruChain/sai-perps/issues/487
+- Sai Perps main source commit: `890b60831ce50749fa2c34438eeebd3e2bdd5fb8`
+- Main CI build: https://github.com/NibiruChain/sai-perps/actions/runs/39979483073
+- Optimizer image: `cosmwasm/optimizer:0.17.0`, Linux x86_64.
 
-Homebox used a Windows-backed source mount because its Ubuntu 24 Docker
-integration was disabled. Compilation succeeded, but that mount blocked writes
-of the build metadata. Provenance was recorded after copying the unchanged Wasm
-into the Linux worktree. Binary checksums matched the CI manifest.
+All three binaries match the main CI artifact manifest. They also match the
+pre-merge CI artifacts from run `39977596123` byte-for-byte; the complete existing
+keeper package tests passed with those bytes. Pulse includes the minimal
+migration entrypoint. No migration-specific tests or simulations were added.
 
 To verify the files from this directory:
 
