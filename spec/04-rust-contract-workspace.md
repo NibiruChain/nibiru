@@ -14,6 +14,7 @@ directory `lib/`.
 | Location | Contents |
 | --- | --- |
 | `wasm-contracts/` | Nibiru CosmWasm contracts, including `nibi-stargate`, incentives, lockup, multisig, vesting, and test contracts. |
+| `lib/cosmwasm-optimizer/` | The `sai-wasm-optimizer` CLI for pinned ARM64/AMD64 contract builds and maintained-VM validation. |
 | `lib/nibiru-std/` | Nibiru-specific types and Stargate bindings for CosmWasm contracts. |
 | `lib/nibiru-ownable/` | Two-step ownership and delegated-permission patterns for contracts. |
 | `lib/nibiru-ownable-derive/` | Procedural macros re-exported by crate `nibiru-ownable`. |
@@ -40,7 +41,9 @@ just rs wasm-check
 
 Command `just rs test-all` runs the root Cargo workspace tests. Command
 `just rs wasm-all` compiles contract artifacts, and command `just rs wasm-check`
-validates those artifact files for deployment.
+validates those artifact files with the maintained VM.
+The [optimizer README](../lib/cosmwasm-optimizer/README.md) documents
+installation, package selection, caches, and AMD64 release mode.
 
 Each contract owns its usage documentation in its package `README.md`. Start
 with [the contracts README](../wasm-contracts/README.md) when navigating the

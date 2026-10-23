@@ -375,8 +375,9 @@ wasmvm *args:
     cd lib/wasmvm && just {{ args }}
 
 # Run root Rust workspace commands. Ex: `just rs test-all`.
+[positional-arguments]
 rust *args:
-    just --justfile just-rs.just {{ args }}
+    just --justfile just-rs.just "$@"
 
 alias rs := rust
 

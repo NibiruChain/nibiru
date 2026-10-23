@@ -11,13 +11,32 @@ install:
   # https://crates.io/crates/cosmwasm-check
   cargo install cosmwasm-check
 
-# TODO: Keep this compatibility recipe while artifact and CI parity move in a later change.
-wasm-all:
-  cd wasm-contracts && bash ../contrib/scripts/wasm-out.sh
+# Build optimized contracts with the maintained optimizer (default mode: dev).
+wasm-all mode="dev":
+  just rs optimizer build --manifest-path Cargo.toml --output-dir wasm-contracts/artifacts --mode {{quote(mode)}}
 
-# TODO: Validate production artifacts after their build and CI migration is specified.
+# Run the maintained sai-wasm-optimizer CLI.
+[positional-arguments]
+optimizer *args:
+  cargo run --locked -p sai-wasm-optimizer -- "$@"
+
+# Test optimizer selection, command handling, and VM validation.
+optimizer-test:
+  cargo test --locked -p sai-wasm-optimizer
+
+# Execute an externally built counter artifact in the maintained VM.
+[positional-arguments]
+optimizer-vm-test artifact:
+  SAI_OPTIMIZER_TEST_WASM="$1" cargo test --locked -p sai-wasm-optimizer --test vm_execution -- --ignored
+
+# Instantiate and update a compiled Sai oracle in the maintained VM.
+[positional-arguments]
+optimizer-oracle-test artifact:
+  SAI_OPTIMIZER_ORACLE_WASM="$1" cargo test --locked -p sai-wasm-optimizer --test vm_sai_oracle -- --ignored
+
+# Validate optimized artifacts with Nibiru's maintained VM.
 wasm-check:
-  cosmwasm-check wasm-contracts/artifacts/*.wasm
+  just rs optimizer check wasm-contracts/artifacts/*.wasm
 
 # Compiles a single CW contract to wasm bytecode.
 # wasm-single:

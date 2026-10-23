@@ -45,6 +45,7 @@ jobs:
               - "just-rs.just"
               - "contrib/scripts/**"
               - "lib/cosmwasm-vm/**"
+              - "lib/cosmwasm-optimizer/**"
               - "lib/cw-address-like/**"
               - "lib/easy-addr/**"
               - "lib/nibiru-ownable/**"
@@ -217,3 +218,42 @@ jobs:
       - name: Run Wasmer tests
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
         run: just rs test-wasmer
+
+  optimizer-smoke:
+    needs: changes-rust
+    if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: 2
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_PROFILE_TEST_DEBUG: "0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: taiki-e/install-action@just
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ runner.arch }}-optimizer-${{ hashFiles('Cargo.lock') }}
+      - name: Checkout pinned upstream counter fixture
+        uses: actions/checkout@v7
+        with:
+          repository: CosmWasm/optimizer
+          ref: b09e2fcf849b98ea846d6839f728bd4568dcd1fd
+          path: .optimizer-fixture
+      - name: Test CLI and execute optimized Wasm
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -R .optimizer-fixture/tests/simple-contract "$RUNNER_TEMP/optimizer-counter"
+          just rs optimizer-test
+          just rs optimizer build --manifest-path "$RUNNER_TEMP/optimizer-counter/Cargo.toml" --output-dir "$RUNNER_TEMP/optimizer-artifacts"
+          just rs optimizer-vm-test "$RUNNER_TEMP/optimizer-artifacts/simple_contract.wasm"
