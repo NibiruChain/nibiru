@@ -33,28 +33,45 @@ jobs:
         run: |
           set -euo pipefail
 
+          before="${{ github.event.before }}"
+
+          # Log the decision inputs first so a failed step still shows them.
+          jq -cn \
+            --arg event "$GITHUB_EVENT_NAME" \
+            --arg ref "$GITHUB_REF" \
+            --arg before "$before" \
+            --arg sha "$GITHUB_SHA" \
+            '{log: "changes.inputs", event: $event, ref: $ref,
+              before: $before, sha: $sha}'
+
+          # emit sets the bundler output and logs it with the reason.
+          emit() {
+            echo "bundler=$1" >> "$GITHUB_OUTPUT"
+            jq -cn --arg bundler "$1" --arg reason "$2" \
+              '{log: "changes.outputs", bundler: $bundler, reason: $reason}'
+          }
+
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            emit true "Manual workflow dispatch."
             exit 0
           fi
 
           if [[ "${GITHUB_REF}" == refs/tags/passkey-bundler/v* ]]; then
-            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            emit true "Passkey bundler version tag push."
             exit 0
           fi
 
-          before="${{ github.event.before }}"
           if [[ -z "${before}" || "${before}" == "0000000000000000000000000000000000000000" ]]; then
-            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            emit true "No previous commit to diff against."
             exit 0
           fi
 
           if git diff --name-only "${before}" "${GITHUB_SHA}" -- "evm/passkey-bundler" ".github/workflows/passkey-bundler-docker.yml" | grep -q .; then
-            echo "bundler=true" >> "$GITHUB_OUTPUT"
+            emit true "Passkey bundler changes detected."
             exit 0
           fi
 
-          echo "bundler=false" >> "$GITHUB_OUTPUT"
+          emit false "No passkey bundler changes detected."
 
   build:
     name: Build (${{ matrix.build.platform }})
