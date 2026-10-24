@@ -4,25 +4,72 @@ Build CosmWasm contracts with pinned Rust and Binaryen tools, then validate
 artifacts with Nibiru's maintained VM. The CLI runs ARM64 tools on ARM64 Docker
 and AMD64 tools on AMD64 Docker. Release mode always selects AMD64.
 
-## Install
+## 1 - Install
 
-Build from the Nibiru repository with its pinned Rust toolchain:
+Native binaries are distributed through optimizer-specific GitHub releases.
+The commands below require a published optimizer release; source installation
+remains available while the first release is being prepared.
+
+Install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall#installation),
+then install the pinned optimizer from a Nibiru checkout:
 
 ```sh
-cargo install --locked --path lib/cosmwasm-optimizer
-sai-wasm-optimizer --help
+just rs optimizer-install 0.1.0
+sai-wasm-optimizer --version
 sai-wasm-optimizer doctor
 ```
 
-Docker must be running and accessible to the current user. The first build
-pulls an optimizer image and downloads contract dependencies. The CLI itself
-links Nibiru's maintained VM, so its initial compilation also builds Wasmer.
-Install the normal native Rust build prerequisites for your platform.
+The installer downloads the release's standalone manifest, checks its SHA-256
+and version, and invokes Binstall with only the release-metadata strategy.
+Binstall selects the native executable automatically. Missing or unsupported
+binaries fail rather than compiling from source or using a third-party binary.
+This path does not require a Rust compiler or publishing VM crates to crates.io.
+It does require `cargo-binstall`, `curl`, and `sha256sum` or `shasum`.
 
-For development in this checkout, use `just rs optimizer` instead of installing
-the binary. For example, `just rs optimizer doctor`.
+For an isolated installation, pass a Cargo installation root:
 
-## Build and validate
+```sh
+just rs optimizer-install 0.1.0 /tmp/sai-optimizer
+/tmp/sai-optimizer/bin/sai-wasm-optimizer --help
+```
+
+The supported release targets are:
+
+| Platform | Target | Runtime baseline |
+| --- | --- | --- |
+| Linux AMD64 | x86_64-unknown-linux-gnu | glibc 2.35, Ubuntu 22.04 |
+| Linux ARM64 | aarch64-unknown-linux-gnu | glibc 2.39, Ubuntu 24.04 |
+| macOS Intel | x86_64-apple-darwin | macOS 13 |
+| macOS Apple Silicon | aarch64-apple-darwin | macOS 13 |
+
+ARM64 WSL uses the Linux ARM64 binary. Alpine Linux and native Windows do not
+have release targets. Mac builds validate a compiled Wasm fixture; Docker
+Desktop contract-building behavior still needs hardware verification.
+
+Binstall's ordinary name-only command discovers crates.io metadata. This
+monorepo instead ships a dependency-free manifest as a release asset, with the
+same version and download layout as the executable archives. Binstall accepts
+that file through its `--manifest-path` option. Its `--git` option discovers
+workspace members but cannot pin a Git tag or revision, so the installer uses
+versioned release metadata. The original source crate remains in
+`lib/cosmwasm-optimizer`.
+
+To compile from source with Nibiru's pinned Rust toolchain:
+
+```sh
+cargo install --locked --path lib/cosmwasm-optimizer
+```
+
+Source compilation requires native Rust build prerequisites and compiles the
+linked Nibiru VM and Wasmer. For checkout development, use the command
+`just rs optimizer doctor` instead of installing the binary.
+
+Docker must be running and accessible for contract builds. Native binary
+installation removes host-tool compilation; it does not remove Docker or
+contract compilation. The first contract build pulls its pinned optimizer
+image and downloads contract dependencies.
+
+## 2 - Build and validate
 
 ```sh
 # Build one contract from a workspace.
@@ -61,7 +108,7 @@ directory's Wasm files with the selected artifacts. Compilation or validation
 failure leaves the previous artifacts in place. Generated Wasm files belong
 in local build output or release assets, not source control.
 
-## Tool versions and caches
+## 3 - Tool versions and caches
 
 The first implementation pins `cosmwasm/optimizer:0.17.0` for AMD64 and
 `cosmwasm/optimizer-arm64:0.17.0` for ARM64, each by immutable image digest.
@@ -80,7 +127,7 @@ Compatibility checks cover imports, exports, capabilities, and Wasm features.
 They do not establish contract behavior. The compiled-Wasm integration test
 also instantiates, executes, and queries the counter fixture.
 
-## WSL and Apple Silicon
+## 4 - WSL and Apple Silicon
 
 On ARM64 WSL, run Docker's Linux ARM64 daemon and use the default development
 mode. Apple Silicon users can use the same Linux ARM64 container path through
@@ -99,7 +146,7 @@ local development and retains AMD64 for releases. It does not claim identical
 output across architectures. Source verification must use the recorded tool
 versions, architecture, and image digest.
 
-## Tests
+## 5 - Tests
 
 ```sh
 just rs optimizer-test
@@ -114,19 +161,19 @@ instantiates a real Sai oracle, changes its expiration, and queries the result.
 The fixture binary
 is an external build artifact and is not committed.
 
-## Running without Docker
+## 6 - Running without Docker
 
-Docker packages the host Rust compiler, Wasm standard library, linker, and
+Docker packages the contract Rust compiler, Wasm standard library, linker, and
 Binaryen executable. A native backend needs each component at a selected
 version, plus the same Cargo flags and VM checks. Moving orchestration into a
 Rust binary does not supply these dependencies automatically.
 
 The initial ARM64 experiment runs Binaryen 116 directly on WSL from the pinned
 image's statically linked executable. Native compiler and artifact comparison
-results are recorded in the child epic. A supported installer and native
-backend remain follow-up work; V1 uses Docker for contract compilation.
+results are recorded in the child epic. A native contract compiler backend remains follow-up work; the binary installer
+distributes the host CLI, while V1 uses Docker for contract compilation.
 
-## Upstream maintenance
+## 7 - Upstream maintenance
 
 The baseline is [CosmWasm/optimizer v0.17.0](https://github.com/CosmWasm/optimizer/tree/v0.17.0),
 commit `b09e2fcf849b98ea846d6839f728bd4568dcd1fd`. Upstream optimizer is
@@ -138,3 +185,44 @@ When updating the pins, rebuild the counter and Sai contracts on both
 architectures, run maintained-VM execution tests, compare checksums, and record
 any release-policy change. Keep the contract compiler pin and image digests
 in sync.
+
+
+## 8 - Package and release the CLI
+
+Use Python 3.11 or later and Rust 1.95.0 on a native target runner:
+
+```sh
+just rs optimizer-release version
+just rs optimizer-release validate-tag --tag sai-wasm-optimizer-v0.1.0
+just rs optimizer-release package --target aarch64-unknown-linux-gnu --output-dir dist/optimizer
+```
+
+The package helper builds only the optimizer executable and its dependencies.
+It overrides workspace LTO with 16 codegen units for host-tool build speed;
+contract compiler flags and image pins are separate. Each archive contains the
+executable, licenses, README, and JSON provenance. Packaging extracts and runs
+the archived executable, checks its version, and validates the committed
+`hackatom_1.0.wasm` fixture through Nibiru's VM without Docker.
+
+The workflow in `.github/workflows/optimizer-release.yml` builds all four native
+targets on PRs and manual dispatches. These events upload archives and SHA-256
+sidecars without publishing a GitHub release. Native Linux builders establish
+the glibc baselines in the table; Mac builds target macOS 13.
+
+A push of a tag matching `sai-wasm-optimizer-vMAJOR.MINOR.PATCH` triggers
+publication after all four packages pass. The tag must match the crate version.
+Publication verifies the complete archive set, checksums, source commit,
+lockfile hash, and clean-source provenance. It publishes the standalone
+`sai-wasm-optimizer.toml` manifest and a `SHA256SUMS` file with the archives.
+Optimizer releases use `--latest=false` so they do not replace the latest chain
+release. Existing chain and libwasmvm release tag patterns are separate.
+
+To inspect a collected release bundle without publishing:
+
+```sh
+just rs optimizer-release publish --artifacts-dir dist/optimizer --tag sai-wasm-optimizer-v0.1.0
+```
+
+Only the same command with `--run` creates a GitHub release. Prepare and review
+all four native CI artifacts before pushing the first optimizer version tag.
+Repeated publication does not overwrite an existing release.

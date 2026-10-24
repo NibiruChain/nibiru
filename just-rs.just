@@ -20,6 +20,16 @@ wasm-all mode="dev":
 optimizer *args:
   cargo run --locked -p sai-wasm-optimizer -- "$@"
 
+# Package native optimizer binaries and prepare versioned releases.
+[positional-arguments]
+optimizer-release *args:
+  python3 contrib/scripts/optimizer-release.py "$@"
+
+# Install a pinned native optimizer binary without compiling it locally.
+[positional-arguments]
+optimizer-install version *args:
+  bash contrib/scripts/install-wasm-optimizer.sh "$@"
+
 # Test optimizer selection, command handling, and VM validation.
 optimizer-test:
   cargo test --locked -p sai-wasm-optimizer
