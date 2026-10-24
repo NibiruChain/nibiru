@@ -570,7 +570,8 @@ func ensureNewTimeout(timeoutCh <-chan cmtpubsub.Message, height int64, round in
 		"Timeout expired while waiting for NewTimeout event")
 }
 
-func ensureNewProposal(proposalCh <-chan cmtpubsub.Message, height int64, round int32) {
+func ensureNewProposal(proposalCh <-chan cmtpubsub.Message, height int64, round int32) types.BlockID {
+	var blockID types.BlockID
 	select {
 	case <-time.After(ensureTimeout):
 		panic("Timeout expired while waiting for NewProposal event")
@@ -586,7 +587,9 @@ func ensureNewProposal(proposalCh <-chan cmtpubsub.Message, height int64, round 
 		if proposalEvent.Round != round {
 			panic(fmt.Sprintf("expected round %v, got %v", round, proposalEvent.Round))
 		}
+		blockID = proposalEvent.BlockID
 	}
+	return blockID
 }
 
 func ensureNewValidBlock(validBlockCh <-chan cmtpubsub.Message, height int64, round int32) {
