@@ -1,6 +1,6 @@
 name: "Wasm VM"
-# Builds release candidate libwasmvm artifacts on ordinary branch and PR runs.
-# Durable GitHub Release publishing only runs for lib/wasmvm version tags.
+# Tests relevant PR/main changes. Daily, manual, and VM tag runs also build all platforms.
+# Only VM version tags publish a durable GitHub Release.
 
 on:
   push:
@@ -9,6 +9,8 @@ on:
     tags:
       - "lib/wasmvm/v*.*.*"
   pull_request:
+  schedule:
+    - cron: "50 4 * * *" # Daily at 04:50 UTC, after the Rust maintenance run.
   workflow_dispatch:
 
 permissions:
@@ -22,40 +24,47 @@ jobs:
     outputs:
       has-changes-for-wasmvm: ${{ steps.filter.outputs.wasmvm }}
       do-run: ${{ steps.decision.outputs['do-run'] }}
+      do-package: ${{ steps.decision.outputs['do-package'] }}
       do-release: ${{ steps.decision.outputs['do-release'] }}
       reason: ${{ steps.decision.outputs.reason }}
     steps:
       - uses: actions/checkout@v7
 
+      - name: Test Wasm VM event policy
+        run: bash contrib/scripts/wasmvm-ci-policy-test.sh
+
       - name: Check for Wasm VM FFI changes
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         id: filter
         uses: dorny/paths-filter@v4
         with:
+          # Main uses the complete pushed range; PRs compare with their base.
+          base: ${{ github.event_name == 'push' && github.event.before || github.base_ref }}
           filters: |
             wasmvm:
               - "lib/wasmvm/**"
               - "lib/wasmer/**"
               - "lib/cosmwasm-vm/**"
+              - "go.mod"
+              - "go.sum"
+              - "justfile"
               - "Cargo.toml"
               - "Cargo.lock"
               - "rust-toolchain.toml"
               - "contrib/scripts/build-wasmvm-source*.sh"
+              - "contrib/scripts/wasmvm-ci-policy*.sh"
               - "contrib/docker/Dockerfile.wasmvm-source"
               - ".github/workflows/wasmvm.yml"
 
-      # The path filter controls ordinary PR runs, while workflow dispatch and
-      # push events force the jobs to execute. Only matching version-tag pushes
-      # may publish a release.
+      # PR/main changes select tests. Scheduled/manual/tag events also package.
       - name: Decide Wasm VM FFI run mode
         id: decision
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref }}
-          HAS_CHANGES_FOR_WASMVM: ${{ steps.filter.outputs.wasmvm }}
+          HAS_CHANGES_FOR_WASMVM: ${{ steps.filter.outputs.wasmvm || 'false' }}
         run: |
           set -euo pipefail
-
-          # Log the decision inputs first so a failed step still shows them.
           jq -cn \
             --arg event "$EVENT_NAME" \
             --arg ref "$REF_NAME" \
@@ -63,38 +72,12 @@ jobs:
             '{log: "changes-wasmvm.inputs", event: $event, ref: $ref,
               "has-changes-for-wasmvm": $wasmvm}'
 
-          do_run=false
-          do_release=false
-          reason="No Wasm VM FFI changes detected."
-
-          if [[ "$HAS_CHANGES_FOR_WASMVM" == "true" ]]; then
-            do_run=true
-            reason="Wasm VM FFI changes detected."
-          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            do_run=true
-            reason="Manual workflow dispatch runs Wasm VM FFI jobs."
-          elif [[ "$EVENT_NAME" == "push" ]]; then
-            do_run=true
-            reason="Push events run Wasm VM FFI jobs."
-          fi
-
-          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" =~ ^refs/tags/lib/wasmvm/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            do_release=true
-            reason="Wasm VM FFI version tag push runs release publishing."
-          fi
-
-          {
-            echo "do-run=$do_run"
-            echo "do-release=$do_release"
-            echo "reason=$reason"
-          } >> "$GITHUB_OUTPUT"
-
-          jq -cn \
-            --arg do_run "$do_run" \
-            --arg do_release "$do_release" \
-            --arg reason "$reason" \
-            '{log: "changes-wasmvm.outputs", "do-run": $do_run,
-              "do-release": $do_release, reason: $reason}'
+          decision="$(bash contrib/scripts/wasmvm-ci-policy.sh \
+            "$EVENT_NAME" "$REF_NAME" "$HAS_CHANGES_FOR_WASMVM")"
+          printf '%s\n' "$decision" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$decision" | jq -Rnc '
+            [inputs | split("=") | {key: .[0], value: (.[1:] | join("="))}]
+            | from_entries | {log: "changes-wasmvm.outputs"} + .'
 
   # rust-base-tests (job): Tests the Rust crate `wasmvm`, generated bindings,
   # and Rust docs.
@@ -376,27 +359,27 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: skip-build-libwasmvm-static-musl
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] != 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] != 'true' }}
         run: |
-          echo "job: build-libwasmvm-static-musl was skipped. ${{ needs.changes-wasmvm.outputs.reason }}"
+          echo "Platform packaging runs daily, on manual dispatch, or for VM release tags."
 
       - uses: actions/checkout@v7
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
 
       - name: Install just
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: taiki-e/install-action@just
 
       - name: Build static builder image
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm docker-image-static
 
       - name: Build static musl libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm artifact-static
 
       - name: Collect static artifacts
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: |
           mkdir -p artifacts/static-musl
           cp lib/wasmvm/internal/api/libwasmvm_muslc.a artifacts/static-musl/libwasmvm_muslc.x86_64.a
@@ -404,7 +387,7 @@ jobs:
           (cd artifacts/static-musl && sha256sum -- libwasmvm_muslc.x86_64.a libwasmvm_muslc.aarch64.a > checksums.txt && cat checksums.txt)
 
       - name: Upload musl static libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-muslc
@@ -448,27 +431,27 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: skip-build-libwasmvm-shared-linux
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] != 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] != 'true' }}
         run: |
-          echo "job: build-libwasmvm-shared-linux was skipped. ${{ needs.changes-wasmvm.outputs.reason }}"
+          echo "Platform packaging runs daily, on manual dispatch, or for VM release tags."
 
       - uses: actions/checkout@v7
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
 
       - name: Install just
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: taiki-e/install-action@just
 
       - name: Build Linux builder image
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm docker-image-linux
 
       - name: Build Linux shared libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm artifact-linux
 
       - name: Collect Linux shared artifacts
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: |
           mkdir -p artifacts/linux-shared
           cp lib/wasmvm/internal/api/libwasmvm.x86_64.so artifacts/linux-shared/
@@ -476,7 +459,7 @@ jobs:
           (cd artifacts/linux-shared && sha256sum -- libwasmvm.aarch64.so libwasmvm.x86_64.so > checksums.txt && cat checksums.txt)
 
       - name: Upload Linux shared libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-glibc
@@ -498,27 +481,27 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: skip-build-libwasmvm-darwin
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] != 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] != 'true' }}
         run: |
-          echo "job: build-libwasmvm-darwin was skipped. ${{ needs.changes-wasmvm.outputs.reason }}"
+          echo "Platform packaging runs daily, on manual dispatch, or for VM release tags."
 
       - uses: actions/checkout@v7
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
 
       - name: Install just
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: taiki-e/install-action@just
 
       - name: Build Darwin builder image
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm docker-image-cross
 
       - name: Build Darwin libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: just wasmvm artifact-darwin
 
       - name: Collect Darwin artifacts
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         run: |
           mkdir -p artifacts/darwin
           cp lib/wasmvm/internal/api/libwasmvm.dylib artifacts/darwin/
@@ -526,7 +509,7 @@ jobs:
           (cd artifacts/darwin && sha256sum -- libwasmvm.dylib libwasmvmstatic_darwin.a > checksums.txt && cat checksums.txt)
 
       - name: Upload Darwin libraries
-        if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
+        if: ${{ needs.changes-wasmvm.outputs['do-package'] == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: libwasmvm-darwin
