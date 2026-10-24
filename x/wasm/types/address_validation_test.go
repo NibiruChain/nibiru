@@ -22,12 +22,16 @@ func TestAddressListValidation(t *testing.T) {
 			return (AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: addrs}).ValidateBasic()
 		},
 		"store code": func(addrs []string) error {
-			return (MsgStoreCode{Sender: authority, WASMByteCode: []byte("wasm"),
-				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: addrs}}).ValidateBasic()
+			return (MsgStoreCode{
+				Sender: authority, WASMByteCode: []byte("wasm"),
+				InstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: addrs},
+			}).ValidateBasic()
 		},
 		"update instantiate config": func(addrs []string) error {
-			return (MsgUpdateInstantiateConfig{Sender: authority, CodeID: 1,
-				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: addrs}}).ValidateBasic()
+			return (MsgUpdateInstantiateConfig{
+				Sender: authority, CodeID: 1,
+				NewInstantiatePermission: &AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: addrs},
+			}).ValidateBasic()
 		},
 		"add upload addresses": func(addrs []string) error {
 			return (MsgAddCodeUploadParamsAddresses{Authority: authority, Addresses: addrs}).ValidateBasic()
@@ -37,18 +41,18 @@ func TestAddressListValidation(t *testing.T) {
 		},
 	}
 	cases := map[string]struct {
-		addresses []string
-		err error
+		addresses   []string
+		err         error
 		errContains string
 	}{
-		"at limit": {addresses: addresses[:MaxAddressCount]},
-		"over limit": {addresses: addresses, err: sdkerrors.ErrInvalidRequest},
-		"empty": {err: ErrEmpty},
-		"uppercase": {addresses: []string{strings.ToUpper(authority)}},
-		"duplicate": {addresses: []string{authority, authority}, err: ErrDuplicate},
+		"at limit":               {addresses: addresses[:MaxAddressCount]},
+		"over limit":             {addresses: addresses, err: sdkerrors.ErrInvalidRequest},
+		"empty":                  {err: ErrEmpty},
+		"uppercase":              {addresses: []string{strings.ToUpper(authority)}},
+		"duplicate":              {addresses: []string{authority, authority}, err: ErrDuplicate},
 		"case variant duplicate": {addresses: []string{authority, strings.ToUpper(authority)}, err: ErrDuplicate},
-		"invalid address": {addresses: []string{"invalid"}, errContains: "decoding bech32 failed"},
-		"mixed case address": {addresses: []string{strings.ToUpper(authority[:1]) + authority[1:]}, errContains: "decoding bech32 failed"},
+		"invalid address":        {addresses: []string{"invalid"}, errContains: "decoding bech32 failed"},
+		"mixed case address":     {addresses: []string{strings.ToUpper(authority[:1]) + authority[1:]}, errContains: "decoding bech32 failed"},
 	}
 	for name, validate := range validators {
 		t.Run(name, func(t *testing.T) {

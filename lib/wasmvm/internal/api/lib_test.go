@@ -1190,7 +1190,7 @@ func TestFloats(t *testing.T) {
 
 func TestErrorWithMessage(t *testing.T) {
 	for _, tc := range []struct {
-		name string
+		name    string
 		message []byte
 	}{
 		{name: "none"},
