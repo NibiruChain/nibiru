@@ -215,14 +215,23 @@ func (rp *remotePeer) accept() {
 			return
 		}
 
+		// Drop a bad inbound connection and keep listening. Any local
+		// process can connect to this port, e.g. a dev tool that probes new
+		// localhost listeners with HTTP. Exiting here would kill the whole
+		// test binary. A test that needs this connection fails on its own
+		// assertions.
 		pc, err := testInboundPeerConn(conn, rp.Config, rp.PrivKey)
 		if err != nil {
-			golog.Fatalf("Failed to create a peer: %+v", err)
+			golog.Printf("Failed to create a peer: %+v", err)
+			_ = conn.Close()
+			continue
 		}
 
 		_, err = handshake(pc.conn, time.Second, rp.nodeInfo())
 		if err != nil {
-			golog.Fatalf("Failed to perform handshake: %+v", err)
+			golog.Printf("Failed to perform handshake: %+v", err)
+			_ = conn.Close()
+			continue
 		}
 
 		conns = append(conns, conn)
