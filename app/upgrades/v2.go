@@ -105,6 +105,9 @@ var (
 	// Upgrade2_20_0 runs normal module migrations without changing Wasm state.
 	// The v2.20 binary activates its temporary Wasm policy through app wiring.
 	Upgrade2_20_0 = NewVanillaUpgrade("v2.20.0")
+
+	// Upgrade2_22_0 runs standard module migrations for the next minor release.
+	Upgrade2_22_0 = NewVanillaUpgrade("v2.22.0")
 )
 
 var _ HandlerImpl = (*Handler_v2_16)(nil)

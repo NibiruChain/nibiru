@@ -5,6 +5,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
@@ -125,6 +126,37 @@ func TestEVMPrepareProposalPassesThroughNonEVMOrder(t *testing.T) {
 	})
 
 	require.Equal(t, [][]byte{txA, txB}, response.Txs)
+}
+
+// TestEVMPrepareProposalCountsProtoEncodedTxSize proves the handler budgets
+// RequestPrepareProposal.MaxTxBytes by CometBFT's protobuf-encoded tx size, not
+// raw length. Two txs whose raw lengths exactly fill MaxTxBytes exceed it once
+// encoded, so only the first is selected.
+func TestEVMPrepareProposalCountsProtoEncodedTxSize(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	buildNonEVM := func(memo string) []byte {
+		builder := deps.App.GetTxConfig().NewTxBuilder()
+		builder.SetMemo(memo)
+		bytes, err := deps.App.GetTxConfig().TxEncoder()(builder.GetTx())
+		require.NoError(t, err)
+		return bytes
+	}
+	txA := buildNonEVM("a")
+	txB := buildNonEVM("b")
+	rawLen := int64(len(txA) + len(txB))
+	require.Greater(t, cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{txA, txB}), rawLen)
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: rawLen,
+		Txs:        [][]byte{txA, txB},
+	})
+
+	require.Equal(t, [][]byte{txA}, response.Txs)
 }
 
 // TestEVMPrepareProposalPrioritizesExecutableSenderHeads proves that across

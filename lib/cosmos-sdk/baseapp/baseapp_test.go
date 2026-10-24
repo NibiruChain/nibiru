@@ -10,6 +10,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
@@ -718,6 +719,9 @@ func TestDefaultProposalHandler_NoOpMempoolTxSelection(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, txBz, 103)
 
+	txDataSize := int(cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{txBz}))
+	require.Equal(t, 105, txDataSize)
+
 	ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil).
 		WithConsensusParams(&tmproto.ConsensusParams{})
 
@@ -742,7 +746,7 @@ func TestDefaultProposalHandler_NoOpMempoolTxSelection(t *testing.T) {
 			}),
 			req: abci.RequestPrepareProposal{
 				Txs:        [][]byte{txBz, txBz, txBz, txBz, txBz},
-				MaxTxBytes: 309,
+				MaxTxBytes: 315,
 			},
 			expectedTxs: 3,
 		},
@@ -750,9 +754,17 @@ func TestDefaultProposalHandler_NoOpMempoolTxSelection(t *testing.T) {
 			ctx: ctx,
 			req: abci.RequestPrepareProposal{
 				Txs:        [][]byte{txBz, txBz, txBz, txBz, txBz},
-				MaxTxBytes: 309,
+				MaxTxBytes: 315,
 			},
 			expectedTxs: 3,
+		},
+		"large max tx bytes len calculation": {
+			ctx: ctx,
+			req: abci.RequestPrepareProposal{
+				Txs:        [][]byte{txBz, txBz, txBz, txBz, txBz},
+				MaxTxBytes: 309,
+			},
+			expectedTxs: 2,
 		},
 		"max gas and tx bytes": {
 			ctx: ctx.WithConsensusParams(&tmproto.ConsensusParams{
@@ -762,7 +774,7 @@ func TestDefaultProposalHandler_NoOpMempoolTxSelection(t *testing.T) {
 			}),
 			req: abci.RequestPrepareProposal{
 				Txs:        [][]byte{txBz, txBz, txBz, txBz, txBz},
-				MaxTxBytes: 309,
+				MaxTxBytes: 315,
 			},
 			expectedTxs: 3,
 		},
