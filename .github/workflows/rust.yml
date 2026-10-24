@@ -68,6 +68,15 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Log the decision inputs first so a failed step still shows them.
+          jq -cn \
+            --arg event "$EVENT_NAME" \
+            --arg workspace "$HAS_WORKSPACE_CHANGES" \
+            --arg wasmer "$HAS_WASMER_CHANGES" \
+            '{log: "changes-rust.inputs", event: $event,
+              "has-workspace-changes": $workspace,
+              "has-wasmer-changes": $wasmer}'
+
           run_workspace=false
           run_wasmer=false
           workspace_reason="No root Rust workspace changes detected."
@@ -96,6 +105,16 @@ jobs:
             echo "workspace-reason=$workspace_reason"
             echo "wasmer-reason=$wasmer_reason"
           } >> "$GITHUB_OUTPUT"
+
+          jq -cn \
+            --arg run_workspace "$run_workspace" \
+            --arg run_wasmer "$run_wasmer" \
+            --arg workspace_reason "$workspace_reason" \
+            --arg wasmer_reason "$wasmer_reason" \
+            '{log: "changes-rust.outputs", "run-workspace": $run_workspace,
+              "run-wasmer": $run_wasmer,
+              "workspace-reason": $workspace_reason,
+              "wasmer-reason": $wasmer_reason}'
 
   # rust-test (job): Runs the legacy root Cargo workspace test suite.
   rust-test:
