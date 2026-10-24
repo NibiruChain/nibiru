@@ -60,3 +60,12 @@ type ParsedTrade struct {
 	SL                *string
 	IsEvmOrigin       bool
 }
+
+type TradeInfo struct {
+	CreatedBlock       uint64  `json:"created_block"`
+	ClosedBlock        *uint64 `json:"closed_block"`
+	ClosedPrice        *string `json:"closed_price"`
+	MaxSlippageP       string  `json:"max_slippage_p"`
+	LastOIUpdateTs     string  `json:"last_oi_update_ts"`
+	CollateralPriceUSD string  `json:"collateral_price_usd"`
+}

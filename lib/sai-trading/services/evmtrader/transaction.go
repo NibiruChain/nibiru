@@ -11,13 +11,14 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	evmtest "github.com/NibiruChain/nibiru/v2/evm/evmtest"
-	"github.com/NibiruChain/nibiru/v2/evm/precompile"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	txtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // sendEVMTransaction sends an EVM transaction using ChainClient and MsgEthereumTx
@@ -40,26 +41,20 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		gasLimit = 2_000_000
 	}
 
-	// Get gas price from network
-	gasPrice, err := t.client.SuggestGasPrice(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("gas price: %w", err)
-	}
-	// Ensure minimum gas price (defensive: prevent 0 or extremely low values)
-	if gasPrice.Cmp(big.NewInt(1000)) < 0 {
-		gasPrice = big.NewInt(1000) // 1000 wei minimum
-	}
+	zeroInt := big.NewInt(0)
 
 	// Create JsonTxArgs
 	txArgs := evm.JsonTxArgs{
-		From:     &t.accountAddr,
-		To:       &to,
-		Nonce:    (*hexutil.Uint64)(&nonce),
-		Gas:      (*hexutil.Uint64)(&gasLimit),
-		GasPrice: (*hexutil.Big)(gasPrice),
-		Value:    (*hexutil.Big)(value),
-		Data:     (*hexutil.Bytes)(&data),
-		ChainID:  (*hexutil.Big)(chainID),
+		From:                 &t.accountAddr,
+		To:                   &to,
+		Nonce:                (*hexutil.Uint64)(&nonce),
+		Gas:                  (*hexutil.Uint64)(&gasLimit),
+		MaxFeePerGas:         (*hexutil.Big)(zeroInt),
+		MaxPriorityFeePerGas: (*hexutil.Big)(zeroInt),
+		GasPrice:             (*hexutil.Big)(zeroInt),
+		Value:                (*hexutil.Big)(value),
+		Data:                 (*hexutil.Bytes)(&data),
+		ChainID:              (*hexutil.Big)(chainID),
 	}
 
 	// Convert to MsgEthereumTx
@@ -99,10 +94,25 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 	}
 
 	if grpcRes.TxResponse.Code != 0 {
-		return nil, parseContractError(grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
+		contractErr := parseContractError(grpcRes.TxResponse.Code, grpcRes.TxResponse.RawLog)
+		// Use the first line as a coarse category so we can group failure kinds
+		reason := strings.TrimSpace(contractErr.Error())
+		if idx := strings.Index(reason, "\n"); idx >= 0 {
+			reason = strings.TrimSpace(reason[:idx])
+		}
+
+		t.logTxResult(
+			grpcRes.TxResponse.TxHash,
+			"failed",
+			reason,
+			to.Hex(),
+			grpcRes.TxResponse.Height,
+			uint64(grpcRes.TxResponse.GasWanted),
+			uint64(grpcRes.TxResponse.GasUsed),
+		)
+		return nil, contractErr
 	}
 
-	// Wait for transaction to be committed
 	txHash := grpcRes.TxResponse.TxHash
 	timeout := time.NewTimer(15 * time.Second)
 	tick := time.NewTicker(500 * time.Millisecond)
@@ -117,66 +127,183 @@ func (t *EVMTrader) sendEVMTransaction(ctx context.Context, to common.Address, v
 		case <-tick.C:
 			resp, _ := t.txClient.GetTx(ctx, &txtypes.GetTxRequest{Hash: txHash})
 			if resp != nil && resp.TxResponse != nil {
-				if err := validateEVMResult(resp.TxResponse); err != nil {
+				if err := t.evmTxResponseError(ctx, resp.TxResponse, to, value, data); err != nil {
+					t.logTxResult(
+						resp.TxResponse.TxHash,
+						"failed",
+						err.Error(),
+						to.Hex(),
+						resp.TxResponse.Height,
+						uint64(resp.TxResponse.GasWanted),
+						uint64(resp.TxResponse.GasUsed),
+					)
 					return nil, err
 				}
+				t.logTxResult(
+					resp.TxResponse.TxHash,
+					"success",
+					"",
+					to.Hex(),
+					resp.TxResponse.Height,
+					uint64(resp.TxResponse.GasWanted),
+					uint64(resp.TxResponse.GasUsed),
+				)
 				return resp.TxResponse, nil
 			}
 		case <-timeout.C:
+			t.logTxResult(
+				txHash,
+				"failed",
+				"timeout waiting for tx",
+				to.Hex(),
+				0,
+				uint64(gasLimit),
+				0,
+			)
 			return nil, fmt.Errorf("tx not found after timeout, hash: %s", txHash)
 		}
 	}
 
+	t.logTxResult(
+		txHash,
+		"failed",
+		fmt.Sprintf("tx not found after %d retries", maxRetries),
+		to.Hex(),
+		0,
+		uint64(gasLimit),
+		0,
+	)
 	return nil, fmt.Errorf("tx not found after %d retries, hash: %s", maxRetries, txHash)
 }
 
-// sendOpenTradeTransaction sends the open_trade transaction
-func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64) (*sdk.TxResponse, error) {
-	// Build WASM execute call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+// sendOpenTradeTransaction sends the open_trade transaction via the PerpVaultEvmInterface contract.
+func (t *EVMTrader) sendOpenTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte, collateralAmt *big.Int, collateralIndex uint64, useERC20Amount *big.Int) (*sdk.TxResponse, error) {
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	interfaceAddr := common.HexToAddress(t.addrs.EvmInterfaceAddress)
+	if useERC20Amount == nil {
+		useERC20Amount = big.NewInt(0)
+	}
 
-	// Query the correct denomination for the collateral index
-	collateralDenom, err := t.queryCollateralDenom(ctx, collateralIndex)
+	data, err := interfaceABI.Pack(
+		"openTrade",
+		msgBytes,
+		new(big.Int).SetUint64(collateralIndex),
+		collateralAmt,
+		useERC20Amount,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("query collateral denom for index %d: %w", collateralIndex, err)
+		return nil, fmt.Errorf("pack openTrade: %w", err)
 	}
 
-	funds := []struct {
-		Denom  string
-		Amount *big.Int
-	}{
-		{Denom: collateralDenom, Amount: collateralAmt},
-	}
-
-	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
-	if err != nil {
-		return nil, fmt.Errorf("pack wasm execute: %w", err)
-	}
-
-	// Sign and send EVM tx to WASM precompile
-	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+	return t.sendEVMTransaction(ctx, interfaceAddr, big.NewInt(0), data, chainID)
 }
 
-// sendCloseTradeTransaction sends the close_trade transaction
+// sendCloseTradeTransaction sends the close_trade transaction via the PerpVaultEvmInterface contract.
 func (t *EVMTrader) sendCloseTradeTransaction(ctx context.Context, chainID *big.Int, msgBytes []byte) (*sdk.TxResponse, error) {
-	// Build WASM execute call
-	wasmABI := getWasmPrecompileABI()
-	wasmPrecompileAddr := precompile.PrecompileAddr_Wasm
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	interfaceAddr := common.HexToAddress(t.addrs.EvmInterfaceAddress)
 
-	// No funds needed for close_trade
-	funds := []struct {
-		Denom  string
-		Amount *big.Int
-	}{}
-
-	data, err := wasmABI.Pack("execute", t.addrs.PerpAddress, msgBytes, funds)
+	data, err := interfaceABI.Pack("executeSimpleFunctions", msgBytes)
 	if err != nil {
-		return nil, fmt.Errorf("pack wasm execute: %w", err)
+		return nil, fmt.Errorf("pack executeSimpleFunctions: %w", err)
 	}
 
-	// Sign and send EVM tx to WASM precompile
-	return t.sendEVMTransaction(ctx, wasmPrecompileAddr, big.NewInt(0), data, chainID)
+	return t.sendEVMTransaction(ctx, interfaceAddr, big.NewInt(0), data, chainID)
+}
+
+// evmTxResponseError returns an error when an EVM transaction reverted on-chain.
+// The ABCI event's VmError is normally just the generic "execution reverted"
+// with no reason attached, so on revert we replay the call via eth_call to
+// recover the actual revert reason (require string or custom error).
+func (t *EVMTrader) evmTxResponseError(ctx context.Context, txResp *sdk.TxResponse, to common.Address, value *big.Int, data []byte) error {
+	if txResp.Code != 0 {
+		return validateEVMResult(txResp)
+	}
+	for _, event := range txResp.Events {
+		if event.Type != evm.TypeUrlEventEthereumTx {
+			continue
+		}
+		ethTx, err := evm.EventEthereumTxFromABCIEvent(event)
+		if err != nil {
+			continue
+		}
+		if ethTx.VmError == "" {
+			return nil
+		}
+		reason := ethTx.VmError
+		if decoded := t.decodeRevertReason(ctx, to, value, data, txResp.Height); decoded != "" {
+			reason = decoded
+		}
+		return fmt.Errorf("EVM execution failed: %s (tx %s)", reason, txResp.TxHash)
+	}
+	return validateEVMResult(txResp)
+}
+
+func (t *EVMTrader) decodeRevertReason(ctx context.Context, to common.Address, value *big.Int, data []byte, height int64) string {
+	if t.client == nil || height <= 1 {
+		return ""
+	}
+
+	callMsg := ethereum.CallMsg{
+		From:  t.accountAddr,
+		To:    &to,
+		Value: value,
+		Data:  data,
+	}
+	_, err := t.client.CallContract(ctx, callMsg, big.NewInt(height-1))
+	if err == nil {
+		return ""
+	}
+
+	if reason, ok := decodeRevertErrorData(err); ok {
+		return reason
+	}
+
+	if msg := err.Error(); strings.Contains(msg, "execution reverted") {
+		return strings.TrimSpace(msg)
+	}
+	return ""
+}
+
+func decodeRevertErrorData(err error) (string, bool) {
+	dataErr, ok := err.(rpc.DataError)
+	if !ok {
+		return "", false
+	}
+
+	var hexStr string
+	switch v := dataErr.ErrorData().(type) {
+	case string:
+		hexStr = v
+	case []byte:
+		hexStr = hexutil.Encode(v)
+	default:
+		return "", false
+	}
+
+	revertData, decErr := hexutil.Decode(hexStr)
+	if decErr != nil || len(revertData) < 4 {
+		return "", false
+	}
+
+	if reason, unpackErr := abi.UnpackRevert(revertData); unpackErr == nil {
+		return reason, true
+	}
+
+	interfaceABI := getPerpVaultEvmInterfaceABI()
+	selector := hexutil.Encode(revertData[:4])
+	for name, abiErr := range interfaceABI.Errors {
+		if hexutil.Encode(abiErr.ID[:4]) != selector {
+			continue
+		}
+		args, unpackErr := abiErr.Inputs.Unpack(revertData[4:])
+		if unpackErr != nil {
+			return name, true
+		}
+		return fmt.Sprintf("%s%v", name, args), true
+	}
+
+	return "", false
 }
 
 // parseContractError parses common contract errors and provides user-friendly error messages.
@@ -207,6 +334,10 @@ Solutions:
 Error code: %d`, currentOI, maxOI, pctUsed, code)
 		}
 		return fmt.Errorf("market exposure limit reached - cannot open new positions (long or short)\n\nTry: trader list (to see other markets)\n\nError code: %d, log: %s", code, rawLog)
+	}
+
+	if strings.Contains(rawLog, "sender balance < tx cost") {
+		return fmt.Errorf("❌ INSUFFICIENT BALANCE\n\nYou don't have enough gas tokens for this trade.\n\nError code: %d", code)
 	}
 
 	// Parse insufficient balance error

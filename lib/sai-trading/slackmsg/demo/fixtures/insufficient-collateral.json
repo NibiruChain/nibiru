@@ -1,0 +1,10 @@
+{
+  "kind": "error",
+  "message": "Insufficient collateral",
+  "fields": {
+    "required": 93663,
+    "collateral_index": 3,
+    "error": "insufficient collateral: have bank=0 erc20=0 total=0, need=93663 (denom: erc20/0x1d2eD546C1b5e142d568cab5a4A438f3B2f561E3)",
+    "fund_this_address": "nibi1rplf2vhaahfe0ar8hcjmv3uae99jc0yh3ww8c3 with collateral index 3"
+  }
+}

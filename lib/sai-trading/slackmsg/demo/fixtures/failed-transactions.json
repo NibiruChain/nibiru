@@ -1,0 +1,14 @@
+{
+  "kind": "health",
+  "fields": {
+    "positions_opened_24h": 6,
+    "positions_closed_24h": 5,
+    "open_positions": 1,
+    "volume_generated": "1.82 USD",
+    "realized_pnl": "-0.000156 USD",
+    "failed_txs_24h": 2,
+    "failed_reason_types": "Insufficient collateral: 1\nRPC unavailable: 1",
+    "market_pairs": ["btc/usdc", "eth/usdc"],
+    "balance_stnibi": "9691033831"
+  }
+}

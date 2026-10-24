@@ -1,5 +1,31 @@
 # Nibiru/Sai-Trading
 
+## Preview Slack messages
+
+From the repository root:
+
+```sh
+just sai-trading preview-slack
+just sai-trading preview-slack --case insufficient-collateral
+just sai-trading preview-slack --case healthy --format json
+```
+
+From this directory, use `just preview-slack` with the same arguments.
+Messages use compact log lines with stable field order and one Slack code block.
+The terminal preview prints the same text without the code fence. Use
+`--format json` for the exact outgoing payload. With all cases selected,
+JSON output is an object keyed by case name; a selected case emits its payload directly.
+
+Edit the shared payload builders in `slackmsg/message.go`, then rerun the command.
+The bot uses those same builders. Sample inputs live in
+`slackmsg/demo/fixtures/` and include `healthy`, `failed-transactions`,
+`insufficient-collateral`, and `rpc-error`. Fixtures are embedded at build time,
+so rerunning the command picks up edits to both fixtures and Go code.
+
+The preview uses only sample data. It needs no wallet, chain, environment file,
+or Slack webhook and makes no network requests. It previews formatting, not
+the bot's error filters or reporting schedule.
+
 Rough notes (for now)
 
 ## Plan

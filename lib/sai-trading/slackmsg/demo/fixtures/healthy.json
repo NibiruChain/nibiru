@@ -1,0 +1,14 @@
+{
+  "kind": "health",
+  "fields": {
+    "positions_opened_24h": 31,
+    "positions_closed_24h": 30,
+    "open_positions": 0,
+    "volume_generated": "9.70 USD",
+    "realized_pnl": "0.000165 USD",
+    "failed_txs_24h": 0,
+    "market_pairs": ["btc/usdc", "eth/usdc"],
+    "balance_erc20/0x1d2eD546C1b5e142d568cab5a4A438f3B2f561E3": "0",
+    "balance_stnibi": "9693317815"
+  }
+}
