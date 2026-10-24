@@ -1,7 +1,7 @@
 package types
 
 import (
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	proto "github.com/cosmos/gogoproto/proto"
 )
 

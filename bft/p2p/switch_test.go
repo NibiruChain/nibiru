@@ -19,12 +19,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/p2p/conn"
-	p2pproto "github.com/cometbft/cometbft/proto/tendermint/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p/conn"
+	p2pproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/p2p"
 )
 
 var (

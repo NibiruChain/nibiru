@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
-	cfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
-	cmttime "github.com/cometbft/cometbft/types/time"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
 var config *cfg.Config // NOTE: must be reset for each _test.go file

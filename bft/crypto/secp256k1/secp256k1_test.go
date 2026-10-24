@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
 )
 
 type keyData struct {

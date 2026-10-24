@@ -3,7 +3,7 @@ package pex
 import (
 	"time"
 
-	"github.com/cometbft/cometbft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
 )
 
 // knownAddress tracks information about a known network address

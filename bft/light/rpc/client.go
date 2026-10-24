@@ -10,15 +10,15 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/merkle"
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	service "github.com/cometbft/cometbft/libs/service"
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	service "github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 var errNegOrZeroHeight = errors.New("negative or zero height")

@@ -9,9 +9,9 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/types"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 func TestTxFilter(t *testing.T) {

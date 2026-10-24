@@ -3,8 +3,8 @@ package test
 import (
 	"time"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 func MakeVote(

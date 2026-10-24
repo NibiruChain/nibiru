@@ -6,7 +6,7 @@ package coregrpc
 import (
 	context "context"
 	fmt "fmt"
-	types "github.com/cometbft/cometbft/abci/types"
+	types "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"

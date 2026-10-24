@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	btcec "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/go-bip39"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"

@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
-	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/privval"
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	tmed25519 "github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/cosmos/go-bip39"
 
 	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"

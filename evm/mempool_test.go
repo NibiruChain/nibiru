@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/evm"

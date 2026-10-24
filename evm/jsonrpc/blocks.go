@@ -8,8 +8,8 @@ import (
 	"math/big"
 	"strconv"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	"github.com/cosmos/gogoproto/proto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

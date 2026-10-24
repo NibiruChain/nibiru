@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg"
 )
 
 func Start(testnet *e2e.Testnet) error {

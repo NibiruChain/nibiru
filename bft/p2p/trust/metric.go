@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/service"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
 )
 
 //---------------------------------------------------------------------------------------

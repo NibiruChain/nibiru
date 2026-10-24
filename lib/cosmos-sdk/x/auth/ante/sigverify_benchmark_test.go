@@ -3,7 +3,7 @@ package ante_test
 import (
 	"testing"
 
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"

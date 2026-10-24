@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	abcicli "github.com/cometbft/cometbft/abci/client"
-	"github.com/cometbft/cometbft/abci/server"
-	"github.com/cometbft/cometbft/abci/types"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	"github.com/cometbft/cometbft/libs/service"
+	abcicli "github.com/NibiruChain/nibiru/v2/bft/abci/client"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/server"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
 )
 
 func TestProperSyncCalls(t *testing.T) {

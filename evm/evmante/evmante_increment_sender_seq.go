@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

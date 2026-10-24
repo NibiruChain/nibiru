@@ -15,14 +15,14 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/cometbft/cometbft/libs/log"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
 
-	abcicli "github.com/cometbft/cometbft/abci/client"
-	"github.com/cometbft/cometbft/abci/example/code"
-	"github.com/cometbft/cometbft/abci/example/kvstore"
-	abciserver "github.com/cometbft/cometbft/abci/server"
-	"github.com/cometbft/cometbft/abci/types"
+	abcicli "github.com/NibiruChain/nibiru/v2/bft/abci/client"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/code"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
+	abciserver "github.com/NibiruChain/nibiru/v2/bft/abci/server"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
 )
 
 var grand *rand.Rand

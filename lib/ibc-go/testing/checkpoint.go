@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
 
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"

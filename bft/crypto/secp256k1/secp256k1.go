@@ -12,8 +12,8 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"golang.org/x/crypto/ripemd160" //nolint: gosec,staticcheck // necessary for Bitcoin address format
 
-	"github.com/cometbft/cometbft/crypto"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 )
 
 // -------------------------------------

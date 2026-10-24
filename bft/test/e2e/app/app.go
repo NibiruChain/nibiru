@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cometbft/cometbft/abci/example/code"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	cmttypes "github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/code"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 const appVersion = 1

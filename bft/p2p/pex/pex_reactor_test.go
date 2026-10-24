@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/p2p/mock"
-	tmp2p "github.com/cometbft/cometbft/proto/tendermint/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p/mock"
+	tmp2p "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/p2p"
 )
 
 var (

@@ -11,13 +11,13 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	auto "github.com/cometbft/cometbft/libs/autofile"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/libs/service"
-	cmtcons "github.com/cometbft/cometbft/proto/tendermint/consensus"
-	cmttime "github.com/cometbft/cometbft/types/time"
+	auto "github.com/NibiruChain/nibiru/v2/bft/libs/autofile"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtcons "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/consensus"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
 const (

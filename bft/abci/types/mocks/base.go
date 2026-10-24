@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	types "github.com/cometbft/cometbft/abci/types"
+	types "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 )
 
 // BaseMock provides a wrapper around the generated Application mock and a BaseApplication.

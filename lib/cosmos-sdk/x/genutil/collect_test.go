@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	cdctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

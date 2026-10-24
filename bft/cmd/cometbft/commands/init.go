@@ -5,13 +5,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cfg "github.com/cometbft/cometbft/config"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/privval"
-	"github.com/cometbft/cometbft/types"
-	cmttime "github.com/cometbft/cometbft/types/time"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
 // InitFilesCmd initializes a fresh CometBFT instance.

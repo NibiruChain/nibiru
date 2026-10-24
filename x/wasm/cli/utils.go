@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"

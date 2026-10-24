@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

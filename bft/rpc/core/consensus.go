@@ -1,11 +1,11 @@
 package core
 
 import (
-	cm "github.com/cometbft/cometbft/consensus"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	"github.com/cometbft/cometbft/types"
+	cm "github.com/NibiruChain/nibiru/v2/bft/consensus"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // Validators gets the validator set at the given block height.

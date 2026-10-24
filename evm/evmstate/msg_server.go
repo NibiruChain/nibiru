@@ -13,8 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmttypes "github.com/cometbft/cometbft/types"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"

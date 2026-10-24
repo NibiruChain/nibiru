@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto"
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/libs/protoio"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/protoio"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 const (

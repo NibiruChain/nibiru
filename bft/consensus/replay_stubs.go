@@ -1,12 +1,12 @@
 package consensus
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/clist"
-	mempl "github.com/cometbft/cometbft/mempool"
-	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
-	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/clist"
+	mempl "github.com/NibiruChain/nibiru/v2/bft/mempool"
+	cmtstate "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/state"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 //-----------------------------------------------------------------------------

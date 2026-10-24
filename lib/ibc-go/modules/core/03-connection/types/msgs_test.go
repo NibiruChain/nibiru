@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	log "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	log "github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/iavl"

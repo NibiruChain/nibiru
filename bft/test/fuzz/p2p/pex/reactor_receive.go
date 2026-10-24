@@ -3,13 +3,13 @@ package pex
 import (
 	"net"
 
-	"github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/service"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/p2p/pex"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p/pex"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 	"github.com/cosmos/gogoproto/proto"
 )
 

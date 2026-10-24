@@ -3,8 +3,8 @@ package types
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/crypto/merkle"
-	tmmerkle "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	tmmerkle "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 	ics23 "github.com/confio/ics23/go"
 
 	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"

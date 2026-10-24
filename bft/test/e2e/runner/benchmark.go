@@ -6,8 +6,8 @@ import (
 	"math"
 	"time"
 
-	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
-	"github.com/cometbft/cometbft/types"
+	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // Benchmark is a simple function for fetching, calculating and printing

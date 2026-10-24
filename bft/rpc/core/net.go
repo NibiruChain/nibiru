@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cometbft/cometbft/p2p"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 // NetInfo returns network info.

@@ -6,12 +6,12 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/cometbft/cometbft/libs/log"
-	cmtpubsub "github.com/cometbft/cometbft/libs/pubsub"
-	"github.com/cometbft/cometbft/light"
-	lrpc "github.com/cometbft/cometbft/light/rpc"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	rpcserver "github.com/cometbft/cometbft/rpc/jsonrpc/server"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtpubsub "github.com/NibiruChain/nibiru/v2/bft/libs/pubsub"
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	lrpc "github.com/NibiruChain/nibiru/v2/bft/light/rpc"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
+	rpcserver "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
 )
 
 // A Proxy defines parameters for running an HTTP server proxy.

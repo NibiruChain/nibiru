@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	pkgerrors "github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

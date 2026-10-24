@@ -9,10 +9,10 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/gogoproto/proto"
 
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	cmtstore "github.com/cometbft/cometbft/proto/tendermint/store"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	cmtstore "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/store"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 /*

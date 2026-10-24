@@ -9,16 +9,16 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-	cmtcfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/progressbar"
-	"github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/state/indexer"
-	blockidxkv "github.com/cometbft/cometbft/state/indexer/block/kv"
-	"github.com/cometbft/cometbft/state/indexer/sink/psql"
-	"github.com/cometbft/cometbft/state/txindex"
-	"github.com/cometbft/cometbft/state/txindex/kv"
-	"github.com/cometbft/cometbft/types"
+	abcitypes "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/progressbar"
+	"github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/state/indexer"
+	blockidxkv "github.com/NibiruChain/nibiru/v2/bft/state/indexer/block/kv"
+	"github.com/NibiruChain/nibiru/v2/bft/state/indexer/sink/psql"
+	"github.com/NibiruChain/nibiru/v2/bft/state/txindex"
+	"github.com/NibiruChain/nibiru/v2/bft/state/txindex/kv"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 const (

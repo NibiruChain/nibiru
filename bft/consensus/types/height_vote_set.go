@@ -6,11 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	"github.com/cometbft/cometbft/p2p"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 type RoundVoteSet struct {

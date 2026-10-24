@@ -1,8 +1,8 @@
 package proxy
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/version"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 // RequestInfo contains all the information for sending

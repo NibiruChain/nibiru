@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 )
 
 // DefaultDirPerm is the default permissions used when creating directories.

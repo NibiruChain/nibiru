@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	dbm "github.com/cometbft/cometbft-db"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmttypes "github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/require"
 )
 

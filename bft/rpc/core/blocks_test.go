@@ -9,12 +9,12 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/state/mocks"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtstate "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/state"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/state/mocks"
 )
 
 func TestBlockchainInfo(t *testing.T) {

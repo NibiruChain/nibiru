@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/internal/test"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/types"
-	cmttime "github.com/cometbft/cometbft/types/time"
+	"github.com/NibiruChain/nibiru/v2/bft/internal/test"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
 // TestLoadBlockExtendedCommit tests loading the extended commit for a previously

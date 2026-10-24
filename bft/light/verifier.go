@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	"github.com/cometbft/cometbft/types"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 var (

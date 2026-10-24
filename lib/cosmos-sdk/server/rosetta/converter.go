@@ -7,12 +7,12 @@ import (
 	"reflect"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	tmcoretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	rosettatypes "github.com/coinbase/rosetta-sdk-go/types"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto"
-	tmcoretypes "github.com/cometbft/cometbft/rpc/core/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

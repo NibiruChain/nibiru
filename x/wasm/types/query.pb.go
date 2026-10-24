@@ -7,9 +7,9 @@ import (
 	bytes "bytes"
 	context "context"
 	fmt "fmt"
+	github_com_cometbft_cometbft_libs_bytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	query "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
-	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -568,7 +568,7 @@ var xxx_messageInfo_QueryCodeRequest proto.InternalMessageInfo
 type CodeInfoResponse struct {
 	CodeID                uint64                                           `protobuf:"varint,1,opt,name=code_id,json=codeId,proto3" json:"id"`
 	Creator               string                                           `protobuf:"bytes,2,opt,name=creator,proto3" json:"creator,omitempty"`
-	DataHash              github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,3,opt,name=data_hash,json=dataHash,proto3,casttype=github.com/cometbft/cometbft/libs/bytes.HexBytes" json:"data_hash,omitempty"`
+	DataHash              github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,3,opt,name=data_hash,json=dataHash,proto3,casttype=github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes" json:"data_hash,omitempty"`
 	InstantiatePermission AccessConfig                                     `protobuf:"bytes,6,opt,name=instantiate_permission,json=instantiatePermission,proto3" json:"instantiate_permission"`
 }
 

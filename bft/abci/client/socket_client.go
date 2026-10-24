@@ -10,11 +10,11 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/cometbft/cometbft/abci/types"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
-	"github.com/cometbft/cometbft/libs/service"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/libs/timer"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/timer"
 )
 
 const (

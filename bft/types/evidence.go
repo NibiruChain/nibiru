@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/merkle"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 // Evidence represents any provable malicious activity by a validator.

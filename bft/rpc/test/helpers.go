@@ -8,18 +8,18 @@ import (
 	"strings"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
-	cfg "github.com/cometbft/cometbft/config"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
-	nm "github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/privval"
-	"github.com/cometbft/cometbft/proxy"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	core_grpc "github.com/cometbft/cometbft/rpc/grpc"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
+	nm "github.com/NibiruChain/nibiru/v2/bft/node"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	core_grpc "github.com/NibiruChain/nibiru/v2/bft/rpc/grpc"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 )
 
 // Options helps with specifying some parameters for our RPC testing for greater

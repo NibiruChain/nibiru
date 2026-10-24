@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtime "github.com/cometbft/cometbft/types/time"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	tmtime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 

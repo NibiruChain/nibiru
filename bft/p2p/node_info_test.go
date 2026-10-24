@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 )
 
 func TestNodeInfoValidate(t *testing.T) {

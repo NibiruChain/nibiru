@@ -15,16 +15,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/merkle"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	"github.com/cometbft/cometbft/libs/bits"
-	"github.com/cometbft/cometbft/libs/bytes"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmtversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	cmttime "github.com/cometbft/cometbft/types/time"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bits"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmtversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 func TestMain(m *testing.M) {

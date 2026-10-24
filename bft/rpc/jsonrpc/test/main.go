@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cometbft/cometbft/libs/log"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	rpcserver "github.com/cometbft/cometbft/rpc/jsonrpc/server"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	rpcserver "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 var routes = map[string]*rpcserver.RPCFunc{

@@ -5,13 +5,13 @@ package tendermint
 
 import (
 	fmt "fmt"
-	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
-	types2 "github.com/cometbft/cometbft/proto/tendermint/types"
+	github_com_cometbft_cometbft_libs_bytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	types2 "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	types "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
+	types1 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
-	types "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
-	types1 "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"
 	_go "github.com/cosmos/ics23/go"
 	_ "google.golang.org/protobuf/types/known/durationpb"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
@@ -105,7 +105,7 @@ type ConsensusState struct {
 	Timestamp time.Time `protobuf:"bytes,1,opt,name=timestamp,proto3,stdtime" json:"timestamp"`
 	// commitment root (i.e app hash)
 	Root               types1.MerkleRoot                                `protobuf:"bytes,2,opt,name=root,proto3" json:"root"`
-	NextValidatorsHash github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,3,opt,name=next_validators_hash,json=nextValidatorsHash,proto3,casttype=github.com/cometbft/cometbft/libs/bytes.HexBytes" json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
+	NextValidatorsHash github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,3,opt,name=next_validators_hash,json=nextValidatorsHash,proto3,casttype=github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes" json:"next_validators_hash,omitempty" yaml:"next_validators_hash"`
 }
 
 func (m *ConsensusState) Reset()         { *m = ConsensusState{} }

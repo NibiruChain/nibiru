@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/libs/log"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/prefix"

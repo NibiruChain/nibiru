@@ -8,13 +8,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	flow "github.com/cometbft/cometbft/libs/flowrate"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/service"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/p2p"
-	"github.com/cometbft/cometbft/types"
-	cmttime "github.com/cometbft/cometbft/types/time"
+	flow "github.com/NibiruChain/nibiru/v2/bft/libs/flowrate"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
 /*

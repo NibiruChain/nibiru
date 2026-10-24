@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	cmtlog "github.com/cometbft/cometbft/libs/log"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"

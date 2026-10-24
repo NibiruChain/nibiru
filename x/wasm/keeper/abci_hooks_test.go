@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/stretchr/testify/require"
 
 	sdktestdata "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"

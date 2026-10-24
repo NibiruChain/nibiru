@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 	"sigs.k8s.io/yaml"
 

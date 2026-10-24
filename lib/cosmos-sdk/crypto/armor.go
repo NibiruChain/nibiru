@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"golang.org/x/crypto/openpgp/armor" //nolint:staticcheck
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"

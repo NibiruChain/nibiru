@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cometbft/cometbft/crypto/merkle"
-	"github.com/cometbft/cometbft/libs/bits"
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bits"
+	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 var (

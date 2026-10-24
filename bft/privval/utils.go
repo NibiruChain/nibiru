@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
 )
 
 // IsConnTimeout returns a boolean indicating whether the error is known to

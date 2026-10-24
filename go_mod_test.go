@@ -18,6 +18,7 @@ import (
 var bannedUpstream = []string{
 	"github.com/cosmos/cosmos-sdk",
 	"github.com/cosmos/ibc-go",
+	"github.com/cometbft/cometbft",
 }
 
 func isBannedModule(modPath string) (banned string, ok bool) {

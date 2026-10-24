@@ -17,10 +17,10 @@ import (
 	"context"
 	"errors"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/pubsub/query"
-	"github.com/cometbft/cometbft/state/txindex"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	"github.com/NibiruChain/nibiru/v2/bft/state/txindex"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 const (

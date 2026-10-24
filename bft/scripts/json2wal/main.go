@@ -14,9 +14,9 @@ import (
 	"os"
 	"strings"
 
-	cs "github.com/cometbft/cometbft/consensus"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/types"
+	cs "github.com/NibiruChain/nibiru/v2/bft/consensus"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 func main() {

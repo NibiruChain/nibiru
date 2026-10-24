@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/rpc/client/mock"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 )
 
 func TestStatus(t *testing.T) {

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
-	"github.com/cometbft/cometbft/types"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // waitForHeight waits for the network to reach a certain height (or above),

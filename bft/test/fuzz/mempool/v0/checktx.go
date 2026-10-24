@@ -1,11 +1,11 @@
 package v0
 
 import (
-	"github.com/cometbft/cometbft/abci/example/kvstore"
-	"github.com/cometbft/cometbft/config"
-	mempl "github.com/cometbft/cometbft/mempool"
-	mempoolv0 "github.com/cometbft/cometbft/mempool/v0"
-	"github.com/cometbft/cometbft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	mempl "github.com/NibiruChain/nibiru/v2/bft/mempool"
+	mempoolv0 "github.com/NibiruChain/nibiru/v2/bft/mempool/v0"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
 )
 
 var mempool mempl.Mempool

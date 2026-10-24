@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 

@@ -12,12 +12,12 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/light"
-	"github.com/cometbft/cometbft/light/provider"
-	mockp "github.com/cometbft/cometbft/light/provider/mock"
-	dbs "github.com/cometbft/cometbft/light/store/db"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	"github.com/NibiruChain/nibiru/v2/bft/light/provider"
+	mockp "github.com/NibiruChain/nibiru/v2/bft/light/provider/mock"
+	dbs "github.com/NibiruChain/nibiru/v2/bft/light/store/db"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 const (

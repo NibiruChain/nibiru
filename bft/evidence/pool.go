@@ -13,11 +13,11 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	clist "github.com/cometbft/cometbft/libs/clist"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/types"
+	clist "github.com/NibiruChain/nibiru/v2/bft/libs/clist"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 const (

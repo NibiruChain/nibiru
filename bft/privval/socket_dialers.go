@@ -5,9 +5,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
-	p2pconn "github.com/cometbft/cometbft/p2p/conn"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
+	p2pconn "github.com/NibiruChain/nibiru/v2/bft/p2p/conn"
 )
 
 // Socket errors.

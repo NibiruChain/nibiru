@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cometbft/cometbft/crypto/merkle"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 // TxKeySize is the size of the transaction key index

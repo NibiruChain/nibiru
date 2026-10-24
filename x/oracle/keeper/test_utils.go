@@ -7,6 +7,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
@@ -38,10 +42,6 @@ import (
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 )
 

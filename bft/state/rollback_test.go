@@ -8,15 +8,15 @@ import (
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
-	cmtversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	"github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/state/mocks"
-	"github.com/cometbft/cometbft/store"
-	"github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	cmtstate "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/state"
+	cmtversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	"github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/state/mocks"
+	"github.com/NibiruChain/nibiru/v2/bft/store"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 func TestRollback(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	auto "github.com/cometbft/cometbft/libs/autofile"
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	auto "github.com/NibiruChain/nibiru/v2/bft/libs/autofile"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 )
 
 const Version = "0.0.1"

@@ -11,13 +11,13 @@ import (
 
 	"github.com/creachadair/taskgroup"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/clist"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/mempool"
-	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/clist"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/mempool"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 var _ mempool.Mempool = (*TxMempool)(nil)

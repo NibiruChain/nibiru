@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	cfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/clist"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/mempool"
-	"github.com/cometbft/cometbft/p2p"
-	protomem "github.com/cometbft/cometbft/proto/tendermint/mempool"
-	"github.com/cometbft/cometbft/types"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/clist"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/mempool"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	protomem "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/mempool"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 	"golang.org/x/sync/semaphore"
 )
 

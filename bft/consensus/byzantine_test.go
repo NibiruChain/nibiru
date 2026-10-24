@@ -14,23 +14,23 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	abcicli "github.com/cometbft/cometbft/abci/client"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/evidence"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/libs/service"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	mempl "github.com/cometbft/cometbft/mempool"
+	abcicli "github.com/NibiruChain/nibiru/v2/bft/abci/client"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/evidence"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	mempl "github.com/NibiruChain/nibiru/v2/bft/mempool"
 
-	cfg "github.com/cometbft/cometbft/config"
-	mempoolv0 "github.com/cometbft/cometbft/mempool/v0"
-	mempoolv1 "github.com/cometbft/cometbft/mempool/v1" //nolint:staticcheck // SA1019 Priority mempool deprecated but still supported in this release.
-	"github.com/cometbft/cometbft/p2p"
-	cmtcons "github.com/cometbft/cometbft/proto/tendermint/consensus"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/store"
-	"github.com/cometbft/cometbft/types"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	mempoolv0 "github.com/NibiruChain/nibiru/v2/bft/mempool/v0"
+	mempoolv1 "github.com/NibiruChain/nibiru/v2/bft/mempool/v1" //nolint:staticcheck // SA1019 Priority mempool deprecated but still supported in this release.
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	cmtcons "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/consensus"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/store"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 //----------------------------------------------

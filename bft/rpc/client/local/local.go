@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtpubsub "github.com/cometbft/cometbft/libs/pubsub"
-	cmtquery "github.com/cometbft/cometbft/libs/pubsub/query"
-	nm "github.com/cometbft/cometbft/node"
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
-	"github.com/cometbft/cometbft/rpc/core"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtpubsub "github.com/NibiruChain/nibiru/v2/bft/libs/pubsub"
+	cmtquery "github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	nm "github.com/NibiruChain/nibiru/v2/bft/node"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/core"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 /*

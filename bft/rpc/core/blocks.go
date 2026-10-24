@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	cmtquery "github.com/cometbft/cometbft/libs/pubsub/query"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	blockidxnull "github.com/cometbft/cometbft/state/indexer/block/null"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	cmtquery "github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	blockidxnull "github.com/NibiruChain/nibiru/v2/bft/state/indexer/block/null"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // BlockchainInfo gets block headers for minHeight <= height <= maxHeight.

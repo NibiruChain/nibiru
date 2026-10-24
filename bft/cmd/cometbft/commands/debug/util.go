@@ -9,8 +9,8 @@ import (
 	"path"
 	"path/filepath"
 
-	cfg "github.com/cometbft/cometbft/config"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 )
 
 // dumpStatus gets node status state dump from the CometBFT RPC and writes it

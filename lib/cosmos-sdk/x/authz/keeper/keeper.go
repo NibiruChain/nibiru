@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"

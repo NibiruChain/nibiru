@@ -3,8 +3,8 @@ package proofs
 import (
 	"sort"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 	"golang.org/x/exp/maps"
 
 	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"

@@ -8,7 +8,7 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

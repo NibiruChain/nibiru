@@ -4,8 +4,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	p2pconn "github.com/cometbft/cometbft/p2p/conn"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	p2pconn "github.com/NibiruChain/nibiru/v2/bft/p2p/conn"
 )
 
 const (

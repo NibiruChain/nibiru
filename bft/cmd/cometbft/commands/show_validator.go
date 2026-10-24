@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/privval"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
 )
 
 // ShowValidatorCmd adds capabilities for showing the validator info.

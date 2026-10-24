@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	cstypes "github.com/cometbft/cometbft/consensus/types"
-	"github.com/cometbft/cometbft/libs/bits"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	"github.com/cometbft/cometbft/p2p"
-	cmtcons "github.com/cometbft/cometbft/proto/tendermint/consensus"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
+	cstypes "github.com/NibiruChain/nibiru/v2/bft/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bits"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	cmtcons "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/consensus"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/cosmos/gogoproto/proto"
 )
 

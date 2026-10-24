@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cometbft/cometbft/test/loadtime/payload"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/test/loadtime/payload"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/gofrs/uuid"
 	"gonum.org/v1/gonum/stat"
 )

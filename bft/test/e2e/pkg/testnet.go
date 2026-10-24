@@ -15,10 +15,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 
 	_ "embed"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cometbft/cometbft/libs/tempfile"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/tempfile"
 )
 
 /* Loading & Saving */

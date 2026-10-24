@@ -11,16 +11,16 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/evidence"
-	"github.com/cometbft/cometbft/evidence/mocks"
-	"github.com/cometbft/cometbft/internal/test"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	sm "github.com/cometbft/cometbft/state"
-	smmocks "github.com/cometbft/cometbft/state/mocks"
-	"github.com/cometbft/cometbft/store"
-	"github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/evidence"
+	"github.com/NibiruChain/nibiru/v2/bft/evidence/mocks"
+	"github.com/NibiruChain/nibiru/v2/bft/internal/test"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	smmocks "github.com/NibiruChain/nibiru/v2/bft/state/mocks"
+	"github.com/NibiruChain/nibiru/v2/bft/store"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 func TestMain(m *testing.M) {

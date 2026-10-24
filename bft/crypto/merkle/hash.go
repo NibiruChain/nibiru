@@ -1,7 +1,7 @@
 package merkle
 
 import (
-	"github.com/cometbft/cometbft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 )
 
 // TODO: make these have a large predefined capacity

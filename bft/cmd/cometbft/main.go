@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
-	cmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	"github.com/cometbft/cometbft/cmd/cometbft/commands/debug"
-	cfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/cli"
-	nm "github.com/cometbft/cometbft/node"
+	cmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	"github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands/debug"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/cli"
+	nm "github.com/NibiruChain/nibiru/v2/bft/node"
 )
 
 func main() {

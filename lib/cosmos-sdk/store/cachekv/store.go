@@ -6,8 +6,8 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/NibiruChain/nibiru/v2/bft/libs/math"
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/math"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/internal/conv"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv/internal"

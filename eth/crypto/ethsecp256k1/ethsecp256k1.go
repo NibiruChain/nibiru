@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

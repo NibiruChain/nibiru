@@ -13,9 +13,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	tmlog "github.com/cometbft/cometbft/libs/log"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 )
 
 // AddCommands adds server commands

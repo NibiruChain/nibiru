@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/cometbft/cometbft/libs/log"
-	rs "github.com/cometbft/cometbft/rpc/jsonrpc/server"
-	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	rs "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
+	types "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 var rpcFuncMap = map[string]*rs.RPCFunc{

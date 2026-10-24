@@ -3,8 +3,8 @@ package wasm
 import (
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

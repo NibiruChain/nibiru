@@ -5,12 +5,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtnet "github.com/cometbft/cometbft/libs/net"
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 
-	"github.com/cometbft/cometbft/privval"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
 )
 
 func main() {

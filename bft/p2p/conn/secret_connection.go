@@ -20,13 +20,13 @@ import (
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/nacl/box"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
-	"github.com/cometbft/cometbft/libs/async"
-	"github.com/cometbft/cometbft/libs/protoio"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	tmp2p "github.com/cometbft/cometbft/proto/tendermint/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/async"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/protoio"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	tmp2p "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/p2p"
 )
 
 // 4 + 1024 == 1028 total frame size

@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cometbft/cometbft/libs/log"
-	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	types "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 type sampleResult struct {

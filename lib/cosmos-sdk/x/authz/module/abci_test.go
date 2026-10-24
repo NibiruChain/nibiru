@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +20,7 @@ import (
 	authztestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/testutil"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
-	"github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 func TestBeginBlockerIsInert(t *testing.T) {

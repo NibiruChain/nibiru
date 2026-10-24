@@ -6,9 +6,9 @@ package types
 import (
 	bytes "bytes"
 	fmt "fmt"
+	github_com_cometbft_cometbft_libs_bytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx/amino"
-	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -394,7 +394,7 @@ var xxx_messageInfo_AbsoluteTxPosition proto.InternalMessageInfo
 // Model is a struct that holds a KV pair
 type Model struct {
 	// hex-encode key to read it better (this is often ascii)
-	Key github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,1,opt,name=key,proto3,casttype=github.com/cometbft/cometbft/libs/bytes.HexBytes" json:"key,omitempty"`
+	Key github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,1,opt,name=key,proto3,casttype=github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes" json:"key,omitempty"`
 	// base64-encode raw value
 	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/internal/conv"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

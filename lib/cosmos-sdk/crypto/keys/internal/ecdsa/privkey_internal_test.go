@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/stretchr/testify/suite"
 )
 

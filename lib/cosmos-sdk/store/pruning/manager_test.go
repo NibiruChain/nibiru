@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	db "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 

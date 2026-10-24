@@ -3,9 +3,9 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
 )
 
 func Ed25519ValidatorUpdate(pk []byte, power int64) ValidatorUpdate {

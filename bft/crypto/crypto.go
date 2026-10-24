@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	"github.com/cometbft/cometbft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"

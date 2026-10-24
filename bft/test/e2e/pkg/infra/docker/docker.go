@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
-	"github.com/cometbft/cometbft/test/e2e/pkg/infra"
+	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg"
+	"github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg/infra"
 )
 
 var _ infra.Provider = &Provider{}

@@ -265,12 +265,11 @@ run_go_compile() {
   local arch_name="$4"
   local version="$5"
   local commit="$6"
-  local cmt_version="$7"
-  local build_tags="$8"
-  local build_tags_csv="$9"
-  local wasmvm_version="${10}"
-  local just_build="${11}"
-  local static_pie="${12}"
+  local build_tags="$7"
+  local build_tags_csv="$8"
+  local wasmvm_version="$9"
+  local just_build="${10}"
+  local static_pie="${11}"
 
   local cgo_ldflags ldflags go_build_mode install_dir
   go_build_mode=""
@@ -292,7 +291,6 @@ run_go_compile() {
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Version=${version}"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Commit=${commit}"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.BuildTags=${build_tags_csv}"
-  ldflags+=" -X github.com/cometbft/cometbft/version.CMTSemVer=${cmt_version}"
   ldflags+=" -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb"
   ldflags+=" -linkmode=external -w -s"
 
@@ -348,7 +346,7 @@ main() {
 
   local builddir="${BUILDDIR:-$REPO_ROOT/build}"
   local tempdir="${TEMPDIR:-$REPO_ROOT/temp}"
-  local os_name arch_name version commit cmt_version wasmvm_version build_tags tags_csv static_pie
+  local os_name arch_name version commit wasmvm_version build_tags tags_csv static_pie
 
   os_name="$(detect_os_name)"
   if [[ "$os_name" == darwin ]]; then
@@ -357,7 +355,6 @@ main() {
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"
-  cmt_version="$(go list -m github.com/cometbft/cometbft | sed 's:.* ::')"
   wasmvm_version="v1.13.1"
   case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
     true) wasmvm_version="source" ;;
@@ -382,7 +379,7 @@ main() {
   ensure_temp_dir "$tempdir"
   ensure_wasmvm_lib "$tempdir" "$os_name" "$arch_name" "$wasmvm_version"
   run_go_compile "$builddir" "$tempdir" "$os_name" "$arch_name" \
-    "$version" "$commit" "$cmt_version" "$build_tags" "$tags_csv" "$wasmvm_version" "$JUST_BUILD" "$static_pie"
+    "$version" "$commit" "$build_tags" "$tags_csv" "$wasmvm_version" "$JUST_BUILD" "$static_pie"
 
   if [[ "$JUST_BUILD" == true ]]; then
     if [[ ! -x "${builddir}/nibid" ]]; then

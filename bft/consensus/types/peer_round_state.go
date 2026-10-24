@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/bits"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bits"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 //-----------------------------------------------------------------------------

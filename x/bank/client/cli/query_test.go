@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

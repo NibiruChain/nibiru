@@ -6,9 +6,9 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cometbft_cometbft_libs_bytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	query "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
-	github_com_cometbft_cometbft_libs_bytes "github.com/cometbft/cometbft/libs/bytes"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -36,7 +36,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type QueryEvidenceRequest struct {
 	// evidence_hash defines the hash of the requested evidence.
 	// Deprecated: Use hash, a HEX encoded string, instead.
-	EvidenceHash github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,1,opt,name=evidence_hash,json=evidenceHash,proto3,casttype=github.com/cometbft/cometbft/libs/bytes.HexBytes" json:"evidence_hash,omitempty"` // Deprecated: Do not use.
+	EvidenceHash github_com_cometbft_cometbft_libs_bytes.HexBytes `protobuf:"bytes,1,opt,name=evidence_hash,json=evidenceHash,proto3,casttype=github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes" json:"evidence_hash,omitempty"` // Deprecated: Do not use.
 	// hash defines the evidence hash of the requested evidence.
 	//
 	// Since: cosmos-sdk 0.47

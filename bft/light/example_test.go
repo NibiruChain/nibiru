@@ -10,13 +10,13 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/abci/example/kvstore"
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/light"
-	"github.com/cometbft/cometbft/light/provider"
-	httpp "github.com/cometbft/cometbft/light/provider/http"
-	dbs "github.com/cometbft/cometbft/light/store/db"
-	rpctest "github.com/cometbft/cometbft/rpc/test"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	"github.com/NibiruChain/nibiru/v2/bft/light/provider"
+	httpp "github.com/NibiruChain/nibiru/v2/bft/light/provider/http"
+	dbs "github.com/NibiruChain/nibiru/v2/bft/light/store/db"
+	rpctest "github.com/NibiruChain/nibiru/v2/bft/rpc/test"
 )
 
 // Automatically getting new headers and verifying them.

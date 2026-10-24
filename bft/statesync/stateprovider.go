@@ -8,18 +8,18 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/libs/log"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/light"
-	lightprovider "github.com/cometbft/cometbft/light/provider"
-	lighthttp "github.com/cometbft/cometbft/light/provider/http"
-	lightrpc "github.com/cometbft/cometbft/light/rpc"
-	lightdb "github.com/cometbft/cometbft/light/store/db"
-	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	lightprovider "github.com/NibiruChain/nibiru/v2/bft/light/provider"
+	lighthttp "github.com/NibiruChain/nibiru/v2/bft/light/provider/http"
+	lightrpc "github.com/NibiruChain/nibiru/v2/bft/light/rpc"
+	lightdb "github.com/NibiruChain/nibiru/v2/bft/light/store/db"
+	cmtstate "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/state"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 //go:generate ../scripts/mockery_generate.sh StateProvider

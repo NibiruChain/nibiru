@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 )
 
 // ID is a hex-encoded crypto.Address

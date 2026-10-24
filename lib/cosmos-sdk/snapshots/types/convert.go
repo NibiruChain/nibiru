@@ -1,7 +1,7 @@
 package types
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

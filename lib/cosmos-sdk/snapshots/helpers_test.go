@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	db "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	protoio "github.com/cosmos/gogoproto/io"
 	"github.com/stretchr/testify/require"
 

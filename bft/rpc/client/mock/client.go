@@ -18,13 +18,13 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/libs/service"
-	"github.com/cometbft/cometbft/rpc/client"
-	"github.com/cometbft/cometbft/rpc/core"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpctypes "github.com/cometbft/cometbft/rpc/jsonrpc/types"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/core"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // Client wraps arbitrary implementations of the various interfaces.

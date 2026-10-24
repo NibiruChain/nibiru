@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"math"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	pkgerrors "github.com/pkg/errors"
 

@@ -9,10 +9,10 @@ import (
 
 	db "github.com/cometbft/cometbft-db"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/pubsub/query"
-	blockidxkv "github.com/cometbft/cometbft/state/indexer/block/kv"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	blockidxkv "github.com/NibiruChain/nibiru/v2/bft/state/indexer/block/kv"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 func TestBlockIndexer(t *testing.T) {

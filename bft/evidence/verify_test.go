@@ -10,17 +10,17 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	"github.com/cometbft/cometbft/evidence"
-	"github.com/cometbft/cometbft/evidence/mocks"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmtversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	sm "github.com/cometbft/cometbft/state"
-	smmocks "github.com/cometbft/cometbft/state/mocks"
-	"github.com/cometbft/cometbft/types"
-	"github.com/cometbft/cometbft/version"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/evidence"
+	"github.com/NibiruChain/nibiru/v2/bft/evidence/mocks"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmtversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	smmocks "github.com/NibiruChain/nibiru/v2/bft/state/mocks"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/version"
 )
 
 const (

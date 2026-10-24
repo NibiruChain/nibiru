@@ -3,7 +3,7 @@ package keeper
 import (
 	"encoding/json"
 
-	tmBytes "github.com/cometbft/cometbft/libs/bytes"
+	tmBytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	fuzz "github.com/google/gofuzz"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

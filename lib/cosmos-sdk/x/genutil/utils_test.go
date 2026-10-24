@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/privval"
+	tmed25519 "github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/privval"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	"github.com/stretchr/testify/require"
 )
 

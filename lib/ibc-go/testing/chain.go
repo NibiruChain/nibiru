@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	cmttypes "github.com/cometbft/cometbft/types"
-	tmversion "github.com/cometbft/cometbft/version"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	tmprotoversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
+	tmversion "github.com/NibiruChain/nibiru/v2/bft/version"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

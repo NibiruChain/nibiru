@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

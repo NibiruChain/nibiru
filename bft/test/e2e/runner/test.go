@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	e2e "github.com/cometbft/cometbft/test/e2e/pkg"
+	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/pkg"
 )
 
 // Test runs test cases under tests/

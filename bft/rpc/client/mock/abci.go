@@ -3,12 +3,12 @@ package mock
 import (
 	"context"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/rpc/client"
-	ctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	ctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // ABCIApp will send all abci related request to the named app,

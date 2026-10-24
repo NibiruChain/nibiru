@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	tmrpcserver "github.com/cometbft/cometbft/rpc/jsonrpc/server"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmrpcserver "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
 	gateway "github.com/cosmos/gogogateway"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"

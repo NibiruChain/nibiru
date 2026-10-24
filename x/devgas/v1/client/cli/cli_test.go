@@ -7,12 +7,12 @@ import (
 	"io"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/stretchr/testify/suite"
 
 	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdktestutilcli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"

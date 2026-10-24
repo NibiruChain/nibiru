@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	ocproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	ocproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

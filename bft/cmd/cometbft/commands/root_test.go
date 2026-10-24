@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cfg "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/cli"
-	cmtos "github.com/cometbft/cometbft/libs/os"
+	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/cli"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 )
 
 // clearConfig clears env vars, the given root dir, and resets viper.

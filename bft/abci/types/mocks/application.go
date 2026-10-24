@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	types "github.com/cometbft/cometbft/abci/types"
+	types "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	mock "github.com/stretchr/testify/mock"
 )
 

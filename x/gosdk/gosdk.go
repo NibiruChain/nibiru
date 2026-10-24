@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/hex"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	cmtcoretypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	cmtcoretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/app"

@@ -9,8 +9,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/evm/rpc"
 
-	"github.com/cometbft/cometbft/libs/log"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/ethereum/go-ethereum/common"

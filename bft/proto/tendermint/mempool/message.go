@@ -3,7 +3,7 @@ package mempool
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
 	"github.com/cosmos/gogoproto/proto"
 )
 

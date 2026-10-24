@@ -3,7 +3,7 @@ package client
 import (
 	"encoding/base64"
 
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 	"github.com/spf13/pflag"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cometbft/cometbft/test/loadtime/payload"
+	"github.com/NibiruChain/nibiru/v2/bft/test/loadtime/payload"
 	"github.com/google/uuid"
 )
 

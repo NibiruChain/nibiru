@@ -17,6 +17,9 @@ coverage.txt
 coverage.html
 temp
 temp*
+!bft/libs/tempfile/
+!bft/libs/tempfile/*
+!bft/test/e2e/pkg/templates/
 txout.json
 vote.json
 **__pycache**

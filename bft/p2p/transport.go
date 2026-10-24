@@ -8,10 +8,10 @@ import (
 
 	"golang.org/x/net/netutil"
 
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/libs/protoio"
-	"github.com/cometbft/cometbft/p2p/conn"
-	cmtp2p "github.com/cometbft/cometbft/proto/tendermint/p2p"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/protoio"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p/conn"
+	cmtp2p "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/p2p"
 	"github.com/cosmos/gogoproto/proto"
 )
 

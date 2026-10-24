@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 

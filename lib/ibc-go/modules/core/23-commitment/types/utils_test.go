@@ -3,8 +3,8 @@ package types_test
 import (
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	crypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/23-commitment/types"

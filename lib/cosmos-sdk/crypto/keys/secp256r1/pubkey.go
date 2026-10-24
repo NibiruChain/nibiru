@@ -3,7 +3,7 @@ package secp256r1
 import (
 	"encoding/base64"
 
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 
 	ecdsa "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/internal/ecdsa"

@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	cmtmath "github.com/cometbft/cometbft/libs/math"
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
-	"github.com/cometbft/cometbft/light/provider"
-	"github.com/cometbft/cometbft/light/store"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
+	"github.com/NibiruChain/nibiru/v2/bft/light/provider"
+	"github.com/NibiruChain/nibiru/v2/bft/light/store"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 type mode byte

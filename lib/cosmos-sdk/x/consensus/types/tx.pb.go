@@ -6,8 +6,8 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	types "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/msgservice"
-	types "github.com/cometbft/cometbft/proto/tendermint/types"
 	_ "github.com/cosmos/cosmos-proto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"

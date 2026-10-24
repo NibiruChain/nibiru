@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
 
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
 	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"

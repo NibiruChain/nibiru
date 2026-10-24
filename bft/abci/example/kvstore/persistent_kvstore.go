@@ -9,11 +9,11 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cometbft/cometbft/abci/example/code"
-	"github.com/cometbft/cometbft/abci/types"
-	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
-	"github.com/cometbft/cometbft/libs/log"
-	pc "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/code"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	pc "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 )
 
 const (

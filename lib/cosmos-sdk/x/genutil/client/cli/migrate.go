@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"

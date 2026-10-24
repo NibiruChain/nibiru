@@ -4,7 +4,7 @@ import (
 	"io"
 	"testing"
 
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

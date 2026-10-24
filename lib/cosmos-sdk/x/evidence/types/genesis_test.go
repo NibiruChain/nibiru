@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

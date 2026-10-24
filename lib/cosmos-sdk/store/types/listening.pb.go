@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/cometbft/cometbft/abci/types"
+	types "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"

@@ -1,7 +1,7 @@
 package evidence
 
 import (
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 //go:generate ../scripts/mockery_generate.sh BlockStore

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

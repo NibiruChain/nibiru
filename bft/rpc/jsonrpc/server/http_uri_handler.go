@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	cmtjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	cmtjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	types "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 // HTTP + URI handler

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cometbft/cometbft/libs/log"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/spf13/viper"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

@@ -4,7 +4,7 @@ import (
 	"io"
 	"math"
 
-	"github.com/cometbft/cometbft/libs/protoio"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/protoio"
 	"github.com/cosmos/gogoproto/proto"
 )
 

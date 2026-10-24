@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/orderedcode"
 
-	"github.com/cometbft/cometbft/libs/pubsub/query"
-	"github.com/cometbft/cometbft/state/indexer"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	"github.com/NibiruChain/nibiru/v2/bft/state/indexer"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 type HeightInfo struct {

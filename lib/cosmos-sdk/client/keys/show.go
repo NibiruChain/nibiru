@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

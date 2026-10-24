@@ -11,13 +11,13 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/cometbft/cometbft/abci/server"
-	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	"github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
-	pvm "github.com/cometbft/cometbft/privval"
-	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/rpc/client/local"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/server"
+	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	"github.com/NibiruChain/nibiru/v2/bft/node"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/local"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,7 +36,7 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
 
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 )
 
 const (

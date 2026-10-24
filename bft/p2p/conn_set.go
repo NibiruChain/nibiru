@@ -3,7 +3,7 @@ package p2p
 import (
 	"net"
 
-	cmtsync "github.com/cometbft/cometbft/libs/sync"
+	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
 )
 
 // ConnSet is a lookup table for connections and all their ips.

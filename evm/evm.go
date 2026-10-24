@@ -4,7 +4,7 @@ package evm
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

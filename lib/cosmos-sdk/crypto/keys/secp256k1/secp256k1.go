@@ -8,8 +8,8 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
-	"github.com/cometbft/cometbft/crypto"
 	"golang.org/x/crypto/ripemd160" //nolint: staticcheck
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

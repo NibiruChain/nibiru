@@ -1,7 +1,7 @@
 package exported
 
 import (
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	"github.com/cosmos/gogoproto/proto"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

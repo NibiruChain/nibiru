@@ -3,7 +3,7 @@ package mempool
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/assert"
 )
 

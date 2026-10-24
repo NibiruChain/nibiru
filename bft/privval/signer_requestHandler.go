@@ -3,12 +3,12 @@ package privval
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/crypto"
-	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
-	cryptoproto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	privvalproto "github.com/cometbft/cometbft/proto/tendermint/privval"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	cryptoproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
+	privvalproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/privval"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 func DefaultValidationRequestHandler(

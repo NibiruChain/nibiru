@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 

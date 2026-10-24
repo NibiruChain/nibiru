@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/cometbft/cometbft/consensus"
+	"github.com/NibiruChain/nibiru/v2/bft/consensus"
 )
 
 // ReplayCmd allows replaying of messages from the WAL.

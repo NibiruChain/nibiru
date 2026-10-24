@@ -18,13 +18,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 
-	client "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	server "github.com/cometbft/cometbft/rpc/jsonrpc/server"
-	types "github.com/cometbft/cometbft/rpc/jsonrpc/types"
+	client "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
+	server "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
+	types "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
 )
 
 // Client and Server should work over tcp or unix sockets

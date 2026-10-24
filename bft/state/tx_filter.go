@@ -1,8 +1,8 @@
 package state
 
 import (
-	mempl "github.com/cometbft/cometbft/mempool"
-	"github.com/cometbft/cometbft/types"
+	mempl "github.com/NibiruChain/nibiru/v2/bft/mempool"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 // TxPreCheck returns a function to filter transactions before processing.

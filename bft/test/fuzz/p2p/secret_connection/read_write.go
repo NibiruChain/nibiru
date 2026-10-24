@@ -6,9 +6,9 @@ import (
 	"io"
 	"log"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cometbft/cometbft/libs/async"
-	sc "github.com/cometbft/cometbft/p2p/conn"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/async"
+	sc "github.com/NibiruChain/nibiru/v2/bft/p2p/conn"
 )
 
 func Fuzz(data []byte) int {

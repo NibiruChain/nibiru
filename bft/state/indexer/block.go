@@ -3,8 +3,8 @@ package indexer
 import (
 	"context"
 
-	"github.com/cometbft/cometbft/libs/pubsub/query"
-	"github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
 //go:generate ../../scripts/mockery_generate.sh BlockIndexer
