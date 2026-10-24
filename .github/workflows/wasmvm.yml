@@ -55,6 +55,14 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Log the decision inputs first so a failed step still shows them.
+          jq -cn \
+            --arg event "$EVENT_NAME" \
+            --arg ref "$REF_NAME" \
+            --arg wasmvm "$HAS_CHANGES_FOR_WASMVM" \
+            '{log: "changes-wasmvm.inputs", event: $event, ref: $ref,
+              "has-changes-for-wasmvm": $wasmvm}'
+
           do_run=false
           do_release=false
           reason="No Wasm VM FFI changes detected."
@@ -80,6 +88,13 @@ jobs:
             echo "do-release=$do_release"
             echo "reason=$reason"
           } >> "$GITHUB_OUTPUT"
+
+          jq -cn \
+            --arg do_run "$do_run" \
+            --arg do_release "$do_release" \
+            --arg reason "$reason" \
+            '{log: "changes-wasmvm.outputs", "do-run": $do_run,
+              "do-release": $do_release, reason: $reason}'
 
   # rust-base-tests (job): Tests the Rust crate `wasmvm`, generated bindings,
   # and Rust docs.
