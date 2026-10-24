@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
@@ -449,7 +450,7 @@ func (suite *KeeperTestSuite) TestPruneGrants() {
 			}
 			err := suite.feegrantKeeper.GrantAllowance(suite.ctx, tc.granter, tc.grantee, tc.allowance)
 			suite.NoError(err)
-			suite.feegrantKeeper.RemoveExpiredAllowances(tc.ctx)
+			suite.feegrantKeeper.RemoveExpiredAllowances(tc.ctx, 200)
 			grant, err := suite.feegrantKeeper.GetAllowance(tc.ctx, tc.granter, tc.grantee)
 			if tc.expErrMsg != "" {
 				suite.Error(err)
@@ -462,4 +463,59 @@ func (suite *KeeperTestSuite) TestPruneGrants() {
 			}
 		})
 	}
+}
+
+func (suite *KeeperTestSuite) TestEndBlockPruningLimit() {
+	grantee := suite.addrs[0]
+	granters := simtestutil.CreateIncrementalAccounts(453)[1:]
+	expiry := suite.ctx.BlockTime().Add(24 * time.Hour)
+	futureExpiry := expiry.Add(48 * time.Hour)
+
+	for _, granter := range granters[:450] {
+		suite.Require().NoError(suite.feegrantKeeper.GrantAllowance(suite.ctx, granter, grantee, &feegrant.BasicAllowance{
+			Expiration: &expiry,
+		}))
+	}
+	suite.Require().NoError(suite.feegrantKeeper.GrantAllowance(suite.ctx, granters[450], grantee, &feegrant.BasicAllowance{
+		Expiration: &futureExpiry,
+	}))
+	suite.Require().NoError(suite.feegrantKeeper.GrantAllowance(suite.ctx, granters[451], grantee, &feegrant.BasicAllowance{}))
+
+	suite.ctx = suite.ctx.WithBlockTime(expiry.Add(time.Hour))
+	for block, remaining := range []int{252, 52, 2, 2} {
+		suite.ctx = suite.ctx.WithBlockHeight(int64(block + 1))
+		module.EndBlocker(suite.ctx, suite.feegrantKeeper)
+
+		count := 0
+		suite.Require().NoError(suite.feegrantKeeper.IterateAllFeeAllowances(suite.ctx, func(_ feegrant.Grant) bool {
+			count++
+			return false
+		}))
+		suite.Require().Equal(remaining, count, "block %d", block+1)
+		for _, granter := range granters[450:] {
+			_, err := suite.feegrantKeeper.GetAllowance(suite.ctx, granter, grantee)
+			suite.Require().NoError(err)
+		}
+	}
+	for _, granter := range granters[:450] {
+		_, err := suite.feegrantKeeper.GetAllowance(suite.ctx, granter, grantee)
+		suite.Require().ErrorContains(err, "not found")
+	}
+}
+
+func (suite *KeeperTestSuite) TestPruningNonpositiveLimitKeepsExpiredGrantUnusable() {
+	expiry := suite.ctx.BlockTime().Add(24 * time.Hour)
+	granter, grantee := suite.addrs[0], suite.addrs[1]
+	suite.Require().NoError(suite.feegrantKeeper.GrantAllowance(suite.ctx, granter, grantee, &feegrant.BasicAllowance{
+		SpendLimit: suite.atom,
+		Expiration: &expiry,
+	}))
+	suite.ctx = suite.ctx.WithBlockTime(expiry.Add(time.Hour))
+	for _, limit := range []int32{0, -1} {
+		suite.feegrantKeeper.RemoveExpiredAllowances(suite.ctx, limit)
+		_, err := suite.feegrantKeeper.GetAllowance(suite.ctx, granter, grantee)
+		suite.Require().NoError(err)
+	}
+	err := suite.feegrantKeeper.UseGrantedFees(suite.ctx, granter, grantee, sdk.NewCoins(sdk.NewInt64Coin("atom", 1)), nil)
+	suite.Require().ErrorIs(err, feegrant.ErrFeeLimitExpired)
 }
