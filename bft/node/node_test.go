@@ -34,12 +34,49 @@ import (
 	cmttime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 )
 
+// testClientCreator returns an in-process client for the app named by
+// config.ProxyApp. cfg.TestConfig sets "kvstore", which
+// proxy.DefaultClientCreator no longer resolves in Nibiru BFT.
+func testClientCreator(config *cfg.Config) proxy.ClientCreator {
+	switch config.ProxyApp {
+	case "kvstore":
+		return proxy.NewLocalClientCreator(kvstore.NewApplication())
+	case "persistent_kvstore":
+		return proxy.NewLocalClientCreator(
+			kvstore.NewPersistentKVStoreApplication(config.DBDir()),
+		)
+	default:
+		return proxy.DefaultClientCreator(
+			config.ProxyApp, config.ABCI, config.DBDir(),
+		)
+	}
+}
+
+// newTestNode is DefaultNewNode with testClientCreator.
+func newTestNode(config *cfg.Config, logger log.Logger) (*Node, error) {
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	if err != nil {
+		return nil, err
+	}
+	return NewNode(config,
+		privval.LoadOrGenFilePV(
+			config.PrivValidatorKeyFile(), config.PrivValidatorStateFile(),
+		),
+		nodeKey,
+		testClientCreator(config),
+		DefaultGenesisDocProviderFunc(config),
+		DefaultDBProvider,
+		DefaultMetricsProvider(config.Instrumentation),
+		logger,
+	)
+}
+
 func TestNodeStartStop(t *testing.T) {
 	config := cfg.ResetTestRoot("node_node_test")
 	defer os.RemoveAll(config.RootDir)
 
 	// create & start node
-	n, err := DefaultNewNode(config, log.TestingLogger())
+	n, err := newTestNode(config, log.TestingLogger())
 	require.NoError(t, err)
 	err = n.Start()
 	require.NoError(t, err)
@@ -102,7 +139,7 @@ func TestNodeDelayedStart(t *testing.T) {
 	now := cmttime.Now()
 
 	// create & start node
-	n, err := DefaultNewNode(config, log.TestingLogger())
+	n, err := newTestNode(config, log.TestingLogger())
 	n.GenesisDoc().GenesisTime = now.Add(2 * time.Second)
 	require.NoError(t, err)
 
@@ -119,7 +156,7 @@ func TestNodeSetAppVersion(t *testing.T) {
 	defer os.RemoveAll(config.RootDir)
 
 	// create & start node
-	n, err := DefaultNewNode(config, log.TestingLogger())
+	n, err := newTestNode(config, log.TestingLogger())
 	require.NoError(t, err)
 
 	// default config uses the kvstore app
@@ -162,7 +199,7 @@ func TestNodeSetPrivValTCP(t *testing.T) {
 	}()
 	defer signerServer.Stop() //nolint:errcheck // ignore for tests
 
-	n, err := DefaultNewNode(config, log.TestingLogger())
+	n, err := newTestNode(config, log.TestingLogger())
 	require.NoError(t, err)
 	assert.IsType(t, &privval.RetrySignerClient{}, n.PrivValidator())
 }
@@ -175,7 +212,7 @@ func TestPrivValidatorListenAddrNoProtocol(t *testing.T) {
 	defer os.RemoveAll(config.RootDir)
 	config.BaseConfig.PrivValidatorListenAddr = addrNoPrefix
 
-	_, err := DefaultNewNode(config, log.TestingLogger())
+	_, err := newTestNode(config, log.TestingLogger())
 	assert.Error(t, err)
 }
 
@@ -206,7 +243,7 @@ func TestNodeSetPrivValIPC(t *testing.T) {
 	}()
 	defer pvsc.Stop() //nolint:errcheck // ignore for tests
 
-	n, err := DefaultNewNode(config, log.TestingLogger())
+	n, err := newTestNode(config, log.TestingLogger())
 	require.NoError(t, err)
 	assert.IsType(t, &privval.RetrySignerClient{}, n.PrivValidator())
 }
@@ -428,7 +465,7 @@ func TestNodeNewNodeCustomReactors(t *testing.T) {
 	n, err := NewNode(config,
 		privval.LoadOrGenFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile()),
 		nodeKey,
-		proxy.DefaultClientCreator(config.ProxyApp, config.ABCI, config.DBDir()),
+		testClientCreator(config),
 		DefaultGenesisDocProviderFunc(config),
 		DefaultDBProvider,
 		DefaultMetricsProvider(config.Instrumentation),

@@ -4,10 +4,8 @@ import (
 	"fmt"
 
 	abcicli "github.com/NibiruChain/nibiru/v2/bft/abci/client"
-	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
 	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmtsync "github.com/NibiruChain/nibiru/v2/bft/libs/sync"
-	e2e "github.com/NibiruChain/nibiru/v2/bft/test/e2e/app"
 )
 
 //go:generate ../scripts/mockery_generate.sh ClientCreator
@@ -68,21 +66,20 @@ func (r *remoteClientCreator) NewABCIClient() (abcicli.Client, error) {
 	return remoteApp, nil
 }
 
-// DefaultClientCreator returns a default ClientCreator, which will create a
-// local client if addr is one of: 'kvstore',
-// 'persistent_kvstore' or 'noop', otherwise - a remote client.
+// DefaultClientCreator returns a default ClientCreator. It creates a local
+// client running an empty BaseApplication if addr is "noop", and a remote
+// client for any other addr (for example "tcp://127.0.0.1:26658" or
+// "unix:///path/to/app.sock") over the given transport ("socket" or "grpc").
+//
+// Nibiru BFT: upstream also accepted "kvstore", "persistent_kvstore", and
+// "e2e" as built-in example apps. Those cases were removed so the example
+// and e2e test apps are not linked into nibid. The standalone cometbft
+// binary resolves them itself (see bft/cmd/cometbft/apps.go), and tests use
+// NewLocalClientCreator with the app they need.
+//
+// The dbDir argument is kept for signature compatibility. It is unused.
 func DefaultClientCreator(addr, transport, dbDir string) ClientCreator {
 	switch addr {
-	case "kvstore":
-		return NewLocalClientCreator(kvstore.NewApplication())
-	case "persistent_kvstore":
-		return NewLocalClientCreator(kvstore.NewPersistentKVStoreApplication(dbDir))
-	case "e2e":
-		app, err := e2e.NewApplication(e2e.DefaultConfig(dbDir))
-		if err != nil {
-			panic(err)
-		}
-		return NewLocalClientCreator(app)
 	case "noop":
 		return NewLocalClientCreator(types.NewBaseApplication())
 	default:

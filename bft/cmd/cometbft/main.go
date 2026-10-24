@@ -8,7 +8,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands/debug"
 	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/cli"
-	nm "github.com/NibiruChain/nibiru/v2/bft/node"
 )
 
 func main() {
@@ -41,7 +40,10 @@ func main() {
 	//	* Provide their own DB implementation
 	// can copy this file and use something other than the
 	// DefaultNewNode function
-	nodeFunc := nm.DefaultNewNode
+	//
+	// Nibiru BFT: newNode (apps.go) wraps DefaultNewNode's setup and adds
+	// the built-in "kvstore", "persistent_kvstore", and "e2e" apps.
+	nodeFunc := newNode
 
 	// Create & start node
 	rootCmd.AddCommand(cmd.NewRunNodeCmd(nodeFunc))
