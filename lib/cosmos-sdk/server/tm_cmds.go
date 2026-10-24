@@ -107,11 +107,13 @@ func VersionCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			bs, err := yaml.Marshal(&struct {
 				Tendermint    string
+				NibiruBFT     string `json:"Nibiru BFT"`
 				ABCI          string
 				BlockProtocol uint64
 				P2PProtocol   uint64
 			}{
 				Tendermint:    tversion.TMCoreSemVer,
+				NibiruBFT:     tversion.NibiruBFTSemVer,
 				ABCI:          tversion.ABCIVersion,
 				BlockProtocol: tversion.BlockProtocol,
 				P2PProtocol:   tversion.P2PProtocol,

@@ -291,6 +291,8 @@ run_go_compile() {
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Version=${version}"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.Commit=${commit}"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version.BuildTags=${build_tags_csv}"
+  # Nibiru BFT version tracks the nibid version, as bare semver (no "v").
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/bft/version.NibiruBFTSemVer=${version#v}"
   ldflags+=" -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb"
   ldflags+=" -linkmode=external -w -s"
 

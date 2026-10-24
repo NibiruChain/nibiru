@@ -456,6 +456,7 @@ func logNodeStartupInfo(state sm.State, pubKey crypto.PubKey, logger, consensusL
 	// Log the version info.
 	logger.Info("Version info",
 		"tendermint_version", version.TMCoreSemVer,
+		"nibiru_bft_version", version.NibiruBFTSemVer,
 		"abci", version.ABCISemVer,
 		"block", version.BlockProtocol,
 		"p2p", version.P2PProtocol,
