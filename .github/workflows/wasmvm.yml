@@ -64,8 +64,20 @@ jobs:
           REF_NAME: ${{ github.ref }}
           HAS_CHANGES_FOR_WASMVM: ${{ steps.filter.outputs.wasmvm || 'false' }}
         run: |
-          bash contrib/scripts/wasmvm-ci-policy.sh \
-            "$EVENT_NAME" "$REF_NAME" "$HAS_CHANGES_FOR_WASMVM" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          jq -cn \
+            --arg event "$EVENT_NAME" \
+            --arg ref "$REF_NAME" \
+            --arg wasmvm "$HAS_CHANGES_FOR_WASMVM" \
+            '{log: "changes-wasmvm.inputs", event: $event, ref: $ref,
+              "has-changes-for-wasmvm": $wasmvm}'
+
+          decision="$(bash contrib/scripts/wasmvm-ci-policy.sh \
+            "$EVENT_NAME" "$REF_NAME" "$HAS_CHANGES_FOR_WASMVM")"
+          printf '%s\n' "$decision" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$decision" | jq -Rnc '
+            [inputs | split("=") | {key: .[0], value: (.[1:] | join("="))}]
+            | from_entries | {log: "changes-wasmvm.outputs"} + .'
 
   # rust-base-tests (job): Tests the Rust crate `wasmvm`, generated bindings,
   # and Rust docs.

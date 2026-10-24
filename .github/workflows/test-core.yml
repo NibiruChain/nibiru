@@ -161,6 +161,21 @@ jobs:
               - "lib/cosmos-sdk/**"
               - ".github/workflows/test-core.yml"
 
+      - name: Log change outputs
+        env:
+          NIBIRU_GO: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
+          IBC_GO: ${{ steps.check_nibiru_go.outputs.ibc-go }}
+          COSMOS_SDK: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+        run: |
+          jq -cn \
+            --arg event "$GITHUB_EVENT_NAME" \
+            --arg nibiru_go "$NIBIRU_GO" \
+            --arg ibc_go "$IBC_GO" \
+            --arg cosmos_sdk "$COSMOS_SDK" \
+            '{log: "changes-nibiru-go.outputs", event: $event,
+              "nibiru-go": $nibiru_go, "ibc-go": $ibc_go,
+              "cosmos-sdk": $cosmos_sdk}'
+
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
         run: |
