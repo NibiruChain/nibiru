@@ -248,7 +248,7 @@ func calcWithFreeTier(storedBytes, freeTier uint64) (uint64, uint64) {
 func (g WasmGasRegister) ToWasmVMGas(source storetypes.Gas) uint64 {
 	x := source * g.c.GasMultiplier
 	if x < source {
-		panic(sdk.ErrorOutOfGas{Descriptor: "overflow"})
+		panic(storetypes.ErrorGasOverflow{Descriptor: "ToWasmVMGas"})
 	}
 	return x
 }
