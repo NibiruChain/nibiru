@@ -299,7 +299,7 @@ func LoadTestnet(manifest Manifest, fname string, ifd InfrastructureData) (*Test
 	for heightStr, validators := range manifest.ValidatorUpdates {
 		height, err := strconv.Atoi(heightStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid validator update height %q: %w", height, err)
+			return nil, fmt.Errorf("invalid validator update height %q: %w", heightStr, err)
 		}
 		valUpdate := map[*Node]int64{}
 		for name, power := range validators {
