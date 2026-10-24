@@ -25,21 +25,31 @@ import (
 func TestOnChanOpenInitVersion(t *testing.T) {
 	skipUnsupportedNibiruWasmIBCHarness(t)
 
-	const startVersion = "v1"
+	const v1 = "v1"
 	specs := map[string]struct {
-		contractRsp *wvm.IBC3ChannelOpenResponse
-		expVersion  string
+		startVersion string
+		contractRsp  *wvm.IBC3ChannelOpenResponse
+		expVersion   string
+		expErr       bool
 	}{
 		"different version": {
-			contractRsp: &wvm.IBC3ChannelOpenResponse{Version: "v2"},
-			expVersion:  "v2",
+			startVersion: v1,
+			contractRsp:  &wvm.IBC3ChannelOpenResponse{Version: "v2"},
+			expVersion:   "v2",
 		},
 		"no response": {
-			expVersion: startVersion,
+			startVersion: v1,
+			expVersion:   v1,
 		},
 		"empty result": {
-			contractRsp: &wvm.IBC3ChannelOpenResponse{},
-			expVersion:  startVersion,
+			startVersion: v1,
+			contractRsp:  &wvm.IBC3ChannelOpenResponse{},
+			expVersion:   v1,
+		},
+		"empty versions should fail": {
+			startVersion: "",
+			contractRsp:  &wvm.IBC3ChannelOpenResponse{},
+			expErr:       true,
 		},
 	}
 	for name, spec := range specs {
@@ -67,10 +77,17 @@ func TestOnChanOpenInitVersion(t *testing.T) {
 
 			path.EndpointA.ChannelConfig = &ibctesting.ChannelConfig{
 				PortID:  contractInfo.IBCPortID,
-				Version: startVersion,
+				Version: spec.startVersion,
 				Order:   channeltypes.UNORDERED,
 			}
-			require.NoError(t, path.EndpointA.ChanOpenInit())
+			// when
+			gotErr := path.EndpointA.ChanOpenInit()
+			// then
+			if spec.expErr {
+				require.Error(t, gotErr)
+				return
+			}
+			require.NoError(t, gotErr)
 			assert.Equal(t, spec.expVersion, path.EndpointA.ChannelConfig.Version)
 		})
 	}

@@ -1519,7 +1519,8 @@ func TestABCI_PrepareProposal_ReachedMaxBytes(t *testing.T) {
 		Height:     1,
 	}
 	resPrepareProposal := suite.baseApp.PrepareProposal(reqPrepareProposal)
-	require.Equal(t, 11, len(resPrepareProposal.Txs))
+	// Tx sizes are protobuf-encoded, so 10 txs fit rather than 11 raw.
+	require.Equal(t, 10, len(resPrepareProposal.Txs))
 }
 
 func TestABCI_PrepareProposal_BadEncoding(t *testing.T) {

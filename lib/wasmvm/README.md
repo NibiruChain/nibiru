@@ -19,6 +19,38 @@ allows you to compile, initialize and execute CosmWasm smart contracts from Go
 applications, in particular from
 [x/wasm](https://github.com/CosmWasm/wasmd/tree/master/x/wasm).
 
+## 1 - CI schedule and release builds
+
+The Wasm VM workflow tests relevant pull requests and pushes to `main`. Its path
+filter covers the VM, Wasmer, CosmWasm runtime, dependency manifests, and build
+configuration. Main pushes compare the whole pushed range with the previous
+commit; pull requests compare with their base branch.
+
+| Event | VM tests | Linux and macOS packages | Publish release |
+| --- | --- | --- | --- |
+| Relevant PR or main push | Run | Fast-pass | No |
+| Unrelated PR or main push | Fast-pass | Fast-pass | No |
+| Daily at 04:50 UTC | Run | Build all platforms | No |
+| Manual workflow dispatch | Run | Build all platforms | No |
+| Stable `lib/wasmvm/vMAJOR.MINOR.PATCH` tag push | Run | Build all platforms | Yes |
+
+Fast-pass jobs complete successfully through an explanatory step. Conditions on
+individual steps guard the expensive work, keeping repository checks green
+without compiling unchanged components. Full platform builds run daily to catch
+failures caused by changes in build environments and external downloads.
+The existing optional Alpine Go-consumer check still requires its repository
+variable to be enabled.
+
+Daily and manual runs upload workflow artifacts for inspection. Only a matching
+VM release tag may publish a GitHub Release, after all platform packages pass
+and the tagged commit is verified as reachable from `main`.
+
+Test the event policy locally with:
+
+```sh
+bash contrib/scripts/wasmvm-ci-policy-test.sh
+```
+
 ## Structure
 
 This repo contains both Rust and Go code. The Rust code is compiled into a
