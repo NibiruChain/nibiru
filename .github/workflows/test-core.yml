@@ -116,6 +116,7 @@ jobs:
       nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
       ibc-go: ${{ steps.check_nibiru_go.outputs.ibc-go }}
       cosmos-sdk: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+      bft: ${{ steps.check_nibiru_go.outputs.bft }}
     steps:
       - uses: actions/checkout@v7
 
@@ -159,21 +160,28 @@ jobs:
             cosmos-sdk:
               - "lib/cosmos-sdk/**"
               - ".github/workflows/test-core.yml"
+            bft:
+              - "bft/**"
+              - "go.mod"
+              - "go.sum"
+              - ".github/workflows/test-core.yml"
 
       - name: Log change outputs
         env:
           NIBIRU_GO: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
           IBC_GO: ${{ steps.check_nibiru_go.outputs.ibc-go }}
           COSMOS_SDK: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+          BFT: ${{ steps.check_nibiru_go.outputs.bft }}
         run: |
           jq -cn \
             --arg event "$GITHUB_EVENT_NAME" \
             --arg nibiru_go "$NIBIRU_GO" \
             --arg ibc_go "$IBC_GO" \
             --arg cosmos_sdk "$COSMOS_SDK" \
+            --arg bft "$BFT" \
             '{log: "changes-nibiru-go.outputs", event: $event,
               "nibiru-go": $nibiru_go, "ibc-go": $ibc_go,
-              "cosmos-sdk": $cosmos_sdk}'
+              "cosmos-sdk": $cosmos_sdk, "bft": $bft}'
 
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
@@ -571,3 +579,37 @@ jobs:
         if: needs.changes-nibiru-go.outputs.cosmos-sdk == 'true'
         run: |
           just csdk test
+
+  bft:
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.bft != 'true'
+        run: |
+          echo "job \"bft\" was skipped since relevant files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: Run tests for bft (Nibiru BFT)
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        run: |
+          just bft test

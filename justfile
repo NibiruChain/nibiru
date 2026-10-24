@@ -246,7 +246,7 @@ release-image-publish release_tag version:
 _go-test-pkgs:
     #!/usr/bin/env bash
     set -euo pipefail
-    go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib)/'
+    go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib|bft)/'
 
 [private]
 test-sim-nondeterminism:
