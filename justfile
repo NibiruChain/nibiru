@@ -385,10 +385,6 @@ alias rs := rust
 chaos *args:
     just --justfile just-chaos.just {{ args }}
 
-# Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
-sai-trading *args:
-    cd lib/sai-trading && just {{ args }}
-
 # Run commands from the lib/cosmos-sdk subtree.
 csdk *args:
     cd lib/cosmos-sdk && just {{ args }}
