@@ -11,22 +11,42 @@ The commands below require a published optimizer release; source installation
 remains available while the first release is being prepared.
 
 Install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall#installation),
-then install the pinned optimizer from a Nibiru checkout:
+then download the manifest for the version you want and install through Cargo.
+These commands work outside a Nibiru checkout:
+
+```sh
+manifest_dir="$(mktemp -d)"
+curl --proto '=https' --tlsv1.2 --fail --location \
+  https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer-v0.1.0/sai-wasm-optimizer.toml \
+  --output "$manifest_dir/sai-wasm-optimizer.toml"
+cargo binstall --manifest-path "$manifest_dir/sai-wasm-optimizer.toml" \
+  --strategies crate-meta-data --no-confirm sai-wasm-optimizer
+sai-wasm-optimizer --version
+sai-wasm-optimizer doctor
+rm -r "$manifest_dir"
+```
+
+Binstall selects the native executable automatically. The release-metadata
+strategy downloads the binary from the versioned release. Missing or unsupported
+binaries fail rather than compiling from source or using a third-party binary.
+Installation does not require a Rust compiler or publishing VM crates to
+crates.io. If Cargo itself is unavailable, invoke `cargo-binstall` directly with
+the same arguments. The executable stays installed for subsequent commands;
+repeated installation of the same version reuses the installed binary.
+
+A release also includes a `SHA256SUMS` file for verifying its downloads. From a
+Nibiru checkout, the optional Just wrapper downloads the manifest, checks its
+SHA-256 and requested version, then invokes `cargo-binstall` with the same
+release-metadata strategy:
 
 ```sh
 just rs optimizer-install 0.1.0
-sai-wasm-optimizer --version
-sai-wasm-optimizer doctor
 ```
 
-The installer downloads the release's standalone manifest, checks its SHA-256
-and version, and invokes Binstall with only the release-metadata strategy.
-Binstall selects the native executable automatically. Missing or unsupported
-binaries fail rather than compiling from source or using a third-party binary.
-This path does not require a Rust compiler or publishing VM crates to crates.io.
-It does require `cargo-binstall`, `curl`, and `sha256sum` or `shasum`.
-
-For an isolated installation, pass a Cargo installation root:
+The wrapper requires `cargo-binstall`, `curl`, and `sha256sum` or `shasum`.
+For an isolated installation, its second argument selects a Cargo installation
+root. Direct Binstall users can add `--root /tmp/sai-optimizer` to the command
+above. The wrapper equivalent is:
 
 ```sh
 just rs optimizer-install 0.1.0 /tmp/sai-optimizer
@@ -204,25 +224,63 @@ executable, licenses, README, and JSON provenance. Packaging extracts and runs
 the archived executable, checks its version, and validates the committed
 `hackatom_1.0.wasm` fixture through Nibiru's VM without Docker.
 
-The workflow in `.github/workflows/optimizer-release.yml` builds all four native
-targets on PRs and manual dispatches. These events upload archives and SHA-256
-sidecars without publishing a GitHub release. Native Linux builders establish
-the glibc baselines in the table; Mac builds target macOS 13.
+The workflow in `.github/workflows/optimizer-release.yml` runs only when you
+manually dispatch it or push an optimizer version tag. It has two job
+definitions: native packaging with a four-platform matrix, and publication
+after all packages pass. Manual runs upload archives and SHA-256 sidecars for
+review. Tag runs additionally publish the release. Native Linux builders
+establish the glibc baselines in the table; Mac builds target macOS 13.
 
-A push of a tag matching `sai-wasm-optimizer-vMAJOR.MINOR.PATCH` triggers
-publication after all four packages pass. The tag must match the crate version.
-Publication verifies the complete archive set, checksums, source commit,
-lockfile hash, and clean-source provenance. It publishes the standalone
-`sai-wasm-optimizer.toml` manifest and a `SHA256SUMS` file with the archives.
-Optimizer releases use `--latest=false` so they do not replace the latest chain
-release. Existing chain and libwasmvm release tag patterns are separate.
+### 8.1 - Build artifacts on demand
 
-To inspect a collected release bundle without publishing:
+After the workflow is merged into the default branch, select **Optimizer native
+distribution** in GitHub Actions, choose **Run workflow**, and select the branch
+or tag to build. The equivalent CLI command is:
+
+```sh
+gh workflow run optimizer-release.yml --repo NibiruChain/nibiru --ref main
+```
+
+Download the four `optimizer-dist-*` artifacts from that run and collect their
+archives and checksum sidecars in one directory. To inspect the bundle from a
+checkout of the exact commit that produced it:
 
 ```sh
 just rs optimizer-release publish --artifacts-dir dist/optimizer --tag sai-wasm-optimizer-v0.1.0
 ```
 
-Only the same command with `--run` creates a GitHub release. Prepare and review
-all four native CI artifacts before pushing the first optimizer version tag.
-Repeated publication does not overwrite an existing release.
+This command verifies the complete platform set, archive checksums, clean source
+provenance, source commit, and lockfile hash. It generates the standalone
+`sai-wasm-optimizer.toml` manifest and `SHA256SUMS` file and prints the publication
+command. Only adding `--run` creates a GitHub release.
+
+### 8.2 - Release successive versions
+
+1. Set the version in `lib/cosmwasm-optimizer/Cargo.toml`. Use `0.1.0` for the
+   first release and a new version for each later release. Run
+   `cargo check --package sai-wasm-optimizer` to update the root lockfile when
+   the package version changes, then commit both files through the normal PR
+   process.
+2. Choose the reviewed commit to release. Optionally run the manual build above
+   on that commit's branch or tag and inspect its four artifacts.
+3. Tag that exact commit with the matching version. For example, after reviewing
+   the `0.1.0` source on main:
+
+   ```sh
+   git fetch origin main
+   git tag sai-wasm-optimizer-v0.1.0 origin/main
+   git push origin sai-wasm-optimizer-v0.1.0
+   ```
+
+4. Watch the **Optimizer native distribution** tag run. Each native runner
+   validates that the tag matches the package version before building. Once
+   all four packages pass, the publication job verifies and uploads the archives,
+   standalone manifest, and checksum list.
+5. Install the released version with `cargo binstall` using its downloaded
+   manifest. Verify the executable's version and run `doctor`. Consuming
+   repositories such as Sai can then pin that release manifest and install the
+   binary during setup.
+
+Optimizer releases use `--latest=false` so they do not replace the latest chain
+release. Existing chain and libwasmvm release tag patterns are separate.
+Published versions are immutable; use a new version and tag for corrections.

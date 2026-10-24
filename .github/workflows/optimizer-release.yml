@@ -1,20 +1,6 @@
 name: Optimizer native distribution
 
 on:
-  pull_request:
-    paths:
-      - ".github/workflows/optimizer-release.yml"
-      - "lib/cosmwasm-optimizer/**"
-      - "lib/cosmwasm-vm/**"
-      - "lib/wasmer/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "rust-toolchain.toml"
-      - ".cargo/**"
-      - "contrib/scripts/optimizer-release.py"
-      - "contrib/scripts/install-wasm-optimizer.sh"
-      - "justfile"
-      - "just-rs.just"
   workflow_dispatch:
   push:
     tags:
@@ -22,10 +8,6 @@ on:
 
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -39,25 +21,7 @@ env:
   RUSTUP_TOOLCHAIN: "1.95.0"
 
 jobs:
-  validate:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-      - uses: taiki-e/install-action@just
-      - name: Read optimizer package version
-        run: just rs optimizer-release version
-      - name: Validate release tag against package version
-        if: github.event_name == 'push'
-        run: just rs optimizer-release validate-tag --tag "$GITHUB_REF_NAME"
-
   package:
-    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +48,11 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       - uses: taiki-e/install-action@just
+      - name: Read optimizer package version
+        run: just rs optimizer-release version
+      - name: Validate release tag against package version
+        if: github.event_name == 'push'
+        run: just rs optimizer-release validate-tag --tag "$GITHUB_REF_NAME"
       - name: Cache optimizer distribution build
         uses: actions/cache@v6
         with:
