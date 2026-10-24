@@ -17,8 +17,9 @@ pub fn check_file(path: &Path) -> Result<()> {
         .with_context(|| format!("reading Wasm artifact {}", path.display()))?;
     check_wasm(&wasm, &capabilities_from_csv(NIBIRU_CAPABILITIES))
         .with_context(|| format!("Nibiru VM rejected {}", path.display()))?;
-    // Static checks defer function-body validation. Compilation also enforces
-    // the VM gatekeeper's opcode policy, as the chain's store_code path does.
+    // Static validation checks function bodies against the supported Wasm features.
+    // Compilation also enforces the VM gatekeeper's opcode policy, matching
+    // the chain's store_code path.
     compile(&make_compiling_engine(None), &wasm).with_context(|| {
         format!("Nibiru VM could not compile {}", path.display())
     })?;
