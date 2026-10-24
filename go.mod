@@ -18,7 +18,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/chzyer/readline v1.5.1
 	github.com/cockroachdb/errors v1.12.0
-	github.com/coinbase/rosetta-sdk-go v0.7.9
+	github.com/coinbase/rosetta-sdk-go/types v1.7.2
 	// Consenus Engine
 	github.com/cometbft/cometbft v0.37.18
 	github.com/cometbft/cometbft-db v0.11.0
