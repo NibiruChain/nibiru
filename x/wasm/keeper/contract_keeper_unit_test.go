@@ -60,13 +60,14 @@ func TestInstantiate2(t *testing.T) {
 		exampleContract(t, ctx, false)
 	}
 	specs := map[string]struct {
-		setup   func(t *testing.T, ctx sdk.Context)
-		codeID  uint64
-		sender  sdk.AccAddress
-		salt    []byte
-		initMsg json.RawMessage
-		fixMsg  bool
-		expErr  error
+		setup     func(t *testing.T, ctx sdk.Context)
+		codeID    uint64
+		sender    sdk.AccAddress
+		salt      []byte
+		initMsg   json.RawMessage
+		fixMsg    bool
+		expErr    error
+		expErrMsg string
 	}{
 		"fix msg - generates different address than without fixMsg": {
 			setup:   exampleWithoutFixMsg,
@@ -136,6 +137,8 @@ func TestInstantiate2(t *testing.T) {
 			salt:    []byte(mySalt),
 			initMsg: mustMarshal(t, HackatomExampleInitMsg{Verifier: otherAddr, Beneficiary: beneficiaryAddr}),
 			expErr:  types.ErrDuplicate,
+			expErrMsg: "contract address already exists, " +
+				"try a different combination of creator, checksum and salt",
 		},
 		"fix msg - long msg": {
 			setup:   exampleWithFixMsg,
@@ -163,6 +166,9 @@ func TestInstantiate2(t *testing.T) {
 			)
 			if spec.expErr != nil {
 				assert.ErrorIs(t, gotErr, spec.expErr)
+				if spec.expErrMsg != "" {
+					assert.ErrorContains(t, gotErr, spec.expErrMsg)
+				}
 				return
 			}
 			require.NoError(t, gotErr)
