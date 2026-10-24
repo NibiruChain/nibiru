@@ -465,6 +465,9 @@ func (suite *KeeperTestSuite) TestPruneGrants() {
 	}
 }
 
+// TestEndBlockPruningLimit exercises the module EndBlocker so the test covers its
+// 200-grant limit, not just the keeper's configurable limit. A shared expiry
+// creates a backlog that must drain across blocks while valid grants survive.
 func (suite *KeeperTestSuite) TestEndBlockPruningLimit() {
 	grantee := suite.addrs[0]
 	granters := simtestutil.CreateIncrementalAccounts(453)[1:]
@@ -482,6 +485,8 @@ func (suite *KeeperTestSuite) TestEndBlockPruningLimit() {
 	suite.Require().NoError(suite.feegrantKeeper.GrantAllowance(suite.ctx, granters[451], grantee, &feegrant.BasicAllowance{}))
 
 	suite.ctx = suite.ctx.WithBlockTime(expiry.Add(time.Hour))
+	// Each count includes two valid grants. The fourth block checks that cleanup
+	// remains harmless after the expired backlog has drained.
 	for block, remaining := range []int{252, 52, 2, 2} {
 		suite.ctx = suite.ctx.WithBlockHeight(int64(block + 1))
 		module.EndBlocker(suite.ctx, suite.feegrantKeeper)
@@ -503,6 +508,9 @@ func (suite *KeeperTestSuite) TestEndBlockPruningLimit() {
 	}
 }
 
+// TestPruningNonpositiveLimitKeepsExpiredGrantUnusable separates storage cleanup
+// from fee authorization: even if pruning leaves an expired grant in storage,
+// UseGrantedFees must reject it.
 func (suite *KeeperTestSuite) TestPruningNonpositiveLimitKeepsExpiredGrantUnusable() {
 	expiry := suite.ctx.BlockTime().Add(24 * time.Hour)
 	granter, grantee := suite.addrs[0], suite.addrs[1]

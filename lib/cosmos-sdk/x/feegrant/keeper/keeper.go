@@ -335,8 +335,12 @@ func (k Keeper) addToFeeAllowanceQueue(ctx sdk.Context, grantKey []byte, exp *ti
 	store.Set(feegrant.FeeAllowancePrefixQueue(exp, grantKey), []byte{})
 }
 
-// RemoveExpiredAllowances deletes at most limit expired grants from grantsByExpiryQueue.
-// Any remaining expired grants stay queued for the next call.
+// RemoveExpiredAllowances deletes at most limit expired grants and their expiry
+// queue entries. A nonpositive limit deletes nothing. The queue is ordered by
+// expiry, so later calls resume at the earliest remaining entry.
+//
+// Pruning only reclaims storage. UseGrantedFees still checks allowance expiry,
+// so expired grants awaiting cleanup cannot authorize fee payments.
 func (k Keeper) RemoveExpiredAllowances(ctx sdk.Context, limit int32) {
 	exp := ctx.BlockTime()
 	store := ctx.KVStore(k.storeKey)

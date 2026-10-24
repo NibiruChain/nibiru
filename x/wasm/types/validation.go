@@ -99,8 +99,14 @@ func ValidateVerificationInfo(source, builder string, codeHash []byte) error {
 	return nil
 }
 
-// validateBech32Addresses ensures the list is not empty, has no duplicates,
-// and does not exceed the maximum number of addresses.
+// validateBech32Addresses accepts between one and MaxAddressCount unique account
+// addresses. It checks the count before decoding to bound validation work.
+// Each address must pass Bech32 validation before case normalization, since
+// normalizing first would turn malformed mixed-case input into a valid address.
+// Normalization only detects duplicates; the input strings remain unchanged.
+// It returns ErrEmpty for an empty list, sdkerrors.ErrInvalidRequest above the
+// count limit, a wrapped address decoding error, or ErrDuplicate for repeated
+// addresses, including uppercase and lowercase forms of the same address.
 func validateBech32Addresses(addresses []string) error {
 	switch n := len(addresses); {
 	case n == 0:

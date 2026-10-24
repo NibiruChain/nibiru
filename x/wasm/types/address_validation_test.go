@@ -11,6 +11,10 @@ import (
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )
 
+// TestAddressListValidation guards against permission entry points applying
+// different validation rules. Every path must enforce the same count boundaries
+// and reject case-variant duplicates without accepting malformed mixed-case
+// Bech32 input. Valid uppercase addresses remain accepted.
 func TestAddressListValidation(t *testing.T) {
 	addresses := make([]string, MaxAddressCount+1)
 	for i := range addresses {
@@ -72,6 +76,9 @@ func TestAddressListValidation(t *testing.T) {
 	}
 }
 
+// TestAccessTypeWithAddressLimit checks that the programmatic constructor uses
+// the same count limit. AccessType.With reports invalid configurations by panic,
+// unlike ValidateBasic methods, which return errors for transaction input.
 func TestAccessTypeWithAddressLimit(t *testing.T) {
 	addresses := make([]sdk.AccAddress, MaxAddressCount+1)
 	for i := range addresses {

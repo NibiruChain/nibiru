@@ -523,6 +523,8 @@ func TestExecuteUnreachable(t *testing.T) {
 	require.ErrorContains(t, err, "RuntimeError: unreachable")
 }
 
+// TestExecuteCpuLoop checks that repeated gas exhaustion returns OutOfGasError
+// and consumes the limit on each call. Each execution gets a fresh gas meter.
 func TestExecuteCpuLoop(t *testing.T) {
 	cache, cleanup := withCache(t)
 	defer cleanup()
@@ -1188,6 +1190,8 @@ func TestFloats(t *testing.T) {
 	require.Equal(t, "95f70fa6451176ab04a9594417a047a1e4d8e2ff809609b8f81099496bee2393", hex.EncodeToString(hash))
 }
 
+// TestErrorWithMessage covers absent, empty, and populated Rust error buffers
+// to preserve error semantics across cleanup. It does not measure allocations.
 func TestErrorWithMessage(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
