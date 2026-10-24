@@ -20,23 +20,26 @@ coverage:
   range: 40..92
   round: down
   precision: 2
-  # status: See https://docs.codecov.com/docs/commit-status
+  # Report project and patch coverage without enforcing a coverage minimum.
+  # [Informational checks](https://docs.codecov.com/docs/commit-status#informational)
+  # To enforce coverage later, disable informational mode and set target/threshold.
+  # [Coverage targets](https://docs.codecov.com/docs/commit-status#target)
   status:
     project:
-      default: false
-      # default:
-      #   target: 60%
-      #   if_not_found: success
-      #   threshold: 1% # Allow coverage to drop by X%, posting a success status.
-      #   # removed_code_behavior: Takes values [off, removals_only, adjust_base]
-      #   removed_code_behavior: adjust_base
+      default:
+        informational: true
     patch:
       default:
-        target: 0%
+        informational: true
 
-comment: # this is a top-level key
-  layout: " diff, flags, files"
+# Show coverage figures, comparisons, file details, and report links.
+# Comment presentation is separate from the informational status checks above.
+# [Full report format](https://docs.codecov.com/docs/changing-your-pr-comment-format)
+# [Comment options](https://docs.codecov.com/docs/pull-request-comments)
+comment:
+  layout: "header, diff, files, footer"
+  hide_project_coverage: false
   behavior: default
-  require_changes: true # if true: only post the comment if coverage changes
+  require_changes: false # Report even when coverage is unchanged.
   require_base: false # [true :: must have a base report to post]
   require_head: true # [true :: must have a head report to post]
