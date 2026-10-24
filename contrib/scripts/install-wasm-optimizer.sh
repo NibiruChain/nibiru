@@ -2,7 +2,8 @@
 # Install a pinned native optimizer release through cargo-binstall.
 set -euo pipefail
 
-if [[ $# -lt 1 || $# -gt 2 || ! "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+version_pattern='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$'
+if [[ $# -lt 1 || $# -gt 2 || ! "$1" =~ $version_pattern ]]; then
   echo "Usage: $0 VERSION [INSTALL_ROOT]" >&2
   exit 2
 fi
@@ -24,7 +25,7 @@ fi
 
 temporary="$(mktemp -d)"
 trap 'rm -rf -- "$temporary"' EXIT
-base="https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer-v${version}"
+base="https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer/v${version}"
 manifest="$temporary/sai-wasm-optimizer.toml"
 curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
   "$base/sai-wasm-optimizer.toml" --output "$manifest"

@@ -25,6 +25,10 @@ optimizer *args:
 optimizer-release *args:
   python3 contrib/scripts/optimizer-release.py "$@"
 
+# Check optimizer release versions and publication commands without building.
+optimizer-release-test:
+  python3 contrib/scripts/optimizer-release_test.py
+
 # Install a pinned native optimizer binary without compiling it locally.
 [positional-arguments]
 optimizer-install version *args:

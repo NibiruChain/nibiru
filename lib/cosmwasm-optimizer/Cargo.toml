@@ -25,7 +25,7 @@ cosmwasm-std = "1.5.11"
 
 # Native release assets live alongside chain releases, under their own tag prefix.
 [package.metadata.binstall]
-pkg-url = "{ repo }/releases/download/sai-wasm-optimizer-v{ version }/{ name }-{ version }-{ target }.tar.gz"
+pkg-url = "{ repo }/releases/download/sai-wasm-optimizer/v{ version }/{ name }-{ version }-{ target }.tar.gz"
 pkg-fmt = "tgz"
 bin-dir = "{ bin }{ binary-ext }"
 disabled-strategies = ["quick-install", "compile"]

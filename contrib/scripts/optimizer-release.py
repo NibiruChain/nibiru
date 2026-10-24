@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CRATE = ROOT / "lib/cosmwasm-optimizer"
 NAME = "sai-wasm-optimizer"
 REPOSITORY = "NibiruChain/nibiru"
+VERSION_PATTERN = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-rc\.[1-9][0-9]*)?"
 TARGETS = (
     "x86_64-unknown-linux-gnu",
     "aarch64-unknown-linux-gnu",
@@ -45,13 +46,13 @@ def configuration() -> dict:
 
 def version() -> str:
     value = configuration()["version"]
-    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", value):
-        raise ValueError("optimizer releases require a stable MAJOR.MINOR.PATCH version")
+    if not re.fullmatch(VERSION_PATTERN, value):
+        raise ValueError("expected MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-rc.N, with N >= 1")
     return value
 
 
 def validate_tag(tag: str) -> None:
-    expected = f"{NAME}-v{version()}"
+    expected = f"{NAME}/v{version()}"
     if tag != expected:
         raise ValueError(f"expected tag {expected!r}, got {tag!r}")
 
@@ -237,6 +238,8 @@ def publish(args: argparse.Namespace) -> None:
         "--verify-tag", "--latest=false", "--title", f"{NAME} {version()}",
         "--notes-file", str(notes), *map(str, archives), str(manifest), str(sums),
     ]
+    if "-rc." in version():
+        command.append("--prerelease")
     if not args.run:
         print("Release verified; no publication requested.")
         print(" ".join(command))

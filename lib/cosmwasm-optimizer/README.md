@@ -11,13 +11,14 @@ The commands below require a published optimizer release; source installation
 remains available while the first release is being prepared.
 
 Install [cargo-binstall](https://github.com/cargo-bins/cargo-binstall#installation),
-then download the manifest for the version you want and install through Cargo.
-These commands work outside a Nibiru checkout:
+then download the manifest for the exact version you want and install through
+Cargo. The first stable release is `0.1.0`. These commands require that release
+to be published and work outside a Nibiru checkout:
 
 ```sh
 manifest_dir="$(mktemp -d)"
 curl --proto '=https' --tlsv1.2 --fail --location \
-  https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer-v0.1.0/sai-wasm-optimizer.toml \
+  https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer/v0.1.0/sai-wasm-optimizer.toml \
   --output "$manifest_dir/sai-wasm-optimizer.toml"
 cargo binstall --manifest-path "$manifest_dir/sai-wasm-optimizer.toml" \
   --strategies crate-meta-data --no-confirm sai-wasm-optimizer
@@ -31,7 +32,9 @@ strategy downloads the binary from the versioned release. Missing or unsupported
 binaries fail rather than compiling from source or using a third-party binary.
 Installation does not require a Rust compiler or publishing VM crates to
 crates.io. If Cargo itself is unavailable, invoke `cargo-binstall` directly with
-the same arguments. The executable stays installed for subsequent commands;
+the same arguments. Let the manifest select the version; do not add a separate
+`@version` argument. Binstall accepts a version override without checking whether
+it matches the manifest. The executable stays installed for subsequent commands;
 repeated installation of the same version reuses the installed binary.
 
 A release also includes a `SHA256SUMS` file for verifying its downloads. From a
@@ -190,8 +193,9 @@ Rust binary does not supply these dependencies automatically.
 
 The initial ARM64 experiment runs Binaryen 116 directly on WSL from the pinned
 image's statically linked executable. Native compiler and artifact comparison
-results are recorded in the child epic. A native contract compiler backend remains follow-up work; the binary installer
-distributes the host CLI, while V1 uses Docker for contract compilation.
+results are recorded in the child epic. A native contract compiler backend
+remains follow-up work. The binary installer distributes the host CLI, while V1
+uses Docker for contract compilation.
 
 ## 7 - Upstream maintenance
 
@@ -206,14 +210,13 @@ architectures, run maintained-VM execution tests, compare checksums, and record
 any release-policy change. Keep the contract compiler pin and image digests
 in sync.
 
-
 ## 8 - Package and release the CLI
 
 Use Python 3.11 or later and Rust 1.95.0 on a native target runner:
 
 ```sh
 just rs optimizer-release version
-just rs optimizer-release validate-tag --tag sai-wasm-optimizer-v0.1.0
+just rs optimizer-release validate-tag --tag sai-wasm-optimizer/v0.1.0
 just rs optimizer-release package --target aarch64-unknown-linux-gnu --output-dir dist/optimizer
 ```
 
@@ -224,29 +227,28 @@ executable, licenses, README, and JSON provenance. Packaging extracts and runs
 the archived executable, checks its version, and validates the committed
 `hackatom_1.0.wasm` fixture through Nibiru's VM without Docker.
 
-The workflow in `.github/workflows/optimizer-release.yml` runs only when you
-manually dispatch it or push an optimizer version tag. It has two job
-definitions: native packaging with a four-platform matrix, and publication
-after all packages pass. Manual runs upload archives and SHA-256 sidecars for
-review. Tag runs additionally publish the release. Native Linux builders
-establish the glibc baselines in the table; Mac builds target macOS 13.
+The workflow in `.github/workflows/optimizer-release.yml` runs on manual
+dispatches and optimizer tag pushes. It does not run on pull requests. Manual
+runs upload archives and SHA-256 sidecars for review. Tag runs rebuild all four
+native packages and publish after they pass. Native Linux builders establish
+the glibc baselines in the table; Mac builds target macOS 13.
 
 ### 8.1 - Build artifacts on demand
 
-After the workflow is merged into the default branch, select **Optimizer native
-distribution** in GitHub Actions, choose **Run workflow**, and select the branch
-or tag to build. The equivalent CLI command is:
+Once the workflow is available in GitHub Actions, select **Optimizer native
+distribution**, choose **Run workflow**, and select the reviewed branch or tag
+to build. For example:
 
 ```sh
-gh workflow run optimizer-release.yml --repo NibiruChain/nibiru --ref main
+gh workflow run optimizer-release.yml --repo NibiruChain/nibiru --ref ud/wasm-optim
 ```
 
-Download the four `optimizer-dist-*` artifacts from that run and collect their
-archives and checksum sidecars in one directory. To inspect the bundle from a
-checkout of the exact commit that produced it:
+Record the run's source commit. Download its four `optimizer-dist-*` artifacts
+and collect their archives and checksum sidecars in one directory. To inspect
+the bundle from a checkout of that exact commit:
 
 ```sh
-just rs optimizer-release publish --artifacts-dir dist/optimizer --tag sai-wasm-optimizer-v0.1.0
+just rs optimizer-release publish --artifacts-dir dist/optimizer --tag sai-wasm-optimizer/v0.1.0
 ```
 
 This command verifies the complete platform set, archive checksums, clean source
@@ -254,33 +256,93 @@ provenance, source commit, and lockfile hash. It generates the standalone
 `sai-wasm-optimizer.toml` manifest and `SHA256SUMS` file and prints the publication
 command. Only adding `--run` creates a GitHub release.
 
-### 8.2 - Release successive versions
+Manual artifacts provide evidence for review. The tag workflow rebuilds the
+packages at the tagged commit; it does not promote or reuse the manual run's
+archives.
+
+### 8.2 - Publish a stable version
 
 1. Set the version in `lib/cosmwasm-optimizer/Cargo.toml`. Use `0.1.0` for the
-   first release and a new version for each later release. Run
+   first stable release and a new version for each later release. Run
    `cargo check --package sai-wasm-optimizer` to update the root lockfile when
-   the package version changes, then commit both files through the normal PR
-   process.
-2. Choose the reviewed commit to release. Optionally run the manual build above
-   on that commit's branch or tag and inspect its four artifacts.
-3. Tag that exact commit with the matching version. For example, after reviewing
-   the `0.1.0` source on main:
+   the package version changes, then commit both files for review.
+2. Choose the reviewed commit to release. The commit may be on a PR branch;
+   merging it into `main` is not a prerequisite. Optionally run the manual
+   workflow on that branch or a tag, record its commit, and inspect the four
+   native packages.
+3. Create the matching tag at that exact reviewed commit. Replace the example
+   commit placeholder with its full SHA:
 
    ```sh
-   git fetch origin main
-   git tag sai-wasm-optimizer-v0.1.0 origin/main
-   git push origin sai-wasm-optimizer-v0.1.0
+   release_commit=REVIEWED_COMMIT_SHA
+   git tag sai-wasm-optimizer/v0.1.0 "$release_commit"
+   git push origin refs/tags/sai-wasm-optimizer/v0.1.0
    ```
 
 4. Watch the **Optimizer native distribution** tag run. Each native runner
    validates that the tag matches the package version before building. Once
    all four packages pass, the publication job verifies and uploads the archives,
    standalone manifest, and checksum list.
-5. Install the released version with `cargo binstall` using its downloaded
-   manifest. Verify the executable's version and run `doctor`. Consuming
-   repositories such as Sai can then pin that release manifest and install the
-   binary during setup.
+5. Download the released manifest and install with the direct `cargo binstall`
+   command in section 1. Check the executable's version and run `doctor`.
+   Consuming repositories such as Sai can then pin that release manifest.
 
-Optimizer releases use `--latest=false` so they do not replace the latest chain
-release. Existing chain and libwasmvm release tag patterns are separate.
-Published versions are immutable; use a new version and tag for corrections.
+Stable tags have the form `sai-wasm-optimizer/vMAJOR.MINOR.PATCH` and produce
+regular GitHub releases. Optimizer releases use `--latest=false` so they do not
+replace the latest chain release. Existing chain and libwasmvm release tag
+patterns are separate.
+
+### 8.3 - Publish and graduate release candidates
+
+A release candidate uses a crate version such as `0.2.0-rc.1` and a matching
+tag, `sai-wasm-optimizer/v0.2.0-rc.1`. The accepted form is
+`MAJOR.MINOR.PATCH-rc.N`, where `N` is at least 1 and has no leading zeros.
+For example, `rc.0` and `rc.01` are invalid.
+
+Use the same review, manual build, and tag workflow as a stable release. The
+publisher automatically marks release candidates as GitHub prereleases.
+Prereleases also use `--latest=false`. To install a candidate, download its
+manifest from its exact release URL, such as:
+
+```text
+https://github.com/NibiruChain/nibiru/releases/download/sai-wasm-optimizer/v0.2.0-rc.1/sai-wasm-optimizer.toml
+```
+
+Pass that manifest to the direct `cargo binstall` command without an `@version`
+override. The optional wrapper accepts the complete candidate version:
+
+```sh
+just rs optimizer-install 0.2.0-rc.1
+```
+
+To graduate a candidate, change the crate version from `0.2.0-rc.N` to `0.2.0`,
+update the root lockfile, and commit both files for review. Optionally build
+and inspect the stable packages, then tag that reviewed commit with
+`sai-wasm-optimizer/v0.2.0`. The stable tag run rebuilds the packages. Renaming
+candidate archives would retain the candidate executable's version and source
+provenance.
+
+### 8.4 - Recover a failed release run
+
+For a transient runner, network, or upload failure, rerun the failed jobs from
+the original run:
+
+```sh
+gh run rerun RUN_ID --failed --repo NibiruChain/nibiru
+```
+
+The rerun uses the original commit SHA. Inspect the failure logs first and keep
+the tag fixed. If the fix requires code changes, commit and review the fix,
+choose a new candidate version such as `0.2.0-rc.2`, update the lockfile, and
+publish a new candidate tag.
+
+If publication left a partial release, inspect the existing release and assets
+before retrying:
+
+```sh
+gh release view sai-wasm-optimizer/v0.1.0 --repo NibiruChain/nibiru
+```
+
+The publisher refuses to overwrite an existing release. A job rerun cannot
+replace its assets. Use a new version and tag for corrections to a public
+release. Preserve published tags; do not delete or move them to another commit.
