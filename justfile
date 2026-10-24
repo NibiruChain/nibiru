@@ -388,3 +388,7 @@ chaos *args:
 # Run commands from the lib/cosmos-sdk subtree.
 csdk *args:
     cd lib/cosmos-sdk && just {{ args }}
+
+# Run commands from the bft (Nibiru BFT) subtree. Ex: `just bft test`.
+bft *args:
+    cd bft && just {{ args }}
