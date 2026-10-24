@@ -24,6 +24,7 @@ const (
 // nibid release that ships the fork.
 var NibiruBFTSemVer = "2.22.0"
 
-// TMGitCommitHash uses git rev-parse HEAD to find commit hash which is helpful
-// for the engineering team when working with the cometbft binary. See Makefile
+// TMGitCommitHash is the git commit of the build, logged as "commit_hash" at
+// node startup. It is set via ldflags (contrib/scripts/build-nibiru.sh for
+// nibid, the bft justfile for the test-only cometbft binary).
 var TMGitCommitHash = ""
