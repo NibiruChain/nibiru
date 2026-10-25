@@ -1,34 +1,43 @@
-package v0_test
+package v0
 
 import (
-	"io"
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	mempoolv0 "github.com/NibiruChain/nibiru/v2/bft/test/fuzz/mempool/v0"
+	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
+	"github.com/NibiruChain/nibiru/v2/bft/config"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	mempl "github.com/NibiruChain/nibiru/v2/bft/mempool"
+	mempoolv0 "github.com/NibiruChain/nibiru/v2/bft/mempool/v0"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
 )
 
-const testdataCasesDir = "testdata/cases"
-
-func TestMempoolTestdataCases(t *testing.T) {
-	entries, err := os.ReadDir(testdataCasesDir)
-	require.NoError(t, err)
-
-	for _, e := range entries {
-		entry := e
-		t.Run(entry.Name(), func(t *testing.T) {
-			defer func() {
-				r := recover()
-				require.Nilf(t, r, "testdata/cases test panic")
-			}()
-			f, err := os.Open(filepath.Join(testdataCasesDir, entry.Name()))
-			require.NoError(t, err)
-			input, err := io.ReadAll(f)
-			require.NoError(t, err)
-			mempoolv0.Fuzz(input)
-		})
+// FuzzMempoolV0 feeds arbitrary transactions to CheckTx on a mempool backed
+// by the in-process kvstore app. Seeds live in testdata/fuzz/FuzzMempoolV0.
+func FuzzMempoolV0(f *testing.F) {
+	app := kvstore.NewApplication()
+	cc := proxy.NewLocalClientCreator(app)
+	appConn, err := cc.NewABCIClient()
+	if err != nil {
+		f.Fatal(err)
 	}
+	appConn.SetLogger(log.NewNopLogger())
+	if err := appConn.Start(); err != nil {
+		f.Fatal(err)
+	}
+
+	cfg := config.DefaultMempoolConfig()
+	cfg.Broadcast = false
+	mp := mempoolv0.NewCListMempool(cfg, appConn, 0)
+
+	f.Fuzz(func(t *testing.T, data []byte) {
+		// CheckTx errors (full mempool, cached or oversized tx) are expected.
+		// Only a panic fails the test.
+		_ = mp.CheckTx(data, nil, mempl.TxInfo{})
+
+		// Keep the mempool below its size limit so later inputs still reach
+		// the app instead of returning ErrMempoolIsFull.
+		if mp.Size() >= cfg.Size {
+			mp.Flush()
+		}
+	})
 }
