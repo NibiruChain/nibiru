@@ -11,6 +11,8 @@
 #   GOOS      Target GOOS for cross-compilation
 #   NIBID_STATIC_PIE  Build a Linux static PIE (default: false). Requires a
 #                     supported musl toolchain such as the release container.
+#   NIBID_EXTRA_TAGS  Space-separated Go build tags added to the defaults.
+#                     Test-only, e.g. "nibiru_nondeterminism_canary".
 #
 # Usage:
 #   contrib/scripts/build-nibiru.sh
@@ -366,6 +368,10 @@ main() {
     *) log_error "NIBIRU_WASMVM_BUILD_FROM_SOURCE must be true or false"; exit 1 ;;
   esac
   build_tags="$(build_tags_for_os "$os_name")"
+  if [[ -n "${NIBID_EXTRA_TAGS:-}" ]]; then
+    build_tags+=" ${NIBID_EXTRA_TAGS}"
+    log_info "extra build tags: ${NIBID_EXTRA_TAGS}"
+  fi
   tags_csv="$(build_tags_csv "$build_tags")"
   static_pie="${NIBID_STATIC_PIE:-false}"
 
