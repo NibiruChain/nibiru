@@ -203,3 +203,29 @@ build-abci-cli:
   set -euo pipefail
   go build -mod=readonly -o build/abci-cli ./abci/cmd/abci-cli
   echo "✅ Built $(pwd)/build/abci-cli (test-only)"
+
+# ---------------------------------------------------------------------------
+# Race CI groups
+#
+# The bft-race job in .github/workflows/test-core.yml runs the three
+# _test-grouped groups as separate matrix jobs. Consensus and p2p + mempool
+# are picked with package patterns (./consensus/..., ./p2p/... ./mempool/...).
+# "Everything else" has no single pattern, so this recipe lists every bft
+# package outside those directories and passes them to _test-grouped. The
+# Postgres sink is still skipped there.
+# ---------------------------------------------------------------------------
+
+# Run tests outside consensus, p2p, and mempool. Ex: "just bft test-rest -race"
+test-rest *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  package_prefix="github.com/NibiruChain/nibiru/v2/bft/"
+  patterns=()
+  while IFS= read -r pkg; do
+    relative="${pkg#"$package_prefix"}"
+    case "$relative" in
+      consensus|consensus/*|p2p|p2p/*|mempool|mempool/*) ;;
+      *) patterns+=("./$relative") ;;
+    esac
+  done < <(go list ./...)
+  just _test-grouped {{ args }} "${patterns[@]}"
