@@ -83,7 +83,7 @@ func TestGoSum_NoBannedDependencies(t *testing.T) {
 }
 
 func TestGeneratedProtoImports_NoUpstreamModules(t *testing.T) {
-	for _, root := range []string{"eth", "evm", "x"} {
+	for _, root := range []string{"bft", "eth", "evm", "lib", "x"} {
 		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 			if err != nil {
 				return err
