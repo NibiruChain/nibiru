@@ -613,3 +613,52 @@ jobs:
         if: needs.changes-nibiru-go.outputs.bft == 'true'
         run: |
           just bft test
+
+  # bft-race runs the Nibiru BFT unit tests with the race detector, one job
+  # per _test-grouped group. A race prints "WARNING: DATA RACE" and the test
+  # binary exits 66, which fails the job. See #2829.
+  bft-race:
+    name: bft-race (${{ matrix.group.name }})
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        group:
+          - name: consensus
+            recipe: test-race ./consensus/...
+          - name: p2p + mempool
+            recipe: test-race ./p2p/... ./mempool/...
+          - name: everything else
+            # Every bft package outside consensus, p2p, and mempool. The
+            # Postgres sink is skipped, as in `just bft test`.
+            recipe: test-rest -race
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.bft != 'true'
+        run: |
+          echo "job \"bft-race\" was skipped since relevant files were not changed."
+
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        uses: taiki-e/install-action@just
+
+      - name: Run bft tests with -race (${{ matrix.group.name }})
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        env:
+          RECIPE: ${{ matrix.group.recipe }}
+        run: |
+          # RECIPE is a recipe name plus its args; word splitting is intended.
+          # shellcheck disable=SC2086
+          just bft $RECIPE
