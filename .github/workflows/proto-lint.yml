@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - "proto/**"
+      - "bft/proto/**"
       - "lib/cosmos-sdk/proto/**"
       - "lib/ibc-go/proto/**"
       - "buf.work.yaml"
