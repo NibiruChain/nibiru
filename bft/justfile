@@ -203,3 +203,50 @@ build-abci-cli:
   set -euo pipefail
   go build -mod=readonly -o build/abci-cli ./abci/cmd/abci-cli
   echo "✅ Built $(pwd)/build/abci-cli (test-only)"
+
+# fuzz
+#
+# Native Go fuzz tests (`go test -fuzz`). Plain `just bft test` replays each
+# target's seeds in testdata/fuzz/<FuzzFunc>/ as unit tests. A failing input
+# found while fuzzing is written to that same directory; commit it with the
+# fix so it becomes a regression test.
+#
+# Target                 Fuzz function            Package (under bft/)
+# mempool-v0             FuzzMempoolV0            test/fuzz/mempool/v0
+# mempool-v1             FuzzMempoolV1            test/fuzz/mempool/v1
+# p2p-addrbook           FuzzP2PAddrBook          test/fuzz/p2p/addrbook
+# p2p-pex                FuzzP2PPex               test/fuzz/p2p/pex
+# p2p-secret-connection  FuzzP2PSecretConnection  test/fuzz/p2p/secret_connection
+# rpc-jsonrpc-server     FuzzRPCJSONRPCServer     test/fuzz/rpc/jsonrpc/server
+# pubsub-query           FuzzPubsubQuery          libs/pubsub/query
+fuzz_targets := "mempool-v0 mempool-v1 p2p-addrbook p2p-pex " + \
+  "p2p-secret-connection rpc-jsonrpc-server pubsub-query"
+
+# Extra args go to `go test`, such as "-parallel 2".
+# Fuzz one target for a duration. Ex: "just bft fuzz p2p-pex 30s"
+fuzz target duration="30s" *args="":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  case "{{ target }}" in
+    mempool-v0) pkg=./test/fuzz/mempool/v0 fn=FuzzMempoolV0 ;;
+    mempool-v1) pkg=./test/fuzz/mempool/v1 fn=FuzzMempoolV1 ;;
+    p2p-addrbook) pkg=./test/fuzz/p2p/addrbook fn=FuzzP2PAddrBook ;;
+    p2p-pex) pkg=./test/fuzz/p2p/pex fn=FuzzP2PPex ;;
+    p2p-secret-connection)
+      pkg=./test/fuzz/p2p/secret_connection fn=FuzzP2PSecretConnection ;;
+    rpc-jsonrpc-server)
+      pkg=./test/fuzz/rpc/jsonrpc/server fn=FuzzRPCJSONRPCServer ;;
+    pubsub-query) pkg=./libs/pubsub/query fn=FuzzPubsubQuery ;;
+    *)
+      echo "❌ unknown fuzz target: {{ target }}"
+      echo "   Targets: {{ fuzz_targets }}"
+      exit 1
+      ;;
+  esac
+  echo "RUN: go test $pkg -run '^\$' -fuzz '^$fn\$' -fuzztime {{ duration }}"
+  go test "$pkg" -run '^$' -fuzz "^$fn\$" -fuzztime "{{ duration }}" {{ args }}
+  echo "✅ SUCCESS: just bft fuzz {{ target }} {{ duration }}"
+
+# Print fuzz target names, one per line. Ex: "just bft fuzz-targets"
+fuzz-targets:
+  @printf '%s\n' {{ fuzz_targets }}
