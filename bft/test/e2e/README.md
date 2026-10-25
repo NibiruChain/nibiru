@@ -77,9 +77,13 @@ cd bft/test/e2e
 ./build/runner -f networks/ci.toml setup
 ```
 
-`networks/long.toml` sets some nodes to `cometbft/e2e-node:latest`, the
-upstream CometBFT image on Docker Hub, to test upgrades from it to the local
-image.
+`networks/long.toml` starts some nodes on `cometbft/e2e-node:v0.37.18`, the
+upstream CometBFT image on Docker Hub, and upgrades them to the local image.
+This is the path mainnet took from upstream CometBFT to Nibiru BFT. Pin the
+old version to a v0.37.x tag; `latest` is upstream's newest release line.
+
+CI runs these manifests from `.github/workflows/test-bft-e2e.yml`:
+`networks/ci.toml` on pull requests and `networks/long.toml` nightly.
 
 The upstream `Makefile` in this directory still works (`make docker`,
 `make runner`), but `bft/justfile` is the maintained entry point.

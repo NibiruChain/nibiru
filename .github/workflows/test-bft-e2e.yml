@@ -1,0 +1,228 @@
+# Nibiru BFT e2e testnets (bft/test/e2e). See bft/test/e2e/README.md.
+#
+# - e2e-ci runs networks/ci.toml on pull requests that touch bft/, go.mod,
+#   go.sum, or this file. It covers crashes, partitions, validator set
+#   changes, evidence, block sync, and state sync in one short run.
+# - e2e-long runs networks/long.toml nightly and on demand. It needs
+#   hundreds of heights and includes an upgrade from upstream CometBFT
+#   v0.37.18 to Nibiru BFT.
+#
+# Both jobs build cometbft/e2e-node:local-version with buildx and the GitHub
+# Actions cache. RocksDB has its own layer in bft/test/e2e/docker/Dockerfile,
+# so a cache hit skips the RocksDB build and the Go module download, and only
+# the two binaries rebuild when bft/ changes.
+
+name: "Nibiru BFT e2e"
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 4 * * *" # Nightly at 04:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  E2E_IMAGE: cometbft/e2e-node:local-version
+  E2E_DIR: bft/test/e2e
+  # Same cache for both jobs, so the nightly run reuses PR layers.
+  E2E_CACHE_SCOPE: bft-e2e-image
+
+jobs:
+  # A paths filter in a job, not in `on.pull_request.paths`, so the e2e-ci
+  # check still reports (as skipped) on PRs that do not touch bft/.
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      bft: ${{ steps.filter.outputs.bft }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Check for Nibiru BFT changes"
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            bft:
+              - "bft/**"
+              - "go.mod"
+              - "go.sum"
+              - ".github/workflows/test-bft-e2e.yml"
+
+  e2e-ci:
+    needs: changes
+    if: needs.changes.outputs.bft == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runner and the tests/ package run on the host.
+      - name: "Set up Go"
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: "Install just"
+        uses: taiki-e/install-action@just
+
+      - uses: docker/setup-buildx-action@v4
+
+      # Same build as `just bft e2e-image`. build-push-action passes the
+      # Actions cache credentials to buildx, which a `run` step does not get.
+      - name: "Build the e2e node image"
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: bft/test/e2e/docker/Dockerfile
+          tags: ${{ env.E2E_IMAGE }}
+          load: true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          cache-from: type=gha,scope=${{ env.E2E_CACHE_SCOPE }}
+          # mode=max also caches the build stage (RocksDB, Go modules).
+          cache-to: type=gha,mode=max,scope=${{ env.E2E_CACHE_SCOPE }}
+
+      # A step timeout, so the log steps below still run if the testnet
+      # hangs.
+      - name: "Run networks/ci.toml"
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          mkdir -p "$E2E_DIR/build"
+          just bft e2e networks/ci.toml 2>&1 | tee "$E2E_DIR/build/e2e.log"
+
+      # run-multiple.sh already prints container logs and cleans up when a
+      # testnet fails. This step covers a timeout or cancel, where the
+      # testnet is still running.
+      - name: "Collect docker compose logs"
+        if: failure() || cancelled()
+        shell: bash
+        run: |
+          out="$E2E_DIR/build/logs"
+          mkdir -p "$out"
+          docker ps -a > "$out/docker-ps.txt" 2>&1 || true
+          compose="$E2E_DIR/networks/ci/docker-compose.yml"
+          if [[ -f "$compose" ]]; then
+            docker compose -f "$compose" logs --no-color \
+              > "$out/docker-compose.log" 2>&1 || true
+            docker compose -f "$compose" down -v || true
+          fi
+
+      - name: "Upload e2e logs"
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bft-e2e-ci-logs
+          path: |
+            ${{ env.E2E_DIR }}/build/e2e.log
+            ${{ env.E2E_DIR }}/build/logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e-long:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: "Install just"
+        uses: taiki-e/install-action@just
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: "Build the e2e node image"
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: bft/test/e2e/docker/Dockerfile
+          tags: ${{ env.E2E_IMAGE }}
+          load: true
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+          cache-from: type=gha,scope=${{ env.E2E_CACHE_SCOPE }}
+          cache-to: type=gha,mode=max,scope=${{ env.E2E_CACHE_SCOPE }}
+
+      # long.toml starts most nodes on the upstream image
+      # cometbft/e2e-node:v0.37.18 and upgrades them to local-version, which
+      # is the path mainnet took from upstream CometBFT to Nibiru BFT.
+      # Upstream publishes that tag on Docker Hub for amd64 and arm64, so we
+      # pull it instead of building it from upstream source. The manifest
+      # pins v0.37.18 because `latest` is upstream's newest release line,
+      # not v0.37. Pulling here fails fast if the tag ever disappears.
+      - name: "Pull the upstream v0.37.18 e2e image"
+        run: docker pull cometbft/e2e-node:v0.37.18
+
+      - name: "Run networks/long.toml"
+        timeout-minutes: 120
+        shell: bash
+        run: |
+          mkdir -p "$E2E_DIR/build"
+          just bft e2e networks/long.toml 2>&1 | tee "$E2E_DIR/build/e2e.log"
+
+      - name: "Collect docker compose logs"
+        if: failure() || cancelled()
+        shell: bash
+        run: |
+          out="$E2E_DIR/build/logs"
+          mkdir -p "$out"
+          docker ps -a > "$out/docker-ps.txt" 2>&1 || true
+          compose="$E2E_DIR/networks/long/docker-compose.yml"
+          if [[ -f "$compose" ]]; then
+            docker compose -f "$compose" logs --no-color \
+              > "$out/docker-compose.log" 2>&1 || true
+            docker compose -f "$compose" down -v || true
+          fi
+
+      - name: "Upload e2e logs"
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bft-e2e-long-logs
+          path: |
+            ${{ env.E2E_DIR }}/build/e2e.log
+            ${{ env.E2E_DIR }}/build/logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Draft, disabled: open or update one tracking issue when the nightly run
+  # fails. Enabling it is the repo owner's decision. To enable, uncomment
+  # the job and add `issues: write` to its permissions.
+  #
+  # e2e-long-notify:
+  #   needs: e2e-long
+  #   if: failure() && github.event_name == 'schedule'
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     issues: write
+  #   steps:
+  #     - name: "Open or update the nightly e2e failure issue"
+  #       env:
+  #         GH_TOKEN: ${{ github.token }}
+  #         GH_REPO: ${{ github.repository }}
+  #         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #         TITLE: "ci(bft): Nightly e2e long.toml run failed"
+  #       shell: bash
+  #       run: |
+  #         body="Nightly \`networks/long.toml\` failed on ${GITHUB_SHA}: ${RUN_URL}"
+  #         number="$(gh issue list --state open --label Z-bft \
+  #           --search "in:title \"$TITLE\"" --json number --jq '.[0].number')"
+  #         if [[ -n "$number" ]]; then
+  #           gh issue comment "$number" --body "$body"
+  #         else
+  #           gh issue create --title "$TITLE" --label Z-bft --body "$body"
+  #         fi
