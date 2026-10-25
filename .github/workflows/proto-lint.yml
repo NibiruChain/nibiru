@@ -1,6 +1,8 @@
 name: Protobuf
-# Protobuf runs buf (https://buf.build/) lint and check-breakage
-# This workflow is only run when a .proto file has been changed
+# Protobuf runs buf (https://buf.build/) breaking-change checks and verifies
+# the generated Go output. It runs only when a proto root or the proto build
+# changes. spec/07-protobuf-state-breaks.md explains what counts as a break
+# and why the release-tag check matters.
 on:
   pull_request:
     paths:
@@ -13,6 +15,7 @@ on:
       - "contrib/scripts/protocgen.sh"
       - "go_mod_test.go"
       - "justfile"
+      - ".github/workflows/proto-lint.yml"
 
 # Allow concurrent runs on main/release branches but isolates other branches 
 concurrency:
@@ -35,19 +38,123 @@ jobs:
   #         with:
   #           input: "proto"
 
+  # break-check compares each proto root with the PR base branch. It catches
+  # a break introduced by this PR.
   break-check:
+    name: break-check (${{ matrix.root }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        root:
+          - proto
+          - bft/proto
+          - lib/cosmos-sdk/proto
+          - lib/ibc-go/proto
+    env:
+      ROOT: ${{ matrix.root }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: bufbuild/buf-setup-action@v1.50.0
         with:
+          version: 1.55.1
           github_token: ${{ github.token }}
-      - name: Check for breaking changes
+      - name: Check that the base branch has this root
+        id: base
+        run: |
+          # bft/proto exists only on ud/bft and branches cut from it. Skip
+          # it for PRs whose base doesn't have it yet, such as main.
+          if git ls-tree -d --name-only "origin/${BASE_REF}" -- "${ROOT}" \
+            | grep -qx "${ROOT}"; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${ROOT} is not on ${BASE_REF}; skipping."
+          fi
+      - name: Check for breaking changes against the base branch
+        if: steps.base.outputs.present == 'true'
         run: >-
-          buf breaking proto
-          --against "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},subdir=proto"
+          buf breaking "${ROOT}"
+          --against "https://github.com/${GITHUB_REPOSITORY}.git#branch=${BASE_REF},subdir=${ROOT}"
           --exclude-imports
           --error-format github-actions
+
+  # break-check-release compares each proto root with the last release. It
+  # also catches a break spread over several PRs that are each compatible
+  # with their base.
+  break-check-release:
+    name: break-check-release (${{ matrix.root }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        root:
+          - proto
+          - bft/proto
+          - lib/cosmos-sdk/proto
+          - lib/ibc-go/proto
+    env:
+      ROOT: ${{ matrix.root }}
+      # bft/proto has no Nibiru release yet, so its baseline is the upstream
+      # tag it was vendored from. The override keeps the FILE rules and
+      # allows the go_package rewrite to github.com/NibiruChain/nibiru/v2/bft.
+      # --config turns off workspace resolution, which is fine here because
+      # bft/proto imports only gogoproto.
+      # TODO: Remove BFT_BASELINE and BFT_CONFIG once a Nibiru release
+      # contains bft/. bft/proto then uses the release tag like the others.
+      BFT_BASELINE: "https://github.com/cometbft/cometbft.git#tag=v0.37.18,subdir=proto"
+      BFT_CONFIG: '{"version":"v1","deps":["buf.build/cosmos/gogo-proto"],"breaking":{"use":["FILE"],"except":["FILE_SAME_GO_PACKAGE"]}}'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Fetch tags so the job can find the last release.
+          fetch-depth: 0
+      - uses: bufbuild/buf-setup-action@v1.50.0
+        with:
+          version: 1.55.1
+          github_token: ${{ github.token }}
+      - name: Resolve the last release tag
+        id: release
+        run: |
+          # Newest v2.x.y tag, ignoring tags with a suffix such as -rc.1,
+          # -test.2, or -p1. Git sorts v2.22.0-rc.1 above v2.22.0.
+          tag="$(git tag --list 'v2.*' --sort=-v:refname \
+            | grep -E '^v2\.[0-9]+\.[0-9]+$' | head -1)"
+          if [ -z "${tag}" ]; then
+            echo "::error::No v2.x.y release tag found."
+            exit 1
+          fi
+          echo "Last release: ${tag}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+      - name: Check for breaking changes against the last release
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          against="https://github.com/${GITHUB_REPOSITORY}.git#tag=${TAG},subdir=${ROOT}"
+          args=()
+          case "${ROOT}" in
+            bft/proto)
+              against="${BFT_BASELINE}"
+              args+=(--config "${BFT_CONFIG}")
+              ;;
+            lib/cosmos-sdk/proto)
+              # The release still has the duplicate tendermint/ copy that
+              # moved to bft/proto with the same packages. The path is
+              # relative to the module.
+              # TODO: Remove this once the last release has no
+              # lib/cosmos-sdk/proto/tendermint.
+              args+=(--exclude-path tendermint)
+              ;;
+          esac
+          echo "buf breaking ${ROOT} against ${against}"
+          buf breaking "${ROOT}" \
+            --against "${against}" \
+            --exclude-imports \
+            --error-format github-actions \
+            "${args[@]}"
 
   proto-gen-go:
     name: Verify generated Go output
