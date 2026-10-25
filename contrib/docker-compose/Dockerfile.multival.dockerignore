@@ -1,0 +1,23 @@
+# BuildKit reads this file instead of the root .dockerignore when building
+# Dockerfile.multival. Send only what `go build ./x/cli` and
+# contrib/scripts/build-nibiru.sh need.
+*
+!go.mod
+!go.sum
+!app/
+!bft/
+!eth/
+!evm/
+!x/
+!lib/cosmos-sdk/
+!lib/ibc-go/
+!lib/wasmvm/
+!contrib/scripts/build-nibiru.sh
+!contrib/scripts/wasmvm-checksums.txt
+!contrib/scripts/build-wasmvm-source.sh
+
+**/target/
+**/node_modules/
+bft/build/
+bft/test/e2e/build/
+bft/test/e2e/networks/*/
