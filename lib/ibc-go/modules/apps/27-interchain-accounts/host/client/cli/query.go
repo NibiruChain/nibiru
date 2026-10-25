@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/spf13/cobra"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

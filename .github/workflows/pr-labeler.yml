@@ -1,0 +1,22 @@
+name: "Label PRs by zone"
+# Applies Z-* zone labels from the paths a PR changes.
+# Config: .github/labeler.yml
+# https://github.com/actions/labeler
+
+# pull_request_target lets fork PRs get labels. It is safe here because
+# the labeler never checks out or runs PR code. GitHub reads this workflow
+# and its config from the base branch.
+on:
+  pull_request_target:
+    types: ["opened", "synchronize", "reopened"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label-zones:
+    name: "Label PR zones"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5

@@ -1,7 +1,7 @@
 package jsonrpc_test
 
 import (
-	cmtlog "github.com/cometbft/cometbft/libs/log"
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/evm/jsonrpc"

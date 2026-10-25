@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
+
+	rpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

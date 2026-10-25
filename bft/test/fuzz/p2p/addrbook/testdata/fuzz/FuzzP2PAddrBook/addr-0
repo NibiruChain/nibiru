@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"id\":\"bb846d0ebb6f60d9c0f584f4528f3ab59ab18e38\",\"ip\":\"0.0.0.0\",\"port\":0}")

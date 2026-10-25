@@ -21,3 +21,4 @@ is not part of the Nibiru website documentation.
 - [04. Rust contract workspace](./04-rust-contract-workspace.md)
 - [05. Publishing coupled Rust crates](./05-publishing-coupled-rust-crates.md)
 - [06. Sai Pulse block-hook integration](./06-sai-pulse.md)
+- [07. Protobuf state breaks](./07-protobuf-state-breaks.md)

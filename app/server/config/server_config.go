@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/cometbft/cometbft/libs/strings"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/strings"
 
 	sdkioerrors "cosmossdk.io/errors"
 

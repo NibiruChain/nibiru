@@ -27,7 +27,7 @@ message QueryEvidenceRequest {
   // Deprecated: Use hash, a HEX encoded string, instead.
   bytes evidence_hash = 1 [
     deprecated           = true,
-    (gogoproto.casttype) = "github.com/cometbft/cometbft/libs/bytes.HexBytes"
+    (gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes"
   ];
 
   // hash defines the evidence hash of the requested evidence.

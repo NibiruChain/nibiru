@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"

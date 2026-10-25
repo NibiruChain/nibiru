@@ -6,6 +6,9 @@ set -Eeuo pipefail
 BUF_VERSION="1.55.1"
 PROTOC_GEN_GOCOSMOS_VERSION="1.4.10"
 PROTOC_GEN_GRPC_GATEWAY_VERSION="1.16.0"
+# PROTOC_GEN_GOGOFASTER_VERSION: Plugin for the CometBFT protos in bft/proto.
+# Matches github.com/cosmos/gogoproto in go.mod.
+PROTOC_GEN_GOGOFASTER_VERSION="1.7.2"
 
 # REPO_ROOT: Resolve the repository so this script also works outside its root.
 REPO_ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")/../.." rev-parse --show-toplevel)"
@@ -181,6 +184,7 @@ check_proto_plugins() {
   local -a plugin_specs=(
     "protoc-gen-gocosmos|github.com/cosmos/gogoproto/protoc-gen-gocosmos|github.com/cosmos/gogoproto|${PROTOC_GEN_GOCOSMOS_VERSION}"
     "protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway|github.com/grpc-ecosystem/grpc-gateway|${PROTOC_GEN_GRPC_GATEWAY_VERSION}"
+    "protoc-gen-gogofaster|github.com/cosmos/gogoproto/protoc-gen-gogofaster|github.com/cosmos/gogoproto|${PROTOC_GEN_GOGOFASTER_VERSION}"
   )
 
   if ! which_ok go; then

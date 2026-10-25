@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	db "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/mock"

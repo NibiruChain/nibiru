@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"cosmossdk.io/depinject"
 
