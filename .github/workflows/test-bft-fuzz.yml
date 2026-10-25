@@ -49,10 +49,34 @@ jobs:
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
+      - name: "Locate the fuzz cache"
+        id: fuzz-cache-dir
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+
+      # The generated corpus lives in $(go env GOCACHE)/fuzz, outside the
+      # repo. Restore the newest one for this target and save a new one after
+      # every run, so each night builds on the last. Cache keys are
+      # immutable, so the key includes the run ID.
+      - name: "Restore fuzz cache"
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.fuzz-cache-dir.outputs.dir }}
+          key: bft-fuzz-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: |
+            bft-fuzz-${{ matrix.target }}-
+
       - name: "Fuzz ${{ matrix.target }} for 10m"
         # go test's default -timeout is 10m, the same as -fuzztime, so raise
         # it. A hung input still fails the job when the timeout fires.
         run: just bft fuzz "${{ matrix.target }}" 10m -timeout 15m
+
+      - name: "Save fuzz cache"
+        # Save after a failure too: the corpus is still worth keeping.
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.fuzz-cache-dir.outputs.dir }}
+          key: bft-fuzz-${{ matrix.target }}-${{ github.run_id }}
 
       - name: "Collect failing inputs"
         if: failure()
