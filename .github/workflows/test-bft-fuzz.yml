@@ -1,0 +1,76 @@
+name: "Nibiru BFT Fuzz"
+
+# Runs each Nibiru BFT native Go fuzz test for 10 minutes. Seeds in
+# testdata/fuzz/ also run on every PR through `just bft test` (Core Tests).
+# Targets and packages are listed in the `# fuzz` section of bft/justfile.
+on:
+  workflow_dispatch: # Runs on manual calls
+  schedule:
+    - cron: "0 3 * * *" # Runs automatically every day at 03:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - mempool-v0
+          - mempool-v1
+          - p2p-addrbook
+          - p2p-pex
+          - p2p-secret-connection
+          - rpc-jsonrpc-server
+          - pubsub-query
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
+
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+
+      - name: "Fuzz ${{ matrix.target }} for 10m"
+        # go test's default -timeout is 10m, the same as -fuzztime, so raise
+        # it. A hung input still fails the job when the timeout fires.
+        run: just bft fuzz "${{ matrix.target }}" 10m -timeout 15m
+
+      - name: "Collect failing inputs"
+        if: failure()
+        run: |
+          # go test -fuzz writes each failing input to the package's
+          # testdata/fuzz/<FuzzFunc>/ directory, which is otherwise only
+          # committed seeds.
+          dest="$RUNNER_TEMP/fuzz-failures"
+          mkdir -p "$dest"
+          git ls-files --others --exclude-standard -z -- \
+            'bft/**/testdata/fuzz/**' |
+            xargs -0 -r cp --parents -t "$dest"
+          find "$dest" -type f -print
+
+      - name: "Upload failing inputs"
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: bft-fuzz-${{ matrix.target }}
+          path: ${{ runner.temp }}/fuzz-failures
+          if-no-files-found: warn
