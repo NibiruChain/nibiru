@@ -21,20 +21,50 @@ up-ibc:
 up-hm:
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile heartmonitor up --detach --build
 
+# Start 4 validators on one chain (multival profile) without deleting local state.
+up-multival:
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile multival build multival-genesis
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile multival up --detach multival-genesis nibiru-val-0 nibiru-val-1 nibiru-val-2 nibiru-val-3
+
+# Check app hash agreement across 4 validators under load and restarts. Ex: "LOAD_SECONDS=300 just chaos determinism"
+determinism:
+    bash contrib/scripts/determinism.sh
+
+# Self-test: plant a non-deterministic EndBlock and pass only if `determinism` catches it.
+determinism-canary:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    log="$(mktemp)"
+    MULTIVAL_IMAGE=nibiru-multival:canary \
+      MULTIVAL_BUILD_TAGS=nibiru_nondeterminism_canary \
+      LOAD_SECONDS="${LOAD_SECONDS:-30}" \
+      bash contrib/scripts/determinism.sh 2>&1 | tee "$log"
+    status="${PIPESTATUS[0]}"
+    if [[ "$status" -ne 0 ]] && grep -q "first height where app hashes differ" "$log"; then
+      echo "✅ determinism caught the planted bug"
+      rm -f "$log"
+      exit 0
+    fi
+    echo "❌ determinism did not catch the planted bug (exit $status)"
+    rm -f "$log"
+    exit 1
+
 # Stop every Chaosnet profile while preserving named volumes.
 down:
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc down --timeout 1
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile heartmonitor down --timeout 1
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile multival down --timeout 1
 
 # Remove every Chaosnet profile and its named volumes.
 [confirm]
 destroy:
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc down --timeout 1 --volumes
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile heartmonitor down --timeout 1 --volumes
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile multival down --timeout 1 --volumes
 
 # Print logs from every Chaosnet service.
 logs:
-    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc --profile heartmonitor logs
+    docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc --profile heartmonitor --profile multival logs
 
 # Print logs from the Heart Monitor service.
 logs-hm:
