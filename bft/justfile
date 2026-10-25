@@ -227,13 +227,19 @@ fuzz_targets := "mempool-v0 mempool-v1 p2p-addrbook p2p-pex " + \
 fuzz target duration="30s" *args="":
   #!/usr/bin/env bash
   set -euo pipefail
+  extra=()
   case "{{ target }}" in
     mempool-v0) pkg=./test/fuzz/mempool/v0 fn=FuzzMempoolV0 ;;
     mempool-v1) pkg=./test/fuzz/mempool/v1 fn=FuzzMempoolV1 ;;
     p2p-addrbook) pkg=./test/fuzz/p2p/addrbook fn=FuzzP2PAddrBook ;;
     p2p-pex) pkg=./test/fuzz/p2p/pex fn=FuzzP2PPex ;;
     p2p-secret-connection)
-      pkg=./test/fuzz/p2p/secret_connection fn=FuzzP2PSecretConnection ;;
+      pkg=./test/fuzz/p2p/secret_connection fn=FuzzP2PSecretConnection
+      # Each input runs a full handshake, so minimizing a new input under
+      # the default 60s limit stalls a worker for most of a minute. A 5s
+      # limit keeps the workers fuzzing.
+      extra=(-fuzzminimizetime 5s)
+      ;;
     rpc-jsonrpc-server)
       pkg=./test/fuzz/rpc/jsonrpc/server fn=FuzzRPCJSONRPCServer ;;
     pubsub-query) pkg=./libs/pubsub/query fn=FuzzPubsubQuery ;;
@@ -243,8 +249,10 @@ fuzz target duration="30s" *args="":
       exit 1
       ;;
   esac
-  echo "RUN: go test $pkg -run '^\$' -fuzz '^$fn\$' -fuzztime {{ duration }}"
-  go test "$pkg" -run '^$' -fuzz "^$fn\$" -fuzztime "{{ duration }}" {{ args }}
+  echo "RUN: go test $pkg -run '^\$' -fuzz '^$fn\$'" \
+    "-fuzztime {{ duration }} ${extra[*]:-}"
+  go test "$pkg" -run '^$' -fuzz "^$fn\$" -fuzztime "{{ duration }}" \
+    ${extra[@]+"${extra[@]}"} {{ args }}
   echo "✅ SUCCESS: just bft fuzz {{ target }} {{ duration }}"
 
 # Print fuzz target names, one per line. Ex: "just bft fuzz-targets"
