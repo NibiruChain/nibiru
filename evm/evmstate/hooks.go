@@ -22,6 +22,7 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock also retrieves the bloom filter value from the transient store and commits it to the
 func (k *Keeper) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	k.nondeterminismCanary(ctx) // no-op unless built with a test-only tag
 
 	bloom := gethcoretypes.BytesToBloom(k.EvmState.GetBlockBloomTransient(ctx).Bytes())
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventBlockBloom{
