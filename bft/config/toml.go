@@ -49,7 +49,7 @@ func EnsureRoot(rootDir string) {
 	}
 }
 
-// XXX: this func should probably be called by cmd/cometbft/commands/init.go
+// XXX: this func should probably be called by cmd/nibiru-bft/commands/init.go
 // alongside the writing of the genesis.json and priv_validator.json
 func writeDefaultConfigFile(configFilePath string) {
 	WriteConfigFile(configFilePath, DefaultConfig())

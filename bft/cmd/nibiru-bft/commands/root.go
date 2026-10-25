@@ -64,10 +64,13 @@ func ParseConfig(cmd *cobra.Command) (*cfg.Config, error) {
 	return conf, nil
 }
 
-// RootCmd is the root command for CometBFT core.
+// RootCmd is the root command for the nibiru-bft test binary.
 var RootCmd = &cobra.Command{
-	Use:   "cometbft",
-	Short: "BFT state machine replication for applications in any programming languages",
+	Use:   "nibiru-bft",
+	Short: "Nibiru BFT test binary (not for production use)",
+	Long: `Nibiru BFT test binary: a standalone consensus node for local and e2e
+testing. It is not released and is not for production use. Production
+consensus runs inside the Nibiru binary (nibid).`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 		if cmd.Name() == VersionCmd.Name() {
 			return nil

@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	abciserver "github.com/NibiruChain/nibiru/v2/bft/abci/server"
-	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	tmos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 	"github.com/NibiruChain/nibiru/v2/bft/node"
 	"github.com/NibiruChain/nibiru/v2/bft/p2p"

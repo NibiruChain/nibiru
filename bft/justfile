@@ -185,16 +185,17 @@ lint:
 
 # Test-only: Nibiru BFT ships inside nibid. Use this binary for local
 # harnesses that need a bare consensus node.
-# Build the standalone cometbft into bft/build/. Ex: "just bft build-cometbft"
-build-cometbft:
+# Build the standalone nibiru-bft into bft/build/.
+# Ex: "just bft build-nibiru-bft"
+build-nibiru-bft:
   #!/usr/bin/env bash
   set -euo pipefail
   commit="$(git rev-parse --short HEAD)"
   ldflags="-s -w"
   ldflags+=" -X github.com/NibiruChain/nibiru/v2/bft/version.TMGitCommitHash=${commit}"
   go build -mod=readonly -trimpath -ldflags "$ldflags" \
-    -o build/cometbft ./cmd/cometbft
-  echo "✅ Built $(pwd)/build/cometbft (test-only)"
+    -o build/nibiru-bft ./cmd/nibiru-bft
+  echo "✅ Built $(pwd)/build/nibiru-bft (test-only)"
 
 # Build test-only abci-cli into bft/build/. Ex: "just bft build-abci-cli"
 build-abci-cli:

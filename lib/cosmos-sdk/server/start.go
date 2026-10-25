@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/bft/abci/server"
-	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	"github.com/NibiruChain/nibiru/v2/bft/node"
 	"github.com/NibiruChain/nibiru/v2/bft/p2p"
 	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"

@@ -13,7 +13,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
-	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
+	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 )

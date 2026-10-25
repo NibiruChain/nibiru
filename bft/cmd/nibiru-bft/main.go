@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	cmd "github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands"
-	"github.com/NibiruChain/nibiru/v2/bft/cmd/cometbft/commands/debug"
+	cmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
+	"github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands/debug"
 	cfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 )

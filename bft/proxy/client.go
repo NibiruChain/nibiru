@@ -74,7 +74,7 @@ func (r *remoteClientCreator) NewABCIClient() (abcicli.Client, error) {
 // Nibiru BFT: upstream also accepted "kvstore", "persistent_kvstore", and
 // "e2e" as built-in example apps. Those cases were removed so the example
 // and e2e test apps are not linked into nibid. The standalone cometbft
-// binary resolves them itself (see bft/cmd/cometbft/apps.go), and tests use
+// binary resolves them itself (see bft/cmd/nibiru-bft/apps.go), and tests use
 // NewLocalClientCreator with the app they need.
 //
 // The dbDir argument is kept for signature compatibility. It is unused.

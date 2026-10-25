@@ -10,11 +10,11 @@ export CMTHOME=$HOME/.cometbft_app
 
 function kvstore_over_socket(){
     rm -rf $CMTHOME
-    cometbft init
+    nibiru-bft init
     echo "Starting kvstore_over_socket"
     abci-cli kvstore > /dev/null &
     pid_kvstore=$!
-    cometbft node > cometbft.log &
+    nibiru-bft node > cometbft.log &
     pid_cometbft=$!
     sleep 5
 
@@ -27,9 +27,9 @@ function kvstore_over_socket(){
 # start cometbft first
 function kvstore_over_socket_reorder(){
     rm -rf $CMTHOME
-    cometbft init
+    nibiru-bft init
     echo "Starting kvstore_over_socket_reorder (ie. start cometbft first)"
-    cometbft node > cometbft.log &
+    nibiru-bft node > cometbft.log &
     pid_cometbft=$!
     sleep 2
     abci-cli kvstore > /dev/null &

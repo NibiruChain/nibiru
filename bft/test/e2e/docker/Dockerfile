@@ -13,9 +13,9 @@ WORKDIR /src/cometbft
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Build CometBFT and install into /usr/bin/cometbft
+# Build nibiru-bft and install into /usr/bin/nibiru-bft
 COPY . .
-RUN make build && cp build/cometbft /usr/bin/cometbft
+RUN make build && cp build/nibiru-bft /usr/bin/nibiru-bft
 COPY test/e2e/docker/entrypoint* /usr/bin/
 RUN cd test/e2e && make node && cp build/node /usr/bin/app
 
