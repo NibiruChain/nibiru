@@ -1,13 +1,92 @@
 # End-to-End Tests
 
-Spins up and tests CometBFT networks in Docker Compose based on a testnet manifest. To run the CI testnet:
+Spins up and tests Nibiru BFT networks in Docker Compose based on a testnet
+manifest. To run the CI testnet from the repo root:
 
 ```sh
-make
-./build/runner -f networks/ci.toml
+just bft e2e-image
+just bft e2e networks/ci.toml
 ```
 
-This creates and runs a testnet named `ci` under `networks/ci/` (determined by the manifest filename).
+This creates and runs a testnet named `ci` under `networks/ci/` (determined by
+the manifest filename).
+
+## Requirements
+
+- Docker with BuildKit and the `docker compose` plugin.
+- Go, at the version in the root `go.mod`. The runner and the `tests/`
+  package run on the host.
+- `just`.
+
+## Recipes
+
+Both recipes live in the `# e2e` section of `bft/justfile`. Run them from the
+repo root as `just bft <recipe>`, or from `bft/` as `just <recipe>`.
+
+### `just bft e2e-image`
+
+Builds the node image `cometbft/e2e-node:local-version` from
+`docker/Dockerfile`. The runner uses that tag by default (`pkg/testnet.go`)
+for any node without a `version` in its manifest.
+
+- The build context is the repo root, because `bft/` belongs to the root Go
+  module (`github.com/NibiruChain/nibiru/v2`). `docker/Dockerfile.dockerignore`
+  replaces the root `.dockerignore` for this build and sends only `go.mod`,
+  `go.sum`, and `bft/`.
+- The base image is `golang:<go.mod version>-bookworm`. LevelDB comes from
+  Debian. RocksDB 8.9.1 is built from source, since the root `go.mod`
+  replaces `github.com/linxGnu/grocksdb` with v1.8.12, which binds RocksDB
+  8.9.1. Change the `ROCKSDB_VERSION` build arg only together with that
+  replace directive.
+- The image holds `/usr/bin/app` (`./node`, Nibiru BFT and the e2e app in
+  one process, used with `abci_protocol = "builtin"`) and
+  `/usr/bin/nibiru-bft` (`bft/cmd/nibiru-bft`, used by `docker/entrypoint`
+  when the app runs as a separate process over `tcp`, `unix`, or `grpc`).
+  Both are built with `-tags badgerdb,boltdb,cleveldb,rocksdb`.
+- Extra arguments go to `docker build`, for example
+  `just bft e2e-image --no-cache` or `just bft e2e-image --progress=plain`.
+
+The first build compiles RocksDB and downloads every module in the root
+`go.mod`, so it takes several minutes. Later builds reuse those layers and
+only rebuild the two binaries when `bft/` changes.
+
+### `just bft e2e <manifest>...`
+
+Builds the runner into `build/runner` and runs each manifest in order through
+`run-multiple.sh`. Manifest paths are relative to `bft/test/e2e`; a leading
+`bft/test/e2e/` or `test/e2e/` is also accepted. The recipe fails early if the
+image is missing.
+
+```sh
+just bft e2e networks/ci.toml
+just bft e2e networks/simple.toml networks/single.toml
+```
+
+For each manifest the runner runs setup, load, start, perturb, evidence,
+and `go test ./tests/...`, then cleans up. When a testnet fails,
+`run-multiple.sh` prints the manifest and all container logs, cleans up, and
+continues with the next manifest. The recipe exits non-zero if any testnet
+failed.
+
+To run a single stage or keep a failed testnet around for inspection, call
+the runner directly from `bft/test/e2e` (see [Test stages](#test-stages)):
+
+```sh
+just bft e2e-runner
+cd bft/test/e2e
+./build/runner -f networks/ci.toml setup
+```
+
+`networks/long.toml` sets some nodes to `cometbft/e2e-node:latest`, the
+upstream CometBFT image on Docker Hub, to test upgrades from it to the local
+image.
+
+The upstream `Makefile` in this directory still works (`make docker`,
+`make runner`), but `bft/justfile` is the maintained entry point.
+
+For reference, on a 12-core arm64 machine the first `e2e-image` build took
+about 5 minutes (RocksDB alone took 3.5), and `networks/ci.toml` took about
+5 minutes.
 
 ## Testnet Manifests
 
