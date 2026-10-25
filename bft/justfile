@@ -203,3 +203,54 @@ build-abci-cli:
   set -euo pipefail
   go build -mod=readonly -o build/abci-cli ./abci/cmd/abci-cli
   echo "✅ Built $(pwd)/build/abci-cli (test-only)"
+
+# ---------------------------------------------------------------------------
+# e2e: multi-node testnets in Docker (bft/test/e2e). See
+# bft/test/e2e/README.md.
+# ---------------------------------------------------------------------------
+
+e2e_image := "cometbft/e2e-node:local-version"
+
+# The context is the repo root, because bft/ belongs to the root module.
+# bft/test/e2e/docker/Dockerfile.dockerignore limits it to go.mod, go.sum,
+# and bft/. Extra args go to `docker build`. The first build compiles
+# RocksDB and takes several minutes; later builds reuse that layer.
+# Build the e2e node image. Ex: "just bft e2e-image"
+e2e-image *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  commit="$(git rev-parse --short HEAD 2>/dev/null || true)"
+  docker build \
+    --tag "{{ e2e_image }}" \
+    --build-arg "GIT_COMMIT=${commit}" \
+    -f test/e2e/docker/Dockerfile \
+    {{ args }} ..
+  echo "✅ Built {{ e2e_image }}"
+
+# Build the e2e runner into bft/test/e2e/build/. Ex: "just bft e2e-runner"
+e2e-runner:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  go build -o test/e2e/build/runner ./test/e2e/runner
+  echo "✅ Built $(pwd)/test/e2e/build/runner"
+
+# Manifest paths are relative to bft/test/e2e (a leading "bft/test/e2e/" or
+# "test/e2e/" is also accepted). Runs them in order through run-multiple.sh,
+# which dumps the manifest and container logs when a testnet fails. Needs
+# the image from e2e-image.
+# Run e2e testnets. Ex: "just bft e2e networks/ci.toml"
+e2e +manifests: e2e-runner
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if ! docker image inspect "{{ e2e_image }}" >/dev/null 2>&1; then
+    echo "❌ Missing image {{ e2e_image }}. Run 'just bft e2e-image' first."
+    exit 1
+  fi
+  manifests=()
+  for arg in {{ manifests }}; do
+    arg="${arg#bft/test/e2e/}"
+    arg="${arg#test/e2e/}"
+    manifests+=("$arg")
+  done
+  cd test/e2e
+  ./run-multiple.sh "${manifests[@]}"
