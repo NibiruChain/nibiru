@@ -76,11 +76,20 @@ jobs:
           fi
       - name: Check for breaking changes against the base branch
         if: steps.base.outputs.present == 'true'
-        run: >-
-          buf breaking "${ROOT}"
-          --against "https://github.com/${GITHUB_REPOSITORY}.git#branch=${BASE_REF},subdir=${ROOT}"
-          --exclude-imports
-          --error-format github-actions
+        run: |
+          args=(--exclude-imports --error-format github-actions)
+          # TODO: Drop this once main no longer has
+          # lib/cosmos-sdk/proto/tendermint. That copy moved to bft/proto with
+          # the same packages, so its deletion is not a wire break. See
+          # spec/07-protobuf-state-breaks.md.
+          if [ "${ROOT}" = "lib/cosmos-sdk/proto" ] \
+            && git ls-tree -d --name-only "origin/${BASE_REF}" \
+              -- "${ROOT}/tendermint" | grep -qx "${ROOT}/tendermint"; then
+            args+=(--exclude-path tendermint)
+          fi
+          buf breaking "${ROOT}" \
+            --against "https://github.com/${GITHUB_REPOSITORY}.git#branch=${BASE_REF},subdir=${ROOT}" \
+            "${args[@]}"
 
   # break-check-release compares each proto root with the last release. It
   # also catches a break spread over several PRs that are each compatible
