@@ -8,12 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	tmrpcserver "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
 	gateway "github.com/cosmos/gogogateway"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmrpcserver "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/server"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"

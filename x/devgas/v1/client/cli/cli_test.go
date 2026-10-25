@@ -7,8 +7,9 @@ import (
 	"io"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdktestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 

@@ -5,9 +5,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
 
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

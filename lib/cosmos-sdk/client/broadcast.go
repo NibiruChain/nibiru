@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/v2/bft/mempool"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/NibiruChain/nibiru/v2/bft/mempool"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

@@ -6,12 +6,13 @@ import (
 	"io"
 	"time"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 	dbm "github.com/cometbft/cometbft-db"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
 	pruningtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/pruning/types"

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/stretchr/testify/require"
+
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"

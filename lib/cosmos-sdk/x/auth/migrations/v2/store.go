@@ -21,11 +21,12 @@ import (
 	"errors"
 	"fmt"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

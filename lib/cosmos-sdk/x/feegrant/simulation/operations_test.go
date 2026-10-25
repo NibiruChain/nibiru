@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

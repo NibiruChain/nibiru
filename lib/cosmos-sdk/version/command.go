@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"strings"
 
-	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
+
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 )
 
 const flagLong = "long"

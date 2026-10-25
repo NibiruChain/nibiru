@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"

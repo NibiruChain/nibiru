@@ -4,9 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"

@@ -9,9 +9,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/evm/rpc"
 
+	pkgerrors "github.com/pkg/errors"
+
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
-	pkgerrors "github.com/pkg/errors"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

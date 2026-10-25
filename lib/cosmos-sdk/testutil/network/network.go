@@ -15,14 +15,16 @@ import (
 	"testing"
 	"time"
 
-	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
-	"github.com/NibiruChain/nibiru/v2/bft/node"
-	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	"github.com/NibiruChain/nibiru/v2/bft/node"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+
 	sdkmath "cosmossdk.io/math"
+
 	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/configurator"

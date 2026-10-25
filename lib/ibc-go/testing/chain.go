@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	tmprotoversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	tmversion "github.com/NibiruChain/nibiru/v2/bft/version"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

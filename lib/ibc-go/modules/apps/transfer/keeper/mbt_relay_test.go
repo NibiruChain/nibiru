@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

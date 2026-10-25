@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"cosmossdk.io/depinject"
 

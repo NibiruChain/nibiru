@@ -87,11 +87,12 @@ import (
 	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 
+	dbm "github.com/cometbft/cometbft-db"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"

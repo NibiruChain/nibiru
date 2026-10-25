@@ -7,13 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cosmos/go-bip39"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/cosmos/go-bip39"
-	pkgerrors "github.com/pkg/errors"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

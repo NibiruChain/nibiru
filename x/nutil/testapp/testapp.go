@@ -6,11 +6,12 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	tmdb "github.com/cometbft/cometbft-db"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	tmdb "github.com/cometbft/cometbft-db"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

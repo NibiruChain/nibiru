@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"sort"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	modulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
 	"cosmossdk.io/core/appmodule"

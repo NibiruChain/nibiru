@@ -13,6 +13,7 @@ import (
 	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
 	queryv1 "cosmossdk.io/api/cosmos/query/v1"
 	sdkioerrors "cosmossdk.io/errors"
+
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

@@ -8,9 +8,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"sigs.k8s.io/yaml"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
-	"sigs.k8s.io/yaml"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

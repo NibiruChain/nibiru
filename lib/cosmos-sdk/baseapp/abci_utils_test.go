@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	cmtsecp256k1 "github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
-	cmtprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
-	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	protoio "github.com/cosmos/gogoproto/io"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmtsecp256k1 "github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
+	cmtprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

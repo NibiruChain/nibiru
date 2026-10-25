@@ -6,12 +6,13 @@ import (
 	"math"
 	"testing"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/depinject"
 

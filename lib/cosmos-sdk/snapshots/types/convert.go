@@ -1,8 +1,9 @@
 package types
 
 import (
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	proto "github.com/cosmos/gogoproto/proto"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )

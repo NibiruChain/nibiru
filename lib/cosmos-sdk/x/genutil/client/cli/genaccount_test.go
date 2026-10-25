@@ -9,9 +9,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

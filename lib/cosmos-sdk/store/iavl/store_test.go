@@ -7,11 +7,12 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"

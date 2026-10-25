@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/stretchr/testify/suite"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

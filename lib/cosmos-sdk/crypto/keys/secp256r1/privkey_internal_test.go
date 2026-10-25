@@ -3,9 +3,10 @@ package secp256r1
 import (
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 

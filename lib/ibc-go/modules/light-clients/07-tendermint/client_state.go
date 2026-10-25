@@ -4,9 +4,10 @@ import (
 	"strings"
 	"time"
 
+	ics23 "github.com/cosmos/ics23/go"
+
 	"github.com/NibiruChain/nibiru/v2/bft/light"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	ics23 "github.com/cosmos/ics23/go"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

@@ -8,8 +8,6 @@ import (
 	"math/big"
 	"strconv"
 
-	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
-	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	"github.com/cosmos/gogoproto/proto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -18,6 +16,9 @@ import (
 	"github.com/status-im/keycard-go/hexutils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	grpctypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/grpc"

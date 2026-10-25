@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	dbm "github.com/cometbft/cometbft-db"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"

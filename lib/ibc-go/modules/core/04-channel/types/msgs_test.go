@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	log "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	log "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/iavl"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"

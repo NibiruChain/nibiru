@@ -9,10 +9,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codecTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 

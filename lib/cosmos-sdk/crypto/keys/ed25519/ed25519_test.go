@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
-	tmed25519 "github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	tmed25519 "github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

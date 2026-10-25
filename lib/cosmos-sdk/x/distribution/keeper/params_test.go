@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

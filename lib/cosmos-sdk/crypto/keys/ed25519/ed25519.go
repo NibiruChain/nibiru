@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/hdevalence/ed25519consensus"
+
 	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
-	"github.com/hdevalence/ed25519consensus"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"

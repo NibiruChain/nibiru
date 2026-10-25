@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
-	"sigs.k8s.io/yaml"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence/exported"

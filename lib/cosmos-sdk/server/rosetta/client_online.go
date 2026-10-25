@@ -19,8 +19,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 
 	crgerrs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/errors"
 	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"

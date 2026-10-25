@@ -3,9 +3,10 @@ package mock_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/testing/mock"
 )

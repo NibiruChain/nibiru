@@ -4,8 +4,9 @@ package evm
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"

@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdkcodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

@@ -9,15 +9,16 @@ import (
 	"path/filepath"
 
 	"cosmossdk.io/depinject"
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
-	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

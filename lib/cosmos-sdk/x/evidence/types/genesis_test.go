@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	"github.com/stretchr/testify/require"
+
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

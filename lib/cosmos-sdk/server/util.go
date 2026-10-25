@@ -22,13 +22,14 @@ import (
 	"github.com/spf13/viper"
 
 	"cosmossdk.io/log"
+	dbm "github.com/cometbft/cometbft-db"
+
 	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/NibiruChain/nibiru/v2/bft/node"
 	tmstore "github.com/NibiruChain/nibiru/v2/bft/store"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	dbm "github.com/cometbft/cometbft-db"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

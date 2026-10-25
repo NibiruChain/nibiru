@@ -5,13 +5,14 @@ import (
 	"io"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cosmos/gogoproto/grpc"
+	"github.com/spf13/cobra"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/gogoproto/grpc"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/api"

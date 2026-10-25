@@ -13,8 +13,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 
 	sdkioerrors "cosmossdk.io/errors"
-	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -22,6 +20,9 @@ import (
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 

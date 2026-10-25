@@ -3,10 +3,11 @@ package app_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"

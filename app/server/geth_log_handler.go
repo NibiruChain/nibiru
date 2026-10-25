@@ -7,8 +7,9 @@ import (
 	"context"
 	"log/slog"
 
-	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	gethlog "github.com/ethereum/go-ethereum/log"
+
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 )
 
 // Ensure LogHandler implements slog.Handler

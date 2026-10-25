@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/gogoproto/proto"
 	"sigs.k8s.io/yaml"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

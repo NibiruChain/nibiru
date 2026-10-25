@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 

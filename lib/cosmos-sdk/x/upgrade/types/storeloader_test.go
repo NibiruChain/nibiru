@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log" //nolint:staticcheck
 	dbm "github.com/cometbft/cometbft-db"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log" //nolint:staticcheck
 
 	//nolint:staticcheck
 	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"

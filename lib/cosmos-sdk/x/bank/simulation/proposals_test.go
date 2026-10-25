@@ -5,8 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	"gotest.tools/v3/assert"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"

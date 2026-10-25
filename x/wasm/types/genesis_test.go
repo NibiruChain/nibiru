@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

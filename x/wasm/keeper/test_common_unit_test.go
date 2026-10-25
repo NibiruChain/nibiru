@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/stretchr/testify/require"
 
 	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
 	icahosttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/host/types"

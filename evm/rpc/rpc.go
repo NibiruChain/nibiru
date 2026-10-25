@@ -11,6 +11,7 @@ import (
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdkioerrors "cosmossdk.io/errors"
+
 	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

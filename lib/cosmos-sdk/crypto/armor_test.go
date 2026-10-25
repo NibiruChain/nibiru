@@ -7,10 +7,11 @@ import (
 	"io"
 	"testing"
 
-	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
-	"github.com/NibiruChain/nibiru/v2/bft/crypto/xsalsa20symmetric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/xsalsa20symmetric"
 
 	"cosmossdk.io/depinject"
 

@@ -10,10 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	db "github.com/cometbft/cometbft-db"
 	protoio "github.com/cosmos/gogoproto/io"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"

@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cosmos/gogoproto/proto"
+	"golang.org/x/exp/maps"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cosmos/gogoproto/proto"
-	"golang.org/x/exp/maps"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"

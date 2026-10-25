@@ -11,6 +11,10 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/NibiruChain/nibiru/v2/bft/abci/server"
 	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	"github.com/NibiruChain/nibiru/v2/bft/node"
@@ -18,9 +22,6 @@ import (
 	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"
 	"github.com/NibiruChain/nibiru/v2/bft/proxy"
 	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/local"
-	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

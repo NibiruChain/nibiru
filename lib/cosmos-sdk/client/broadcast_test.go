@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	"github.com/NibiruChain/nibiru/v2/bft/mempool"
 	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

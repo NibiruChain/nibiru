@@ -8,14 +8,15 @@ import (
 	"strings"
 	"sync"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	dbm "github.com/cometbft/cometbft-db"
 	protoio "github.com/cosmos/gogoproto/io"
 	gogotypes "github.com/cosmos/gogoproto/types"
 	iavltree "github.com/cosmos/iavl"
 	pkgerrors "github.com/pkg/errors"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachemulti"

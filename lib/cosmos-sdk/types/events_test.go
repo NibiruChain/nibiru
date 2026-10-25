@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	testdata "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"

@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
+
 	abci_server "github.com/NibiruChain/nibiru/v2/bft/abci/server"
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -10,8 +10,9 @@ import (
 	tmed25519 "github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 	"github.com/NibiruChain/nibiru/v2/bft/privval"
 
-	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	"github.com/stretchr/testify/require"
+
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 )
 
 func TestExportGenesisFileWithTime(t *testing.T) {

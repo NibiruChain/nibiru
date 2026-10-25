@@ -7,8 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/spf13/cast"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

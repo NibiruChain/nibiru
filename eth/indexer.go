@@ -2,9 +2,10 @@
 package eth
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // EVMTxIndexer defines the interface of custom eth tx indexer.

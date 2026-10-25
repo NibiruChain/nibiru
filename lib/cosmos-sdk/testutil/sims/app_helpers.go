@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	dbm "github.com/cometbft/cometbft-db"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	dbm "github.com/cometbft/cometbft-db"
 
 	"cosmossdk.io/depinject"
 	sdkmath "cosmossdk.io/math"

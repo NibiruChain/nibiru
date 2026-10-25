@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/gaskv"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"

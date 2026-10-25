@@ -11,8 +11,9 @@ import (
 	"strings"
 
 	"github.com/99designs/keyring"
-	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	pkgerrors "github.com/pkg/errors"
+
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/cosmos/go-bip39"
 

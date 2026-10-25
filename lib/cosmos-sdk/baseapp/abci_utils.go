@@ -3,9 +3,10 @@ package baseapp
 import (
 	"fmt"
 
+	"github.com/cockroachdb/errors"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
-	"github.com/cockroachdb/errors"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"

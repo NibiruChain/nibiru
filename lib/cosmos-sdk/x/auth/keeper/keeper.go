@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	gogotypes "github.com/cosmos/gogoproto/types"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"

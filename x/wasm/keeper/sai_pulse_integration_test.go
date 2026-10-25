@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

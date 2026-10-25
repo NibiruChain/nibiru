@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
+
 	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 

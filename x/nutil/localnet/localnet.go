@@ -11,13 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/ethclient"
+	gethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
-	"github.com/ethereum/go-ethereum/ethclient"
-	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/spf13/cobra"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
-	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	pkgerrors "github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

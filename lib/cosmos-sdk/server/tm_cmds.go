@@ -5,6 +5,9 @@ package server
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
+
 	"github.com/NibiruChain/nibiru/v2/bft/light"
 	"github.com/NibiruChain/nibiru/v2/bft/node"
 	"github.com/NibiruChain/nibiru/v2/bft/p2p"
@@ -14,8 +17,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/statesync"
 	"github.com/NibiruChain/nibiru/v2/bft/store"
 	tversion "github.com/NibiruChain/nibiru/v2/bft/version"
-	"github.com/spf13/cobra"
-	"sigs.k8s.io/yaml"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/stretchr/testify/require"
+
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cachekv"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/dbadapter"

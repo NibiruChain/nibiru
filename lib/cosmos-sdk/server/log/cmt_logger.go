@@ -2,6 +2,7 @@ package server
 
 import (
 	"cosmossdk.io/log"
+
 	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 )
 

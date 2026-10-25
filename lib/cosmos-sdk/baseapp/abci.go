@@ -10,12 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"

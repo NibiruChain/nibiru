@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/hex"
 
+	"google.golang.org/grpc"
+
 	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	cmtcoretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
-	"google.golang.org/grpc"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"

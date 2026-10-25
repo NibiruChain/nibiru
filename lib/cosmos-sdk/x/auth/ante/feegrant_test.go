@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

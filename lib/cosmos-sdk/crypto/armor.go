@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"golang.org/x/crypto/openpgp/armor" //nolint:staticcheck
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/legacy"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/bcrypt"

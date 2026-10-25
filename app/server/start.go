@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	dbm "github.com/cometbft/cometbft-db"
+
 	abciserver "github.com/NibiruChain/nibiru/v2/bft/abci/server"
 	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 	tmos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
@@ -36,7 +38,6 @@ import (
 	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"
 	"github.com/NibiruChain/nibiru/v2/bft/proxy"
 	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/local"
-	dbm "github.com/cometbft/cometbft-db"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta"
 	crgserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/server"

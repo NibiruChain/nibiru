@@ -7,17 +7,19 @@ import (
 	"testing"
 	"time"
 
+	gogoproto "github.com/cosmos/gogoproto/proto"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
-	gogoproto "github.com/cosmos/gogoproto/proto"
+
+	gethcore "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/eth/filters"
+	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/types"
-	gethcore "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/eth/filters"
-	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm"

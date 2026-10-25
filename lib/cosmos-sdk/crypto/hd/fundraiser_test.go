@@ -7,9 +7,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/hd"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"

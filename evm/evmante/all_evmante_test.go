@@ -3,10 +3,11 @@ package evmante_test
 import (
 	"math/big"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

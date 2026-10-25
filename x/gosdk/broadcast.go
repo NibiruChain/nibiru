@@ -3,8 +3,9 @@ package gosdk
 import (
 	"context"
 
-	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	"google.golang.org/grpc"
+
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	sdkclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdkclienttx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/tx"

@@ -1,8 +1,9 @@
 package types
 
 import (
-	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	proto "github.com/cosmos/gogoproto/proto"
+
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 )
 
 // PubKey defines a public key and extends proto.Message.

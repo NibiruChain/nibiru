@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/spf13/viper"
+
 	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	"github.com/spf13/viper"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

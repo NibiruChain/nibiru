@@ -7,9 +7,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 
-	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

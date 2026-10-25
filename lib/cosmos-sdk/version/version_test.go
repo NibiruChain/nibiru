@@ -6,9 +6,10 @@ import (
 	"runtime"
 	"testing"
 
-	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"

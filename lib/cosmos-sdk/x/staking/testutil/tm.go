@@ -2,6 +2,7 @@ package testutil
 
 import (
 	sdkmath "cosmossdk.io/math"
+
 	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 

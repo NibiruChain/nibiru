@@ -5,13 +5,14 @@ import (
 	"math/big"
 	"testing"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
-	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 

@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	tmtime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	tmtime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 

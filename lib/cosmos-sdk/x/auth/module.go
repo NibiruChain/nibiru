@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"cosmossdk.io/depinject"
 

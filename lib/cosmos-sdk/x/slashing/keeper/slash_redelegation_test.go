@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
+
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/keeper"

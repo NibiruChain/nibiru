@@ -9,6 +9,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+
 	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
