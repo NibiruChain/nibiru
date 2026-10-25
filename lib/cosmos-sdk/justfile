@@ -33,7 +33,7 @@ gen-mocks:
   # before committing the generated file.
   $mockgen -source=types/handler.go -package mock -destination testutil/mock/types_handler.go
   $mockgen -package mock -destination testutil/mock/tendermint_tm_db_DB.go github.com/cometbft/cometbft-db DB
-  $mockgen -package mock -destination testutil/mock/tendermint_tendermint_libs_log_DB.go github.com/cometbft/cometbft/libs/log Logger
+  $mockgen -package mock -destination testutil/mock/tendermint_tendermint_libs_log_DB.go github.com/NibiruChain/nibiru/v2/bft/libs/log Logger
   $mockgen -package mock -destination testutil/mock/grpc_server.go github.com/cosmos/gogoproto/grpc Server
 
   printf "Generating package-local mocks...\n"

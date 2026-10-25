@@ -246,7 +246,7 @@ release-image-publish release_tag version:
 _go-test-pkgs:
     #!/usr/bin/env bash
     set -euo pipefail
-    go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib)/'
+    go list ./... | grep -Ev '^github.com/NibiruChain/nibiru/v2/(api|lib|bft)/'
 
 [private]
 test-sim-nondeterminism:
@@ -385,10 +385,10 @@ alias rs := rust
 chaos *args:
     just --justfile just-chaos.just {{ args }}
 
-# Run commands from the sai-trading subtree. Ex: `just sai-trading test`.
-sai-trading *args:
-    cd lib/sai-trading && just {{ args }}
-
 # Run commands from the lib/cosmos-sdk subtree.
 csdk *args:
     cd lib/cosmos-sdk && just {{ args }}
+
+# Run commands from the bft (Nibiru BFT) subtree. Ex: `just bft test`.
+bft *args:
+    cd bft && just {{ args }}

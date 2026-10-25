@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
+
+	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"

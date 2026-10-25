@@ -1,7 +1,7 @@
 package multisig
 
 import (
-	"github.com/cometbft/cometbft/crypto/sr25519"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/sr25519"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"

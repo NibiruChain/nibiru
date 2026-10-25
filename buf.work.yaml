@@ -1,4 +1,6 @@
 version: v1
 directories:
   - proto
+  - bft/proto
   - lib/cosmos-sdk/proto
+  - lib/ibc-go/proto

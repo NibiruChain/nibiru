@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/spf13/cobra"
+
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

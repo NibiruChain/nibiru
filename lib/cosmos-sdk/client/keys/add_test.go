@@ -7,8 +7,9 @@ import (
 	"io"
 	"testing"
 
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/stretchr/testify/require"
+
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
 	"github.com/cosmos/go-bip39"
 

@@ -1,9 +1,9 @@
 package codec
 
 import (
-	tmcrypto "github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/crypto/encoding"
-	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	tmprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"

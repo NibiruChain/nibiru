@@ -8,9 +8,10 @@ import (
 	"io"
 	"strings"
 
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
+
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"

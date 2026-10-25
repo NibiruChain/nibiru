@@ -4,7 +4,7 @@
 package secp256k1
 
 import (
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1/internal/secp256k1"
 )

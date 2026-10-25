@@ -1,0 +1,45 @@
+# Zone labels (Z-*) applied to PRs by the files they change.
+# Used by .github/workflows/pr-labeler.yml via actions/labeler.
+# A PR can match several zones; overlap is expected.
+
+Z-wasm:
+  - changed-files:
+      - any-glob-to-any-file:
+          - x/wasm/**
+          - lib/wasmvm/**
+          - lib/cosmwasm-vm/**
+          - lib/wasmer/**
+          - lib/nibi-wasm/**
+
+Z-evm:
+  - changed-files:
+      - any-glob-to-any-file:
+          - evm/**
+          - eth/**
+
+Z-ante:
+  - changed-files:
+      - any-glob-to-any-file:
+          - app/ante/**
+          - app/ante.go
+          - evm/evmante/**
+          - x/devgas/v1/ante/**
+          - lib/cosmos-sdk/x/auth/ante/**
+          - lib/ibc-go/modules/core/ante/**
+
+Z-bft:
+  - changed-files:
+      - any-glob-to-any-file:
+          - bft/**
+
+Z-csdk:
+  - changed-files:
+      - any-glob-to-any-file:
+          - lib/cosmos-sdk/**
+
+Z-ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**
+          - "**/justfile"
+          - "**/*.just"

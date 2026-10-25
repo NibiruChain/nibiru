@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

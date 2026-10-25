@@ -14,7 +14,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
 )
 
 // RPC namespaces and API version

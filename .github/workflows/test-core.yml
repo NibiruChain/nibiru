@@ -116,6 +116,7 @@ jobs:
       nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
       ibc-go: ${{ steps.check_nibiru_go.outputs.ibc-go }}
       cosmos-sdk: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+      bft: ${{ steps.check_nibiru_go.outputs.bft }}
     steps:
       - uses: actions/checkout@v7
 
@@ -150,7 +151,6 @@ jobs:
               - "justfile"
               - ".github/workflows/test-core.yml"
               - "evm/e2e/**"
-              - "lib/sai-trading/**"
             ibc-go:
               - "lib/ibc-go/**"
               - "go.mod"
@@ -160,21 +160,28 @@ jobs:
             cosmos-sdk:
               - "lib/cosmos-sdk/**"
               - ".github/workflows/test-core.yml"
+            bft:
+              - "bft/**"
+              - "go.mod"
+              - "go.sum"
+              - ".github/workflows/test-core.yml"
 
       - name: Log change outputs
         env:
           NIBIRU_GO: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
           IBC_GO: ${{ steps.check_nibiru_go.outputs.ibc-go }}
           COSMOS_SDK: ${{ steps.check_nibiru_go.outputs.cosmos-sdk }}
+          BFT: ${{ steps.check_nibiru_go.outputs.bft }}
         run: |
           jq -cn \
             --arg event "$GITHUB_EVENT_NAME" \
             --arg nibiru_go "$NIBIRU_GO" \
             --arg ibc_go "$IBC_GO" \
             --arg cosmos_sdk "$COSMOS_SDK" \
+            --arg bft "$BFT" \
             '{log: "changes-nibiru-go.outputs", event: $event,
               "nibiru-go": $nibiru_go, "ibc-go": $ibc_go,
-              "cosmos-sdk": $cosmos_sdk}'
+              "cosmos-sdk": $cosmos_sdk, "bft": $bft}'
 
       - name: skip-build
         if: steps.check_nibiru_go.outputs.nibiru-go == 'false'
@@ -573,75 +580,85 @@ jobs:
         run: |
           just csdk test
 
-  sai-trading:
-    name: Sai E2E (sai-trading)
-    needs: [changes-nibiru-go, build]
+  bft:
+    needs: changes-nibiru-go
     runs-on: ubuntu-latest
     steps:
-      - name: skip-sai-trading
-        if: needs.changes-nibiru-go.outputs.nibiru-go != 'true'
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.bft != 'true'
         run: |
-          echo "job: sai-trading was skipped since Nibiru Golang files were not changed."
+          echo "job \"bft\" was skipped since relevant files were not changed."
 
       - uses: actions/checkout@v7
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          # cache: "The action has a built-in functionality for caching and
+          # restoring go modules and build outputs. It uses [actions/cache@v4]."
+          # - Handles go module cache (go env GOMODCACHE).
+          # - Handles go build cache (go env GOCACHE).
+          cache: true
 
       - name: "Install just"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
         # casey/just: https://just.systems/man/en/chapter_6.html
         # taiki-e/install-action: https://github.com/taiki-e/install-action
         uses: taiki-e/install-action@just
 
-      - name: "Download nibid artifact"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: actions/download-artifact@v8
-        with:
-          name: nibid-linux-amd64
-          path: dist
-
-      - name: "Install nibid artifact"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+      - name: Run tests for bft (Nibiru BFT)
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
         run: |
-          sudo install -m 0755 dist/nibid /usr/local/bin/nibid
-          nibid version
+          just bft test
 
-      - name: "Setup Bun"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.2.22
+  # bft-race runs the Nibiru BFT unit tests with the race detector, one job
+  # per _test-grouped group. A race prints "WARNING: DATA RACE" and the test
+  # binary exits 66, which fails the job. See #2829.
+  bft-race:
+    name: bft-race (${{ matrix.group.name }})
+    needs: changes-nibiru-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        group:
+          - name: consensus
+            recipe: test-race ./consensus/...
+          - name: p2p + mempool
+            recipe: test-race ./p2p/... ./mempool/...
+          - name: everything else
+            # Every bft package outside consensus, p2p, and mempool. The
+            # Postgres sink is skipped, as in `just bft test`.
+            recipe: test-rest -race
+    steps:
+      - name: skip-tests
+        if: needs.changes-nibiru-go.outputs.bft != 'true'
+        run: |
+          echo "job \"bft-race\" was skipped since relevant files were not changed."
 
-      - name: "Setup Go"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+      - uses: actions/checkout@v7
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+
+      - name: "Set up Go"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
         uses: actions/setup-go@v7
         with:
-          go-version-file: lib/sai-trading/go.mod
+          go-version-file: go.mod
+          cache: true
 
-      - name: "Install sai-trading dependencies"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        working-directory: "lib/sai-trading/scripts"
-        run: bun install
+      - name: "Install just"
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        uses: taiki-e/install-action@just
 
-      - name: "Launch localnet"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
+      - name: Run bft tests with -race (${{ matrix.group.name }})
+        if: needs.changes-nibiru-go.outputs.bft == 'true'
+        env:
+          RECIPE: ${{ matrix.group.recipe }}
         run: |
-          (set -o pipefail; just localnet --no-build 2>&1 | tee log-localnet.txt) &
-          pid_localnet=$!
-          # EVM JSON-RPC (:8545) benchmarked at 20s to become ready in CI;
-          # sleep 22s to keep a small stability buffer and reduce startup races.
-          # check after 10s so startup failures fail this step instead of surfacing
-          # later as test connection errors.
-          sleep 10
-          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
-            echo "localnet failed to stay running during startup"
-            cat log-localnet.txt
-            exit 1
-          fi
-
-          echo "Localnet is running in the background { pid=$pid_localnet }"
-          sleep 12
-
-      - name: "Run sai-trading tests"
-        if: needs.changes-nibiru-go.outputs.nibiru-go == 'true'
-        working-directory: "lib/sai-trading"
-        run: just test
+          # RECIPE is a recipe name plus its args; word splitting is intended.
+          # shellcheck disable=SC2086
+          just bft $RECIPE

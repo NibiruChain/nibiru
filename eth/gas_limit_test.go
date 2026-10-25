@@ -8,7 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 // TestGasMeter: Ensures correct behvaior of the `InfiniteGasMeterWithLimit`

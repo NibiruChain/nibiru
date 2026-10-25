@@ -8,12 +8,12 @@ import (
 	json "encoding/json"
 	reflect "reflect"
 
+	types1 "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	client "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	codec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	types "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	types0 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	module "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
-	types1 "github.com/cometbft/cometbft/abci/types"
 	gomock "github.com/golang/mock/gomock"
 	runtime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	cobra "github.com/spf13/cobra"

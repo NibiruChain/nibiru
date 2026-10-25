@@ -1,0 +1,12 @@
+# BuildKit reads this file instead of the root .dockerignore when building
+# bft/test/e2e/docker/Dockerfile. The e2e image needs only the root module
+# files and bft/, so everything else stays out of the build context.
+*
+!go.mod
+!go.sum
+!bft/
+
+# Local build output and generated testnet directories (node data, logs).
+bft/build/
+bft/test/e2e/build/
+bft/test/e2e/networks/*/

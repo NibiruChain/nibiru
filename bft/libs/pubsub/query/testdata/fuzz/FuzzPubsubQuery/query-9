@@ -1,0 +1,2 @@
+go test fuzz v1
+string("slash.reason EXISTS AND slash.power > 1000")

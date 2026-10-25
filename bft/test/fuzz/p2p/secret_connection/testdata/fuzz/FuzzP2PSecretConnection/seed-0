@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("dadc04c2-cfb1-4aa9-a92a-c0bf780ec8b6")

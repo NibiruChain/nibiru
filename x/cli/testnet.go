@@ -11,12 +11,13 @@ import (
 	"path/filepath"
 
 	sdkmath "cosmossdk.io/math"
-	cmtcfg "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmttypes "github.com/cometbft/cometbft/types"
-	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/spf13/cobra"
+
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	tmos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
+	tmtime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

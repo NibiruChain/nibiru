@@ -1,8 +1,8 @@
 package gosdk
 
 import (
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	cmtrpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	cmtrpchttp "github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 )
 
 var _ cmtrpcclient.Client = (*cmtrpchttp.HTTP)(nil)

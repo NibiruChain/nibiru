@@ -1,7 +1,0 @@
-artifacts/solidity/build-info
-*.dbg.json
-
-.env
-.cache/
-log-*.txt
-scripts/node_modules/
