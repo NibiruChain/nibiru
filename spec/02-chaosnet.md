@@ -32,7 +32,7 @@ From the repository root, use these commands:
 | `just chaos up-hm` | Starts one validator with Postgres, Heart Monitor, and GraphQL. |
 | `just chaos up-multival` | Starts four validators on one chain and preserves existing named volumes. |
 | `just chaos determinism` | Runs the app hash agreement check on a fresh `multival` network. |
-| `just chaos determinism-canary` | Self-test: plants a non-deterministic `EndBlock` and passes only if the check catches it. |
+| `just chaos determinism-selftest` | Self-test: plants a non-deterministic `EndBlock` and passes only if the check catches it. |
 | `just chaos build` | Rebuilds Chaosnet images without cache and pulls base images. |
 | `just chaos down` | Stops all profiles and preserves named volumes. |
 | `just chaos destroy` | Stops all profiles and removes named volumes after confirmation. |
@@ -151,13 +151,14 @@ target height and compare about 90 heights. Building the image from scratch adds
 
 ### Planted bug
 
-`just chaos determinism-canary` builds `nibiru-multival:canary` with the
-test-only build tag `nibiru_nondeterminism_canary`. With that tag,
-`evm/evmstate/nondeterminism_canary.go` writes each node's
+`just chaos determinism-selftest` builds `nibiru-multival:fault-injection`
+with the test-only build tag `nibiru_fault_injection`. With that tag,
+`evm/evmstate/fault_injection.go` writes each node's
 `time.Now().UnixNano()` to the EVM store in `EndBlock`, so every validator
 commits a different app hash after height 1. The recipe passes only if the
-check fails and names the first height where app hashes differ. Never ship
-a binary built with that tag.
+check fails and names the first height where app hashes differ. An
+unrelated failure, such as a crash or a build error, does not count as a
+pass. Never ship a binary built with that tag.
 
 ## IBC walkthrough
 

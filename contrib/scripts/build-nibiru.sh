@@ -12,7 +12,7 @@
 #   NIBID_STATIC_PIE  Build a Linux static PIE (default: false). Requires a
 #                     supported musl toolchain such as the release container.
 #   NIBID_EXTRA_TAGS  Space-separated Go build tags added to the defaults.
-#                     Test-only, e.g. "nibiru_nondeterminism_canary".
+#                     Test-only, e.g. "nibiru_fault_injection".
 #
 # Usage:
 #   contrib/scripts/build-nibiru.sh

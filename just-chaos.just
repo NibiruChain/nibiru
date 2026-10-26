@@ -31,12 +31,12 @@ determinism:
     bash contrib/scripts/determinism.sh
 
 # Self-test: plant a non-deterministic EndBlock and pass only if `determinism` catches it.
-determinism-canary:
+determinism-selftest:
     #!/usr/bin/env bash
     set -uo pipefail
     log="$(mktemp)"
-    MULTIVAL_IMAGE=nibiru-multival:canary \
-      MULTIVAL_BUILD_TAGS=nibiru_nondeterminism_canary \
+    MULTIVAL_IMAGE=nibiru-multival:fault-injection \
+      MULTIVAL_BUILD_TAGS=nibiru_fault_injection \
       LOAD_SECONDS="${LOAD_SECONDS:-30}" \
       bash contrib/scripts/determinism.sh 2>&1 | tee "$log"
     status="${PIPESTATUS[0]}"

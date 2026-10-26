@@ -8,8 +8,8 @@
 # nibid and the tools the scripts need. contrib/scripts/multival-genesis.sh
 # creates the shared genesis at container start, not at image build time.
 #
-# NIBID_EXTRA_TAGS adds Go build tags. `just chaos determinism-canary` sets
-# it to nibiru_nondeterminism_canary to plant a non-deterministic EndBlock.
+# NIBID_EXTRA_TAGS adds Go build tags. `just chaos determinism-selftest` sets
+# it to nibiru_fault_injection to plant a non-deterministic EndBlock.
 
 ARG GO_VERSION=1.27
 
