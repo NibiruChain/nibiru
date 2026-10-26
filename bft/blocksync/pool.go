@@ -311,7 +311,13 @@ func (pool *BlockPool) RedoRequest(height int64) p2p.ID {
 // TODO: ensure that blocks come in order for each peer.
 func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int) {
 	pool.mtx.Lock()
-	defer pool.mtx.Unlock()
+	var sendErr error
+	defer func() {
+		pool.mtx.Unlock()
+		if sendErr != nil {
+			pool.sendError(sendErr, peerID)
+		}
+	}()
 
 	requester := pool.requesters[block.Height]
 	if requester == nil {
@@ -320,10 +326,9 @@ func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int
 		// can't punish it. But if the peer sent us a block we clearly didn't
 		// request, we disconnect.
 		if block.Height > pool.height || block.Height < pool.startHeight {
-			err := fmt.Errorf("peer sent us block #%d we didn't expect (current height: %d, start height: %d)",
+			sendErr = fmt.Errorf("peer sent us block #%d we didn't expect (current height: %d, start height: %d)",
 				block.Height, pool.height, pool.startHeight)
-			pool.sendError(err, peerID)
-			pool.Logger.Error("failed to add block", "peer", peerID, "err", err)
+			pool.Logger.Error("failed to add block", "peer", peerID, "err", sendErr)
 			return
 		}
 
@@ -333,9 +338,8 @@ func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int
 	}
 
 	if !requester.setBlock(block, peerID) {
-		err := fmt.Errorf("requested block #%d from %v, not %s", block.Height, requester.requestedFrom(), peerID)
-		pool.sendError(err, peerID)
-		pool.Logger.Error("failed to add block", "peer", peerID, "err", err)
+		sendErr = fmt.Errorf("requested block #%d from %v, not %s", block.Height, requester.requestedFrom(), peerID)
+		pool.Logger.Error("failed to add block", "peer", peerID, "err", sendErr)
 		return
 	}
 
