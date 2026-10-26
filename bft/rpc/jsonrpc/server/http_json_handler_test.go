@@ -277,3 +277,77 @@ func TestRPCResponseCache(t *testing.T) {
 	res.Body.Close()
 	require.Nil(t, err, "reading from the body should not give back an error")
 }
+
+// Calls that leave out arguments must get a JSON-RPC reply, not a panic.
+// RecoverAndLogHandler wraps the mux as it does on a node, so a panic shows
+// up as an HTTP 500 with an "Internal error" response.
+func TestRPCMissingParams(t *testing.T) {
+	handler := RecoverAndLogHandler(testMux(), log.NewNopLogger())
+	tests := []struct {
+		payload    string
+		wantCode   int // 0 means no error
+		expectedID types.JSONRPCIntID
+	}{
+		// no params at all works like {}
+		{`{"jsonrpc": "2.0", "method": "c", "id": 1}`, 0, 1},
+		{`{"jsonrpc": "2.0", "method": "block", "id": 2}`, 0, 2},
+		// too few positional params
+		{`{"jsonrpc": "2.0", "method": "c", "id": 3, "params": ["a"]}`, -32602, 3},
+		{`{"jsonrpc": "2.0", "method": "c", "id": 4, "params": []}`, -32602, 4},
+		// named params with missing keys use the zero value
+		{`{"jsonrpc": "2.0", "method": "c", "id": 5, "params": {"s": "a"}}`, 0, 5},
+		{`{"jsonrpc": "2.0", "method": "c", "id": 6, "params": {}}`, 0, 6},
+		{`{"jsonrpc": "2.0", "method": "c", "id": 7, "params": null}`, 0, 7},
+	}
+
+	for i, tt := range tests {
+		req, _ := http.NewRequest("POST", "http://localhost/", strings.NewReader(tt.payload))
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		res := rec.Result()
+		blob, err := io.ReadAll(res.Body)
+		require.NoError(t, err, "#%d", i)
+		res.Body.Close()
+
+		assert.Equal(t, http.StatusOK, res.StatusCode, "#%d: %s", i, blob)
+		recv := new(types.RPCResponse)
+		require.NoError(t, json.Unmarshal(blob, recv), "#%d: %s", i, blob)
+		assert.Equal(t, tt.expectedID, recv.ID, "#%d: %s", i, blob)
+		if tt.wantCode == 0 {
+			assert.Nil(t, recv.Error, "#%d: %s", i, blob)
+		} else if assert.NotNil(t, recv.Error, "#%d: %s", i, blob) {
+			assert.Equal(t, tt.wantCode, recv.Error.Code, "#%d: %s", i, blob)
+		}
+	}
+}
+
+// A call with missing params works like {}, and a bad call doesn't take down
+// the other calls in its batch.
+func TestRPCMissingParamsInBatch(t *testing.T) {
+	handler := RecoverAndLogHandler(testMux(), log.NewNopLogger())
+	payload := `[
+		{"jsonrpc": "2.0", "method": "c", "id": 1, "params": ["a", "10"]},
+		{"jsonrpc": "2.0", "method": "c", "id": 2},
+		{"jsonrpc": "2.0", "method": "c", "id": 3, "params": ["a"]}
+	]`
+	req, _ := http.NewRequest("POST", "http://localhost/", strings.NewReader(payload))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	res := rec.Result()
+	blob, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	res.Body.Close()
+
+	require.Equal(t, http.StatusOK, res.StatusCode, "%s", blob)
+	var responses []types.RPCResponse
+	require.NoError(t, json.Unmarshal(blob, &responses), "%s", blob)
+	require.Len(t, responses, 3, "%s", blob)
+	assert.Equal(t, types.JSONRPCIntID(1), responses[0].ID)
+	assert.Nil(t, responses[0].Error)
+	assert.Equal(t, types.JSONRPCIntID(2), responses[1].ID)
+	assert.Nil(t, responses[1].Error)
+	assert.Equal(t, types.JSONRPCIntID(3), responses[2].ID)
+	if assert.NotNil(t, responses[2].Error) {
+		assert.Equal(t, -32602, responses[2].Error.Code)
+	}
+}

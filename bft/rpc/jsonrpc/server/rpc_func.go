@@ -95,6 +95,17 @@ func (f *RPCFunc) cacheableWithArgs(args []reflect.Value) bool {
 	return true
 }
 
+// checkArgCount returns an error if args, which starts with the
+// *types.Context the handlers prepend, does not have one value per argument
+// of f. reflect.Value.Call panics on a count mismatch.
+func (f *RPCFunc) checkArgCount(args []reflect.Value) error {
+	if len(args) != len(f.args) {
+		return fmt.Errorf("expected %v parameters (%v), got %v",
+			len(f.args)-1, f.argNames, len(args)-1)
+	}
+	return nil
+}
+
 func newRPCFunc(f interface{}, args string, options ...Option) *RPCFunc {
 	var argNames []string
 	if args != "" {

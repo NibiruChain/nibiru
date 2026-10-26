@@ -365,17 +365,21 @@ func (wsc *wsConnection) readRoutine() {
 
 			ctx := &types.Context{JSONReq: &request, WSConn: wsc}
 			args := []reflect.Value{reflect.ValueOf(ctx)}
-			if len(request.Params) > 0 {
-				fnArgs, err := jsonParamsToArgs(rpcFunc, request.Params)
-				if err != nil {
-					if err := wsc.WriteRPCResponse(writeCtx,
-						types.RPCInternalError(request.ID, fmt.Errorf("error converting json params to arguments: %w", err)),
-					); err != nil {
-						wsc.Logger.Error("Error writing RPC response", "err", err)
-					}
-					continue
+			fnArgs, err := jsonParamsToArgs(rpcFunc, paramsOrEmpty(request.Params))
+			if err != nil {
+				if err := wsc.WriteRPCResponse(writeCtx,
+					types.RPCInvalidParamsError(request.ID, fmt.Errorf("error converting json params to arguments: %w", err)),
+				); err != nil {
+					wsc.Logger.Error("Error writing RPC response", "err", err)
 				}
-				args = append(args, fnArgs...)
+				continue
+			}
+			args = append(args, fnArgs...)
+			if err := rpcFunc.checkArgCount(args); err != nil {
+				if err := wsc.WriteRPCResponse(writeCtx, types.RPCInvalidParamsError(request.ID, err)); err != nil {
+					wsc.Logger.Error("Error writing RPC response", "err", err)
+				}
+				continue
 			}
 
 			returns := rpcFunc.f.Call(args)

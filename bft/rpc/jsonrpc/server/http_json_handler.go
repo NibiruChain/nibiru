@@ -88,17 +88,20 @@ func makeJSONRPCHandler(funcMap map[string]*RPCFunc, logger log.Logger) http.Han
 			}
 			ctx := &types.Context{JSONReq: &request, HTTPReq: r}
 			args := []reflect.Value{reflect.ValueOf(ctx)}
-			if len(request.Params) > 0 {
-				fnArgs, err := jsonParamsToArgs(rpcFunc, request.Params)
-				if err != nil {
-					responses = append(
-						responses,
-						types.RPCInvalidParamsError(request.ID, fmt.Errorf("error converting json params to arguments: %w", err)),
-					)
-					cache = false
-					continue
-				}
-				args = append(args, fnArgs...)
+			fnArgs, err := jsonParamsToArgs(rpcFunc, paramsOrEmpty(request.Params))
+			if err != nil {
+				responses = append(
+					responses,
+					types.RPCInvalidParamsError(request.ID, fmt.Errorf("error converting json params to arguments: %w", err)),
+				)
+				cache = false
+				continue
+			}
+			args = append(args, fnArgs...)
+			if err := rpcFunc.checkArgCount(args); err != nil {
+				responses = append(responses, types.RPCInvalidParamsError(request.ID, err))
+				cache = false
+				continue
 			}
 
 			if cache && !rpcFunc.cacheableWithArgs(args) {
@@ -215,6 +218,16 @@ func jsonParamsToArgs(rpcFunc *RPCFunc, raw []byte) ([]reflect.Value, error) {
 
 	// Otherwise, bad format, we cannot parse
 	return nil, fmt.Errorf("unknown type for JSON params: %v. Expected map or array", err)
+}
+
+// paramsOrEmpty returns params, or an empty object if the request left
+// params out. JSON-RPC 2.0 lets a request omit params, and an empty object
+// gives every argument its zero value, the same as {} or null.
+func paramsOrEmpty(params json.RawMessage) json.RawMessage {
+	if len(params) == 0 {
+		return json.RawMessage("{}")
+	}
+	return params
 }
 
 // writes a list of available rpc endpoints as an html page
