@@ -49,6 +49,18 @@ determinism-selftest:
     rm -f "$log"
     exit 1
 
+# Run `determinism-selftest`, then `determinism`. Stops if the self-test fails: a clean run means nothing if the check is blind.
+determinism-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    start="$SECONDS"
+    just --justfile just-chaos.just determinism-selftest
+    selftest="$((SECONDS - start))"
+    echo "[determinism-all] determinism-selftest passed in ${selftest}s"
+    start="$SECONDS"
+    just --justfile just-chaos.just determinism
+    echo "[determinism-all] determinism passed in $((SECONDS - start))s"
+
 # Stop every Chaosnet profile while preserving named volumes.
 down:
     docker compose -f ./contrib/docker-compose/docker-compose-chaosnet.yml --profile ibc down --timeout 1

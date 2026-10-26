@@ -33,6 +33,7 @@ From the repository root, use these commands:
 | `just chaos up-multival` | Starts four validators on one chain and preserves existing named volumes. |
 | `just chaos determinism` | Runs the app hash agreement check on a fresh `multival` network. |
 | `just chaos determinism-selftest` | Self-test: plants a non-deterministic `EndBlock` and passes only if the check catches it. |
+| `just chaos determinism-all` | Runs `determinism-selftest`, then `determinism`. Stops if the self-test fails. |
 | `just chaos build` | Rebuilds Chaosnet images without cache and pulls base images. |
 | `just chaos down` | Stops all profiles and preserves named volumes. |
 | `just chaos destroy` | Stops all profiles and removes named volumes after confirmation. |
@@ -159,6 +160,11 @@ commits a different app hash after height 1. The recipe passes only if the
 check fails and names the first height where app hashes differ. An
 unrelated failure, such as a crash or a build error, does not count as a
 pass. Never ship a binary built with that tag.
+
+The self-test is a regression test for the detector. `just chaos
+determinism-all` runs it first and stops if it fails, because a clean
+`determinism` run means nothing if the check cannot see a planted bug. It
+then runs `determinism`.
 
 ## IBC walkthrough
 
