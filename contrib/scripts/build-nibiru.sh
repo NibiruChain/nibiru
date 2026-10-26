@@ -359,7 +359,7 @@ main() {
   arch_name="$(detect_arch_name "$os_name")"
   version="$(compute_version)"
   commit="$(compute_commit)"
-  wasmvm_version="v1.13.1"
+  wasmvm_version="v1.13.2"
   case "${NIBIRU_WASMVM_BUILD_FROM_SOURCE:-false}" in
     true) wasmvm_version="source" ;;
     false) ;;
