@@ -1,6 +1,7 @@
 package blocksync
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -44,6 +45,9 @@ type peerError struct {
 func (e peerError) Error() string {
 	return fmt.Sprintf("error with peer %v: %s", e.peerID, e.err.Error())
 }
+
+// Reactor implements MsgBytesFilter
+var _ p2p.MsgBytesFilter = (*Reactor)(nil)
 
 // Reactor handles long-term catchup syncing.
 type Reactor struct {
@@ -223,6 +227,59 @@ func (bcR *Reactor) respondToPeer(msg *bcproto.BlockRequest,
 		ChannelID: BlocksyncChannel,
 		Message:   &bcproto.NoBlockResponse{Height: msg.Height},
 	})
+}
+
+// FilterMsgBytes implements p2p.MsgBytesFilter and rejects messages from
+// unexpected peers before unmarshalling the request.
+func (bcR *Reactor) FilterMsgBytes(chID byte, src p2p.Peer, msgBytes []byte) error {
+	// do not check invalid messages, will fail unmarshalling
+	if chID != BlocksyncChannel || len(msgBytes) == 0 {
+		return nil
+	}
+
+	// unmarshal into custom stub struct that will do no allocations so we can
+	// quickly and cheaply check the validity of BlockResponse message
+	var stub bcproto.SigCountMessage
+	if err := stub.Unmarshal(msgBytes); err != nil {
+		return fmt.Errorf("malformed blocksync message from peer %s: %w", src.ID(), err)
+	}
+	if stub.BlockResponse == nil {
+		// Not a BlockResponse oneof case, no extra validation to do in this
+		// case
+		return nil
+	}
+
+	// blocksync not running, we should not be getting a BlockResponse
+	if !bcR.pool.IsRunning() {
+		return errors.New("unsolicited BlockResponse: blocksync not active")
+	}
+
+	// ensure we have an outstanding request to this peer
+	if !bcR.pool.HasPendingRequestFrom(src.ID()) {
+		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
+	}
+
+	// validate the commit count in the response
+	if err := validateMaxVotes(stub.BlockResponse); err != nil {
+		return fmt.Errorf("validating max votes in BlockResponse from peer %s: %w", src.ID(), err)
+	}
+
+	return nil
+}
+
+// validateMaxVotes validates that the number of commit signatures is less
+// than the MaxVotesCount, returns an error if not.
+func validateMaxVotes(br *bcproto.SigCountBlockResponse) error {
+	commitSigs := 0
+	if br != nil && br.Block != nil && br.Block.LastCommit != nil {
+		commitSigs = len(br.Block.LastCommit.Signatures)
+	}
+
+	if commitSigs > types.MaxVotesCount {
+		return fmt.Errorf("too many commit signatures: %d (max %d)", commitSigs, types.MaxVotesCount)
+	}
+
+	return nil
 }
 
 // Receive implements Reactor by handling 4 types of messages (look below).
