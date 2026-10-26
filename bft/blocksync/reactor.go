@@ -30,6 +30,10 @@ const (
 	statusUpdateIntervalSeconds = 10
 	// check if we should switch to consensus reactor
 	switchToConsensusIntervalSeconds = 1
+
+	// defaultNoBlockTimeout is how long blocksync waits without syncing a
+	// block before it switches to consensus.
+	defaultNoBlockTimeout = 30 * time.Second
 )
 
 type consensusReactor interface {
@@ -96,7 +100,7 @@ func NewReactorWithOfflineStateSyncAndAddr(state sm.State, blockExec *sm.BlockEx
 	if startHeight == 1 {
 		startHeight = state.InitialHeight
 	}
-	pool := NewBlockPool(startHeight, requestsCh, errorsCh)
+	pool := NewBlockPool(startHeight, requestsCh, errorsCh, defaultNoBlockTimeout)
 
 	bcR := &Reactor{
 		initialState: state,
@@ -150,6 +154,10 @@ func (bcR *Reactor) SwitchToBlockSync(state sm.State) error {
 
 	bcR.pool.mtx.Lock()
 	bcR.pool.height = state.LastBlockHeight + 1
+	// The pool starts at the state sync height, not at the height the reactor
+	// was built with. Otherwise IsCaughtUp sees pool.height > startHeight
+	// before any block is synced and lets the sync tracker end blocksync.
+	bcR.pool.startHeight = bcR.pool.height
 	bcR.pool.updateMaxPeerHeight()
 	bcR.pool.mtx.Unlock()
 

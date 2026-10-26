@@ -452,7 +452,7 @@ func TestInvalidSignatureAfterTwoThirdsIsRejected(t *testing.T) {
 func TestSwitchToBlockSyncRaceWithSetPeerRange(t *testing.T) {
 	requestsCh := make(chan BlockRequest, 1000)
 	errorsCh := make(chan peerError, 1000)
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	require.NoError(t, pool.Start())
 	t.Cleanup(func() { _ = pool.Stop() })
 
@@ -491,7 +491,7 @@ func TestSwitchToBlockSyncRaceWithSetPeerRange(t *testing.T) {
 func TestSwitchToBlockSyncRecomputesMaxPeerHeight(t *testing.T) {
 	requestsCh := make(chan BlockRequest, 1000)
 	errorsCh := make(chan peerError, 1000)
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	require.NoError(t, pool.Start())
 	t.Cleanup(func() { _ = pool.Stop() })
 
@@ -514,7 +514,7 @@ func newFilterReactor(t *testing.T) *Reactor {
 
 	requestsCh := make(chan BlockRequest, 1000)
 	errorsCh := make(chan peerError, 1000)
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	require.NoError(t, pool.Start())
 	t.Cleanup(func() { _ = pool.Stop() })
 
@@ -835,4 +835,33 @@ func TestPeerNotDisconnectedOnLateBlockResponseAfterConsensusSwitch(t *testing.T
 		return switches[0].Peers().Size() != 1
 	}, 200*time.Millisecond, 5*time.Millisecond,
 		"serving peer was incorrectly disconnected by a late in-flight BlockResponse")
+}
+
+// TestSwitchToBlockSyncDoesNotEscapeBeforeFirstBlock checks that after state
+// sync the sync tracker does not end blocksync before any block is synced.
+// SwitchToBlockSync moves pool.height past the height the reactor was built
+// with, so startHeight must move with it.
+func TestSwitchToBlockSyncDoesNotEscapeBeforeFirstBlock(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 1000)
+	errorsCh := make(chan peerError, 1000)
+	pool := NewBlockPool(1, requestsCh, errorsCh, defaultNoBlockTimeout)
+	pool.SetLogger(log.TestingLogger())
+
+	r := &Reactor{pool: pool}
+	r.Logger = log.TestingLogger()
+
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	// pool.Start returns ErrAlreadyStarted, so no pool routine is spawned, but
+	// pool.height and pool.startHeight are still set.
+	_ = r.SwitchToBlockSync(sm.State{LastBlockHeight: 100})
+
+	pool.SetPeerRange("peer1", 1, 200)
+
+	// Let peerConnWait pass without syncing a block. The peer never answers.
+	time.Sleep(peerConnWait + 200*time.Millisecond)
+
+	require.False(t, pool.IsCaughtUp(),
+		"blocksync must not end before the first block after state sync")
 }
