@@ -385,34 +385,29 @@ FOR_LOOP:
 			}
 			firstPartSetHeader := firstParts.Header()
 			firstID := types.BlockID{Hash: first.Hash(), PartSetHeader: firstPartSetHeader}
-			// Finally, verify the first block using the second's commit
-			// NOTE: we can probably make this more efficient, but note that calling
-			// first.Hash() doesn't verify the tx contents, so MakePartSet() is
-			// currently necessary.
-			err = state.Validators.VerifyCommitLight(
-				chainID, firstID, first.Height, second.LastCommit)
-
-			if err == nil {
-				// validate the block before we persist it
-				err = bcR.blockExec.ValidateBlock(state, first)
+			// Fully verify second.LastCommit to ensure all signatures are valid.
+			// It is persisted below as the seen commit for first.
+			err = state.Validators.VerifyCommit(chainID, firstID, first.Height, second.LastCommit)
+			if err != nil {
+				bcR.handleValidationFailure(first, second, err)
+				continue FOR_LOOP
 			}
 
-			if err != nil {
-				bcR.Logger.Error("Error in validation", "err", err)
-				peerID := bcR.pool.RemovePeerAndRedoAllPeerRequests(first.Height)
-				peer := bcR.Switch.Peers().Get(peerID)
-				if peer != nil {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer, fmt.Errorf("Reactor validation error: %v", err))
-				}
-				peerID2 := bcR.pool.RemovePeerAndRedoAllPeerRequests(second.Height)
-				peer2 := bcR.Switch.Peers().Get(peerID2)
-				if peer2 != nil && peer2 != peer {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer2, fmt.Errorf("Reactor validation error: %v", err))
-				}
+			// Validate the block before we persist it.
+			//
+			// For the first block synced, we must fully verify first.LastCommit
+			// since it was not verified as a prior second.LastCommit.
+			//
+			// For subsequent blocks, first.LastCommit was already fully verified
+			// in the previous iteration (as second.LastCommit), so we skip the
+			// redundant VerifyCommit() inside ValidateBlock.
+			blockValidator := bcR.blockExec.ValidateBlockSkipLastCommit
+			if blocksSynced == 0 {
+				blockValidator = bcR.blockExec.ValidateBlock
+			}
+
+			if err = blockValidator(state, first); err != nil {
+				bcR.handleValidationFailure(first, second, err)
 				continue FOR_LOOP
 			}
 
@@ -442,6 +437,30 @@ FOR_LOOP:
 		case <-bcR.Quit():
 			break FOR_LOOP
 		}
+	}
+}
+
+func (bcR *Reactor) handleValidationFailure(blockA, blockB *types.Block, err error) {
+	bcR.Logger.Error("Error in validation", "height", blockA.Height, "hash", blockA.Hash(), "err", err)
+
+	err = fmt.Errorf("Reactor validation error: %v", err)
+
+	idA := bcR.pool.RemovePeerAndRedoAllPeerRequests(blockA.Height)
+	if peerA := bcR.Switch.Peers().Get(idA); peerA != nil {
+		// NOTE: we've already removed the peer's request, but we
+		// still need to clean up the rest.
+		bcR.Switch.StopPeerForError(peerA, err)
+	}
+
+	idB := bcR.pool.RemovePeerAndRedoAllPeerRequests(blockB.Height)
+	if idA == idB {
+		return
+	}
+
+	if peerB := bcR.Switch.Peers().Get(idB); peerB != nil {
+		// NOTE: we've already removed the peer's request, but we
+		// still need to clean up the rest.
+		bcR.Switch.StopPeerForError(peerB, err)
 	}
 }
 

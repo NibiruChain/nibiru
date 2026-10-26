@@ -47,6 +47,30 @@ func randGenesisDoc(numValidators int, randPower bool, minPower int64) (*types.G
 	}, privValidators
 }
 
+func genesisDocWithValsPowers(powers []int64) (*types.GenesisDoc, []types.PrivValidator) {
+	if len(powers) == 0 {
+		panic("must have atleast 1 validator")
+	}
+
+	validators := make([]types.GenesisValidator, len(powers))
+	privValidators := make([]types.PrivValidator, len(powers))
+	for i, power := range powers {
+		val, privVal := types.RandValidator(false, power)
+		validators[i] = types.GenesisValidator{
+			PubKey: val.PubKey,
+			Power:  val.VotingPower,
+		}
+		privValidators[i] = privVal
+	}
+	sort.Sort(types.PrivValidatorsByAddress(privValidators))
+
+	return &types.GenesisDoc{
+		GenesisTime: cmttime.Now(),
+		ChainID:     config.ChainID(),
+		Validators:  validators,
+	}, privValidators
+}
+
 type ReactorPair struct {
 	reactor *Reactor
 	app     proxy.AppConns
@@ -58,9 +82,11 @@ func newReactor(
 	genDoc *types.GenesisDoc,
 	privVals []types.PrivValidator,
 	maxBlockHeight int64,
+	opts ...reactorOption,
 ) ReactorPair {
-	if len(privVals) != 1 {
-		panic("only support one validator")
+	var options reactorOpts
+	for _, opt := range opts {
+		opt(&options)
 	}
 
 	app := &testApp{}
@@ -116,19 +142,35 @@ func newReactor(
 			lastBlockMeta := blockStore.LoadBlockMeta(blockHeight - 1)
 			lastBlock := blockStore.LoadBlock(blockHeight - 1)
 
-			vote, err := types.MakeVote(
-				lastBlock.Header.Height,
-				lastBlockMeta.BlockID,
-				state.Validators,
-				privVals[0],
-				lastBlock.Header.ChainID,
-				time.Now(),
-			)
-			if err != nil {
-				panic(err)
+			// Simulate commits for the previous height
+			commitSigs := make([]types.CommitSig, len(privVals))
+			for _, val := range privVals {
+				pubKey, err := val.GetPubKey()
+				if err != nil {
+					panic(err)
+				}
+				idx, _ := state.Validators.GetByAddress(pubKey.Address())
+
+				vote, err := types.MakeVote(
+					lastBlock.Header.Height,
+					lastBlockMeta.BlockID,
+					state.Validators,
+					val,
+					lastBlock.Header.ChainID,
+					time.Now(),
+				)
+				if err != nil {
+					panic(err)
+				}
+				commitSigs[idx] = vote.CommitSig()
 			}
-			lastCommit = types.NewCommit(vote.Height, vote.Round,
-				lastBlockMeta.BlockID, []types.CommitSig{vote.CommitSig()})
+			if options.invalidLastCommitSigBlock == blockHeight {
+				// Corrupt the signature of the last validator in the set. With
+				// the right powers, the commit still carries 2/3+ of valid power.
+				commitSigs[len(commitSigs)-1].Signature = []byte("invalid signature")
+			}
+			lastCommit = types.NewCommit(lastBlock.Header.Height, 0,
+				lastBlockMeta.BlockID, commitSigs)
 		}
 
 		thisBlock, err := state.MakeBlock(blockHeight, nil, lastCommit, nil, state.Validators.Proposer.Address)
@@ -138,7 +180,12 @@ func newReactor(
 		require.NoError(t, err)
 		blockID := types.BlockID{Hash: thisBlock.Hash(), PartSetHeader: thisParts.Header()}
 
-		state, _, err = blockExec.ApplyBlock(state, blockID, thisBlock)
+		if options.invalidLastCommitSigBlock == blockHeight {
+			// ApplyBlock would reject the corrupted LastCommit.
+			state, _, err = blockExec.ApplyVerifiedBlock(state, blockID, thisBlock)
+		} else {
+			state, _, err = blockExec.ApplyBlock(state, blockID, thisBlock)
+		}
 		if err != nil {
 			panic(fmt.Errorf("error apply block: %w", err))
 		}
@@ -150,6 +197,20 @@ func newReactor(
 	bcReactor.SetLogger(logger.With("module", "blockchain"))
 
 	return ReactorPair{bcReactor, proxyApp}
+}
+
+type reactorOpts struct {
+	invalidLastCommitSigBlock int64
+}
+
+type reactorOption func(*reactorOpts)
+
+// withInvalidLastCommitSigBlock corrupts one signature in the LastCommit of
+// the block at the given height.
+func withInvalidLastCommitSigBlock(height int64) reactorOption {
+	return func(o *reactorOpts) {
+		o.invalidLastCommitSigBlock = height
+	}
 }
 
 func TestNoBlockResponse(t *testing.T) {
@@ -328,4 +389,53 @@ func (app *testApp) Commit() abci.ResponseCommit {
 
 func (app *testApp) Query(reqQuery abci.RequestQuery) (resQuery abci.ResponseQuery) {
 	return
+}
+
+// TestInvalidSignatureAfterTwoThirdsIsRejected checks that blocksync fully
+// verifies second.LastCommit before it stores that commit as the seen commit
+// for first. A light check would stop counting once 2/3+ of the power signed
+// and would miss the invalid signature that follows.
+func TestInvalidSignatureAfterTwoThirdsIsRejected(t *testing.T) {
+	config = cfg.ResetTestRoot("blockchain_reactor_test")
+	defer os.RemoveAll(config.RootDir)
+	genDoc, privVals := genesisDocWithValsPowers([]int64{10, 10, 10, 1})
+
+	const (
+		maxBlockHeight = int64(10)
+		invalidHeight  = int64(5)
+	)
+
+	reactorPairs := make([]ReactorPair, 2)
+	reactorPairs[0] = newReactor(t, log.TestingLogger(), genDoc, privVals, maxBlockHeight,
+		withInvalidLastCommitSigBlock(invalidHeight))
+	reactorPairs[1] = newReactor(t, log.TestingLogger(), genDoc, privVals, 0)
+
+	p2p.MakeConnectedSwitches(config.P2P, 2, func(i int, s *p2p.Switch) *p2p.Switch {
+		s.AddReactor("BLOCKCHAIN", reactorPairs[i].reactor)
+		return s
+	}, p2p.Connect2Switches)
+
+	defer func() {
+		for _, r := range reactorPairs {
+			_ = r.reactor.Stop()
+			_ = r.app.Stop()
+		}
+	}()
+
+	syncing := reactorPairs[1].reactor
+	require.Eventually(t, func() bool {
+		return syncing.Switch.Peers().Size() == 0
+	}, 30*time.Second, 50*time.Millisecond, "the peer serving the bad commit must be stopped")
+
+	// Block invalidHeight-1 must not be stored, since its seen commit would be
+	// the corrupted LastCommit of block invalidHeight.
+	require.Equal(t, invalidHeight-2, syncing.store.Height())
+
+	vals := reactorPairs[0].reactor.initialState.Validators
+	for h := int64(1); h <= syncing.store.Height(); h++ {
+		seenCommit := syncing.store.LoadSeenCommit(h)
+		require.NotNil(t, seenCommit)
+		require.NoError(t, vals.VerifyCommit(genDoc.ChainID, seenCommit.BlockID, h, seenCommit),
+			"seen commit at height %d", h)
+	}
 }

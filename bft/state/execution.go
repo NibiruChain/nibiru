@@ -175,11 +175,26 @@ func (blockExec *BlockExecutor) ProcessProposal(
 // Validation does not mutate state, but does require historical information from the stateDB,
 // ie. to verify evidence from a validator at an old height.
 func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) error {
-	err := validateBlock(state, block)
-	if err != nil {
+	return blockExec.validateBlockAndCheckEvidence(state, block)
+}
+
+// ValidateBlockSkipLastCommit validates the same as blockexec.ValidateBlock
+// however it performs no validation of the block's LastCommit.
+//
+// This should only be used if you know that the LastCommit has already been validated elsewhere.
+func (blockExec *BlockExecutor) ValidateBlockSkipLastCommit(state State, block *types.Block) error {
+	return blockExec.validateBlockAndCheckEvidence(state, block, withSkipLastCommit)
+}
+
+func (blockExec *BlockExecutor) validateBlockAndCheckEvidence(state State, block *types.Block, opts ...func(*blockValidationOptions)) error {
+	if err := validateBlock(state, block, opts...); err != nil {
 		return err
 	}
 	return blockExec.evpool.CheckEvidence(block.Evidence.Evidence)
+}
+
+func withSkipLastCommit(opts *blockValidationOptions) {
+	opts.skipLastCommitVerification = true
 }
 
 // ApplyVerifiedBlock does the same as `ApplyBlock`, but skips verification.
