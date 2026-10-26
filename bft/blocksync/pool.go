@@ -254,6 +254,9 @@ func (pool *BlockPool) PopRequest() {
 	delete(pool.requesters, pool.height)
 	pool.height++
 
+	// Re-evaluate maxPeerHeight: peers whose pruned base was just beyond the previous pool.height may now be able to contribute
+	pool.updateMaxPeerHeight()
+
 	// Notify the next minBlocksForSingleRequest requesters about new height, so
 	// they can potentially request a block from the second peer.
 	for i := int64(0); i < minBlocksForSingleRequest && i < int64(len(pool.requesters)); i++ {
@@ -359,6 +362,16 @@ func (pool *BlockPool) SetPeerRange(peerID p2p.ID, base int64, height int64) {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
+	// A peer whose own reported base exceeds its own height reports an impossible range, so it is treated as faulty.
+	if base > height {
+		pool.Logger.Info("Peer reporting base greater than height", "peer", peerID, "base", base, "height", height)
+		if _, exists := pool.peers[peerID]; exists {
+			pool.removePeer(peerID)
+		}
+		pool.banPeer(peerID)
+		return
+	}
+
 	peer := pool.peers[peerID]
 	if peer != nil {
 		if base < peer.base || height < peer.height {
@@ -386,9 +399,7 @@ func (pool *BlockPool) SetPeerRange(peerID p2p.ID, base int64, height int64) {
 		pool.sortedPeers = append([]*bpPeer{peer}, pool.sortedPeers...)
 	}
 
-	if height > pool.maxPeerHeight {
-		pool.maxPeerHeight = height
-	}
+	pool.updateMaxPeerHeight()
 }
 
 // RemovePeer removes the peer with peerID from the pool. If there's no peer
@@ -429,15 +440,28 @@ func (pool *BlockPool) removePeer(peerID p2p.ID) {
 	}
 }
 
-// If no peers are left, maxPeerHeight is set to 0.
+// updateMaxPeerHeight sets maxPeerHeight to the highest height among peers.
 func (pool *BlockPool) updateMaxPeerHeight() {
 	var max int64
 	for _, peer := range pool.peers {
+		if pool.height > 0 && peer.base > pool.height {
+			// Keeps a faulty peer from inflating maxPeerHeight with a
+			// base/height pair no peer can actually serve, which would
+			// stall IsCaughtUp forever.
+			continue
+		}
 		if peer.height > max {
 			max = peer.height
 		}
 	}
 	pool.maxPeerHeight = max
+}
+
+// IsPeerBanned returns true if the peer is banned.
+func (pool *BlockPool) IsPeerBanned(peerID p2p.ID) bool {
+	pool.mtx.Lock()
+	defer pool.mtx.Unlock()
+	return pool.isPeerBanned(peerID)
 }
 
 func (pool *BlockPool) isPeerBanned(peerID p2p.ID) bool {
