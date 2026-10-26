@@ -548,3 +548,39 @@ func TestBlockPoolMaxPeerHeightRefreshesOnPopRequest(t *testing.T) {
 	require.EqualValues(t, 100, pool.MaxPeerHeight(),
 		"peer B must contribute to maxPeerHeight once pool.height reaches its base")
 }
+
+// TestPeerOnTimeoutDoesNotDeadlockOnSendError is a regression test for
+// bpPeer.onTimeout holding pool.mtx while calling sendError on an unbuffered
+// channel.
+func TestPeerOnTimeoutDoesNotDeadlockOnSendError(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 10)
+	errorsCh := make(chan peerError) // unbuffered: keeps onTimeout blocked in sendError
+
+	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool.SetLogger(log.TestingLogger())
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	pool.SetPeerRange("A", 1, 10)
+	pool.mtx.Lock()
+	peer := pool.peers["A"]
+	pool.mtx.Unlock()
+
+	go peer.onTimeout()
+	time.Sleep(50 * time.Millisecond)
+
+	heightDone := make(chan struct{})
+	go func() {
+		pool.Height()
+		close(heightDone)
+	}()
+
+	select {
+	case <-heightDone:
+		<-errorsCh
+	case <-time.After(500 * time.Millisecond):
+		<-errorsCh
+		<-heightDone
+		t.Fatal("deadlock: onTimeout held pool.mtx while blocked in sendError")
+	}
+}
