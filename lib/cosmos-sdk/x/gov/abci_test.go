@@ -1,6 +1,7 @@
 package gov_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
@@ -22,6 +24,116 @@ import (
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 )
+
+// setUndecodableProposal stores a proposal whose message has a type URL that is
+// not registered, as after an upgrade removes a message type, so GetProposal
+// panics on it. It backs the proposal with a deposit from depositor.
+func setUndecodableProposal(
+	t *testing.T, s suite, ctx sdk.Context, depositor sdk.AccAddress, active bool,
+) v1.Proposal {
+	startTime := ctx.BlockHeader().Time.Add(-4 * time.Hour)
+	endTime := ctx.BlockHeader().Time
+	proposal, err := v1.NewProposal(nil, 1, startTime, endTime, "",
+		"Unsupported proposal", "Unsupported proposal", depositor)
+	require.NoError(t, err)
+	proposal.Messages = []*codectypes.Any{
+		{TypeUrl: "/nibiru.removed.v1.MsgRemoved", Value: []byte{}},
+	}
+	if active {
+		proposal.Status = v1.StatusVotingPeriod
+		proposal.VotingStartTime = &startTime
+		proposal.VotingEndTime = &endTime
+	}
+	s.GovKeeper.SetProposal(ctx, proposal)
+	require.Panics(t, func() { s.GovKeeper.GetProposal(ctx, proposal.Id) })
+
+	_, found, err := s.GovKeeper.GetProposalE(ctx, proposal.Id)
+	require.True(t, found)
+	require.Error(t, err)
+
+	if active {
+		s.GovKeeper.InsertActiveProposalQueue(ctx, proposal.Id, endTime)
+	} else {
+		s.GovKeeper.InsertInactiveProposalQueue(ctx, proposal.Id, endTime)
+	}
+
+	depositCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000)))
+	require.NoError(t, s.BankKeeper.SendCoinsFromAccountToModule(
+		ctx, depositor, types.ModuleName, depositCoins))
+	s.GovKeeper.SetDeposit(ctx, v1.NewDeposit(proposal.Id, depositor, depositCoins))
+
+	return proposal
+}
+
+// requireProposalFailedEvent checks that EndBlocker emitted eventType with a
+// failed result for proposalID.
+func requireProposalFailedEvent(
+	t *testing.T, ctx sdk.Context, eventType string, proposalID uint64,
+) {
+	for _, event := range ctx.EventManager().Events() {
+		if event.Type != eventType {
+			continue
+		}
+		attrs := map[string]string{}
+		for _, attr := range event.Attributes {
+			attrs[attr.Key] = attr.Value
+		}
+		if attrs[types.AttributeKeyProposalID] == fmt.Sprintf("%d", proposalID) {
+			require.Equal(t, types.AttributeValueProposalFailed,
+				attrs[types.AttributeKeyProposalResult])
+			return
+		}
+	}
+	t.Fatalf("no %s event for proposal %d", eventType, proposalID)
+}
+
+func TestUndecodableProposal_InactiveProposalFails(t *testing.T) {
+	s := createTestSuite(t)
+	ctx := s.App.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+	addrs := simtestutil.AddTestAddrs(s.BankKeeper, s.StakingKeeper, ctx, 1, valTokens)
+	balanceBefore := s.BankKeeper.GetAllBalances(ctx, addrs[0])
+
+	proposal := setUndecodableProposal(t, s, ctx, addrs[0], false)
+
+	require.NotPanics(t, func() { gov.EndBlocker(ctx, s.GovKeeper) })
+
+	_, found, err := s.GovKeeper.GetProposalE(ctx, proposal.Id)
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Empty(t, s.GovKeeper.GetDeposits(ctx, proposal.Id))
+	require.Equal(t, balanceBefore, s.BankKeeper.GetAllBalances(ctx, addrs[0]))
+
+	inactiveQueue := s.GovKeeper.InactiveProposalQueueIterator(ctx, ctx.BlockHeader().Time)
+	require.False(t, inactiveQueue.Valid())
+	inactiveQueue.Close()
+
+	requireProposalFailedEvent(t, ctx, types.EventTypeInactiveProposal, proposal.Id)
+}
+
+func TestUndecodableProposal_ActiveProposalFails(t *testing.T) {
+	s := createTestSuite(t)
+	ctx := s.App.BaseApp.NewContext(false, tmproto.Header{Time: time.Now()})
+	addrs := simtestutil.AddTestAddrs(s.BankKeeper, s.StakingKeeper, ctx, 1, valTokens)
+	balanceBefore := s.BankKeeper.GetAllBalances(ctx, addrs[0])
+
+	proposal := setUndecodableProposal(t, s, ctx, addrs[0], true)
+
+	require.NotPanics(t, func() { gov.EndBlocker(ctx, s.GovKeeper) })
+
+	got, found := s.GovKeeper.GetProposal(ctx, proposal.Id)
+	require.True(t, found)
+	require.Equal(t, v1.StatusFailed, got.Status)
+	require.Empty(t, got.Messages)
+	require.Equal(t, proposal.Title, got.Title)
+	require.Empty(t, s.GovKeeper.GetDeposits(ctx, proposal.Id))
+	require.Equal(t, balanceBefore, s.BankKeeper.GetAllBalances(ctx, addrs[0]))
+
+	activeQueue := s.GovKeeper.ActiveProposalQueueIterator(ctx, ctx.BlockHeader().Time)
+	require.False(t, activeQueue.Valid())
+	activeQueue.Close()
+
+	requireProposalFailedEvent(t, ctx, types.EventTypeActiveProposal, proposal.Id)
+}
 
 func TestTickExpiredDepositPeriod(t *testing.T) {
 	suite := createTestSuite(t)

@@ -109,19 +109,40 @@ func (keeper Keeper) SubmitProposal(ctx sdk.Context, messages []sdk.Msg, metadat
 // GetProposal gets a proposal from store by ProposalID.
 // Panics if can't unmarshal the proposal.
 func (keeper Keeper) GetProposal(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool) {
+	proposal, found, err := keeper.GetProposalE(ctx, proposalID)
+	if err != nil {
+		panic(err)
+	}
+
+	return proposal, found
+}
+
+// GetProposalE gets a proposal from store by ProposalID. Unlike GetProposal,
+// it returns an error instead of panicking when the stored proposal can't be
+// unmarshaled, for example when one of its messages has a type URL that is no
+// longer registered. On that error, the returned proposal holds the fields
+// that decode without resolving the message Anys, and its ID is always set.
+func (keeper Keeper) GetProposalE(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool, error) {
 	store := ctx.KVStore(keeper.storeKey)
 
 	bz := store.Get(types.ProposalKey(proposalID))
 	if bz == nil {
-		return v1.Proposal{}, false
+		return v1.Proposal{}, false, nil
 	}
 
 	var proposal v1.Proposal
 	if err := keeper.UnmarshalProposal(bz, &proposal); err != nil {
-		panic(err)
+		// Plain proto decoding skips UnpackInterfaces, so it still recovers
+		// the outer fields when only a message Any fails to resolve.
+		proposal = v1.Proposal{}
+		if rawErr := proposal.Unmarshal(bz); rawErr != nil {
+			proposal = v1.Proposal{}
+		}
+		proposal.Id = proposalID
+		return proposal, true, err
 	}
 
-	return proposal, true
+	return proposal, true, nil
 }
 
 // SetProposal sets a proposal to store.
