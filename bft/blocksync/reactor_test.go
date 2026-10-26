@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
@@ -438,4 +439,65 @@ func TestInvalidSignatureAfterTwoThirdsIsRejected(t *testing.T) {
 		require.NoError(t, vals.VerifyCommit(genDoc.ChainID, seenCommit.BlockID, h, seenCommit),
 			"seen commit at height %d", h)
 	}
+}
+
+// TestSwitchToBlockSyncRaceWithSetPeerRange detects the data race between
+// Reactor.SwitchToBlockSync() writing pool.height without pool.mtx and
+// SetPeerRange() reading it via updateMaxPeerHeight() under pool.mtx.
+// Must be run with -race to be effective.
+func TestSwitchToBlockSyncRaceWithSetPeerRange(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 1000)
+	errorsCh := make(chan peerError, 1000)
+	pool := NewBlockPool(1, requestsCh, errorsCh)
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	r := &Reactor{pool: pool}
+	r.Logger = log.TestingLogger()
+
+	state := sm.State{LastBlockHeight: 100}
+
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	// SwitchToBlockSync() writes pool.height; pool.Start returns
+	// ErrAlreadyStarted since the pool is pre-started, but the write still
+	// races with concurrent reads.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-start
+		_ = r.SwitchToBlockSync(state)
+	}()
+
+	// SetPeerRange holds pool.mtx and reads pool.height via updateMaxPeerHeight.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-start
+		for i := int64(0); i < 500; i++ {
+			pool.SetPeerRange("peer1", i+2, i+100)
+		}
+	}()
+
+	close(start)
+	wg.Wait()
+}
+
+func TestSwitchToBlockSyncRecomputesMaxPeerHeight(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 1000)
+	errorsCh := make(chan peerError, 1000)
+	pool := NewBlockPool(1, requestsCh, errorsCh)
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	// base=2 > pool.height=1: excluded from maxPeerHeight, so it stays 0.
+	pool.SetPeerRange("peer1", 2, 200)
+	require.Equal(t, int64(0), pool.MaxPeerHeight())
+
+	r := &Reactor{pool: pool}
+	r.Logger = log.TestingLogger()
+
+	_ = r.SwitchToBlockSync(sm.State{LastBlockHeight: 100})
+	require.Equal(t, int64(200), pool.MaxPeerHeight())
 }
