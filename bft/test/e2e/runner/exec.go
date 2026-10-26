@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	osexec "os/exec"
@@ -41,10 +42,26 @@ func execCompose(dir string, args ...string) error {
 		args...)...)
 }
 
+// execComposeOutput runs a Docker Compose command for a testnet and returns
+// its stdout only. Compose prints warnings to stderr (for example that the
+// `version` attribute is obsolete), and callers check for empty output.
 func execComposeOutput(dir string, args ...string) ([]byte, error) {
-	return execOutput(append(
-		[]string{"docker", "compose", "-f", filepath.Join(dir, "docker-compose.yml")},
-		args...)...)
+	args = append(
+		[]string{"compose", "-f", filepath.Join(dir, "docker-compose.yml")},
+		args...)
+	var stderr bytes.Buffer
+	cmd := osexec.Command("docker", args...) //nolint:gosec
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
+	switch err := err.(type) {
+	case nil:
+		return out, nil
+	case *osexec.ExitError:
+		return nil, fmt.Errorf("failed to run %q:\n%s%s",
+			append([]string{"docker"}, args...), out, stderr.Bytes())
+	default:
+		return nil, err
+	}
 }
 
 // execComposeVerbose runs a Docker Compose command for a testnet and displays its output.
