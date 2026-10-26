@@ -27,7 +27,10 @@ func Perturb(testnet *e2e.Testnet) error {
 // after recovering.
 func PerturbNode(node *e2e.Node, perturbation e2e.Perturbation) (*rpctypes.ResultStatus, error) {
 	testnet := node.Testnet
-	out, err := execComposeOutput(testnet.Dir, "ps", "-q", node.Name)
+	// Count only running containers. Some Compose v2 versions also list the
+	// stopped pre-upgrade container here, which hides the <node>_u one.
+	out, err := execComposeOutput(
+		testnet.Dir, "ps", "-q", "--status", "running", node.Name)
 	if err != nil {
 		return nil, err
 	}
