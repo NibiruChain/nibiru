@@ -164,7 +164,9 @@ pass. Never ship a binary built with that tag.
 The self-test is a regression test for the detector. `just chaos
 determinism-all` runs it first and stops if it fails, because a clean
 `determinism` run means nothing if the check cannot see a planted bug. It
-then runs `determinism`.
+then runs `determinism`. The nightly workflow
+`.github/workflows/test-determinism.yml` runs `determinism-all` at 05:30
+UTC, on manual dispatch, and on pull requests that change the check.
 
 ## IBC walkthrough
 
