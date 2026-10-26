@@ -2,7 +2,8 @@
 # `up`, `up-ibc`, and `up-hm` preserve named volumes. Run `destroy` only when a fresh local state is wanted.
 
 # List Chaosnet recipes.
-setup:
+[private]
+list:
     just --justfile just-chaos.just --list
 
 # Rebuild Chaosnet images without cache and pull base images.
