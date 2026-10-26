@@ -652,11 +652,7 @@ func (msg MsgAddCodeUploadParamsAddresses) ValidateBasic() error {
 		return sdkioerrors.Wrap(err, "authority")
 	}
 
-	if len(msg.Addresses) == 0 {
-		return sdkioerrors.Wrap(ErrEmpty, "addresses")
-	}
-
-	return checkDuplicatedAddresses(msg.Addresses)
+	return validateBech32Addresses(msg.Addresses)
 }
 
 func (msg MsgRemoveCodeUploadParamsAddresses) Route() string {
@@ -684,26 +680,7 @@ func (msg MsgRemoveCodeUploadParamsAddresses) ValidateBasic() error {
 		return sdkioerrors.Wrap(err, "authority")
 	}
 
-	if len(msg.Addresses) == 0 {
-		return sdkioerrors.Wrap(ErrEmpty, "addresses")
-	}
-
-	return checkDuplicatedAddresses(msg.Addresses)
-}
-
-func checkDuplicatedAddresses(addresses []string) error {
-	index := map[string]struct{}{}
-	for _, addr := range addresses {
-		addr = strings.ToUpper(addr)
-		if _, err := sdk.AccAddressFromBech32(addr); err != nil {
-			return sdkioerrors.Wrap(err, "addresses")
-		}
-		if _, found := index[addr]; found {
-			return sdkioerrors.Wrap(ErrInvalid, "duplicate addresses")
-		}
-		index[addr] = struct{}{}
-	}
-	return nil
+	return validateBech32Addresses(msg.Addresses)
 }
 
 func (msg MsgStoreAndMigrateContract) Route() string {

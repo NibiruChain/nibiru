@@ -4,7 +4,7 @@ use cosmwasm_vm::{capabilities_from_csv, internals::check_wasm};
 use sai_wasm_optimizer::validation::{check_file, NIBIRU_CAPABILITIES};
 
 #[test]
-fn rejects_bulk_memory_instruction_after_static_compatibility_passes() {
+fn rejects_bulk_memory_instruction_during_static_validation() {
     let wasm = wat::parse_str(
         r#"(module
             (memory (export "memory") 1)
@@ -20,7 +20,18 @@ fn rejects_bulk_memory_instruction_after_static_compatibility_passes() {
         )"#,
     )
     .unwrap();
-    check_wasm(&wasm, &capabilities_from_csv(NIBIRU_CAPABILITIES)).unwrap();
+    // Static validation checks function bodies, so it rejects the opcode before
+    // compilation reaches the VM gatekeeper.
+    let static_error =
+        check_wasm(&wasm, &capabilities_from_csv(NIBIRU_CAPABILITIES))
+            .unwrap_err();
+    assert!(
+        static_error
+            .to_string()
+            .to_ascii_lowercase()
+            .contains("bulk memory"),
+        "expected static validation rejection, got {static_error}"
+    );
     let directory = tempfile::tempdir().unwrap();
     let artifact = directory.path().join("bulk-memory.wasm");
     fs::write(&artifact, wasm).unwrap();
@@ -29,6 +40,6 @@ fn rejects_bulk_memory_instruction_after_static_compatibility_passes() {
         format!("{error:#}")
             .to_ascii_lowercase()
             .contains("bulk memory"),
-        "expected VM gatekeeper rejection, got {error:#}"
+        "expected optimizer rejection, got {error:#}"
     );
 }

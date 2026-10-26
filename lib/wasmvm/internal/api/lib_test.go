@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -522,6 +523,8 @@ func TestExecuteUnreachable(t *testing.T) {
 	require.ErrorContains(t, err, "RuntimeError: unreachable")
 }
 
+// TestExecuteCpuLoop checks that repeated gas exhaustion returns OutOfGasError
+// and consumes the limit on each call. Each execution gets a fresh gas meter.
 func TestExecuteCpuLoop(t *testing.T) {
 	cache, cleanup := withCache(t)
 	defer cleanup()
@@ -548,16 +551,15 @@ func TestExecuteCpuLoop(t *testing.T) {
 
 	// execute a cpu loop
 	maxGas := uint64(40_000_000)
-	gasMeter2 := NewMockGasMeter(maxGas)
-	igasMeter2 := wvm.GasMeter(gasMeter2)
-	store.SetGasMeter(gasMeter2)
 	info = MockInfoBin(t, "fred")
-	start = time.Now()
-	_, cost, err = Execute(cache, checksum, env, info, []byte(`{"cpu_loop":{}}`), &igasMeter2, store, api, &querier, maxGas, TESTING_PRINT_DEBUG)
-	diff = time.Since(start)
-	require.Error(t, err)
-	assert.Equal(t, cost.UsedInternally, maxGas)
-	t.Logf("CPULoop Time (%d gas): %s\n", cost.UsedInternally, diff)
+	for i := 0; i < 10; i++ {
+		gasMeter2 := NewMockGasMeter(maxGas)
+		igasMeter2 := wvm.GasMeter(gasMeter2)
+		store.SetGasMeter(gasMeter2)
+		_, cost, err = Execute(cache, checksum, env, info, []byte(`{"cpu_loop":{}}`), &igasMeter2, store, api, &querier, maxGas, TESTING_PRINT_DEBUG)
+		require.ErrorIs(t, err, wvm.OutOfGasError{})
+		assert.Equal(t, maxGas, cost.UsedInternally)
+	}
 }
 
 func TestExecuteStorageLoop(t *testing.T) {
@@ -1186,4 +1188,32 @@ func TestFloats(t *testing.T) {
 
 	hash := hasher.Sum(nil)
 	require.Equal(t, "95f70fa6451176ab04a9594417a047a1e4d8e2ff809609b8f81099496bee2393", hex.EncodeToString(hash))
+}
+
+// TestErrorWithMessage covers absent, empty, and populated Rust error buffers
+// to preserve error semantics across cleanup. It does not measure allocations.
+func TestErrorWithMessage(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		message []byte
+	}{
+		{name: "none"},
+		{name: "empty", message: []byte{}},
+		{name: "message", message: []byte("Ran out of gas")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := errorWithMessage(syscall.Errno(2), newUnmanagedVector(tc.message))
+			require.ErrorIs(t, err, wvm.OutOfGasError{})
+		})
+	}
+
+	t.Run("preserve syscall error without message", func(t *testing.T) {
+		err := errorWithMessage(syscall.EINVAL, newUnmanagedVector(nil))
+		require.ErrorIs(t, err, syscall.EINVAL)
+	})
+
+	t.Run("use Rust error message", func(t *testing.T) {
+		err := errorWithMessage(syscall.EINVAL, newUnmanagedVector([]byte("contract error")))
+		require.EqualError(t, err, "contract error")
+	})
 }

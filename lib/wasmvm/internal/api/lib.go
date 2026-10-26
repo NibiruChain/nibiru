@@ -622,11 +622,13 @@ func convertGasReport(report C.GasReport) wvm.GasReport {
 /**** To error module ***/
 
 func errorWithMessage(err error, b C.UnmanagedVector) error {
+	// Always free the Rust error buffer, including on out-of-gas returns.
+	msg := copyAndDestroyUnmanagedVector(b)
+
 	// this checks for out of gas as a special case
 	if errno, ok := err.(syscall.Errno); ok && int(errno) == 2 {
 		return wvm.OutOfGasError{}
 	}
-	msg := copyAndDestroyUnmanagedVector(b)
 	if msg == nil {
 		return err
 	}
