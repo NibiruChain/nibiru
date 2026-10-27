@@ -56,9 +56,16 @@ func TestMempoolProgressAfterCreateEmptyBlocksInterval(t *testing.T) {
 	newBlockCh := subscribe(cs.eventBus, types.EventQueryNewBlock)
 	startTestRound(cs, cs.Height, cs.Round)
 
-	ensureNewEventOnChannel(newBlockCh)   // first block gets committed
-	ensureNoNewEventOnChannel(newBlockCh) // then we dont make a block ...
-	ensureNewEventOnChannel(newBlockCh)   // until the CreateEmptyBlocksInterval has passed
+	ensureNewEventOnChannel(newBlockCh) // first block gets committed
+	// The interval timer for height 2 starts when the node enters that height,
+	// before this goroutine receives the first block. A no-event window as long
+	// as the interval would end after the timer fires, so the second block can
+	// land inside it. Check half the interval instead. This catches a block
+	// made right away or an interval that fires in under about 100 ms, but not
+	// one that fires between about 100 and 200 ms.
+	ensureNoNewEvent(newBlockCh, ensureTimeout/2,
+		"We should be stuck waiting, not receiving new event on the channel") // then we dont make a block ...
+	ensureNewEventOnChannel(newBlockCh) // until the CreateEmptyBlocksInterval has passed
 }
 
 func TestMempoolProgressInHigherRound(t *testing.T) {
