@@ -19,4 +19,4 @@ jobs:
     name: "Label PR zones"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v7

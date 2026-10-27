@@ -46,6 +46,21 @@ func TestByzantinePrevoteEquivocation(t *testing.T) {
 	appFunc := newKVStore
 
 	genDoc, privVals := randGenesisDoc(nValidators, false, 30)
+
+	// Give the byzantine validator 2/5 of the voting power, so the three
+	// honest validators (3/5) cannot reach +2/3 at height 2 without its
+	// prevote. With equal power they can commit height 2 on their own, and
+	// the conflicting prevotes then arrive at height 3 and are dropped as a
+	// height mismatch, so no evidence is ever produced. Same change as
+	// upstream cometbft/cometbft#6041.
+	byzPubKey, err := privVals[byzantineNode].GetPubKey()
+	require.NoError(t, err)
+	for i := range genDoc.Validators {
+		if genDoc.Validators[i].PubKey.Equals(byzPubKey) {
+			genDoc.Validators[i].Power *= 2
+		}
+	}
+
 	css := make([]*State, nValidators)
 
 	for i := 0; i < nValidators; i++ {
@@ -162,21 +177,23 @@ func TestByzantinePrevoteEquivocation(t *testing.T) {
 			require.NoError(t, err)
 			peerList := reactors[byzantineNode].Switch.Peers().List()
 			bcs.Logger.Info("Getting peer list", "peers", peerList)
-			// send two votes to all peers (1st to one half, 2nd to another half)
-			for i, peer := range peerList {
-				if i < len(peerList)/2 {
-					bcs.Logger.Info("Signed and pushed vote", "vote", prevote1, "peer", peer)
-					peer.SendEnvelope(p2p.Envelope{
-						Message:   &cmtcons.Vote{Vote: prevote1.ToProto()},
-						ChannelID: VoteChannel,
-					})
-				} else {
-					bcs.Logger.Info("Signed and pushed vote", "vote", prevote2, "peer", peer)
-					peer.SendEnvelope(p2p.Envelope{
-						Message:   &cmtcons.Vote{Vote: prevote2.ToProto()},
-						ChannelID: VoteChannel,
-					})
-				}
+			// Send both conflicting votes to every peer, in order, on the same
+			// channel. Each honest validator adds the first and detects the
+			// second as a conflict. Splitting the votes between peers relied on
+			// gossip carrying the other vote to a node before it committed
+			// height 2, a race the commit sometimes won. Same change as
+			// upstream cometbft/cometbft#5839.
+			for _, peer := range peerList {
+				bcs.Logger.Info("Signed and pushed votes",
+					"vote1", prevote1, "vote2", prevote2, "peer", peer)
+				peer.SendEnvelope(p2p.Envelope{
+					Message:   &cmtcons.Vote{Vote: prevote1.ToProto()},
+					ChannelID: VoteChannel,
+				})
+				peer.SendEnvelope(p2p.Envelope{
+					Message:   &cmtcons.Vote{Vote: prevote2.ToProto()},
+					ChannelID: VoteChannel,
+				})
 			}
 		} else {
 			bcs.Logger.Info("Behaving normally")
@@ -264,14 +281,31 @@ func TestByzantinePrevoteEquivocation(t *testing.T) {
 	evidenceFromEachValidator := make([]types.Evidence, nValidators)
 
 	wg := new(sync.WaitGroup)
+	// subErrCh collects the error from any block subscription the event bus
+	// cancels before its validator sees evidence. Without it, a canceled
+	// subscription would end its goroutine silently, and the test would
+	// report missing evidence instead of the real cause. Buffered to one slot
+	// per validator, so no goroutine blocks on the send.
+	subErrCh := make(chan error, nValidators)
 	for i := 0; i < nValidators; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			for msg := range blocksSubs[i].Out() {
-				block := msg.Data().(types.EventDataNewBlock).Block
-				if len(block.Evidence.Evidence) != 0 {
-					evidenceFromEachValidator[i] = block.Evidence.Evidence[0]
+			sub := blocksSubs[i]
+			// Also watch Cancelled, so the goroutine exits when the event bus
+			// stops at cleanup (upstream cometbft/cometbft#5814).
+			for {
+				select {
+				case msg := <-sub.Out():
+					block := msg.Data().(types.EventDataNewBlock).Block
+					if len(block.Evidence.Evidence) != 0 {
+						evidenceFromEachValidator[i] = block.Evidence.Evidence[0]
+						return
+					}
+				case <-sub.Cancelled():
+					if err := sub.Err(); err != nil {
+						subErrCh <- err
+					}
 					return
 				}
 			}
@@ -289,6 +323,11 @@ func TestByzantinePrevoteEquivocation(t *testing.T) {
 
 	select {
 	case <-done:
+		select {
+		case err := <-subErrCh:
+			t.Fatalf("subscription unexpectedly canceled: %v", err)
+		default:
+		}
 		for idx, ev := range evidenceFromEachValidator {
 			if assert.NotNil(t, ev, idx) {
 				ev, ok := ev.(*types.DuplicateVoteEvidence)
