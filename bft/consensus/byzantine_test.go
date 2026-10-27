@@ -281,6 +281,11 @@ func TestByzantinePrevoteEquivocation(t *testing.T) {
 	evidenceFromEachValidator := make([]types.Evidence, nValidators)
 
 	wg := new(sync.WaitGroup)
+	// subErrCh collects the error from any block subscription the event bus
+	// cancels before its validator sees evidence. Without it, a canceled
+	// subscription would end its goroutine silently, and the test would
+	// report missing evidence instead of the real cause. Buffered to one slot
+	// per validator, so no goroutine blocks on the send.
 	subErrCh := make(chan error, nValidators)
 	for i := 0; i < nValidators; i++ {
 		wg.Add(1)
