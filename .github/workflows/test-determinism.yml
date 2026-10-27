@@ -1,0 +1,97 @@
+# App hash agreement across 4 validators on one chain. See
+# spec/02-chaosnet.md.
+#
+# Runs `just chaos determinism-all`:
+#   1. determinism-selftest builds nibid with the test-only
+#      nibiru_fault_injection tag and passes only if the check reports the
+#      first height where app hashes differ. This is a regression test for
+#      the detector.
+#   2. determinism runs the real check under EVM, Wasm, and bank load while
+#      validators get killed and restarted. It only runs if step 1 passed.
+#
+# Runs nightly, on demand, and on pull requests that change the check.
+#
+# Compose builds both images with the runner's local BuildKit, with no
+# Actions cache. The second build reuses the Go module layer and the Go
+# build cache mount from the first, so it only relinks nibid.
+
+name: "Determinism"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/test-determinism.yml"
+      - "contrib/docker-compose/Dockerfile.multival"
+      - "contrib/docker-compose/docker-compose-chaosnet.yml"
+      - "contrib/scripts/build-nibiru.sh"
+      - "contrib/scripts/determinism.sh"
+      - "contrib/scripts/determinism/**"
+      - "contrib/scripts/multival-genesis.sh"
+      - "contrib/scripts/multival-load.sh"
+      - "evm/evmstate/fault_injection.go"
+      - "evm/evmstate/fault_injection_off.go"
+      - "evm/evmstate/hooks.go"
+      - "just-chaos.just"
+  schedule:
+    - cron: "30 5 * * *" # Nightly at 05:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  determinism-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      # determinism.sh builds its compare and EVM load tool on the host.
+      - name: "Set up Go"
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: "Install just"
+        uses: taiki-e/install-action@just
+
+      # A step timeout, so the log steps below still run if a node hangs.
+      - name: "Run just chaos determinism-all"
+        timeout-minutes: 45
+        shell: bash
+        # Logs go outside the repo, so they stay out of the Docker build
+        # context.
+        run: |
+          LOG_DIR="$RUNNER_TEMP/determinism"
+          mkdir -p "$LOG_DIR"
+          just chaos determinism-all 2>&1 | tee "$LOG_DIR/determinism.log"
+
+      # determinism.sh prints the logs of stopped nodes and removes the
+      # network on exit. This step covers a timeout or cancel, where the
+      # network may still be running.
+      - name: "Collect docker compose logs"
+        if: failure() || cancelled()
+        shell: bash
+        run: |
+          compose="contrib/docker-compose/docker-compose-chaosnet.yml"
+          LOG_DIR="$RUNNER_TEMP/determinism"
+          mkdir -p "$LOG_DIR"
+          docker ps -a > "$LOG_DIR/docker-ps.txt" 2>&1 || true
+          docker compose -f "$compose" --profile multival logs --no-color \
+            > "$LOG_DIR/docker-compose.log" 2>&1 || true
+          docker compose -f "$compose" --profile multival down \
+            --volumes --timeout 1 || true
+
+      - name: "Upload determinism logs"
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: determinism-logs
+          path: ${{ runner.temp }}/determinism/
+          if-no-files-found: ignore
+          retention-days: 14

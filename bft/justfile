@@ -3,7 +3,8 @@
 # the root Go module, so `./...` here means `./bft/...` from the root.
 
 # Displays available recipes by running `just -l`.
-setup:
+[private]
+list:
   #!/usr/bin/env bash
   just -l
 
