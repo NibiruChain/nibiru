@@ -219,7 +219,12 @@ func TestBroadcastTxForPeerStopsWhenReactorStops(t *testing.T) {
 	const N = 2
 	_, switches := makeAndConnectReactors(config, N)
 
-	// stop reactors
+	// Stop the switches, not only the reactors. Stopping a reactor leaves the
+	// peer connections open, and their goroutines block forever. leaktest
+	// usually misses them because its snapshot already holds them, but on a
+	// busy machine they can still be unstarted when the snapshot is taken.
+	// leaktest skips unstarted goroutines, so they then show up as leaks.
+	// Stopping the switches stops the peers and every goroutine they started.
 	for _, s := range switches {
 		assert.NoError(t, s.Stop())
 	}
@@ -349,7 +354,14 @@ func mempoolLogger() log.Logger {
 	})
 }
 
-// connect N mempool reactors through N switches
+// makeAndConnectReactors starts n mempool reactors, each on its own p2p
+// switch, and connects every switch to every other one.
+//
+// It returns the switches as well as the reactors because stopping a reactor
+// leaves its switch, its peers, and their connection goroutines running.
+// A test that checks for leaked goroutines must stop the switches, which stop
+// their peers and reactors too. Tests that only need the reactors ignore the
+// second value. The shape matches upstream CometBFT v0.38.x.
 func makeAndConnectReactors(config *cfg.Config, n int) ([]*Reactor, []*p2p.Switch) {
 	reactors := make([]*Reactor, n)
 	logger := mempoolLogger()
