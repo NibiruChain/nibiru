@@ -82,6 +82,8 @@ func runEvmLoad(args []string) error {
 	rpcs := fs.String("rpc", "", "comma-separated JSON-RPC URLs, one per node")
 	duration := fs.Duration("duration", 60*time.Second, "how long to send")
 	interval := fs.Duration("interval", 500*time.Millisecond, "pause per tx")
+	minSent := fs.Int("min-sent", 1,
+		"fail unless every node accepted at least this many txs")
 	_ = fs.Parse(args)
 
 	urls := splitList(*rpcs)
@@ -103,9 +105,17 @@ func runEvmLoad(args []string) error {
 	}
 	wg.Wait()
 
+	var short []string
 	for i, s := range stats {
 		fmt.Printf("evm-load node %d (%s): sent %d, rejected %d\n",
 			i, urls[i], s.sent, s.rejected)
+		if s.sent < *minSent {
+			short = append(short, fmt.Sprintf("node %d sent %d", i, s.sent))
+		}
+	}
+	if len(short) > 0 {
+		return fmt.Errorf("evm-load: fewer than %d txs sent: %s",
+			*minSent, strings.Join(short, ", "))
 	}
 	return nil
 }
@@ -251,6 +261,8 @@ func runCompare(args []string) error {
 	timeout := fs.Duration("timeout", 15*time.Minute, "overall wait limit")
 	failedOut := fs.String("failed-out", "",
 		"write names of nodes that stopped to this file, one per line")
+	minOKTxs := fs.Int("min-ok-txs", 0,
+		"fail unless at least this many txs have code 0")
 	_ = fs.Parse(args)
 
 	nodes, err := parseNodes(*rpcs, *names)
@@ -289,6 +301,14 @@ func runCompare(args []string) error {
 				failedTxs++
 			}
 		}
+	}
+	okTxs := txs - failedTxs
+	if okTxs < *minOKTxs {
+		fmt.Printf("compare: FAIL: %d txs with code 0 on heights 1..%d, "+
+			"want at least %d (%d txs in total)\n",
+			okTxs, *target, *minOKTxs, txs)
+		return fmt.Errorf("only %d successful txs, want at least %d",
+			okTxs, *minOKTxs)
 	}
 	fmt.Printf("compare: OK, %d nodes agree on heights 1..%d "+
 		"(%d txs, %d with a non-zero code)\n",
