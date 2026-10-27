@@ -1,16 +1,21 @@
 # Eris governance replay
 
 Script `capture.py` downloads public mainnet code and complete contract storage
-at a single block. It never signs or submits transactions. Snapshot `snapshot.json`
-records height `47677314`, the block time, contract info, code hashes, code history,
-and raw storage entries for the hub, escrow, allocation gauge, and proposal gauge.
-Compressed bytecode files use deterministic gzip headers. The replay checks each
-uncompressed SHA-256 hash before importing Wasm genesis state.
+at a single block. It never signs or submits transactions. Snapshot
+`snapshot.json.gz` is gzipped JSON (about 100 KB, 800 KB uncompressed); read it
+with `zcat snapshot.json.gz | less`. It records height `47677314`, the block
+time, contract info, code hashes, code history, and raw storage entries for
+the hub, escrow, allocation gauge, and proposal gauge. The snapshot and the
+compressed bytecode files use deterministic gzip headers, so a capture at the
+same height reproduces the same bytes. The replay checks each uncompressed
+SHA-256 hash before importing Wasm genesis state.
 
-The governance test runs the canonical ErisEvm implementation behind a delegate
-proxy, using real Wasm and FunToken precompiles. A new test account creates its
-position through contract execution. The escrow invokes both live gauge
-callbacks. Tests do not edit the captured Wasm state to make those calls succeed.
+The test decodes the snapshot and bytecode once per test binary and builds a
+fresh chain from it for each test. The governance test runs the canonical
+ErisEvm implementation behind a delegate proxy, using real Wasm and FunToken
+precompiles. A new test account creates its position through contract
+execution. The escrow invokes both live gauge callbacks. Tests do not edit the
+captured Wasm state to make those calls succeed.
 
 The ERC20 receipt contract is a standard six-decimal ERC20Minter deployed locally.
 Its initialized code and storage are copied to the production receipt address,

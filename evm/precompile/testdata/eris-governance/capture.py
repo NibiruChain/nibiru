@@ -48,5 +48,7 @@ for name, address in ADDRESSES.items():
         (OUT / f"{name}.wasm.gz").write_bytes(gzip.compress(bytecode, mtime=0))
     result["contracts"].append({"name": name, "address": address, "info": contract["contract_info"], "hash": digest, "models": entries, "history": query("wasm", "contract-history", address)["entries"]})
     print(f"{name}: {len(entries)} entries, {len(bytecode)} bytes", flush=True)
-(OUT / "snapshot.json").write_text(json.dumps(result, indent=2) + "\n")
+# Gzip the indented JSON with a zero timestamp, like the Wasm files, so the
+# same capture always produces the same bytes. Read it with `zcat`.
+(OUT / "snapshot.json.gz").write_bytes(gzip.compress((json.dumps(result, indent=2) + "\n").encode(), 9, mtime=0))
 print(f"Captured mainnet block {height}", flush=True)
