@@ -281,6 +281,9 @@ services:
 
   nibiru-val-2:
     <<: *multival-node
+    # `just chaos determinism-selftest-one` runs this validator alone on the
+    # fault-injection image.
+    image: ${MULTIVAL_IMAGE_VAL2:-${MULTIVAL_IMAGE:-nibiru-multival:local}}
     command: ["start", "--home", "/net/val-2"]
     depends_on: *multival-after-genesis
     ports:

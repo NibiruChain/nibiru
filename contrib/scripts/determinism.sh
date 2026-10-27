@@ -34,6 +34,8 @@
 #                       stopped (default 60)
 #   MULTIVAL_IMAGE      image tag (default nibiru-multival:local)
 #   MULTIVAL_BUILD_TAGS extra Go build tags for nibid (default none)
+#   MULTIVAL_IMAGE_VAL2 an already built image for nibiru-val-2 only (default
+#                       MULTIVAL_IMAGE)
 #   KEEP_NETWORK        "true" leaves the network running (default false)
 #
 # Exits non-zero when nodes disagree, a node stops, or the load did not run.
