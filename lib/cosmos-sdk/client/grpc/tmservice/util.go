@@ -1,7 +1,7 @@
 package tmservice
 
 import (
-	tmprototypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmprototypes "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )

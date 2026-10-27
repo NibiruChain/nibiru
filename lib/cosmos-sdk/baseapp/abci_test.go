@@ -10,11 +10,12 @@ import (
 	"testing"
 
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/gogoproto/jsonpb"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	baseapptestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp/testutil"
@@ -1519,7 +1520,8 @@ func TestABCI_PrepareProposal_ReachedMaxBytes(t *testing.T) {
 		Height:     1,
 	}
 	resPrepareProposal := suite.baseApp.PrepareProposal(reqPrepareProposal)
-	require.Equal(t, 11, len(resPrepareProposal.Txs))
+	// Tx sizes are protobuf-encoded, so 10 txs fit rather than 11 raw.
+	require.Equal(t, 10, len(resPrepareProposal.Txs))
 }
 
 func TestABCI_PrepareProposal_BadEncoding(t *testing.T) {

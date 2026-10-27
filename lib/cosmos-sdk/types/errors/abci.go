@@ -1,7 +1,7 @@
 package errors
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 )
 
 // ResponseCheckTxWithEvents returns an ABCI ResponseCheckTx object with fields filled in

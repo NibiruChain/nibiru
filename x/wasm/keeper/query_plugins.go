@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
@@ -732,6 +732,10 @@ func ConvertSdkDenomUnitsToWasmDenomUnits(denomUnits []*banktypes.DenomUnit) []w
 			Denom:    u.Denom,
 			Exponent: u.Exponent,
 			Aliases:  u.Aliases,
+		}
+		// Returning nil may break cosmwasm-std
+		if u.Aliases == nil {
+			converted[i].Aliases = []string{}
 		}
 	}
 	return converted

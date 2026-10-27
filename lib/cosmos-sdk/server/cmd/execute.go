@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/spf13/cobra"
+
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

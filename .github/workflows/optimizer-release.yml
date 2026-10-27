@@ -1,0 +1,99 @@
+name: Optimizer native distribution
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "sai-wasm-optimizer/v*"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: "2"
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+  CARGO_TARGET_DIR: target/optimizer-dist
+  RUSTUP_TOOLCHAIN: "1.95.0"
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Keep Linux artifacts on their documented glibc baselines.
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+          - target: x86_64-apple-darwin
+            runner: macos-15-intel
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/install-action@just
+      - name: Read optimizer package version
+        run: just rs optimizer-release version
+      - name: Validate release tag against package version
+        if: github.event_name == 'push'
+        run: just rs optimizer-release validate-tag --tag "$GITHUB_REF_NAME"
+      - name: Cache optimizer distribution build
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/db/
+            target/optimizer-dist/
+          key: optimizer-dist-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.runner }}-rust1.95.0-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'contrib/scripts/optimizer-release.py') }}
+      - name: Build, package, and smoke test native optimizer
+        run: just rs optimizer-release package --target "${{ matrix.target }}" --output-dir dist/optimizer
+      - name: Upload native archive and checksum
+        uses: actions/upload-artifact@v7
+        with:
+          name: optimizer-dist-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            dist/optimizer/*.tar.gz
+            dist/optimizer/*.tar.gz.sha256
+
+  publish:
+    needs: package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/sai-wasm-optimizer/v')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - uses: taiki-e/install-action@just
+      - name: Download all native packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: optimizer-dist-*
+          merge-multiple: true
+          path: dist/optimizer
+      - name: Verify packages and publish matching optimizer tag
+        run: just rs optimizer-release publish --artifacts-dir dist/optimizer --tag "$GITHUB_REF_NAME" --run

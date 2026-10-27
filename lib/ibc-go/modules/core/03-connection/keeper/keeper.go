@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"

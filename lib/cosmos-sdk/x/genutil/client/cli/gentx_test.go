@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	"github.com/stretchr/testify/suite"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

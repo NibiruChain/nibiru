@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

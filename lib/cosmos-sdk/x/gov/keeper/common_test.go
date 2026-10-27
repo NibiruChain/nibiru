@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	tmtime "github.com/NibiruChain/nibiru/v2/bft/types/time"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"

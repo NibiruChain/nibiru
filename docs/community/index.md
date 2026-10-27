@@ -36,4 +36,3 @@ description: >-
 3. **Blog (For Devs)**: [Developer-focused tutorials and blog content on Nibiru and all things Web3.](https://nibiru.fi/blog/tags/for%20devs)
 4. **Hackathons**: [Nibiru hackathons give ambitious founders and developers a platform to collaborate with other buidlers and bring innovative ideas to life.](https://t.me/nibiruhackathon)
 5. **Requests for Protocols (RFPs)**: [Thorough specifications outlining desired Web3 initiatives and applications in the Nibiru Ecosystem.](https://nibiru.notion.site/9365f31b339f4ce69ac25d88dd519690?v=f3483f760045490bb463a75ac091dad5&pvs=4)
-6. **Nibiru Grants**: [We welcome skilled developers passionate about enriching the Nibiru ecosystem to apply. Successful candidates may earn milestone-based rewards in addition to accelerator-like support for engineering, fundraising, and marketing.](https://nibiru.fi/ecosystem/grants)

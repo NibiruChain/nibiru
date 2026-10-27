@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/cometbft/cometbft/crypto/tmhash"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 
 	sdkioerrors "cosmossdk.io/errors"
 )

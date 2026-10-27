@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 type mockValidator struct {

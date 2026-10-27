@@ -10,7 +10,7 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	modulev1 "cosmossdk.io/api/cosmos/capability/module/v1"
 	"cosmossdk.io/depinject"

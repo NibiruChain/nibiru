@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

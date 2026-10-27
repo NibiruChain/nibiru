@@ -1,7 +1,7 @@
 package types
 
 import (
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	sdkmaps "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/internal/maps"
 )

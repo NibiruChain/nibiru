@@ -8,7 +8,7 @@ import (
 
 	"github.com/coinbase/rosetta-sdk-go/types"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	crgerrs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/errors"
 	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"

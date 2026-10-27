@@ -5,9 +5,10 @@ import (
 	"sort"
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
 	"pgregory.net/rapid"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"

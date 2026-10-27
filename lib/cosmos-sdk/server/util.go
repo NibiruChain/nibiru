@@ -23,12 +23,13 @@ import (
 
 	"cosmossdk.io/log"
 	dbm "github.com/cometbft/cometbft-db"
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	cmtcfg "github.com/cometbft/cometbft/config"
-	tmlog "github.com/cometbft/cometbft/libs/log"
-	"github.com/cometbft/cometbft/node"
-	tmstore "github.com/cometbft/cometbft/store"
-	cmttypes "github.com/cometbft/cometbft/types"
+
+	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	tmlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/node"
+	tmstore "github.com/NibiruChain/nibiru/v2/bft/store"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

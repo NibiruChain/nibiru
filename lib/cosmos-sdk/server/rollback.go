@@ -3,8 +3,9 @@ package server
 import (
 	"fmt"
 
-	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
 	"github.com/spf13/cobra"
+
+	tmcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"

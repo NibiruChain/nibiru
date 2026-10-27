@@ -13,14 +13,15 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 
-	abcitypes "github.com/cometbft/cometbft/abci/types"
+	abcitypes "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	rosettatypes "github.com/coinbase/rosetta-sdk-go/types"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/cometbft/cometbft/rpc/client/http"
 	"google.golang.org/grpc"
+
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/http"
 
 	crgerrs "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/errors"
 	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"
@@ -31,7 +32,7 @@ import (
 	auth "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
 )

@@ -163,7 +163,10 @@ func cGet(ptr *C.db_t, gasMeter *C.gas_meter_t, usedGas *cu64, key C.U8SliceView
 		// we received an invalid pointer
 		return C.GoError_BadArgument
 	}
-	if !(*val).is_none || !(*errOut).is_none {
+	// cGet, cSet, cDelete, cNext, and nextPart do not write errOut, so they
+	// must not inspect its uninitialized contents. Only output vectors a
+	// callback overwrites need the is_none ownership check.
+	if !(*val).is_none {
 		panic("Got a non-none UnmanagedVector we're about to override. This is a bug because someone has to drop the old one.")
 	}
 
@@ -191,9 +194,6 @@ func cSet(ptr *C.db_t, gasMeter *C.gas_meter_t, usedGas *cu64, key C.U8SliceView
 		// we received an invalid pointer
 		return C.GoError_BadArgument
 	}
-	if !(*errOut).is_none {
-		panic("Got a non-none UnmanagedVector we're about to override. This is a bug because someone has to drop the old one.")
-	}
 
 	gm := *(*wvm.GasMeter)(unsafe.Pointer(gasMeter))
 	kv := *(*wvm.KVStore)(unsafe.Pointer(ptr))
@@ -215,9 +215,6 @@ func cDelete(ptr *C.db_t, gasMeter *C.gas_meter_t, usedGas *cu64, key C.U8SliceV
 	if ptr == nil || gasMeter == nil || usedGas == nil || errOut == nil {
 		// we received an invalid pointer
 		return C.GoError_BadArgument
-	}
-	if !(*errOut).is_none {
-		panic("Got a non-none UnmanagedVector we're about to override. This is a bug because someone has to drop the old one.")
 	}
 
 	gm := *(*wvm.GasMeter)(unsafe.Pointer(gasMeter))
@@ -288,7 +285,7 @@ func cNext(ref C.iterator_t, gasMeter *C.gas_meter_t, usedGas *cu64, key *C.Unma
 		// we received an invalid pointer
 		return C.GoError_BadArgument
 	}
-	if !(*key).is_none || !(*val).is_none || !(*errOut).is_none {
+	if !(*key).is_none || !(*val).is_none {
 		panic("Got a non-none UnmanagedVector we're about to override. This is a bug because someone has to drop the old one.")
 	}
 
@@ -339,7 +336,7 @@ func nextPart(ref C.iterator_t, gasMeter *C.gas_meter_t, usedGas *cu64, output *
 		// we received an invalid pointer
 		return C.GoError_BadArgument
 	}
-	if !(*output).is_none || !(*errOut).is_none {
+	if !(*output).is_none {
 		panic("Got a non-none UnmanagedVector we're about to override. This is a bug because someone has to drop the old one.")
 	}
 

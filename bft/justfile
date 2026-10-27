@@ -1,0 +1,339 @@
+# Nibiru BFT (in-tree CometBFT v0.37.18) recipes. Run from the repo root as
+# `just bft <recipe>`, or from `bft/` as `just <recipe>`. Packages belong to
+# the root Go module, so `./...` here means `./bft/...` from the root.
+
+# Displays available recipes by running `just -l`.
+[private]
+list:
+  #!/usr/bin/env bash
+  just -l
+
+# Postgres event sink tests start a Docker container in TestMain and exit
+# the whole binary without Docker, so `test` skips them. Use `test-psql`.
+psql_pkg := "github.com/NibiruChain/nibiru/v2/bft/state/indexer/sink/psql"
+
+# Args starting with "./" pick packages (relative to bft/); other args go to
+# `go test`. The Postgres sink is always skipped (see test-psql).
+# Run Nibiru BFT unit tests in sections. Ex: "just bft test ./types/..."
+test *args:
+  just _test-grouped {{ args }}
+
+# Run Nibiru BFT unit tests with -race. Ex: "just bft test-race -count=1"
+test-race *args:
+  just _test-grouped -race {{ args }}
+
+# The `deadlock` build tag swaps libs/sync mutexes for
+# github.com/sasha-s/go-deadlock, which reports lock-order inversions and
+# long lock waits.
+# Run unit tests with the deadlock detector. Ex: "just bft test-deadlock"
+test-deadlock *args:
+  just _test-grouped -tags=deadlock {{ args }}
+
+# TestMain starts a postgres:13 container with dockertest, so this needs a
+# running Docker daemon.
+# Run the Postgres event sink tests (Docker). Ex: "just bft test-psql"
+test-psql *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if ! docker info >/dev/null 2>&1; then
+    echo "❌ test-psql needs a running Docker daemon"
+    exit 1
+  fi
+  echo "RUN: go test {{ psql_pkg }} {{ args }}"
+  go test "{{ psql_pkg }}" {{ args }}
+
+# Drives the kvstore example app with `abci-cli batch` and compares against
+# the committed abci/tests/test_cli/*.abci.out files. The script runs
+# `killall abci-cli` when done.
+# Run the ABCI CLI kvstore contract test. Ex: "just bft test-abci-cli"
+test-abci-cli: build-abci-cli
+  #!/usr/bin/env bash
+  set -euo pipefail
+  GOBIN="$(pwd)/build" bash abci/tests/test_cli/test.sh
+
+[private]
+_test-grouped *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  # Args starting with "./" are package patterns, relative to bft/ (a
+  # leading "./bft/" is also accepted). Everything else goes to `go test`.
+  patterns=()
+  flags=()
+  for arg in {{ args }}; do
+    case "$arg" in
+      ./bft/*) patterns+=("./${arg#./bft/}") ;;
+      ./*) patterns+=("$arg") ;;
+      *) flags+=("$arg") ;;
+    esac
+  done
+  if [[ "${#patterns[@]}" -eq 0 ]]; then
+    patterns=(./...)
+  fi
+
+  package_prefix="github.com/NibiruChain/nibiru/v2/bft/"
+  package_list="$(go list "${patterns[@]}")"
+  failed=0
+
+  consensus=()
+  p2p_mempool=()
+  everything_else=()
+
+  while IFS= read -r pkg; do
+    if [[ "$pkg" == "{{ psql_pkg }}" ]]; then
+      continue
+    fi
+
+    relative="${pkg#"$package_prefix"}"
+    case "$relative" in
+      consensus|consensus/*)
+        consensus+=("$pkg")
+        ;;
+      p2p|p2p/*|mempool|mempool/*)
+        p2p_mempool+=("$pkg")
+        ;;
+      *)
+        everything_else+=("$pkg")
+        ;;
+    esac
+  done <<< "$package_list"
+
+  run_group() {
+    local title="$1"
+    shift
+
+    if [[ "$#" -eq 0 ]]; then
+      return
+    fi
+    echo "::group::$title"
+    if ! go test ${flags[@]+"${flags[@]}"} "$@"; then
+      failed=1
+    fi
+    echo "::endgroup::"
+  }
+
+  run_group "Nibiru BFT: consensus" ${consensus[@]+"${consensus[@]}"}
+  run_group "Nibiru BFT: p2p + mempool" ${p2p_mempool[@]+"${p2p_mempool[@]}"}
+  run_group "Nibiru BFT: Everything else" \
+    ${everything_else[@]+"${everything_else[@]}"}
+
+  if [[ "$failed" -ne 0 ]]; then
+    echo "❌ FAILED: Nibiru BFT tests (Postgres sink skipped; see test-psql)"
+  else
+    echo "✅ SUCCESS: Nibiru BFT tests (Postgres sink skipped; see test-psql)"
+  fi
+  exit "$failed"
+
+# Runs the `//go:generate` lines that call scripts/mockery_generate.sh
+# (Mockery v2.53.8, pinned there; .mockery.yml holds its options).
+# Regenerate committed Mockery mocks. Ex: "just bft gen-mocks"
+gen-mocks:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  go generate -run="mockery_generate" ./...
+  echo "✅ SUCCESS: just bft gen-mocks"
+
+# Also regenerates scripts/metricsgen/testdata, which `./...` skips.
+# Regenerate metrics.gen.go files. Ex: "just bft gen-metrics"
+gen-metrics:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  for dir in ./scripts/metricsgen/testdata/*/; do
+    go generate -v -run="scripts/metricsgen" "${dir%/}"
+  done
+  go generate -run="scripts/metricsgen" ./...
+  echo "✅ SUCCESS: just bft gen-metrics"
+
+# Regenerates mocks and metrics, then fails if any file under bft/ changed.
+# Works in a dirty tree: it compares bft/ before and after generation using a
+# temporary git index, so it never stages anything. Protobuf is not checked.
+# Fail if generated mocks or metrics drift. Ex: "just bft check-generated"
+check-generated:
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
+  real_index="$(git rev-parse --path-format=absolute --git-path index)"
+
+  # Print the git tree hash of the working tree, including untracked files.
+  snapshot_tree() {
+    cp "$real_index" "$tmpdir/index"
+    GIT_INDEX_FILE="$tmpdir/index" git add -A -- .
+    GIT_INDEX_FILE="$tmpdir/index" git write-tree
+  }
+
+  before="$(snapshot_tree)"
+  just gen-mocks
+  just gen-metrics
+  after="$(snapshot_tree)"
+
+  if [[ "$before" != "$after" ]]; then
+    git diff-tree -r --stat "$before" "$after"
+    echo "❌ Generated mocks or metrics are out of date."
+    echo "   Run 'just bft gen-mocks gen-metrics' and commit the result."
+    exit 1
+  fi
+  echo "✅ SUCCESS: generated mocks and metrics are up to date"
+
+# Report reachable known Go vulnerabilities. Ex: "just bft govulncheck"
+govulncheck:
+  go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+# Lint bft/ with the root config, without --fix. Ex: "just bft lint"
+lint:
+  cd .. && golangci-lint run --fix=false ./bft/...
+
+# Test-only: Nibiru BFT ships inside nibid. Use this binary for local
+# harnesses that need a bare consensus node.
+# Build the standalone nibiru-bft into bft/build/.
+# Ex: "just bft build-nibiru-bft"
+build-nibiru-bft:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  commit="$(git rev-parse --short HEAD)"
+  ldflags="-s -w"
+  ldflags+=" -X github.com/NibiruChain/nibiru/v2/bft/version.TMGitCommitHash=${commit}"
+  go build -mod=readonly -trimpath -ldflags "$ldflags" \
+    -o build/nibiru-bft ./cmd/nibiru-bft
+  echo "✅ Built $(pwd)/build/nibiru-bft (test-only)"
+
+# Build test-only abci-cli into bft/build/. Ex: "just bft build-abci-cli"
+build-abci-cli:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  go build -mod=readonly -o build/abci-cli ./abci/cmd/abci-cli
+  echo "✅ Built $(pwd)/build/abci-cli (test-only)"
+
+# ---------------------------------------------------------------------------
+# e2e: multi-node testnets in Docker (bft/test/e2e). See
+# bft/test/e2e/README.md.
+# ---------------------------------------------------------------------------
+
+e2e_image := "cometbft/e2e-node:local-version"
+
+# The context is the repo root, because bft/ belongs to the root module.
+# bft/test/e2e/docker/Dockerfile.dockerignore limits it to go.mod, go.sum,
+# and bft/. Extra args go to `docker build`. The first build compiles
+# RocksDB and takes several minutes; later builds reuse that layer.
+# Build the e2e node image. Ex: "just bft e2e-image"
+e2e-image *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  commit="$(git rev-parse --short HEAD 2>/dev/null || true)"
+  docker build \
+    --tag "{{ e2e_image }}" \
+    --build-arg "GIT_COMMIT=${commit}" \
+    -f test/e2e/docker/Dockerfile \
+    {{ args }} ..
+  echo "✅ Built {{ e2e_image }}"
+
+# Build the e2e runner into bft/test/e2e/build/. Ex: "just bft e2e-runner"
+e2e-runner:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  go build -o test/e2e/build/runner ./test/e2e/runner
+  echo "✅ Built $(pwd)/test/e2e/build/runner"
+
+# Manifest paths are relative to bft/test/e2e (a leading "bft/test/e2e/" or
+# "test/e2e/" is also accepted). Runs them in order through run-multiple.sh,
+# which dumps the manifest and container logs when a testnet fails. Needs
+# the image from e2e-image.
+# Run e2e testnets. Ex: "just bft e2e networks/ci.toml"
+e2e +manifests: e2e-runner
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if ! docker image inspect "{{ e2e_image }}" >/dev/null 2>&1; then
+    echo "❌ Missing image {{ e2e_image }}. Run 'just bft e2e-image' first."
+    exit 1
+  fi
+  manifests=()
+  for arg in {{ manifests }}; do
+    arg="${arg#bft/test/e2e/}"
+    arg="${arg#test/e2e/}"
+    manifests+=("$arg")
+  done
+  cd test/e2e
+  ./run-multiple.sh "${manifests[@]}"
+
+# ---------------------------------------------------------------------------
+# Race CI groups
+#
+# The bft-race job in .github/workflows/test-core.yml runs the three
+# _test-grouped groups as separate matrix jobs. Consensus and p2p + mempool
+# are picked with package patterns (./consensus/..., ./p2p/... ./mempool/...).
+# "Everything else" has no single pattern, so this recipe lists every bft
+# package outside those directories and passes them to _test-grouped. The
+# Postgres sink is still skipped there.
+# ---------------------------------------------------------------------------
+
+# Run tests outside consensus, p2p, and mempool. Ex: "just bft test-rest -race"
+test-rest *args:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  package_prefix="github.com/NibiruChain/nibiru/v2/bft/"
+  patterns=()
+  while IFS= read -r pkg; do
+    relative="${pkg#"$package_prefix"}"
+    case "$relative" in
+      consensus|consensus/*|p2p|p2p/*|mempool|mempool/*) ;;
+      *) patterns+=("./$relative") ;;
+    esac
+  done < <(go list ./...)
+  just _test-grouped {{ args }} "${patterns[@]}"
+
+# ---------------------------------------------------------------------------
+# fuzz
+#
+# Native Go fuzz tests (`go test -fuzz`). Plain `just bft test` replays each
+# target's seeds in testdata/fuzz/<FuzzFunc>/ as unit tests. A failing input
+# found while fuzzing is written to that same directory; commit it with the
+# fix so it becomes a regression test.
+#
+# Target                 Fuzz function            Package (under bft/)
+# mempool-v0             FuzzMempoolV0            test/fuzz/mempool/v0
+# mempool-v1             FuzzMempoolV1            test/fuzz/mempool/v1
+# p2p-addrbook           FuzzP2PAddrBook          test/fuzz/p2p/addrbook
+# p2p-pex                FuzzP2PPex               test/fuzz/p2p/pex
+# p2p-secret-connection  FuzzP2PSecretConnection  test/fuzz/p2p/secret_connection
+# rpc-jsonrpc-server     FuzzRPCJSONRPCServer     test/fuzz/rpc/jsonrpc/server
+# pubsub-query           FuzzPubsubQuery          libs/pubsub/query
+fuzz_targets := "mempool-v0 mempool-v1 p2p-addrbook p2p-pex " + \
+  "p2p-secret-connection rpc-jsonrpc-server pubsub-query"
+
+# Extra args go to `go test`, such as "-parallel 2".
+# Fuzz one target for a duration. Ex: "just bft fuzz p2p-pex 30s"
+fuzz target duration="30s" *args="":
+  #!/usr/bin/env bash
+  set -euo pipefail
+  extra=()
+  case "{{ target }}" in
+    mempool-v0) pkg=./test/fuzz/mempool/v0 fn=FuzzMempoolV0 ;;
+    mempool-v1) pkg=./test/fuzz/mempool/v1 fn=FuzzMempoolV1 ;;
+    p2p-addrbook) pkg=./test/fuzz/p2p/addrbook fn=FuzzP2PAddrBook ;;
+    p2p-pex) pkg=./test/fuzz/p2p/pex fn=FuzzP2PPex ;;
+    p2p-secret-connection)
+      pkg=./test/fuzz/p2p/secret_connection fn=FuzzP2PSecretConnection
+      # Each input runs a full handshake, so minimizing a new input under
+      # the default 60s limit stalls a worker for most of a minute. A 5s
+      # limit keeps the workers fuzzing.
+      extra=(-fuzzminimizetime 5s)
+      ;;
+    rpc-jsonrpc-server)
+      pkg=./test/fuzz/rpc/jsonrpc/server fn=FuzzRPCJSONRPCServer ;;
+    pubsub-query) pkg=./libs/pubsub/query fn=FuzzPubsubQuery ;;
+    *)
+      echo "❌ unknown fuzz target: {{ target }}"
+      echo "   Targets: {{ fuzz_targets }}"
+      exit 1
+      ;;
+  esac
+  echo "RUN: go test $pkg -run '^\$' -fuzz '^$fn\$'" \
+    "-fuzztime {{ duration }} ${extra[*]:-}"
+  go test "$pkg" -run '^$' -fuzz "^$fn\$" -fuzztime "{{ duration }}" \
+    ${extra[@]+"${extra[@]}"} {{ args }}
+  echo "✅ SUCCESS: just bft fuzz {{ target }} {{ duration }}"
+
+# Print fuzz target names, one per line. Ex: "just bft fuzz-targets"
+fuzz-targets:
+  @printf '%s\n' {{ fuzz_targets }}

@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	cmttypes "github.com/cometbft/cometbft/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
+
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/eth"
 )

@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("\x12=\n;\n(31151cb6521aa94757a00eab3abceed0e09b74ae\x12\vff02::1:114\x18\xa0\xd0\x01")

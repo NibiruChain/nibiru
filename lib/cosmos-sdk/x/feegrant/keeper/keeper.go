@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 
@@ -335,17 +335,23 @@ func (k Keeper) addToFeeAllowanceQueue(ctx sdk.Context, grantKey []byte, exp *ti
 	store.Set(feegrant.FeeAllowancePrefixQueue(exp, grantKey), []byte{})
 }
 
-// RemoveExpiredAllowances iterates grantsByExpiryQueue and deletes the expired grants.
-func (k Keeper) RemoveExpiredAllowances(ctx sdk.Context) {
+// RemoveExpiredAllowances deletes at most limit expired grants and their expiry
+// queue entries. A nonpositive limit deletes nothing. The queue is ordered by
+// expiry, so later calls resume at the earliest remaining entry.
+//
+// Pruning only reclaims storage. UseGrantedFees still checks allowance expiry,
+// so expired grants awaiting cleanup cannot authorize fee payments.
+func (k Keeper) RemoveExpiredAllowances(ctx sdk.Context, limit int32) {
 	exp := ctx.BlockTime()
 	store := ctx.KVStore(k.storeKey)
 	iterator := store.Iterator(feegrant.FeeAllowanceQueueKeyPrefix, sdk.InclusiveEndBytes(feegrant.AllowanceByExpTimeKey(&exp)))
 	defer iterator.Close()
 
-	for ; iterator.Valid(); iterator.Next() {
+	for pruned := int32(0); pruned < limit && iterator.Valid(); iterator.Next() {
 		store.Delete(iterator.Key())
 
 		granter, grantee := feegrant.ParseAddressesFromFeeAllowanceQueueKey(iterator.Key())
 		store.Delete(feegrant.FeeAllowanceKey(granter, grantee))
+		pruned++
 	}
 }

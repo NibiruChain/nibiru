@@ -10,12 +10,13 @@ import (
 	"time"
 
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 
@@ -301,6 +302,7 @@ func TestBankQuerierMetadata(t *testing.T) {
 			{
 				Denom:    "utest",
 				Exponent: 0,
+				Aliases:  []string{},
 			},
 		},
 	}
@@ -313,6 +315,55 @@ func TestBankQuerierMetadata(t *testing.T) {
 	})
 	require.Error(t, gotErr2)
 	assert.Contains(t, gotErr2.Error(), "uatom: not found")
+}
+
+func TestBankQuerierMetadataWithNilAliases(t *testing.T) {
+	metadata := banktypes.Metadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []*banktypes.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+				Aliases:  nil,
+			},
+		},
+	}
+
+	mock := bankKeeperMock{GetDenomMetadataFn: func(ctx sdk.Context, denom string) (banktypes.Metadata, bool) {
+		if denom == "utest" {
+			return metadata, true
+		} else {
+			return banktypes.Metadata{}, false
+		}
+	}}
+
+	ctx := sdk.Context{}
+	q := keeper.BankQuerier(mock)
+	gotBz, gotErr := q(ctx, &wvm.BankQuery{
+		DenomMetadata: &wvm.DenomMetadataQuery{
+			Denom: "utest",
+		},
+	})
+	require.NoError(t, gotErr)
+	// cosmwasm-std declares `aliases: Vec<String>` without a serde default,
+	// so a JSON null fails to parse in the contract.
+	assert.Contains(t, string(gotBz), `"aliases":[]`)
+	assert.NotContains(t, string(gotBz), `"aliases":null`)
+	var got wvm.DenomMetadataResponse
+	require.NoError(t, json.Unmarshal(gotBz, &got))
+	exp := wvm.DenomMetadata{
+		Name: "Test Token",
+		Base: "utest",
+		DenomUnits: []wvm.DenomUnit{
+			{
+				Denom:    "utest",
+				Exponent: 0,
+				Aliases:  []string{},
+			},
+		},
+	}
+	assert.Equal(t, exp, got.Metadata)
 }
 
 func TestBankQuerierAllMetadata(t *testing.T) {
@@ -353,6 +404,7 @@ func TestBankQuerierAllMetadata(t *testing.T) {
 					{
 						Denom:    "utest",
 						Exponent: 0,
+						Aliases:  []string{},
 					},
 				},
 			},

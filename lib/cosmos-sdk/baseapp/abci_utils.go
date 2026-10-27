@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/cockroachdb/errors"
-	abci "github.com/cometbft/cometbft/abci/types"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/mempool"
@@ -278,7 +280,7 @@ func (ts *defaultTxSelector) Clear() {
 }
 
 func (ts *defaultTxSelector) SelectTxForProposal(maxTxBytes, maxBlockGas uint64, memTx sdk.Tx, txBz []byte) bool {
-	txSize := uint64(len(txBz))
+	txSize := uint64(cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{txBz}))
 
 	var txGasLimit uint64
 	if memTx != nil {

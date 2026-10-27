@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"

@@ -1,7 +1,7 @@
 package rootmulti
 
 import (
-	"github.com/cometbft/cometbft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
 
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 )

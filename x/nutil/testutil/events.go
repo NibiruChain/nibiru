@@ -10,8 +10,9 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )

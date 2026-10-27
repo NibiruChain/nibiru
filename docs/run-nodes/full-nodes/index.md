@@ -20,6 +20,9 @@ description: >-
 | [Next Steps](#next-steps) | Tips on validator participation and pointers to related docs. |
 | [Example `nibid` commands](#example-nibid-commands) | Sample CLI commands for querying balances and exploring module references. |
 
+See [Node metrics](./metrics.md) for SDK and CometBFT telemetry configuration,
+transaction and query timing, and PromQL examples.
+
 ## Available Networks
 
 On Nibiru Chain, the term "network" encompasses a collective system of

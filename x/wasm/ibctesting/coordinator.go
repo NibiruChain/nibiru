@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	channeltypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/04-channel/types"
 	host "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/24-host"

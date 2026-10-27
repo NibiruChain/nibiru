@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

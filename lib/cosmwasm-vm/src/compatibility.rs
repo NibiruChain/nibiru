@@ -81,6 +81,9 @@ const MAX_FUNCTIONS: usize = 10000;
 
 const MAX_FUNCTION_PARAMS: usize = 50;
 
+// Bound aggregate signature size even when every function stays below its own limit.
+const MAX_TOTAL_FUNCTION_PARAMS: usize = 10_000;
+
 const MAX_FUNCTION_RESULTS: usize = 1;
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
@@ -88,7 +91,7 @@ pub fn check_wasm(
     wasm_code: &[u8],
     available_capabilities: &HashSet<String>,
 ) -> VmResult<()> {
-    let module = ParsedWasm::parse(wasm_code)?;
+    let mut module = ParsedWasm::parse(wasm_code)?;
 
     check_wasm_tables(&module)?;
     check_wasm_memories(&module)?;
@@ -98,7 +101,9 @@ pub fn check_wasm(
     check_wasm_capabilities(&module, available_capabilities)?;
     check_wasm_functions(&module)?;
 
-    Ok(())
+    // Parsing defers function bodies so the cheaper compatibility checks run first.
+    // Upload validation must still enforce the VM's restricted Wasm feature set.
+    module.validate_funcs()
 }
 
 fn check_wasm_tables(module: &ParsedWasm) -> VmResult<()> {
@@ -263,6 +268,11 @@ fn check_wasm_functions(module: &ParsedWasm) -> VmResult<()> {
             "Wasm contract contains function with more than {MAX_FUNCTION_RESULTS} results"
         )));
     }
+    if module.total_func_params > MAX_TOTAL_FUNCTION_PARAMS {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract contains more than {MAX_TOTAL_FUNCTION_PARAMS} function parameters in total"
+        )));
+    }
     Ok(())
 }
 
@@ -281,6 +291,7 @@ mod tests {
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CONTRACT_RUST_170: &[u8] =
         include_bytes!("../testdata/cyberpunk_rust170.wasm");
+    static SAI_PERP: &[u8] = include_bytes!("../testdata/sai-perp.wasm");
 
     fn default_capabilities() -> HashSet<String> {
         ["staking".to_string()].into_iter().collect()
@@ -296,6 +307,101 @@ mod tests {
     fn check_wasm_allows_sign_ext() {
         // See https://github.com/CosmWasm/cosmwasm/issues/1727
         check_wasm(CONTRACT_RUST_170, &default_capabilities()).unwrap();
+    }
+
+    // Reusing one function type must count its parameters once per function,
+    // rather than once per type. Both fixtures stay below the per-function limit.
+    #[test]
+    fn check_wasm_total_function_params_boundary() {
+        for total in [MAX_TOTAL_FUNCTION_PARAMS, MAX_TOTAL_FUNCTION_PARAMS + 1] {
+            let mut wat = String::from(
+                r#"(module
+                    (memory 1)
+                    (func (export "interface_version_8"))
+                    (func (export "allocate"))
+                    (func (export "deallocate"))
+                    (func (export "instantiate"))"#,
+            );
+            let params = " i32".repeat(MAX_FUNCTION_PARAMS);
+            for _ in 0..total / MAX_FUNCTION_PARAMS {
+                wat.push_str(&format!("(func (param{params}))"));
+            }
+            let remainder = total % MAX_FUNCTION_PARAMS;
+            if remainder != 0 {
+                wat.push_str(&format!(
+                    "(func (param{}))",
+                    " i32".repeat(remainder)
+                ));
+            }
+            wat.push(')');
+            let wasm = wat::parse_str(wat).unwrap();
+            let parsed = ParsedWasm::parse(&wasm).unwrap();
+            assert_eq!(parsed.total_func_params, total);
+            let result = check_wasm(&wasm, &HashSet::new());
+            if total == MAX_TOTAL_FUNCTION_PARAMS {
+                result.unwrap();
+            } else {
+                assert!(
+                    matches!(result, Err(VmError::StaticValidationErr { msg, .. })
+                    if msg == "Wasm contract contains more than 10000 function parameters in total")
+                );
+            }
+        }
+    }
+
+    // A local declaration is inside a deferred function body. Checking operators
+    // in compiler middleware alone cannot reject a SIMD local with no SIMD opcode.
+    #[test]
+    fn check_wasm_rejects_disabled_feature_in_function_body() {
+        for local_type in ["i32", "v128"] {
+            let wasm = wat::parse_str(format!(
+                r#"(module
+                    (memory 1)
+                    (func (export "interface_version_8"))
+                    (func (export "allocate"))
+                    (func (export "deallocate"))
+                    (func (export "instantiate") (local {local_type})))"#,
+            ))
+            .unwrap();
+            ParsedWasm::parse(&wasm).unwrap();
+            let result = check_wasm(&wasm, &HashSet::new());
+            if local_type == "i32" {
+                result.unwrap();
+            } else {
+                let err = result.unwrap_err();
+                assert!(
+                    matches!(err, VmError::StaticValidationErr { ref msg, .. }
+                    if msg.contains("SIMD") || msg.contains("simd")),
+                    "{err:?}"
+                );
+            }
+        }
+    }
+
+    // Older interface versions intentionally fail full compatibility checks, but
+    // their valid function bodies and signature sizes must pass the added gates.
+    // The Sai fixture also exercises the complete upload validation path.
+    #[test]
+    fn check_wasm_existing_contract_fixtures() {
+        let pattern = format!("{}/testdata/*.wasm", env!("CARGO_MANIFEST_DIR"));
+        for path in glob::glob(&pattern).unwrap() {
+            let path = path.unwrap();
+            let wasm = std::fs::read(&path).unwrap();
+            if path.file_name().unwrap() == "corrupted.wasm" {
+                assert!(check_wasm(&wasm, &default_capabilities()).is_err());
+                continue;
+            }
+            let mut module = ParsedWasm::parse(&wasm)
+                .unwrap_or_else(|err| panic!("{}: {err}", path.display()));
+            check_wasm_functions(&module)
+                .unwrap_or_else(|err| panic!("{}: {err}", path.display()));
+            module
+                .validate_funcs()
+                .unwrap_or_else(|err| panic!("{}: {err}", path.display()));
+        }
+        let module = ParsedWasm::parse(SAI_PERP).unwrap();
+        let capabilities = required_capabilities_from_module(&module);
+        check_wasm(SAI_PERP, &capabilities).unwrap();
     }
 
     #[test]

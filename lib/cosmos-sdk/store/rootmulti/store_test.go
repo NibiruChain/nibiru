@@ -7,9 +7,10 @@ import (
 	"time"
 
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codecTypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

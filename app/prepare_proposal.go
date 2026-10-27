@@ -6,7 +6,8 @@ import (
 	"math"
 	"sort"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
@@ -118,7 +119,7 @@ func NewEVMPrepareProposalHandler(
 		for queue.Len() > 0 {
 			chain := heap.Pop(&queue).(*proposalChain)
 			tx := chain.current()
-			if !proposalCapacityAllows(usedBytes, uint64(len(tx.TxBytes)), maxBytes) ||
+			if !proposalCapacityAllows(usedBytes, proposalTxSize(tx.TxBytes), maxBytes) ||
 				!proposalCapacityAllows(usedGas, tx.GasWanted, maxGas) {
 				// Do not expose a later nonce from this sender when its current
 				// executable head does not fit.
@@ -129,7 +130,7 @@ func NewEVMPrepareProposalHandler(
 				continue
 			}
 			selected = append(selected, tx.TxBytes)
-			usedBytes += uint64(len(tx.TxBytes))
+			usedBytes += proposalTxSize(tx.TxBytes)
 			usedGas += tx.GasWanted
 
 			chain.index++
@@ -147,7 +148,7 @@ func NewEVMPrepareProposalHandler(
 			if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
 				gasWanted = gasTx.GetGas()
 			}
-			if !proposalCapacityAllows(usedBytes, uint64(len(txBytes)), maxBytes) ||
+			if !proposalCapacityAllows(usedBytes, proposalTxSize(txBytes), maxBytes) ||
 				!proposalCapacityAllows(usedGas, gasWanted, maxGas) {
 				continue
 			}
@@ -155,7 +156,7 @@ func NewEVMPrepareProposalHandler(
 				continue
 			}
 			selected = append(selected, txBytes)
-			usedBytes += uint64(len(txBytes))
+			usedBytes += proposalTxSize(txBytes)
 			usedGas += gasWanted
 		}
 
@@ -200,4 +201,11 @@ func executableProposalChains(
 // capacity without overflowing used or maximum.
 func proposalCapacityAllows(used, next, maximum uint64) bool {
 	return used <= maximum && next <= maximum-used
+}
+
+// proposalTxSize returns the bytes txBytes adds to a proposal as CometBFT
+// counts them against RequestPrepareProposal.MaxTxBytes: the protobuf-encoded
+// size inside block data, which exceeds the raw length by the field overhead.
+func proposalTxSize(txBytes []byte) uint64 {
+	return uint64(cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{txBytes}))
 }

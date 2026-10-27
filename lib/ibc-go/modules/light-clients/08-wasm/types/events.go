@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 

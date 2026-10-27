@@ -12,10 +12,11 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

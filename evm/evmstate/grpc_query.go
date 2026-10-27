@@ -33,7 +33,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/tracers/logger"
 	gethparams "github.com/ethereum/go-ethereum/params"
 
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 // Compile-time interface assertion

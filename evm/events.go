@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	sdkioerrors "cosmossdk.io/errors"
-	abci "github.com/cometbft/cometbft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 )

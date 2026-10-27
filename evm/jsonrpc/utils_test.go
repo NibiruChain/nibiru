@@ -3,9 +3,10 @@ package jsonrpc_test
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	gethcrypto "github.com/ethereum/go-ethereum/crypto"
 
