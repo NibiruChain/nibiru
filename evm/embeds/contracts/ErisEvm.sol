@@ -34,13 +34,8 @@ contract ErisEvm {
     /// @dev Escrow and gauge are separate Wasm contracts. Their Rust message
     /// schemas are packages/eris/src/voting_escrow.rs and amp_gauges.rs at
     /// https://github.com/erisprotocol/contracts-tokenfactory/tree/7c3acdb32907d30727bd8f4313bd91a539aaa8d8.
-    /// @dev The voting escrow. Locked receipts give allocation voting power,
-    /// and every lock change calls back into both gauges.
     string private constant ERIS_ESCROW =
         "nibi1us4rh4a9rexvde8l3m8f8nlz6wcf9qg57zk2w06kqkm4vtp96vkst9kuwd";
-    /// @dev The validator allocation gauge. Votes here set the caller's
-    /// preferred stake split for the next weekly period; the hub owner still
-    /// applies targets and rebalances.
     string private constant ERIS_GAUGE =
         "nibi1qh59hdelxfwah7g7e8k0lxu4upqatq5w4jdw60yv9shhlhm86ckq4txl92";
 
@@ -285,8 +280,6 @@ contract ErisEvm {
         _doWasmExecute(ERIS_GAUGE, args, new INibiruEvm.BankCoin[](0));
     }
 
-    /// @dev Extends the caller's escrow lock. Shared by extendLockTime and
-    /// extendLockAndVote so both send the same escrow message.
     function _extendLock(uint64 time) internal {
         _doWasmExecute(
             ERIS_ESCROW,
@@ -320,8 +313,6 @@ contract ErisEvm {
         _doWasmExecute(ERIS_ESCROW, args, funds);
     }
 
-    /// @dev Sends the caller's allocation to the gauge after _voteArgs
-    /// validates it. Shared by vote and extendLockAndVote.
     function _vote(
         string[] calldata validators,
         uint16[] calldata weights
