@@ -1,5 +1,6 @@
 # Displays Rust workspace recipes.
-setup:
+[private]
+list:
   #!/usr/bin/env bash
   just rs --list
 

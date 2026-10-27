@@ -583,6 +583,16 @@ func TestStateLockNoPOL(t *testing.T) {
 
 	validatePrecommit(t, cs1, round, 0, vss[0], nil, theBlockHash) // precommit nil but be locked on proposal
 
+	// Build vs2's proposal for the next round now, while cs1 waits for vs2's
+	// precommit. Once cs1 enters the next round it times out the proposal
+	// after cs1.config.Propose(round), about 43 ms, and building a new State
+	// here can take longer than that on a busy machine.
+	cs2, _ := randState(2) // needed so generated block is different than locked block
+	prop, propBlock := decideProposal(t, cs2, vs2, vs2.Height, vs2.Round+1)
+	if prop == nil || propBlock == nil {
+		t.Fatal("Failed to create proposal block with vs2")
+	}
+
 	bps1, err := rs.ProposalBlock.MakePartSet(partSize)
 	require.NoError(t, err)
 	signAddVotes(
@@ -594,13 +604,6 @@ func TestStateLockNoPOL(t *testing.T) {
 	ensurePrecommit(voteCh, height, round)
 
 	ensureNewTimeout(timeoutWaitCh, height, round, cs1.config.Precommit(round).Nanoseconds())
-
-	cs2, _ := randState(2) // needed so generated block is different than locked block
-	// before we time out into new round, set next proposal block
-	prop, propBlock := decideProposal(t, cs2, vs2, vs2.Height, vs2.Round+1)
-	if prop == nil || propBlock == nil {
-		t.Fatal("Failed to create proposal block with vs2")
-	}
 
 	incrementRound(vs2)
 

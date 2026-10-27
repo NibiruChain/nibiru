@@ -1,5 +1,6 @@
 # Displays available recipes by running `just -l`.
-setup:
+[private]
+list:
   #!/usr/bin/env bash
   just -l
 

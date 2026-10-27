@@ -27,7 +27,11 @@ func Perturb(testnet *e2e.Testnet) error {
 // after recovering.
 func PerturbNode(node *e2e.Node, perturbation e2e.Perturbation) (*rpctypes.ResultStatus, error) {
 	testnet := node.Testnet
-	out, err := execComposeOutput(testnet.Dir, "ps", "-q", node.Name)
+	// Empty output means the upgrade perturbation stopped <node> and started
+	// <node>_u. Count only running containers, so a stopped <node> does not
+	// hide <node>_u.
+	out, err := execComposeOutput(
+		testnet.Dir, "ps", "-q", "--status", "running", node.Name)
 	if err != nil {
 		return nil, err
 	}

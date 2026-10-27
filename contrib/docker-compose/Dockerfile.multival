@@ -1,0 +1,51 @@
+# Nibiru node image for the Chaosnet `multival` profile and
+# `just chaos determinism`. Build from the repo root:
+#
+#   docker build -f contrib/docker-compose/Dockerfile.multival \
+#     -t nibiru-multival:local .
+#
+# Unlike the `chaosnet` target in the root Dockerfile, this image holds only
+# nibid and the tools the scripts need. contrib/scripts/multival-genesis.sh
+# creates the shared genesis at container start, not at image build time.
+#
+# NIBID_EXTRA_TAGS adds Go build tags. `just chaos determinism-selftest` sets
+# it to nibiru_fault_injection to plant a non-deterministic EndBlock.
+
+ARG GO_VERSION=1.27
+
+# ----- Stage "build" ----------
+FROM golang:${GO_VERSION} AS build
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+WORKDIR /nibiru
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq liblz4-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY ["go.mod", "go.sum", "./"]
+RUN go mod download
+
+COPY . .
+
+ARG VERSION=v0.0.0-multival
+ARG NIBID_EXTRA_TAGS=""
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/nibiru/temp \
+    VERSION="${VERSION}" NIBID_EXTRA_TAGS="${NIBID_EXTRA_TAGS}" \
+    bash contrib/scripts/build-nibiru.sh --run --just-build \
+  && cp build/nibid /usr/local/bin/nibid
+
+# ----- Stage "runtime" ----------
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash ca-certificates curl jq \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /usr/local/bin/nibid /usr/local/bin/nibid
+
+EXPOSE 26656 26657 8545
+ENTRYPOINT ["nibid"]
+CMD ["version"]

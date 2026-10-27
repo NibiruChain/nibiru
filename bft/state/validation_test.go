@@ -374,8 +374,10 @@ func TestValidateBlockTime(t *testing.T) {
 		block, err := makeBlock(state, height, lastCommit)
 		require.NoError(t, err)
 
-		// Set time to before last block time
-		block.Time = block.Time.Add(-time.Millisecond * 10)
+		// Set time to before last block time. Offsetting from the median
+		// time is not enough: when blocks are more than 10ms apart, as under
+		// -race, the median minus 10ms is still after the last block time.
+		block.Time = state.LastBlockTime.Add(-time.Millisecond * 10)
 		err = blockExec.ValidateBlock(state, block)
 
 		require.ErrorContains(t, err, "not greater than last block time")

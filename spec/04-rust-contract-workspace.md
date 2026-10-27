@@ -27,7 +27,7 @@ they keep independent Cargo workspaces and lockfiles.
 
 ## Commands
 
-Use the root Rust dispatcher. Command `just rs setup` lists the available Rust
+Use the root Rust dispatcher. Command `just rs` lists the available Rust
 recipes.
 
 ```bash
