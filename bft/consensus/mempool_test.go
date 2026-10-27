@@ -117,7 +117,13 @@ func TestMempoolTxConcurrentWithCommit(t *testing.T) {
 	cs := newStateWithConfigAndBlockStore(config, state, privVals[0], NewCounterApplication(), blockDB)
 	err := stateStore.Save(state)
 	require.NoError(t, err)
-	newBlockHeaderCh := subscribe(cs.eventBus, types.EventQueryNewBlockHeader)
+	// With the 10 ms test timeouts and SkipTimeoutCommit, this node commits a
+	// block every few milliseconds. A buffered subscription has room for one
+	// event, and the event bus cancels it as soon as a second header arrives
+	// before this loop reads the first. The loop then never sees the rest of
+	// the txs and times out. An unbuffered subscription makes the node wait
+	// for this loop instead.
+	newBlockHeaderCh := subscribeUnBuffered(cs.eventBus, types.EventQueryNewBlockHeader)
 
 	const numTxs int64 = 3000
 	go deliverTxsRange(cs, 0, int(numTxs))
