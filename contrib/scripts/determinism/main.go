@@ -275,16 +275,7 @@ func runCompare(args []string) error {
 
 	heights, stopped := waitForHeight(nodes, *target, *stall, *timeout)
 	if len(stopped) > 0 {
-		if *failedOut != "" {
-			var b strings.Builder
-			for _, n := range stopped {
-				b.WriteString(n.Name + "\n")
-			}
-			_ = os.WriteFile(*failedOut, []byte(b.String()), 0o644)
-		}
-		reportStopped(nodes, heights, stopped)
-		return fmt.Errorf("%d node(s) stopped before height %d",
-			len(stopped), *target)
+		return failStopped(nodes, heights, stopped, *target, *failedOut)
 	}
 
 	fmt.Printf("compare: all %d nodes reached height %d; comparing 1..%d\n",
@@ -302,6 +293,16 @@ func runCompare(args []string) error {
 			}
 		}
 	}
+
+	// The header at height h carries the app hash after h-1, so block
+	// target+1 holds the app hash after target, the one /abci_info reports.
+	heights, stopped = waitForHeight(nodes, *target+1, *stall, *timeout)
+	if len(stopped) > 0 {
+		return failStopped(nodes, heights, stopped, *target+1, *failedOut)
+	}
+	if err := compareAppHashAt(nodes, *target+1); err != nil {
+		return err
+	}
 	okTxs := txs - failedTxs
 	if okTxs < *minOKTxs {
 		fmt.Printf("compare: FAIL: %d txs with code 0 on heights 1..%d, "+
@@ -313,6 +314,47 @@ func runCompare(args []string) error {
 	fmt.Printf("compare: OK, %d nodes agree on heights 1..%d "+
 		"(%d txs, %d with a non-zero code)\n",
 		len(nodes), *target, txs, failedTxs)
+	return nil
+}
+
+// failStopped writes the stopped nodes to failedOut (when set), reports why
+// they stopped, and returns the error for runCompare.
+func failStopped(
+	nodes []Node, heights []int64, stopped []Node, target int64,
+	failedOut string,
+) error {
+	if failedOut != "" {
+		var b strings.Builder
+		for _, n := range stopped {
+			b.WriteString(n.Name + "\n")
+		}
+		_ = os.WriteFile(failedOut, []byte(b.String()), 0o644)
+	}
+	reportStopped(nodes, heights, stopped)
+	return fmt.Errorf("%d node(s) stopped before height %d",
+		len(stopped), target)
+}
+
+// compareAppHashAt compares header.app_hash of block h across nodes.
+func compareAppHashAt(nodes []Node, h int64) error {
+	var base blockFields
+	for i, n := range nodes {
+		b, err := getBlock(n, h)
+		if err != nil {
+			return fmt.Errorf("height %d on %s: %w", h, n.Name, err)
+		}
+		if i == 0 {
+			base = b
+			continue
+		}
+		if b.AppHash != base.AppHash {
+			fmt.Printf("compare: FAIL: first difference at height %d, "+
+				"field header.app_hash\n", h)
+			fmt.Printf("  %s: %s\n  %s: %s\n",
+				nodes[0].Name, base.AppHash, n.Name, b.AppHash)
+			return fmt.Errorf("nodes disagree at height %d (header.app_hash)", h)
+		}
+	}
 	return nil
 }
 
