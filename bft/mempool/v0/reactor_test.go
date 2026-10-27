@@ -48,7 +48,7 @@ func TestReactorBroadcastTxsMessage(t *testing.T) {
 	// replace Connect2Switches (full mesh) with a func, which connects first
 	// reactor to others and nothing else, this test should also pass with >2 reactors.
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -70,7 +70,7 @@ func TestReactorBroadcastTxsMessage(t *testing.T) {
 func TestReactorConcurrency(t *testing.T) {
 	config := cfg.TestConfig()
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -131,7 +131,7 @@ func TestReactorConcurrency(t *testing.T) {
 func TestReactorNoBroadcastToSender(t *testing.T) {
 	config := cfg.TestConfig()
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -154,7 +154,7 @@ func TestReactor_MaxTxBytes(t *testing.T) {
 	config := cfg.TestConfig()
 
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -192,7 +192,7 @@ func TestBroadcastTxForPeerStopsWhenPeerStops(t *testing.T) {
 
 	config := cfg.TestConfig()
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -217,13 +217,16 @@ func TestBroadcastTxForPeerStopsWhenReactorStops(t *testing.T) {
 
 	config := cfg.TestConfig()
 	const N = 2
-	reactors := makeAndConnectReactors(config, N)
+	_, switches := makeAndConnectReactors(config, N)
 
-	// stop reactors
-	for _, r := range reactors {
-		if err := r.Stop(); err != nil {
-			assert.NoError(t, err)
-		}
+	// Stop the switches, not only the reactors. Stopping a reactor leaves the
+	// peer connections open, and their goroutines block forever. leaktest
+	// usually misses them because its snapshot already holds them, but on a
+	// busy machine they can still be unstarted when the snapshot is taken.
+	// leaktest skips unstarted goroutines, so they then show up as leaks.
+	// Stopping the switches stops the peers and every goroutine they started.
+	for _, s := range switches {
+		assert.NoError(t, s.Stop())
 	}
 
 	// check that we are not leaking any go-routines
@@ -271,7 +274,7 @@ func TestMempoolIDsPanicsIfNodeRequestsOvermaxActiveIDs(t *testing.T) {
 func TestDontExhaustMaxActiveIDs(t *testing.T) {
 	config := cfg.TestConfig()
 	const N = 1
-	reactors := makeAndConnectReactors(config, N)
+	reactors, _ := makeAndConnectReactors(config, N)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -301,7 +304,7 @@ func TestDontExhaustMaxActiveIDs(t *testing.T) {
 func TestMempoolReactorMaxActiveOutboundConnections(t *testing.T) {
 	config := cfg.TestConfig()
 	config.Mempool.ExperimentalMaxGossipConnectionsToNonPersistentPeers = 1
-	reactors := makeAndConnectReactors(config, 4)
+	reactors, _ := makeAndConnectReactors(config, 4)
 	defer func() {
 		for _, r := range reactors {
 			if err := r.Stop(); err != nil {
@@ -351,8 +354,15 @@ func mempoolLogger() log.Logger {
 	})
 }
 
-// connect N mempool reactors through N switches
-func makeAndConnectReactors(config *cfg.Config, n int) []*Reactor {
+// makeAndConnectReactors starts n mempool reactors, each on its own p2p
+// switch, and connects every switch to every other one.
+//
+// It returns the switches as well as the reactors because stopping a reactor
+// leaves its switch, its peers, and their connection goroutines running.
+// A test that checks for leaked goroutines must stop the switches, which stop
+// their peers and reactors too. Tests that only need the reactors ignore the
+// second value. The shape matches upstream CometBFT v0.38.x.
+func makeAndConnectReactors(config *cfg.Config, n int) ([]*Reactor, []*p2p.Switch) {
 	reactors := make([]*Reactor, n)
 	logger := mempoolLogger()
 	for i := 0; i < n; i++ {
@@ -365,12 +375,12 @@ func makeAndConnectReactors(config *cfg.Config, n int) []*Reactor {
 		reactors[i].SetLogger(logger.With("validator", i))
 	}
 
-	p2p.MakeConnectedSwitches(config.P2P, n, func(i int, s *p2p.Switch) *p2p.Switch {
+	switches := p2p.MakeConnectedSwitches(config.P2P, n, func(i int, s *p2p.Switch) *p2p.Switch {
 		s.AddReactor("MEMPOOL", reactors[i])
 		return s
 
 	}, p2p.Connect2Switches)
-	return reactors
+	return reactors, switches
 }
 
 func newUniqueTxs(n int) types.Txs {

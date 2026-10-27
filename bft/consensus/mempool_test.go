@@ -56,9 +56,16 @@ func TestMempoolProgressAfterCreateEmptyBlocksInterval(t *testing.T) {
 	newBlockCh := subscribe(cs.eventBus, types.EventQueryNewBlock)
 	startTestRound(cs, cs.Height, cs.Round)
 
-	ensureNewEventOnChannel(newBlockCh)   // first block gets committed
-	ensureNoNewEventOnChannel(newBlockCh) // then we dont make a block ...
-	ensureNewEventOnChannel(newBlockCh)   // until the CreateEmptyBlocksInterval has passed
+	ensureNewEventOnChannel(newBlockCh) // first block gets committed
+	// The interval timer for height 2 starts when the node enters that height,
+	// before this goroutine receives the first block. A no-event window as long
+	// as the interval would end after the timer fires, so the second block can
+	// land inside it. Check half the interval instead. This catches a block
+	// made right away or an interval that fires in under about 100 ms, but not
+	// one that fires between about 100 and 200 ms.
+	ensureNoNewEvent(newBlockCh, ensureTimeout/2,
+		"We should be stuck waiting, not receiving new event on the channel") // then we dont make a block ...
+	ensureNewEventOnChannel(newBlockCh) // until the CreateEmptyBlocksInterval has passed
 }
 
 func TestMempoolProgressInHigherRound(t *testing.T) {
@@ -117,7 +124,13 @@ func TestMempoolTxConcurrentWithCommit(t *testing.T) {
 	cs := newStateWithConfigAndBlockStore(config, state, privVals[0], NewCounterApplication(), blockDB)
 	err := stateStore.Save(state)
 	require.NoError(t, err)
-	newBlockHeaderCh := subscribe(cs.eventBus, types.EventQueryNewBlockHeader)
+	// With the 10 ms test timeouts and SkipTimeoutCommit, this node commits a
+	// block every few milliseconds. A buffered subscription has room for one
+	// event, and the event bus cancels it as soon as a second header arrives
+	// before this loop reads the first. The loop then never sees the rest of
+	// the txs and times out. An unbuffered subscription makes the node wait
+	// for this loop instead.
+	newBlockHeaderCh := subscribeUnBuffered(cs.eventBus, types.EventQueryNewBlockHeader)
 
 	const numTxs int64 = 3000
 	go deliverTxsRange(cs, 0, int(numTxs))
