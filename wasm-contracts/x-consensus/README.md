@@ -25,7 +25,8 @@ consensus params.
   together. If the query fails or the values are invalid, the store keeps
   its last good params and the chain keeps running.
 - **Where it comes from.** The x/xconsensus module creates it with
-  `instantiate2` from the embedded build `x/xconsensus/x_consensus.wasm`:
+  `instantiate2` from the embedded build `x/xconsensus/x_consensus.wasm.gz`
+(decompressed in Go before it is stored):
   at genesis for new chains, and in the v2.22 upgrade handler for existing
   chains. The creator is the module address
   `authtypes.NewModuleAddress("xconsensus")` and the salt is `x-consensus`,
@@ -149,6 +150,14 @@ module checks again before copying.
 
 ```bash
 cargo test -p x-consensus
-just rs wasm-all release   # optimized build into wasm-contracts/artifacts
+just rs optimizer build --manifest-path Cargo.toml -p x-consensus \
+  --output-dir wasm-contracts/artifacts --mode release   # AMD64 release build
 just rs wasm-check
+gzip -9 -n -c wasm-contracts/artifacts/x_consensus.wasm > x/xconsensus/x_consensus.wasm.gz
 ```
+
+To update the embedded build, commit the new `x/xconsensus/x_consensus.wasm.gz`
+and set `XConsensusWasmSHA256` in `x/xconsensus/x_consensus.go` to the SHA-256
+of the decompressed `.wasm`, which is the on-chain code checksum. The
+x-consensus artifact workflow rebuilds the release on pull requests and fails
+if the decompressed embedded bytes differ.

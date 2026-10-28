@@ -36,14 +36,22 @@
 package xconsensus
 
 import (
+	"bytes"
+	"compress/gzip"
 	_ "embed"
 	"fmt"
+	"io"
 	"time"
 
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-// XConsensusWasm is the optimized x-consensus contract bytecode.
+// XConsensusWasm is the optimized x-consensus contract bytecode, decompressed
+// from the embedded x_consensus.wasm.gz when the package loads. Keeping the
+// raw bytes here means every caller (the genesis and upgrade paths through
+// EnsureXConsensus, and the tests) works on the exact code the chain stores,
+// whose SHA-256 is the on-chain code checksum.
 //
 //   - Source: wasm-contracts/x-consensus (crate x-consensus 0.1.0) at
 //     commit 9f1d07e87b63b995816d86e4b388608a4cbfed08. Later doc-only edits
@@ -55,11 +63,43 @@ import (
 //     linux/amd64), produced by the x-consensus artifact workflow
 //     (.github/workflows/x-consensus-artifact.yml), which rebuilds it on
 //     every relevant pull request and fails if these bytes differ.
-//   - SHA-256: f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e
-//   - Size: 178226 bytes.
+//   - Compression: gzip -9 -n into x_consensus.wasm.gz, the same convention
+//     as the repo's gzipped Wasm fixtures. -n drops the name and timestamp
+//     so recompressing gives the same file. Only the decompressed bytes are
+//     checked; the .gz is packaging and may differ between gzip versions.
+//   - SHA-256 of the decompressed code:
+//     f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e
+//   - Size: 178226 bytes decompressed, 64296 bytes gzipped.
+var XConsensusWasm = mustGunzip(xConsensusWasmGz)
+
+// xConsensusWasmGz is the gzipped contract build that ships in nibid. Gzip
+// cuts the embedded size by about two thirds and keeps rebuild diffs small,
+// as for other gzipped Wasm in the repo.
 //
-//go:embed x_consensus.wasm
-var XConsensusWasm []byte
+//go:embed x_consensus.wasm.gz
+var xConsensusWasmGz []byte
+
+// mustGunzip decompresses the embedded build, reading at most
+// wasmtypes.MaxWasmSize bytes, the Wasm module's own limit on stored code, so
+// the cap rejects nothing the chain would accept. It panics on a corrupt or oversized archive: the bytes are fixed at
+// build time, so a failure is a broken release, and TestEmbeddedWasm catches
+// it before one ships.
+func mustGunzip(gz []byte) []byte {
+	r, err := gzip.NewReader(bytes.NewReader(gz))
+	if err != nil {
+		panic(fmt.Sprintf("x-consensus: open embedded gzip: %v", err))
+	}
+	defer r.Close()
+	code, err := io.ReadAll(io.LimitReader(r, int64(wasmtypes.MaxWasmSize)+1))
+	if err != nil {
+		panic(fmt.Sprintf("x-consensus: read embedded gzip: %v", err))
+	}
+	if len(code) > wasmtypes.MaxWasmSize {
+		panic(fmt.Sprintf("x-consensus: embedded Wasm exceeds %d bytes",
+			wasmtypes.MaxWasmSize))
+	}
+	return code
+}
 
 // XConsensusWasmSHA256 is the hex SHA-256 of XConsensusWasm. Wasm code
 // checksums are SHA-256 of the bytecode, so this is also the Wasm code

@@ -56,9 +56,12 @@ func updateParams(t *testing.T) xconsensus.ConsensusParams {
 	return params
 }
 
-// TestEmbeddedWasm checks that the embedded bytes are Wasm and match
-// XConsensusWasmSHA256, so a rebuilt artifact cannot ship with a stale
-// checksum, which also fixes the published contract address.
+// TestEmbeddedWasm checks that the embedded x_consensus.wasm.gz decompresses
+// (at package load, within the Wasm size limit) to a Wasm module whose
+// SHA-256 matches XConsensusWasmSHA256. A corrupt archive panics before the
+// test runs, so a broken build cannot ship, and a rebuilt artifact cannot
+// ship with a stale checksum, which also fixes the published contract
+// address.
 func TestEmbeddedWasm(t *testing.T) {
 	require.NotEmpty(t, xconsensus.XConsensusWasm)
 	require.True(t,
