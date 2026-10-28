@@ -53,6 +53,32 @@ optimizer-oracle-test artifact:
 wasm-check:
   just rs optimizer check wasm-contracts/artifacts/*.wasm
 
+# The embedded x-consensus bytes become chain state at genesis and in the
+# upgrade handler, and their checksum fixes the contract address, so they must
+# match a fresh build of the source. Only decompressed bytes are compared,
+# since gzip output can differ between gzip versions. On a mismatch, commit the
+# printed .gz and set ContractWasmSHA256 in x/consensus/wasm.go.
+#
+# Check that x/consensus/x_consensus.wasm.gz is the release build of x-consensus.
+wasm-embed-check:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  out="wasm-contracts/artifacts/embed-check"
+  just rs optimizer build --manifest-path Cargo.toml -p x-consensus \
+    --output-dir "$out" --mode release
+  built="$(sha256sum "$out/x_consensus.wasm" | cut -d' ' -f1)"
+  embedded="$(gzip -dc x/consensus/x_consensus.wasm.gz | sha256sum | cut -d' ' -f1)"
+  constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' x/consensus/wasm.go)"
+  echo "release build:           $built"
+  echo "embedded (decompressed): $embedded"
+  echo "ContractWasmSHA256:      $constant"
+  if [ "$built" != "$embedded" ] || [ "$built" != "$constant" ]; then
+    gzip -9 -n -c "$out/x_consensus.wasm" > "$out/x_consensus.wasm.gz"
+    echo "x/consensus/x_consensus.wasm.gz is not the release build of wasm-contracts/x-consensus." >&2
+    echo "Commit $out/x_consensus.wasm.gz and set ContractWasmSHA256 to $built." >&2
+    exit 1
+  fi
+
 # Compiles a single CW contract to wasm bytecode.
 # wasm-single:
 #   bash scripts/wasm-out.sh --single
