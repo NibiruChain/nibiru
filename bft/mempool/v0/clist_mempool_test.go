@@ -694,6 +694,64 @@ func TestMempoolNoCacheOverflow(t *testing.T) {
 	assert.True(t, found == 1)
 }
 
+// TestRecheckStateMachine verifies the recheck state transitions and that
+// setRecheckFull only moves active to full, so a Lock that overlaps the end
+// of rechecking can never leave the mempool reporting full afterwards.
+// Ported from cometbft/cometbft#5837.
+func TestRecheckStateMachine(t *testing.T) {
+	app := kvstore.NewApplication()
+	cc := proxy.NewLocalClientCreator(app)
+	mp, cleanup := newMempoolWithApp(cc)
+	defer cleanup()
+
+	requireState := func(want recheckStateEnum, full bool) {
+		t.Helper()
+		got := recheckStateEnum(mp.recheckState.Load())
+		require.Equal(t, want, got)
+		require.Equal(t, full, mp.recheckConsideredFull())
+		if full {
+			require.Error(t, mp.isFull(1))
+		} else {
+			require.NoError(t, mp.isFull(1))
+		}
+	}
+
+	// Initial state: idle.
+	requireState(recheckStateIdle, false)
+
+	// setRecheckFull on idle is a no-op: idle never becomes full.
+	require.False(t, mp.setRecheckFull(),
+		"setRecheckFull must not move idle to full")
+	requireState(recheckStateIdle, false)
+
+	// Lock on idle leaves the state idle.
+	mp.Lock()
+	mp.Unlock()
+	requireState(recheckStateIdle, false)
+
+	// idle -> active, as recheckTxs does.
+	mp.recheckState.Store(int32(recheckStateActive))
+	requireState(recheckStateActive, false)
+
+	// active -> full via Lock.
+	mp.Lock()
+	mp.Unlock()
+	requireState(recheckStateFull, true)
+
+	// A second setRecheckFull on full does not change the state.
+	require.False(t, mp.setRecheckFull())
+	requireState(recheckStateFull, true)
+
+	// full -> idle when rechecking finishes, in a single store.
+	mp.setRecheckDone()
+	requireState(recheckStateIdle, false)
+
+	// active -> idle when rechecking finishes before a new block.
+	mp.recheckState.Store(int32(recheckStateActive))
+	mp.setRecheckDone()
+	requireState(recheckStateIdle, false)
+}
+
 // This will non-deterministically catch some concurrency failures like
 // https://github.com/tendermint/tendermint/issues/3509
 // TODO: all of the tests should probably also run using the remote proxy app
