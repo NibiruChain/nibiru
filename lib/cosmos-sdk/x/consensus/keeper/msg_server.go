@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 type msgServer struct {

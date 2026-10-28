@@ -128,8 +128,10 @@ func setupErisReplay(t *testing.T) (*app.NibiruApp, sdk.Context) {
 	require.NoError(t, reader.Close())
 	checksum := sha256.Sum256(bytecode)
 	require.Equal(t, "e1c2be31ae008a015efa16b51f74ca1a014f4b1d0952da12ba3f60aaffa66321", hex.EncodeToString(checksum[:]))
-	deps := evmtest.NewTestDeps()
-	a, ctx := deps.App, deps.Ctx()
+	// The replay imports Wasm genesis into the app, so it needs the empty
+	// Wasm store of a pre-v2.22 chain, without the genesis x-consensus code.
+	a, _ := testapp.NewNibiruTestAppPreXConsensus()
+	ctx := testapp.NewContext(a)
 	ctx = ctx.WithChainID("cataclysm-1").WithBlockHeight(snapshot.Height)
 	capturedTime, err := time.Parse(time.RFC3339Nano, snapshot.Time)
 	require.NoError(t, err)

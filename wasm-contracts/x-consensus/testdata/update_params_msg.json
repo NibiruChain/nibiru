@@ -1,0 +1,19 @@
+{
+  "update_params": {
+    "params": {
+      "block": {
+        "max_bytes": "22020096",
+        "max_gas": "-1"
+      },
+      "evidence": {
+        "max_age_num_blocks": "100000",
+        "max_age_duration_ns": "172800000000000",
+        "max_bytes": "1048576"
+      },
+      "validator": {
+        "pub_key_types": ["ed25519", "secp256k1"]
+      },
+      "min_block_commit_duration_ms": 200
+    }
+  }
+}

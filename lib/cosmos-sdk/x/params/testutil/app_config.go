@@ -13,10 +13,10 @@ import (
 
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
-	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
 	paramstypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"

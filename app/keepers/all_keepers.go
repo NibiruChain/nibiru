@@ -4,7 +4,6 @@ import (
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/docs/statik"
 	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
-	consensusparamkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
 	distrkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/keeper"
 	feegrantkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
 	govkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/keeper"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
+	consensuskeeper "github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
 	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 	epochskeeper "github.com/NibiruChain/nibiru/v2/x/epochs/keeper"
 	inflationkeeper "github.com/NibiruChain/nibiru/v2/x/mint/keeper"
@@ -40,11 +40,10 @@ type PublicKeepers struct {
 	BankKeeper    *evmstate.NibiruBankKeeper
 	StakingKeeper *stakingkeeper.Keeper
 	/* DistrKeeper is the keeper of the distribution store */
-	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             *govkeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
-	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	UpgradeKeeper         *upgradekeeper.Keeper
+	DistrKeeper    distrkeeper.Keeper
+	GovKeeper      *govkeeper.Keeper
+	FeeGrantKeeper feegrantkeeper.Keeper
+	UpgradeKeeper  *upgradekeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
@@ -66,6 +65,12 @@ type PublicKeepers struct {
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmstate.Keeper
+
+	// ConsensusKeeper owns the x/consensus store, which baseapp uses as its
+	// consensus param store, copies the params from the x-consensus contract
+	// into it each block, and holds the chain commit wait for Nibiru BFT. A
+	// pointer: it holds atomics shared with the engine.
+	ConsensusKeeper *consensuskeeper.Keeper
 
 	// WASM keepers
 	WasmKeeper         wasmkeeper.Keeper
