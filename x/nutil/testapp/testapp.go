@@ -97,9 +97,46 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	nibiruApp *app.NibiruApp, gen app.GenesisState,
 ) {
+	return NewNibiruTestAppWithDB(tmdb.NewMemDB(), customGenesisOverride)
+}
+
+// NewNibiruTestAppWithDB is NewNibiruTestApp on a caller-owned database, so a
+// test can commit blocks, then open a second app instance on the same
+// database to simulate a node restart.
+func NewNibiruTestAppWithDB(db tmdb.DB, customGenesisOverride app.GenesisState) (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
+) {
+	return newNibiruTestApp(db, customGenesisOverride, sims.DefaultConsensusParams)
+}
+
+// NewNibiruTestAppPreXConsensus returns a chain as it looked before the
+// v2.22 upgrade: the x/consensus store holds sims.DefaultConsensusParams, like
+// every test app, but no x-consensus contract exists and the Wasm store is
+// empty. Use it for upgrade tests, and for Wasm tests that assume an empty
+// Wasm genesis (code ID 1 free, no contracts).
+//
+// InitChain sends no consensus params, which is the only case where genesis
+// skips the contract (xconsensus.ErrNoStoredParams); the params are stored
+// right after, in the same uncommitted genesis state.
+func NewNibiruTestAppPreXConsensus() (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
+) {
+	nibiruApp, gen = newNibiruTestApp(tmdb.NewMemDB(), app.GenesisState{}, nil)
+	nibiruApp.ConsensusParamsKeeper.Set(
+		NewContext(nibiruApp), sims.DefaultConsensusParams)
+	return nibiruApp, gen
+}
+
+// newNibiruTestApp builds the test app on db and runs InitChain with the
+// given consensus params (nil sends none).
+func newNibiruTestApp(
+	db tmdb.DB,
+	customGenesisOverride app.GenesisState,
+	consensusParams *tmproto.ConsensusParams,
+) (nibiruApp *app.NibiruApp, gen app.GenesisState) {
 	app := app.NewNibiruApp(
 		log.NewNopLogger(),
-		tmdb.NewMemDB(),
+		db,
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*appOpts=*/ sims.EmptyAppOptions{},
@@ -143,8 +180,11 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 		panic(err)
 	}
 
+	// Real genesis always has a time, and x-consensus is instantiated during
+	// InitChain, where Wasm requires a positive block time.
 	app.InitChain(abci.RequestInitChain{
-		ConsensusParams: sims.DefaultConsensusParams,
+		Time:            time.Now().UTC(),
+		ConsensusParams: consensusParams,
 		AppStateBytes:   stateBytes,
 	})
 

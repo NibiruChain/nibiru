@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -107,6 +108,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
+	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -363,6 +365,8 @@ func NewNibiruApp(
 	}
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
+	app.XConsensusKeeper = xconsensus.NewKeeper(
+		&app.WasmKeeper, &app.ConsensusParamsKeeper, app.SudoKeeper)
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
@@ -384,6 +388,7 @@ func NewNibiruApp(
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
+		xconsensus.NewAppModule(app.XConsensusKeeper),
 	); err != nil {
 		panic(err)
 	}
@@ -394,6 +399,11 @@ func NewNibiruApp(
 			delete(app.ModuleManager.Modules, name)
 		}
 	}
+
+	// x-consensus is the only writer of consensus params. x/consensus keeps
+	// its store (the copy baseapp reads) and its Params query, but its
+	// MsgUpdateParams is rejected in the router.
+	app.MsgServiceRouter().SetCircuit(xconsensusCircuitBreaker{})
 
 	// make sure to get the ibc tendermint client interface types
 	ibctm.AppModuleBasic{}.RegisterInterfaces(app.interfaceRegistry)
@@ -491,6 +501,7 @@ func NewNibiruApp(
 		if err := ibcwasmkeeper.InitializePinnedCodes(app.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
+		app.warmXConsensusCommitWait()
 	}
 
 	return app
@@ -517,7 +528,31 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	}
 	EnsureERC2470AuthAccount(app.appCodec, genesisState)
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	res := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+
+	// Create x-consensus after module genesis: it is seeded from the params
+	// baseapp stored before genesis, Wasm genesis must have run, and on an
+	// imported genesis the contract already exists, so this is a no-op. It is
+	// not a module InitGenesis because Manager.InitGenesis skips modules that
+	// are missing from the genesis JSON. A chain without the contract would
+	// silently keep static params, so fail loudly instead. The one exception
+	// is a genesis without consensus params, which only test harnesses send.
+	err := app.XConsensusKeeper.EnsureXConsensus(ctx)
+	switch {
+	case errors.Is(err, xconsensus.ErrNoStoredParams):
+		ctx.Logger().Info("x-consensus not created: genesis has no consensus params",
+			"module", xconsensus.ModuleName)
+	case err != nil:
+		panic(fmt.Errorf("create x-consensus at genesis: %w", err))
+	default:
+		// An imported genesis can carry a set commit wait. Load it so the
+		// first height already uses it.
+		if err := app.XConsensusKeeper.WarmCommitWait(ctx); err != nil {
+			ctx.Logger().Error("could not load the x-consensus commit wait",
+				"module", xconsensus.ModuleName, "err", err)
+		}
+	}
+	return res
 }
 
 // LoadHeight loads a particular height

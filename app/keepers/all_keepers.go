@@ -31,6 +31,7 @@ import (
 	oraclekeeper "github.com/NibiruChain/nibiru/v2/x/oracle/keeper"
 	sudokeeper "github.com/NibiruChain/nibiru/v2/x/sudo/keeper"
 	tokenfactorykeeper "github.com/NibiruChain/nibiru/v2/x/tokenfactory/keeper"
+	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
 type PublicKeepers struct {
@@ -66,6 +67,11 @@ type PublicKeepers struct {
 	DevGasKeeper       devgaskeeper.Keeper
 	TokenFactoryKeeper tokenfactorykeeper.Keeper
 	EvmKeeper          *evmstate.Keeper
+
+	// XConsensusKeeper copies consensus params from the x-consensus contract
+	// into the x/consensus store each block and holds the chain commit wait
+	// for Nibiru BFT. A pointer: it holds atomics shared with the engine.
+	XConsensusKeeper *xconsensus.Keeper
 
 	// WASM keepers
 	WasmKeeper         wasmkeeper.Keeper
