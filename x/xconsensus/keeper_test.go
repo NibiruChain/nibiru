@@ -120,13 +120,47 @@ func (c *chain) storedParams() cmtproto.ConsensusParams {
 // update executes UpdateParams as sender in the current block.
 func (c *chain) update(sender sdk.AccAddress, params xconsensus.ConsensusParams) error {
 	c.t.Helper()
-	msg, err := json.Marshal(xconsensus.ExecuteMsg{
+	return c.execute(sender, xconsensus.ExecuteMsg{
 		UpdateParams: &xconsensus.UpdateParamsMsg{Params: params},
 	})
+}
+
+// execute sends msg to x-consensus as sender in the current block, the way
+// a MsgExecuteContract tx would.
+func (c *chain) execute(sender sdk.AccAddress, msg xconsensus.ExecuteMsg) error {
+	c.t.Helper()
+	bz, err := json.Marshal(msg)
 	require.NoError(c.t, err)
 	_, err = wasmkeeper.NewDefaultPermissionKeeper(&c.app.WasmKeeper).
-		Execute(c.ctx, c.contract(), sender, msg, sdk.NewCoins())
+		Execute(c.ctx, c.contract(), sender, bz, sdk.NewCoins())
 	return err
+}
+
+// migrateMsg is ExecuteMsg.Migrate to codeID with an empty migrate message.
+func migrateMsg(codeID uint64) xconsensus.ExecuteMsg {
+	return xconsensus.ExecuteMsg{Migrate: &xconsensus.MigrateExecMsg{
+		CodeID: codeID, Msg: []byte(`{}`),
+	}}
+}
+
+// storeCode uploads a second copy of the x-consensus code as sender, with
+// the given instantiate permission, and returns its code ID.
+func (c *chain) storeCode(
+	sender sdk.AccAddress, access wasmtypes.AccessConfig,
+) uint64 {
+	c.t.Helper()
+	codeID, _, err := wasmkeeper.NewDefaultPermissionKeeper(&c.app.WasmKeeper).
+		Create(c.ctx, sender, xconsensus.XConsensusWasm, &access)
+	require.NoError(c.t, err)
+	return codeID
+}
+
+// contractInfo returns the Wasm contract info of x-consensus.
+func (c *chain) contractInfo() *wasmtypes.ContractInfo {
+	c.t.Helper()
+	info := c.app.WasmKeeper.GetContractInfo(c.ctx, c.contract())
+	require.NotNil(c.t, info)
+	return info
 }
 
 // writeContractParams overwrites the contract's stored params with raw JSON,
@@ -173,9 +207,8 @@ func mustProto(
 }
 
 // TestGenesisCreatesXConsensus checks a fresh chain: InitChain creates exactly
-// one x-consensus, created by the module address, with the x/sudo root as Wasm
-// admin, code instantiable by nobody else, the genesis params, and the commit
-// wait unset. testapp's genesis bonds its validator through staking genesis;
+// one x-consensus, created by the module address, as its own Wasm admin, code
+// instantiable by nobody else, the genesis params, and the commit wait unset. testapp's genesis bonds its validator through staking genesis;
 // gentxs are covered by the localnet check, which uses real gentxs.
 func TestGenesisCreatesXConsensus(t *testing.T) {
 	c := newChain(t)
@@ -184,7 +217,7 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 	info := c.app.WasmKeeper.GetContractInfo(c.ctx, c.contract())
 	require.NotNil(t, info)
 	require.Equal(t, xconsensus.CreatorAddr().String(), info.Creator)
-	require.Equal(t, testutil.ADDR_SUDO_ROOT, info.Admin)
+	require.Equal(t, c.contract().String(), info.Admin, "x-consensus must be its own admin")
 	require.Equal(t, xconsensus.ContractLabel, info.Label)
 	code := c.app.WasmKeeper.GetCodeInfo(c.ctx, info.CodeID)
 	require.Equal(t, wasmtypes.AccessTypeNobody, code.InstantiateConfig.Permission)
@@ -205,6 +238,128 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 	// EnsureXConsensus is idempotent.
 	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
 	require.Len(t, c.contractsByCreator(), 1)
+}
+
+// TestPredictedAddress checks that PredictContractAddr, computed from the
+// embedded checksum alone, is the address genesis created. Operators and docs
+// can publish this address before the chain or upgrade creates it.
+func TestPredictedAddress(t *testing.T) {
+	c := newChain(t)
+	checksum, err := hex.DecodeString(xconsensus.XConsensusWasmSHA256)
+	require.NoError(t, err)
+	predicted := xconsensus.PredictContractAddr(checksum)
+	require.Equal(t, predicted, c.contract())
+	require.Equal(t, predicted.String(), c.contractInfo().Admin)
+	t.Logf("x-consensus address: %s (creator %s)",
+		predicted, xconsensus.CreatorAddr())
+}
+
+// TestSelfAdminMigrate checks the self-admin model: the x/sudo root migrates
+// x-consensus by executing Migrate on the contract, which then migrates
+// itself. The code ID changes and the params survive. The new code must let
+// the contract instantiate it, because the Wasm keeper checks the caller,
+// here the contract, against the new code's instantiate permission.
+func TestSelfAdminMigrate(t *testing.T) {
+	c := newChain(t)
+	want := changedParams(t, 250)
+	require.NoError(t, c.update(rootAddr(), want))
+	oldCodeID := c.contractInfo().CodeID
+
+	closed := c.storeCode(rootAddr(), wasmtypes.AllowNobody)
+	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(closed)),
+		"to use new code")
+
+	newCodeID := c.storeCode(rootAddr(),
+		wasmtypes.AccessTypeAnyOfAddresses.With(c.contract()))
+	require.NotEqual(t, oldCodeID, newCodeID)
+	require.NoError(t, c.execute(rootAddr(), migrateMsg(newCodeID)))
+
+	info := c.contractInfo()
+	require.Equal(t, newCodeID, info.CodeID)
+	require.Equal(t, c.contract().String(), info.Admin)
+	require.Equal(t, want, c.contractParams())
+
+	// The migrated contract still serves the EndBlocker.
+	res := c.nextBlock()
+	require.Equal(t, mustProto(t, want, nil), *res.ConsensusParamUpdates)
+}
+
+// TestSelfAdminRootOnly checks that only the live x/sudo root can migrate
+// x-consensus or move its admin, and that a root rotation moves that right
+// at once, with no MsgUpdateAdmin.
+func TestSelfAdminRootOnly(t *testing.T) {
+	c := newChain(t)
+	codeID := c.storeCode(rootAddr(),
+		wasmtypes.AccessTypeAnyOfAddresses.With(c.contract()))
+	outsider := testutil.NewAccAddress()
+	oldCodeID := c.contractInfo().CodeID
+
+	require.ErrorContains(t, c.execute(outsider, migrateMsg(codeID)),
+		"is not the x/sudo root")
+	require.ErrorContains(t, c.execute(outsider, xconsensus.ExecuteMsg{
+		UpdateAdmin: &xconsensus.UpdateAdminMsg{Admin: outsider.String()},
+	}), "is not the x/sudo root")
+	// Sending MsgMigrateContract directly fails too: the admin is the
+	// contract, not the root.
+	_, err := wasmkeeper.NewDefaultPermissionKeeper(&c.app.WasmKeeper).
+		Migrate(c.ctx, c.contract(), rootAddr(), codeID, []byte(`{}`))
+	require.ErrorContains(t, err, "can not migrate")
+	require.Equal(t, oldCodeID, c.contractInfo().CodeID)
+	require.Equal(t, c.contract().String(), c.contractInfo().Admin)
+
+	// After a root rotation the old root is out and the new root is in.
+	newRoot := testutil.NewAccAddress()
+	sudoers, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
+	require.NoError(t, err)
+	sudoers.Root = newRoot.String()
+	c.app.SudoKeeper.Sudoers.Set(c.ctx, sudoers)
+	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(codeID)),
+		"is not the x/sudo root")
+	require.NoError(t, c.execute(newRoot, migrateMsg(codeID)))
+	require.Equal(t, codeID, c.contractInfo().CodeID)
+}
+
+// TestSelfAdminUpdateAdmin checks that the root can hand the Wasm admin to
+// another address, after which Migrate through the contract stops working
+// and the new admin migrates directly.
+func TestSelfAdminUpdateAdmin(t *testing.T) {
+	c := newChain(t)
+	newAdmin := testutil.NewAccAddress()
+	require.NoError(t, c.execute(rootAddr(), xconsensus.ExecuteMsg{
+		UpdateAdmin: &xconsensus.UpdateAdminMsg{Admin: newAdmin.String()},
+	}))
+	require.Equal(t, newAdmin.String(), c.contractInfo().Admin)
+
+	codeID := c.storeCode(rootAddr(), wasmtypes.AllowEverybody)
+	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(codeID)),
+		"can not migrate")
+	_, err := wasmkeeper.NewDefaultPermissionKeeper(&c.app.WasmKeeper).
+		Migrate(c.ctx, c.contract(), newAdmin, codeID, []byte(`{}`))
+	require.NoError(t, err)
+	require.Equal(t, codeID, c.contractInfo().CodeID)
+}
+
+// TestSelfAdminMigrateMainnetGuard checks Migrate under the mainnet Wasm
+// deployer guard. The guard checks the actor of the migration, which is the
+// contract, not the root, so the contract needs the x/sudo wasm_deployer role
+// before the root can migrate it through Migrate.
+func TestSelfAdminMigrateMainnetGuard(t *testing.T) {
+	c := newChain(t)
+	c.ctx = c.ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+	codeID := c.storeCode(rootAddr(),
+		wasmtypes.AccessTypeAnyOfAddresses.With(c.contract()))
+
+	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(codeID)),
+		"requires root or role")
+
+	sudoers, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
+	require.NoError(t, err)
+	sudoers.Roles = append(sudoers.Roles, sudo.RoleMembers{
+		Role: sudo.RoleWasmDeployer, Members: []string{c.contract().String()},
+	})
+	c.app.SudoKeeper.Sudoers.Set(c.ctx, sudoers)
+	require.NoError(t, c.execute(rootAddr(), migrateMsg(codeID)))
+	require.Equal(t, codeID, c.contractInfo().CodeID)
 }
 
 // TestParamChangeAppliesFromNextBlock follows one UpdateParams executed by the

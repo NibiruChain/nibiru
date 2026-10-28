@@ -56,6 +56,9 @@ func updateParams(t *testing.T) xconsensus.ConsensusParams {
 	return params
 }
 
+// TestEmbeddedWasm checks that the embedded bytes are Wasm and match
+// XConsensusWasmSHA256, so a rebuilt artifact cannot ship with a stale
+// checksum, which also fixes the published contract address.
 func TestEmbeddedWasm(t *testing.T) {
 	require.NotEmpty(t, xconsensus.XConsensusWasm)
 	require.True(t,
@@ -65,6 +68,9 @@ func TestEmbeddedWasm(t *testing.T) {
 	require.Equal(t, xconsensus.XConsensusWasmSHA256, hex.EncodeToString(sum[:]))
 }
 
+// TestMessagesMatchContractJSON checks the Go types against the JSON the
+// contract accepts. The contract rejects unknown fields, so any drift would
+// make every update or the per-block query fail.
 func TestMessagesMatchContractJSON(t *testing.T) {
 	t.Run("instantiate", func(t *testing.T) {
 		msg := xconsensus.InstantiateMsg{Params: defaultParams(t)}
@@ -101,6 +107,19 @@ func TestMessagesMatchContractJSON(t *testing.T) {
 		require.JSONEq(t, `{}`, string(got))
 	})
 
+	t.Run("migrate and update_admin", func(t *testing.T) {
+		got, err := json.Marshal(xconsensus.ExecuteMsg{
+			Migrate: &xconsensus.MigrateExecMsg{CodeID: 42, Msg: []byte(`{}`)},
+		})
+		require.NoError(t, err)
+		require.JSONEq(t, `{"migrate":{"code_id":42,"msg":"e30="}}`, string(got))
+		got, err = json.Marshal(xconsensus.ExecuteMsg{
+			UpdateAdmin: &xconsensus.UpdateAdminMsg{Admin: "nibi1admin"},
+		})
+		require.NoError(t, err)
+		require.JSONEq(t, `{"update_admin":{"admin":"nibi1admin"}}`, string(got))
+	})
+
 	t.Run("int64 extremes stay exact", func(t *testing.T) {
 		params := defaultParams(t)
 		params.Block.MaxGas = 1<<63 - 1
@@ -116,6 +135,9 @@ func TestMessagesMatchContractJSON(t *testing.T) {
 	})
 }
 
+// TestProtoConversion checks the conversion to and from Nibiru BFT's proto
+// type: lossless for the three groups, version taken only from the caller,
+// and an incomplete proto rejected.
 func TestProtoConversion(t *testing.T) {
 	pb := cmttypes.DefaultConsensusParams().ToProto()
 	params, err := xconsensus.ConsensusParamsFromProto(pb)
@@ -157,7 +179,8 @@ func TestContractOnChain(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, xconsensus.XConsensusWasmSHA256, hex.EncodeToString(checksum))
 
-	// No admin: the code is only migratable by governance.
+	// No admin: in this test only governance could migrate. Production
+	// creation (EnsureXConsensus) makes the contract its own admin.
 	contract, _, err := keeper.Instantiate(
 		ctx, codeID, creator, nil,
 		readFixture(t, "instantiate_msg.json"), "x-consensus", sdk.Coins{},

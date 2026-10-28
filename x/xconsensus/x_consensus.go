@@ -71,6 +71,28 @@ type InstantiateMsg struct {
 type ExecuteMsg struct {
 	// UpdateParams replaces all params at once.
 	UpdateParams *UpdateParamsMsg `json:"update_params,omitempty"`
+	// Migrate migrates x-consensus to new code through the contract itself.
+	Migrate *MigrateExecMsg `json:"migrate,omitempty"`
+	// UpdateAdmin hands the Wasm admin of x-consensus to another address.
+	UpdateAdmin *UpdateAdminMsg `json:"update_admin,omitempty"`
+}
+
+// MigrateExecMsg is the body of ExecuteMsg.Migrate. The contract answers it
+// with a Wasm MsgMigrateContract for its own address, which the Wasm keeper
+// accepts because the contract is its own admin.
+type MigrateExecMsg struct {
+	// CodeID is the code to migrate to.
+	CodeID uint64 `json:"code_id"`
+	// Msg is the JSON message for the new code's migrate entry point. It
+	// encodes as base64, the JSON form of CosmWasm Binary.
+	Msg []byte `json:"msg"`
+}
+
+// UpdateAdminMsg is the body of ExecuteMsg.UpdateAdmin. The contract answers
+// it with a Wasm MsgUpdateAdmin for its own address.
+type UpdateAdminMsg struct {
+	// Admin is the bech32 address of the new Wasm admin.
+	Admin string `json:"admin"`
 }
 
 // UpdateParamsMsg is the body of ExecuteMsg.UpdateParams. There is no

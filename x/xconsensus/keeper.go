@@ -26,9 +26,11 @@ const ModuleName = "xconsensus"
 const ContractLabel = "x-consensus"
 
 // ContractSalt is the fixed instantiate2 salt. With the fixed creator
-// (CreatorAddr) it makes the address deterministic for a given code checksum,
-// though nothing depends on that: the app finds the contract through the
-// creator index instead (see Keeper.ContractAddr).
+// (CreatorAddr) it makes the address depend only on the code checksum (see
+// PredictContractAddr), so it can be published before the contract exists.
+// The app itself finds the contract through the creator index (see
+// Keeper.ContractAddr), so a rebuild of the embedded Wasm, which changes the
+// address, breaks nothing.
 var ContractSalt = []byte("x-consensus")
 
 // QueryGasLimit bounds the gas of the per-block params query, in SDK gas.
@@ -68,11 +70,6 @@ type ParamStore interface {
 	Set(ctx sdk.Context, cp *cmtproto.ConsensusParams)
 }
 
-// RootReader returns the current x/sudo root. The sudo keeper implements it.
-type RootReader interface {
-	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
-}
-
 // ErrNoStoredParams means the x/consensus store has no params to seed
 // x-consensus from. Nibiru BFT always sends consensus params in InitChain and
 // baseapp stores them before module genesis, so only test harnesses that call
@@ -101,7 +98,6 @@ const commitWaitUnset int64 = -1
 type Keeper struct {
 	wasm   *wasmkeeper.Keeper
 	params ParamStore
-	sudo   RootReader
 
 	// queryGasLimit is QueryGasLimit outside tests. Tests lower it to force
 	// an out-of-gas query (see export_test.go).
@@ -112,15 +108,12 @@ type Keeper struct {
 }
 
 // NewKeeper returns a Keeper with the commit wait unset. wasm must be the
-// app's Wasm keeper (by pointer, so later keeper options apply), params the
-// x/consensus keeper, and sudo the x/sudo keeper.
-func NewKeeper(
-	wasm *wasmkeeper.Keeper, params ParamStore, sudo RootReader,
-) *Keeper {
+// app's Wasm keeper (by pointer, so later keeper options apply) and params the
+// x/consensus keeper.
+func NewKeeper(wasm *wasmkeeper.Keeper, params ParamStore) *Keeper {
 	k := &Keeper{
 		wasm:          wasm,
 		params:        params,
-		sudo:          sudo,
 		queryGasLimit: QueryGasLimit,
 	}
 	k.commitWait.Store(commitWaitUnset)
@@ -167,12 +160,14 @@ func (k *Keeper) findContract(ctx sdk.Context) (sdk.AccAddress, bool) {
 // goes through the governance permission keeper, so the mainnet Wasm deployer
 // guard and the code upload policy pass for this module-owned creator.
 //
-// The Wasm admin, who may migrate the contract, is the x/sudo root at
-// creation, or none if no root is set. It is a snapshot: after a root
-// rotation it stays the old root until someone sends MsgUpdateAdmin. Governance
-// stays the break-glass, since Nibiru's Wasm keeper lets a gov proposal
-// migrate any contract regardless of admin. Updating params needs no admin:
-// the contract checks the live root on every execute.
+// The contract is its own Wasm admin. Instantiate2 needs the admin before the
+// address exists, so EnsureXConsensus passes PredictContractAddr and checks
+// the result. The x/sudo root then migrates the contract, or moves its admin,
+// by executing Migrate or UpdateAdmin on it, so those rights follow the live
+// root just as param updates do, with no MsgUpdateAdmin after a root
+// rotation. Governance stays the break-glass, since Nibiru's Wasm keeper lets
+// a gov proposal migrate any contract regardless of admin
+// (x/wasm/keeper/authz_policy.go:66).
 //
 // All writes happen in a cache context that is written only on success, so a
 // failure leaves state untouched.
@@ -199,32 +194,41 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 		return err
 	}
 
-	// No root means no admin: only governance can migrate.
-	admin, err := k.sudo.GetRootAddr(cacheCtx)
-	if err != nil {
-		ctx.Logger().Info("x-consensus created without a Wasm admin: no x/sudo root",
-			"module", ModuleName, "err", err)
-		admin = nil
-	}
-
 	gov := wasmkeeper.NewGovPermissionKeeper(k.wasm)
-	codeID, _, err := gov.Create(cacheCtx, CreatorAddr(), XConsensusWasm,
+	codeID, checksum, err := gov.Create(cacheCtx, CreatorAddr(), XConsensusWasm,
 		&wasmtypes.AccessConfig{Permission: wasmtypes.AccessTypeNobody})
 	if err != nil {
 		return fmt.Errorf("store x-consensus code: %w", err)
 	}
+	// The contract is its own Wasm admin. Instantiate2 sets the admin before
+	// the address exists, so pass the address it is about to derive.
+	admin := PredictContractAddr(checksum)
 	addr, _, err := gov.Instantiate2(cacheCtx, codeID, CreatorAddr(), admin,
 		initMsg, ContractLabel, sdk.NewCoins(), ContractSalt, false)
 	if err != nil {
 		return fmt.Errorf("instantiate x-consensus: %w", err)
+	}
+	if !addr.Equals(admin) {
+		return fmt.Errorf(
+			"x-consensus address %s differs from the predicted %s", addr, admin)
 	}
 
 	write()
 	k.contract.Store(&addr)
 	k.commitWait.Store(commitWaitUnset)
 	ctx.Logger().Info("created x-consensus", "module", ModuleName,
-		"address", addr.String(), "code_id", codeID, "admin", admin.String())
+		"address", addr.String(), "code_id", codeID)
 	return nil
+}
+
+// PredictContractAddr returns the address Instantiate2 gives x-consensus for
+// code with the given checksum: CreatorAddr, ContractSalt, and fixMsg=false,
+// which leaves the instantiate message out of the derivation. It matches
+// wasmkeeper.PredicableAddressGenerator, which clears the message when fixMsg
+// is false before calling BuildContractAddressPredictable.
+func PredictContractAddr(checksum []byte) sdk.AccAddress {
+	return wasmkeeper.BuildContractAddressPredictable(
+		checksum, CreatorAddr(), ContractSalt, []byte{})
 }
 
 // QueryParams reads the contract's params with a bounded, recovering smart
