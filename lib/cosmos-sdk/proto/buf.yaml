@@ -8,6 +8,14 @@ deps:
 breaking:
   use:
     - FILE
+  # Allow Go generated-code package moves without treating them as proto API
+  # breaks, as proto/buf.yaml does. go_package only picks the Go package that
+  # protoc-gen-gocosmos writes; the wire, type URLs and gRPC routes stay the
+  # same (spec/07-protobuf-state-breaks.md). First used to move
+  # cosmos.consensus.v1 into github.com/NibiruChain/nibiru/v2/x/consensus/types.
+  # Rule docs: https://buf.build/docs/breaking/rules/#file_same_go_package
+  except:
+    - FILE_SAME_GO_PACKAGE
 lint:
   use:
     - DEFAULT

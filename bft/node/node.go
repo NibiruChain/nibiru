@@ -190,6 +190,33 @@ func StateProvider(stateProvider statesync.StateProvider) Option {
 	}
 }
 
+// CommitTimeoutFunc lets an in-process application set the commit wait that
+// Nibiru BFT otherwise reads from config.toml `consensus.timeout_commit`.
+// Nibiru stores the value on chain as min_block_commit_duration_ms, so every
+// validator paces blocks the same way. A nil fn keeps the config.toml
+// behavior. See cs.CommitTimeoutFunc for the contract fn must follow: it runs
+// under the consensus mutex, so it must only read a cached value.
+//
+// Options run after NewNode builds the consensus state, but before the node
+// starts. Round 0 of the first height is scheduled only when the node starts,
+// so this option recomputes the start time of the first height with fn and
+// the value applies from that height, the same as passing the hook to
+// cs.NewState directly. This keeps the NewNode signature unchanged for every
+// existing caller.
+func CommitTimeoutFunc(fn cs.CommitTimeoutFunc) Option {
+	return func(n *Node) {
+		if n.consensusState == nil {
+			return
+		}
+		if err := n.consensusState.SetCommitTimeoutFunc(fn); err != nil {
+			// Unreachable from NewNode, which applies options before Start.
+			// Fail loudly: silently keeping config.toml would mislead the
+			// operator about block pacing.
+			panic(fmt.Sprintf("node.CommitTimeoutFunc: %v", err))
+		}
+	}
+}
+
 // BootstrapState synchronizes the stores with the application after state sync
 // has been performed offline. It is expected that the block store and state
 // store are empty at the time the function is called.

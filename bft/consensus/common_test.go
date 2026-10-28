@@ -378,9 +378,12 @@ func newStateWithConfig(
 	state sm.State,
 	pv types.PrivValidator,
 	app abci.Application,
+	options ...StateOption,
 ) *State {
 	blockDB := dbm.NewMemDB()
-	return newStateWithConfigAndBlockStore(thisConfig, state, pv, app, blockDB)
+	return newStateWithConfigAndBlockStore(
+		thisConfig, state, pv, app, blockDB, options...,
+	)
 }
 
 func newStateWithConfigAndBlockStore(
@@ -389,6 +392,7 @@ func newStateWithConfigAndBlockStore(
 	pv types.PrivValidator,
 	app abci.Application,
 	blockDB dbm.DB,
+	options ...StateOption,
 ) *State {
 	// Get BlockStore
 	blockStore := store.NewBlockStore(blockDB)
@@ -439,7 +443,10 @@ func newStateWithConfigAndBlockStore(
 	}
 
 	blockExec := sm.NewBlockExecutor(stateStore, log.TestingLogger(), proxyAppConnCon, mempool, evpool)
-	cs := NewState(thisConfig.Consensus, state, blockExec, blockStore, mempool, evpool)
+	cs := NewState(
+		thisConfig.Consensus, state, blockExec, blockStore, mempool, evpool,
+		options...,
+	)
 	cs.SetLogger(log.TestingLogger().With("module", "consensus"))
 	cs.SetPrivValidator(pv)
 

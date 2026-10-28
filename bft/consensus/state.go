@@ -141,6 +141,13 @@ type State struct {
 
 	// for reporting metrics
 	metrics *Metrics
+
+	// commitTimeoutFn, when set, supplies the commit wait in place of
+	// config.toml timeout_commit. See CommitTimeoutFunc.
+	commitTimeoutFn CommitTimeoutFunc
+	// lastCommitTimeoutOverride is the last value commitTimeoutFn reported,
+	// kept so a config override is logged once per change.
+	lastCommitTimeoutOverride commitTimeoutOverride
 }
 
 // StateOption sets an optional parameter on the State.
@@ -659,16 +666,12 @@ func (cs *State) updateToState(state sm.State) {
 	cs.updateHeight(height)
 	cs.updateRoundStep(0, cstypes.RoundStepNewHeight)
 
-	if cs.CommitTime.IsZero() {
-		// "Now" makes it easier to sync up dev nodes.
-		// We add timeoutCommit to allow transactions
-		// to be gathered for the first block.
-		// And alternative solution that relies on clocks:
-		// cs.StartTime = state.LastBlockTime.Add(timeoutCommit)
-		cs.StartTime = cs.config.Commit(cmttime.Now())
-	} else {
-		cs.StartTime = cs.config.Commit(cs.CommitTime)
-	}
+	// The next height starts at CommitTime plus the commit wait, or at now
+	// plus the commit wait when there is no CommitTime yet. "Now" makes it
+	// easier to sync up dev nodes, and the wait lets the first block gather
+	// transactions. The wait comes from commitTimeoutFn when the app sets
+	// it, otherwise from config.toml timeout_commit.
+	cs.StartTime = cs.nextHeightStartTime(height)
 
 	cs.Validators = validators
 	cs.Proposal = nil
