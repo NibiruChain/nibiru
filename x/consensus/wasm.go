@@ -17,11 +17,10 @@ import (
 // creator index (keeper.Keeper.ContractAddr), not that address, so rebuilding
 // the embedded Wasm is safe; only published addresses go stale.
 //
-// This constant is the only copy of the hash in Go. TestEmbeddedWasm checks it
-// against the embedded bytes, and the x-consensus artifact workflow
-// (.github/workflows/x-consensus-artifact.yml) reads it from this file and
-// checks it against a fresh release build. To update the build, follow the
-// Commands section of wasm-contracts/x-consensus/README.md.
+// This constant is the only copy of the hash in Go, and TestEmbeddedWasm
+// checks it against the embedded bytes. To update the build, follow the
+// "Updating the embedded build" steps in wasm-contracts/x-consensus/README.md
+// and set this constant to the SHA-256 of the uncompressed .wasm.
 const ContractWasmSHA256 = "f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e"
 
 // contractWasmGz is the gzipped x-consensus release build that ships in
@@ -29,10 +28,9 @@ const ContractWasmSHA256 = "f1ac9367879aac63755370c4ff779b8d684598f3a43021306764
 // diffs small, as for other gzipped Wasm in the repo.
 //
 //   - Source: wasm-contracts/x-consensus.
-//   - Build: the AMD64 release optimizer, as the x-consensus artifact
-//     workflow runs it on every relevant pull request. The workflow fails if
-//     the decompressed bytes differ from its build, so the embedded code is
-//     reproducible from source.
+//   - Build: the release optimizer, just rs optimizer build --manifest-path
+//     Cargo.toml -p x-consensus --output-dir wasm-contracts/artifacts
+//     --mode release, so the embedded code can be rebuilt from source.
 //   - Compression: gzip -9 -n, the same convention as the repo's gzipped Wasm
 //     fixtures. -n drops the name and timestamp so recompressing gives the
 //     same file. Only the decompressed bytes are checked; the .gz is

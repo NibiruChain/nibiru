@@ -151,14 +151,20 @@ module checks again before copying.
 
 ```bash
 cargo test -p x-consensus
-just rs optimizer build --manifest-path Cargo.toml -p x-consensus \
-  --output-dir wasm-contracts/artifacts --mode release   # AMD64 release build
 just rs wasm-check
-gzip -9 -n -c wasm-contracts/artifacts/x_consensus.wasm > x/consensus/x_consensus.wasm.gz
 ```
 
-To update the embedded build, commit the new `x/consensus/x_consensus.wasm.gz`
-and set `ContractWasmSHA256` in `x/consensus/wasm.go` to the SHA-256
-of the decompressed `.wasm`, which is the on-chain code checksum. The
-x-consensus artifact workflow rebuilds the release on pull requests and fails
-if the decompressed embedded bytes differ.
+### Updating the embedded build
+
+1. Build the release:
+   `just rs optimizer build --manifest-path Cargo.toml -p x-consensus --output-dir wasm-contracts/artifacts --mode release`
+2. Gzip it:
+   `gzip -9 -n -c wasm-contracts/artifacts/x_consensus.wasm > x/consensus/x_consensus.wasm.gz`
+   (`-n` drops the name and timestamp, so recompressing gives the same file).
+3. Commit `x/consensus/x_consensus.wasm.gz`.
+4. Set `ContractWasmSHA256` in `x/consensus/wasm.go` to the SHA-256 of the
+   uncompressed `wasm-contracts/artifacts/x_consensus.wasm`
+   (`sha256sum wasm-contracts/artifacts/x_consensus.wasm`). That hash is the
+   on-chain code checksum, and `TestEmbeddedWasm` fails until the two match.
+   A new build also changes the published contract address, so update
+   `TestContractAddressPinned` in `x/consensus/keeper`.
