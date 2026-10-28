@@ -1,17 +1,22 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	abciclient "github.com/NibiruChain/nibiru/v2/bft/abci/client"
 	"github.com/NibiruChain/nibiru/v2/bft/abci/example/kvstore"
 	abciserver "github.com/NibiruChain/nibiru/v2/bft/abci/server"
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
 )
 
 func TestClientServerNoAddrPrefix(t *testing.T) {
-	addr := "localhost:26658"
+	port, err := cmtnet.GetFreePort()
+	require.NoError(t, err)
+	addr := fmt.Sprintf("localhost:%d", port)
 	transport := "socket"
 	app := kvstore.NewApplication()
 
