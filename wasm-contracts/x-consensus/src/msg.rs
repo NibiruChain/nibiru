@@ -1,6 +1,6 @@
 //! msg.rs: Messages and the consensus params type of the x-consensus contract.
 //!
-//! JSON conventions. The Go module `x/xconsensus` decodes these messages, so
+//! JSON conventions. The Go package `x/consensus/types` decodes these messages, so
 //! each choice keeps values exact across Rust, Go and JavaScript clients:
 //!
 //! - Field names are snake_case and match the proto field names in
@@ -113,7 +113,7 @@ pub enum ExecuteMsg {
     },
 }
 
-/// Read-only queries. The x/xconsensus EndBlocker sends [`QueryMsg::Params`]
+/// Read-only queries. The x/consensus EndBlocker sends [`QueryMsg::Params`]
 /// once per block.
 #[cw_serde]
 #[derive(QueryResponses)]

@@ -16,9 +16,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
+	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
+	consensuskeeper "github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
-	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
 // preUpgradeParams stands in for the x/consensus params of a live chain
@@ -57,7 +59,7 @@ func runUpgrade2_22(
 }
 
 // preUpgradeChain returns a chain without x-consensus whose x/consensus store
-// holds params, and whose version map predates the xconsensus module, so the
+// holds params, and whose version map predates the x/consensus app module, so the
 // handler sees exactly what a live chain at the upgrade height has.
 func preUpgradeChain(
 	t *testing.T, chainID string, params *cmtproto.ConsensusParams,
@@ -69,7 +71,7 @@ func preUpgradeChain(
 	require.False(t, found)
 	nibiru.ConsensusParamsKeeper.Set(ctx, params)
 	versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-	delete(versions, xconsensus.ModuleName)
+	delete(versions, consensusmodule.AppModuleName)
 	nibiru.UpgradeKeeper.SetModuleVersionMap(ctx, module.VersionMap(versions))
 	return nibiru, ctx
 }
@@ -93,27 +95,27 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 				require.NotEqual(t, "upgrade_failure", ev.Type, ev.Attributes)
 			}
 			versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-			require.Equal(t, uint64(1), versions[xconsensus.ModuleName])
+			require.Equal(t, uint64(1), versions[consensusmodule.AppModuleName])
 
 			addr, found := nibiru.XConsensusKeeper.ContractAddr(ctx)
 			require.True(t, found)
 			info := nibiru.WasmKeeper.GetContractInfo(ctx, addr)
-			require.Equal(t, xconsensus.CreatorAddr().String(), info.Creator)
+			require.Equal(t, consensuskeeper.CreatorAddr().String(), info.Creator)
 			require.Equal(t, addr.String(), info.Admin)
 			checksum := nibiru.WasmKeeper.GetCodeInfo(ctx, info.CodeID).CodeHash
-			require.Equal(t, xconsensus.PredictContractAddr(checksum), addr)
+			require.Equal(t, consensuskeeper.PredictContractAddr(checksum), addr)
 			// The contract is not the root, so passing this check means it
 			// is a wasm_deployer member.
 			require.NoError(t, nibiru.SudoKeeper.CheckPermissions(
 				addr, ctx, sudo.RoleWasmDeployer))
 
-			req, err := json.Marshal(xconsensus.QueryParams())
+			req, err := json.Marshal(consensustypes.QueryParams())
 			require.NoError(t, err)
 			resp, err := nibiru.WasmKeeper.QuerySmart(ctx, addr, req)
 			require.NoError(t, err)
-			var got xconsensus.ConsensusParams
+			var got consensustypes.ConsensusParams
 			require.NoError(t, json.Unmarshal(resp, &got))
-			want, err := xconsensus.ConsensusParamsFromProto(pre)
+			want, err := consensustypes.ConsensusParamsFromProto(pre)
 			require.NoError(t, err)
 			require.Equal(t, want, got)
 			require.Nil(t, got.MinBlockCommitDurationMs)
@@ -127,7 +129,7 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 			// Running the handler again creates nothing.
 			runUpgrade2_22(t, nibiru, ctx)
 			var count int
-			nibiru.WasmKeeper.IterateContractsByCreator(ctx, xconsensus.CreatorAddr(),
+			nibiru.WasmKeeper.IterateContractsByCreator(ctx, consensuskeeper.CreatorAddr(),
 				func(sdk.AccAddress) bool { count++; return false })
 			require.Equal(t, 1, count)
 		})
@@ -154,5 +156,5 @@ func TestUpgrade2_22_0FailureContinues(t *testing.T) {
 	_, found := nibiru.XConsensusKeeper.ContractAddr(ctx)
 	require.False(t, found)
 	versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-	require.Equal(t, uint64(1), versions[xconsensus.ModuleName])
+	require.Equal(t, uint64(1), versions[consensusmodule.AppModuleName])
 }

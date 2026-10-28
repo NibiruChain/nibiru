@@ -9,7 +9,7 @@
 //! reported here is the one Go would report. Line numbers below refer to
 //! `bft/types/params.go` in this tree.
 //!
-//! The x/xconsensus EndBlocker runs the Go check again before copying the
+//! The x/consensus EndBlocker runs the Go check again before copying the
 //! params, so a bug here or a bad migration cannot halt the chain either.
 
 use crate::error::ContractError;

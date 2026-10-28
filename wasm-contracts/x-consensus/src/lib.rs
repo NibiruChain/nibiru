@@ -21,7 +21,7 @@
 //!
 //! # When a change takes effect
 //!
-//! The x/xconsensus EndBlocker runs after every other module's. It queries
+//! The x/consensus EndBlocker runs after every other module's. It queries
 //! this contract under a fixed gas limit, validates the result with Nibiru
 //! BFT's own rules, and copies it into the x/consensus store. baseapp returns
 //! that copy to Nibiru BFT from the same EndBlock. So a change executed in

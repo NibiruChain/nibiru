@@ -128,7 +128,7 @@ func NewNibiruTestAppWithDB(db tmdb.DB, customGenesisOverride app.GenesisState) 
 // Wasm genesis (code ID 1 free, no contracts).
 //
 // InitChain sends no consensus params, which is the only case where genesis
-// skips the contract (xconsensus.ErrNoStoredParams); the params are stored
+// skips the contract (keeper.ErrNoStoredParams); the params are stored
 // right after, in the same uncommitted genesis state.
 func NewNibiruTestAppPreXConsensus() (
 	nibiruApp *app.NibiruApp, gen app.GenesisState,

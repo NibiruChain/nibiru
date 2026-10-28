@@ -15,7 +15,7 @@ use crate::sudo::query_sudo_root;
 /// Validates and stores the initial params.
 ///
 /// No root check runs here, and the sender gains no rights. Only the
-/// x/xconsensus module creates the contract (at genesis or in the v2.22
+/// x/consensus module creates the contract (at genesis or in the v2.22
 /// upgrade), and a new chain may do so before x/sudo has a root. Rights come
 /// from the live root at execute time instead.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
@@ -132,7 +132,7 @@ fn update_admin(
 /// Answers [`QueryMsg`] from storage.
 ///
 /// The params query cannot fail on a live contract, since instantiate always
-/// writes the params. The x/xconsensus EndBlocker sends it once per block
+/// writes the params. The x/consensus EndBlocker sends it once per block
 /// under a fixed gas limit, so it stays a single storage read.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {

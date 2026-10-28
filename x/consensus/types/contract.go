@@ -1,28 +1,9 @@
-// Package xconsensus embeds the x-consensus CosmWasm contract, creates it,
-// and copies its params into the x/consensus store once per block.
-//
-// x-consensus owns Nibiru BFT's consensus params, the role the x/consensus
-// module used to have. It holds the block, evidence and validator params
-// plus min_block_commit_duration_ms, a chain-wide commit wait that replaces
-// each node's config.toml timeout_commit. The x/consensus store remains only
-// as the copy that baseapp and Nibiru BFT read, and its MsgUpdateParams is
-// blocked by a circuit breaker (app/xconsensus.go).
-//
-// Only the current x/sudo root may change the contract. It reads the root on
-// every execute through the Stargate query /nibiru.sudo.v1.Query/QuerySudoers
-// and stores no owner, so a root rotation applies at once. The contract is
-// also its own Wasm admin, so the root migrates it through the contract
-// (ExecuteMsg.Migrate) and migration rights follow the live root too.
-// Governance stays the break-glass for migration.
-//
-// The module EndBlocker (AppModule, ordered last) queries the contract once
-// per block under QueryGasLimit, validates the result with Nibiru BFT's own
-// rules, and writes it to the x/consensus store. baseapp reads that store at
-// BeginBlock, for every tx, and at EndBlock, where it returns the params to
-// Nibiru BFT. So a change executed in block H applies from H+1 for both the
-// app and the engine, and a failed query keeps the last good copy. The app
-// version is not in the contract: x/upgrade owns it, and the refresh copies
-// it unchanged. Contract source: wasm-contracts/x-consensus.
+package types
+
+// This file holds the Go side of the x-consensus contract messages and the
+// conversions between its params and Nibiru BFT's proto type. It lives in the
+// light types package, not the keeper, so clients and lib code can encode
+// contract messages without importing x/wasm.
 //
 // JSON conventions (see wasm-contracts/x-consensus/src/msg.rs):
 //   - int64 fields are JSON strings, hence the ",string" tag option, so
@@ -33,91 +14,18 @@
 //   - The contract rejects unknown fields, so these types must match its
 //     messages exactly; the shared fixtures in
 //     wasm-contracts/x-consensus/testdata keep them in sync.
-package xconsensus
 
 import (
-	"bytes"
-	"compress/gzip"
-	_ "embed"
 	"fmt"
-	"io"
 	"time"
 
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
-// XConsensusWasm is the optimized x-consensus contract bytecode, decompressed
-// from the embedded x_consensus.wasm.gz when the package loads. Keeping the
-// raw bytes here means every caller (the genesis and upgrade paths through
-// EnsureXConsensus, and the tests) works on the exact code the chain stores,
-// whose SHA-256 is the on-chain code checksum.
-//
-//   - Source: wasm-contracts/x-consensus (crate x-consensus 0.1.0) at
-//     commit 9f1d07e87b63b995816d86e4b388608a4cbfed08. Later doc-only edits
-//     to the Rust source do not change the bytes.
-//   - Build: just rs optimizer build --manifest-path Cargo.toml
-//     -p x-consensus --output-dir wasm-contracts/artifacts --mode release
-//     (sai-wasm-optimizer 0.1.0, image cosmwasm/optimizer:0.17.0 pinned at
-//     sha256:7e0b9229c1a4118d0c9a2af2e7f5d95a91f264c26a2ce5681c779926e74d7f85,
-//     linux/amd64), produced by the x-consensus artifact workflow
-//     (.github/workflows/x-consensus-artifact.yml), which rebuilds it on
-//     every relevant pull request and fails if these bytes differ.
-//   - Compression: gzip -9 -n into x_consensus.wasm.gz, the same convention
-//     as the repo's gzipped Wasm fixtures. -n drops the name and timestamp
-//     so recompressing gives the same file. Only the decompressed bytes are
-//     checked; the .gz is packaging and may differ between gzip versions.
-//   - SHA-256 of the decompressed code:
-//     f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e
-//   - Size: 178226 bytes decompressed, 64296 bytes gzipped.
-var XConsensusWasm = mustGunzip(xConsensusWasmGz)
-
-// xConsensusWasmGz is the gzipped contract build that ships in nibid. Gzip
-// cuts the embedded size by about two thirds and keeps rebuild diffs small,
-// as for other gzipped Wasm in the repo.
-//
-//go:embed x_consensus.wasm.gz
-var xConsensusWasmGz []byte
-
-// mustGunzip decompresses the embedded build, reading at most
-// wasmtypes.MaxWasmSize bytes, the Wasm module's own limit on stored code, so
-// the cap rejects nothing the chain would accept. It panics on a corrupt or oversized archive: the bytes are fixed at
-// build time, so a failure is a broken release, and TestEmbeddedWasm catches
-// it before one ships.
-func mustGunzip(gz []byte) []byte {
-	r, err := gzip.NewReader(bytes.NewReader(gz))
-	if err != nil {
-		panic(fmt.Sprintf("x-consensus: open embedded gzip: %v", err))
-	}
-	defer r.Close()
-	code, err := io.ReadAll(io.LimitReader(r, int64(wasmtypes.MaxWasmSize)+1))
-	if err != nil {
-		panic(fmt.Sprintf("x-consensus: read embedded gzip: %v", err))
-	}
-	if len(code) > wasmtypes.MaxWasmSize {
-		panic(fmt.Sprintf("x-consensus: embedded Wasm exceeds %d bytes",
-			wasmtypes.MaxWasmSize))
-	}
-	return code
-}
-
-// XConsensusWasmSHA256 is the hex SHA-256 of XConsensusWasm. Wasm code
-// checksums are SHA-256 of the bytecode, so this is also the Wasm code
-// checksum, and it fixes the contract address (PredictContractAddr). The app
-// finds the contract through the Wasm creator index (Keeper.ContractAddr),
-// not that address, so rebuilding the embedded Wasm is safe; only published
-// addresses go stale. A test keeps the constant in sync.
-const XConsensusWasmSHA256 = "f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e"
-
-// MaxMinBlockCommitDurationMs is the contract's upper bound for
-// ConsensusParams.MinBlockCommitDurationMs, 30 s. A longer wait would make
-// the chain look halted. The Go side checks it again (ValidatedProto), so a
-// contract that stopped enforcing it still cannot stretch block times.
-const MaxMinBlockCommitDurationMs uint64 = 30_000
-
-// InstantiateMsg instantiates x-consensus. Only EnsureXConsensus sends it,
-// seeded from the x/consensus store with the commit wait unset, so creating
-// the contract changes no behavior. The contract validates Params exactly
+// InstantiateMsg instantiates x-consensus. Only
+// keeper.Keeper.EnsureXConsensus sends it, seeded from the x/consensus store
+// with the commit wait unset, so creating the contract changes no behavior. The contract validates Params exactly
 // like an update. Instantiation needs no x/sudo root, so genesis can create
 // the contract before a root is set, and the sender gains no rights.
 type InstantiateMsg struct {
@@ -323,4 +231,33 @@ func ConsensusParamsFromProto(
 			PubKeyTypes: append([]string{}, pb.Validator.PubKeyTypes...),
 		},
 	}, nil
+}
+
+// ValidatedProto converts the contract params to the engine's proto type with
+// the given version (copied from the store by the caller) and checks them the
+// way Nibiru BFT will: ValidateBasic on the full params struct, since the
+// engine halts on an invalid update, plus MaxMinBlockCommitDurationMs. The
+// contract enforces the same rules; checking again here means a contract bug
+// or a bad migration cannot halt the chain.
+func (p ConsensusParams) ValidatedProto(
+	version *cmtproto.VersionParams,
+) (cmtproto.ConsensusParams, error) {
+	if ms := p.MinBlockCommitDurationMs; ms != nil &&
+		*ms > MaxMinBlockCommitDurationMs {
+		return cmtproto.ConsensusParams{}, fmt.Errorf(
+			"min_block_commit_duration_ms %d exceeds the %d ms cap",
+			*ms, MaxMinBlockCommitDurationMs)
+	}
+	pb := p.ToProto(version)
+	// bft/types ConsensusParamsFromProto dereferences Version; validation
+	// does not look at it, so a nil version validates as the zero version.
+	full := pb
+	if full.Version == nil {
+		full.Version = &cmtproto.VersionParams{}
+	}
+	if err := cmttypes.ConsensusParamsFromProto(full).ValidateBasic(); err != nil {
+		return cmtproto.ConsensusParams{}, fmt.Errorf(
+			"invalid x-consensus params: %w", err)
+	}
+	return pb, nil
 }

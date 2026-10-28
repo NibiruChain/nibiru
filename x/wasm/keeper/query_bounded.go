@@ -16,7 +16,7 @@ import (
 // store holds a deterministic copy that the app refreshes from the contract
 // under a bounded gas meter. Readers use the module store, so a slow or broken
 // contract can never stall a block or halt the chain; the refresh just fails
-// and the copy keeps its last good value. x-consensus (x/xconsensus) is the
+// and the copy keeps its last good value. x-consensus (x/consensus) is the
 // first user.
 //
 // Why each step matters:

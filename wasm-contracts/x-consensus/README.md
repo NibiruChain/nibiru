@@ -17,20 +17,21 @@ consensus params.
   x/sudo for the root on every execute, through the Stargate query
   `/nibiru.sudo.v1.Query/QuerySudoers`, and stores no owner. A root rotation
   takes effect at once. An empty root or a failed query rejects the message.
-- **When a change applies.** The x/xconsensus EndBlocker runs after every
+- **When a change applies.** The x/consensus EndBlocker runs after every
   other module. It queries `params` under a fixed gas limit, validates the
   result with Nibiru BFT's own rules, and copies it into the x/consensus
   store, which baseapp returns to Nibiru BFT from the same EndBlock. A change
   executed in block H applies from block H+1, for the app and the engine
   together. If the query fails or the values are invalid, the store keeps
   its last good params and the chain keeps running.
-- **Where it comes from.** The x/xconsensus module creates it with
-  `instantiate2` from the embedded build `x/xconsensus/x_consensus.wasm.gz`
-(decompressed in Go before it is stored):
-  at genesis for new chains, and in the v2.22 upgrade handler for existing
-  chains. The creator is the module address
-  `authtypes.NewModuleAddress("xconsensus")` and the salt is `x-consensus`,
-  so the address depends only on the code checksum.
+- **Where it comes from.** The x/consensus module creates it with
+  `instantiate2` from the embedded build `x/consensus/x_consensus.wasm.gz`
+  (decompressed in Go before it is stored): at genesis for new chains, and
+  in the v2.22 upgrade handler for existing chains. The creator is the
+  module address `authtypes.NewModuleAddress("xconsensus")`
+  (`types.ContractCreatorName`, which keeps the name the module had when the
+  address was published) and the salt is `x-consensus`, so the address
+  depends only on the code checksum.
 - **Migration.** The contract is its own Wasm admin. The root migrates it by
   executing `migrate` on the contract, which then migrates itself, so
   migration rights follow the live root like param updates. The chain also
@@ -82,7 +83,7 @@ halted.
 ## Messages
 
 Instantiate ([fixture](./testdata/instantiate_msg.json)). Sent only by the
-x/xconsensus module; it needs no root.
+x/consensus module; it needs no root.
 
 ```json
 {
@@ -153,11 +154,11 @@ cargo test -p x-consensus
 just rs optimizer build --manifest-path Cargo.toml -p x-consensus \
   --output-dir wasm-contracts/artifacts --mode release   # AMD64 release build
 just rs wasm-check
-gzip -9 -n -c wasm-contracts/artifacts/x_consensus.wasm > x/xconsensus/x_consensus.wasm.gz
+gzip -9 -n -c wasm-contracts/artifacts/x_consensus.wasm > x/consensus/x_consensus.wasm.gz
 ```
 
-To update the embedded build, commit the new `x/xconsensus/x_consensus.wasm.gz`
-and set `XConsensusWasmSHA256` in `x/xconsensus/x_consensus.go` to the SHA-256
+To update the embedded build, commit the new `x/consensus/x_consensus.wasm.gz`
+and set `ContractWasmSHA256` in `x/consensus/wasm.go` to the SHA-256
 of the decompressed `.wasm`, which is the on-chain code checksum. The
 x-consensus artifact workflow rebuilds the release on pull requests and fails
 if the decompressed embedded bytes differ.

@@ -26,10 +26,10 @@ const ROOT: &str = easy_addr::addr!("root");
 /// A different valid address with no rights.
 const NOT_ROOT: &str = easy_addr::addr!("not-root");
 
-/// Fixture shared with the Go package `x/xconsensus`.
+/// Fixture shared with the Go package `x/consensus/types`.
 const INSTANTIATE_FIXTURE: &str =
     include_str!("../testdata/instantiate_msg.json");
-/// Fixture shared with the Go package `x/xconsensus`.
+/// Fixture shared with the Go package `x/consensus/types`.
 const UPDATE_PARAMS_FIXTURE: &str =
     include_str!("../testdata/update_params_msg.json");
 

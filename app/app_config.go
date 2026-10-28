@@ -49,6 +49,7 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
+	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
@@ -57,7 +58,6 @@ import (
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	tftypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
 var (
@@ -167,13 +167,13 @@ var (
 		// Everything else should be before genmsg
 		genmsg.ModuleName,
 
-		// NOTE (EndBlocker requirement): xconsensus must be last. Its
+		// NOTE (EndBlocker requirement): x/consensus must be last. Its
 		// EndBlocker copies the x-consensus contract params into the
 		// x/consensus store after every module that can execute the contract
 		// in this block (for example gov proposals), and baseapp returns that
 		// store to Nibiru BFT right after the last EndBlocker. It has no
 		// genesis or BeginBlocker, so its place in those orders is moot.
-		xconsensus.ModuleName,
+		consensusmodule.AppModuleName,
 	}
 
 	AppConfig depinject.Config

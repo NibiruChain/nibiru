@@ -9,8 +9,6 @@ import (
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
-
-	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
 // CommitTimeoutFunc returns the hook Nibiru BFT uses for its commit wait
@@ -18,7 +16,7 @@ import (
 // replaces config.toml timeout_commit on every node once it is set.
 //
 // The engine calls the hook under its consensus mutex after committing H,
-// with height H+1, so the closure only loads an atomic. The x/xconsensus
+// with height H+1, so the closure only loads an atomic. The x/consensus
 // EndBlocker sets it during EndBlock H, before that commit, which makes a
 // change executed in H govern the wait before H+1, together with the app
 // params and header of H+1. The height argument is not needed for that.
@@ -49,7 +47,7 @@ func (app *NibiruApp) warmXConsensusCommitWait() {
 		app.Logger().Error(
 			"could not load the x-consensus commit wait; using config.toml "+
 				"timeout_commit until the next block",
-			"module", xconsensus.ModuleName, "height", height, "err", err)
+			"module", consensustypes.ModuleName, "height", height, "err", err)
 	}
 }
 
@@ -61,7 +59,7 @@ var consensusMsgUpdateParamsURL = sdk.MsgTypeURL(&consensustypes.MsgUpdateParams
 //
 // It is defense in depth. Gov proposals execute through this router in the
 // gov EndBlocker, where an ante filter would not see them, and the
-// x/xconsensus EndBlocker, ordered last, would overwrite such a write in the
+// x/consensus EndBlocker, ordered last, would overwrite such a write in the
 // same block anyway. Blocking in the router also stops the message through
 // authz, Wasm and EVM dispatch. The x/consensus Params query stays available.
 //

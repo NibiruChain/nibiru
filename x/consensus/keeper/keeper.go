@@ -1,4 +1,7 @@
-package xconsensus
+// Package keeper holds the x/consensus Keeper, which creates the x-consensus
+// contract and copies its params into the x/consensus store once per block.
+// See the consensus package doc for the whole flow.
+package keeper
 
 import (
 	"bytes"
@@ -10,58 +13,25 @@ import (
 	"time"
 
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/consensus"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-// ModuleName names the app module that refreshes the x/consensus store from
-// x-consensus at the end of every block. It has no store of its own.
-const ModuleName = "xconsensus"
-
-// ContractLabel is the Wasm label of the x-consensus contract.
-const ContractLabel = "x-consensus"
-
-// ContractSalt is the fixed instantiate2 salt. With the fixed creator
-// (CreatorAddr) it makes the address depend only on the code checksum (see
-// PredictContractAddr), so it can be published before the contract exists.
-// The app itself finds the contract through the creator index (see
-// Keeper.ContractAddr), so a rebuild of the embedded Wasm, which changes the
-// address, breaks nothing.
-var ContractSalt = []byte("x-consensus")
-
-// QueryGasLimit bounds the gas of the per-block params query, in SDK gas.
-//
-// Measured October 28, 2026 (TestQueryGasUsage): one params query on the
-// embedded contract, unpinned, uses 66,013 gas and about 0.1 ms. Most of it
-// is the fixed instance setup cost (InstantiateContractCosts); the contract
-// itself does one storage read and a JSON encode. 1,000,000 gives 15 times
-// headroom for a future contract version with more fields.
-//
-// The limit is also the worst case a broken contract can cost every block:
-// a query that loops runs until the limit, which took about 0.12 s at
-// 1,000,000 gas and 0.43 s at 3,000,000 (TestQuerySmartBounded, hackatom
-// hashing loop). At the sub-second block times x-consensus exists for, a
-// tighter limit keeps a bad migration from multiplying the block time while
-// governance fixes it.
-//
-// It is a Go constant, not a param or node config, so every node meters the
-// query the same way: a node-local limit could let some nodes refresh and
-// others not, which would split the app hash.
-const QueryGasLimit uint64 = 1_000_000
-
 // CreatorAddr is the fixed creator of the x-consensus contract, the module
-// address of ModuleName. No key controls it, so only this module can create
-// contracts under it, which makes "first contract created by CreatorAddr" a
+// address of types.ContractCreatorName (not of types.ModuleName, so the
+// contract address survived the module rename). No key controls it, so only
+// this module can create contracts under it, which makes "first contract created by CreatorAddr" a
 // safe way to find x-consensus on any chain (mainnet, testnets, localnet,
 // tests) and after any rebuild of the embedded Wasm.
 func CreatorAddr() sdk.AccAddress {
-	return authtypes.NewModuleAddress(ModuleName)
+	return authtypes.NewModuleAddress(types.ContractCreatorName)
 }
 
 // ParamStore is the x/consensus keeper as this module uses it: the persisted
@@ -113,7 +83,7 @@ type Keeper struct {
 	params ParamStore
 	sudo   SudoKeeper
 
-	// queryGasLimit is QueryGasLimit outside tests. Tests lower it to force
+	// queryGasLimit is types.QueryGasLimit outside tests. Tests lower it to force
 	// an out-of-gas query (see export_test.go).
 	queryGasLimit uint64
 
@@ -131,7 +101,7 @@ func NewKeeper(
 		wasm:          wasm,
 		params:        params,
 		sudo:          sudo,
-		queryGasLimit: QueryGasLimit,
+		queryGasLimit: types.QueryGasLimit,
 	}
 	k.commitWait.Store(commitWaitUnset)
 	return k
@@ -209,17 +179,17 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 	if stored.Block == nil && stored.Evidence == nil && stored.Validator == nil {
 		return ErrNoStoredParams
 	}
-	seed, err := ConsensusParamsFromProto(*stored)
+	seed, err := types.ConsensusParamsFromProto(*stored)
 	if err != nil {
 		return fmt.Errorf("seed x-consensus from x/consensus params: %w", err)
 	}
-	initMsg, err := json.Marshal(InstantiateMsg{Params: seed})
+	initMsg, err := json.Marshal(types.InstantiateMsg{Params: seed})
 	if err != nil {
 		return err
 	}
 
 	gov := wasmkeeper.NewGovPermissionKeeper(k.wasm)
-	codeID, checksum, err := gov.Create(cacheCtx, CreatorAddr(), XConsensusWasm,
+	codeID, checksum, err := gov.Create(cacheCtx, CreatorAddr(), consensus.ContractWasm(),
 		&wasmtypes.AccessConfig{Permission: wasmtypes.AccessTypeNobody})
 	if err != nil {
 		return fmt.Errorf("store x-consensus code: %w", err)
@@ -228,7 +198,8 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 	// the address exists, so pass the address it is about to derive.
 	admin := PredictContractAddr(checksum)
 	addr, _, err := gov.Instantiate2(cacheCtx, codeID, CreatorAddr(), admin,
-		initMsg, ContractLabel, sdk.NewCoins(), ContractSalt, false)
+		initMsg, types.ContractLabel, sdk.NewCoins(), []byte(types.ContractSalt),
+		false)
 	if err != nil {
 		return fmt.Errorf("instantiate x-consensus: %w", err)
 	}
@@ -243,7 +214,7 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 	write()
 	k.contract.Store(&addr)
 	k.commitWait.Store(commitWaitUnset)
-	ctx.Logger().Info("created x-consensus", "module", ModuleName,
+	ctx.Logger().Info("created x-consensus", "module", types.ModuleName,
 		"address", addr.String(), "code_id", codeID)
 	return nil
 }
@@ -300,34 +271,35 @@ func (k *Keeper) ensureDeployerRole(
 }
 
 // PredictContractAddr returns the address Instantiate2 gives x-consensus for
-// code with the given checksum: CreatorAddr, ContractSalt, and fixMsg=false,
+// code with the given checksum: CreatorAddr, types.ContractSalt, and
+// fixMsg=false,
 // which leaves the instantiate message out of the derivation. It matches
 // wasmkeeper.PredicableAddressGenerator, which clears the message when fixMsg
 // is false before calling BuildContractAddressPredictable.
 func PredictContractAddr(checksum []byte) sdk.AccAddress {
 	return wasmkeeper.BuildContractAddressPredictable(
-		checksum, CreatorAddr(), ContractSalt, []byte{})
+		checksum, CreatorAddr(), []byte(types.ContractSalt), []byte{})
 }
 
 // QueryParams reads the contract's params with a bounded, recovering smart
 // query (wasmkeeper.Keeper.QuerySmartBounded) and decodes them. It never
 // writes state and never panics.
-func (k *Keeper) QueryParams(ctx sdk.Context) (ConsensusParams, error) {
+func (k *Keeper) QueryParams(ctx sdk.Context) (types.ConsensusParams, error) {
 	addr, found := k.ContractAddr(ctx)
 	if !found {
-		return ConsensusParams{}, errors.New("x-consensus contract not found")
+		return types.ConsensusParams{}, errors.New("x-consensus contract not found")
 	}
-	req, err := json.Marshal(QueryParams())
+	req, err := json.Marshal(types.QueryParams())
 	if err != nil {
-		return ConsensusParams{}, err
+		return types.ConsensusParams{}, err
 	}
 	resp, _, err := k.wasm.QuerySmartBounded(ctx, addr, req, k.queryGasLimit)
 	if err != nil {
-		return ConsensusParams{}, fmt.Errorf("query x-consensus params: %w", err)
+		return types.ConsensusParams{}, fmt.Errorf("query x-consensus params: %w", err)
 	}
-	var params ConsensusParams
+	var params types.ConsensusParams
 	if err := json.Unmarshal(resp, &params); err != nil {
-		return ConsensusParams{}, fmt.Errorf("decode x-consensus params: %w", err)
+		return types.ConsensusParams{}, fmt.Errorf("decode x-consensus params: %w", err)
 	}
 	return params, nil
 }
@@ -340,7 +312,7 @@ func (k *Keeper) QueryParams(ctx sdk.Context) (ConsensusParams, error) {
 // It queries the contract (QueryParams), keeps Version from the stored params
 // (the engine copies Version.App into block headers and it belongs to
 // x/upgrade), validates the full struct with Nibiru BFT's own ValidateBasic
-// plus the commit wait cap (ValidatedProto), and writes only if the encoded
+// plus the commit wait cap (types.ConsensusParams.ValidatedProto), and writes only if the encoded
 // bytes differ, so an unchanged block writes nothing. On success it also sets
 // the commit wait that CommitTimeoutFunc reports from the next height.
 //
@@ -392,7 +364,7 @@ func (k *Keeper) WarmCommitWait(ctx sdk.Context) error {
 }
 
 // setCommitWait stores params' commit wait, or the unset sentinel.
-func (k *Keeper) setCommitWait(params ConsensusParams) {
+func (k *Keeper) setCommitWait(params types.ConsensusParams) {
 	wait, ok := params.MinBlockCommitDuration()
 	if !ok {
 		k.commitWait.Store(commitWaitUnset)
@@ -411,33 +383,4 @@ func (k *Keeper) CommitWait() (time.Duration, bool) {
 		return 0, false
 	}
 	return time.Duration(v), true
-}
-
-// ValidatedProto converts the contract params to the engine's proto type with
-// the given version (copied from the store by the caller) and checks them the
-// way Nibiru BFT will: ValidateBasic on the full params struct, since the
-// engine halts on an invalid update, plus MaxMinBlockCommitDurationMs. The
-// contract enforces the same rules; checking again here means a contract bug
-// or a bad migration cannot halt the chain.
-func (p ConsensusParams) ValidatedProto(
-	version *cmtproto.VersionParams,
-) (cmtproto.ConsensusParams, error) {
-	if ms := p.MinBlockCommitDurationMs; ms != nil &&
-		*ms > MaxMinBlockCommitDurationMs {
-		return cmtproto.ConsensusParams{}, fmt.Errorf(
-			"min_block_commit_duration_ms %d exceeds the %d ms cap",
-			*ms, MaxMinBlockCommitDurationMs)
-	}
-	pb := p.ToProto(version)
-	// bft/types ConsensusParamsFromProto dereferences Version; validation
-	// does not look at it, so a nil version validates as the zero version.
-	full := pb
-	if full.Version == nil {
-		full.Version = &cmtproto.VersionParams{}
-	}
-	if err := cmttypes.ConsensusParamsFromProto(full).ValidateBasic(); err != nil {
-		return cmtproto.ConsensusParams{}, fmt.Errorf(
-			"invalid x-consensus params: %w", err)
-	}
-	return pb, nil
 }

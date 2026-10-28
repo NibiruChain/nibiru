@@ -27,7 +27,7 @@ type Handler_v2_22 struct{}
 // Handler returns migration errors, since the binary needs the migrated
 // schema. A failure to create x-consensus is logged and reported as an
 // upgrade_failure event (the v2.16 pattern) and the upgrade continues: the
-// x/consensus store still holds the current params, the x/xconsensus
+// x/consensus store still holds the current params, the x/consensus
 // EndBlocker keeps them while no contract exists, and a later upgrade can
 // retry, because EnsureXConsensus is idempotent and writes nothing on
 // failure.

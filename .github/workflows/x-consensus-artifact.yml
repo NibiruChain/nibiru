@@ -1,7 +1,7 @@
 name: x-consensus artifact
 # x-consensus artifact rebuilds the embedded x-consensus contract with the
 # AMD64 release optimizer and checks it against the decompressed
-# x/xconsensus/x_consensus.wasm.gz.
+# x/consensus/x_consensus.wasm.gz.
 # The embedded bytes become chain state at genesis and in the v2.22 upgrade,
 # and their checksum fixes the contract's instantiate2 address, so the binary
 # must be reproducible from source. Only the decompressed bytes are compared:
@@ -13,8 +13,8 @@ on:
   pull_request:
     paths:
       - "wasm-contracts/x-consensus/**"
-      - "x/xconsensus/x_consensus.wasm.gz"
-      - "x/xconsensus/x_consensus.go"
+      - "x/consensus/x_consensus.wasm.gz"
+      - "x/consensus/wasm.go"
       - "Cargo.lock"
       - "Cargo.toml"
       - "just-rs.just"
@@ -63,13 +63,13 @@ jobs:
       - name: Compare with the embedded artifact
         run: |
           built="$(sha256sum wasm-contracts/artifacts/x_consensus.wasm | cut -d' ' -f1)"
-          gzip -t x/xconsensus/x_consensus.wasm.gz
-          embedded="$(gzip -dc x/xconsensus/x_consensus.wasm.gz | sha256sum | cut -d' ' -f1)"
-          constant="$(sed -n 's/^const XConsensusWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' x/xconsensus/x_consensus.go)"
+          gzip -t x/consensus/x_consensus.wasm.gz
+          embedded="$(gzip -dc x/consensus/x_consensus.wasm.gz | sha256sum | cut -d' ' -f1)"
+          constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' x/consensus/wasm.go)"
           echo "release build: $built"
           echo "embedded (decompressed): $embedded"
           echo "Go constant:   $constant"
           if [ "$built" != "$embedded" ] || [ "$built" != "$constant" ]; then
-            echo "::error::x/xconsensus/x_consensus.wasm.gz does not decompress to the release build of wasm-contracts/x-consensus. Download artifact x-consensus-release from this run, commit its x_consensus.wasm.gz, and set XConsensusWasmSHA256 to $built."
+            echo "::error::x/consensus/x_consensus.wasm.gz does not decompress to the release build of wasm-contracts/x-consensus. Download artifact x-consensus-release from this run, commit its x_consensus.wasm.gz, and set ContractWasmSHA256 in x/consensus/wasm.go to $built."
             exit 1
           fi

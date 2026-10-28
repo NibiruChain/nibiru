@@ -1,4 +1,4 @@
-package xconsensus_test
+package keeper_test
 
 import (
 	"encoding/hex"
@@ -26,22 +26,23 @@ import (
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"
+	"github.com/NibiruChain/nibiru/v2/x/consensus"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
-	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
 // chain drives a test app block by block through the real ABCI methods, so
-// the x/xconsensus EndBlocker, baseapp's EndBlock response and Commit all run
+// the x/consensus EndBlocker, baseapp's EndBlock response and Commit all run
 // as they do on a node.
 type chain struct {
 	t   *testing.T
@@ -86,10 +87,10 @@ func (c *chain) contract() sdk.AccAddress {
 	return addr
 }
 
-// contractsByCreator lists every contract created by xconsensus.CreatorAddr.
+// contractsByCreator lists every contract created by keeper.CreatorAddr.
 func (c *chain) contractsByCreator() []sdk.AccAddress {
 	var addrs []sdk.AccAddress
-	c.app.WasmKeeper.IterateContractsByCreator(c.ctx, xconsensus.CreatorAddr(),
+	c.app.WasmKeeper.IterateContractsByCreator(c.ctx, keeper.CreatorAddr(),
 		func(addr sdk.AccAddress) bool {
 			addrs = append(addrs, addr)
 			return false
@@ -99,13 +100,13 @@ func (c *chain) contractsByCreator() []sdk.AccAddress {
 
 // contractParams queries the contract with an unbounded query, as a client
 // would.
-func (c *chain) contractParams() xconsensus.ConsensusParams {
+func (c *chain) contractParams() consensustypes.ConsensusParams {
 	c.t.Helper()
-	req, err := json.Marshal(xconsensus.QueryParams())
+	req, err := json.Marshal(consensustypes.QueryParams())
 	require.NoError(c.t, err)
 	resp, err := c.app.WasmKeeper.QuerySmart(c.ctx, c.contract(), req)
 	require.NoError(c.t, err)
-	var params xconsensus.ConsensusParams
+	var params consensustypes.ConsensusParams
 	require.NoError(c.t, json.Unmarshal(resp, &params))
 	return params
 }
@@ -119,16 +120,16 @@ func (c *chain) storedParams() cmtproto.ConsensusParams {
 }
 
 // update executes UpdateParams as sender in the current block.
-func (c *chain) update(sender sdk.AccAddress, params xconsensus.ConsensusParams) error {
+func (c *chain) update(sender sdk.AccAddress, params consensustypes.ConsensusParams) error {
 	c.t.Helper()
-	return c.execute(sender, xconsensus.ExecuteMsg{
-		UpdateParams: &xconsensus.UpdateParamsMsg{Params: params},
+	return c.execute(sender, consensustypes.ExecuteMsg{
+		UpdateParams: &consensustypes.UpdateParamsMsg{Params: params},
 	})
 }
 
 // execute sends msg to x-consensus as sender in the current block, the way
 // a MsgExecuteContract tx would.
-func (c *chain) execute(sender sdk.AccAddress, msg xconsensus.ExecuteMsg) error {
+func (c *chain) execute(sender sdk.AccAddress, msg consensustypes.ExecuteMsg) error {
 	c.t.Helper()
 	bz, err := json.Marshal(msg)
 	require.NoError(c.t, err)
@@ -138,8 +139,8 @@ func (c *chain) execute(sender sdk.AccAddress, msg xconsensus.ExecuteMsg) error 
 }
 
 // migrateMsg is ExecuteMsg.Migrate to codeID with an empty migrate message.
-func migrateMsg(codeID uint64) xconsensus.ExecuteMsg {
-	return xconsensus.ExecuteMsg{Migrate: &xconsensus.MigrateExecMsg{
+func migrateMsg(codeID uint64) consensustypes.ExecuteMsg {
+	return consensustypes.ExecuteMsg{Migrate: &consensustypes.MigrateExecMsg{
 		CodeID: codeID, Msg: []byte(`{}`),
 	}}
 }
@@ -151,7 +152,7 @@ func (c *chain) storeCode(
 ) uint64 {
 	c.t.Helper()
 	codeID, _, err := wasmkeeper.NewDefaultPermissionKeeper(&c.app.WasmKeeper).
-		Create(c.ctx, sender, xconsensus.XConsensusWasm, &access)
+		Create(c.ctx, sender, consensus.ContractWasm(), &access)
 	require.NoError(c.t, err)
 	return codeID
 }
@@ -193,16 +194,16 @@ func rootAddr() sdk.AccAddress { return sdk.MustAccAddressFromBech32(testutil.AD
 
 // genesisParams is the x/consensus genesis of every test app, as contract
 // params.
-func genesisParams(t *testing.T) xconsensus.ConsensusParams {
+func genesisParams(t *testing.T) consensustypes.ConsensusParams {
 	t.Helper()
-	params, err := xconsensus.ConsensusParamsFromProto(*sims.DefaultConsensusParams)
+	params, err := consensustypes.ConsensusParamsFromProto(*sims.DefaultConsensusParams)
 	require.NoError(t, err)
 	return params
 }
 
 // changedParams returns genesis params with a new block gas limit, an extra
 // key type, and the commit wait set to waitMs.
-func changedParams(t *testing.T, waitMs uint64) xconsensus.ConsensusParams {
+func changedParams(t *testing.T, waitMs uint64) consensustypes.ConsensusParams {
 	t.Helper()
 	params := genesisParams(t)
 	params.Block.MaxGas = 77_000_000
@@ -213,7 +214,7 @@ func changedParams(t *testing.T, waitMs uint64) xconsensus.ConsensusParams {
 
 // mustProto converts contract params to the engine type with version.
 func mustProto(
-	t *testing.T, p xconsensus.ConsensusParams, version *cmtproto.VersionParams,
+	t *testing.T, p consensustypes.ConsensusParams, version *cmtproto.VersionParams,
 ) cmtproto.ConsensusParams {
 	t.Helper()
 	pb, err := p.ValidatedProto(version)
@@ -232,13 +233,13 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 
 	info := c.app.WasmKeeper.GetContractInfo(c.ctx, c.contract())
 	require.NotNil(t, info)
-	require.Equal(t, xconsensus.CreatorAddr().String(), info.Creator)
+	require.Equal(t, keeper.CreatorAddr().String(), info.Creator)
 	require.Equal(t, c.contract().String(), info.Admin, "x-consensus must be its own admin")
 	require.True(t, c.isDeployer(c.contract()), "x-consensus must hold wasm_deployer")
-	require.Equal(t, xconsensus.ContractLabel, info.Label)
+	require.Equal(t, consensustypes.ContractLabel, info.Label)
 	code := c.app.WasmKeeper.GetCodeInfo(c.ctx, info.CodeID)
 	require.Equal(t, wasmtypes.AccessTypeNobody, code.InstantiateConfig.Permission)
-	require.Equal(t, xconsensus.XConsensusWasmSHA256, hex.EncodeToString(code.CodeHash))
+	require.Equal(t, consensus.ContractWasmSHA256, hex.EncodeToString(code.CodeHash))
 
 	require.Equal(t, genesisParams(t), c.contractParams())
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())
@@ -262,13 +263,29 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 // can publish this address before the chain or upgrade creates it.
 func TestPredictedAddress(t *testing.T) {
 	c := newChain(t)
-	checksum, err := hex.DecodeString(xconsensus.XConsensusWasmSHA256)
+	checksum, err := hex.DecodeString(consensus.ContractWasmSHA256)
 	require.NoError(t, err)
-	predicted := xconsensus.PredictContractAddr(checksum)
+	predicted := keeper.PredictContractAddr(checksum)
 	require.Equal(t, predicted, c.contract())
 	require.Equal(t, predicted.String(), c.contractInfo().Admin)
 	t.Logf("x-consensus address: %s (creator %s)",
-		predicted, xconsensus.CreatorAddr())
+		predicted, keeper.CreatorAddr())
+}
+
+// TestContractAddressPinned pins the creator and contract address published
+// for the current embedded build. The creator is the module address of
+// types.ContractCreatorName, kept as "xconsensus" when the module became
+// x/consensus, so a module rename can never move the contract. A rebuild of
+// the embedded Wasm changes the contract address on purpose; update the
+// address here and wherever it is published.
+func TestContractAddressPinned(t *testing.T) {
+	require.Equal(t, "nibi1y0jxhu9gx4hqsx56apkkllfjpctf4ffsk25atd",
+		keeper.CreatorAddr().String())
+	checksum, err := hex.DecodeString(consensus.ContractWasmSHA256)
+	require.NoError(t, err)
+	require.Equal(t,
+		"nibi1mlr9daxryfedvt6sx5g06f22lvtr76x2urdnv5sprs2nyupt86wslq8p0v",
+		keeper.PredictContractAddr(checksum).String())
 }
 
 // TestSelfAdminMigrate checks the self-admin model: the x/sudo root migrates
@@ -313,8 +330,8 @@ func TestSelfAdminRootOnly(t *testing.T) {
 
 	require.ErrorContains(t, c.execute(outsider, migrateMsg(codeID)),
 		"is not the x/sudo root")
-	require.ErrorContains(t, c.execute(outsider, xconsensus.ExecuteMsg{
-		UpdateAdmin: &xconsensus.UpdateAdminMsg{Admin: outsider.String()},
+	require.ErrorContains(t, c.execute(outsider, consensustypes.ExecuteMsg{
+		UpdateAdmin: &consensustypes.UpdateAdminMsg{Admin: outsider.String()},
 	}), "is not the x/sudo root")
 	// Sending MsgMigrateContract directly fails too: the admin is the
 	// contract, not the root.
@@ -342,8 +359,8 @@ func TestSelfAdminRootOnly(t *testing.T) {
 func TestSelfAdminUpdateAdmin(t *testing.T) {
 	c := newChain(t)
 	newAdmin := testutil.NewAccAddress()
-	require.NoError(t, c.execute(rootAddr(), xconsensus.ExecuteMsg{
-		UpdateAdmin: &xconsensus.UpdateAdminMsg{Admin: newAdmin.String()},
+	require.NoError(t, c.execute(rootAddr(), consensustypes.ExecuteMsg{
+		UpdateAdmin: &consensustypes.UpdateAdminMsg{Admin: newAdmin.String()},
 	}))
 	require.Equal(t, newAdmin.String(), c.contractInfo().Admin)
 
@@ -496,7 +513,7 @@ func TestRefreshFallback(t *testing.T) {
 		{
 			name: "commit wait above the cap",
 			breakIt: func(c *chain) {
-				params := changedParams(t, xconsensus.MaxMinBlockCommitDurationMs+1)
+				params := changedParams(t, consensustypes.MaxMinBlockCommitDurationMs+1)
 				bz, err := json.Marshal(params)
 				require.NoError(t, err)
 				c.writeContractParams(string(bz))
@@ -531,7 +548,7 @@ func TestRefreshFallback(t *testing.T) {
 // Nibiru BFT's ValidateBasic to the full struct, the commit wait cap, and
 // keeps the caller's version.
 func TestValidatedProto(t *testing.T) {
-	good := changedParams(t, xconsensus.MaxMinBlockCommitDurationMs)
+	good := changedParams(t, consensustypes.MaxMinBlockCommitDurationMs)
 	pb, err := good.ValidatedProto(&cmtproto.VersionParams{App: 3})
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), pb.Version.App)
@@ -539,17 +556,17 @@ func TestValidatedProto(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, pb.Version)
 
-	for name, mutate := range map[string]func(p *xconsensus.ConsensusParams){
-		"commit wait above cap": func(p *xconsensus.ConsensusParams) {
-			ms := xconsensus.MaxMinBlockCommitDurationMs + 1
+	for name, mutate := range map[string]func(p *consensustypes.ConsensusParams){
+		"commit wait above cap": func(p *consensustypes.ConsensusParams) {
+			ms := consensustypes.MaxMinBlockCommitDurationMs + 1
 			p.MinBlockCommitDurationMs = &ms
 		},
-		"zero max bytes":      func(p *xconsensus.ConsensusParams) { p.Block.MaxBytes = 0 },
-		"max gas below -1":    func(p *xconsensus.ConsensusParams) { p.Block.MaxGas = -2 },
-		"zero evidence age":   func(p *xconsensus.ConsensusParams) { p.Evidence.MaxAgeNumBlocks = 0 },
-		"evidence over block": func(p *xconsensus.ConsensusParams) { p.Evidence.MaxBytes = p.Block.MaxBytes + 1 },
-		"no key types":        func(p *xconsensus.ConsensusParams) { p.Validator.PubKeyTypes = nil },
-		"unknown key type":    func(p *xconsensus.ConsensusParams) { p.Validator.PubKeyTypes = []string{"sr25519"} },
+		"zero max bytes":      func(p *consensustypes.ConsensusParams) { p.Block.MaxBytes = 0 },
+		"max gas below -1":    func(p *consensustypes.ConsensusParams) { p.Block.MaxGas = -2 },
+		"zero evidence age":   func(p *consensustypes.ConsensusParams) { p.Evidence.MaxAgeNumBlocks = 0 },
+		"evidence over block": func(p *consensustypes.ConsensusParams) { p.Evidence.MaxBytes = p.Block.MaxBytes + 1 },
+		"no key types":        func(p *consensustypes.ConsensusParams) { p.Validator.PubKeyTypes = nil },
+		"unknown key type":    func(p *consensustypes.ConsensusParams) { p.Validator.PubKeyTypes = []string{"sr25519"} },
 	} {
 		t.Run(name, func(t *testing.T) {
 			p := changedParams(t, 0)
@@ -671,16 +688,16 @@ func TestConsensusMsgUpdateParamsBlocked(t *testing.T) {
 // QueryGasLimit, and checks the limit keeps a wide margin over it.
 func TestQueryGasUsage(t *testing.T) {
 	c := newChain(t)
-	req, err := json.Marshal(xconsensus.QueryParams())
+	req, err := json.Marshal(consensustypes.QueryParams())
 	require.NoError(t, err)
 
 	start := time.Now()
 	_, gasUsed, err := c.app.WasmKeeper.QuerySmartBounded(
-		c.ctx, c.contract(), req, xconsensus.QueryGasLimit)
+		c.ctx, c.contract(), req, consensustypes.QueryGasLimit)
 	elapsed := time.Since(start)
 	require.NoError(t, err)
 	t.Logf("x-consensus params query: %d gas, %s", gasUsed, elapsed)
-	require.Less(t, gasUsed*10, xconsensus.QueryGasLimit,
+	require.Less(t, gasUsed*10, consensustypes.QueryGasLimit,
 		"QueryGasLimit should keep a 10x margin over the measured query")
 }
 
@@ -695,12 +712,12 @@ func TestGenesisCost(t *testing.T) {
 
 	ctx, _ := c.ctx.CacheContext()
 	gov := wasmkeeper.NewGovPermissionKeeper(&c.app.WasmKeeper)
-	initMsg, err := json.Marshal(xconsensus.InstantiateMsg{Params: genesisParams(t)})
+	initMsg, err := json.Marshal(consensustypes.InstantiateMsg{Params: genesisParams(t)})
 	require.NoError(t, err)
 	creator := testutil.NewAccAddress()
 
 	start = time.Now()
-	codeID, _, err := gov.Create(ctx, creator, xconsensus.XConsensusWasm, nil)
+	codeID, _, err := gov.Create(ctx, creator, consensus.ContractWasm(), nil)
 	require.NoError(t, err)
 	_, _, err = gov.Instantiate2(ctx, codeID, creator, nil, initMsg,
 		"cost", sdk.NewCoins(), []byte("cost"), false)

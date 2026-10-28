@@ -93,6 +93,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/evm/evmmodule"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
+	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
+	consensuskeeper "github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
@@ -108,7 +110,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/sudo/sudomodule"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory"
 	tokenfactorytypes "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
-	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 
 	// force call init() of the geth tracers
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
@@ -365,7 +366,7 @@ func NewNibiruApp(
 	}
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
-	app.XConsensusKeeper = xconsensus.NewKeeper(
+	app.XConsensusKeeper = consensuskeeper.NewKeeper(
 		&app.WasmKeeper, &app.ConsensusParamsKeeper, app.SudoKeeper)
 
 	// register non-depinject modules
@@ -388,7 +389,7 @@ func NewNibiruApp(
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
-		xconsensus.NewAppModule(app.XConsensusKeeper),
+		consensusmodule.NewAppModule(app.XConsensusKeeper),
 	); err != nil {
 		panic(err)
 	}
@@ -539,9 +540,9 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	// is a genesis without consensus params, which only test harnesses send.
 	err := app.XConsensusKeeper.EnsureXConsensus(ctx)
 	switch {
-	case errors.Is(err, xconsensus.ErrNoStoredParams):
+	case errors.Is(err, consensuskeeper.ErrNoStoredParams):
 		ctx.Logger().Info("x-consensus not created: genesis has no consensus params",
-			"module", xconsensus.ModuleName)
+			"module", consensustypes.ModuleName)
 	case err != nil:
 		panic(fmt.Errorf("create x-consensus at genesis: %w", err))
 	default:
@@ -549,7 +550,7 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		// first height already uses it.
 		if err := app.XConsensusKeeper.WarmCommitWait(ctx); err != nil {
 			ctx.Logger().Error("could not load the x-consensus commit wait",
-				"module", xconsensus.ModuleName, "err", err)
+				"module", consensustypes.ModuleName, "err", err)
 		}
 	}
 	return res
