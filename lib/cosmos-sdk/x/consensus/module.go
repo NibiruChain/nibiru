@@ -1,3 +1,15 @@
+// Package consensus is the Cosmos SDK x/consensus module: a depinject module
+// whose keeper stores the consensus params and whose gov-gated
+// MsgUpdateParams changes them.
+//
+// Deprecated: NibiruApp no longer uses this module. Nibiru's own x/consensus
+// module (github.com/NibiruChain/nibiru/v2/x/consensus) owns the "consensus"
+// store, serves the Params query, and rejects MsgUpdateParams, because the
+// x-consensus contract owns the consensus params. The types moved to
+// github.com/NibiruChain/nibiru/v2/x/consensus/types, which this package
+// imports. It is kept only for lib's own depinject test apps (the
+// testutil/app_config.go files and testutil/configurator) and the ibc-go
+// simapps, and will be removed together with that test wiring.
 package consensus
 
 import (
@@ -22,8 +34,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 // ConsensusVersion defines the current x/consensus module consensus version.

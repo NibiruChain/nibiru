@@ -48,6 +48,22 @@ func NewTestDeps() TestDeps {
 	}
 }
 
+// NewTestDepsPreXConsensus is NewTestDeps without the genesis x-consensus
+// contract, for tests that assume an empty Wasm genesis (code ID 1 free, no
+// contracts). See testapp.NewNibiruTestAppPreXConsensus.
+func NewTestDepsPreXConsensus() TestDeps {
+	app, ctx := testapp.NewNibiruTestAppAndContextPreXConsensus()
+	ctx = ctx.WithChainID(eth.EIP155ChainID_Testnet)
+
+	return TestDeps{
+		App:       app,
+		ctxInit:   ctx,
+		EvmKeeper: app.EvmKeeper,
+		GenState:  evm.DefaultGenesisState(),
+		Sender:    NewEthPrivAcc(),
+	}
+}
+
 // NewStateDB returns the current [*evmstate.SDB] pointer for the [*TestDeps]
 // instance. This function mutates the [*TestDeps] and initializes the state DB
 // it one is not set already.

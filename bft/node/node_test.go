@@ -526,3 +526,41 @@ func state(nVals int, height int64) (sm.State, dbm.DB, []types.PrivValidator) {
 	}
 	return s, stateDB, privVals
 }
+
+// TestNodeCommitTimeoutFunc checks that the CommitTimeoutFunc option reaches
+// the consensus state before the node starts, so the first height already
+// uses the hook value instead of config.toml timeout_commit.
+func TestNodeCommitTimeoutFunc(t *testing.T) {
+	config := cfg.ResetTestRoot("node_commit_timeout_func_test")
+	defer os.RemoveAll(config.RootDir)
+
+	const wait = 30 * time.Second
+	require.NotEqual(t, wait, config.Consensus.TimeoutCommit)
+	hook := func(int64) (time.Duration, bool) { return wait, true }
+
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	require.NoError(t, err)
+
+	before := cmttime.Now()
+	n, err := NewNode(config,
+		privval.LoadOrGenFilePV(
+			config.PrivValidatorKeyFile(), config.PrivValidatorStateFile(),
+		),
+		nodeKey,
+		testClientCreator(config),
+		DefaultGenesisDocProviderFunc(config),
+		DefaultDBProvider,
+		DefaultMetricsProvider(config.Instrumentation),
+		log.TestingLogger(),
+		CommitTimeoutFunc(hook),
+	)
+	require.NoError(t, err)
+	after := cmttime.Now()
+
+	start := n.ConsensusState().GetRoundState().StartTime
+	assert.False(t, start.Before(before.Add(wait)), "start %v", start)
+	assert.False(t, start.After(after.Add(wait)), "start %v", start)
+
+	require.NoError(t, n.Start())
+	require.NoError(t, n.Stop())
+}

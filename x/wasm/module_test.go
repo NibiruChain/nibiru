@@ -89,7 +89,10 @@ func (f *testFaucet) Fund(ctx sdk.Context, addr sdk.AccAddress, coins ...sdk.Coi
 
 func setupTest(t *testing.T) testData {
 	t.Helper()
-	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
+	// These tests assert code IDs and counts from an empty Wasm genesis, so
+	// they use an app without the genesis x-consensus code.
+	nibiru, _ := testapp.NewNibiruTestAppPreXConsensus()
+	ctx := testapp.NewContext(nibiru)
 	encConf := nibiruapp.MakeEncodingConfig()
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()
