@@ -6,10 +6,13 @@
 // min_block_commit_duration_ms. Only the current x/sudo root may update
 // them; the contract reads the root on every execute through the Stargate
 // query /nibiru.sudo.v1.Query/QuerySudoers and stores no owner. The app
-// version is not in the contract: it belongs to x/upgrade. The app queries
-// the contract once per block at EndBlock, so a change applies from the next
-// block for both the app and the engine. Contract source:
-// wasm-contracts/x-consensus.
+// version is not in the contract: it belongs to x/upgrade. The module
+// EndBlocker (AppModule, ordered last) queries the contract once per block,
+// validates the result, and writes it to the x/consensus store. That store is
+// the copy every reader uses: baseapp at BeginBlock, for every tx, and at
+// EndBlock, where it returns the params to Nibiru BFT. So a change applies
+// from the next block for both the app and the engine, and a failed query
+// keeps the last good copy. Contract source: wasm-contracts/x-consensus.
 //
 // JSON conventions (see wasm-contracts/x-consensus/src/msg.rs):
 //   - int64 fields are JSON strings, hence the ",string" tag option, so
@@ -42,8 +45,10 @@ import (
 var XConsensusWasm []byte
 
 // XConsensusWasmSHA256 is the hex SHA-256 of XConsensusWasm. Wasm code
-// checksums are SHA-256 of the bytecode, so this is also the code checksum
-// that fixes the instantiate2 address. A test keeps it in sync.
+// checksums are SHA-256 of the bytecode, so this is also the Wasm code
+// checksum. Nothing depends on the contract address it implies: the app finds
+// the contract through the Wasm creator index (Keeper.ContractAddr), so
+// rebuilding the embedded Wasm is safe. A test keeps it in sync.
 const XConsensusWasmSHA256 = "9b59483c9064d2baa3c2023ecf90dbc0f1f45ab13acfde14a0c96661e50e11df"
 
 // MaxMinBlockCommitDurationMs is the contract's upper bound for
