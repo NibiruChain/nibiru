@@ -46,13 +46,17 @@ import (
 // XConsensusWasm is the optimized x-consensus contract bytecode.
 //
 //   - Source: wasm-contracts/x-consensus (crate x-consensus 0.1.0) at
-//     commit fdc94269479510ce55912b442cf95a87b6d873cd.
+//     commit 9f1d07e87b63b995816d86e4b388608a4cbfed08. Later doc-only edits
+//     to the Rust source do not change the bytes.
 //   - Build: just rs optimizer build --manifest-path Cargo.toml
-//     -p x-consensus --output-dir wasm-contracts/artifacts --mode dev
-//     (sai-wasm-optimizer 0.1.0, image cosmwasm/optimizer-arm64:0.17.0,
-//     linux/arm64, Rust 1.86.0, Binaryen 116).
-//   - SHA-256: 37dc541f06b9229371d7b985b05ecbe76f47be2693dfdfcd0cb8a50196c2096d
-//   - Size: 178224 bytes.
+//     -p x-consensus --output-dir wasm-contracts/artifacts --mode release
+//     (sai-wasm-optimizer 0.1.0, image cosmwasm/optimizer:0.17.0 pinned at
+//     sha256:7e0b9229c1a4118d0c9a2af2e7f5d95a91f264c26a2ce5681c779926e74d7f85,
+//     linux/amd64), produced by the x-consensus artifact workflow
+//     (.github/workflows/x-consensus-artifact.yml), which rebuilds it on
+//     every relevant pull request and fails if these bytes differ.
+//   - SHA-256: f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e
+//   - Size: 178226 bytes.
 //
 //go:embed x_consensus.wasm
 var XConsensusWasm []byte
@@ -63,7 +67,7 @@ var XConsensusWasm []byte
 // finds the contract through the Wasm creator index (Keeper.ContractAddr),
 // not that address, so rebuilding the embedded Wasm is safe; only published
 // addresses go stale. A test keeps the constant in sync.
-const XConsensusWasmSHA256 = "37dc541f06b9229371d7b985b05ecbe76f47be2693dfdfcd0cb8a50196c2096d"
+const XConsensusWasmSHA256 = "f1ac9367879aac63755370c4ff779b8d684598f3a43021306764376ce5c3912e"
 
 // MaxMinBlockCommitDurationMs is the contract's upper bound for
 // ConsensusParams.MinBlockCommitDurationMs, 30 s. A longer wait would make
