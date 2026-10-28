@@ -493,7 +493,8 @@ timeout_precommit_delta = "{{ .Consensus.TimeoutPrecommitDelta }}"
 # executed, so execution uses up part of the wait. If execution takes longer,
 # the next height starts once execution finishes.
 # When the chain sets min_block_commit_duration_ms, that value overrides this
-# setting and the node logs a warning naming both values.
+# setting. When the two differ, the node logs a warning naming both values,
+# once per change.
 timeout_commit = "{{ .Consensus.TimeoutCommit }}"
 
 # How many blocks to look back to check existence of the node's consensus votes before joining consensus

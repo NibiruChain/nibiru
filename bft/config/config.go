@@ -1045,7 +1045,8 @@ type ConsensusConfig struct {
 	// node collect more precommits for the last commit.
 	//
 	// When the chain sets min_block_commit_duration_ms, that value overrides
-	// this setting and the node logs a warning naming both values.
+	// this setting. When the two differ, the node logs a warning naming both
+	// values, once per change.
 	TimeoutCommit time.Duration `mapstructure:"timeout_commit"`
 
 	// Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)

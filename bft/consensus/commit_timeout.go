@@ -23,9 +23,10 @@ import (
 // `timeout_commit` from config.toml. A negative duration is treated like
 // ok=false.
 //
-// The engine calls the function while holding the consensus state mutex, once
-// per height. It must be cheap and non-blocking: read a cached value, never
-// query application state, take application locks, or do I/O. A slow
+// The engine calls the function while holding the consensus state mutex, at
+// least once per height (at startup it can run twice for the same height), so
+// it must be idempotent. It must be cheap and non-blocking: read a cached
+// value, never query application state, take application locks, or do I/O. A slow
 // function delays consensus for every peer that waits on this node.
 type CommitTimeoutFunc func(height int64) (wait time.Duration, ok bool)
 
