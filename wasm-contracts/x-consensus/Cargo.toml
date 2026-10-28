@@ -1,0 +1,29 @@
+[package]
+name = "x-consensus"
+version = "0.1.0"
+edition = "2021"
+description = "Nibiru consensus parameters and chain-wide commit timing"
+homepage = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# features.library: Use the library feature to disable all
+# instantiate/execute/query exports, so other crates can depend on the
+# message types.
+library = []
+
+[dependencies]
+cosmwasm-std = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cw-storage-plus = { workspace = true }
+cw2 = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+easy-addr = { workspace = true }
+serde_json = { workspace = true }
