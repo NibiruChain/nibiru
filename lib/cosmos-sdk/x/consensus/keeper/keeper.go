@@ -7,7 +7,7 @@ import (
 	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/exported"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 var _ exported.ConsensusParamSetter = (*Keeper)(nil)

@@ -8,7 +8,7 @@ import (
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )

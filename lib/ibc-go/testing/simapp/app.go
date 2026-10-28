@@ -54,7 +54,6 @@ import (
 	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
-	consensusparamtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
@@ -89,6 +88,7 @@ import (
 	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	consensusparamtypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller"

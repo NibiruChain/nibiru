@@ -22,8 +22,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 // ConsensusVersion defines the current x/consensus module consensus version.

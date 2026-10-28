@@ -46,7 +46,6 @@ import (
 	authzmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
-	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	distr "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution"
 	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence"
@@ -62,6 +61,7 @@ import (
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
 	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
