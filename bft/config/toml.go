@@ -487,9 +487,13 @@ timeout_prevote_delta = "{{ .Consensus.TimeoutPrevoteDelta }}"
 timeout_precommit = "{{ .Consensus.TimeoutPrecommit }}"
 # How much the timeout_precommit increases with each round
 timeout_precommit_delta = "{{ .Consensus.TimeoutPrecommitDelta }}"
-# How long we wait after committing a block, before starting on the new
-# height (this gives us a chance to receive some more precommits, even
-# though we already have +2/3).
+# The commit wait: time from this node's commit decision to the scheduled
+# start of the next height. The timer starts when the node has precommits for
+# one block from more than two-thirds of voting power, before the block is
+# executed, so execution uses up part of the wait. If execution takes longer,
+# the next height starts once execution finishes.
+# When the chain sets min_block_commit_duration_ms, that value overrides this
+# setting and the node logs a warning naming both values.
 timeout_commit = "{{ .Consensus.TimeoutCommit }}"
 
 # How many blocks to look back to check existence of the node's consensus votes before joining consensus

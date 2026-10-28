@@ -1035,10 +1035,17 @@ type ConsensusConfig struct {
 	TimeoutPrecommit time.Duration `mapstructure:"timeout_precommit"`
 	// How much the timeout_precommit increases with each round
 	TimeoutPrecommitDelta time.Duration `mapstructure:"timeout_precommit_delta"`
-	// How long we wait after committing a block, before starting on the new
-	// height (this gives us a chance to receive some more precommits, even
-	// though we already have +2/3).
-	// NOTE: when modifying, make sure to update time_iota_ms genesis parameter
+	// TimeoutCommit is the commit wait: the time from this node's commit
+	// decision to the scheduled start of the next height. The timer starts
+	// when the node has precommits for one block from more than two-thirds
+	// of voting power (CommitTime), before the block is executed, so
+	// execution and saving use up part of the wait. It is not a pause added
+	// after execution. If execution takes longer than the wait, the next
+	// height starts once execution finishes. The extra time also lets the
+	// node collect more precommits for the last commit.
+	//
+	// When the chain sets min_block_commit_duration_ms, that value overrides
+	// this setting and the node logs a warning naming both values.
 	TimeoutCommit time.Duration `mapstructure:"timeout_commit"`
 
 	// Make progress as soon as we have all the precommits (as if TimeoutCommit = 0)
@@ -1119,8 +1126,9 @@ func (cfg *ConsensusConfig) Precommit(round int32) time.Duration {
 	) * time.Nanosecond
 }
 
-// Commit returns the amount of time to wait for straggler votes after receiving +2/3 precommits
-// for a single block (ie. a commit).
+// Commit returns the scheduled start of the next height from config alone:
+// t, the commit decision time, plus TimeoutCommit. The consensus state uses
+// its own helper instead, so a chain value can override TimeoutCommit.
 func (cfg *ConsensusConfig) Commit(t time.Time) time.Time {
 	return t.Add(cfg.TimeoutCommit)
 }
