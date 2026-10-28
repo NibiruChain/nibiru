@@ -19,7 +19,6 @@ library = []
 cosmwasm-std = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cw-storage-plus = { workspace = true }
-cw2 = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }

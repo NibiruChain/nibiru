@@ -90,8 +90,8 @@ type QueryMsg struct {
 // {"params":{}}.
 func QueryParams() QueryMsg { return QueryMsg{Params: &struct{}{}} }
 
-// MigrateMsg is the migrate message. It has no fields: a migration only
-// records the new cw2 version.
+// MigrateMsg is the migrate message. It has no fields: a migration replaces
+// the code and keeps the stored params.
 type MigrateMsg struct{}
 
 // ConsensusParams is the params object stored in x-consensus and returned

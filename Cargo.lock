@@ -4490,7 +4490,6 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
- "cw2",
  "easy-addr",
  "schemars",
  "serde",

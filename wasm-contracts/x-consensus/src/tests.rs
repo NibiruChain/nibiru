@@ -10,9 +10,7 @@ use cosmwasm_std::{
     QuerierResult, QueryRequest, SystemError, SystemResult,
 };
 
-use crate::contract::{
-    execute, instantiate, migrate, query, CONTRACT_NAME, CONTRACT_VERSION,
-};
+use crate::contract::{execute, instantiate, migrate, query};
 use crate::error::ContractError;
 use crate::msg::{
     BlockParams, ConsensusParams, EvidenceParams, ExecuteMsg, InstantiateMsg,
@@ -152,12 +150,9 @@ fn update(
 }
 
 #[test]
-fn instantiate_stores_params_and_version() {
+fn instantiate_stores_params() {
     let deps = setup(default_params());
     assert_eq!(query_params(&deps), default_params());
-    let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
-    assert_eq!(version.contract, CONTRACT_NAME);
-    assert_eq!(version.version, CONTRACT_VERSION);
 }
 
 #[test]
@@ -265,13 +260,9 @@ fn sudo_root_checks() {
 }
 
 #[test]
-fn migrate_sets_version_and_keeps_state() {
+fn migrate_keeps_state() {
     let mut deps = setup(default_params());
-    cw2::set_contract_version(deps.as_mut().storage, CONTRACT_NAME, "0.0.0")
-        .unwrap();
     migrate(deps.as_mut(), mock_env(), MigrateMsg {}).unwrap();
-    let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
-    assert_eq!(version.version, CONTRACT_VERSION);
     assert_eq!(query_params(&deps), default_params());
 }
 

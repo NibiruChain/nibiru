@@ -3,7 +3,6 @@
 use cosmwasm_std::{
     to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
-use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -11,11 +10,6 @@ use crate::msg::{
 };
 use crate::state::PARAMS;
 use crate::sudo::query_sudo_root;
-
-/// cw2 contract name, so tooling can identify the contract on chain.
-pub const CONTRACT_NAME: &str = "nibiru-wasm/contracts/x-consensus";
-/// cw2 contract version, taken from the crate version.
-pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Stores the initial params after validating them.
 ///
@@ -29,7 +23,6 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     msg.params.validate()?;
     PARAMS.save(deps.storage, &msg.params)?;
     Ok(Response::new().add_attribute("action", "instantiate"))
@@ -92,14 +85,16 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-/// Records the new cw2 version. Params are left unchanged; a future version
-/// that changes the storage layout adds its own migration.
+/// Accepts a code migration and leaves the params unchanged. The entry point
+/// exists so the Wasm admin can replace the code; a future version that
+/// changes the storage layout adds its own state migration here. There is no
+/// cw2 version record: nothing reads one, and the code hash already
+/// identifies the deployed version.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(
-    deps: DepsMut,
+    _deps: DepsMut,
     _env: Env,
     _msg: MigrateMsg,
 ) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     Ok(Response::new().add_attribute("action", "migrate"))
 }

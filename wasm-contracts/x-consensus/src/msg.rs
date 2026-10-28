@@ -64,8 +64,8 @@ pub enum QueryMsg {
     Params {},
 }
 
-/// Migration message. It carries no fields: a migration only records the new
-/// cw2 contract version. Params stay as stored.
+/// Migration message. It carries no fields: a migration replaces the code and
+/// keeps the stored params.
 #[cw_serde]
 pub struct MigrateMsg {}
 
