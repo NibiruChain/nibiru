@@ -7,21 +7,21 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{
-    ConsensusParams, ExecuteMsg, InstantiateMsg, MigrateMsg, OwnerResponse,
-    QueryMsg,
+    ConsensusParams, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
 };
-use crate::state::{OWNER, PARAMS};
+use crate::state::PARAMS;
+use crate::sudo::query_sudo_root;
 
 /// cw2 contract name, so tooling can identify the contract on chain.
 pub const CONTRACT_NAME: &str = "nibiru-wasm/contracts/x-consensus";
 /// cw2 contract version, taken from the crate version.
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Stores the owner and the initial params after validating both.
+/// Stores the initial params after validating them.
 ///
-/// The instantiating sender has no special rights; only `msg.owner` does.
-/// This lets the chain instantiate from Go with any creator while the x/sudo
-/// root owns the contract.
+/// The instantiating sender gains no rights. Instantiation does not need an
+/// x/sudo root, so a fresh chain can create the contract at genesis before
+/// any root is set.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -30,17 +30,13 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    let owner = deps.api.addr_validate(&msg.owner)?;
     msg.params.validate()?;
-    OWNER.save(deps.storage, &owner)?;
     PARAMS.save(deps.storage, &msg.params)?;
-    Ok(Response::new()
-        .add_attribute("action", "instantiate")
-        .add_attribute("owner", owner))
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
-/// Dispatches owner-only state changes. Every branch checks the owner first,
-/// so an unauthorized sender learns nothing about param validity.
+/// Dispatches root-only state changes. The root check runs first, so an
+/// unauthorized sender learns nothing about param validity.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -48,20 +44,30 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    assert_owner(deps.as_ref(), &info)?;
+    assert_sudo_root(deps.as_ref(), &info)?;
     match msg {
         ExecuteMsg::UpdateParams { params } => update_params(deps, params),
-        ExecuteMsg::UpdateOwner { owner } => update_owner(deps, owner),
     }
 }
 
-/// Returns [`ContractError::Unauthorized`] unless the sender is the owner.
-fn assert_owner(deps: Deps, info: &MessageInfo) -> Result<(), ContractError> {
-    let owner = OWNER.load(deps.storage)?;
-    if info.sender != owner {
+/// Fails unless the sender is the current x/sudo root.
+///
+/// The root is read on every call instead of stored, so a root rotation
+/// through x/sudo `MsgChangeRoot` takes effect here at once. An empty root
+/// or a failed query rejects the call, so the contract never falls back to
+/// letting anyone write.
+fn assert_sudo_root(
+    deps: Deps,
+    info: &MessageInfo,
+) -> Result<(), ContractError> {
+    let root = query_sudo_root(&deps.querier)?;
+    if root.is_empty() {
+        return Err(ContractError::NoSudoRoot);
+    }
+    if info.sender.as_str() != root {
         return Err(ContractError::Unauthorized {
             sender: info.sender.to_string(),
-            owner: owner.to_string(),
+            root,
         });
     }
     Ok(())
@@ -77,32 +83,17 @@ fn update_params(
     Ok(Response::new().add_attribute("action", "update_params"))
 }
 
-/// Validates `owner` as a bech32 address and makes it the owner.
-fn update_owner(
-    deps: DepsMut,
-    owner: String,
-) -> Result<Response, ContractError> {
-    let owner = deps.api.addr_validate(&owner)?;
-    OWNER.save(deps.storage, &owner)?;
-    Ok(Response::new()
-        .add_attribute("action", "update_owner")
-        .add_attribute("owner", owner))
-}
-
 /// Answers [`QueryMsg`] from storage. Queries never fail on a live contract,
-/// since instantiate always writes both items.
+/// since instantiate always writes the params.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Params {} => to_json_binary(&PARAMS.load(deps.storage)?),
-        QueryMsg::Owner {} => to_json_binary(&OwnerResponse {
-            owner: OWNER.load(deps.storage)?.to_string(),
-        }),
     }
 }
 
-/// Records the new cw2 version. Params and owner are left unchanged; a
-/// future version that changes the storage layout adds its own migration.
+/// Records the new cw2 version. Params are left unchanged; a future version
+/// that changes the storage layout adds its own migration.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(
     deps: DepsMut,

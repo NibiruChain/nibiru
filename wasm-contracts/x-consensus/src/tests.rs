@@ -1,9 +1,14 @@
 //! tests.rs: Unit tests for x-consensus entry points and validation.
 
+use std::marker::PhantomData;
+
 use cosmwasm_std::testing::{
-    mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+    mock_env, mock_info, MockApi, MockQuerier, MockStorage,
 };
-use cosmwasm_std::{from_json, Int64, OwnedDeps, Uint64};
+use cosmwasm_std::{
+    from_json, to_json_binary, ContractResult, Empty, Int64, OwnedDeps, Querier,
+    QuerierResult, QueryRequest, SystemError, SystemResult,
+};
 
 use crate::contract::{
     execute, instantiate, migrate, query, CONTRACT_NAME, CONTRACT_VERSION,
@@ -11,17 +16,16 @@ use crate::contract::{
 use crate::error::ContractError;
 use crate::msg::{
     BlockParams, ConsensusParams, EvidenceParams, ExecuteMsg, InstantiateMsg,
-    MigrateMsg, OwnerResponse, QueryMsg, ValidatorParams, VersionParams,
-    MAX_MIN_BLOCK_COMMIT_DURATION_MS,
+    MigrateMsg, QueryMsg, ValidatorParams, MAX_MIN_BLOCK_COMMIT_DURATION_MS,
 };
+use crate::state::PARAMS;
+use crate::sudo::QUERY_SUDOERS_PATH;
 use crate::validate::MAX_BLOCK_SIZE_BYTES;
 
-/// Owner address made by the default mock API.
-const OWNER: &str = easy_addr::addr!("owner");
+/// x/sudo root address made by the default mock API.
+const ROOT: &str = easy_addr::addr!("root");
 /// A different valid address with no rights.
-const NOT_OWNER: &str = easy_addr::addr!("not-owner");
-
-type Deps = OwnedDeps<MockStorage, MockApi, MockQuerier>;
+const NOT_ROOT: &str = easy_addr::addr!("not-root");
 
 /// Fixture shared with the Go package `x/xconsensus`.
 const INSTANTIATE_FIXTURE: &str =
@@ -30,8 +34,58 @@ const INSTANTIATE_FIXTURE: &str =
 const UPDATE_PARAMS_FIXTURE: &str =
     include_str!("../testdata/update_params_msg.json");
 
-/// Go `DefaultConsensusParams` (`bft/types/params.go`) with the commit
-/// duration unset.
+/// Querier that answers the x/sudo `QuerySudoers` Stargate query like the
+/// chain does, and delegates every other request to [`MockQuerier`].
+struct SudoQuerier {
+    /// Root returned by `QuerySudoers`. Empty means no root is set.
+    root: String,
+    /// When true, `QuerySudoers` fails as if the path were not accepted.
+    fail: bool,
+    /// Handles all other requests.
+    base: MockQuerier,
+}
+
+impl Querier for SudoQuerier {
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
+            Ok(r) => r,
+            Err(e) => {
+                return SystemResult::Err(SystemError::InvalidRequest {
+                    error: e.to_string(),
+                    request: bin_request.into(),
+                })
+            }
+        };
+        match request {
+            QueryRequest::Stargate { path, .. }
+                if path == QUERY_SUDOERS_PATH =>
+            {
+                if self.fail {
+                    return SystemResult::Err(SystemError::UnsupportedRequest {
+                        kind: path,
+                    });
+                }
+                // Same shape as the Wasm keeper's proto JSON, including the
+                // roles field the contract ignores.
+                let json = serde_json::json!({
+                    "sudoers": {
+                        "root": self.root,
+                        "roles": [{"role": "wasm_deployer", "members": []}],
+                    }
+                });
+                SystemResult::Ok(ContractResult::Ok(
+                    to_json_binary(&json).unwrap(),
+                ))
+            }
+            _ => self.base.raw_query(bin_request),
+        }
+    }
+}
+
+type Deps = OwnedDeps<MockStorage, MockApi, SudoQuerier>;
+
+/// Go `DefaultConsensusParams` (`bft/types/params.go`) without the version,
+/// and with the commit duration unset.
 fn default_params() -> ConsensusParams {
     ConsensusParams {
         block: BlockParams {
@@ -46,22 +100,34 @@ fn default_params() -> ConsensusParams {
         validator: ValidatorParams {
             pub_key_types: vec!["ed25519".to_string()],
         },
-        version: VersionParams {
-            app: Uint64::new(0),
-        },
         min_block_commit_duration_ms: None,
     }
 }
 
-/// Instantiates the contract with `OWNER` and `params`.
+/// Fresh dependencies whose x/sudo root is `root`.
+fn deps_with_root(root: &str) -> Deps {
+    OwnedDeps {
+        storage: MockStorage::default(),
+        api: MockApi::default(),
+        querier: SudoQuerier {
+            root: root.to_string(),
+            fail: false,
+            base: MockQuerier::default(),
+        },
+        custom_query_type: PhantomData,
+    }
+}
+
+/// Instantiates the contract with `params` and x/sudo root `ROOT`.
 fn setup(params: ConsensusParams) -> Deps {
-    let mut deps = mock_dependencies();
-    let msg = InstantiateMsg {
-        owner: OWNER.to_string(),
-        params,
-    };
-    instantiate(deps.as_mut(), mock_env(), mock_info(NOT_OWNER, &[]), msg)
-        .expect("instantiate");
+    let mut deps = deps_with_root(ROOT);
+    instantiate(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(NOT_ROOT, &[]),
+        InstantiateMsg { params },
+    )
+    .expect("instantiate");
     deps
 }
 
@@ -69,14 +135,6 @@ fn setup(params: ConsensusParams) -> Deps {
 fn query_params(deps: &Deps) -> ConsensusParams {
     from_json(query(deps.as_ref(), mock_env(), QueryMsg::Params {}).unwrap())
         .unwrap()
-}
-
-/// Queries the stored owner.
-fn query_owner(deps: &Deps) -> String {
-    let res: OwnerResponse =
-        from_json(query(deps.as_ref(), mock_env(), QueryMsg::Owner {}).unwrap())
-            .unwrap();
-    res.owner
 }
 
 /// Sends `UpdateParams` from `sender`.
@@ -94,36 +152,44 @@ fn update(
 }
 
 #[test]
-fn instantiate_stores_owner_params_and_version() {
+fn instantiate_stores_params_and_version() {
     let deps = setup(default_params());
     assert_eq!(query_params(&deps), default_params());
-    // The owner comes from the message, not the instantiating sender.
-    assert_eq!(query_owner(&deps), OWNER);
     let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
     assert_eq!(version.contract, CONTRACT_NAME);
     assert_eq!(version.version, CONTRACT_VERSION);
 }
 
 #[test]
-fn instantiate_rejects_invalid_params_and_owner() {
-    let mut deps = mock_dependencies();
+fn instantiate_needs_no_sudo_root() {
+    let mut deps = deps_with_root("");
+    deps.querier.fail = true;
+    instantiate(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(NOT_ROOT, &[]),
+        InstantiateMsg {
+            params: default_params(),
+        },
+    )
+    .unwrap();
+    assert_eq!(query_params(&deps), default_params());
+}
+
+#[test]
+fn instantiate_rejects_invalid_params() {
+    let mut deps = deps_with_root(ROOT);
     let mut params = default_params();
     params.block.max_bytes = Int64::new(0);
-    let msg = InstantiateMsg {
-        owner: OWNER.to_string(),
-        params,
-    };
-    let err = instantiate(deps.as_mut(), mock_env(), mock_info(OWNER, &[]), msg)
-        .unwrap_err();
+    let err = instantiate(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(ROOT, &[]),
+        InstantiateMsg { params },
+    )
+    .unwrap_err();
     assert!(matches!(err, ContractError::InvalidParams(_)), "{err}");
-
-    let msg = InstantiateMsg {
-        owner: "Not An Address".to_string(),
-        params: default_params(),
-    };
-    let err = instantiate(deps.as_mut(), mock_env(), mock_info(OWNER, &[]), msg)
-        .unwrap_err();
-    assert!(matches!(err, ContractError::Std(_)), "{err}");
+    assert!(PARAMS.may_load(deps.as_ref().storage).unwrap().is_none());
 }
 
 #[test]
@@ -133,14 +199,13 @@ fn update_params_round_trip() {
     params.block.max_gas = Int64::new(150_000_000);
     params.validator.pub_key_types =
         vec!["ed25519".to_string(), "secp256k1".to_string()];
-    params.version.app = Uint64::new(u64::MAX);
     params.min_block_commit_duration_ms = Some(200);
-    update(&mut deps, OWNER, params.clone()).unwrap();
+    update(&mut deps, ROOT, params.clone()).unwrap();
     assert_eq!(query_params(&deps), params);
 
     // Setting the value back to None unsets it.
     params.min_block_commit_duration_ms = None;
-    update(&mut deps, OWNER, params.clone()).unwrap();
+    update(&mut deps, ROOT, params.clone()).unwrap();
     assert_eq!(query_params(&deps).min_block_commit_duration_ms, None);
 }
 
@@ -150,59 +215,53 @@ fn update_params_rejects_invalid_and_keeps_old_value() {
     let mut params = default_params();
     params.min_block_commit_duration_ms =
         Some(MAX_MIN_BLOCK_COMMIT_DURATION_MS + 1);
-    let err = update(&mut deps, OWNER, params).unwrap_err();
+    let err = update(&mut deps, ROOT, params).unwrap_err();
     assert!(matches!(err, ContractError::InvalidParams(_)), "{err}");
     assert_eq!(query_params(&deps), default_params());
 }
 
 #[test]
-fn owner_checks() {
+fn sudo_root_checks() {
     let mut deps = setup(default_params());
-    let err = update(&mut deps, NOT_OWNER, default_params()).unwrap_err();
+    let mut changed = default_params();
+    changed.min_block_commit_duration_ms = Some(1_000);
+
+    // A non-root sender is rejected.
+    let err = update(&mut deps, NOT_ROOT, changed.clone()).unwrap_err();
     assert_eq!(
         err,
         ContractError::Unauthorized {
-            sender: NOT_OWNER.to_string(),
-            owner: OWNER.to_string(),
+            sender: NOT_ROOT.to_string(),
+            root: ROOT.to_string(),
         }
     );
 
-    // The owner check runs before validation.
+    // The root check runs before validation.
     let mut bad = default_params();
     bad.validator.pub_key_types = vec![];
-    let err = update(&mut deps, NOT_OWNER, bad).unwrap_err();
+    let err = update(&mut deps, NOT_ROOT, bad).unwrap_err();
     assert!(matches!(err, ContractError::Unauthorized { .. }), "{err}");
 
-    let transfer = ExecuteMsg::UpdateOwner {
-        owner: NOT_OWNER.to_string(),
-    };
-    let err = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(NOT_OWNER, &[]),
-        transfer.clone(),
-    )
-    .unwrap_err();
-    assert!(matches!(err, ContractError::Unauthorized { .. }), "{err}");
+    // An empty root rejects everyone, including a sender equal to "".
+    deps.querier.root = String::new();
+    let err = update(&mut deps, ROOT, changed.clone()).unwrap_err();
+    assert_eq!(err, ContractError::NoSudoRoot);
 
-    // An invalid new owner is rejected.
-    let err = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info(OWNER, &[]),
-        ExecuteMsg::UpdateOwner {
-            owner: "Not An Address".to_string(),
-        },
-    )
-    .unwrap_err();
+    // A failed root query rejects the update.
+    deps.querier.root = ROOT.to_string();
+    deps.querier.fail = true;
+    let err = update(&mut deps, ROOT, changed.clone()).unwrap_err();
     assert!(matches!(err, ContractError::Std(_)), "{err}");
+    assert_eq!(query_params(&deps), default_params());
 
-    // Transfer, then the old owner loses rights and the new owner gains them.
-    execute(deps.as_mut(), mock_env(), mock_info(OWNER, &[]), transfer).unwrap();
-    assert_eq!(query_owner(&deps), NOT_OWNER);
-    let err = update(&mut deps, OWNER, default_params()).unwrap_err();
+    // Root rotation in x/sudo takes effect immediately: the old root loses
+    // rights and the new root gains them.
+    deps.querier.fail = false;
+    deps.querier.root = NOT_ROOT.to_string();
+    let err = update(&mut deps, ROOT, changed.clone()).unwrap_err();
     assert!(matches!(err, ContractError::Unauthorized { .. }), "{err}");
-    update(&mut deps, NOT_OWNER, default_params()).unwrap();
+    update(&mut deps, NOT_ROOT, changed.clone()).unwrap();
+    assert_eq!(query_params(&deps), changed);
 }
 
 #[test]
@@ -214,7 +273,6 @@ fn migrate_sets_version_and_keeps_state() {
     let version = cw2::get_contract_version(deps.as_ref().storage).unwrap();
     assert_eq!(version.version, CONTRACT_VERSION);
     assert_eq!(query_params(&deps), default_params());
-    assert_eq!(query_owner(&deps), OWNER);
 }
 
 /// One validation case: a mutation of the default params and the expected
@@ -406,7 +464,7 @@ fn validation_boundaries() {
         let got = params.validate();
         // The same rule through the contract.
         let mut deps = setup(default_params());
-        let via_exec = update(&mut deps, OWNER, params.clone());
+        let via_exec = update(&mut deps, ROOT, params.clone());
 
         match case.err {
             None => {
@@ -430,7 +488,6 @@ fn validation_boundaries() {
 #[test]
 fn json_fixtures_match_types() {
     let msg: InstantiateMsg = serde_json::from_str(INSTANTIATE_FIXTURE).unwrap();
-    assert_eq!(msg.owner, "nibi1qqx5reauy4glpskmppy88pz25qp2py5yxvpxdt");
     assert_eq!(msg.params, default_params());
     let want: serde_json::Value =
         serde_json::from_str(INSTANTIATE_FIXTURE).unwrap();
@@ -465,4 +522,11 @@ fn json_fixtures_match_types() {
     // cannot silently round a large int64.
     let bad = INSTANTIATE_FIXTURE.replace("\"22020096\"", "22020096");
     assert!(serde_json::from_str::<InstantiateMsg>(&bad).is_err());
+
+    // The contract has no power over the app version: a params object that
+    // still carries one is rejected instead of silently dropped.
+    let mut v: serde_json::Value =
+        serde_json::from_str(INSTANTIATE_FIXTURE).unwrap();
+    v["params"]["version"] = serde_json::json!({"app": "1"});
+    assert!(serde_json::from_value::<InstantiateMsg>(v).is_err());
 }

@@ -6,12 +6,12 @@
 //! - Field names are snake_case and match the proto field names in
 //!   `bft/proto/tendermint/types/params.proto`, except where a unit suffix is
 //!   added (`max_age_duration_ns`).
-//! - Every Go `int64` field is an [`Int64`] and every Go `uint64` field is a
-//!   [`Uint64`]. Both serialize as JSON strings, for example `"22020096"`,
-//!   because 64-bit values can exceed the largest integer a JSON number holds
-//!   exactly (2^53 - 1) in JavaScript and other float-based decoders. This is
-//!   the CosmWasm convention and matches how the Cosmos SDK encodes int64 in
-//!   JSON. Go decodes them with the `,string` struct tag option.
+//! - Every Go `int64` field is an [`Int64`], which serializes as a JSON
+//!   string, for example `"22020096"`, because 64-bit values can exceed the
+//!   largest integer a JSON number holds exactly (2^53 - 1) in JavaScript and
+//!   other float-based decoders. This is the CosmWasm convention and matches
+//!   how the Cosmos SDK encodes int64 in JSON. Go decodes them with the
+//!   `,string` struct tag option.
 //! - Durations are integers with the unit in the field name. The evidence
 //!   max age is in nanoseconds because Go `time.Duration` is an int64 count of
 //!   nanoseconds, so nanoseconds round-trip exactly and any other unit would
@@ -21,41 +21,36 @@
 //!   missing field means unset.
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Int64, Uint64};
+use cosmwasm_std::Int64;
 
-/// Instantiates x-consensus with an owner and the initial params.
+/// Instantiates x-consensus with the initial params.
 ///
 /// The chain instantiates it from Go, at genesis (seeded from the params
 /// that InitChain stored) or in the upgrade handler (copied from x/consensus),
-/// so `params` is validated exactly like an update.
+/// so `params` is validated exactly like an update. There is no owner field:
+/// the right to update is checked against the x/sudo root at execute time.
 #[cw_serde]
 pub struct InstantiateMsg {
-    /// Bech32 address allowed to update params and transfer ownership. On
-    /// every network this is the x/sudo root, which is the Treasury CW3 on
-    /// mainnet and testnet.
-    pub owner: String,
     /// Initial consensus params. Must pass [`ConsensusParams::validate`].
     pub params: ConsensusParams,
 }
 
-/// Owner-only state changes.
+/// State changes. Only the current x/sudo root may execute them.
+///
+/// The contract stores no owner. It reads the root from x/sudo on every
+/// execute, because x/sudo `MsgChangeRoot` rewrites only the sudo root, so a
+/// stored owner would go stale after a root rotation, and a fresh chain may
+/// start with no root at all.
 #[cw_serde]
 pub enum ExecuteMsg {
     /// Replaces all params at once. There is no partial update, so a stored
-    /// params value is always one the owner wrote as a whole and that passed
+    /// params value is always one the root wrote as a whole and that passed
     /// validation as a whole (some rules, such as evidence max bytes against
     /// block max bytes, span several fields). The chain applies the new
     /// values from the block after the one that executes this message.
     UpdateParams {
         /// New params, replacing the stored params entirely.
         params: ConsensusParams,
-    },
-    /// Transfers ownership in one step. The sender must be the current
-    /// owner. One step matches how the x/sudo root rotates and keeps a CW3
-    /// proposal self-contained; the new address is checked as valid bech32.
-    UpdateOwner {
-        /// Bech32 address of the new owner.
-        owner: String,
     },
 }
 
@@ -67,29 +62,24 @@ pub enum QueryMsg {
     /// Returns the stored [`ConsensusParams`].
     #[returns(ConsensusParams)]
     Params {},
-    /// Returns the current owner.
-    #[returns(OwnerResponse)]
-    Owner {},
-}
-
-/// Response to [`QueryMsg::Owner`].
-#[cw_serde]
-pub struct OwnerResponse {
-    /// Bech32 address of the current owner.
-    pub owner: String,
 }
 
 /// Migration message. It carries no fields: a migration only records the new
-/// cw2 contract version. Params and owner stay as stored.
+/// cw2 contract version. Params stay as stored.
 #[cw_serde]
 pub struct MigrateMsg {}
 
 /// Every consensus parameter of Nibiru BFT plus the chain-wide commit timing.
 ///
-/// The first four groups mirror `tendermint.types.ConsensusParams`
+/// The three groups mirror `tendermint.types.ConsensusParams`
 /// (`bft/proto/tendermint/types/params.proto`) field for field, so the Go
 /// adapter converts them one to one and returns them to the engine through
 /// the existing ABCI `ConsensusParamUpdates` field.
+///
+/// `version` (the app protocol version) is deliberately absent. The engine
+/// copies `Version.App` into block headers, and that value belongs to
+/// x/upgrade, so the contract has no power over it. The Go adapter copies
+/// the version unchanged from the existing store.
 #[cw_serde]
 pub struct ConsensusParams {
     /// Block size and gas limits.
@@ -98,8 +88,6 @@ pub struct ConsensusParams {
     pub evidence: EvidenceParams,
     /// Validator public key types.
     pub validator: ValidatorParams,
-    /// App protocol version.
-    pub version: VersionParams,
     /// Minimum time, in milliseconds, from the commit decision to the start
     /// of the next height. `None` (JSON `null` or absent) means unset: every
     /// node keeps its own `config.toml` `timeout_commit`.
@@ -162,13 +150,4 @@ pub struct ValidatorParams {
     /// ABCI public key type names validators may use. Must be non-empty, and
     /// each entry must be a known type: `ed25519` or `secp256k1`.
     pub pub_key_types: Vec<String>,
-}
-
-/// Mirrors `tendermint.types.VersionParams`.
-#[cw_serde]
-pub struct VersionParams {
-    /// App protocol version reported to the engine. `bft/types/params.go`
-    /// `Update` copies it into the engine state, so the stored value must be
-    /// the real app version.
-    pub app: Uint64,
 }

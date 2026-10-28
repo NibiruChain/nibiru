@@ -13,9 +13,6 @@
       "validator": {
         "pub_key_types": ["ed25519", "secp256k1"]
       },
-      "version": {
-        "app": "0"
-      },
       "min_block_commit_duration_ms": 200
     }
   }
