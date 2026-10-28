@@ -6,8 +6,9 @@ use cosmwasm_std::testing::{
     mock_env, mock_info, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{
-    from_json, to_json_binary, ContractResult, Empty, Int64, OwnedDeps, Querier,
-    QuerierResult, QueryRequest, SystemError, SystemResult,
+    from_json, to_json_binary, Binary, ContractResult, CosmosMsg, Empty, Int64,
+    OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult,
+    WasmMsg,
 };
 
 use crate::contract::{execute, instantiate, migrate, query};
@@ -257,6 +258,114 @@ fn sudo_root_checks() {
     assert!(matches!(err, ContractError::Unauthorized { .. }), "{err}");
     update(&mut deps, NOT_ROOT, changed.clone()).unwrap();
     assert_eq!(query_params(&deps), changed);
+}
+
+#[test]
+fn migrate_dispatches_self_migration() {
+    let mut deps = setup(default_params());
+    let env = mock_env();
+    let msg = Binary::from(br#"{"note":"v2"}"#);
+    let res = execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info(ROOT, &[]),
+        ExecuteMsg::Migrate {
+            code_id: 7,
+            msg: msg.clone(),
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0].msg,
+        CosmosMsg::Wasm(WasmMsg::Migrate {
+            contract_addr: env.contract.address.to_string(),
+            new_code_id: 7,
+            msg,
+        })
+    );
+    assert_eq!(query_params(&deps), default_params());
+}
+
+#[test]
+fn update_admin_dispatches_admin_change() {
+    let mut deps = setup(default_params());
+    let env = mock_env();
+    let res = execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info(ROOT, &[]),
+        ExecuteMsg::UpdateAdmin {
+            admin: NOT_ROOT.to_string(),
+        },
+    )
+    .unwrap();
+    assert_eq!(res.messages.len(), 1);
+    assert_eq!(
+        res.messages[0].msg,
+        CosmosMsg::Wasm(WasmMsg::UpdateAdmin {
+            contract_addr: env.contract.address.to_string(),
+            admin: NOT_ROOT.to_string(),
+        })
+    );
+}
+
+#[test]
+fn update_admin_rejects_invalid_address() {
+    let mut deps = setup(default_params());
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(ROOT, &[]),
+        ExecuteMsg::UpdateAdmin {
+            admin: NOT_ROOT.to_uppercase(),
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, ContractError::Std(_)), "{err}");
+}
+
+#[test]
+fn admin_messages_are_root_only() {
+    let mut deps = setup(default_params());
+    let msgs = [
+        ExecuteMsg::Migrate {
+            code_id: 7,
+            msg: Binary::from(b"{}"),
+        },
+        ExecuteMsg::UpdateAdmin {
+            admin: NOT_ROOT.to_string(),
+        },
+        // The root check runs before the admin address is validated.
+        ExecuteMsg::UpdateAdmin {
+            admin: NOT_ROOT.to_uppercase(),
+        },
+    ];
+    for msg in msgs {
+        let err = execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(NOT_ROOT, &[]),
+            msg.clone(),
+        )
+        .unwrap_err();
+        assert!(
+            matches!(err, ContractError::Unauthorized { .. }),
+            "{msg:?}: {err}"
+        );
+    }
+    deps.querier.root = String::new();
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(ROOT, &[]),
+        ExecuteMsg::Migrate {
+            code_id: 7,
+            msg: Binary::from(b"{}"),
+        },
+    )
+    .unwrap_err();
+    assert_eq!(err, ContractError::NoSudoRoot);
 }
 
 #[test]

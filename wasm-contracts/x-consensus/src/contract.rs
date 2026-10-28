@@ -1,7 +1,8 @@
 //! contract.rs: Entry points of the x-consensus contract.
 
 use cosmwasm_std::{
-    to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult, WasmMsg,
 };
 
 use crate::error::ContractError;
@@ -33,13 +34,17 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     assert_sudo_root(deps.as_ref(), &info)?;
     match msg {
         ExecuteMsg::UpdateParams { params } => update_params(deps, params),
+        ExecuteMsg::Migrate { code_id, msg } => {
+            Ok(migrate_self(&env, code_id, msg))
+        }
+        ExecuteMsg::UpdateAdmin { admin } => update_admin(deps, &env, admin),
     }
 }
 
@@ -74,6 +79,36 @@ fn update_params(
     params.validate()?;
     PARAMS.save(deps.storage, &params)?;
     Ok(Response::new().add_attribute("action", "update_params"))
+}
+
+/// Returns a response that migrates this contract to `code_id` with `msg`.
+/// The Wasm keeper accepts it because the contract is its own admin.
+fn migrate_self(env: &Env, code_id: u64, msg: Binary) -> Response {
+    Response::new()
+        .add_message(WasmMsg::Migrate {
+            contract_addr: env.contract.address.to_string(),
+            new_code_id: code_id,
+            msg,
+        })
+        .add_attribute("action", "migrate")
+        .add_attribute("new_code_id", code_id.to_string())
+}
+
+/// Returns a response that hands the Wasm admin of this contract to
+/// `admin`, after checking that `admin` is a valid address.
+fn update_admin(
+    deps: DepsMut,
+    env: &Env,
+    admin: String,
+) -> Result<Response, ContractError> {
+    let admin = deps.api.addr_validate(&admin)?;
+    Ok(Response::new()
+        .add_message(WasmMsg::UpdateAdmin {
+            contract_addr: env.contract.address.to_string(),
+            admin: admin.to_string(),
+        })
+        .add_attribute("action", "update_admin")
+        .add_attribute("admin", admin))
 }
 
 /// Answers [`QueryMsg`] from storage. Queries never fail on a live contract,

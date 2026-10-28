@@ -21,7 +21,7 @@
 //!   missing field means unset.
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Int64;
+use cosmwasm_std::{Binary, Int64};
 
 /// Instantiates x-consensus with the initial params.
 ///
@@ -51,6 +51,19 @@ pub enum ExecuteMsg {
     UpdateParams {
         /// New params, replacing the stored params entirely.
         params: ConsensusParams,
+    },
+    /// Migrates this contract to `code_id`. The contract is its own Wasm
+    /// admin, so migration follows the live x/sudo root.
+    Migrate {
+        /// Code ID to migrate to.
+        code_id: u64,
+        /// JSON message for the new code's migrate entry point.
+        msg: Binary,
+    },
+    /// Hands the Wasm admin of this contract to `admin`.
+    UpdateAdmin {
+        /// Bech32 address of the new Wasm admin.
+        admin: String,
     },
 }
 
