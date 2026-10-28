@@ -33,13 +33,13 @@ import (
 // XConsensusWasm is the optimized x-consensus contract bytecode.
 //
 //   - Source: wasm-contracts/x-consensus (crate x-consensus 0.1.0) at
-//     commit 5cc49aea1bd9154687a596596cc190cff1a4aaf4.
+//     commit 6793e5e5bf5950b52c2d4a9716dafd7a39f44ac8.
 //   - Build: just rs optimizer build --manifest-path Cargo.toml
 //     -p x-consensus --output-dir wasm-contracts/artifacts --mode dev
 //     (sai-wasm-optimizer 0.1.0, image cosmwasm/optimizer-arm64:0.17.0,
 //     linux/arm64, Rust 1.86.0, Binaryen 116).
-//   - SHA-256: 9b59483c9064d2baa3c2023ecf90dbc0f1f45ab13acfde14a0c96661e50e11df
-//   - Size: 171875 bytes.
+//   - SHA-256: e23d930efc2a4f0b2e6f8936a0ad8f173363bbb8131edf18690a56c9cdc2a821
+//   - Size: 170525 bytes.
 //
 //go:embed x_consensus.wasm
 var XConsensusWasm []byte
@@ -49,7 +49,7 @@ var XConsensusWasm []byte
 // checksum. Nothing depends on the contract address it implies: the app finds
 // the contract through the Wasm creator index (Keeper.ContractAddr), so
 // rebuilding the embedded Wasm is safe. A test keeps it in sync.
-const XConsensusWasmSHA256 = "9b59483c9064d2baa3c2023ecf90dbc0f1f45ab13acfde14a0c96661e50e11df"
+const XConsensusWasmSHA256 = "e23d930efc2a4f0b2e6f8936a0ad8f173363bbb8131edf18690a56c9cdc2a821"
 
 // MaxMinBlockCommitDurationMs is the contract's upper bound for
 // ConsensusParams.MinBlockCommitDurationMs, 30 s. A longer wait would make
