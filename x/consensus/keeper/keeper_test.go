@@ -82,7 +82,7 @@ func (c *chain) nextBlock() abci.ResponseEndBlock {
 // contract returns the x-consensus address and fails if it is missing.
 func (c *chain) contract() sdk.AccAddress {
 	c.t.Helper()
-	addr, found := c.app.XConsensusKeeper.ContractAddr(c.ctx)
+	addr, found := c.app.ConsensusKeeper.ContractAddr(c.ctx)
 	require.True(c.t, found, "x-consensus not found")
 	return addr
 }
@@ -243,7 +243,7 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 
 	require.Equal(t, genesisParams(t), c.contractParams())
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())
-	_, ok := c.app.XConsensusKeeper.CommitWait()
+	_, ok := c.app.ConsensusKeeper.CommitWait()
 	require.False(t, ok)
 	_, ok = c.app.CommitTimeoutFunc()(2)
 	require.False(t, ok)
@@ -254,7 +254,7 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())
 
 	// EnsureXConsensus is idempotent.
-	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
+	require.NoError(t, c.app.ConsensusKeeper.EnsureXConsensus(c.ctx))
 	require.Len(t, c.contractsByCreator(), 1)
 }
 
@@ -408,11 +408,11 @@ func TestEnsureXConsensusRestoresDeployerRole(t *testing.T) {
 	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(codeID)),
 		"requires root or role")
 
-	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
+	require.NoError(t, c.app.ConsensusKeeper.EnsureXConsensus(c.ctx))
 	require.True(t, c.isDeployer(c.contract()))
 	before, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
 	require.NoError(t, err)
-	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
+	require.NoError(t, c.app.ConsensusKeeper.EnsureXConsensus(c.ctx))
 	after, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
 	require.NoError(t, err)
 	require.Equal(t, before, after)
@@ -437,7 +437,7 @@ func TestParamChangeAppliesFromNextBlock(t *testing.T) {
 
 	// During H, readers still see the old params.
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())
-	_, ok := c.app.XConsensusKeeper.CommitWait()
+	_, ok := c.app.ConsensusKeeper.CommitWait()
 	require.False(t, ok)
 
 	res := c.nextBlock()
@@ -467,7 +467,7 @@ func TestRefreshKeepsVersion(t *testing.T) {
 	c := newChain(t)
 	withVersion := *sims.DefaultConsensusParams
 	withVersion.Version = &cmtproto.VersionParams{App: 7}
-	c.app.ConsensusParamsKeeper.Set(c.ctx, &withVersion)
+	c.app.ConsensusKeeper.Set(c.ctx, &withVersion)
 
 	require.NoError(t, c.update(rootAddr(), changedParams(t, 500)))
 	res := c.nextBlock()
@@ -495,7 +495,7 @@ func TestRefreshFallback(t *testing.T) {
 			breakIt: func(c *chain) {
 				// The real query uses far more than 1000 gas, so this behaves
 				// like a contract that loops.
-				c.app.XConsensusKeeper.SetQueryGasLimit(1_000)
+				c.app.ConsensusKeeper.SetQueryGasLimit(1_000)
 			},
 		},
 		{
@@ -535,11 +535,11 @@ func TestRefreshFallback(t *testing.T) {
 				require.NotPanics(t, func() { res = c.nextBlock() })
 				require.Equal(t, goodProto, *res.ConsensusParamUpdates)
 				require.Equal(t, goodProto, c.storedParams())
-				wait, ok := c.app.XConsensusKeeper.CommitWait()
+				wait, ok := c.app.ConsensusKeeper.CommitWait()
 				require.True(t, ok)
 				require.Equal(t, 300*time.Millisecond, wait)
 			}
-			require.Error(t, c.app.XConsensusKeeper.Refresh(c.ctx))
+			require.Error(t, c.app.ConsensusKeeper.Refresh(c.ctx))
 		})
 	}
 }
@@ -646,7 +646,8 @@ func TestExportImportRoundTrip(t *testing.T) {
 }
 
 // TestConsensusMsgUpdateParamsBlocked checks the defense in depth around
-// x/consensus: its MsgUpdateParams fails in the router even with the gov
+// x/consensus: MsgUpdateParams still decodes (old txs and proposals carry
+// it) but fails with ErrUpdateParamsDisabled in the router even with the gov
 // authority, which is how gov proposals execute it, and a write that reaches
 // the store anyway is overwritten by the refresh in the same block.
 func TestConsensusMsgUpdateParamsBlocked(t *testing.T) {
@@ -660,14 +661,20 @@ func TestConsensusMsgUpdateParamsBlocked(t *testing.T) {
 		Evidence:  &cmtproto.EvidenceParams{MaxAgeNumBlocks: 1, MaxAgeDuration: time.Hour, MaxBytes: 0},
 		Validator: tampered.Validator,
 	}
+	resolved, err := c.app.InterfaceRegistry().Resolve(sdk.MsgTypeURL(msg))
+	require.NoError(t, err, "MsgUpdateParams must still decode")
+	require.IsType(t, &consensustypes.MsgUpdateParams{}, resolved)
+
 	handler := c.app.MsgServiceRouter().Handler(msg)
-	require.NotNil(t, handler, "the route stays registered; the circuit rejects it")
-	_, err := handler(c.ctx, msg)
-	require.ErrorContains(t, err, "circuit breaker")
+	require.NotNil(t, handler, "the route stays registered; the handler rejects it")
+	_, err = handler(c.ctx, msg)
+	require.ErrorIs(t, err, consensustypes.ErrUpdateParamsDisabled)
+	require.ErrorContains(t, err,
+		"disabled: execute update_params on the x-consensus contract")
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())
 
 	// A direct store write in the block is overwritten at its EndBlock.
-	c.app.ConsensusParamsKeeper.Set(c.ctx, &tampered)
+	c.app.ConsensusKeeper.Set(c.ctx, &tampered)
 	res := c.nextBlock()
 	require.Equal(t, *sims.DefaultConsensusParams, *res.ConsensusParamUpdates)
 	require.Equal(t, *sims.DefaultConsensusParams, c.storedParams())

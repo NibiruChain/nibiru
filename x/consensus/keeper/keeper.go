@@ -14,6 +14,9 @@ import (
 
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
@@ -27,19 +30,12 @@ import (
 // CreatorAddr is the fixed creator of the x-consensus contract, the module
 // address of types.ContractCreatorName (not of types.ModuleName, so the
 // contract address survived the module rename). No key controls it, so only
-// this module can create contracts under it, which makes "first contract created by CreatorAddr" a
-// safe way to find x-consensus on any chain (mainnet, testnets, localnet,
-// tests) and after any rebuild of the embedded Wasm.
+// this module can create contracts under it, which makes "first contract
+// created by CreatorAddr" a safe way to find x-consensus on any chain
+// (mainnet, testnets, localnet, tests) and after any rebuild of the embedded
+// Wasm.
 func CreatorAddr() sdk.AccAddress {
 	return authtypes.NewModuleAddress(types.ContractCreatorName)
-}
-
-// ParamStore is the x/consensus keeper as this module uses it: the persisted
-// copy of the consensus params. baseapp reads the same store through its own
-// ParamStore at BeginBlock, for every tx, and at EndBlock.
-type ParamStore interface {
-	Get(ctx sdk.Context) (*cmtproto.ConsensusParams, error)
-	Set(ctx sdk.Context, cp *cmtproto.ConsensusParams)
 }
 
 // SudoKeeper is the x/sudo keeper as this module uses it: to grant
@@ -60,15 +56,26 @@ type SudoKeeper interface {
 // The app then runs without the contract and keeps static params.
 var ErrNoStoredParams = errors.New("x/consensus store has no consensus params")
 
+// The Keeper is baseapp's consensus param store.
+var _ baseapp.ParamStore = (*Keeper)(nil)
+
 // commitWaitUnset is the commitWait sentinel for "no chain value". Real
 // values are non-negative durations in nanoseconds.
 const commitWaitUnset int64 = -1
 
-// Keeper wires x-consensus into the app. The contract is the only writer of
-// consensus params; the x/consensus store is a deterministic copy that the
-// module EndBlocker refreshes once per block (Refresh). Every reader, baseapp
-// included, reads that store, so all nodes see the same params at the same
-// height even right after a restart or state sync.
+// Keeper is the x/consensus keeper. It owns the x/consensus store
+// (types.StoreKey), which holds the consensus params under
+// types.ParamStoreKeyConsensusParams, and wires x-consensus into the app.
+//
+// The contract is the only writer of consensus params; the store is a
+// deterministic copy that the module EndBlocker refreshes once per block
+// (Refresh). Every reader reads that store: baseapp through Get, Has and Set
+// (the app passes the Keeper to BaseApp.SetParamStore), and clients through
+// the Params gRPC query. So all nodes see the same params at the same height,
+// even right after a restart or state sync.
+//
+// The store key and value key are the ones the Cosmos SDK x/consensus module
+// used, so the Keeper reads a live chain's existing params with no migration.
 //
 // The Keeper also holds two in-memory values that never decide state:
 //   - the contract address, cached after the first lookup (it never changes
@@ -79,9 +86,10 @@ const commitWaitUnset int64 = -1
 //
 // Use it through a pointer: it holds atomics.
 type Keeper struct {
-	wasm   *wasmkeeper.Keeper
-	params ParamStore
-	sudo   SudoKeeper
+	cdc      codec.BinaryCodec
+	storeKey storetypes.StoreKey
+	wasm     *wasmkeeper.Keeper
+	sudo     SudoKeeper
 
 	// queryGasLimit is types.QueryGasLimit outside tests. Tests lower it to force
 	// an out-of-gas query (see export_test.go).
@@ -91,20 +99,49 @@ type Keeper struct {
 	commitWait atomic.Int64
 }
 
-// NewKeeper returns a Keeper with the commit wait unset. wasm must be the
-// app's Wasm keeper (by pointer, so later keeper options apply), params the
-// x/consensus keeper, and sudo the x/sudo keeper.
+// NewKeeper returns a Keeper with the commit wait unset. storeKey must be the
+// types.StoreKey store, mounted exactly once by the app. wasm must be the
+// app's Wasm keeper (by pointer, so later keeper options apply), and sudo the
+// x/sudo keeper.
 func NewKeeper(
-	wasm *wasmkeeper.Keeper, params ParamStore, sudo SudoKeeper,
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+	wasm *wasmkeeper.Keeper,
+	sudo SudoKeeper,
 ) *Keeper {
 	k := &Keeper{
+		cdc:           cdc,
+		storeKey:      storeKey,
 		wasm:          wasm,
-		params:        params,
 		sudo:          sudo,
 		queryGasLimit: types.QueryGasLimit,
 	}
 	k.commitWait.Store(commitWaitUnset)
 	return k
+}
+
+// Get returns the stored consensus params. A missing value decodes as empty
+// params, not an error, which is what baseapp and EnsureXConsensus
+// (ErrNoStoredParams) expect before InitChain stores the first params.
+func (k *Keeper) Get(ctx sdk.Context) (*cmtproto.ConsensusParams, error) {
+	cp := &cmtproto.ConsensusParams{}
+	bz := ctx.KVStore(k.storeKey).Get(types.ParamStoreKeyConsensusParams)
+	if err := k.cdc.Unmarshal(bz, cp); err != nil {
+		return nil, err
+	}
+	return cp, nil
+}
+
+// Has reports whether the store holds consensus params.
+func (k *Keeper) Has(ctx sdk.Context) bool {
+	return ctx.KVStore(k.storeKey).Has(types.ParamStoreKeyConsensusParams)
+}
+
+// Set stores the consensus params. Only baseapp at InitChain
+// (StoreConsensusParams) and Refresh call it; no message writes it.
+func (k *Keeper) Set(ctx sdk.Context, cp *cmtproto.ConsensusParams) {
+	ctx.KVStore(k.storeKey).Set(
+		types.ParamStoreKeyConsensusParams, k.cdc.MustMarshal(cp))
 }
 
 // ContractAddr returns the x-consensus address, or false if the contract does
@@ -172,7 +209,7 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 		return nil
 	}
 
-	stored, err := k.params.Get(cacheCtx)
+	stored, err := k.Get(cacheCtx)
 	if err != nil {
 		return fmt.Errorf("read x/consensus params: %w", err)
 	}
@@ -324,7 +361,7 @@ func (k *Keeper) Refresh(ctx sdk.Context) error {
 	if err != nil {
 		return err
 	}
-	stored, err := k.params.Get(ctx)
+	stored, err := k.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("read x/consensus params: %w", err)
 	}
@@ -341,7 +378,7 @@ func (k *Keeper) Refresh(ctx sdk.Context) error {
 		return err
 	}
 	if !bytes.Equal(storedBz, nextBz) {
-		k.params.Set(ctx, &next)
+		k.Set(ctx, &next)
 	}
 	k.setCommitWait(params)
 	return nil

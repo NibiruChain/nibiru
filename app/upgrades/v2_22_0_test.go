@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
@@ -16,7 +18,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
-	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
 	consensuskeeper "github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
@@ -59,7 +60,7 @@ func runUpgrade2_22(
 }
 
 // preUpgradeChain returns a chain without x-consensus whose x/consensus store
-// holds params, and whose version map predates the x/consensus app module, so the
+// holds params, and whose version map predates the x/consensus module, so the
 // handler sees exactly what a live chain at the upgrade height has.
 func preUpgradeChain(
 	t *testing.T, chainID string, params *cmtproto.ConsensusParams,
@@ -67,11 +68,11 @@ func preUpgradeChain(
 	t.Helper()
 	nibiru, _ := testapp.NewNibiruTestAppPreXConsensus()
 	ctx := testapp.NewContext(nibiru).WithChainID(chainID)
-	_, found := nibiru.XConsensusKeeper.ContractAddr(ctx)
+	_, found := nibiru.ConsensusKeeper.ContractAddr(ctx)
 	require.False(t, found)
-	nibiru.ConsensusParamsKeeper.Set(ctx, params)
+	nibiru.ConsensusKeeper.Set(ctx, params)
 	versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-	delete(versions, consensusmodule.AppModuleName)
+	delete(versions, consensustypes.ModuleName)
 	nibiru.UpgradeKeeper.SetModuleVersionMap(ctx, module.VersionMap(versions))
 	return nibiru, ctx
 }
@@ -95,9 +96,9 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 				require.NotEqual(t, "upgrade_failure", ev.Type, ev.Attributes)
 			}
 			versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-			require.Equal(t, uint64(1), versions[consensusmodule.AppModuleName])
+			require.Equal(t, uint64(1), versions[consensustypes.ModuleName])
 
-			addr, found := nibiru.XConsensusKeeper.ContractAddr(ctx)
+			addr, found := nibiru.ConsensusKeeper.ContractAddr(ctx)
 			require.True(t, found)
 			info := nibiru.WasmKeeper.GetContractInfo(ctx, addr)
 			require.Equal(t, consensuskeeper.CreatorAddr().String(), info.Creator)
@@ -119,11 +120,11 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, want, got)
 			require.Nil(t, got.MinBlockCommitDurationMs)
-			_, ok := nibiru.XConsensusKeeper.CommitWait()
+			_, ok := nibiru.ConsensusKeeper.CommitWait()
 			require.False(t, ok)
 
 			// The first refresh after the upgrade writes nothing new.
-			require.NoError(t, nibiru.XConsensusKeeper.Refresh(ctx))
+			require.NoError(t, nibiru.ConsensusKeeper.Refresh(ctx))
 			require.Equal(t, pre, *nibiru.GetConsensusParams(ctx))
 
 			// Running the handler again creates nothing.
@@ -153,8 +154,62 @@ func TestUpgrade2_22_0FailureContinues(t *testing.T) {
 		}
 	}
 	require.True(t, failed, "expected an upgrade_failure event")
-	_, found := nibiru.XConsensusKeeper.ContractAddr(ctx)
+	_, found := nibiru.ConsensusKeeper.ContractAddr(ctx)
 	require.False(t, found)
 	versions := nibiru.UpgradeKeeper.GetModuleVersionMap(ctx)
-	require.Equal(t, uint64(1), versions[consensusmodule.AppModuleName])
+	require.Equal(t, uint64(1), versions[consensustypes.ModuleName])
+}
+
+// TestUpgrade2_22_0KeepsConsensusStore checks that moving the x/consensus
+// store from the Cosmos SDK module to the Nibiru module loses nothing at the
+// upgrade: params written before the upgrade read back identical after the
+// upgrade, the following EndBlock and Commit, and the committed store list
+// still includes the "consensus" store. The app mounts that store itself now;
+// a missing mount would drop it from the commit info and split the app hash.
+func TestUpgrade2_22_0KeepsConsensusStore(t *testing.T) {
+	pre := preUpgradeParams()
+	nibiru, ctx := preUpgradeChain(t, "localnet", &pre)
+	require.True(t, nibiru.ConsensusKeeper.Has(ctx))
+
+	runUpgrade2_22(t, nibiru, ctx)
+	require.Equal(t, pre, *nibiru.GetConsensusParams(ctx))
+
+	res := nibiru.EndBlock(abci.RequestEndBlock{Height: ctx.BlockHeight()})
+	require.Equal(t, pre, *res.ConsensusParamUpdates)
+	commitID := nibiru.Commit()
+	require.NotEmpty(t, commitID.Data)
+
+	// The committed state, read through baseapp's param store and the gRPC
+	// query, holds the same params.
+	committed := nibiru.NewContext(true, cmtproto.Header{
+		Height: nibiru.LastBlockHeight(), Time: ctx.BlockTime(),
+	})
+	require.Equal(t, pre, *nibiru.GetConsensusParams(committed))
+	resp, err := nibiru.ConsensusKeeper.Params(
+		sdk.WrapSDKContext(committed), &consensustypes.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.Equal(t, pre, *resp.Params)
+
+	cms, ok := nibiru.CommitMultiStore().(*rootmulti.Store)
+	require.True(t, ok)
+	info, err := cms.GetCommitInfo(nibiru.LastBlockHeight())
+	require.NoError(t, err)
+	var names []string
+	for _, store := range info.StoreInfos {
+		names = append(names, store.Name)
+	}
+	require.Contains(t, names, consensustypes.StoreKey)
+	require.Equal(t, 1, countOf(names, consensustypes.StoreKey))
+	t.Logf("committed stores: %v", names)
+}
+
+// countOf returns how often want occurs in names.
+func countOf(names []string, want string) int {
+	var n int
+	for _, name := range names {
+		if name == want {
+			n++
+		}
+	}
+	return n
 }

@@ -134,7 +134,7 @@ func NewNibiruTestAppPreXConsensus() (
 	nibiruApp *app.NibiruApp, gen app.GenesisState,
 ) {
 	nibiruApp, gen = newNibiruTestApp(tmdb.NewMemDB(), app.GenesisState{}, nil)
-	nibiruApp.ConsensusParamsKeeper.Set(
+	nibiruApp.ConsensusKeeper.Set(
 		NewContext(nibiruApp), sims.DefaultConsensusParams)
 	return nibiruApp, gen
 }

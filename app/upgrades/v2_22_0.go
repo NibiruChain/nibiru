@@ -63,5 +63,5 @@ func ensureXConsensus(
 			err = fmt.Errorf("create x-consensus: panic: %v", r)
 		}
 	}()
-	return nibiru.XConsensusKeeper.EnsureXConsensus(ctx)
+	return nibiru.ConsensusKeeper.EnsureXConsensus(ctx)
 }

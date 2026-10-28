@@ -10,8 +10,8 @@
 //! each node's `config.toml` `timeout_commit`.
 //!
 //! The x/consensus store still exists, but only as the per-block copy that
-//! baseapp and Nibiru BFT read. Its `MsgUpdateParams` is blocked by a circuit
-//! breaker (`app/xconsensus.go`).
+//! baseapp and Nibiru BFT read. Its `MsgUpdateParams` always fails
+//! (`x/consensus/module.go`).
 //!
 //! # Who can change it
 //!

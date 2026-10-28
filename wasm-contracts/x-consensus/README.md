@@ -7,9 +7,9 @@ block, evidence and validator params that Nibiru BFT enforces, plus
 node's `config.toml` `timeout_commit`.
 
 The x/consensus store still exists, but only as the per-block copy that
-baseapp and Nibiru BFT read. Its `MsgUpdateParams` is blocked by a circuit
-breaker (`app/xconsensus.go`), so x-consensus is the only way to change
-consensus params.
+baseapp and Nibiru BFT read. Its `MsgUpdateParams` always fails with
+`ErrUpdateParamsDisabled` (`x/consensus/module.go`), so x-consensus is the
+only way to change consensus params.
 
 ## How it works
 

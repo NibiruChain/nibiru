@@ -7,7 +7,6 @@ import (
 	authzmodulev1 "cosmossdk.io/api/cosmos/authz/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 	capabilitymodulev1 "cosmossdk.io/api/cosmos/capability/module/v1"
-	consensusmodulev1 "cosmossdk.io/api/cosmos/consensus/module/v1"
 	crisismodulev1 "cosmossdk.io/api/cosmos/crisis/module/v1"
 	distrmodulev1 "cosmossdk.io/api/cosmos/distribution/module/v1"
 	evidencemodulev1 "cosmossdk.io/api/cosmos/evidence/module/v1"
@@ -49,7 +48,6 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
-	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
 	"github.com/NibiruChain/nibiru/v2/x/genmsg"
@@ -173,7 +171,7 @@ var (
 		// in this block (for example gov proposals), and baseapp returns that
 		// store to Nibiru BFT right after the last EndBlocker. It has no
 		// genesis or BeginBlocker, so its place in those orders is moot.
-		consensusmodule.AppModuleName,
+		consensustypes.ModuleName,
 	}
 
 	AppConfig depinject.Config
@@ -285,10 +283,6 @@ func init() {
 			{
 				Name:   genutiltypes.ModuleName,
 				Config: appconfig.WrapAny(&genutilmodulev1.Module{}),
-			},
-			{
-				Name:   consensustypes.ModuleName,
-				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 		},
 	})

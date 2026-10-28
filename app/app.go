@@ -278,6 +278,13 @@ func NewNibiruApp(
 			ibcwasmtypes.StoreKey,
 
 			// nibiru x/ keys
+			//
+			// consensustypes.StoreKey ("consensus") is the store the Cosmos SDK
+			// x/consensus module mounted through depinject. It must be mounted
+			// exactly once and keep its name: unmounted, it drops out of the
+			// commit info and changes the app hash; mounted twice, the store
+			// panics at load.
+			consensustypes.StoreKey,
 			epochs.StoreKey,
 			oracletypes.StoreKey,
 			mint.StoreKey,
@@ -347,7 +354,6 @@ func NewNibiruApp(
 		&app.authzKeeper,
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
-		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -366,8 +372,14 @@ func NewNibiruApp(
 	}
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
-	app.XConsensusKeeper = consensuskeeper.NewKeeper(
-		&app.WasmKeeper, &app.ConsensusParamsKeeper, app.SudoKeeper)
+	app.ConsensusKeeper = consensuskeeper.NewKeeper(
+		app.appCodec, app.keys[consensustypes.StoreKey], &app.WasmKeeper,
+		app.SudoKeeper)
+	// The x/consensus Keeper is baseapp's param store: InitChain stores the
+	// genesis consensus params through it, and BeginBlock, every tx and
+	// EndBlock read them. depinject used to set this through the Cosmos SDK
+	// module's BaseAppOption. It must be set before app.Load seals the app.
+	app.SetParamStore(app.ConsensusKeeper)
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
@@ -389,22 +401,10 @@ func NewNibiruApp(
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
-		consensusmodule.NewAppModule(app.XConsensusKeeper),
+		consensusmodule.NewAppModule(app.ConsensusKeeper),
 	); err != nil {
 		panic(err)
 	}
-
-	// remove consensus module from the module manager as we didn't have consensus module from the first place
-	for name := range app.ModuleManager.Modules {
-		if name == consensustypes.ModuleName {
-			delete(app.ModuleManager.Modules, name)
-		}
-	}
-
-	// x-consensus is the only writer of consensus params. x/consensus keeps
-	// its store (the copy baseapp reads) and its Params query, but its
-	// MsgUpdateParams is rejected in the router.
-	app.MsgServiceRouter().SetCircuit(xconsensusCircuitBreaker{})
 
 	// make sure to get the ibc tendermint client interface types
 	ibctm.AppModuleBasic{}.RegisterInterfaces(app.interfaceRegistry)
@@ -538,7 +538,7 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	// are missing from the genesis JSON. A chain without the contract would
 	// silently keep static params, so fail loudly instead. The one exception
 	// is a genesis without consensus params, which only test harnesses send.
-	err := app.XConsensusKeeper.EnsureXConsensus(ctx)
+	err := app.ConsensusKeeper.EnsureXConsensus(ctx)
 	switch {
 	case errors.Is(err, consensuskeeper.ErrNoStoredParams):
 		ctx.Logger().Info("x-consensus not created: genesis has no consensus params",
@@ -548,7 +548,7 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 	default:
 		// An imported genesis can carry a set commit wait. Load it so the
 		// first height already uses it.
-		if err := app.XConsensusKeeper.WarmCommitWait(ctx); err != nil {
+		if err := app.ConsensusKeeper.WarmCommitWait(ctx); err != nil {
 			ctx.Logger().Error("could not load the x-consensus commit wait",
 				"module", consensustypes.ModuleName, "err", err)
 		}
