@@ -261,6 +261,13 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 // Why this is safe: the contract can only send Migrate and UpdateAdmin for
 // its own address, and only after the live x/sudo root check, so the role
 // gives it no deployment power beyond migrating itself on the root's order.
+// The role belongs to the contract address, not to its code. Any code the
+// root later migrates x-consensus into inherits wasm_deployer, which on
+// mainnet includes upload rights, so treat each x-consensus migration as a
+// deployer grant. EnsureXConsensus also re-grants the role whenever it runs
+// (today only at genesis and in v2.22), so a root that revoked it on purpose
+// would see it return the next time a handler calls EnsureXConsensus.
+//
 // Rejected alternatives: exempting self-migration in the guard would weaken
 // it for every self-admin contract, and a manual runbook grant would leave
 // mainnet migration broken until someone remembered it.

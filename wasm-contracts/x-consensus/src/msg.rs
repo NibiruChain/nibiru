@@ -231,8 +231,8 @@ pub struct BlockParams {
 /// `max_age_num_blocks` and `max_age_duration_ns`. While it is within either
 /// limit, Nibiru BFT accepts it (`bft/evidence/verify.go:40`) and x/evidence
 /// slashes for it (`lib/cosmos-sdk/x/evidence/keeper/infraction.go:64`). So
-/// the longer of the two windows decides. A short window lets a double sign
-/// escape slashing.
+/// the longer of the two windows decides. Only when both windows are short
+/// can a double sign escape slashing.
 #[cw_serde]
 pub struct EvidenceParams {
     /// Maximum evidence age in blocks. Must be positive.
