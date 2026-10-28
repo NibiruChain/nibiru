@@ -15,6 +15,8 @@ import (
 )
 
 var (
+	//go:embed artifacts/contracts/ErisEvm.sol/ErisEvm.json
+	erisEvmJSON []byte
 	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/ERC20MinterWithMetadataUpdates.sol/ERC20MinterWithMetadataUpdates.json
@@ -69,9 +71,9 @@ var (
 )
 
 var (
-	// Contract_ERC20Minter: The default ERC20 contract deployed during the
-	// creation of a `FunToken` mapping from a bank coin.
-	// Original ERC20 minter contract
+	// SmartContract_ErisEvm is the canonical proxy implementation for liquid staking and governance.
+	SmartContract_ErisEvm = CompiledEvmContract{Name: "ErisEvm.sol", EmbedJSON: erisEvmJSON}
+	// SmartContract_ERC20Minter is the original ERC20 minter for Bank-origin FunTokens.
 	SmartContract_ERC20Minter = CompiledEvmContract{
 		Name:      "ERC20Minter.sol",
 		EmbedJSON: erc20MinterContractJSON,
@@ -226,6 +228,7 @@ var (
 )
 
 func init() {
+	SmartContract_ErisEvm.MustLoad()
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()

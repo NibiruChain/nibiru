@@ -55,8 +55,11 @@ nibid tx wasm store <path-to-nibi_stargate.wasm> --from="$KEYNAME" --gas=2000999
 If the bytecode is already stored, use its code ID to instantiate another
 contract with separate state and a new address.
 
+Code ID 1 is no longer free on a new chain: genesis stores the x-consensus
+contract first. Use the code ID from the store transaction, or take the latest:
+
 ```bash
-CODE_ID=1
+CODE_ID=$(nibid q wasm list-code --reverse --limit 1 -o json | jq -r '.code_infos[0].code_id')
 nibid tx wasm inst $CODE_ID '{}' --label="fungible tokens" --no-admin --from="$KEYNAME" -y | tx 
 ```
 

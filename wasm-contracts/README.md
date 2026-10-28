@@ -17,6 +17,8 @@ for the workspace map and root Rust commands.
 
 - [**core-token-vesting**](./core-token-vesting/README.md)
 - [**core-token-vesting-v2**](./core-token-vesting-v2/README.md)
+- [**x-consensus**](./x-consensus/README.md): Consensus params and
+  chain-wide commit timing for Nibiru BFT, embedded in `nibid`.
 Each maintained contract owns its usage reference in its package `README.md`.
 Keep instantiate, execute, and query examples beside the Rust message types
 they document. Put public Nibiru website content in [`docs/`](../docs/) only

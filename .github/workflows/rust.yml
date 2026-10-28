@@ -29,6 +29,7 @@ jobs:
       run-wasmer: ${{ steps.decision.outputs['run-wasmer'] }}
       workspace-reason: ${{ steps.decision.outputs['workspace-reason'] }}
       wasmer-reason: ${{ steps.decision.outputs['wasmer-reason'] }}
+      run-contracts: ${{ steps.decision.outputs['run-contracts'] }}
     steps:
       - uses: actions/checkout@v7
 
@@ -59,6 +60,15 @@ jobs:
               - "just-rs.just"
               - "lib/wasmer/**"
               - ".github/workflows/rust.yml"
+            contracts:
+              - "wasm-contracts/**"
+              - "x/consensus/x_consensus.wasm.gz"
+              - "x/consensus/wasm.go"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "just-rs.just"
+              - "lib/cosmwasm-optimizer/**"
+              - ".github/workflows/rust.yml"
 
       - name: Decide Rust run mode
         id: decision
@@ -66,6 +76,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           HAS_WORKSPACE_CHANGES: ${{ steps.filter.outputs.workspace }}
           HAS_WASMER_CHANGES: ${{ steps.filter.outputs.wasmer }}
+          HAS_CONTRACT_CHANGES: ${{ steps.filter.outputs.contracts }}
         run: |
           set -euo pipefail
 
@@ -80,12 +91,14 @@ jobs:
 
           run_workspace=false
           run_wasmer=false
+          run_contracts=false
           workspace_reason="No root Rust workspace changes detected."
           wasmer_reason="No Wasmer changes detected."
 
           if [[ "$EVENT_NAME" == "push" || "$EVENT_NAME" == "schedule" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
             run_workspace=true
             run_wasmer=true
+            run_contracts=true
             workspace_reason="${EVENT_NAME} runs the full legacy Rust suite."
             wasmer_reason="${EVENT_NAME} runs the full legacy Rust suite."
           else
@@ -98,6 +111,10 @@ jobs:
               run_wasmer=true
               wasmer_reason="Wasmer changes detected."
             fi
+
+            if [[ "$HAS_CONTRACT_CHANGES" == "true" ]]; then
+              run_contracts=true
+            fi
           fi
 
           {
@@ -105,6 +122,7 @@ jobs:
             echo "run-wasmer=$run_wasmer"
             echo "workspace-reason=$workspace_reason"
             echo "wasmer-reason=$wasmer_reason"
+            echo "run-contracts=$run_contracts"
           } >> "$GITHUB_OUTPUT"
 
           jq -cn \
@@ -116,6 +134,39 @@ jobs:
               "run-wasmer": $run_wasmer,
               "workspace-reason": $workspace_reason,
               "wasmer-reason": $wasmer_reason}'
+
+  # wasm-contracts (job): Builds the wasm-contracts/ contracts in release mode
+  # when contract code changes, so every pull request that touches a contract
+  # produces downloadable AMD64 builds, and checks that the x-consensus build
+  # embedded in nibid matches a fresh build of its source.
+  wasm-contracts:
+    needs: changes-rust
+    if: ${{ needs.changes-rust.outputs['run-contracts'] == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - uses: taiki-e/install-action@just
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ runner.arch }}-wasm-contracts-${{ hashFiles('Cargo.lock') }}
+      - name: Build contracts in release mode
+        run: |
+          just rs wasm-all release
+          just rs wasm-check
+      - name: Upload contract builds
+        uses: actions/upload-artifact@v7
+        with:
+          name: wasm-contracts-release
+          path: wasm-contracts/artifacts/*.wasm
+          if-no-files-found: error
+      - name: Check the embedded x-consensus build
+        run: just rs wasm-embed-check
 
   # rust-test (job): Runs the legacy root Cargo workspace test suite.
   rust-test:

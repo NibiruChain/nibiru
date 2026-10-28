@@ -35,7 +35,9 @@ var (
 // message that can upload or migrate Wasm code. Combined messages
 // must reject before allocating a code ID or storing code.
 func TestMainnetWasmDeployerGuardRejectsNonRootMessages(t *testing.T) {
-	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	// Asserts code IDs from an empty Wasm genesis: no x-consensus code.
+	wasmApp, _ := testapp.NewNibiruTestAppPreXConsensus()
+	ctx := testapp.NewContext(wasmApp)
 	ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
 
 	root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
@@ -95,7 +97,9 @@ func TestMainnetWasmDeployerGuardRejectsNonRootMessages(t *testing.T) {
 // Passing the guard still leaves the ordinary Wasm permission checks in force.
 func TestMainnetWasmDeployerGuardAllowsRootAndGovernance(t *testing.T) {
 	t.Run("sudo root lifecycle", func(t *testing.T) {
-		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		// Asserts code IDs from an empty Wasm genesis: no x-consensus code.
+		wasmApp, _ := testapp.NewNibiruTestAppPreXConsensus()
+		ctx := testapp.NewContext(wasmApp)
 		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
 
 		root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
@@ -134,7 +138,9 @@ func TestMainnetWasmDeployerGuardAllowsRootAndGovernance(t *testing.T) {
 	})
 
 	t.Run("sudo root", func(t *testing.T) {
-		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		// Asserts code IDs from an empty Wasm genesis: no x-consensus code.
+		wasmApp, _ := testapp.NewNibiruTestAppPreXConsensus()
+		ctx := testapp.NewContext(wasmApp)
 		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
 
 		root := sdk.AccAddress(bytes.Repeat([]byte{1}, types.ContractAddrLen))
@@ -171,7 +177,9 @@ func TestMainnetWasmDeployerGuardAllowsRootAndGovernance(t *testing.T) {
 	})
 
 	t.Run("governance with unreadable sudo root", func(t *testing.T) {
-		wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+		// Asserts code IDs from an empty Wasm genesis: no x-consensus code.
+		wasmApp, _ := testapp.NewNibiruTestAppPreXConsensus()
+		ctx := testapp.NewContext(wasmApp)
 		ctx = ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
 
 		wasmApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: "not-an-address"})
@@ -208,7 +216,9 @@ func TestMainnetWasmDeployerGuardAllowsRootAndGovernance(t *testing.T) {
 }
 
 func TestStoreCode(t *testing.T) {
-	wasmApp, ctx := testapp.NewNibiruTestAppAndContext()
+	// Asserts code IDs from an empty Wasm genesis: no x-consensus code.
+	wasmApp, _ := testapp.NewNibiruTestAppPreXConsensus()
+	ctx := testapp.NewContext(wasmApp)
 	_, _, sender := testdata.KeyTestPubAddr()
 	msg := types.MsgStoreCodeFixture(func(m *types.MsgStoreCode) {
 		m.WASMByteCode = wasmContract
