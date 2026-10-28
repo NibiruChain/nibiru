@@ -51,6 +51,18 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	return app, ctx
 }
 
+// NewNibiruTestAppAndContextPreXConsensus is NewNibiruTestAppAndContext
+// without the genesis x-consensus contract (see
+// NewNibiruTestAppPreXConsensus). Use it for tests that assume an empty Wasm
+// genesis, such as code ID 1 being the first code they store.
+func NewNibiruTestAppAndContextPreXConsensus() (*app.NibiruApp, sdk.Context) {
+	app, _ := NewNibiruTestAppPreXConsensus()
+	ctx := NewContext(app)
+	app.OracleKeeper.SetPrice(ctx, types.NewPair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdkmath.LegacyNewDec(20000))
+	return app, ctx
+}
+
 // NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
 func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	blockHeader := tmproto.Header{

@@ -37,7 +37,8 @@ type KeeperTestSuite struct {
 }
 
 func (s *KeeperTestSuite) SetupTest() {
-	nibiruApp, ctx := testapp.NewNibiruTestAppAndContext()
+	// The suite stores and instantiates code ID 1 from an empty Wasm genesis.
+	nibiruApp, ctx := testapp.NewNibiruTestAppAndContextPreXConsensus()
 	s.app = nibiruApp
 	s.ctx = ctx
 

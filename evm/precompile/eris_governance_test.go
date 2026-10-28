@@ -173,7 +173,8 @@ func readGzipFile(path string) ([]byte, error) {
 func setupErisGovernance(t *testing.T) (evmtest.TestDeps, common.Address) {
 	t.Helper()
 	snapshot := loadErisSnapshot(t)
-	deps := evmtest.NewTestDeps()
+	// The replay imports Wasm genesis, so it needs an empty Wasm store.
+	deps := evmtest.NewTestDepsPreXConsensus()
 	captured, err := time.Parse(time.RFC3339Nano, snapshot.Time)
 	require.NoError(t, err)
 	deps.SetCtx(deps.Ctx().
