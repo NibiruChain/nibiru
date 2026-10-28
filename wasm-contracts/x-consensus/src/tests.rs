@@ -150,12 +150,16 @@ fn update(
     )
 }
 
+/// Instantiate stores the params exactly as given. The Go module seeds the
+/// contract from x/consensus this way, so any drift would change the chain.
 #[test]
 fn instantiate_stores_params() {
     let deps = setup(default_params());
     assert_eq!(query_params(&deps), default_params());
 }
 
+/// Instantiate works with no x/sudo root and a failing root query, so a new
+/// chain can create x-consensus at genesis before any root exists.
 #[test]
 fn instantiate_needs_no_sudo_root() {
     let mut deps = deps_with_root("");
@@ -172,6 +176,8 @@ fn instantiate_needs_no_sudo_root() {
     assert_eq!(query_params(&deps), default_params());
 }
 
+/// Instantiate runs the same validation as an update and stores nothing on
+/// failure, so the contract never starts with params Nibiru BFT rejects.
 #[test]
 fn instantiate_rejects_invalid_params() {
     let mut deps = deps_with_root(ROOT);
@@ -188,6 +194,8 @@ fn instantiate_rejects_invalid_params() {
     assert!(PARAMS.may_load(deps.as_ref().storage).unwrap().is_none());
 }
 
+/// The root can change every group at once, and setting the commit wait back
+/// to `None` unsets it, which hands pacing back to each node's config.
 #[test]
 fn update_params_round_trip() {
     let mut deps = setup(default_params());
@@ -205,6 +213,8 @@ fn update_params_round_trip() {
     assert_eq!(query_params(&deps).min_block_commit_duration_ms, None);
 }
 
+/// A rejected update leaves the old params in place, so a bad proposal can
+/// never leave the contract half updated.
 #[test]
 fn update_params_rejects_invalid_and_keeps_old_value() {
     let mut deps = setup(default_params());
@@ -216,6 +226,9 @@ fn update_params_rejects_invalid_and_keeps_old_value() {
     assert_eq!(query_params(&deps), default_params());
 }
 
+/// The live x/sudo root is the only writer: non-root senders, an empty root
+/// and a failed root query are all rejected, and a root rotation moves the
+/// right at once. The root check also runs before validation.
 #[test]
 fn sudo_root_checks() {
     let mut deps = setup(default_params());
@@ -260,6 +273,8 @@ fn sudo_root_checks() {
     assert_eq!(query_params(&deps), changed);
 }
 
+/// Migrate sends exactly one Wasm migrate for the contract's own address,
+/// with the caller's code ID and message, and leaves the params alone.
 #[test]
 fn migrate_dispatches_self_migration() {
     let mut deps = setup(default_params());
@@ -287,6 +302,8 @@ fn migrate_dispatches_self_migration() {
     assert_eq!(query_params(&deps), default_params());
 }
 
+/// UpdateAdmin sends exactly one Wasm admin change for the contract's own
+/// address. This is how the root moves migration rights elsewhere.
 #[test]
 fn update_admin_dispatches_admin_change() {
     let mut deps = setup(default_params());
@@ -310,6 +327,8 @@ fn update_admin_dispatches_admin_change() {
     );
 }
 
+/// UpdateAdmin rejects an address that does not validate (here, not
+/// normalized), so a malformed value fails before any message is sent.
 #[test]
 fn update_admin_rejects_invalid_address() {
     let mut deps = setup(default_params());
@@ -325,6 +344,8 @@ fn update_admin_rejects_invalid_address() {
     assert!(matches!(err, ContractError::Std(_)), "{err}");
 }
 
+/// Migrate and UpdateAdmin share the root check with UpdateParams. Without
+/// it, anyone could migrate the contract, since the contract is its own admin.
 #[test]
 fn admin_messages_are_root_only() {
     let mut deps = setup(default_params());
@@ -368,6 +389,8 @@ fn admin_messages_are_root_only() {
     assert_eq!(err, ContractError::NoSudoRoot);
 }
 
+/// The migrate entry point keeps the params, so migrating into this code
+/// never resets consensus params.
 #[test]
 fn migrate_keeps_state() {
     let mut deps = setup(default_params());
@@ -383,6 +406,9 @@ struct Case {
     err: Option<&'static str>,
 }
 
+/// Each rule from `bft/types/params.go` plus the commit wait cap, at and just
+/// past its boundary, both as a pure check and through the contract. Keeps
+/// the contract from accepting a value Nibiru BFT would reject, or the reverse.
 #[test]
 fn validation_boundaries() {
     let cases = [
@@ -583,8 +609,10 @@ fn validation_boundaries() {
     }
 }
 
-/// The fixtures are the JSON contract with the Go package. They must decode
-/// to the expected values and re-encode to the same JSON.
+/// The fixtures are the JSON contract with the Go package, which reads the
+/// same files. They must decode to the expected values and re-encode to the
+/// same JSON, and the JSON conventions (strings for int64, null or absent for
+/// unset, no unknown fields) must hold.
 #[test]
 fn json_fixtures_match_types() {
     let msg: InstantiateMsg = serde_json::from_str(INSTANTIATE_FIXTURE).unwrap();

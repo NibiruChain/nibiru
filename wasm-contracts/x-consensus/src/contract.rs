@@ -12,11 +12,12 @@ use crate::msg::{
 use crate::state::PARAMS;
 use crate::sudo::query_sudo_root;
 
-/// Stores the initial params after validating them.
+/// Validates and stores the initial params.
 ///
-/// The instantiating sender gains no rights. Instantiation does not need an
-/// x/sudo root, so a fresh chain can create the contract at genesis before
-/// any root is set.
+/// No root check runs here, and the sender gains no rights. Only the
+/// x/xconsensus module creates the contract (at genesis or in the v2.22
+/// upgrade), and a new chain may do so before x/sudo has a root. Rights come
+/// from the live root at execute time instead.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -29,8 +30,11 @@ pub fn instantiate(
     Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
-/// Dispatches root-only state changes. The root check runs first, so an
-/// unauthorized sender learns nothing about param validity.
+/// Dispatches root-only state changes.
+///
+/// The root check runs before anything else, including param and address
+/// validation, so a sender who is not the root gets the same error for every
+/// message and learns nothing about which values would pass.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -51,9 +55,9 @@ pub fn execute(
 /// Fails unless the sender is the current x/sudo root.
 ///
 /// The root is read on every call instead of stored, so a root rotation
-/// through x/sudo `MsgChangeRoot` takes effect here at once. An empty root
-/// or a failed query rejects the call, so the contract never falls back to
-/// letting anyone write.
+/// through x/sudo `MsgChangeRoot` takes effect here at once. An empty root or
+/// a failed query rejects the call: the contract never falls back to letting
+/// anyone write.
 fn assert_sudo_root(
     deps: Deps,
     info: &MessageInfo,
@@ -71,7 +75,11 @@ fn assert_sudo_root(
     Ok(())
 }
 
-/// Validates and stores `params`, replacing the stored params entirely.
+/// Validates `params` and stores them in place of the old params.
+///
+/// Validation runs on the whole set, so a rejected update leaves the old
+/// params untouched. The chain picks the new values up at this block's
+/// EndBlock and applies them from the next block.
 fn update_params(
     deps: DepsMut,
     params: ConsensusParams,
@@ -82,7 +90,11 @@ fn update_params(
 }
 
 /// Returns a response that migrates this contract to `code_id` with `msg`.
-/// The Wasm keeper accepts it because the contract is its own admin.
+///
+/// The migrate runs as a submessage after this execute returns, with this
+/// contract as the sender. The Wasm keeper accepts it only while the
+/// contract is its own admin. If the migrate fails, the whole execute fails
+/// and nothing changes.
 fn migrate_self(env: &Env, code_id: u64, msg: Binary) -> Response {
     Response::new()
         .add_message(WasmMsg::Migrate {
@@ -95,7 +107,13 @@ fn migrate_self(env: &Env, code_id: u64, msg: Binary) -> Response {
 }
 
 /// Returns a response that hands the Wasm admin of this contract to
-/// `admin`, after checking that `admin` is a valid address.
+/// `admin`, after checking that `admin` is a valid address on this chain.
+///
+/// The check rejects a malformed or non-normalized address in the contract,
+/// with an error that names it, before any message is dispatched. It cannot
+/// catch a valid address that nobody controls, so callers should double
+/// check the value: once the admin leaves the contract, only that address or
+/// governance can migrate.
 fn update_admin(
     deps: DepsMut,
     env: &Env,
@@ -111,8 +129,11 @@ fn update_admin(
         .add_attribute("admin", admin))
 }
 
-/// Answers [`QueryMsg`] from storage. Queries never fail on a live contract,
-/// since instantiate always writes the params.
+/// Answers [`QueryMsg`] from storage.
+///
+/// The params query cannot fail on a live contract, since instantiate always
+/// writes the params. The x/xconsensus EndBlocker sends it once per block
+/// under a fixed gas limit, so it stays a single storage read.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -120,11 +141,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-/// Accepts a code migration and leaves the params unchanged. The entry point
-/// exists so the Wasm admin can replace the code; a future version that
-/// changes the storage layout adds its own state migration here. There is no
-/// cw2 version record: nothing reads one, and the code hash already
-/// identifies the deployed version.
+/// Accepts a migration to this code and keeps the stored params.
+///
+/// The entry point must exist for the Wasm keeper to migrate into this code.
+/// A later version that changes the storage layout adds its state migration
+/// here. There is no cw2 version record to check or bump: nothing reads one,
+/// and the code checksum already identifies the deployed version.
 #[cfg_attr(not(feature = "library"), cosmwasm_std::entry_point)]
 pub fn migrate(
     _deps: DepsMut,
