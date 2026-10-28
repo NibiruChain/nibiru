@@ -2,6 +2,7 @@ package xconsensus
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -70,6 +72,17 @@ type ParamStore interface {
 	Set(ctx sdk.Context, cp *cmtproto.ConsensusParams)
 }
 
+// SudoKeeper is the x/sudo keeper as this module uses it: to grant
+// x-consensus the wasm_deployer role through the role-editing message
+// handler, the same path the v2.21 upgrade used to seed deployers.
+type SudoKeeper interface {
+	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
+	CheckPermissions(actor sdk.AccAddress, ctx sdk.Context, role string) error
+	UpdateRoleMembers(
+		goCtx context.Context, msg *sudo.MsgUpdateRoleMembers,
+	) (*sudo.MsgUpdateRoleMembersResponse, error)
+}
+
 // ErrNoStoredParams means the x/consensus store has no params to seed
 // x-consensus from. Nibiru BFT always sends consensus params in InitChain and
 // baseapp stores them before module genesis, so only test harnesses that call
@@ -98,6 +111,7 @@ const commitWaitUnset int64 = -1
 type Keeper struct {
 	wasm   *wasmkeeper.Keeper
 	params ParamStore
+	sudo   SudoKeeper
 
 	// queryGasLimit is QueryGasLimit outside tests. Tests lower it to force
 	// an out-of-gas query (see export_test.go).
@@ -108,12 +122,15 @@ type Keeper struct {
 }
 
 // NewKeeper returns a Keeper with the commit wait unset. wasm must be the
-// app's Wasm keeper (by pointer, so later keeper options apply) and params the
-// x/consensus keeper.
-func NewKeeper(wasm *wasmkeeper.Keeper, params ParamStore) *Keeper {
+// app's Wasm keeper (by pointer, so later keeper options apply), params the
+// x/consensus keeper, and sudo the x/sudo keeper.
+func NewKeeper(
+	wasm *wasmkeeper.Keeper, params ParamStore, sudo SudoKeeper,
+) *Keeper {
 	k := &Keeper{
 		wasm:          wasm,
 		params:        params,
+		sudo:          sudo,
 		queryGasLimit: QueryGasLimit,
 	}
 	k.commitWait.Store(commitWaitUnset)
@@ -149,9 +166,12 @@ func (k *Keeper) findContract(ctx sdk.Context) (sdk.AccAddress, bool) {
 	return found, found != nil
 }
 
-// EnsureXConsensus creates x-consensus if no contract by CreatorAddr exists
-// and does nothing otherwise, so it is safe to call at every genesis (fresh or
-// imported) and in the upgrade handler.
+// EnsureXConsensus creates x-consensus if no contract by CreatorAddr exists,
+// and in every case makes sure the contract holds the x/sudo wasm_deployer
+// role (ensureDeployerRole). It is idempotent, so it is safe to call at every
+// genesis (fresh or imported) and in the upgrade handler, and a chain whose
+// contract was created before the role grant existed gets the role on the
+// next call.
 //
 // It stores the embedded code (instantiation permission Nobody, so only
 // governance can instantiate copies) and instantiates it with Instantiate2
@@ -174,6 +194,10 @@ func (k *Keeper) findContract(ctx sdk.Context) (sdk.AccAddress, bool) {
 func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 	cacheCtx, write := ctx.CacheContext()
 	if addr, found := k.findContract(cacheCtx); found {
+		if err := k.ensureDeployerRole(cacheCtx, addr); err != nil {
+			return err
+		}
+		write()
 		k.contract.Store(&addr)
 		return nil
 	}
@@ -212,12 +236,59 @@ func (k *Keeper) EnsureXConsensus(ctx sdk.Context) error {
 		return fmt.Errorf(
 			"x-consensus address %s differs from the predicted %s", addr, admin)
 	}
+	if err := k.ensureDeployerRole(cacheCtx, addr); err != nil {
+		return err
+	}
 
 	write()
 	k.contract.Store(&addr)
 	k.commitWait.Store(commitWaitUnset)
 	ctx.Logger().Info("created x-consensus", "module", ModuleName,
 		"address", addr.String(), "code_id", codeID)
+	return nil
+}
+
+// ensureDeployerRole adds addr, the x-consensus contract, to the x/sudo
+// wasm_deployer role unless it already passes that role's check.
+//
+// Why: on mainnet the Wasm deployer guard (x/wasm/keeper/admission.go) checks
+// the actor of every migration, and for ExecuteMsg.Migrate that actor is the
+// contract, not the root. Without the role, the root could not migrate
+// x-consensus through the contract on mainnet. The grant applies on every
+// chain, where it is harmless without the guard, so behavior is the same on
+// every network.
+//
+// Why this is safe: the contract can only send Migrate and UpdateAdmin for
+// its own address, and only after the live x/sudo root check, so the role
+// gives it no deployment power beyond migrating itself on the root's order.
+// Rejected alternatives: exempting self-migration in the guard would weaken
+// it for every self-admin contract, and a manual runbook grant would leave
+// mainnet migration broken until someone remembered it.
+//
+// It goes through the role-editing message handler with the x/sudo root as
+// sender, like the v2.21 deployer seed (app/upgrades/v2_21_0.go), so x/sudo
+// normalizes the state and emits its usual event. The caller runs it in the
+// same cache context as contract creation, so a failure rolls back both.
+func (k *Keeper) ensureDeployerRole(
+	ctx sdk.Context, addr sdk.AccAddress,
+) error {
+	if k.sudo.CheckPermissions(addr, ctx, sudo.RoleWasmDeployer) == nil {
+		return nil
+	}
+	root, err := k.sudo.GetRootAddr(ctx)
+	if err != nil {
+		return fmt.Errorf("grant x-consensus the wasm_deployer role: "+
+			"read x/sudo root: %w", err)
+	}
+	_, err = k.sudo.UpdateRoleMembers(sdk.WrapSDKContext(ctx),
+		&sudo.MsgUpdateRoleMembers{
+			Sender: root.String(),
+			Role:   sudo.RoleWasmDeployer,
+			Add:    []string{addr.String()},
+		})
+	if err != nil {
+		return fmt.Errorf("grant x-consensus the wasm_deployer role: %w", err)
+	}
 	return nil
 }
 

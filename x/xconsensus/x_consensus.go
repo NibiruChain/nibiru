@@ -98,11 +98,13 @@ type ExecuteMsg struct {
 // Wasm migrate of its own address, which the Wasm keeper accepts while the
 // contract is its own admin.
 //
-// The Wasm keeper treats the contract as the caller, so the new code's
-// instantiate permission must allow the x-consensus address, and on mainnet
-// the Wasm deployer guard requires the contract to hold the x/sudo
-// wasm_deployer role. The new code takes over every rule, including the root
-// check.
+// The Wasm keeper treats the contract as the caller. So the new code's
+// instantiate permission must allow the x-consensus address, an operator step
+// when storing it (nibid tx wasm store --instantiate-anyof-addresses
+// <x-consensus address>). The mainnet Wasm deployer guard also requires the
+// caller to hold the x/sudo wasm_deployer role, which EnsureXConsensus grants
+// the contract on every chain. The new code takes over every rule, including
+// the root check.
 type MigrateExecMsg struct {
 	// CodeID is the code to migrate to.
 	CodeID uint64 `json:"code_id"`

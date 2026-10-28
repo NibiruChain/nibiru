@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"math/rand"
+	"slices"
 	"testing"
 	"time"
 
@@ -155,6 +156,20 @@ func (c *chain) storeCode(
 	return codeID
 }
 
+// isDeployer reports whether addr is listed in the x/sudo wasm_deployer
+// role. It reads the role list directly, so the root does not count.
+func (c *chain) isDeployer(addr sdk.AccAddress) bool {
+	c.t.Helper()
+	sudoers, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
+	require.NoError(c.t, err)
+	for _, role := range sudoers.Roles {
+		if role.Role == sudo.RoleWasmDeployer {
+			return slices.Contains(role.Members, addr.String())
+		}
+	}
+	return false
+}
+
 // contractInfo returns the Wasm contract info of x-consensus.
 func (c *chain) contractInfo() *wasmtypes.ContractInfo {
 	c.t.Helper()
@@ -207,8 +222,9 @@ func mustProto(
 }
 
 // TestGenesisCreatesXConsensus checks a fresh chain: InitChain creates exactly
-// one x-consensus, created by the module address, as its own Wasm admin, code
-// instantiable by nobody else, the genesis params, and the commit wait unset. testapp's genesis bonds its validator through staking genesis;
+// one x-consensus, created by the module address, as its own Wasm admin and a
+// member of the x/sudo wasm_deployer role, code instantiable by nobody else,
+// the genesis params, and the commit wait unset. testapp's genesis bonds its validator through staking genesis;
 // gentxs are covered by the localnet check, which uses real gentxs.
 func TestGenesisCreatesXConsensus(t *testing.T) {
 	c := newChain(t)
@@ -218,6 +234,7 @@ func TestGenesisCreatesXConsensus(t *testing.T) {
 	require.NotNil(t, info)
 	require.Equal(t, xconsensus.CreatorAddr().String(), info.Creator)
 	require.Equal(t, c.contract().String(), info.Admin, "x-consensus must be its own admin")
+	require.True(t, c.isDeployer(c.contract()), "x-consensus must hold wasm_deployer")
 	require.Equal(t, xconsensus.ContractLabel, info.Label)
 	code := c.app.WasmKeeper.GetCodeInfo(c.ctx, info.CodeID)
 	require.Equal(t, wasmtypes.AccessTypeNobody, code.InstantiateConfig.Permission)
@@ -341,23 +358,49 @@ func TestSelfAdminUpdateAdmin(t *testing.T) {
 
 // TestSelfAdminMigrateMainnetGuard checks Migrate under the mainnet Wasm
 // deployer guard. The guard checks the actor of the migration, which is the
-// contract, not the root, so the contract needs the x/sudo wasm_deployer role
-// before the root can migrate it through Migrate.
+// contract, not the root, so EnsureXConsensus grants the contract the x/sudo
+// wasm_deployer role. Migrate then works on cataclysm-1 with no manual step.
 func TestSelfAdminMigrateMainnetGuard(t *testing.T) {
 	c := newChain(t)
 	c.ctx = c.ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+	require.True(t, c.isDeployer(c.contract()))
 	codeID := c.storeCode(rootAddr(),
 		wasmtypes.AccessTypeAnyOfAddresses.With(c.contract()))
+	require.NoError(t, c.execute(rootAddr(), migrateMsg(codeID)))
+	require.Equal(t, codeID, c.contractInfo().CodeID)
+}
 
+// TestEnsureXConsensusRestoresDeployerRole models a chain whose contract
+// exists without the wasm_deployer role, as one created before the grant
+// existed would be: mainnet Migrate fails, and the next EnsureXConsensus
+// grants the role without creating a second contract. Repeating it changes
+// nothing.
+func TestEnsureXConsensusRestoresDeployerRole(t *testing.T) {
+	c := newChain(t)
+	c.ctx = c.ctx.WithChainID(appconst.SDK_CHAIN_ID_MAINNET)
+	_, err := c.app.SudoKeeper.UpdateRoleMembers(sdk.WrapSDKContext(c.ctx),
+		&sudo.MsgUpdateRoleMembers{
+			Sender: testutil.ADDR_SUDO_ROOT, Role: sudo.RoleWasmDeployer,
+			Remove: []string{c.contract().String()},
+		})
+	require.NoError(t, err)
+	require.False(t, c.isDeployer(c.contract()))
+
+	codeID := c.storeCode(rootAddr(),
+		wasmtypes.AccessTypeAnyOfAddresses.With(c.contract()))
 	require.ErrorContains(t, c.execute(rootAddr(), migrateMsg(codeID)),
 		"requires root or role")
 
-	sudoers, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
+	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
+	require.True(t, c.isDeployer(c.contract()))
+	before, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
 	require.NoError(t, err)
-	sudoers.Roles = append(sudoers.Roles, sudo.RoleMembers{
-		Role: sudo.RoleWasmDeployer, Members: []string{c.contract().String()},
-	})
-	c.app.SudoKeeper.Sudoers.Set(c.ctx, sudoers)
+	require.NoError(t, c.app.XConsensusKeeper.EnsureXConsensus(c.ctx))
+	after, err := c.app.SudoKeeper.Sudoers.Get(c.ctx)
+	require.NoError(t, err)
+	require.Equal(t, before, after)
+	require.Len(t, c.contractsByCreator(), 1)
+
 	require.NoError(t, c.execute(rootAddr(), migrateMsg(codeID)))
 	require.Equal(t, codeID, c.contractInfo().CodeID)
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/xconsensus"
 )
 
@@ -75,7 +76,7 @@ func preUpgradeChain(
 
 // TestUpgrade2_22_0CreatesXConsensus checks the upgrade on mainnet and
 // testnet chain IDs: x-consensus is created at the predicted address, as its
-// own Wasm admin, with exactly the stored params and the commit wait unset,
+// own Wasm admin and a wasm_deployer member, with exactly the stored params and the commit wait unset,
 // and the stored params, Version included, are unchanged by the next refresh. A second run is a
 // no-op. The mainnet chain ID exercises the Wasm deployer guard, which the
 // governance permission keeper passes.
@@ -101,6 +102,10 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 			require.Equal(t, addr.String(), info.Admin)
 			checksum := nibiru.WasmKeeper.GetCodeInfo(ctx, info.CodeID).CodeHash
 			require.Equal(t, xconsensus.PredictContractAddr(checksum), addr)
+			// The contract is not the root, so passing this check means it
+			// is a wasm_deployer member.
+			require.NoError(t, nibiru.SudoKeeper.CheckPermissions(
+				addr, ctx, sudo.RoleWasmDeployer))
 
 			req, err := json.Marshal(xconsensus.QueryParams())
 			require.NoError(t, err)

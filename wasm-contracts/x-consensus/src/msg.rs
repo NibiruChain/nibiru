@@ -74,13 +74,19 @@ pub enum ExecuteMsg {
     /// migration follow the live x/sudo root, like param updates, instead of
     /// an admin address fixed at creation.
     ///
-    /// The Wasm keeper checks the new code from the contract's point of view:
+    /// The Wasm keeper checks the migration from the contract's point of
+    /// view, since the contract sends it:
     ///
     /// - The new code's instantiate permission must allow this contract's
-    ///   address (for example `AnyOfAddresses` with it, or `Everybody`).
+    ///   address. This is an operator step when storing the code, for example
+    ///   `nibid tx wasm store new.wasm --instantiate-anyof-addresses
+    ///   <x-consensus address>` (or `--instantiate-everybody`).
     /// - On mainnet, the Wasm deployer guard checks the migration's actor,
-    ///   which is this contract, not the root. The contract needs the x/sudo
-    ///   `wasm_deployer` role for this path to work there.
+    ///   which is this contract, not the root. The chain grants the contract
+    ///   the x/sudo `wasm_deployer` role when it creates it (and on any later
+    ///   `EnsureXConsensus`), so no manual step is needed. The role gives the
+    ///   contract no power beyond migrating itself on the root's order,
+    ///   because it can only send these two messages for its own address.
     ///
     /// The new code takes over every rule, including this root check, so a
     /// migration must keep `assert_sudo_root` and these variants unless it

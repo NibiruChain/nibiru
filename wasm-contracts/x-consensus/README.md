@@ -32,7 +32,9 @@ consensus params.
   so the address depends only on the code checksum.
 - **Migration.** The contract is its own Wasm admin. The root migrates it by
   executing `migrate` on the contract, which then migrates itself, so
-  migration rights follow the live root like param updates. Governance stays
+  migration rights follow the live root like param updates. The chain also
+  adds the contract to the x/sudo `wasm_deployer` role, which the mainnet
+  Wasm deployer guard requires of whoever performs a migration. Governance stays
   the break-glass: Nibiru's Wasm keeper lets a gov proposal migrate any
   contract regardless of admin (`x/wasm/keeper/authz_policy.go:66`).
 - **Version.** The app version (`version.app`) is not here. Nibiru BFT copies
@@ -104,10 +106,17 @@ Execute (x/sudo root only):
   change.
 - `{"migrate": {"code_id": 42, "msg": "e30="}}` migrates the contract to
   code 42. `msg` is the base64 JSON for the new code's `migrate` entry point
-  (`e30=` is `{}`). The new code's instantiate permission must allow the
-  x-consensus address, because the Wasm keeper checks it against the
-  contract, which is the caller. On mainnet the Wasm deployer guard also
-  checks the contract, so the contract needs the x/sudo `wasm_deployer` role.
+  (`e30=` is `{}`). The Wasm keeper checks the migration against the
+  contract, which is the caller:
+  - The new code's instantiate permission must allow the x-consensus
+    address. Store it with, for example,
+    `nibid tx wasm store new.wasm --instantiate-anyof-addresses <x-consensus address>`
+    (or `--instantiate-everybody`). This is an operator step.
+  - The mainnet Wasm deployer guard requires the caller to hold the x/sudo
+    `wasm_deployer` role. The chain grants it to x-consensus when it creates
+    the contract, on every network, so no manual step is needed. The role
+    gives the contract nothing beyond self-migration, since it can only
+    migrate or re-admin itself, and only on the live root's order.
 - `{"update_admin": {"admin": "nibi1..."}}` hands the Wasm admin to another
   address. After that, `migrate` through the contract fails and only that
   address or governance can migrate. Param updates are unaffected.

@@ -366,7 +366,7 @@ func NewNibiruApp(
 
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 	app.XConsensusKeeper = xconsensus.NewKeeper(
-		&app.WasmKeeper, &app.ConsensusParamsKeeper)
+		&app.WasmKeeper, &app.ConsensusParamsKeeper, app.SudoKeeper)
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
