@@ -64,6 +64,10 @@ var consensusMsgUpdateParamsURL = sdk.MsgTypeURL(&consensustypes.MsgUpdateParams
 // x/xconsensus EndBlocker, ordered last, would overwrite such a write in the
 // same block anyway. Blocking in the router also stops the message through
 // authz, Wasm and EVM dispatch. The x/consensus Params query stays available.
+//
+// The router holds a single circuit breaker, and no other code sets one today.
+// Adding x/circuit or another breaker later would replace this one through
+// SetCircuit, so the new breaker must compose with this check.
 type xconsensusCircuitBreaker struct{}
 
 // IsAllowed reports false only for x/consensus MsgUpdateParams.
