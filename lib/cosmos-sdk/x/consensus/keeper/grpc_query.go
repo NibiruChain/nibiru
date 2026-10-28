@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 var _ types.QueryServer = Querier{}

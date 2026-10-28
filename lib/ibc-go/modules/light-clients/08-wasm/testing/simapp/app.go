@@ -51,7 +51,6 @@ import (
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
-	consensusparamtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
@@ -86,6 +85,7 @@ import (
 	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	consensusparamtypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 
