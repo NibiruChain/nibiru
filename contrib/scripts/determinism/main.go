@@ -82,6 +82,8 @@ func runEvmLoad(args []string) error {
 	rpcs := fs.String("rpc", "", "comma-separated JSON-RPC URLs, one per node")
 	duration := fs.Duration("duration", 60*time.Second, "how long to send")
 	interval := fs.Duration("interval", 500*time.Millisecond, "pause per tx")
+	minSent := fs.Int("min-sent", 1,
+		"fail unless every node accepted at least this many txs")
 	_ = fs.Parse(args)
 
 	urls := splitList(*rpcs)
@@ -103,9 +105,17 @@ func runEvmLoad(args []string) error {
 	}
 	wg.Wait()
 
+	var short []string
 	for i, s := range stats {
 		fmt.Printf("evm-load node %d (%s): sent %d, rejected %d\n",
 			i, urls[i], s.sent, s.rejected)
+		if s.sent < *minSent {
+			short = append(short, fmt.Sprintf("node %d sent %d", i, s.sent))
+		}
+	}
+	if len(short) > 0 {
+		return fmt.Errorf("evm-load: fewer than %d txs sent: %s",
+			*minSent, strings.Join(short, ", "))
 	}
 	return nil
 }
@@ -251,6 +261,8 @@ func runCompare(args []string) error {
 	timeout := fs.Duration("timeout", 15*time.Minute, "overall wait limit")
 	failedOut := fs.String("failed-out", "",
 		"write names of nodes that stopped to this file, one per line")
+	minOKTxs := fs.Int("min-ok-txs", 0,
+		"fail unless at least this many txs have code 0")
 	_ = fs.Parse(args)
 
 	nodes, err := parseNodes(*rpcs, *names)
@@ -263,16 +275,7 @@ func runCompare(args []string) error {
 
 	heights, stopped := waitForHeight(nodes, *target, *stall, *timeout)
 	if len(stopped) > 0 {
-		if *failedOut != "" {
-			var b strings.Builder
-			for _, n := range stopped {
-				b.WriteString(n.Name + "\n")
-			}
-			_ = os.WriteFile(*failedOut, []byte(b.String()), 0o644)
-		}
-		reportStopped(nodes, heights, stopped)
-		return fmt.Errorf("%d node(s) stopped before height %d",
-			len(stopped), *target)
+		return failStopped(nodes, heights, stopped, *target, *failedOut)
 	}
 
 	fmt.Printf("compare: all %d nodes reached height %d; comparing 1..%d\n",
@@ -290,9 +293,68 @@ func runCompare(args []string) error {
 			}
 		}
 	}
+
+	// The header at height h carries the app hash after h-1, so block
+	// target+1 holds the app hash after target, the one /abci_info reports.
+	heights, stopped = waitForHeight(nodes, *target+1, *stall, *timeout)
+	if len(stopped) > 0 {
+		return failStopped(nodes, heights, stopped, *target+1, *failedOut)
+	}
+	if err := compareAppHashAt(nodes, *target+1); err != nil {
+		return err
+	}
+	okTxs := txs - failedTxs
+	if okTxs < *minOKTxs {
+		fmt.Printf("compare: FAIL: %d txs with code 0 on heights 1..%d, "+
+			"want at least %d (%d txs in total)\n",
+			okTxs, *target, *minOKTxs, txs)
+		return fmt.Errorf("only %d successful txs, want at least %d",
+			okTxs, *minOKTxs)
+	}
 	fmt.Printf("compare: OK, %d nodes agree on heights 1..%d "+
 		"(%d txs, %d with a non-zero code)\n",
 		len(nodes), *target, txs, failedTxs)
+	return nil
+}
+
+// failStopped writes the stopped nodes to failedOut (when set), reports why
+// they stopped, and returns the error for runCompare.
+func failStopped(
+	nodes []Node, heights []int64, stopped []Node, target int64,
+	failedOut string,
+) error {
+	if failedOut != "" {
+		var b strings.Builder
+		for _, n := range stopped {
+			b.WriteString(n.Name + "\n")
+		}
+		_ = os.WriteFile(failedOut, []byte(b.String()), 0o644)
+	}
+	reportStopped(nodes, heights, stopped)
+	return fmt.Errorf("%d node(s) stopped before height %d",
+		len(stopped), target)
+}
+
+// compareAppHashAt compares header.app_hash of block h across nodes.
+func compareAppHashAt(nodes []Node, h int64) error {
+	var base blockFields
+	for i, n := range nodes {
+		b, err := getBlock(n, h)
+		if err != nil {
+			return fmt.Errorf("height %d on %s: %w", h, n.Name, err)
+		}
+		if i == 0 {
+			base = b
+			continue
+		}
+		if b.AppHash != base.AppHash {
+			fmt.Printf("compare: FAIL: first difference at height %d, "+
+				"field header.app_hash\n", h)
+			fmt.Printf("  %s: %s\n  %s: %s\n",
+				nodes[0].Name, base.AppHash, n.Name, b.AppHash)
+			return fmt.Errorf("nodes disagree at height %d (header.app_hash)", h)
+		}
+	}
 	return nil
 }
 
