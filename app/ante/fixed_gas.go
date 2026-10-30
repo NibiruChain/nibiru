@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 const (
@@ -76,36 +77,49 @@ func (anteDec AnteDecZeroGasActors) AnteHandle(
 	simulate bool,
 	next sdk.AnteHandler,
 ) (newCtx sdk.Context, err error) {
-	zeroGasActors := anteDec.SudoKeeper.GetZeroGasActors(ctx)
-	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
+	if !IsZeroGasActorTx(tx, anteDec.SudoKeeper.GetZeroGasActors(ctx)) {
 		return next(ctx, tx, simulate)
+	}
+
+	newCtx = ctx.WithGasMeter(NewFixedGasMeter(ZeroTxGas))
+	return next(newCtx, tx, simulate)
+}
+
+// IsZeroGasActorTx reports whether tx qualifies for [AnteDecZeroGasActors]:
+// the first message's first signer is a zero-gas sender and every message is a
+// Wasm execute call to a zero-gas contract.
+func IsZeroGasActorTx(tx sdk.Tx, zeroGasActors sudo.ZeroGasActors) bool {
+	if len(zeroGasActors.Senders) == 0 || len(zeroGasActors.Contracts) == 0 {
+		return false
 	}
 
 	zeroGasSenders := set.New(zeroGasActors.Senders...)
 	zeroGasContracts := set.New(zeroGasActors.Contracts...)
 
-	for idx, msg := range tx.GetMsgs() {
+	msgs := tx.GetMsgs()
+	if len(msgs) == 0 {
+		return false
+	}
+	for idx, msg := range msgs {
 		if idx == 0 {
 			signers := msg.GetSigners()
 			if len(signers) == 0 {
-				return next(ctx, tx, simulate)
+				return false
 			}
 			fromAddr := signers[0]
 			if !zeroGasSenders.Has(fromAddr.String()) {
-				return next(ctx, tx, simulate)
+				return false
 			}
 		}
 
 		msgExec, ok := msg.(*wasm.MsgExecuteContract)
 		if !ok {
-			return next(ctx, tx, simulate)
+			return false
 		}
 
 		if !zeroGasContracts.Has(msgExec.Contract) {
-			return next(ctx, tx, simulate)
+			return false
 		}
 	}
-
-	newCtx = ctx.WithGasMeter(NewFixedGasMeter(ZeroTxGas))
-	return next(newCtx, tx, simulate)
+	return true
 }

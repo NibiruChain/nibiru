@@ -13,6 +13,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
 // acceptingPrepareVerifier records the outer bytes passed to prepare-proposal
@@ -184,4 +186,112 @@ func TestEVMPrepareProposalPrioritizesExecutableSenderHeads(t *testing.T) {
 	response := handler(ctx, abci.RequestPrepareProposal{MaxTxBytes: 1_000_000})
 
 	require.Equal(t, [][]byte{highPriority, lowPriority}, response.Txs)
+}
+
+// buildProposalWasmExecuteTx encodes an unsigned non-EVM transaction whose
+// messages each execute contract from sender, as CometBFT hands candidates to
+// PrepareProposal.
+func buildProposalWasmExecuteTx(
+	t *testing.T,
+	deps *evmtest.TestDeps,
+	sender string,
+	contracts ...string,
+) []byte {
+	t.Helper()
+	msgs := make([]sdk.Msg, 0, len(contracts))
+	for _, contract := range contracts {
+		msgs = append(msgs, &wasm.MsgExecuteContract{
+			Sender:   sender,
+			Contract: contract,
+			Msg:      wasm.RawContractMessage(`{"set_prices":{"prices":[]}}`),
+		})
+	}
+	builder := deps.App.GetTxConfig().NewTxBuilder()
+	require.NoError(t, builder.SetMsgs(msgs...))
+	builder.SetGasLimit(100_000_000)
+	txBytes, err := deps.App.GetTxConfig().TxEncoder()(builder.GetTx())
+	require.NoError(t, err)
+	return txBytes
+}
+
+// TestEVMPrepareProposalSelectsZeroGasActorTxsFirst proves that non-EVM
+// zero-gas actor transactions (oracle price writes) are proposed ahead of
+// every EVM transaction, so a trade in the same block executes against the
+// price written in that block. Every other non-EVM transaction, including a
+// call to the zero-gas contract from an unlisted sender, a listed sender
+// calling an unlisted contract, or a mixed-contract transaction, keeps its
+// place after the EVM transactions. Relative CometBFT order is preserved
+// within each lane.
+func TestEVMPrepareProposalSelectsZeroGasActorTxsFirst(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+
+	oracleFeeder := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	keeperBot := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	trader := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	oracleContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	perpContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	otherContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:   []string{oracleFeeder, keeperBot},
+		Contracts: []string{oracleContract, perpContract},
+	})
+
+	traderToOracle := buildProposalWasmExecuteTx(t, &deps, trader, oracleContract)
+	oracleWrite := buildProposalWasmExecuteTx(t, &deps, oracleFeeder, oracleContract)
+	feederToOther := buildProposalWasmExecuteTx(t, &deps, oracleFeeder, otherContract)
+	keeperBatch := buildProposalWasmExecuteTx(t, &deps, keeperBot, perpContract, oracleContract)
+	mixedBatch := buildProposalWasmExecuteTx(t, &deps, keeperBot, perpContract, otherContract)
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+		Txs:        [][]byte{traderToOracle, oracleWrite, feederToOther, keeperBatch, mixedBatch},
+	})
+
+	require.Equal(t, [][]byte{
+		oracleWrite, keeperBatch,
+		evmTx,
+		traderToOracle, feederToOther, mixedBatch,
+	}, response.Txs)
+	require.Equal(t, response.Txs, verifier.seen)
+}
+
+// TestEVMPrepareProposalZeroGasLaneWinsScarceSpace proves the zero-gas lane is
+// budgeted before EVM transactions: when RequestPrepareProposal.MaxTxBytes
+// fits either the oracle write or the EVM transaction but not both, the oracle
+// write is proposed and the EVM transaction waits for a later block.
+func TestEVMPrepareProposalZeroGasLaneWinsScarceSpace(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+
+	oracleFeeder := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	oracleContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:   []string{oracleFeeder},
+		Contracts: []string{oracleContract},
+	})
+	oracleWrite := buildProposalWasmExecuteTx(t, &deps, oracleFeeder, oracleContract)
+	maxTxBytes := cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{oracleWrite, evmTx}) - 1
+	require.GreaterOrEqual(t, maxTxBytes, cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{evmTx}))
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: maxTxBytes,
+		Txs:        [][]byte{oracleWrite},
+	})
+
+	require.Equal(t, [][]byte{oracleWrite}, response.Txs)
 }

@@ -9,9 +9,11 @@ import (
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // prepareProposalTxVerifier verifies original outer transaction bytes during
@@ -79,10 +81,15 @@ func (h *proposalHeap) Pop() any {
 // each sender's complete state nonce chain (contiguous live slots from the
 // committed state nonce) through [executableProposalChains], prioritizes
 // executable sender heads with [proposalHeap], and returns original outer bytes
-// from [evm.MempoolTx.TxBytes]. It then appends verified non-EVM candidates from
-// RequestPrepareProposal.Txs in their CometBFT-provided relative order. EVM
-// transactions present in req.Txs are ignored so proposal construction does not
-// rebuild the EVM index from Comet candidates. A recovered panic yields an empty
+// from [evm.MempoolTx.TxBytes]. Non-EVM candidates from
+// RequestPrepareProposal.Txs keep their CometBFT-provided relative order, split
+// into two lanes: zero-gas actor transactions ([ante.IsZeroGasActorTx], e.g.
+// oracle price writes) are selected before every EVM transaction, and all other
+// non-EVM transactions are appended after them. Without the leading lane, a
+// trade submitted as an EVM transaction would always execute against the
+// previous block's price while the oracle update for that block waits behind
+// it. EVM transactions present in req.Txs are ignored so proposal construction
+// does not rebuild the EVM index from Comet candidates. A recovered panic yields an empty
 // proposal rather than an unfiltered EVM candidate set. Node-local mempool
 // membership affects only this node's candidate selection; ProcessProposal and
 // delivery validate from proposal bytes and application state alone.
@@ -112,6 +119,26 @@ func NewEVMPrepareProposalHandler(
 
 		selected := make([][]byte, 0)
 		var usedBytes, usedGas uint64
+		selectNonEVM := func(candidate nonEVMProposalTx) {
+			if !proposalCapacityAllows(usedBytes, proposalTxSize(candidate.txBytes), maxBytes) ||
+				!proposalCapacityAllows(usedGas, candidate.gasWanted, maxGas) {
+				return
+			}
+			if err := verifier.PrepareProposalVerifyTxBytes(candidate.txBytes); err != nil {
+				return
+			}
+			selected = append(selected, candidate.txBytes)
+			usedBytes += proposalTxSize(candidate.txBytes)
+			usedGas += candidate.gasWanted
+		}
+
+		zeroGasLane, otherLane := splitNonEVMProposalTxs(
+			app.txConfig.TxDecoder(), req.Txs, app.SudoKeeper.GetZeroGasActors(ctx),
+		)
+		for _, candidate := range zeroGasLane {
+			selectNonEVM(candidate)
+		}
+
 		chains := executableProposalChains(ctx, app.EvmKeeper, app.EvmMempool.Snapshot())
 		queue := proposalHeap(chains)
 		heap.Init(&queue)
@@ -139,29 +166,46 @@ func NewEVMPrepareProposalHandler(
 			}
 		}
 
-		for _, txBytes := range req.Txs {
-			tx, err := app.txConfig.TxDecoder()(txBytes)
-			if err != nil || evm.IsEthTx(tx) {
-				continue
-			}
-			gasWanted := uint64(0)
-			if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
-				gasWanted = gasTx.GetGas()
-			}
-			if !proposalCapacityAllows(usedBytes, proposalTxSize(txBytes), maxBytes) ||
-				!proposalCapacityAllows(usedGas, gasWanted, maxGas) {
-				continue
-			}
-			if err := verifier.PrepareProposalVerifyTxBytes(txBytes); err != nil {
-				continue
-			}
-			selected = append(selected, txBytes)
-			usedBytes += proposalTxSize(txBytes)
-			usedGas += gasWanted
+		for _, candidate := range otherLane {
+			selectNonEVM(candidate)
 		}
 
 		return abci.ResponsePrepareProposal{Txs: selected}
 	}
+}
+
+// nonEVMProposalTx is a decoded non-EVM candidate from
+// RequestPrepareProposal.Txs with its original outer bytes.
+type nonEVMProposalTx struct {
+	txBytes   []byte
+	gasWanted uint64
+}
+
+// splitNonEVMProposalTxs decodes the CometBFT candidates once and splits the
+// non-EVM transactions into the zero-gas actor lane and the remaining lane,
+// preserving relative order within each. Undecodable and EVM candidates are
+// dropped.
+func splitNonEVMProposalTxs(
+	decode sdk.TxDecoder,
+	candidates [][]byte,
+	zeroGasActors sudo.ZeroGasActors,
+) (zeroGasLane, otherLane []nonEVMProposalTx) {
+	for _, txBytes := range candidates {
+		tx, err := decode(txBytes)
+		if err != nil || evm.IsEthTx(tx) {
+			continue
+		}
+		candidate := nonEVMProposalTx{txBytes: txBytes}
+		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
+			candidate.gasWanted = gasTx.GetGas()
+		}
+		if ante.IsZeroGasActorTx(tx, zeroGasActors) {
+			zeroGasLane = append(zeroGasLane, candidate)
+		} else {
+			otherLane = append(otherLane, candidate)
+		}
+	}
+	return zeroGasLane, otherLane
 }
 
 // executableProposalChains builds each sender's state nonce chain from an
