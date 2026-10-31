@@ -52,6 +52,7 @@ import (
 	feegrantmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 	paramsclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/client"
@@ -61,6 +62,7 @@ import (
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
@@ -268,6 +270,10 @@ func NewNibiruApp(
 	app := &NibiruApp{
 		EvmMempool: evmMempool,
 		keys: sdk.NewKVStoreKeys(
+			// Explicitly wired SDK modules retain their existing store names.
+			govtypes.StoreKey,
+			upgradetypes.StoreKey,
+
 			// ibc keys
 			ibctransfertypes.StoreKey,
 			// Retain the empty historical ICS-29 store as an inert tombstone.
@@ -348,8 +354,6 @@ func NewNibiruApp(
 		&app.crisisKeeper,
 		&app.capabilityKeeper,
 		&app.slashingKeeper,
-		&app.GovKeeper,
-		&app.UpgradeKeeper,
 		&app.paramsKeeper,
 		&app.authzKeeper,
 		&app.evidenceKeeper,
@@ -371,6 +375,9 @@ func NewNibiruApp(
 		}
 	}
 
+	// Construct these keepers before IBC and Wasm, which depend on them.
+	app.initGovKeeper()
+	app.initUpgradeKeeper(appOpts)
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 	app.ConsensusKeeper = consensuskeeper.NewKeeper(
 		app.appCodec, app.keys[consensustypes.StoreKey], &app.WasmKeeper,
@@ -383,6 +390,9 @@ func NewNibiruApp(
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
+		gov.NewAppModule(app.appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
+		upgrade.NewAppModule(app.UpgradeKeeper),
+
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
 		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
@@ -446,8 +456,8 @@ func NewNibiruApp(
 	app.sm.RegisterStoreDecoders()
 
 	// Register the init chainer after manual modules are added to ModuleManager.
-	// The upgrade module's depinject path only seeds versions for app-wired modules,
-	// so InitChainer writes the full ModuleManager version map before InitGenesis.
+	// InitChainer seeds the complete version map for both explicitly wired and
+	// depinject modules before InitGenesis.
 	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
