@@ -16,6 +16,12 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-07-31 - NAN 006: Owning Our Dependencies, a Nonce-Aware Mempool, and
+  24-Hour Votes](./nan-006.md): NAN 006 covers Nibiru v2.16.0 and v2.17.0. We
+  moved the Cosmos SDK, IBC Go, the Wasm module, and the Wasm VM into the Nibiru
+  repository, stopped spam from filling blocks with EVM transactions that can't
+  execute, cut governance votes to 24 hours, and turned off authz.
+
 - [2026-06-30 - NAN 005: Zero Gas in Browser Wallets, a Self-Governing Treasury,
   and the Return of 0x0801](./nan-005.md): NAN 005 covers Nibiru v2.14.0 and
   v2.15.0. New users can make gasless calls from ordinary browser wallets, the
