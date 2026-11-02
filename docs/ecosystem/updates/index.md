@@ -16,6 +16,13 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-04-30 - NAN 004: Retiring the Native Oracle with v2.12.0](./nan-004.md):
+  NAN 004 covers Nibiru v2.12.0. Validators no longer vote on prices, because
+  the chain's built-in oracle is retired. Mapping a token between Nibiru's
+  Cosmos and EVM sides now needs approval on mainnet, and indexers no longer see
+  events from failed EVM transactions. On Sai, stocks, ETFs, and commodities
+  arrived in one listing wave.
+
 - [2026-02-11 - NAN 003: A Smoother EVM for Sai, Passkey Signing, and Zero Gas with v2.11.0](./nan-003.md):
   This release makes Nibiru feel simpler at the surface and safer underneath. It
   fixes a confusing EVM reporting issue, expands gasless onboarding for approved
