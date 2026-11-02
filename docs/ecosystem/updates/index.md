@@ -16,6 +16,12 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-09-30 - NAN 008: Defending Wasm in Layers, and Reading EVM State from
+  Wasm](./nan-008.md): NAN 008 covers Nibiru v2.19.0 and v2.20.0, two releases
+  that protected the network from a Wasm runtime vulnerability while we prepared
+  the repair. It also covers Wasm contracts reading EVM state, transaction
+  lookup by either hash, and clearer fees on Sai.
+
 - [2026-08-31 - NAN 007: A Month Spent on Speed, and Getting Block Time
   Back](./nan-007.md): NAN 007 covers August 2026, a month we spent on speed.
   Sai got faster to load and to trade, mainnet block time went back to about 1.5
