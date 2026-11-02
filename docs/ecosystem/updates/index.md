@@ -16,6 +16,12 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-08-31 - NAN 007: A Month Spent on Speed, and Getting Block Time
+  Back](./nan-007.md): NAN 007 covers August 2026, a month we spent on speed.
+  Sai got faster to load and to trade, mainnet block time went back to about 1.5
+  seconds, and Sai launched Points and referral accounting that follows the
+  code.
+
 - [2026-07-31 - NAN 006: Owning Our Dependencies, a Nonce-Aware Mempool, and
   24-Hour Votes](./nan-006.md): NAN 006 covers Nibiru v2.16.0 and v2.17.0. We
   moved the Cosmos SDK, IBC Go, the Wasm module, and the Wasm VM into the Nibiru
