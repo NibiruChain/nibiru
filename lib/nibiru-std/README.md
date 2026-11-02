@@ -42,3 +42,21 @@ for the available modules and message types.
 - [Nibiru source repository](https://github.com/NibiruChain/nibiru)
 
 `nibiru-std` is licensed under the terms in [LICENSE](LICENSE).
+
+## Storage transactions
+
+Module `storage_txn` provides `StorageTransaction`, a write overlay over
+read-only CosmWasm storage. Reads see pending writes; range iteration merges
+pending changes over the base in key order, so `cw-storage-plus` maps and
+indexes work unchanged. Nothing reaches the base storage unless the caller
+commits with `txn.prepare().commit(&mut base)`.
+
+A smart query can wrap its read-only `deps.storage` in a transaction to run
+execute code and return the result, then drop the transaction so nothing
+persists.
+
+The module is ported from the private `transactions` module of
+[cw-multi-test](https://github.com/CosmWasm/cw-multi-test) v1.2.0, Copyright
+Confio GmbH, licensed under the
+[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+The module documentation lists the changes from the original.

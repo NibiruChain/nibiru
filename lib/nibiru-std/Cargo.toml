@@ -27,6 +27,9 @@ bech32          = "0.9"
 hex             = "0.4"
 tiny-keccak     = { workspace = true }
 
+[dev-dependencies]
+cw-storage-plus = { workspace = true }
+
 # cargo run --bin script-name
 # [[bin]]
 # name = "rust script name"
