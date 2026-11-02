@@ -16,6 +16,13 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-06-30 - NAN 005: Zero Gas in Browser Wallets, a Self-Governing Treasury,
+  and the Return of 0x0801](./nan-005.md): NAN 005 covers Nibiru v2.14.0 and
+  v2.15.0. New users can make gasless calls from ordinary browser wallets, the
+  Foundation Treasury now manages its own signers, and the old oracle address
+  0x0801 returns as a read-only price source so MIM OFT bridge fee quotes work
+  again.
+
 - [2026-04-30 - NAN 004: Retiring the Native Oracle with v2.12.0](./nan-004.md):
   NAN 004 covers Nibiru v2.12.0. Validators no longer vote on prices, because
   the chain's built-in oracle is retired. Mapping a token between Nibiru's
