@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/embeds"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
@@ -258,8 +259,18 @@ func erisExecute(t *testing.T, deps *evmtest.TestDeps, proxy common.Address, met
 	t.Helper()
 	input, err := embeds.SmartContract_ErisEvm.ABI.Pack(method, args...)
 	require.NoError(t, err)
+	return erisCallFrom(t, deps, deps.Sender.EthAddr, proxy, input)
+}
+
+// erisCallFrom sends input to the target as a transaction signed by from and
+// commits. The EVM's tx.origin is set to from, as it is for a real signed
+// transaction, so ErisEvm's direct-caller check sees the same values it sees
+// on chain.
+func erisCallFrom(t *testing.T, deps *evmtest.TestDeps, from, to common.Address, input []byte) *evm.MsgEthereumTxResponse {
+	t.Helper()
 	obj, _ := deps.NewEVM()
-	resp, err := deps.EvmKeeper.CallContract(obj, deps.Sender.EthAddr, &proxy, input, 10_000_000, evm.COMMIT_ETH_TX, nil)
+	obj.Origin = from
+	resp, err := deps.EvmKeeper.CallContract(obj, from, &to, input, 10_000_000, evm.COMMIT_ETH_TX, nil)
 	if err != nil {
 		require.Contains(t, err.Error(), "VMError")
 		resp = &evm.MsgEthereumTxResponse{VmError: err.Error()}
@@ -411,4 +422,85 @@ func TestErisVoteRejectsMalformedPayloads(t *testing.T) {
 			require.Contains(t, erisExecute(t, &deps, proxy, "vote", tc.validators, tc.weights).VmError, tc.want)
 		})
 	}
+}
+
+// erisMutatingCalls lists every ErisEvm method that reaches a mutable
+// precompile, with arguments that would otherwise pass input validation.
+func erisMutatingCalls() []struct {
+	method string
+	args   []any
+} {
+	return []struct {
+		method string
+		args   []any
+	}{
+		{"liquidStake", []any{big.NewInt(1e12)}},
+		{"redeem", nil},
+		{"unstake", []any{big.NewInt(1)}},
+		{"createLock", []any{big.NewInt(1_000_000), uint64(3 * erisWeek)}},
+		{"increaseLockAmount", []any{big.NewInt(1_000_000)}},
+		{"extendLockTime", []any{uint64(erisWeek)}},
+		{"withdrawEscrow", nil},
+		{"vote", []any{[]string{erisValidator}, []uint16{10000}}},
+		{"extendLockAndVote", []any{uint64(erisWeek), []string{erisValidator}, []uint16{10000}}},
+	}
+}
+
+// TestErisRequiresDirectWalletCall checks that every mutating ErisEvm method
+// rejects callers other than the transaction signer. Precompiles reached by
+// DELEGATECALL act for the signer only when the signer calls the proxy
+// directly. Through another contract they would act for the proxy, so
+// ErisEvm must refuse those calls instead of running them under the wrong
+// account.
+func TestErisRequiresDirectWalletCall(t *testing.T) {
+	deps, proxy := setupErisGovernance(t)
+	relay, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestCallRelay)
+	require.NoError(t, err)
+	deps.Commit()
+
+	t.Run("contract caller", func(t *testing.T) {
+		for _, tc := range erisMutatingCalls() {
+			input, err := embeds.SmartContract_ErisEvm.ABI.Pack(tc.method, tc.args...)
+			require.NoError(t, err)
+			relayInput, err := embeds.SmartContract_TestCallRelay.ABI.Pack("relay", proxy, input)
+			require.NoError(t, err)
+			resp := erisCallFrom(t, &deps, deps.Sender.EthAddr, relay.ContractAddr, relayInput)
+			require.Contains(t, resp.VmError, "Direct wallet call required", tc.method)
+		}
+		// Nothing was created for the proxy or for the sender.
+		_, err := deps.App.WasmKeeper.QuerySmart(deps.Ctx(), sdk.MustAccAddressFromBech32(erisEscrow),
+			[]byte(`{"lock_info":{"user":"`+eth.EthAddrToNibiruAddr(proxy).String()+`"}}`))
+		require.Error(t, err, "proxy must not own a lock")
+
+		// Read-only methods stay available to contracts.
+		input, err := embeds.SmartContract_ErisEvm.ABI.Pack("governanceVersion")
+		require.NoError(t, err)
+		relayInput, err := embeds.SmartContract_TestCallRelay.ABI.Pack("relay", proxy, input)
+		require.NoError(t, err)
+		resp := erisCallFrom(t, &deps, deps.Sender.EthAddr, relay.ContractAddr, relayInput)
+		require.Empty(t, resp.VmError)
+	})
+
+	t.Run("signer with delegated code", func(t *testing.T) {
+		// An EIP-7702 delegation designator: 0xef0100 followed by an address.
+		account := evmtest.NewEthPrivAcc()
+		sdb := deps.NewStateDB()
+		sdb.SetCode(account.EthAddr, append([]byte{0xef, 0x01, 0x00}, relay.ContractAddr.Bytes()...))
+		deps.Commit()
+		for _, tc := range erisMutatingCalls() {
+			input, err := embeds.SmartContract_ErisEvm.ABI.Pack(tc.method, tc.args...)
+			require.NoError(t, err)
+			resp := erisCallFrom(t, &deps, account.EthAddr, proxy, input)
+			require.Contains(t, resp.VmError, "Direct wallet call required", tc.method)
+		}
+	})
+
+	t.Run("direct wallet call", func(t *testing.T) {
+		// The signer calling the proxy directly still works, and the lock
+		// belongs to the signer.
+		require.Empty(t, erisExecute(t, &deps, proxy, "createLock", big.NewInt(1_000_000), uint64(3*erisWeek)).VmError)
+		require.Equal(t, "1000000", erisLock(t, &deps)["amount"])
+		require.Empty(t, erisExecute(t, &deps, proxy, "vote", []string{erisValidator}, []uint16{10000}).VmError)
+		require.Contains(t, string(erisUserVotes(t, &deps)), erisValidator)
+	})
 }

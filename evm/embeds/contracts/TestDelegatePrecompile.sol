@@ -169,3 +169,20 @@ contract TestDelegateProxy {
         }
     }
 }
+
+/// @notice Test-only contract wallet stand-in that forwards an arbitrary call
+/// with an ordinary CALL, so the target sees this contract as `msg.sender`.
+contract TestCallRelay {
+    function relay(
+        address target,
+        bytes calldata data
+    ) external payable returns (bytes memory) {
+        (bool ok, bytes memory ret) = target.call{value: msg.value}(data);
+        if (!ok) {
+            assembly {
+                revert(add(ret, 32), mload(ret))
+            }
+        }
+        return ret;
+    }
+}

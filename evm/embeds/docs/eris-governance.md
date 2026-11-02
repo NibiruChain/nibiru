@@ -13,6 +13,16 @@ EOA -> proxy delegatecall -> ErisEvm delegatecall -> Wasm / FunToken precompile
                             msg.sender stays the EOA
 ```
 
+A precompile reached by DELEGATECALL acts for the transaction signer only when
+the signer calls the proxy directly. When another contract calls the proxy, the
+same precompile call acts for the proxy instead. Every mutating method therefore
+requires `msg.sender == tx.origin` and no code at `msg.sender`; other callers
+revert with `Direct wallet call required`. Contract wallets and smart accounts
+can't use ErisEvm. They should execute the Eris hub, escrow, and gauge
+contracts directly, for example with an ordinary CALL to the Wasm precompile,
+which acts for the calling contract. Read-only methods such as `state()` and
+`governanceVersion()` stay open to any caller.
+
 Methods accept six-decimal receipt amounts, seconds of lock duration, validator
 operator addresses, and integer basis points. They expose no recipient override,
 arbitrary Wasm JSON, generic execute function, or owner tuning operation.

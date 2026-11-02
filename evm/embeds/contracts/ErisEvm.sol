@@ -17,8 +17,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///  |_| \_||_____||____/|_____||_|  \_\ \____/
 ///
 /// @notice Delegate call interface for staking NIBI via the Eris amplifier
-/// contract. This contract does not custody funds. All actions propagate
-/// msg.sender via delegatecall.
+/// contract.
+/// @dev Nibiru precompiles reached by DELEGATECALL act for the transaction
+/// signer only when the signer calls this contract directly. Reached through
+/// another contract, they act for the account that holds this code (the
+/// proxy) instead. Every mutating entry point therefore requires a direct
+/// wallet call. Contract wallets and smart accounts should call the Eris Wasm
+/// contracts directly, for example through an ordinary CALL to the Wasm
+/// precompile, which acts for the calling contract.
 contract ErisEvm {
     using Strings for uint256;
 
@@ -55,6 +61,23 @@ contract ErisEvm {
     // This is equivalent to 1 (1e0) in 6-decimal NIBI terms.
     uint256 private constant NIBI_PRECISION_UNIT = 1e12; // 10^12
 
+    /// @dev Restricts a function to direct calls from the transaction signer.
+    /// Only then do delegated precompile calls act for `msg.sender`.
+    modifier onlyDirectCaller() {
+        _onlyDirectCaller();
+        _;
+    }
+
+    /// @dev A caller with code (a contract or a delegated account) is
+    /// rejected too, so the rule holds if the chain enables account code
+    /// delegation for externally owned accounts.
+    function _onlyDirectCaller() private view {
+        require(
+            msg.sender == tx.origin && msg.sender.code.length == 0,
+            "Direct wallet call required"
+        );
+    }
+
     /// @notice Query the Eris state, returning a JSON object in the form of the
     /// `LiquidStakeContract` type:
     ///
@@ -75,7 +98,7 @@ contract ErisEvm {
     }
 
     /// @notice Deposit NIBI to liquid stake and mint stNIBI.
-    function liquidStake(uint256 amount) external {
+    function liquidStake(uint256 amount) external onlyDirectCaller {
         // Require amount to be at least the NIBI_PRECISION_UNIT
         require(
             amount >= NIBI_PRECISION_UNIT,
@@ -152,7 +175,7 @@ contract ErisEvm {
 
     /// @notice Redeem any stNIBI that has finished unstaking to receive the NIBI
     /// principal and any accrued rewards from liquid staking.
-    function redeem() external {
+    function redeem() external onlyDirectCaller {
         bytes memory wasmMsg = bytes('{"withdraw_unbonded":{}}');
         INibiruEvm.BankCoin[] memory funds = new INibiruEvm.BankCoin[](0);
         _doWasmExecute(ERIS_WASM_CONTRACT, wasmMsg, funds);
@@ -160,7 +183,7 @@ contract ErisEvm {
 
     /// @notice Queue to unstake stNIBI to later redeem it for the principal and
     /// accrued rewards from liquid staking.
-    function unstake(uint256 stAmount) external {
+    function unstake(uint256 stAmount) external onlyDirectCaller {
         // See the other address format of the sender
         string memory senderHex = Strings.toHexString(uint160(msg.sender), 20);
 
@@ -202,7 +225,10 @@ contract ErisEvm {
     /// @notice Lock stNIBI receipts to obtain allocation voting power.
     /// @param amount Receipt amount in six-decimal base units, identical for Bank and ERC20.
     /// @param time Lock duration in seconds; Eris rounds down to whole weeks.
-    function createLock(uint256 amount, uint64 time) external {
+    function createLock(
+        uint256 amount,
+        uint64 time
+    ) external onlyDirectCaller {
         _depositEscrow(
             amount,
             abi.encodePacked(
@@ -215,7 +241,7 @@ contract ErisEvm {
 
     /// @notice Add receipts to an existing active escrow without changing its expiry.
     /// @param amount Receipt amount in six-decimal base units.
-    function increaseLockAmount(uint256 amount) external {
+    function increaseLockAmount(uint256 amount) external onlyDirectCaller {
         _depositEscrow(
             amount,
             bytes('{"extend_lock_amount":{"extend_to_min_periods":false}}')
@@ -224,13 +250,13 @@ contract ErisEvm {
 
     /// @notice Extend an active lock, or relock an expired position from the current period.
     /// @param time Duration to add in seconds. The Rust contract enforces remaining-time bounds.
-    function extendLockTime(uint64 time) external {
+    function extendLockTime(uint64 time) external onlyDirectCaller {
         _extendLock(time);
     }
 
     /// @notice Withdraw an expired escrow and return its receipts as ERC20 stNIBI.
     /// @dev Converts only the Bank balance increase from this withdrawal. Existing Bank receipts stay put.
-    function withdrawEscrow() external {
+    function withdrawEscrow() external onlyDirectCaller {
         (uint256 beforeBalance, ) = FUNTOKEN_PRECOMPILE.bankBalance(
             msg.sender,
             ST_NIBI_DENOM
@@ -259,7 +285,7 @@ contract ErisEvm {
     function vote(
         string[] calldata validators,
         uint16[] calldata weights
-    ) external {
+    ) external onlyDirectCaller {
         _vote(validators, weights);
     }
 
@@ -273,7 +299,7 @@ contract ErisEvm {
         uint64 time,
         string[] calldata validators,
         uint16[] calldata weights
-    ) external {
+    ) external onlyDirectCaller {
         // Validate before executing callbacks or changing the escrow.
         bytes memory args = _voteArgs(validators, weights);
         _extendLock(time);

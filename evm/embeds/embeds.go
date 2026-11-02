@@ -68,6 +68,8 @@ var (
 	testCallbackCaller []byte
 	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestDelegateProxy.json
 	testDelegateProxy []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestCallRelay.json
+	testCallRelay []byte
 )
 
 var (
@@ -225,6 +227,10 @@ var (
 		Name:      "TestDelegateProxy.sol",
 		EmbedJSON: testDelegateProxy,
 	}
+	SmartContract_TestCallRelay = CompiledEvmContract{
+		Name:      "TestCallRelay.sol",
+		EmbedJSON: testCallRelay,
+	}
 )
 
 func init() {
@@ -252,6 +258,7 @@ func init() {
 	SmartContract_TestDelegatePrecompile.MustLoad()
 	SmartContract_TestCallbackCaller.MustLoad()
 	SmartContract_TestDelegateProxy.MustLoad()
+	SmartContract_TestCallRelay.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
 	SmartContract_TestOracleAsLZNativeFeeHandler.MustLoad()
 }
