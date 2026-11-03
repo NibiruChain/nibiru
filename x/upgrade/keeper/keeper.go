@@ -4,12 +4,13 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
+
+	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 

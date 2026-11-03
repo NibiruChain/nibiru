@@ -16,8 +16,8 @@ import (
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 
-	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 )
 
 type UpgradeTestSuite struct {

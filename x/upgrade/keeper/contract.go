@@ -36,9 +36,11 @@ type SudoKeeper interface {
 func CreatorAddr() sdk.AccAddress {
 	return authtypes.NewModuleAddress(contracttypes.ContractCreatorName)
 }
+
 func (k *Keeper) BindWasm(wasm *wasmkeeper.Keeper, permissions SudoKeeper, code func() []byte) {
 	k.wasm, k.permissions, k.contractCode = wasm, permissions, code
 }
+
 func (k Keeper) ContractAddr(ctx sdk.Context) (sdk.AccAddress, bool) {
 	bz := ctx.KVStore(k.storeKey).Get(contractAddressKey)
 	if len(bz) == 0 {
@@ -68,6 +70,7 @@ func (k Keeper) queryAt(ctx sdk.Context, addr sdk.AccAddress, request any, resul
 	}
 	return nil
 }
+
 func (k Keeper) queryContract(ctx sdk.Context, request any, result any) error {
 	addr, ok := k.ContractAddr(ctx)
 	if !ok {
@@ -75,11 +78,13 @@ func (k Keeper) queryContract(ctx sdk.Context, request any, result any) error {
 	}
 	return k.queryAt(ctx, addr, request, result)
 }
+
 func (k Keeper) mustQuery(ctx sdk.Context, request any, result any) {
 	if err := k.queryContract(ctx, request, result); err != nil {
 		panic(fmt.Errorf("query x-upgrade: %w", err))
 	}
 }
+
 func (k Keeper) sudoContract(ctx sdk.Context, request any) error {
 	addr, ok := k.ContractAddr(ctx)
 	if !ok || k.wasm == nil {
@@ -92,11 +97,13 @@ func (k Keeper) sudoContract(ctx sdk.Context, request any) error {
 	_, err = k.wasm.Sudo(ctx, addr, msg)
 	return err
 }
+
 func (k Keeper) mustSudo(ctx sdk.Context, request any) {
 	if err := k.sudoContract(ctx, request); err != nil {
 		panic(fmt.Errorf("sudo x-upgrade: %w", err))
 	}
 }
+
 func (k Keeper) executeGovernance(ctx sdk.Context, request any) error {
 	addr, ok := k.ContractAddr(ctx)
 	if !ok || k.wasm == nil {
@@ -113,6 +120,7 @@ func (k Keeper) executeGovernance(ctx sdk.Context, request any) error {
 	_, err = wasmkeeper.NewDefaultPermissionKeeper(k.wasm).Execute(ctx, addr, authority, msg, sdk.NewCoins())
 	return err
 }
+
 func (k Keeper) TimeTarget(ctx sdk.Context) (*TimeTarget, error) {
 	if !k.ContractActive(ctx) {
 		return nil, nil
@@ -121,6 +129,7 @@ func (k Keeper) TimeTarget(ctx sdk.Context) (*TimeTarget, error) {
 	err := k.queryContract(ctx, map[string]any{"time_target": struct{}{}}, &target)
 	return target, err
 }
+
 func (k Keeper) SelectExecutionHeight(ctx sdk.Context) error {
 	addr, ok := k.ContractAddr(ctx)
 	if !ok {
@@ -139,6 +148,7 @@ func (k Keeper) contractPlan(ctx sdk.Context) (upgradetypes.Plan, bool) {
 	}
 	return upgradetypes.Plan{Name: p.Name, Height: p.Height, Info: p.Info}, true
 }
+
 func (k Keeper) snapshotLegacy(ctx sdk.Context) contracttypes.Snapshot {
 	snap := contracttypes.Snapshot{Completed: []contracttypes.CompletedUpgrade{}, ModuleVersions: []contracttypes.ModuleVersion{}}
 	if p, ok := k.GetUpgradePlan(ctx); ok {
@@ -162,6 +172,7 @@ func (k Keeper) snapshotLegacy(ctx sdk.Context) contracttypes.Snapshot {
 	}
 	return snap
 }
+
 func (k Keeper) deleteLegacy(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(upgradetypes.PlanKey())
@@ -178,6 +189,7 @@ func (k Keeper) deleteLegacy(ctx sdk.Context) {
 		}
 	}
 }
+
 func (k Keeper) findContract(ctx sdk.Context) (sdk.AccAddress, bool) {
 	var found sdk.AccAddress
 	k.wasm.IterateContractsByCreator(ctx, CreatorAddr(), func(addr sdk.AccAddress) bool { found = addr; return true })
@@ -265,6 +277,7 @@ func (k *Keeper) InitContract(ctx sdk.Context, versions module.VersionMap) error
 	k.SetModuleVersionMap(ctx, versions)
 	return k.ActivateContract(ctx)
 }
+
 func (k Keeper) ensureDeployerRole(ctx sdk.Context, addr sdk.AccAddress) error {
 	if k.permissions == nil {
 		return fmt.Errorf("upgrade sudo keeper not bound")
@@ -279,6 +292,7 @@ func (k Keeper) ensureDeployerRole(ctx sdk.Context, addr sdk.AccAddress) error {
 	_, err = k.permissions.UpdateRoleMembers(ctx, &sudo.MsgUpdateRoleMembers{Sender: root.String(), Role: sudo.RoleWasmDeployer, Add: []string{addr.String()}})
 	return err
 }
+
 func moduleRecords(vm module.VersionMap) []contracttypes.ModuleVersion {
 	names := make([]string, 0, len(vm))
 	for name := range vm {
@@ -311,6 +325,7 @@ func (v *stringUint64Result) UnmarshalJSON(bz []byte) error {
 	*v.Target = &n
 	return nil
 }
+
 func (k Keeper) scheduleContract(ctx sdk.Context, plan upgradetypes.Plan) error {
 	if err := plan.ValidateScheduleRequest(); err != nil {
 		return err

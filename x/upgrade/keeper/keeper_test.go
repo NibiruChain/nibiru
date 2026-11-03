@@ -19,9 +19,9 @@ import (
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 type KeeperTestSuite struct {

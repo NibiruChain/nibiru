@@ -21,11 +21,15 @@ func TestSelectionAttemptAtomicityAndErrorClassification(t *testing.T) {
 		panicVal any
 	}{
 		{name: "success"},
-		{name: "contract rejection", category: SelectionContractError,
-			err: fmt.Errorf("wrapped: %w", &wvm.ContractError{Message: "bad selection"})},
+		{
+			name: "contract rejection", category: SelectionContractError,
+			err: fmt.Errorf("wrapped: %w", &wvm.ContractError{Message: "bad selection"}),
+		},
 		{name: "VM gas exhaustion", category: SelectionOutOfGas, err: wvm.OutOfGasError{}},
-		{name: "SDK gas exhaustion", category: SelectionOutOfGas,
-			panicVal: sdk.ErrorOutOfGas{Descriptor: "contract execution"}},
+		{
+			name: "SDK gas exhaustion", category: SelectionOutOfGas,
+			panicVal: sdk.ErrorOutOfGas{Descriptor: "contract execution"},
+		},
 		{name: "engine failure", err: errors.New("local engine unavailable")},
 		{name: "unexpected panic", panicVal: "disk fault"},
 	} {

@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/pflag"
 	"time"
+
+	"github.com/spf13/pflag"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client/cli"
 	gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"

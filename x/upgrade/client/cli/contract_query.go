@@ -23,6 +23,7 @@ func printJSON(ctx client.Context, value any) error {
 	}
 	return ctx.PrintString(string(bz) + "\n")
 }
+
 func contractQuery(cmd *cobra.Command, ctx client.Context, request any) (string, json.RawMessage, error) {
 	c := wasmtypes.NewQueryClient(ctx)
 	contracts, err := c.ContractsByCreator(cmd.Context(), &wasmtypes.QueryContractsByCreatorRequest{CreatorAddress: authtypes.NewModuleAddress(contracttypes.ContractCreatorName).String(), Pagination: &querytypes.PageRequest{Limit: 1}})
@@ -43,6 +44,7 @@ func contractQuery(cmd *cobra.Command, ctx client.Context, request any) (string,
 	}
 	return addr, json.RawMessage(response.Data), nil
 }
+
 func GetAppliedRecordCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "applied-record [upgrade-name]", Short: "Return a completed upgrade's name and height without historical block RPC", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, err := client.GetClientQueryContext(cmd)
@@ -61,6 +63,7 @@ func GetAppliedRecordCmd() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
+
 func GetStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "status", Short: "Show pending time targets, concrete plans, and terminal selection failures as JSON", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx, err := client.GetClientQueryContext(cmd)
@@ -117,6 +120,7 @@ func GetStatusCmd() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
+
 func GetParamsCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "params", Short: "Show the upgrade contract's governance authority and activation delay as JSON", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx, err := client.GetClientQueryContext(cmd)
@@ -132,6 +136,7 @@ func GetParamsCmd() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
+
 func GetHistoryCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "history", Short: "List completed upgrades as JSON with height/name cursor pagination", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx, err := client.GetClientQueryContext(cmd)
