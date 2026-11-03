@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -20,9 +21,30 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	upgrademodule "github.com/NibiruChain/nibiru/v2/x/upgrade"
 	upgradecontract "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
+
+// TestUpgradeContractAddressMatchesEmbeddedBuild checks the public prediction
+// against a real fresh-chain deployment. A different initial build predicts a
+// different address, but that prediction must not replace the address recorded
+// for an existing chain. Published release addresses belong to their original
+// artifacts, rather than to every later embedded build.
+func TestUpgradeContractAddressMatchesEmbeddedBuild(t *testing.T) {
+	chain, ctx := testapp.NewNibiruTestAppAndContext()
+	checksum := sha256.Sum256(upgrademodule.ContractWasm())
+	actual, found := chain.UpgradeKeeper.ContractAddr(ctx)
+	require.True(t, found)
+	require.Equal(t, actual, chain.UpgradeKeeper.PredictContractAddr(checksum[:]))
+
+	otherChecksum := checksum
+	otherChecksum[0] ^= 1
+	require.NotEqual(t, actual, chain.UpgradeKeeper.PredictContractAddr(otherChecksum[:]))
+	stored, found := chain.UpgradeKeeper.ContractAddr(ctx)
+	require.True(t, found)
+	require.Equal(t, actual, stored)
+}
 
 // upgradeContractRecords captures every raw contract key and value as hex.
 // Comparing these records across export/import detects state loss that a
