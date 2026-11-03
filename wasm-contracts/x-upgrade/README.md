@@ -61,3 +61,56 @@ and optional descending order. Name lookup returns the earliest matching
 record, preserving legacy behavior even if imported history contains duplicate
 names. Module-version updates merge supplied entries rather than deleting
 omitted modules.
+
+## Operator Queries
+
+Use the status command first when investigating an upcoming upgrade:
+
+```sh
+nibiru query upgrade status
+nibiru query upgrade plan
+nibiru query upgrade params
+nibiru query upgrade history --reverse --limit 20
+nibiru query upgrade history --start-after-height 1234 --start-after-name v2.22.0
+nibiru query upgrade applied-record v2.22.0
+nibiru query upgrade module_versions upgrade
+```
+
+Command `status` reports `none`, `pending_time`, `scheduled`, or `failed` and
+joins contract state with any native terminal-failure record at the same
+committed height. It shows the original time as RFC 3339 UTC and preserves
+exact `target_time_unix_nanos` in the pending record. A `pending_time` request
+has no execution block yet; `plan` exposes only the concrete height-based plan
+used by existing node tooling. Command `params` shows `gov_authority` and the
+warning interval in blocks.
+
+Completion history uses an `IndexedMap` with primary key `(block_height, name)`
+and a nonunique name index. Pagination works in either direction with an
+exclusive height/name cursor, including multiple names at the same height.
+Name lookup preserves the earliest legacy completion if an imported history
+contains duplicate names. Command `applied-record` returns the name and
+`block_height` directly, without requiring an archive RPC to return an old
+block header. The existing `applied` command retains its block-header behavior.
+
+The contract schema uses `block_height`, `gov_authority`, and
+`target_time_unix_nanos`. Native SDK protobuf messages and queries retain their
+existing `height` and authority fields. Go translates at that boundary;
+Cosmovisor still receives an ordinary height-based `upgrade-info.json` file.
+
+## State Ownership and Native Compatibility
+
+The enabling handler copies and verifies the plan, completion history, module
+versions, and protocol version in the contract before deleting their four
+legacy key families. It then publishes the contract address marker. Subsequent
+native lifecycle operations use the contract, including the writes that occur
+after the upgrade handler returns. No live native mirrors of those families
+remain. Wasm genesis exports their raw state.
+
+Go retains historical legacy reads, pre-cutover access, IBC proof storage,
+native migration execution, binary-switch files, and ABCI protocol integration.
+It also keeps an exceptional failure record when a failed VM call cannot
+persist its own result. These requirements add integration code; this first
+version moves state and scheduling policy without claiming a net reduction in
+Go source. A failed state import stops the enabling upgrade rather than marking
+it completed with the contract unavailable. The independent consensus-contract
+bootstrap can retain its native parameter fallback.

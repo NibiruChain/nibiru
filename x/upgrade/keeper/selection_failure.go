@@ -143,9 +143,9 @@ func (k Keeper) TrySelectExecutionHeight(ctx sdk.Context) error {
 	}
 	// Compare seconds/nanoseconds without UnixNano overflow or wall-clock time.
 	seconds := ctx.BlockTime().Unix()
-	if seconds < 0 || uint64(seconds) < target.TargetTime/1_000_000_000 ||
-		(uint64(seconds) == target.TargetTime/1_000_000_000 &&
-			uint64(ctx.BlockTime().Nanosecond()) < target.TargetTime%1_000_000_000) {
+	if seconds < 0 || uint64(seconds) < target.TargetTimeUnixNanos/1_000_000_000 ||
+		(uint64(seconds) == target.TargetTimeUnixNanos/1_000_000_000 &&
+			uint64(ctx.BlockTime().Nanosecond()) < target.TargetTimeUnixNanos%1_000_000_000) {
 		return nil
 	}
 	category, err := attemptHeightSelection(ctx, k.SelectExecutionHeight)

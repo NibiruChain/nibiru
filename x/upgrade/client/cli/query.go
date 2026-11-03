@@ -33,8 +33,9 @@ func GetCurrentPlanCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "get upgrade plan (if one exists)",
-		Long:  "Gets the currently scheduled upgrade plan, if one exists",
-		Args:  cobra.ExactArgs(0),
+		Long: "Return the concrete height-based plan consumed by node upgrade tooling. " +
+			"A time request has no concrete plan until its target is reached. Use upgrade status to inspect unresolved targets or selection failures.",
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {

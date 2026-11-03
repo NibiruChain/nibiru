@@ -13,6 +13,8 @@ use std::marker::PhantomData;
 const ROOT: &str = easy_addr::addr!("root");
 const GOV: &str = easy_addr::addr!("governance");
 const OTHER: &str = easy_addr::addr!("other");
+/// Answers the native sudo query with a mutable root and extra role fields,
+/// exercising live authority lookup and tolerant decoding of module responses.
 struct RootQuerier {
     root: String,
     base: MockQuerier,
@@ -21,7 +23,7 @@ impl Querier for RootQuerier {
     fn raw_query(&self, bytes: &[u8]) -> QuerierResult {
         let request: QueryRequest<Empty> = from_json(bytes).unwrap();
         if let QueryRequest::Stargate { path, .. } = &request {
-            if path == crate::sudo::QUERY_SUDOERS_PATH {
+            if path == nibiru_std::sudo::QUERY_SUDOERS_PATH {
                 return SystemResult::Ok(ContractResult::Ok(to_json_binary(&serde_json::json!({"sudoers":{"root":self.root,"roles":[]}})).unwrap()));
             }
         }
@@ -29,6 +31,7 @@ impl Querier for RootQuerier {
     }
 }
 type Deps = OwnedDeps<MockStorage, MockApi, RootQuerier>;
+/// Creates an absent legacy state so tests distinguish missing values from zero.
 fn empty_snapshot() -> Snapshot {
     Snapshot {
         plan: None,
@@ -37,6 +40,7 @@ fn empty_snapshot() -> Snapshot {
         protocol_version: None,
     }
 }
+/// Instantiates with a fixed governance authority and a separately mutable root.
 fn setup(state: Snapshot) -> Deps {
     let mut deps = OwnedDeps {
         storage: MockStorage::default(),
@@ -52,35 +56,39 @@ fn setup(state: Snapshot) -> Deps {
         mock_env(),
         mock_info(OTHER, &[]),
         InstantiateMsg {
-            governance_authority: GOV.into(),
+            gov_authority: GOV.into(),
             state,
         },
     )
     .unwrap();
     deps
 }
-fn req(height: i64, target_time: Option<u64>) -> ScheduleRequest {
+/// Builds one scheduling request with explicit block or Unix-nanosecond inputs.
+fn req(height: i64, target_time_unix_nanos: Option<u64>) -> ScheduleRequest {
     ScheduleRequest {
         name: "vNext".into(),
-        height: Int64::new(height),
-        target_time: target_time.map(Uint64::new),
+        block_height: Int64::new(height),
+        target_time_unix_nanos: target_time_unix_nanos.map(Uint64::new),
         info: "release".into(),
     }
 }
+/// Decodes the real query entry point instead of reading internal storage directly.
 fn read<T: serde::de::DeserializeOwned>(deps: &Deps, msg: QueryMsg) -> T {
     from_json(query(deps.as_ref(), mock_env(), msg).unwrap()).unwrap()
 }
+/// Preserves all four imported state families and the absent-versus-zero
+/// protocol distinction needed for native migration and genesis compatibility.
 #[test]
 fn import_preserves_all_families_and_absence() {
     let snapshot = Snapshot {
         plan: Some(Plan {
             name: "executing".into(),
-            height: Int64::new(1),
+            block_height: Int64::new(1),
             info: "old".into(),
         }),
         completed: vec![CompletedUpgrade {
             name: "old".into(),
-            height: Int64::new(1),
+            block_height: Int64::new(1),
         }],
         module_versions: vec![ModuleVersion {
             name: "wasm".into(),
@@ -104,6 +112,8 @@ fn import_preserves_all_families_and_absence() {
         Some(Uint64::zero())
     );
 }
+/// Scheduling and cancellation require the native governance account, even
+/// when the caller is the sudo root that controls contract configuration.
 #[test]
 fn governance_gate_does_not_accept_root_or_claimed_owner() {
     let mut deps = setup(empty_snapshot());
@@ -144,6 +154,8 @@ fn governance_gate_does_not_accept_root_or_claimed_owner() {
     .unwrap();
     assert_eq!(read::<Option<Plan>>(&deps, QueryMsg::CurrentPlan {}), None);
 }
+/// Waits for the exact nanosecond target, samples policy when used, and keeps
+/// the selected execution block fixed after later configuration changes.
 #[test]
 fn target_selection_samples_delay_once_and_preserves_full_integers() {
     let mut deps = setup(empty_snapshot());
@@ -161,7 +173,7 @@ fn target_selection_samples_delay_once_and_preserves_full_integers() {
     assert_eq!(read::<Option<Plan>>(&deps, QueryMsg::CurrentPlan {}), None);
     let pending: TimeTarget =
         read::<Option<TimeTarget>>(&deps, QueryMsg::TimeTarget {}).unwrap();
-    assert_eq!(pending.target_time.u64(), target);
+    assert_eq!(pending.target_time_unix_nanos.u64(), target);
     sudo(
         deps.as_mut(),
         env.clone(),
@@ -187,7 +199,7 @@ fn target_selection_samples_delay_once_and_preserves_full_integers() {
     .unwrap();
     let selected =
         read::<Option<Plan>>(&deps, QueryMsg::CurrentPlan {}).unwrap();
-    assert_eq!(selected.height.i64(), env.block.height as i64 + 2);
+    assert_eq!(selected.block_height.i64(), env.block.height as i64 + 2);
     execute(
         deps.as_mut(),
         env.clone(),
@@ -204,6 +216,8 @@ fn target_selection_samples_delay_once_and_preserves_full_integers() {
         selected
     );
 }
+/// Rejects malformed, elapsed, or already-completed scheduling requests
+/// without replacing an existing authorized pending request.
 #[test]
 fn rejects_ambiguous_overdue_and_completed_requests_without_replacement() {
     let mut deps = setup(empty_snapshot());
@@ -251,20 +265,22 @@ fn rejects_ambiguous_overdue_and_completed_requests_without_replacement() {
     )
     .is_err());
 }
+/// Preserves legacy duplicate names, indexes name lookups to the earliest
+/// completion, and pages tied block heights without omitting or repeating records.
 #[test]
 fn history_preserves_duplicate_names_height_ties_and_pagination() {
     let records = vec![
         CompletedUpgrade {
             name: "same".into(),
-            height: Int64::new(10),
+            block_height: Int64::new(10),
         },
         CompletedUpgrade {
             name: "same".into(),
-            height: Int64::new(20),
+            block_height: Int64::new(20),
         },
         CompletedUpgrade {
             name: "zzz".into(),
-            height: Int64::new(20),
+            block_height: Int64::new(20),
         },
     ];
     let mut snapshot = empty_snapshot();
@@ -303,6 +319,8 @@ fn history_preserves_duplicate_names_height_ties_and_pagination() {
     );
     assert_eq!(reverse, vec![records[1].clone(), records[0].clone()]);
 }
+/// Native migrations update selected module versions; omitted modules must
+/// survive, and query results remain ordered deterministically by module name.
 #[test]
 fn version_updates_merge_and_are_ordered() {
     let mut deps = setup(empty_snapshot());
@@ -339,6 +357,8 @@ fn version_updates_merge_and_are_ordered() {
         vec![("a", 2), ("z", 9)]
     );
 }
+/// Runtime policy and self-migration follow the live root after rotation;
+/// governance scheduling authority does not grant those administrative rights.
 #[test]
 fn root_rotation_controls_config_and_self_migration() {
     let mut deps = setup(empty_snapshot());
@@ -389,6 +409,8 @@ fn root_rotation_controls_config_and_self_migration() {
     migrate(deps.as_mut(), env, MigrateMsg {}).unwrap();
     assert_eq!(read::<Snapshot>(&deps, QueryMsg::Snapshot {}), before);
 }
+/// Replacement gets a distinct identity for native failure suppression. A
+/// height overflow must not publish a partially selected execution block.
 #[test]
 fn replacement_assigns_a_new_id_and_overflow_is_atomic() {
     let mut deps = setup(empty_snapshot());
@@ -417,6 +439,8 @@ fn replacement_assigns_a_new_id_and_overflow_is_atomic() {
     );
 }
 
+/// Corrupted or improperly migrated policy cannot bypass the minimum warning
+/// interval and select an immediate upgrade, even if execute validation was bypassed.
 #[test]
 fn invalid_imported_delay_cannot_select_a_same_block_height() {
     let mut deps = setup(empty_snapshot());

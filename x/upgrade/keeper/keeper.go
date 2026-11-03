@@ -29,7 +29,7 @@ import (
 const UpgradeInfoFileName string = "upgrade-info.json"
 
 type Keeper struct {
-	wasm               ContractBridge
+	wasm               ContractAdapter
 	permissions        SudoKeeper
 	contractCode       func() []byte
 	homePath           string                          // root directory of app config
@@ -312,7 +312,7 @@ func (k Keeper) GetLastCompletedUpgrade(ctx sdk.Context) (string, int64) {
 		if record == nil {
 			return "", 0
 		}
-		return record.Name, record.Height
+		return record.Name, record.BlockHeight
 	}
 	iter := sdk.KVStoreReversePrefixIterator(ctx.KVStore(k.storeKey), []byte{types.DoneByte})
 	defer iter.Close()

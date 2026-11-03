@@ -18,17 +18,17 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    deps.api.addr_validate(&msg.governance_authority)?;
+    deps.api.addr_validate(&msg.gov_authority)?;
     CONFIG.save(
         deps.storage,
         &Config {
-            governance_authority: msg.governance_authority,
+            gov_authority: msg.gov_authority,
             activation_delay_blocks: Uint64::new(1000),
         },
     )?;
     NEXT_ID.save(deps.storage, &1)?;
     if let Some(plan) = msg.state.plan {
-        if plan.name.is_empty() || plan.height.i64() <= 0 {
+        if plan.name.is_empty() || plan.block_height.i64() <= 0 {
             return Err(invalid("invalid imported plan"));
         }
         PENDING.save(
@@ -36,19 +36,19 @@ pub fn instantiate(
             &PendingSchedule {
                 id: Uint64::new(1),
                 name: plan.name,
-                height: Some(plan.height),
-                target_time: None,
+                block_height: Some(plan.block_height),
+                target_time_unix_nanos: None,
                 info: plan.info,
             },
         )?;
     }
     for record in msg.state.completed {
-        if record.name.is_empty() || record.height.i64() <= 0 {
+        if record.name.is_empty() || record.block_height.i64() <= 0 {
             return Err(invalid("invalid imported completion"));
         }
         history().save(
             deps.storage,
-            (record.height.i64() as u64, record.name.clone()),
+            (record.block_height.i64() as u64, record.name.clone()),
             &record,
         )?;
     }
@@ -115,7 +115,7 @@ pub fn execute(
 }
 
 fn assert_governance(deps: Deps, info: &MessageInfo) -> StdResult<()> {
-    if info.sender.as_str() != CONFIG.load(deps.storage)?.governance_authority {
+    if info.sender.as_str() != CONFIG.load(deps.storage)?.gov_authority {
         return Err(invalid("sender is not governance authority"));
     }
     Ok(())
@@ -138,9 +138,9 @@ fn schedule(
     if applied(deps.as_ref(), &plan.name)?.i64() != 0 {
         return Err(invalid("upgrade name has already been completed"));
     }
-    match plan.target_time {
+    match plan.target_time_unix_nanos {
         Some(time) => {
-            if plan.height.i64() != 0 {
+            if plan.block_height.i64() != 0 {
                 return Err(invalid(
                     "specify exactly one of target time or height",
                 ));
@@ -150,8 +150,8 @@ fn schedule(
             }
         }
         None => {
-            if plan.height.i64() <= 0
-                || (plan.height.i64() as u64) < env.block.height
+            if plan.block_height.i64() <= 0
+                || (plan.block_height.i64() as u64) < env.block.height
             {
                 return Err(invalid("upgrade height must not be in the past"));
             }
@@ -167,12 +167,12 @@ fn schedule(
         &PendingSchedule {
             id: Uint64::new(id),
             name: plan.name,
-            height: if plan.target_time.is_none() {
-                Some(plan.height)
+            block_height: if plan.target_time_unix_nanos.is_none() {
+                Some(plan.block_height)
             } else {
                 None
             },
-            target_time: plan.target_time,
+            target_time_unix_nanos: plan.target_time_unix_nanos,
             info: plan.info,
         },
     )?;
@@ -186,11 +186,11 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
             let Some(mut pending) = PENDING.may_load(deps.storage)? else {
                 return Ok(Response::new());
             };
-            if pending.height.is_some() {
+            if pending.block_height.is_some() {
                 return Ok(Response::new());
             }
             let target = pending
-                .target_time
+                .target_time_unix_nanos
                 .ok_or_else(|| invalid("pending time target missing"))?;
             if env.block.time.nanos() < target.u64() {
                 return Ok(Response::new());
@@ -205,7 +205,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
                 .checked_add(delay)
                 .filter(|h| *h <= i64::MAX as u64)
                 .ok_or_else(|| invalid("execution height overflow"))?;
-            pending.height = Some(Int64::new(height as i64));
+            pending.block_height = Some(Int64::new(height as i64));
             PENDING.save(deps.storage, &pending)?;
             Ok(Response::new().add_event(
                 Event::new("upgrade_execution_height_selected")
@@ -228,7 +228,7 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
             }
             let record = CompletedUpgrade {
                 name: name.clone(),
-                height: Int64::new(env.block.height as i64),
+                block_height: Int64::new(env.block.height as i64),
             };
             history().save(deps.storage, (env.block.height, name), &record)?;
             Ok(Response::new())
@@ -253,9 +253,9 @@ fn set_versions(
 }
 fn current_plan(deps: Deps) -> StdResult<Option<Plan>> {
     Ok(PENDING.may_load(deps.storage)?.and_then(|p| {
-        p.height.map(|height| Plan {
+        p.block_height.map(|height| Plan {
             name: p.name,
-            height,
+            block_height: height,
             info: p.info,
         })
     }))
@@ -268,7 +268,9 @@ fn applied(deps: Deps, name: &str) -> StdResult<Int64> {
         .range(deps.storage, None, None, Order::Ascending)
         .next()
         .transpose()?;
-    Ok(result.map(|(_, r)| r.height).unwrap_or_else(Int64::zero))
+    Ok(result
+        .map(|(_, r)| r.block_height)
+        .unwrap_or_else(Int64::zero))
 }
 fn modules(deps: Deps, name: Option<String>) -> StdResult<Vec<ModuleVersion>> {
     if let Some(name) = name {
@@ -290,12 +292,14 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::TimeTarget {} => to_json_binary(
             &PENDING
                 .may_load(deps.storage)?
-                .filter(|p| p.height.is_none())
+                .filter(|p| p.block_height.is_none())
                 .and_then(|p| {
-                    p.target_time.map(|target_time| TimeTarget {
-                        id: p.id,
-                        name: p.name,
-                        target_time,
+                    p.target_time_unix_nanos.map(|target_time_unix_nanos| {
+                        TimeTarget {
+                            id: p.id,
+                            name: p.name,
+                            target_time_unix_nanos,
+                        }
                     })
                 }),
         ),
@@ -323,8 +327,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             limit,
             descending,
         } => {
-            let bound = start_after
-                .map(|r| Bound::exclusive((r.height.i64() as u64, r.name)));
+            let bound = start_after.map(|r| {
+                Bound::exclusive((r.block_height.i64() as u64, r.name))
+            });
             let (min, max, order) = if descending.unwrap_or(false) {
                 (None, bound, Order::Descending)
             } else {

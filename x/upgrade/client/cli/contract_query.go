@@ -59,14 +59,14 @@ func GetAppliedRecordCmd() *cobra.Command {
 		if response.Height == 0 {
 			return fmt.Errorf("no upgrade found")
 		}
-		return printJSON(ctx, contracttypes.CompletedUpgrade{Name: args[0], Height: response.Height})
+		return printJSON(ctx, contracttypes.CompletedUpgrade{Name: args[0], BlockHeight: response.Height})
 	}}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
 func GetStatusCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "status", Short: "Show pending time targets, concrete plans, and terminal selection failures as JSON", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+	cmd := &cobra.Command{Use: "status", Short: "Show pending time targets, concrete plans, and terminal selection failures as JSON", Long: "Inspect the pending upgrade without assuming it already has an execution height. Status is none, pending_time, scheduled, or failed. target_time is rendered in UTC; pending retains exact target_time_unix_nanos.", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx, err := client.GetClientQueryContext(cmd)
 		if err != nil {
 			return err
@@ -83,22 +83,22 @@ func GetStatusCmd() *cobra.Command {
 		}
 		status := "none"
 		var target struct {
-			ID         uint64  `json:"id,string"`
-			Height     *string `json:"height"`
-			TargetTime *string `json:"target_time"`
+			ID                  uint64  `json:"id,string"`
+			BlockHeight         *string `json:"block_height"`
+			TargetTimeUnixNanos *string `json:"target_time_unix_nanos"`
 		}
 		if string(pending) != "null" {
 			if err = json.Unmarshal(pending, &target); err != nil {
 				return err
 			}
 			status = "pending_time"
-			if target.Height != nil {
+			if target.BlockHeight != nil {
 				status = "scheduled"
 			}
 		}
 		result := map[string]any{"contract_address": addr, "status": status, "pending": pending}
-		if target.TargetTime != nil {
-			nanos, err := strconv.ParseUint(*target.TargetTime, 10, 64)
+		if target.TargetTimeUnixNanos != nil {
+			nanos, err := strconv.ParseUint(*target.TargetTimeUnixNanos, 10, 64)
 			if err != nil {
 				return err
 			}
@@ -156,7 +156,7 @@ func GetHistoryCmd() *cobra.Command {
 			if height <= 0 || name == "" {
 				return fmt.Errorf("cursor requires both positive start-after-height and start-after-name")
 			}
-			cursor = map[string]string{"height": strconv.FormatInt(height, 10), "name": name}
+			cursor = map[string]string{"block_height": strconv.FormatInt(height, 10), "name": name}
 		}
 		_, data, err := contractQuery(cmd, ctx, map[string]any{"history": map[string]any{"start_after": cursor, "limit": limit, "descending": reverse}})
 		if err != nil {

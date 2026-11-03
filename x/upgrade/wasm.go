@@ -21,7 +21,7 @@ import (
 // checks it against the embedded bytes. To update the build, follow the
 // "Updating the embedded build" steps in wasm-contracts/x-upgrade/README.md
 // and set this constant to the SHA-256 of the uncompressed .wasm.
-const ContractWasmSHA256 = "8dce698cb62296ef6d4d16e1fcee27e2779b5e00e9595ae0d440d34d83c0974e"
+const ContractWasmSHA256 = "693dbb25b092ffebe8d7cc65df0ba51b98ba322e31cecac29fbbbe2882537311"
 
 // contractWasmGz is the gzipped x-upgrade release build that ships in
 // nibid. Gzip cuts the embedded size by about two thirds and keeps rebuild

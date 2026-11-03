@@ -4506,6 +4506,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "easy-addr",
+ "nibiru-std",
  "schemars",
  "serde",
  "serde_json",

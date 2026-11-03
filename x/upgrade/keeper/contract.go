@@ -154,18 +154,18 @@ func (k Keeper) contractPlan(ctx sdk.Context) (upgradetypes.Plan, bool) {
 	if p == nil {
 		return upgradetypes.Plan{}, false
 	}
-	return upgradetypes.Plan{Name: p.Name, Height: p.Height, Info: p.Info}, true
+	return upgradetypes.Plan{Name: p.Name, Height: p.BlockHeight, Info: p.Info}, true
 }
 
 func (k Keeper) snapshotLegacy(ctx sdk.Context) contracttypes.Snapshot {
 	snap := contracttypes.Snapshot{Completed: []contracttypes.CompletedUpgrade{}, ModuleVersions: []contracttypes.ModuleVersion{}}
 	if p, ok := k.GetUpgradePlan(ctx); ok {
-		snap.Plan = &contracttypes.Plan{Name: p.Name, Height: p.Height, Info: p.Info}
+		snap.Plan = &contracttypes.Plan{Name: p.Name, BlockHeight: p.Height, Info: p.Info}
 	}
 	it := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte{upgradetypes.DoneByte})
 	for ; it.Valid(); it.Next() {
 		name, height := parseDoneKey(it.Key())
-		snap.Completed = append(snap.Completed, contracttypes.CompletedUpgrade{Name: name, Height: height})
+		snap.Completed = append(snap.Completed, contracttypes.CompletedUpgrade{Name: name, BlockHeight: height})
 	}
 	it.Close()
 	for _, v := range k.GetModuleVersions(ctx) {
@@ -224,7 +224,7 @@ func (k *Keeper) ActivateContract(ctx sdk.Context) error {
 		if err != nil {
 			return err
 		}
-		msg, err := json.Marshal(contracttypes.InstantiateMsg{GovernanceAuthority: k.authority, State: snap})
+		msg, err := json.Marshal(contracttypes.InstantiateMsg{GovAuthority: k.authority, State: snap})
 		if err != nil {
 			return err
 		}
@@ -260,13 +260,13 @@ func (k *Keeper) InitContract(ctx sdk.Context, versions module.VersionMap) error
 	}
 	if addr, found := k.findContract(ctx); found {
 		var config struct {
-			GovernanceAuthority string `json:"governance_authority"`
-			Delay               uint64 `json:"activation_delay_blocks,string"`
+			GovAuthority string `json:"gov_authority"`
+			Delay        uint64 `json:"activation_delay_blocks,string"`
 		}
 		if err := k.queryAt(ctx, addr, map[string]any{"config": struct{}{}}, &config); err != nil {
 			return err
 		}
-		if config.GovernanceAuthority != k.authority || config.Delay < 2 || config.Delay > uint64(^uint64(0)>>1) {
+		if config.GovAuthority != k.authority || config.Delay < 2 || config.Delay > uint64(^uint64(0)>>1) {
 			return fmt.Errorf("invalid imported x-upgrade configuration")
 		}
 
@@ -337,14 +337,14 @@ func (k Keeper) scheduleContract(ctx sdk.Context, plan upgradetypes.Plan) error 
 	if err := plan.ValidateScheduleRequest(); err != nil {
 		return err
 	}
-	request := contracttypes.ScheduleRequest{Name: plan.Name, Height: plan.Height, Info: plan.Info}
+	request := contracttypes.ScheduleRequest{Name: plan.Name, BlockHeight: plan.Height, Info: plan.Info}
 	if !plan.Time.IsZero() {
 		seconds := plan.Time.Unix()
 		if seconds < 0 || uint64(seconds) > (^uint64(0)-uint64(plan.Time.Nanosecond()))/1_000_000_000 {
 			return fmt.Errorf("target time is outside Wasm timestamp range")
 		}
 		nanos := uint64(seconds)*1_000_000_000 + uint64(plan.Time.Nanosecond())
-		request.TargetTime = &nanos
+		request.TargetTimeUnixNanos = &nanos
 	}
 	old, found := k.GetUpgradePlan(ctx)
 	if err := k.executeGovernance(ctx, map[string]any{"schedule": map[string]any{"plan": request}}); err != nil {

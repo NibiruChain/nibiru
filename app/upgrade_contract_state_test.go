@@ -243,6 +243,15 @@ func TestUpgradeImportFailureAndUncommittedReplay(t *testing.T) {
 	require.False(t, k.ContractActive(ctx))
 	require.Equal(t, before, rawNative())
 	require.Equal(t, codeCount, codes(), "failed import must not publish code metadata")
+	// The registered handler must also reject the enabling upgrade. Logging and
+	// continuing here would incorrectly record completion with legacy state still
+	// active. Discard the block cache, as a halted uncommitted block would be.
+	failedBlock, _ := ctx.CacheContext()
+	require.Panics(t, func() { k.ApplyUpgrade(failedBlock, plan) })
+	require.False(t, k.ContractActive(failedBlock))
+	require.Zero(t, k.GetDoneHeight(failedBlock, plan.Name))
+	require.Equal(t, before, rawNative())
+	require.Equal(t, codeCount, codes())
 	store.Delete([]byte{upgradetypes.VersionMapByte})
 
 	// A process that dies before Commit loses its block cache. Model that
@@ -265,6 +274,6 @@ func TestUpgradeImportFailureAndUncommittedReplay(t *testing.T) {
 	require.Equal(t, uint64(8), *state.ProtocolVersion)
 	require.Len(t, state.Completed, 1)
 	require.Equal(t, plan.Name, state.Completed[0].Name)
-	require.Equal(t, int64(77), state.Completed[0].Height)
+	require.Equal(t, int64(77), state.Completed[0].BlockHeight)
 	require.Equal(t, uint64(8), chain.AppVersion())
 }

@@ -147,3 +147,22 @@ cancellation/replacement, restart, replay, and nonzero-height genesis round trip
 Use historical proposal and upgrade events as compatibility fixtures. Exercise
 Cosmopilot discovery and stale-plan behavior separately; do not change chain
 cancellation semantics to conceal a controller defect.
+
+## Contract Schema and Release Review
+
+Contract JSON identifies consensus heights as `block_height`, scheduling
+permissions as `gov_authority`, and absolute time targets as
+`target_time_unix_nanos`. Nanoseconds preserve consensus block-time precision;
+the native protobuf API retains `height` and request-only `Plan.Time`.
+See the x-upgrade README for operator query examples and indexed-history
+semantics. Native code translates the schema at the existing API boundary.
+
+The typed live-root query uses regenerated `nibiru-std` sudo definitions from
+the in-tree protos, including role memberships. Regenerate with command
+`just rs proto-gen --path proto/nibiru/sudo/v1`, which also runs the Rust import
+cleanup. Do not substitute stale generated ownership types or a cached root.
+
+A failed x-upgrade import is a required migration failure. Returning an error
+prevents completion of a partially enabled release. A log-and-continue policy
+would deliberately deploy a height-only fallback without the promised contract
+state and time scheduling; that policy is not part of this release.
