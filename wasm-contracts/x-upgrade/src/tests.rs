@@ -416,3 +416,31 @@ fn replacement_assigns_a_new_id_and_overflow_is_atomic() {
         before
     );
 }
+
+#[test]
+fn invalid_imported_delay_cannot_select_a_same_block_height() {
+    let mut deps = setup(empty_snapshot());
+    let mut env = mock_env();
+    let target = env.block.time.nanos() + 1;
+    execute(
+        deps.as_mut(),
+        env.clone(),
+        mock_info(GOV, &[]),
+        ExecuteMsg::Schedule {
+            plan: req(0, Some(target)),
+        },
+    )
+    .unwrap();
+    crate::state::CONFIG
+        .update(
+            &mut deps.storage,
+            |mut config| -> cosmwasm_std::StdResult<_> {
+                config.activation_delay_blocks = Uint64::new(1);
+                Ok(config)
+            },
+        )
+        .unwrap();
+    env.block.time = env.block.time.plus_nanos(1);
+    assert!(sudo(deps.as_mut(), env, SudoMsg::SelectExecutionHeight {}).is_err());
+    assert_eq!(read::<Option<Plan>>(&deps, QueryMsg::CurrentPlan {}), None);
+}

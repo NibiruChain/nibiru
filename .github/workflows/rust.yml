@@ -64,6 +64,8 @@ jobs:
               - "wasm-contracts/**"
               - "x/consensus/x_consensus.wasm.gz"
               - "x/consensus/wasm.go"
+              - "x/upgrade/x_upgrade.wasm.gz"
+              - "x/upgrade/wasm.go"
               - "Cargo.toml"
               - "Cargo.lock"
               - "just-rs.just"
@@ -137,8 +139,8 @@ jobs:
 
   # wasm-contracts (job): Builds the wasm-contracts/ contracts in release mode
   # when contract code changes, so every pull request that touches a contract
-  # produces downloadable AMD64 builds, and checks that the x-consensus build
-  # embedded in nibid matches a fresh build of its source.
+  # produces downloadable AMD64 builds, and checks that embedded chain-contract builds
+  # match fresh builds of their Rust source.
   wasm-contracts:
     needs: changes-rust
     if: ${{ needs.changes-rust.outputs['run-contracts'] == 'true' }}
@@ -165,7 +167,7 @@ jobs:
           name: wasm-contracts-release
           path: wasm-contracts/artifacts/*.wasm
           if-no-files-found: error
-      - name: Check the embedded x-consensus build
+      - name: Check embedded chain-contract builds
         run: just rs wasm-embed-check
 
   # rust-test (job): Runs the legacy root Cargo workspace test suite.

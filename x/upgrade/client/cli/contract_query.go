@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -78,8 +79,9 @@ func GetStatusCmd() *cobra.Command {
 		}
 		status := "none"
 		var target struct {
-			ID     uint64  `json:"id,string"`
-			Height *string `json:"height"`
+			ID         uint64  `json:"id,string"`
+			Height     *string `json:"height"`
+			TargetTime *string `json:"target_time"`
 		}
 		if string(pending) != "null" {
 			if err = json.Unmarshal(pending, &target); err != nil {
@@ -91,6 +93,13 @@ func GetStatusCmd() *cobra.Command {
 			}
 		}
 		result := map[string]any{"contract_address": addr, "status": status, "pending": pending}
+		if target.TargetTime != nil {
+			nanos, err := strconv.ParseUint(*target.TargetTime, 10, 64)
+			if err != nil {
+				return err
+			}
+			result["target_time"] = time.Unix(int64(nanos/1_000_000_000), int64(nanos%1_000_000_000)).UTC().Format(time.RFC3339Nano)
+		}
 		if len(receipt) > 0 {
 			var failure struct {
 				RequestID uint64 `json:"request_id,string"`
