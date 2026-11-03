@@ -66,6 +66,17 @@ func TestUpgradeSelectionFailureIsTerminalUntilGovernanceReplacement(t *testing.
 	require.Len(t, ctx.EventManager().Events(), 1)
 	require.Equal(t, "upgrade_selection_failed", ctx.EventManager().Events()[0].Type)
 
+	// Wasm restores the pending request while upgrade genesis restores the
+	// exceptional host receipt. Together they must keep the failed ID terminal.
+	imported, importedCtx := restoreUpgradeTestGenesis(t, chain, ctx)
+	require.Equal(t, failure, imported.UpgradeKeeper.GetSelectionFailure(importedCtx))
+	require.Equal(t, upgradeContractRecords(t, chain, ctx), upgradeContractRecords(t, imported, importedCtx))
+	importedCtx = importedCtx.WithEventManager(sdk.NewEventManager())
+	require.NoError(t, imported.UpgradeKeeper.TrySelectExecutionHeight(importedCtx))
+	require.Empty(t, importedCtx.EventManager().Events())
+	_, found = imported.UpgradeKeeper.GetUpgradePlan(importedCtx)
+	require.False(t, found)
+
 	// Repairing policy does not silently restart the failed request.
 	setDelay(2)
 	ctx = ctx.WithBlockHeight(101).WithEventManager(sdk.NewEventManager())

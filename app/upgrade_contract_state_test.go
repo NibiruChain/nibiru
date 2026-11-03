@@ -46,6 +46,24 @@ func queryUpgradeSnapshot(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) u
 	return state
 }
 
+// Restore exported state without the fresh-chain helper, which intentionally
+// adds another validator and is not appropriate for an existing chain.
+func restoreUpgradeTestGenesis(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) (*app.NibiruApp, sdk.Context) {
+	t.Helper()
+	genesis := chain.ModuleManager.ExportGenesis(ctx, chain.AppCodec())
+	imported := app.NewNibiruApp(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, sims.EmptyAppOptions{})
+	stateBytes, err := json.Marshal(genesis)
+	require.NoError(t, err)
+	imported.InitChain(abci.RequestInitChain{
+		Time: ctx.BlockTime(), InitialHeight: ctx.BlockHeight() + 1,
+		ConsensusParams: chain.GetConsensusParams(ctx), AppStateBytes: stateBytes,
+	})
+	importedCtx := imported.NewContext(false, cmtproto.Header{
+		Height: ctx.BlockHeight() + 1, Time: ctx.BlockTime(),
+	})
+	return imported, importedCtx
+}
+
 func TestUpgradeHandlerCutsOverAllFamiliesBeforeTrailingWrites(t *testing.T) {
 	chain, ctx := testapp.NewNibiruTestAppAndContextPreXConsensus()
 	ctx = ctx.WithBlockHeight(77).WithBlockTime(time.Unix(1_800_000_000, 0).UTC())
@@ -88,8 +106,10 @@ func TestUpgradeHandlerCutsOverAllFamiliesBeforeTrailingWrites(t *testing.T) {
 	require.NotNil(t, state.ProtocolVersion)
 	require.Equal(t, uint64(8), *state.ProtocolVersion)
 	require.Len(t, state.Completed, 3)
-	for _, family := range []byte{upgradetypes.PlanByte, upgradetypes.DoneByte,
-		upgradetypes.VersionMapByte, upgradetypes.ProtocolVersionByte} {
+	for _, family := range []byte{
+		upgradetypes.PlanByte, upgradetypes.DoneByte,
+		upgradetypes.VersionMapByte, upgradetypes.ProtocolVersionByte,
+	} {
 		iterator := sdk.KVStorePrefixIterator(store, []byte{family})
 		require.False(t, iterator.Valid(), "retired family %d must be removed", family)
 		iterator.Close()
@@ -114,19 +134,7 @@ func TestUpgradeContractStateSurvivesGenesisImport(t *testing.T) {
 	wantRecords := upgradeContractRecords(t, chain, ctx)
 	wantVersions := k.GetModuleVersionMap(ctx)
 	wantProtocol := chain.AppVersion()
-	genesis := chain.ModuleManager.ExportGenesis(ctx, chain.AppCodec())
-	// Import the exported genesis directly. The fresh-chain test helper adds
-	// another validator and must not be used to restore an existing chain.
-	imported := app.NewNibiruApp(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, sims.EmptyAppOptions{})
-	stateBytes, err := json.Marshal(genesis)
-	require.NoError(t, err)
-	imported.InitChain(abci.RequestInitChain{
-		Time: ctx.BlockTime(), InitialHeight: ctx.BlockHeight() + 1,
-		ConsensusParams: chain.GetConsensusParams(ctx), AppStateBytes: stateBytes,
-	})
-	importedCtx := imported.NewContext(false, cmtproto.Header{
-		Height: ctx.BlockHeight() + 1, Time: ctx.BlockTime(),
-	})
+	imported, importedCtx := restoreUpgradeTestGenesis(t, chain, ctx)
 	require.Equal(t, wantRecords, upgradeContractRecords(t, imported, importedCtx))
 	require.Equal(t, wantVersions, imported.UpgradeKeeper.GetModuleVersionMap(importedCtx))
 	require.Equal(t, wantProtocol, imported.AppVersion())
