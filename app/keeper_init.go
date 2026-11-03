@@ -1,6 +1,8 @@
 package app
 
 import (
+	"github.com/spf13/cast"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
@@ -13,7 +15,6 @@ import (
 	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
-	"github.com/spf13/cast"
 )
 
 // initGovKeeper constructs governance explicitly after the SDK keepers and
@@ -31,8 +32,8 @@ func (app *NibiruApp) initGovKeeper() {
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	// Nibiru has no governance hook providers. Keeper.Hooks supplies the same
-	// empty hook chain used when depinject received no GovHooksWrapper values.
+	// Nibiru has no governance hook providers. [govkeeper.Keeper.Hooks]
+	// supplies an empty hook chain without requiring explicit hook wiring.
 }
 
 // initUpgradeKeeper constructs the upgrade keeper before IBC consumes it.

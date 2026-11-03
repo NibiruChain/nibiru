@@ -1,6 +1,13 @@
 package app_test
 
 import (
+	"path/filepath"
+	"testing"
+	"time"
+
+	tmdb "github.com/cometbft/cometbft-db"
+	"github.com/stretchr/testify/require"
+
 	"github.com/NibiruChain/nibiru/v2/app"
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
@@ -20,11 +27,6 @@ import (
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	ibcclienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
-	tmdb "github.com/cometbft/cometbft-db"
-	"github.com/stretchr/testify/require"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 // TestExplicitGovernanceWiring protects the behavior previously supplied by
