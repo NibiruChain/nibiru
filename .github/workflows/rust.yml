@@ -167,7 +167,7 @@ jobs:
           name: wasm-contracts-release
           path: wasm-contracts/artifacts/*.wasm
           if-no-files-found: error
-      - name: Check embedded chain-contract builds
+      - name: Check embedded Chain contract builds
         run: just rs wasm-embed-check
 
   # rust-test (job): Runs the legacy root Cargo workspace test suite.

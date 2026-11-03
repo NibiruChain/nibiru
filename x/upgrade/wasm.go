@@ -13,7 +13,7 @@ import (
 
 // ContractWasmSHA256 is the hex SHA-256 of ContractWasm, which is also the
 // on-chain Wasm code checksum. It fixes the contract address
-// (keeper.PredictContractAddr). The app finds the contract through the Wasm
+// (keeper.Keeper.PredictContractAddr). The app finds the contract through the Wasm
 // creator index (keeper.Keeper.ContractAddr), not that address, so rebuilding
 // the embedded Wasm is safe; only published addresses go stale.
 //
@@ -46,7 +46,7 @@ var contractWasm = sync.OnceValue(func() []byte {
 
 // ContractWasm returns the optimized x-upgrade bytecode, decompressed from
 // the embedded x_upgrade.wasm.gz. Every caller (genesis and the v2.22
-// upgrade through keeper.Keeper.EnsureXConsensus, and tests) works on the
+// upgrade through keeper.Keeper.ActivateContract, and tests) works on the
 // exact code the chain stores, whose SHA-256 is ContractWasmSHA256.
 //
 // Decompression is lazy, behind sync.OnceValue, rather than at package init.

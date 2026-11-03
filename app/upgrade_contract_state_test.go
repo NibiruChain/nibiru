@@ -24,6 +24,9 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
+// upgradeContractRecords captures every raw contract key and value as hex.
+// Comparing these records across export/import detects state loss that a
+// higher-level query might hide through defaults or omitted fields.
 func upgradeContractRecords(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) map[string]string {
 	t.Helper()
 	addr, found := chain.UpgradeKeeper.ContractAddr(ctx)
@@ -36,6 +39,9 @@ func upgradeContractRecords(t *testing.T, chain *app.NibiruApp, ctx sdk.Context)
 	return result
 }
 
+// queryUpgradeSnapshot reads the Rust contract's public state snapshot through
+// the real Wasm keeper. It verifies canonical contract state independently of
+// the native upgrade accessors whose migration behavior these tests exercise.
 func queryUpgradeSnapshot(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) upgradecontract.Snapshot {
 	t.Helper()
 	addr, found := chain.UpgradeKeeper.ContractAddr(ctx)
@@ -47,8 +53,9 @@ func queryUpgradeSnapshot(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) u
 	return state
 }
 
-// Restore exported state without the fresh-chain helper, which intentionally
-// adds another validator and is not appropriate for an existing chain.
+// restoreUpgradeTestGenesis exports module state and imports it into a separate
+// app at a nonzero height. The fresh-chain helper adds a validator, so using it
+// here would change the state we are trying to preserve.
 func restoreUpgradeTestGenesis(t *testing.T, chain *app.NibiruApp, ctx sdk.Context) (*app.NibiruApp, sdk.Context) {
 	t.Helper()
 	genesis := chain.ModuleManager.ExportGenesis(ctx, chain.AppCodec())
@@ -65,6 +72,11 @@ func restoreUpgradeTestGenesis(t *testing.T, chain *app.NibiruApp, ctx sdk.Conte
 	return imported, importedCtx
 }
 
+// TestUpgradeHandlerCutsOverAllFamiliesBeforeTrailingWrites runs the enabling
+// v2.22 handler with populated legacy state. ApplyUpgrade writes module and
+// protocol versions, clears the plan, and records completion after the handler
+// returns; those writes must reach the contract after the legacy keys are gone.
+// IBC proof-visible state must remain untouched.
 func TestUpgradeHandlerCutsOverAllFamiliesBeforeTrailingWrites(t *testing.T) {
 	chain, ctx := testapp.NewNibiruTestAppAndContextPreXConsensus()
 	ctx = ctx.WithBlockHeight(77).WithBlockTime(time.Unix(1_800_000_000, 0).UTC())
@@ -118,6 +130,9 @@ func TestUpgradeHandlerCutsOverAllFamiliesBeforeTrailingWrites(t *testing.T) {
 	require.Equal(t, []byte("proof-visible bytes"), store.Get(untouchedIBC))
 }
 
+// TestUpgradeContractStateSurvivesGenesisImport verifies that Wasm genesis
+// restores the canonical upgrade records byte for byte and InitChainer binds
+// the existing contract instead of replacing its state with binary defaults.
 func TestUpgradeContractStateSurvivesGenesisImport(t *testing.T) {
 	chain, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithBlockHeight(9)
@@ -145,6 +160,9 @@ func TestUpgradeContractStateSurvivesGenesisImport(t *testing.T) {
 	require.Equal(t, "future-request", target.Name)
 }
 
+// TestUpgradeContractStateSurvivesAppRestart reopens a committed database.
+// The native protocol field must be restored from the existing contract before
+// another block runs, and initialization must not create another contract.
 func TestUpgradeContractStateSurvivesAppRestart(t *testing.T) {
 	db := tmdb.NewMemDB()
 	chain, _ := testapp.NewNibiruTestAppWithDB(db, app.GenesisState{})
@@ -164,6 +182,7 @@ func TestUpgradeContractStateSurvivesAppRestart(t *testing.T) {
 	require.Equal(t, uint64(99), restarted.UpgradeKeeper.GetModuleVersionMap(restartedCtx)["restart-marker"])
 }
 
+// TestUpgradeImportFailureAndUncommittedReplay checks two atomicity boundaries.
 // Failed contract instantiation must leave legacy state intact. A later block
 // replay must not inherit any completion/version changes from an uncommitted
 // successful attempt, even when the VM has already compiled that bytecode.

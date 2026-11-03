@@ -20,9 +20,19 @@ import (
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 )
 
-// This uses the real Wasm VM. A permitted but enormous delay makes checked
-// height addition fail, proving the contract -> host receipt path without a
-// mock error or a test-only failure switch in production contract code.
+// TestUpgradeSelectionFailureIsTerminalUntilGovernanceReplacement exercises a
+// scheduling failure across the Rust contract, Wasm VM, and native Go module.
+// A valid but enormous activation delay overflows the contract's checked
+// height addition. This produces a real contract error instead of substituting
+// a mocked return value or adding an artificial failure branch to shipped code.
+//
+// The failed Wasm attempt cannot commit its own failure record. Go therefore
+// stores a small native receipt containing the request ID, name, failure height,
+// and stable error category. That receipt suppresses another selection attempt
+// for the same request. The test checks the receipt and event, export/import
+// persistence, suppression after a policy repair, and recovery through a
+// governance-authorized replacement. Mocked errors alone would not exercise
+// the complete VM error classification and persistence path.
 func TestUpgradeSelectionFailureIsTerminalUntilGovernanceReplacement(t *testing.T) {
 	chain, ctx := testapp.NewNibiruTestAppAndContext()
 	ctx = ctx.WithBlockHeight(100).WithBlockTime(time.Unix(1_800_000_000, 0).UTC())
@@ -106,7 +116,8 @@ func TestUpgradeSelectionFailureIsTerminalUntilGovernanceReplacement(t *testing.
 	require.Error(t, err)
 }
 
-// CurrentPlan must remain absent while a timestamp is unresolved, but that
+// TestUpgradeTimeTargetRejectsEarlyBinary checks that CurrentPlan remains absent
+// while a timestamp is unresolved, but that
 // absence must not allow a binary carrying the future handler to run early.
 func TestUpgradeTimeTargetRejectsEarlyBinary(t *testing.T) {
 	for _, reached := range []bool{false, true} {

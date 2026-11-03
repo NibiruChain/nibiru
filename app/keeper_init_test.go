@@ -27,6 +27,10 @@ import (
 	"time"
 )
 
+// TestExplicitGovernanceWiring protects the behavior previously supplied by
+// depinject: module registration, governance authority, native and legacy
+// message routing, and proposal persistence. Routing an authorized parameter
+// update through the app also proves the service uses the app's keeper.
 func TestExplicitGovernanceWiring(t *testing.T) {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 	keeper := nibiru.GovKeeper
@@ -76,6 +80,9 @@ func TestExplicitGovernanceWiring(t *testing.T) {
 	require.Equal(t, stored, *response.Proposal)
 }
 
+// TestExplicitGovernanceWiringRestart reconstructs the app on a committed
+// database. Explicit initialization must reconnect governance to its existing
+// proposals and parameters and restore message services and legacy routes.
 func TestExplicitGovernanceWiringRestart(t *testing.T) {
 	db := tmdb.NewMemDB()
 	nibiru, _ := testapp.NewNibiruTestAppWithDB(db, app.GenesisState{})
@@ -106,6 +113,9 @@ func TestExplicitGovernanceWiringRestart(t *testing.T) {
 	require.True(t, restarted.GovKeeper.LegacyRouter().HasRoute(govtypes.RouterKey))
 }
 
+// TestLegacyUpgradeWiringOptions checks operator settings formerly passed
+// through depinject. Losing skip heights, the node home, or the BaseApp version
+// setter would change upgrade execution or the file watched by Cosmovisor.
 func TestLegacyUpgradeWiringOptions(t *testing.T) {
 	home := t.TempDir()
 	nibiru := app.NewNibiruApp(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, sims.AppOptionsMap{
@@ -122,6 +132,10 @@ func TestLegacyUpgradeWiringOptions(t *testing.T) {
 	require.Same(t, nibiru.BaseApp, nibiru.UpgradeKeeper.GetVersionSetter())
 }
 
+// TestLegacyUpgradeWiringExecutesPlan exercises the registered governance
+// message service and first BeginBlock module after explicit keeper setup.
+// It checks authorization, handler execution, protocol-version advancement,
+// pending-plan removal, and completion history as one application flow.
 func TestLegacyUpgradeWiringExecutesPlan(t *testing.T) {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 	versions := nibiru.ModuleManager.GetVersionMap()
