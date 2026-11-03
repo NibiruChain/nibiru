@@ -53,16 +53,45 @@ optimizer-oracle-test artifact:
 wasm-check:
   just rs optimizer check wasm-contracts/artifacts/*.wasm
 
-# Embedded chain contracts become consensus state, so compare decompressed bytes
-# and the Go checksum constants with fresh release builds of their Rust source.
-# Check that both embedded chain contracts match their release builds.
+# Check embedded Chain contracts against release builds of their Rust source.
 wasm-embed-check:
   #!/usr/bin/env bash
   set -euo pipefail
+  source contrib/bashlib.sh
+  for required_command in just cargo gzip sha256sum sed cut; do
+    which_ok "$required_command"
+  done
+  shopt -s nullglob
+  manifests=(wasm-contracts/x-*/Cargo.toml)
+  if [ "${#manifests[@]}" -eq 0 ]; then
+    echo "No Chain contracts found under wasm-contracts/x-*/Cargo.toml." >&2
+    exit 1
+  fi
+  # Check the complete set before spending time on release builds. The x- crate
+  # convention requires an embedded artifact and checksum in its Go module.
+  for manifest in "${manifests[@]}"; do
+    crate_dir="${manifest%/Cargo.toml}"
+    crate_name="${crate_dir##*/}"
+    module_name="${crate_name#x-}"
+    artifact_name="${crate_name//-/_}"
+    for embedded_file in "x/$module_name/$artifact_name.wasm.gz" "x/$module_name/wasm.go"; do
+      if [ ! -f "$embedded_file" ]; then
+        echo "$crate_name: missing embedded Chain contract file $embedded_file" >&2
+        exit 1
+      fi
+    done
+    constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' "x/$module_name/wasm.go")"
+    if [[ ! "$constant" =~ ^[0-9a-f]{64}$ ]]; then
+      echo "$crate_name: expected one SHA-256 constant in x/$module_name/wasm.go" >&2
+      exit 1
+    fi
+  done
   out="wasm-contracts/artifacts/embed-check"
-  for module_name in consensus upgrade; do
-    crate_name="x-$module_name"
-    artifact_name="x_$module_name"
+  for manifest in "${manifests[@]}"; do
+    crate_dir="${manifest%/Cargo.toml}"
+    crate_name="${crate_dir##*/}"
+    module_name="${crate_name#x-}"
+    artifact_name="${crate_name//-/_}"
     just rs optimizer build --manifest-path Cargo.toml -p "$crate_name" \
       --output-dir "$out" --mode release
     built="$(sha256sum "$out/$artifact_name.wasm" | cut -d' ' -f1)"
