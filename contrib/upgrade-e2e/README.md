@@ -12,7 +12,8 @@ this disposable experiment to avoid copying its database twice per upgrade.
 
 ## Commands
 
-Run these commands from the repository root:
+Install `uv`, then run these commands from the repository root. The recipes
+use the local Python project and lockfile; tests run with pytest.
 
 ```sh
 just --justfile contrib/upgrade-e2e/justfile test
