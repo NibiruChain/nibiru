@@ -472,10 +472,19 @@ func NewNibiruApp(
 		AccountKeeper:  app.AccountKeeper,
 	}))
 	app.SetPrepareProposal(NewEVMPrepareProposalHandler(app, app.BaseApp))
-	app.SetProcessProposal(
+	app.SetProcessProposal(NewLaneOrderProcessProposalHandler(
+		app.txConfig.TxDecoder(),
+		app.SudoKeeper.GetZeroGasActors,
+		func(ctx sdk.Context) bool {
+			return LaneOrderActiveAt(
+				app.UpgradeKeeper.GetDoneHeight(ctx, LaneOrderUpgradeName),
+				ctx.BlockHeight(),
+			)
+		},
+		DefaultLaneOrderConfig,
 		baseapp.NewDefaultProposalHandler(app.EvmMempool, app.BaseApp).
 			ProcessProposalHandler(),
-	)
+	))
 
 	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {

@@ -9,7 +9,6 @@ import (
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -132,9 +131,20 @@ func NewEVMPrepareProposalHandler(
 			usedGas += candidate.gasWanted
 		}
 
-		zeroGasLane, otherLane := splitNonEVMProposalTxs(
+		oracleLane, zeroGasLane, otherLane := splitNonEVMProposalTxs(
 			app.txConfig.TxDecoder(), req.Txs, app.SudoKeeper.GetZeroGasActors(ctx),
 		)
+		// The oracle cap mirrors VerifyProposalLaneOrder so this node never
+		// builds a proposal its own ProcessProposal rejects.
+		oracleSelected := 0
+		for _, candidate := range oracleLane {
+			if limit := DefaultLaneOrderConfig.MaxOracleLaneTxs; limit > 0 && oracleSelected >= limit {
+				break
+			}
+			before := len(selected)
+			selectNonEVM(candidate)
+			oracleSelected += len(selected) - before
+		}
 		for _, candidate := range zeroGasLane {
 			selectNonEVM(candidate)
 		}
@@ -182,30 +192,34 @@ type nonEVMProposalTx struct {
 }
 
 // splitNonEVMProposalTxs decodes the CometBFT candidates once and splits the
-// non-EVM transactions into the zero-gas actor lane and the remaining lane,
-// preserving relative order within each. Undecodable and EVM candidates are
-// dropped.
+// non-EVM transactions by [ClassifyProposalTx] into the oracle, zero-gas, and
+// Cosmos lanes, preserving relative order within each. Undecodable and EVM
+// candidates are dropped. Using the same classifier as ProcessProposal keeps
+// proposals built here valid under [VerifyProposalLaneOrder].
 func splitNonEVMProposalTxs(
 	decode sdk.TxDecoder,
 	candidates [][]byte,
 	zeroGasActors sudo.ZeroGasActors,
-) (zeroGasLane, otherLane []nonEVMProposalTx) {
+) (oracleLane, zeroGasLane, otherLane []nonEVMProposalTx) {
 	for _, txBytes := range candidates {
 		tx, err := decode(txBytes)
-		if err != nil || evm.IsEthTx(tx) {
+		if err != nil {
 			continue
 		}
 		candidate := nonEVMProposalTx{txBytes: txBytes}
 		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
 			candidate.gasWanted = gasTx.GetGas()
 		}
-		if ante.IsZeroGasActorTx(tx, zeroGasActors) {
+		switch ClassifyProposalTx(tx, zeroGasActors) {
+		case LaneOracle:
+			oracleLane = append(oracleLane, candidate)
+		case LaneZeroGas:
 			zeroGasLane = append(zeroGasLane, candidate)
-		} else {
+		case LaneCosmos:
 			otherLane = append(otherLane, candidate)
 		}
 	}
-	return zeroGasLane, otherLane
+	return oracleLane, zeroGasLane, otherLane
 }
 
 // executableProposalChains builds each sender's state nonce chain from an
