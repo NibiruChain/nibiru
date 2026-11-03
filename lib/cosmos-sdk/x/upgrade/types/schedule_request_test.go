@@ -1,10 +1,12 @@
 package types_test
 
 import (
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 func TestScheduleRequestSeparatesTimeTargetsFromExecutablePlans(t *testing.T) {

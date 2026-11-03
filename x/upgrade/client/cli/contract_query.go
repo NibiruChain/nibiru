@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	querytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/query"
@@ -13,7 +15,6 @@ import (
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
-	"github.com/spf13/cobra"
 )
 
 func printJSON(ctx client.Context, value any) error {

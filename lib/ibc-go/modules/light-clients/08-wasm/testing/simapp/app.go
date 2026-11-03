@@ -81,11 +81,11 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	consensusparamtypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
-	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
-	consensusparamtypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 
