@@ -9,11 +9,9 @@ import (
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
-	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 // prepareProposalTxVerifier verifies original outer transaction bytes during
@@ -81,18 +79,30 @@ func (h *proposalHeap) Pop() any {
 // each sender's complete state nonce chain (contiguous live slots from the
 // committed state nonce) through [executableProposalChains], prioritizes
 // executable sender heads with [proposalHeap], and returns original outer bytes
-// from [evm.MempoolTx.TxBytes]. Non-EVM candidates from
-// RequestPrepareProposal.Txs keep their CometBFT-provided relative order, split
-// into two lanes: zero-gas actor transactions ([ante.IsZeroGasActorTx], e.g.
-// oracle price writes) are selected before every EVM transaction, and all other
-// non-EVM transactions are appended after them. Without the leading lane, a
-// trade submitted as an EVM transaction would always execute against the
-// previous block's price while the oracle update for that block waits behind
-// it. EVM transactions present in req.Txs are ignored so proposal construction
-// does not rebuild the EVM index from Comet candidates. A recovered panic yields an empty
-// proposal rather than an unfiltered EVM candidate set. Node-local mempool
-// membership affects only this node's candidate selection; ProcessProposal and
-// delivery validate from proposal bytes and application state alone.
+// from [evm.MempoolTx.TxBytes].
+//
+// The proposal is built in [proposalLane] order, as assigned by
+// [classifyProposalTx]:
+//
+//  1. Oracle lane: zero-gas actor transactions (x/sudo ZeroGasActors) whose
+//     every message is an oracle price write ([isOraclePriceWriteMsg]).
+//  2. Zero-gas lane: other zero-gas actor transactions, such as keeper and
+//     admin calls.
+//  3. EVM lane: the [proposalHeap] selection above.
+//  4. Default lane: all other non-EVM transactions.
+//
+// Lanes 1, 2, and 4 come from RequestPrepareProposal.Txs and keep their
+// CometBFT-provided relative order. Putting price writes first means every
+// later transaction in the block, including keeper actions on the same prices
+// and trades submitted as EVM transactions, executes against the price written
+// in that block rather than the previous one. EVM transactions present in
+// req.Txs are ignored so proposal construction does not rebuild the EVM index
+// from Comet candidates. Every lane shares one byte and gas budget, filled in
+// lane order; a candidate that does not fit is skipped. A recovered panic
+// yields an empty proposal rather than an unfiltered EVM candidate set.
+// Node-local mempool membership affects only this node's candidate selection;
+// ProcessProposal and delivery validate from proposal bytes and application
+// state alone.
 func NewEVMPrepareProposalHandler(
 	app *NibiruApp,
 	verifier prepareProposalTxVerifier,
@@ -132,13 +142,16 @@ func NewEVMPrepareProposalHandler(
 			usedGas += candidate.gasWanted
 		}
 
-		zeroGasLane, otherLane := splitNonEVMProposalTxs(
+		lanes := splitNonEVMProposalTxs(
 			app.txConfig.TxDecoder(), req.Txs, app.SudoKeeper.GetZeroGasActors(ctx),
 		)
-		for _, candidate := range zeroGasLane {
-			selectNonEVM(candidate)
+		for _, lane := range []proposalLane{proposalLaneOracle, proposalLaneZeroGas} {
+			for _, candidate := range lanes[lane] {
+				selectNonEVM(candidate)
+			}
 		}
 
+		// EVM lane: executable sender heads from the app EVM mempool.
 		chains := executableProposalChains(ctx, app.EvmKeeper, app.EvmMempool.Snapshot())
 		queue := proposalHeap(chains)
 		heap.Init(&queue)
@@ -166,46 +179,12 @@ func NewEVMPrepareProposalHandler(
 			}
 		}
 
-		for _, candidate := range otherLane {
+		for _, candidate := range lanes[proposalLaneDefault] {
 			selectNonEVM(candidate)
 		}
 
 		return abci.ResponsePrepareProposal{Txs: selected}
 	}
-}
-
-// nonEVMProposalTx is a decoded non-EVM candidate from
-// RequestPrepareProposal.Txs with its original outer bytes.
-type nonEVMProposalTx struct {
-	txBytes   []byte
-	gasWanted uint64
-}
-
-// splitNonEVMProposalTxs decodes the CometBFT candidates once and splits the
-// non-EVM transactions into the zero-gas actor lane and the remaining lane,
-// preserving relative order within each. Undecodable and EVM candidates are
-// dropped.
-func splitNonEVMProposalTxs(
-	decode sdk.TxDecoder,
-	candidates [][]byte,
-	zeroGasActors sudo.ZeroGasActors,
-) (zeroGasLane, otherLane []nonEVMProposalTx) {
-	for _, txBytes := range candidates {
-		tx, err := decode(txBytes)
-		if err != nil || evm.IsEthTx(tx) {
-			continue
-		}
-		candidate := nonEVMProposalTx{txBytes: txBytes}
-		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
-			candidate.gasWanted = gasTx.GetGas()
-		}
-		if ante.IsZeroGasActorTx(tx, zeroGasActors) {
-			zeroGasLane = append(zeroGasLane, candidate)
-		} else {
-			otherLane = append(otherLane, candidate)
-		}
-	}
-	return zeroGasLane, otherLane
 }
 
 // executableProposalChains builds each sender's state nonce chain from an

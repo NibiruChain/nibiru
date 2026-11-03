@@ -189,8 +189,8 @@ func TestEVMPrepareProposalPrioritizesExecutableSenderHeads(t *testing.T) {
 }
 
 // buildProposalWasmExecuteTx encodes an unsigned non-EVM transaction whose
-// messages each execute contract from sender, as CometBFT hands candidates to
-// PrepareProposal.
+// messages each send an oracle `set_prices` write to contract from sender, as
+// CometBFT hands candidates to PrepareProposal.
 func buildProposalWasmExecuteTx(
 	t *testing.T,
 	deps *evmtest.TestDeps,
@@ -198,16 +198,44 @@ func buildProposalWasmExecuteTx(
 	contracts ...string,
 ) []byte {
 	t.Helper()
-	msgs := make([]sdk.Msg, 0, len(contracts))
+	msgs := make([]*wasm.MsgExecuteContract, 0, len(contracts))
 	for _, contract := range contracts {
-		msgs = append(msgs, &wasm.MsgExecuteContract{
-			Sender:   sender,
-			Contract: contract,
-			Msg:      wasm.RawContractMessage(`{"set_prices":{"prices":[]}}`),
-		})
+		msgs = append(msgs, proposalWasmExec(sender, contract, setPricesMsg))
+	}
+	return buildProposalWasmTx(t, deps, msgs...)
+}
+
+// Sai oracle and perp execute messages used as proposal candidates.
+const (
+	setPricesMsg        = `{"set_prices":{"prices":[[0,"97000.5"],[1,"3500"]]}}`
+	setPriceMsg         = `{"set_price":{"token_id":0,"price_usd":"97000.5"}}`
+	updateExpirationMsg = `{"update_expiration_time":{"expiration_time":60}}`
+	triggerFillMsg      = `{"execute_trigger_order":{"trade_id":7}}`
+)
+
+// proposalWasmExec returns a Wasm execute message from sender to contract.
+func proposalWasmExec(sender, contract, msg string) *wasm.MsgExecuteContract {
+	return &wasm.MsgExecuteContract{
+		Sender:   sender,
+		Contract: contract,
+		Msg:      wasm.RawContractMessage(msg),
+	}
+}
+
+// buildProposalWasmTx encodes an unsigned non-EVM transaction carrying msgs,
+// as CometBFT hands candidates to PrepareProposal.
+func buildProposalWasmTx(
+	t *testing.T,
+	deps *evmtest.TestDeps,
+	msgs ...*wasm.MsgExecuteContract,
+) []byte {
+	t.Helper()
+	sdkMsgs := make([]sdk.Msg, 0, len(msgs))
+	for _, msg := range msgs {
+		sdkMsgs = append(sdkMsgs, msg)
 	}
 	builder := deps.App.GetTxConfig().NewTxBuilder()
-	require.NoError(t, builder.SetMsgs(msgs...))
+	require.NoError(t, builder.SetMsgs(sdkMsgs...))
 	builder.SetGasLimit(100_000_000)
 	txBytes, err := deps.App.GetTxConfig().TxEncoder()(builder.GetTx())
 	require.NoError(t, err)
@@ -294,4 +322,156 @@ func TestEVMPrepareProposalZeroGasLaneWinsScarceSpace(t *testing.T) {
 	})
 
 	require.Equal(t, [][]byte{oracleWrite}, response.Txs)
+}
+
+// saiProposalActors is a mainnet-shaped x/sudo ZeroGasActors setup: the
+// allowlist holds the oracle and perp contracts, and its senders include both
+// the price feeder and the keeper.
+type saiProposalActors struct {
+	feeder, keeper, trader string
+	oracle, perp           string
+}
+
+func setSaiProposalActors(deps *evmtest.TestDeps) saiProposalActors {
+	actors := saiProposalActors{
+		feeder: evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		keeper: evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		trader: evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		oracle: evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		perp:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
+	}
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:   []string{actors.feeder, actors.keeper},
+		Contracts: []string{actors.oracle, actors.perp},
+	})
+	return actors
+}
+
+// TestEVMPrepareProposalOracleLaneBeforeZeroGasLane proves the four proposal
+// lanes: oracle price writes (`set_prices` and `set_price`), then other
+// zero-gas actor transactions, then EVM transactions, then everything else.
+// The keeper fill arrives first in RequestPrepareProposal.Txs but is proposed
+// after the price writes, so it executes against the price written in the
+// same block. Relative CometBFT order holds within each lane.
+func TestEVMPrepareProposalOracleLaneBeforeZeroGasLane(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+
+	keeperFill := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
+	traderTx := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.trader, actors.perp, triggerFillMsg))
+	setPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+	keeperFill2 := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.keeper, actors.perp, `{"liquidate":{"trade_id":8}}`))
+	setPrice := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPriceMsg))
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+		Txs:        [][]byte{keeperFill, traderTx, setPrices, keeperFill2, setPrice},
+	})
+
+	require.Equal(t, [][]byte{
+		setPrices, setPrice, // oracle lane
+		keeperFill, keeperFill2, // zero-gas lane
+		evmTx,    // EVM lane
+		traderTx, // default lane
+	}, response.Txs)
+	require.Equal(t, response.Txs, verifier.seen)
+}
+
+// TestEVMPrepareProposalOracleLaneRequiresPriceWrites proves the oracle lane
+// matches the message, not the contract: a zero-gas actor calling the oracle
+// contract with a non-price message, a batch mixing a price write with a
+// non-price message, and a malformed or multi-key JSON message all fall to
+// the zero-gas lane. A `set_prices` call from an unlisted sender gets no
+// priority at all.
+func TestEVMPrepareProposalOracleLaneRequiresPriceWrites(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+
+	unlistedSetPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.trader, actors.oracle, setPricesMsg))
+	expiryUpdate := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.keeper, actors.oracle, updateExpirationMsg))
+	mixedBatch := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg),
+		proposalWasmExec(actors.feeder, actors.oracle, updateExpirationMsg))
+	malformed := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, `{"set_prices":{"prices":[]}`))
+	twoKeys := buildProposalWasmTx(t, &deps, proposalWasmExec(
+		actors.feeder, actors.oracle,
+		`{"set_prices":{"prices":[]},"update_expiration_time":{}}`))
+	setPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+		Txs: [][]byte{
+			unlistedSetPrices, expiryUpdate, mixedBatch, malformed, twoKeys,
+			setPrices,
+		},
+	})
+
+	require.Equal(t, [][]byte{
+		setPrices,                                    // oracle lane
+		expiryUpdate, mixedBatch, malformed, twoKeys, // zero-gas lane
+		evmTx,             // EVM lane
+		unlistedSetPrices, // default lane
+	}, response.Txs)
+}
+
+// TestEVMPrepareProposalOracleLaneWinsScarceSpace proves the oracle lane is
+// budgeted first: when RequestPrepareProposal.MaxTxBytes fits the price write,
+// the keeper transaction, or the EVM transaction alone but no pair containing
+// the price write, only the price write is proposed, even though the keeper
+// transaction arrived first.
+func TestEVMPrepareProposalOracleLaneWinsScarceSpace(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+
+	keeperFill := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
+	setPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+	maxTxBytes := min(
+		cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices, keeperFill}),
+		cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices, evmTx}),
+	) - 1
+	for _, tx := range [][]byte{setPrices, keeperFill, evmTx} {
+		require.GreaterOrEqual(t, maxTxBytes, cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{tx}))
+	}
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: maxTxBytes,
+		Txs:        [][]byte{keeperFill, setPrices},
+	})
+
+	require.Equal(t, [][]byte{setPrices}, response.Txs)
 }
