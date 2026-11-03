@@ -5,11 +5,11 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-// ContractBridge is the host boundary used by x-upgrade. App wiring supplies
+// ContractAdapter is the host boundary used by x-upgrade. App wiring supplies
 // governance-permission code creation/instantiation and ordinary execute.
 // Depending on this interface keeps the upgrade module independent of the
 // concrete Wasm keeper, including in Wasm's own native test applications.
-type ContractBridge interface {
+type ContractAdapter interface {
 	QuerySmartBounded(sdk.Context, sdk.AccAddress, []byte, uint64) ([]byte, uint64, error)
 	Sudo(sdk.Context, sdk.AccAddress, []byte) ([]byte, error)
 	SudoWithErrorCause(sdk.Context, sdk.AccAddress, []byte) ([]byte, error)

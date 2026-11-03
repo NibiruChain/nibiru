@@ -26,20 +26,31 @@ import (
 	feegranttestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/testutil"
 )
 
+// InjectedTxInputs captures the dependencies selected by the transaction
+// configuration provider so tests can exercise the same fee consumer.
 type InjectedTxInputs struct {
 	Inputs txconfig.TxInputs
 }
 
+// RejectingFeegrant is an alternate fee-grant implementation that records
+// calls and returns a chosen error. It proves injection depends on the keeper
+// interface, rather than requiring the SDK concrete implementation.
 type RejectingFeegrant struct {
 	err   error
 	calls int
 }
 
+// UseGrantedFees records delegation to the injected implementation and returns
+// its rejection so the test can verify error propagation through fee deduction.
 func (k *RejectingFeegrant) UseGrantedFees(sdk.Context, sdk.AccAddress, sdk.AccAddress, sdk.Coins, []sdk.Msg) error {
 	k.calls++
 	return k.err
 }
 
+// TestFeegrantProviderInjection runs fee deduction with the dependencies chosen
+// by depinject. It covers the real SDK allowance being debited, an alternate
+// implementation rejecting the grant, a missing optional provider rejecting a
+// sponsored transaction, and ordinary self-paid fees working without feegrant.
 func TestFeegrantProviderInjection(t *testing.T) {
 	for _, name := range []string{"sdk keeper", "substitute keeper", "absent sponsored", "absent self-paid"} {
 		t.Run(name, func(t *testing.T) {
@@ -128,6 +139,10 @@ func TestFeegrantProviderInjection(t *testing.T) {
 	}
 }
 
+// TestFeegrantAppProviderInjection checks the complete SDK test-app provider
+// graph, rather than the isolated providers above. The real feegrant keeper
+// must resolve into the transaction consumer's interface alongside account and
+// bank keepers, and the resulting transaction configuration must build a tx.
 func TestFeegrantAppProviderInjection(t *testing.T) {
 	var in InjectedTxInputs
 	var txCfg client.TxConfig
@@ -141,6 +156,8 @@ func TestFeegrantAppProviderInjection(t *testing.T) {
 	require.NotNil(t, txCfg.NewTxBuilder())
 }
 
+// CaptureTxInputs exposes module-scoped injected dependencies for assertions
+// without replacing the application transaction-configuration provider.
 func CaptureTxInputs(inputs txconfig.TxInputs) InjectedTxInputs {
 	return InjectedTxInputs{inputs}
 }

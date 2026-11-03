@@ -37,7 +37,7 @@ func CreatorAddr() sdk.AccAddress {
 }
 
 // PredictContractAddr returns the initial Instantiate2 address for checksum,
-// the stable module creator, and the contract salt. The bound [ContractBridge]
+// the stable module creator, and the contract salt. The bound [ContractAdapter]
 // performs the derivation with fixMsg=false, excluding genesis state. This
 // predicts a fresh deployment; [Keeper.ContractAddr] identifies an existing
 // deployment even after its Wasm code has been migrated.
@@ -45,7 +45,7 @@ func (k Keeper) PredictContractAddr(checksum []byte) sdk.AccAddress {
 	return k.wasm.PredictContractAddress(checksum, CreatorAddr(), []byte(contracttypes.ContractSalt))
 }
 
-func (k *Keeper) BindWasm(wasm ContractBridge, permissions SudoKeeper, code func() []byte) {
+func (k *Keeper) BindWasm(wasm ContractAdapter, permissions SudoKeeper, code func() []byte) {
 	k.wasm, k.permissions, k.contractCode = wasm, permissions, code
 }
 

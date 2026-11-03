@@ -10,7 +10,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 )
 
-// Upgrade2_22_0 ships Nibiru BFT and x-consensus. It runs module migrations,
+// Upgrade2_22_0 ships Nibiru BFT, x-consensus, and contract-owned upgrade state.
+// It runs module migrations,
 // then creates the x-consensus contract seeded from the current x/consensus
 // params with min_block_commit_duration_ms unset, so the upgrade changes no
 // behavior until the x/sudo root sets a value.
@@ -31,6 +32,15 @@ type Handler_v2_22 struct{}
 // EndBlocker keeps them while no contract exists, and a later upgrade can
 // retry, because EnsureXConsensus is idempotent and writes nothing on
 // failure.
+//
+// x-upgrade activation is a required state migration and returns an error on
+// failure. Logging and continuing would record v2.22 as completed while its
+// upgrade state remained in the legacy backend and time scheduling unavailable.
+// ActivateContract stages and verifies the import in a cache before deleting
+// legacy keys or publishing its address. A failure stops ApplyUpgrade before
+// completion/version writes; operators can repair the binary and retry the
+// uncommitted upgrade block. This differs from x-consensus, whose existing
+// native parameter store remains a supported fallback when creation fails.
 func (h Handler_v2_22) Handler(
 	mm *module.Manager,
 	cfg module.Configurator,

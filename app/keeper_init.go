@@ -57,35 +57,37 @@ func (app *NibiruApp) initUpgradeKeeper(appOpts servertypes.AppOptions) {
 		app.BaseApp,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	app.UpgradeKeeper.BindWasm(upgradeContractBridge{Keeper: &app.WasmKeeper}, app.SudoKeeper, upgrade.ContractWasm)
+	app.UpgradeKeeper.BindWasm(xUpgradeContractAdapter{Keeper: &app.WasmKeeper}, app.SudoKeeper, upgrade.ContractWasm)
 }
 
-// upgradeContractBridge selects the permissions of native host calls. The
-// Rust contract still checks governance execute callers and the live sudo root.
-type upgradeContractBridge struct{ *wasmkeeper.Keeper }
+// xUpgradeContractAdapter connects the native upgrade keeper to the x-upgrade
+// Chain contract. It selects privileged Wasm permissions for bootstrap code
+// upload and instantiation, and normal permissions for governance execute calls.
+// The Rust contract validates the governance sender and the live x/sudo root.
+type xUpgradeContractAdapter struct{ *wasmkeeper.Keeper }
 
-var _ upgradekeeper.ContractBridge = upgradeContractBridge{}
+var _ upgradekeeper.ContractAdapter = xUpgradeContractAdapter{}
 
 // Execute sends governance scheduling calls through normal Wasm permissions;
 // the contract validates the governance sender before modifying a request.
-func (b upgradeContractBridge) Execute(ctx sdk.Context, addr, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
+func (b xUpgradeContractAdapter) Execute(ctx sdk.Context, addr, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error) {
 	return wasmkeeper.NewDefaultPermissionKeeper(b.Keeper).Execute(ctx, addr, caller, msg, coins)
 }
 
 // CreateCode permits the native enabling handler to upload the embedded build
 // even when ordinary contract uploads are restricted by chain policy.
-func (b upgradeContractBridge) CreateCode(ctx sdk.Context, creator sdk.AccAddress, code []byte, access *wasmtypes.AccessConfig) (uint64, []byte, error) {
+func (b xUpgradeContractAdapter) CreateCode(ctx sdk.Context, creator sdk.AccAddress, code []byte, access *wasmtypes.AccessConfig) (uint64, []byte, error) {
 	return wasmkeeper.NewGovPermissionKeeper(b.Keeper).Create(ctx, creator, code, access)
 }
 
 // Instantiate2 creates the Chain contract through the privileged bootstrap
 // path, with its predicted address supplied as its own Wasm admin.
-func (b upgradeContractBridge) Instantiate2(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, msg []byte, label string, coins sdk.Coins, salt []byte, fixMsg bool) (sdk.AccAddress, []byte, error) {
+func (b xUpgradeContractAdapter) Instantiate2(ctx sdk.Context, codeID uint64, creator, admin sdk.AccAddress, msg []byte, label string, coins sdk.Coins, salt []byte, fixMsg bool) (sdk.AccAddress, []byte, error) {
 	return wasmkeeper.NewGovPermissionKeeper(b.Keeper).Instantiate2(ctx, codeID, creator, admin, msg, label, coins, salt, fixMsg)
 }
 
 // PredictContractAddress excludes the initialization message, matching
 // Instantiate2 with fixMsg=false, so genesis state does not change the address.
-func (upgradeContractBridge) PredictContractAddress(checksum []byte, creator sdk.AccAddress, salt []byte) sdk.AccAddress {
+func (xUpgradeContractAdapter) PredictContractAddress(checksum []byte, creator sdk.AccAddress, salt []byte) sdk.AccAddress {
 	return wasmkeeper.BuildContractAddressPredictable(checksum, creator, salt, []byte{})
 }
