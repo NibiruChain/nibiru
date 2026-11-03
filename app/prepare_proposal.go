@@ -97,12 +97,29 @@ func (h *proposalHeap) Pop() any {
 // and trades submitted as EVM transactions, executes against the price written
 // in that block rather than the previous one. EVM transactions present in
 // req.Txs are ignored so proposal construction does not rebuild the EVM index
-// from Comet candidates. Every lane shares one byte and gas budget, filled in
-// lane order; a candidate that does not fit is skipped. A recovered panic
-// yields an empty proposal rather than an unfiltered EVM candidate set.
-// Node-local mempool membership affects only this node's candidate selection;
-// ProcessProposal and delivery validate from proposal bytes and application
-// state alone.
+// from Comet candidates.
+//
+// A signer's non-EVM transactions are never reordered across lanes: a
+// candidate is demoted to the latest lane holding an earlier candidate from a
+// shared signer (see [splitNonEVMProposalTxs]). This does not track the EVM
+// mempool, so if one account has an EVM transaction at nonce N and a zero-gas
+// Cosmos transaction at sequence N+1, the Cosmos transaction is verified first,
+// fails its sequence check, and waits for a later block. Zero-gas actor keys do
+// not send EVM transactions in practice, so this case is accepted.
+//
+// Every lane shares one byte and gas budget, filled in lane order; a candidate
+// that does not fit is skipped. Gas is charged at each transaction's declared
+// limit, because the default ProcessProposal sums declared gas against
+// max_gas. Zero-gas actor transactions execute on a fixed zero gas meter but
+// may declare a large limit, so with a finite max_gas, lanes 1 and 2 can use
+// the gas budget before any EVM transaction is considered. A per-lane gas cap
+// is left for the ProcessProposal lane-enforcement change. With max_gas = -1
+// the hazard does not apply.
+//
+// A recovered panic yields an empty proposal rather than an unfiltered EVM
+// candidate set. Node-local mempool membership affects only this node's
+// candidate selection; ProcessProposal and delivery validate from proposal
+// bytes and application state alone.
 func NewEVMPrepareProposalHandler(
 	app *NibiruApp,
 	verifier prepareProposalTxVerifier,
@@ -129,6 +146,8 @@ func NewEVMPrepareProposalHandler(
 
 		selected := make([][]byte, 0)
 		var usedBytes, usedGas uint64
+		// selectNonEVM charges declared gas, not executed gas, to match
+		// ProcessProposal; see the max_gas note on this handler.
 		selectNonEVM := func(candidate nonEVMProposalTx) {
 			if !proposalCapacityAllows(usedBytes, proposalTxSize(candidate.txBytes), maxBytes) ||
 				!proposalCapacityAllows(usedGas, candidate.gasWanted, maxGas) {

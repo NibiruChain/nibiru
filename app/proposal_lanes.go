@@ -13,8 +13,9 @@ import (
 )
 
 // proposalLane is the block section a transaction is proposed in. Lanes are
-// declared in proposal order: every selected transaction of a lane precedes
-// every selected transaction of a later lane. See [classifyProposalTx].
+// declared in proposal order, so a lower value is proposed earlier: every
+// selected transaction of a lane precedes every selected transaction of a
+// later lane. See [classifyProposalTx] and [splitNonEVMProposalTxs].
 type proposalLane uint8
 
 const (
@@ -114,20 +115,38 @@ type nonEVMProposalTx struct {
 // splitNonEVMProposalTxs decodes the CometBFT candidates once and groups the
 // non-EVM transactions by [classifyProposalTx], preserving relative order
 // within each lane. Undecodable and EVM candidates are dropped, so the
-// [proposalLaneEVM] entry is always empty.
+// [proposalLaneEVM] entry is always empty. A candidate whose classification
+// panics is also dropped ([classifyProposalCandidate]).
+//
+// Lanes never reorder one signer's transactions: a candidate is demoted to
+// the latest lane already holding an earlier candidate that shares a signer
+// with it. Without this, a zero-gas transaction at account sequence N+1 could
+// be verified ahead of the same account's default-lane transaction at N, fail
+// the sequence check, and miss the block.
 func splitNonEVMProposalTxs(
 	decode sdk.TxDecoder,
 	candidates [][]byte,
 	zeroGasActors sudo.ZeroGasActors,
 ) (lanes [proposalLaneCount][]nonEVMProposalTx) {
+	// latestLane maps a signer address to the latest lane holding one of its
+	// candidates so far. Lane values increase in proposal order.
+	latestLane := make(map[string]proposalLane)
 	for _, txBytes := range candidates {
 		tx, err := decode(txBytes)
 		if err != nil {
 			continue
 		}
-		lane := classifyProposalTx(tx, zeroGasActors)
-		if lane == proposalLaneEVM {
+		lane, signers, ok := classifyProposalCandidate(tx, zeroGasActors)
+		if !ok || lane == proposalLaneEVM {
 			continue
+		}
+		for _, signer := range signers {
+			if prev, seen := latestLane[string(signer)]; seen && prev > lane {
+				lane = prev
+			}
+		}
+		for _, signer := range signers {
+			latestLane[string(signer)] = lane
 		}
 		candidate := nonEVMProposalTx{txBytes: txBytes}
 		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
@@ -136,4 +155,30 @@ func splitNonEVMProposalTxs(
 		lanes[lane] = append(lanes[lane], candidate)
 	}
 	return lanes
+}
+
+// classifyProposalCandidate returns the [classifyProposalTx] lane of a decoded
+// but unverified candidate and, for non-EVM transactions, the signers of its
+// messages. ok is false when classification panics, for example when
+// GetSigners meets an invalid bech32 sender. Such a candidate cannot pass
+// signature verification, so it is dropped rather than placed in a lane; the
+// recover keeps one malformed candidate from reaching the handler-level
+// recover, which would empty the whole proposal.
+func classifyProposalCandidate(
+	tx sdk.Tx,
+	zeroGasActors sudo.ZeroGasActors,
+) (lane proposalLane, signers []sdk.AccAddress, ok bool) {
+	defer func() {
+		if recover() != nil {
+			lane, signers, ok = proposalLaneDefault, nil, false
+		}
+	}()
+	lane = classifyProposalTx(tx, zeroGasActors)
+	if lane == proposalLaneEVM {
+		return lane, nil, true
+	}
+	for _, msg := range tx.GetMsgs() {
+		signers = append(signers, msg.GetSigners()...)
+	}
+	return lane, signers, true
 }
