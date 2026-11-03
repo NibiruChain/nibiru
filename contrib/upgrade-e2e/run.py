@@ -80,6 +80,10 @@ def require_unused_ports(ports: list[int]) -> None:
     with contextlib.ExitStack() as stack:
         for port in ports:
             sock = stack.enter_context(socket.socket())
+            # A previous owned listener can leave TIME_WAIT connections after
+            # shutdown. Match normal server reuse without permitting a second
+            # listening socket on an occupied address.
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 sock.bind(("127.0.0.1", port))
             except OSError as error:
@@ -155,7 +159,16 @@ class Runner:
         return int(status.get("sync_info", status.get("SyncInfo", {}))["latest_block_height"])
 
     def protocol_version(self) -> int:
-        return int(self.rpc_query("block")["block"]["header"]["version"].get("app", 0))
+        # SetProtocolVersion updates BaseApp's ABCI Info field, not the
+        # independently stored consensus-parameter version in block headers.
+        return int(self.rpc_query("abci_info")["response"].get("app_version", 0))
+
+    def contract_snapshot(self, binary: Path, label: str):
+        address = self.query(binary, "upgrade", "status")["contract_address"]
+        response = self.query(binary, "wasm", "contract-state", "smart", address, '{"snapshot":{}}')
+        snapshot = response.get("data", response)
+        self.save(label, snapshot)
+        return snapshot
 
     def wait(self, description: str, check, timeout: float | None = None):
         deadline = time.monotonic() + (timeout or self.args.timeout)
@@ -340,7 +353,7 @@ class Runner:
             raise
         raise RunError(f"Expected no concrete execution plan, got {plan}")
 
-    def export_and_import(self, history, versions) -> None:
+    def export_and_import(self, history, versions, expected_protocol: int) -> None:
         export_path = self.evidence / "exported-genesis.json"
         self.command([str(self.successor), "export", "--home", str(self.home), "--output-document", str(export_path)], timeout=120)
         exported = json.loads(export_path.read_text())
@@ -359,8 +372,11 @@ class Runner:
             raise RunError("Genesis import changed upgrade history")
         if self.query(self.successor, "upgrade", "module_versions") != versions:
             raise RunError("Genesis import changed module versions")
+        if self.protocol_version() != expected_protocol:
+            raise RunError("Genesis import did not restore the native protocol version")
         self.save("imported-status", self.query(self.successor, "upgrade", "status"))
         self.save("imported-rpc-status", self.rpc_query("status"))
+        self.save("imported-abci-info", self.rpc_query("abci_info"))
         self.stop()
         restored_path = self.evidence / "reexported-genesis.json"
         self.command([str(self.successor), "export", "--home", str(self.home), "--output-document", str(restored_path)], timeout=120)
@@ -391,6 +407,9 @@ class Runner:
         self.save("enabled-module-versions", self.query(self.candidate, "upgrade", "module_versions"))
         if self.protocol_version() != baseline_protocol + 1:
             raise RunError("Enabling upgrade did not increment protocol version exactly once")
+        snapshot = self.contract_snapshot(self.candidate, "enabled-contract-snapshot")
+        if int(snapshot.get("protocol_version") or 0) != baseline_protocol + 1:
+            raise RunError("Canonical contract protocol version does not match the native host field")
         applied = self.query(self.candidate, "upgrade", "applied", self.args.enabling_name)
         if int(applied["header"]["height"]) != height:
             raise RunError("Enabling upgrade completed at an unexpected height")
@@ -440,6 +459,9 @@ class Runner:
         self.save("final-module-versions", self.query(self.successor, "upgrade", "module_versions"))
         if self.protocol_version() != baseline_protocol + 2:
             raise RunError("Successor upgrade did not increment protocol version exactly once")
+        snapshot = self.contract_snapshot(self.successor, "final-contract-snapshot")
+        if int(snapshot.get("protocol_version") or 0) != baseline_protocol + 2:
+            raise RunError("Successor contract protocol version does not match the native host field")
         self.expect_no_plan(self.successor)
         shutil.copy2(self.home / "data/upgrade-info.json", self.evidence / "successor-upgrade-info.json")
         history = self.query(self.successor, "upgrade", "history")
@@ -457,7 +479,7 @@ class Runner:
         self.save("restart-status", self.rpc_query("status"))
         self.stop()
         # Export is intentionally nonzero-height so height-based history is not rebased.
-        self.export_and_import(history, versions)
+        self.export_and_import(history, versions, baseline_protocol + 2)
         self.save("result", {"passed": True, "enabling_height": height, "successor_height": selected_height,
                              "run_dir": str(self.root), "note": "Local Cosmovisor, restart, and genesis round-trip acceptance; Cosmopilot and injected failure/replay are separate checks."})
 
