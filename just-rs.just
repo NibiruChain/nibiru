@@ -12,6 +12,11 @@ install:
   # https://crates.io/crates/cosmwasm-check
   cargo install cosmwasm-check
 
+# Generate nibiru-std protobuf types and clean their Rust imports (accepts Buf filters).
+[positional-arguments]
+proto-gen *args:
+  bash proto/buf.gen.rs.sh "$@"
+
 # Build optimized contracts with the maintained optimizer (default mode: dev).
 wasm-all mode="dev":
   just rs optimizer build --manifest-path Cargo.toml --output-dir wasm-contracts/artifacts --mode {{quote(mode)}}
