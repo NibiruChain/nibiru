@@ -296,15 +296,39 @@ func TestEVMPrepareProposalSelectsZeroGasActorTxsFirst(t *testing.T) {
 	require.Equal(t, response.Txs, verifier.seen)
 }
 
-// TestEVMPrepareProposalZeroGasLaneWinsScarceSpace proves the zero-gas lane is
-// budgeted before EVM transactions: when RequestPrepareProposal.MaxTxBytes
-// fits either the oracle write or the EVM transaction but not both, the oracle
-// write is proposed and the EVM transaction waits for a later block.
+// insertProposalEVMTransactions inserts n EVM transactions from the test
+// sender at nonces 0 through n-1 and returns their outer bytes in nonce order.
+func insertProposalEVMTransactions(t *testing.T, deps *evmtest.TestDeps, n int) [][]byte {
+	t.Helper()
+	txs := make([][]byte, 0, n)
+	for nonce := range n {
+		txs = append(txs, insertProposalEVMTransaction(t, deps, uint64(nonce), 100))
+	}
+	return txs
+}
+
+// requireEVMPrefixAfter asserts that txs is lead followed by a non-empty,
+// strict prefix of evmTxs: EVM filled the rest of the block but not all of it
+// fit, so space was scarce.
+func requireEVMPrefixAfter(t *testing.T, lead []byte, evmTxs, txs [][]byte) {
+	t.Helper()
+	require.NotEmpty(t, txs)
+	require.Equal(t, lead, txs[0])
+	rest := txs[1:]
+	require.NotEmpty(t, rest)
+	require.Less(t, len(rest), len(evmTxs))
+	require.Equal(t, evmTxs[:len(rest)], rest)
+}
+
+// TestEVMPrepareProposalZeroGasLaneWinsScarceSpace proves the zero-gas lanes
+// are budgeted before EVM transactions: when the EVM mempool alone could fill
+// RequestPrepareProposal.MaxTxBytes, the oracle write, which fits the
+// priority-lane cap, is proposed first and EVM transactions fill the rest.
 func TestEVMPrepareProposalZeroGasLaneWinsScarceSpace(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
 	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
-	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	evmTxs := insertProposalEVMTransactions(t, &deps, 8)
 
 	oracleFeeder := evmtest.NewEthPrivAcc().NibiruAddr.String()
 	oracleContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
@@ -313,8 +337,7 @@ func TestEVMPrepareProposalZeroGasLaneWinsScarceSpace(t *testing.T) {
 		Contracts: []string{oracleContract},
 	})
 	oracleWrite := buildProposalWasmExecuteTx(t, &deps, oracleFeeder, oracleContract)
-	maxTxBytes := cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{oracleWrite, evmTx}) - 1
-	require.GreaterOrEqual(t, maxTxBytes, cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{evmTx}))
+	maxTxBytes := 4 * cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{oracleWrite})
 
 	verifier := new(acceptingPrepareVerifier)
 	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
@@ -326,7 +349,7 @@ func TestEVMPrepareProposalZeroGasLaneWinsScarceSpace(t *testing.T) {
 		Txs:        [][]byte{oracleWrite},
 	})
 
-	require.Equal(t, [][]byte{oracleWrite}, response.Txs)
+	requireEVMPrefixAfter(t, oracleWrite, evmTxs, response.Txs)
 }
 
 // saiProposalActors is a mainnet-shaped x/sudo ZeroGasActors setup: the
@@ -446,28 +469,24 @@ func TestEVMPrepareProposalOracleLaneRequiresPriceWrites(t *testing.T) {
 }
 
 // TestEVMPrepareProposalOracleLaneWinsScarceSpace proves the oracle lane is
-// budgeted first: when RequestPrepareProposal.MaxTxBytes fits the price write,
-// the keeper transaction, or the EVM transaction alone but no pair containing
-// the price write, only the price write is proposed, even though the keeper
-// transaction arrived first.
+// budgeted first: the priority-lane cap (1/4 of MaxTxBytes) fits the price
+// write or the keeper fill but not both, so only the price write is proposed,
+// even though the keeper fill arrived first. EVM transactions, which alone
+// would overflow the block, fill the remaining space.
 func TestEVMPrepareProposalOracleLaneWinsScarceSpace(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
 	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
-	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	evmTxs := insertProposalEVMTransactions(t, &deps, 8)
 	actors := setSaiProposalActors(&deps)
 
 	keeperFill := buildProposalWasmTx(t, &deps,
 		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
 	setPrices := buildProposalWasmTx(t, &deps,
 		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
-	maxTxBytes := min(
-		cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices, keeperFill}),
-		cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices, evmTx}),
-	) - 1
-	for _, tx := range [][]byte{setPrices, keeperFill, evmTx} {
-		require.GreaterOrEqual(t, maxTxBytes, cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{tx}))
-	}
+	maxTxBytes := 4 * cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices})
+	require.GreaterOrEqual(t, maxTxBytes/4,
+		cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{keeperFill}))
 
 	verifier := new(acceptingPrepareVerifier)
 	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
@@ -479,7 +498,46 @@ func TestEVMPrepareProposalOracleLaneWinsScarceSpace(t *testing.T) {
 		Txs:        [][]byte{keeperFill, setPrices},
 	})
 
-	require.Equal(t, [][]byte{setPrices}, response.Txs)
+	requireEVMPrefixAfter(t, setPrices, evmTxs, response.Txs)
+}
+
+// TestEVMPrepareProposalCapsPriorityLaneBytes proves a flood of zero-fee
+// zero-gas actor transactions cannot take the whole block: lanes 1 and 2
+// together stop at 1/4 of MaxTxBytes, here exactly the price write plus one
+// keeper tx. The price write still wins its place despite arriving last, the
+// rest of the flood is skipped, and the EVM and default lanes keep their
+// room.
+func TestEVMPrepareProposalCapsPriorityLaneBytes(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+
+	flood := make([][]byte, 0, 20)
+	for tradeID := range 20 {
+		flood = append(flood, buildProposalWasmTx(t, &deps, proposalWasmExec(
+			actors.keeper, actors.perp,
+			fmt.Sprintf(`{"liquidate":{"trade_id":%d}}`, 10+tradeID))))
+	}
+	setPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+	traderTx := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.trader, actors.perp, triggerFillMsg))
+	maxTxBytes := 4 * cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{setPrices, flood[0]})
+
+	verifier := new(acceptingPrepareVerifier)
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	candidates := append(append([][]byte{}, flood...), traderTx, setPrices)
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: maxTxBytes,
+		Txs:        candidates,
+	})
+
+	require.Equal(t, [][]byte{setPrices, flood[0], evmTx, traderTx}, response.Txs)
 }
 
 // rejectingPrepareVerifier records every verified candidate and rejects the
@@ -501,8 +559,9 @@ func (v *rejectingPrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) 
 
 // sequencePrepareVerifier models the account sequence check that the BaseApp
 // verifier runs against cumulative prepare-proposal state: a non-EVM tx is
-// accepted only when its signer's sequence is the next one expected, and
-// acceptance advances it. Sequences start at 0. EVM txs are accepted as is.
+// accepted only when every tx-level signer, fee payer included, presents its
+// next expected sequence, and acceptance advances each of them. Sequences
+// start at 0. EVM txs are accepted as is.
 type sequencePrepareVerifier struct {
 	decode sdk.TxDecoder
 	next   map[string]uint64
@@ -521,22 +580,31 @@ func (v *sequencePrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) e
 	if err != nil || len(sigs) == 0 {
 		return nil
 	}
-	signer := sigTx.GetSigners()[0].String()
-	if sigs[0].Sequence != v.next[signer] {
-		return fmt.Errorf("account sequence mismatch: expected %d, got %d",
-			v.next[signer], sigs[0].Sequence)
+	signers := sigTx.GetSigners()
+	if len(signers) != len(sigs) {
+		return fmt.Errorf("expected %d signatures, got %d", len(signers), len(sigs))
 	}
-	v.next[signer]++
+	for i, signer := range signers {
+		if sigs[i].Sequence != v.next[signer.String()] {
+			return fmt.Errorf("account sequence mismatch for %s: expected %d, got %d",
+				signer, v.next[signer.String()], sigs[i].Sequence)
+		}
+	}
+	for _, signer := range signers {
+		v.next[signer.String()]++
+	}
 	return nil
 }
 
 // buildSequencedProposalWasmTx encodes a non-EVM tx carrying msgs with one
-// signer info at account sequence seq. The signature bytes are empty; only
-// the sequence matters to [sequencePrepareVerifier].
+// signer info per tx-level signer, at the given account sequences in signer
+// order (message signers, then feePayer when set and distinct). The signature
+// bytes are empty; only the sequences matter to [sequencePrepareVerifier].
 func buildSequencedProposalWasmTx(
 	t *testing.T,
 	deps *evmtest.TestDeps,
-	seq uint64,
+	feePayer sdk.AccAddress,
+	seqs []uint64,
 	msgs ...*wasm.MsgExecuteContract,
 ) []byte {
 	t.Helper()
@@ -547,13 +615,20 @@ func buildSequencedProposalWasmTx(
 	builder := deps.App.GetTxConfig().NewTxBuilder()
 	require.NoError(t, builder.SetMsgs(sdkMsgs...))
 	builder.SetGasLimit(100_000_000)
-	require.NoError(t, builder.SetSignatures(signingtypes.SignatureV2{
-		PubKey: evmtest.NewEthPrivAcc().PrivKey.PubKey(),
-		Data: &signingtypes.SingleSignatureData{
-			SignMode: signingtypes.SignMode_SIGN_MODE_DIRECT,
-		},
-		Sequence: seq,
-	}))
+	if feePayer != nil {
+		builder.SetFeePayer(feePayer)
+	}
+	sigs := make([]signingtypes.SignatureV2, 0, len(seqs))
+	for _, seq := range seqs {
+		sigs = append(sigs, signingtypes.SignatureV2{
+			PubKey: evmtest.NewEthPrivAcc().PrivKey.PubKey(),
+			Data: &signingtypes.SingleSignatureData{
+				SignMode: signingtypes.SignMode_SIGN_MODE_DIRECT,
+			},
+			Sequence: seq,
+		})
+	}
+	require.NoError(t, builder.SetSignatures(sigs...))
 	txBytes, err := deps.App.GetTxConfig().TxEncoder()(builder.GetTx())
 	require.NoError(t, err)
 	return txBytes
@@ -573,11 +648,11 @@ func TestEVMPrepareProposalKeepsSignerOrderAcrossLanes(t *testing.T) {
 	actors := setSaiProposalActors(&deps)
 	otherContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
 
-	keeperA := buildSequencedProposalWasmTx(t, &deps, 0,
+	keeperA := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
 		proposalWasmExec(actors.keeper, otherContract, `{"claim":{}}`))
-	keeperB := buildSequencedProposalWasmTx(t, &deps, 1,
+	keeperB := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{1},
 		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
-	setPrices := buildSequencedProposalWasmTx(t, &deps, 0,
+	setPrices := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
 		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
 
 	verifier := &sequencePrepareVerifier{
@@ -594,6 +669,40 @@ func TestEVMPrepareProposalKeepsSignerOrderAcrossLanes(t *testing.T) {
 	})
 
 	require.Equal(t, [][]byte{setPrices, evmTx, keeperA, keeperB}, response.Txs)
+}
+
+// TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes proves demotion counts
+// the fee payer as a signer, as ante does. Account P sends a default-lane tx
+// at sequence 0, then pays fees for a keeper trigger fill that carries P's
+// sequence 1. The fill shares signer P with the earlier tx, so it is demoted
+// behind it and both land in one block.
+func TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+	payer := evmtest.NewEthPrivAcc().NibiruAddr
+
+	payerTx := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
+		proposalWasmExec(payer.String(), actors.perp, triggerFillMsg))
+	sponsoredFill := buildSequencedProposalWasmTx(t, &deps, payer, []uint64{0, 1},
+		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
+
+	verifier := &sequencePrepareVerifier{
+		decode: deps.App.GetTxConfig().TxDecoder(),
+		next:   map[string]uint64{},
+	}
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+		Txs:        [][]byte{payerTx, sponsoredFill},
+	})
+
+	require.Equal(t, [][]byte{evmTx, payerTx, sponsoredFill}, response.Txs)
 }
 
 // TestEVMPrepareProposalDropsUnclassifiableCandidate proves a decodable

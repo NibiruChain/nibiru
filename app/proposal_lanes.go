@@ -8,6 +8,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
@@ -118,9 +119,9 @@ type nonEVMProposalTx struct {
 // [proposalLaneEVM] entry is always empty. A candidate whose classification
 // panics is also dropped ([classifyProposalCandidate]).
 //
-// Lanes never reorder one signer's transactions: a candidate is demoted to
-// the latest lane already holding an earlier candidate that shares a signer
-// with it. Without this, a zero-gas transaction at account sequence N+1 could
+// Lanes never reorder one signer's transactions, fee payers included: a
+// candidate is demoted to the latest lane already holding an earlier candidate
+// that shares a signer with it. Without this, a zero-gas transaction at account sequence N+1 could
 // be verified ahead of the same account's default-lane transaction at N, fail
 // the sequence check, and miss the block.
 func splitNonEVMProposalTxs(
@@ -158,8 +159,9 @@ func splitNonEVMProposalTxs(
 }
 
 // classifyProposalCandidate returns the [classifyProposalTx] lane of a decoded
-// but unverified candidate and, for non-EVM transactions, the signers of its
-// messages. ok is false when classification panics, for example when
+// but unverified candidate and, for non-EVM transactions, its tx-level
+// signers: the message signers plus the fee payer, whose sequences ante
+// checks. ok is false when classification panics, for example when
 // GetSigners meets an invalid bech32 sender. Such a candidate cannot pass
 // signature verification, so it is dropped rather than placed in a lane; the
 // recover keeps one malformed candidate from reaching the handler-level
@@ -176,6 +178,11 @@ func classifyProposalCandidate(
 	lane = classifyProposalTx(tx, zeroGasActors)
 	if lane == proposalLaneEVM {
 		return lane, nil, true
+	}
+	// Ante checks and increments the sequence of every tx-level signer,
+	// which includes a fee payer that signs no message.
+	if sigTx, isSigTx := tx.(authsigning.SigVerifiableTx); isSigTx {
+		return lane, sigTx.GetSigners(), true
 	}
 	for _, msg := range tx.GetMsgs() {
 		signers = append(signers, msg.GetSigners()...)
