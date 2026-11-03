@@ -17,7 +17,6 @@ import (
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -37,7 +36,7 @@ func CreatorAddr() sdk.AccAddress {
 	return authtypes.NewModuleAddress(contracttypes.ContractCreatorName)
 }
 
-func (k *Keeper) BindWasm(wasm *wasmkeeper.Keeper, permissions SudoKeeper, code func() []byte) {
+func (k *Keeper) BindWasm(wasm ContractBridge, permissions SudoKeeper, code func() []byte) {
 	k.wasm, k.permissions, k.contractCode = wasm, permissions, code
 }
 
@@ -117,7 +116,7 @@ func (k Keeper) executeGovernance(ctx sdk.Context, request any) error {
 	if err != nil {
 		return err
 	}
-	_, err = wasmkeeper.NewDefaultPermissionKeeper(k.wasm).Execute(ctx, addr, authority, msg, sdk.NewCoins())
+	_, err = k.wasm.Execute(ctx, addr, authority, msg, sdk.NewCoins())
 	return err
 }
 
@@ -211,9 +210,8 @@ func (k *Keeper) ActivateContract(ctx sdk.Context) error {
 	if !found {
 		code := k.contractCode()
 		checksum := sha256.Sum256(code)
-		expected := wasmkeeper.BuildContractAddressPredictable(checksum[:], CreatorAddr(), []byte(contracttypes.ContractSalt), []byte{})
-		gov := wasmkeeper.NewGovPermissionKeeper(k.wasm)
-		codeID, _, err := gov.Create(cache, CreatorAddr(), code, &wasmtypes.AccessConfig{Permission: wasmtypes.AccessTypeNobody})
+		expected := k.wasm.PredictContractAddress(checksum[:], CreatorAddr(), []byte(contracttypes.ContractSalt))
+		codeID, _, err := k.wasm.CreateCode(cache, CreatorAddr(), code, &wasmtypes.AccessConfig{Permission: wasmtypes.AccessTypeNobody})
 		if err != nil {
 			return err
 		}
@@ -221,7 +219,7 @@ func (k *Keeper) ActivateContract(ctx sdk.Context) error {
 		if err != nil {
 			return err
 		}
-		addr, _, err = gov.Instantiate2(cache, codeID, CreatorAddr(), expected, msg, "x-upgrade", sdk.NewCoins(), []byte(contracttypes.ContractSalt), false)
+		addr, _, err = k.wasm.Instantiate2(cache, codeID, CreatorAddr(), expected, msg, "x-upgrade", sdk.NewCoins(), []byte(contracttypes.ContractSalt), false)
 		if err != nil {
 			return err
 		}

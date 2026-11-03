@@ -10,7 +10,6 @@ import (
 	"sort"
 
 	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
-	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
@@ -30,7 +29,7 @@ import (
 const UpgradeInfoFileName string = "upgrade-info.json"
 
 type Keeper struct {
-	wasm               *wasmkeeper.Keeper
+	wasm               ContractBridge
 	permissions        SudoKeeper
 	contractCode       func() []byte
 	homePath           string                          // root directory of app config
