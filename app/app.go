@@ -60,8 +60,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 

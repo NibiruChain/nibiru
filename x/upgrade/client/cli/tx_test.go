@@ -22,8 +22,8 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradecli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradecli "github.com/NibiruChain/nibiru/v2/x/upgrade/client/cli"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/plan"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )

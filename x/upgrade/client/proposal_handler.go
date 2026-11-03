@@ -2,7 +2,7 @@ package client
 
 import (
 	govclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade/client/cli"
 )
 
 var (

@@ -16,8 +16,8 @@ import (
 	svrcmd "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/cmd"
 	clitestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/cli"
 	testutilmod "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradecli "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client/cli"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradecli "github.com/NibiruChain/nibiru/v2/x/upgrade/client/cli"
 )
 
 func TestGetCurrentPlanCmd(t *testing.T) {
