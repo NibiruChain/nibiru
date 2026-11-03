@@ -9,7 +9,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
@@ -102,4 +104,35 @@ func TestUpgradeSelectionFailureIsTerminalUntilGovernanceReplacement(t *testing.
 	chain.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{Root: sdk.AccAddress(make([]byte, 20)).String()})
 	_, err = wasm.Execute(ctx, addr, root, []byte(`{"update_config":{"activation_delay_blocks":"2"}}`), sdk.NewCoins())
 	require.Error(t, err)
+}
+
+// CurrentPlan must remain absent while a timestamp is unresolved, but that
+// absence must not allow a binary carrying the future handler to run early.
+func TestUpgradeTimeTargetRejectsEarlyBinary(t *testing.T) {
+	for _, reached := range []bool{false, true} {
+		t.Run(strconv.FormatBool(reached), func(t *testing.T) {
+			chain, ctx := testapp.NewNibiruTestAppAndContext()
+			ctx = ctx.WithBlockHeight(100).WithBlockTime(time.Unix(1_800_000_000, 0).UTC())
+			k := chain.UpgradeKeeper
+			targetTime := ctx.BlockTime().Add(time.Hour)
+			require.NoError(t, k.ScheduleUpgrade(ctx, upgradetypes.Plan{Name: "future-binary", Time: targetTime}))
+			k.SetUpgradeHandler("future-binary", func(_ sdk.Context, _ upgradetypes.Plan, versions module.VersionMap) (module.VersionMap, error) {
+				t.Fatal("premature binary must not execute its handler")
+				return versions, nil
+			})
+			if reached {
+				ctx = ctx.WithBlockTime(targetTime)
+			}
+			_, found := k.GetUpgradePlan(ctx)
+			require.False(t, found)
+			err := k.TrySelectExecutionHeight(ctx)
+			require.ErrorContains(t, err, "BINARY UPDATED BEFORE TRIGGER!")
+			require.PanicsWithError(t, err.Error(), func() {
+				chain.BeginBlocker(ctx, abci.RequestBeginBlock{Header: ctx.BlockHeader()})
+			})
+			require.Nil(t, k.GetSelectionFailure(ctx), "an early binary is not a contract failure")
+			_, found = k.GetUpgradePlan(ctx)
+			require.False(t, found, "the early binary must not materialize the plan")
+		})
+	}
 }

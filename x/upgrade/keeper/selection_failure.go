@@ -133,6 +133,11 @@ func (k Keeper) TrySelectExecutionHeight(ctx sdk.Context) error {
 	if target == nil {
 		return nil
 	}
+	// A time target has not reached its execution height yet. Preserve the
+	// SDK early-binary guard even while CurrentPlan intentionally returns nil.
+	if k.HasHandler(target.Name) {
+		return fmt.Errorf("BINARY UPDATED BEFORE TRIGGER! UPGRADE %q - in binary but not executed on chain. Downgrade your binary", target.Name)
+	}
 	if failure := k.GetSelectionFailure(ctx); failure != nil && failure.RequestID == target.ID {
 		return nil
 	}
