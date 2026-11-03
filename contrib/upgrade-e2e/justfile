@@ -1,0 +1,21 @@
+# Show the isolated upgrade runner's arguments.
+help:
+    python3 {{justfile_directory()}}/run.py --help
+
+# Prepare an isolated old-binary node without starting it.
+prepare *args:
+    python3 {{justfile_directory()}}/run.py prepare {{args}}
+
+# Start and stop the isolated baseline with pinned Cosmovisor.
+smoke *args:
+    python3 {{justfile_directory()}}/run.py smoke {{args}}
+
+# Run governance upgrades with pinned baseline and candidate binaries.
+run *args:
+    python3 {{justfile_directory()}}/run.py run {{args}}
+
+# Check runner isolation and artifact-verification helpers.
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    python3 -m unittest discover -s '{{justfile_directory()}}' -p '*_test.py' -v
