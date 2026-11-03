@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	contracttypes "github.com/NibiruChain/nibiru/v2/x/upgrade/types"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,6 +29,9 @@ import (
 const UpgradeInfoFileName string = "upgrade-info.json"
 
 type Keeper struct {
+	wasm               *wasmkeeper.Keeper
+	permissions        SudoKeeper
+	contractCode       func() []byte
 	homePath           string                          // root directory of app config
 	skipUpgradeHeights map[int64]bool                  // map of heights to skip for an upgrade
 	storeKey           storetypes.StoreKey             // key to access x/upgrade store
@@ -87,6 +92,10 @@ func (k Keeper) SetUpgradeHandler(name string, upgradeHandler types.UpgradeHandl
 
 // setProtocolVersion sets the protocol version to state
 func (k Keeper) setProtocolVersion(ctx sdk.Context, v uint64) {
+	if k.ContractActive(ctx) {
+		k.mustSudo(ctx, map[string]any{"set_protocol_version": map[string]any{"version": fmt.Sprint(v)}})
+		return
+	}
 	store := ctx.KVStore(k.storeKey)
 	versionBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(versionBytes, v)
@@ -95,6 +104,14 @@ func (k Keeper) setProtocolVersion(ctx sdk.Context, v uint64) {
 
 // getProtocolVersion gets the protocol version from state
 func (k Keeper) getProtocolVersion(ctx sdk.Context) uint64 {
+	if k.ContractActive(ctx) {
+		var v *uint64
+		k.mustQuery(ctx, map[string]any{"protocol_version": struct{}{}}, &stringUint64Result{Target: &v})
+		if v == nil {
+			return 0
+		}
+		return *v
+	}
 	store := ctx.KVStore(k.storeKey)
 	ok := store.Has([]byte{types.ProtocolVersionByte})
 	if ok {
@@ -109,6 +126,10 @@ func (k Keeper) getProtocolVersion(ctx sdk.Context) uint64 {
 
 // SetModuleVersionMap saves a given version map to state
 func (k Keeper) SetModuleVersionMap(ctx sdk.Context, vm module.VersionMap) {
+	if k.ContractActive(ctx) {
+		k.mustSudo(ctx, map[string]any{"set_module_versions": map[string]any{"versions": moduleRecords(vm)}})
+		return
+	}
 	if len(vm) > 0 {
 		store := ctx.KVStore(k.storeKey)
 		versionStore := prefix.NewStore(store, []byte{types.VersionMapByte})
@@ -135,6 +156,13 @@ func (k Keeper) SetModuleVersionMap(ctx sdk.Context, vm module.VersionMap) {
 // GetModuleVersionMap returns a map of key module name and value module consensus version
 // as defined in ADR-041.
 func (k Keeper) GetModuleVersionMap(ctx sdk.Context) module.VersionMap {
+	if k.ContractActive(ctx) {
+		vm := module.VersionMap{}
+		for _, v := range k.GetModuleVersions(ctx) {
+			vm[v.Name] = v.Version
+		}
+		return vm
+	}
 	store := ctx.KVStore(k.storeKey)
 	it := sdk.KVStorePrefixIterator(store, []byte{types.VersionMapByte})
 
@@ -153,6 +181,15 @@ func (k Keeper) GetModuleVersionMap(ctx sdk.Context) module.VersionMap {
 
 // GetModuleVersions gets a slice of module consensus versions
 func (k Keeper) GetModuleVersions(ctx sdk.Context) []*types.ModuleVersion {
+	if k.ContractActive(ctx) {
+		var records []contracttypes.ModuleVersion
+		k.mustQuery(ctx, map[string]any{"module_versions": map[string]any{"name": nil}}, &records)
+		result := make([]*types.ModuleVersion, 0, len(records))
+		for _, v := range records {
+			result = append(result, &types.ModuleVersion{Name: v.Name, Version: v.Version})
+		}
+		return result
+	}
 	store := ctx.KVStore(k.storeKey)
 	it := sdk.KVStorePrefixIterator(store, []byte{types.VersionMapByte})
 	defer it.Close()
@@ -172,6 +209,14 @@ func (k Keeper) GetModuleVersions(ctx sdk.Context) []*types.ModuleVersion {
 
 // getModuleVersion gets the version for a given module, and returns true if it exists, false otherwise
 func (k Keeper) getModuleVersion(ctx sdk.Context, name string) (uint64, bool) {
+	if k.ContractActive(ctx) {
+		var records []contracttypes.ModuleVersion
+		k.mustQuery(ctx, map[string]any{"module_versions": map[string]any{"name": name}}, &records)
+		if len(records) == 0 {
+			return 0, false
+		}
+		return records[0].Version, true
+	}
 	store := ctx.KVStore(k.storeKey)
 	it := sdk.KVStorePrefixIterator(store, []byte{types.VersionMapByte})
 	defer it.Close()
@@ -191,6 +236,9 @@ func (k Keeper) getModuleVersion(ctx sdk.Context, name string) (uint64, bool) {
 // ScheduleUpgrade will also write the upgraded IBC ClientState to the upgraded client
 // path if it is specified in the plan.
 func (k Keeper) ScheduleUpgrade(ctx sdk.Context, plan types.Plan) error {
+	if k.ContractActive(ctx) {
+		return k.scheduleContract(ctx, plan)
+	}
 	if err := plan.ValidateBasic(); err != nil {
 		return err
 	}
@@ -258,6 +306,14 @@ func (k Keeper) GetUpgradedConsensusState(ctx sdk.Context, lastHeight int64) ([]
 
 // GetLastCompletedUpgrade returns the last applied upgrade name and height.
 func (k Keeper) GetLastCompletedUpgrade(ctx sdk.Context) (string, int64) {
+	if k.ContractActive(ctx) {
+		var record *contracttypes.CompletedUpgrade
+		k.mustQuery(ctx, map[string]any{"last_completed": struct{}{}}, &record)
+		if record == nil {
+			return "", 0
+		}
+		return record.Name, record.Height
+	}
 	iter := sdk.KVStoreReversePrefixIterator(ctx.KVStore(k.storeKey), []byte{types.DoneByte})
 	defer iter.Close()
 
@@ -287,6 +343,14 @@ func encodeDoneKey(name string, height int64) []byte {
 
 // GetDoneHeight returns the height at which the given upgrade was executed
 func (k Keeper) GetDoneHeight(ctx sdk.Context, name string) int64 {
+	if k.ContractActive(ctx) {
+		var v *uint64
+		k.mustQuery(ctx, map[string]any{"applied": map[string]any{"name": name}}, &stringUint64Result{Target: &v})
+		if v == nil {
+			return 0
+		}
+		return int64(*v)
+	}
 	iter := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte{types.DoneByte})
 	defer iter.Close()
 
@@ -309,6 +373,14 @@ func (k Keeper) ClearIBCState(ctx sdk.Context, lastHeight int64) {
 
 // ClearUpgradePlan clears any schedule upgrade and associated IBC states.
 func (k Keeper) ClearUpgradePlan(ctx sdk.Context) {
+	if k.ContractActive(ctx) {
+		if old, ok := k.GetUpgradePlan(ctx); ok {
+			k.ClearIBCState(ctx, old.Height)
+		}
+		k.mustSudo(ctx, map[string]any{"clear_plan": struct{}{}})
+		k.ClearSelectionFailure(ctx)
+		return
+	}
 	// clear IBC states everytime upgrade plan is removed
 	oldPlan, found := k.GetUpgradePlan(ctx)
 	if found {
@@ -327,6 +399,9 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // GetUpgradePlan returns the currently scheduled Plan if any, setting havePlan to true if there is a scheduled
 // upgrade or false if there is none
 func (k Keeper) GetUpgradePlan(ctx sdk.Context) (plan types.Plan, havePlan bool) {
+	if k.ContractActive(ctx) {
+		return k.contractPlan(ctx)
+	}
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.PlanKey())
 	if bz == nil {
@@ -339,6 +414,10 @@ func (k Keeper) GetUpgradePlan(ctx sdk.Context) (plan types.Plan, havePlan bool)
 
 // setDone marks this upgrade name as being done so the name can't be reused accidentally
 func (k Keeper) setDone(ctx sdk.Context, name string) {
+	if k.ContractActive(ctx) {
+		k.mustSudo(ctx, map[string]any{"record_completed": map[string]any{"name": name}})
+		return
+	}
 	store := ctx.KVStore(k.storeKey)
 	store.Set(encodeDoneKey(name, ctx.BlockHeight()), []byte{1})
 }

@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 		GetCurrentPlanCmd(),
 		GetAppliedPlanCmd(),
 		GetModuleVersionsCmd(),
+		GetAppliedRecordCmd(), GetStatusCmd(), GetParamsCmd(), GetHistoryCmd(),
 	)
 
 	return cmd

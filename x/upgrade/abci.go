@@ -8,8 +8,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/telemetry"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 )
 
 // BeginBlock will check if there is a scheduled plan and if it is ready to be executed.
@@ -23,6 +23,9 @@ import (
 func BeginBlocker(k *keeper.Keeper, ctx sdk.Context, _ abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
+	if err := k.TrySelectExecutionHeight(ctx); err != nil {
+		panic(err)
+	}
 	plan, found := k.GetUpgradePlan(ctx)
 
 	if !k.DowngradeVerified() {

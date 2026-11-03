@@ -40,3 +40,22 @@ func TestParseArgsToContent(t *testing.T) {
 	require.Equal(t, p.Plan.Height, proposal.Plan.Height)
 	require.Equal(t, p.Plan.Info, proposal.Plan.Info)
 }
+
+func TestParseTimeTargetAndRejectAmbiguousInput(t *testing.T) {
+	fs := NewCmdSubmitLegacyUpgradeProposal().Flags()
+	require.NoError(t, fs.Set(cli.FlagTitle, "time target"))
+	require.NoError(t, fs.Set(cli.FlagDescription, "target selection"))
+	require.NoError(t, fs.Set(FlagUpgradeTime, "2027-01-02T03:04:05.123456789Z"))
+	content, err := parseArgsToContent(fs, "next")
+	require.NoError(t, err)
+	plan := content.(*types.SoftwareUpgradeProposal).Plan
+	require.Zero(t, plan.Height)
+	require.Equal(t, "2027-01-02T03:04:05.123456789Z", plan.Time.Format("2006-01-02T15:04:05.999999999Z07:00"))
+	require.NoError(t, fs.Set(FlagUpgradeHeight, "100"))
+	_, err = parseArgsToContent(fs, "next")
+	require.ErrorContains(t, err, "exactly one")
+	require.NoError(t, fs.Set(FlagUpgradeHeight, "0"))
+	require.NoError(t, fs.Set(FlagUpgradeTime, "2027-01-02"))
+	_, err = parseArgsToContent(fs, "next")
+	require.ErrorContains(t, err, "RFC 3339")
+}

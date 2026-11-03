@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"cosmossdk.io/depinject"
 	dbm "github.com/cometbft/cometbft-db"
@@ -60,10 +61,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/x/upgrade"
-	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
 	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
@@ -513,6 +514,9 @@ func NewNibiruApp(
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 		app.warmXConsensusCommitWait()
+		if app.LastBlockHeight() > 0 {
+			app.UpgradeKeeper.WarmProtocolVersion(app.NewUncachedContext(true, cmtproto.Header{Height: app.LastBlockHeight(), Time: time.Unix(1, 0).UTC()}))
+		}
 	}
 
 	return app
@@ -538,8 +542,14 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err)
 	}
 	EnsureERC2470AuthAccount(app.appCodec, genesisState)
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	res := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	if req.ConsensusParams == nil {
+		// Like x-consensus, keep the legacy test harness with no consensus params
+		// free of chain contracts. Real chain genesis supplies consensus params.
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	} else if err := app.UpgradeKeeper.InitContract(ctx, app.ModuleManager.GetVersionMap()); err != nil {
+		panic(fmt.Errorf("initialize x-upgrade contract: %w", err))
+	}
 
 	// Create x-consensus after module genesis: it is seeded from the params
 	// baseapp stored before genesis, Wasm genesis must have run, and on an

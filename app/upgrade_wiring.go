@@ -8,8 +8,9 @@ import (
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
-	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 )
 
 // initUpgradeKeeper constructs the upgrade keeper before IBC consumes it.
@@ -33,4 +34,5 @@ func (app *NibiruApp) initUpgradeKeeper(appOpts servertypes.AppOptions) {
 		app.BaseApp,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.UpgradeKeeper.BindWasm(&app.WasmKeeper, app.SudoKeeper, upgrade.ContractWasm)
 }

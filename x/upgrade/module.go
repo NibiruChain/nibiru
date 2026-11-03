@@ -29,9 +29,9 @@ import (
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade/client/cli"
 	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 )
 
 func init() {
@@ -39,7 +39,7 @@ func init() {
 }
 
 const (
-	consensusVersion uint64 = 2
+	consensusVersion uint64 = 3
 )
 
 var (
@@ -112,6 +112,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
+	if err := cfg.RegisterMigration(types.ModuleName, 2, func(sdk.Context) error { return nil }); err != nil {
+		panic(err)
+	}
 	m := keeper.NewMigrator(am.keeper)
 	err := cfg.RegisterMigration(types.ModuleName, 1, m.Migrate1to2)
 	if err != nil {
@@ -119,8 +122,12 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	}
 }
 
-// InitGenesis is ignored, no sense in serializing future upgrades
-func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, _ json.RawMessage) []abci.ValidatorUpdate {
+// InitGenesis restores exceptional host failure metadata. Contract state is
+// imported by Wasm genesis; the app activates it after all module genesis.
+func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+	if err := am.keeper.InitSelectionFailureGenesis(ctx, data); err != nil {
+		panic(err)
+	}
 	// set version map automatically if available
 	if versionMap := am.keeper.GetInitVersionMap(); versionMap != nil {
 		// chains can still use a custom init chainer for setting the version map
@@ -142,14 +149,14 @@ func (AppModuleBasic) DefaultGenesis(_ codec.JSONCodec) json.RawMessage {
 	return []byte("{}")
 }
 
-// ValidateGenesis is always successful, as we ignore the value
-func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, config client.TxEncodingConfig, _ json.RawMessage) error {
-	return nil
+// ValidateGenesis checks the exceptional native failure receipt.
+func (AppModuleBasic) ValidateGenesis(_ codec.JSONCodec, config client.TxEncodingConfig, data json.RawMessage) error {
+	return keeper.ValidateSelectionFailureGenesis(data)
 }
 
-// ExportGenesis is always empty, as InitGenesis does nothing either
-func (am AppModule) ExportGenesis(_ sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	return am.DefaultGenesis(cdc)
+// ExportGenesis preserves native failure suppression; Wasm exports contract state.
+func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+	return am.keeper.SelectionFailureGenesis(ctx)
 }
 
 // ConsensusVersion implements AppModule/ConsensusVersion.

@@ -49,6 +49,9 @@ func (h Handler_v2_22) Handler(
 			ctx.Logger().Error("v2.22.0 upgrade failure", "err", err)
 			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.22.0", err))
 		}
+		if err := nibiru.UpgradeKeeper.ActivateContract(ctx); err != nil {
+			return nil, fmt.Errorf("activate x-upgrade: %w", err)
+		}
 		return versions, nil
 	}
 }

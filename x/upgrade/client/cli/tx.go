@@ -18,6 +18,7 @@ import (
 const (
 	// Deprecated: only used for v1beta1 legacy proposals.
 	FlagUpgradeHeight = "upgrade-height"
+	FlagUpgradeTime   = "upgrade-time"
 	// Deprecated: only used for v1beta1 legacy proposals.
 	FlagUpgradeInfo = "upgrade-info"
 	FlagNoValidate  = "no-validate"
@@ -97,6 +98,7 @@ func NewCmdSubmitLegacyUpgradeProposal() *cobra.Command {
 	cmd.Flags().String(cli.FlagDescription, "", "description of proposal") //nolint:staticcheck // we are intentionally using a deprecated flag here.
 	cmd.Flags().String(cli.FlagDeposit, "", "deposit of proposal")
 	cmd.Flags().Int64(FlagUpgradeHeight, 0, "The height at which the upgrade must happen")
+	cmd.Flags().String(FlagUpgradeTime, "", "Absolute RFC 3339 consensus-time target, mutually exclusive with upgrade-height")
 	cmd.Flags().String(FlagUpgradeInfo, "", "Info for the upgrade plan such as new version download urls, etc.")
 	cmd.Flags().Bool(FlagNoValidate, false, "Skip upgrade info parsing, Docker image syntax checks, and binary download, checksum, and executable checks")
 	cmd.Flags().String(FlagDaemonName, getDefaultDaemonName(), "The name of the executable being upgraded (for upgrade-info validation). Default is the DAEMON_NAME env var if set, or else this executable")

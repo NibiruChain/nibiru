@@ -48,3 +48,22 @@ func (p Plan) ShouldExecute(ctx sdk.Context) bool {
 func (p Plan) DueAt() string {
 	return fmt.Sprintf("height: %d", p.Height)
 }
+
+// ValidateScheduleRequest validates the native request shape. Plan.ValidateBasic
+// remains height-only for finalized plans, IBC proof scheduling and node tools.
+// Stateful scheduling rules are enforced by the x-upgrade Rust contract.
+func (p Plan) ValidateScheduleRequest() error {
+	if p.Time.IsZero() {
+		return p.ValidateBasic()
+	}
+	if p.Height != 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("specify exactly one of upgrade height or time")
+	}
+	if p.Name == "" {
+		return sdkerrors.ErrInvalidRequest.Wrap("name cannot be empty")
+	}
+	if p.UpgradedClientState != nil {
+		return sdkerrors.ErrInvalidRequest.Wrap("upgrade logic for IBC has been moved to the IBC module")
+	}
+	return nil
+}

@@ -4,8 +4,8 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 )
 
 // NewSoftwareUpgradeProposalHandler creates a governance handler to manage new proposal types.
@@ -35,6 +35,5 @@ func handleSoftwareUpgradeProposal(ctx sdk.Context, k *keeper.Keeper, p *types.S
 
 //nolint:staticcheck // we are intentionally using a deprecated proposal here.
 func handleCancelSoftwareUpgradeProposal(ctx sdk.Context, k *keeper.Keeper, _ *types.CancelSoftwareUpgradeProposal) error {
-	k.ClearUpgradePlan(ctx)
-	return nil
+	return k.CancelUpgrade(ctx)
 }

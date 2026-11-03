@@ -43,7 +43,7 @@ func TestLegacyUpgradeWiringExecutesPlan(t *testing.T) {
 	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
 	versions := nibiru.ModuleManager.GetVersionMap()
 	require.Equal(t, versions, nibiru.UpgradeKeeper.GetModuleVersionMap(ctx))
-	require.Equal(t, uint64(2), versions[upgradetypes.ModuleName])
+	require.Equal(t, uint64(3), versions[upgradetypes.ModuleName])
 	require.Equal(t, upgradetypes.ModuleName, nibiru.ModuleManager.OrderBeginBlockers[0])
 
 	// Exercise the registered Msg service to preserve its governance authority
