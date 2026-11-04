@@ -1,12 +1,17 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"math"
 
+	"github.com/armon/go-metrics"
+
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/telemetry"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
@@ -25,6 +30,69 @@ var LaneRulesUpgradeName = upgrades.Upgrade2_23_0.UpgradeName
 // state, so enforcement starts at doneHeight+1.
 func laneRulesActiveAt(doneHeight, height int64) bool {
 	return doneHeight > 0 && height > doneHeight
+}
+
+// laneRulesActive reports whether this node applies the lane rules to a
+// proposal at height, under its app.toml "nibiru-bft.lane-rules" policy:
+// "auto" follows [laneRulesActiveAt] for [LaneRulesUpgradeName], "on"
+// always applies them, and "off" never does. PrepareProposal and
+// ProcessProposal both use it, so a node's proposals follow the rules it
+// votes with.
+func (app *NibiruApp) laneRulesActive(ctx sdk.Context, height int64) bool {
+	switch app.laneRulesMode {
+	case srvconfig.LaneRulesOn:
+		return true
+	case srvconfig.LaneRulesOff:
+		return false
+	default:
+		doneHeight := app.UpgradeKeeper.GetDoneHeight(ctx, LaneRulesUpgradeName)
+		return laneRulesActiveAt(doneHeight, height)
+	}
+}
+
+// SetLaneRulesMode overrides the app.toml "nibiru-bft.lane-rules" policy read
+// at construction. It is meant for tests and must not be called while the
+// node handles proposals.
+func (app *NibiruApp) SetLaneRulesMode(mode srvconfig.LaneRulesMode) {
+	app.laneRulesMode = mode
+}
+
+// Lane rule violation classes, wrapped by the errors of
+// [verifyProposalLaneRules] and used as the "reason" telemetry label.
+var (
+	errLaneRuleDecode      = errors.New("undecodable or unclassifiable tx")
+	errLaneRuleOrder       = errors.New("oracle price writes not first")
+	errLaneRulePriorityCap = errors.New("priority lane bytes over cap")
+	errLaneRulePanic       = errors.New("panic in lane rule check")
+)
+
+// laneRuleReason returns the telemetry label for a lane rule error.
+func laneRuleReason(err error) string {
+	switch {
+	case errors.Is(err, errLaneRuleDecode):
+		return "decode"
+	case errors.Is(err, errLaneRuleOrder):
+		return "order"
+	case errors.Is(err, errLaneRulePriorityCap):
+		return "priority_cap"
+	case errors.Is(err, errLaneRulePanic):
+		return "panic"
+	default:
+		return "other"
+	}
+}
+
+// Telemetry keys for the lane rules: rejected proposals in ProcessProposal
+// and PrepareProposal self-check fallbacks to an empty proposal.
+var (
+	laneRulesRejectMetric   = []string{"nibiru_bft", "lane_rules", "reject"}
+	laneRulesFallbackMetric = []string{"nibiru_bft", "lane_rules", "prepare_fallback"}
+)
+
+// countLaneRuleError increments metric with the reason label of err.
+func countLaneRuleError(metric []string, err error) {
+	telemetry.IncrCounterWithLabels(metric, 1,
+		[]metrics.Label{telemetry.NewLabel("reason", laneRuleReason(err))})
 }
 
 // priorityLanesMaxBytes returns the consensus byte cap on transactions in
@@ -67,11 +135,12 @@ func proposalBlockLanes(
 	for idx, txBytes := range txs {
 		tx, err := decode(txBytes)
 		if err != nil {
-			return nil, nil, fmt.Errorf("tx %d: undecodable: %w", idx, err)
+			return nil, nil, fmt.Errorf(
+				"tx %d: %w: %w", idx, errLaneRuleDecode, err)
 		}
 		lane, signers, ok := classifyProposalCandidate(tx, zeroGasActors)
 		if !ok {
-			return nil, nil, fmt.Errorf("tx %d: unclassifiable", idx)
+			return nil, nil, fmt.Errorf("tx %d: %w", idx, errLaneRuleDecode)
 		}
 		own[idx] = lane
 		entries[idx] = newProposalLaneEntry(lane, signers)
@@ -168,8 +237,8 @@ func verifyProposalLaneRules(
 	for idx := range lastPriceWrite {
 		if promoted[idx] != proposalLaneOracle {
 			return fmt.Errorf(
-				"tx %d in %s lane precedes oracle price write tx %d",
-				idx, promoted[idx], lastPriceWrite,
+				"%w: tx %d in %s lane precedes oracle price write tx %d",
+				errLaneRuleOrder, idx, promoted[idx], lastPriceWrite,
 			)
 		}
 	}
@@ -182,7 +251,8 @@ func verifyProposalLaneRules(
 		size := proposalTxSize(txs[idx])
 		if !proposalCapacityAllows(priorityBytes, size, priorityMaxBytes) {
 			return fmt.Errorf(
-				"tx %d: priority lane bytes exceed cap %d", idx, priorityMaxBytes,
+				"%w: tx %d exceeds cap %d", errLaneRulePriorityCap, idx,
+				priorityMaxBytes,
 			)
 		}
 		priorityBytes += size
@@ -201,7 +271,7 @@ func checkProposalLaneRules(
 ) (err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("panic in lane rule check: %v", recovered)
+			err = fmt.Errorf("%w: %v", errLaneRulePanic, recovered)
 		}
 	}()
 	return verifyProposalLaneRules(
@@ -215,12 +285,15 @@ func checkProposalLaneRules(
 // NewLaneOrderProcessProposalHandler wraps next, the stock ProcessProposal
 // handler, with the block lane rules of [verifyProposalLaneRules].
 //
-// Until [LaneRulesUpgradeName] has run and for its own height, it calls next
-// unchanged. Afterward, it rejects a proposal that has an undecodable or
-// unclassifiable transaction or that breaks a lane rule, and otherwise calls
-// next. Classification uses only the proposal bytes and committed state: the
-// x/sudo ZeroGasActors and consensus params that PrepareProposal also reads.
-// No client tags or node-local mempool state are involved.
+// While [NibiruApp.laneRulesActive] is false, it calls next unchanged. Under
+// the default "auto" policy, that is until [LaneRulesUpgradeName] has run
+// and at its own height. Afterward, it rejects a proposal that has an
+// undecodable or unclassifiable transaction or that breaks a lane rule, and
+// otherwise calls next. Classification uses only the proposal bytes and
+// committed state: the x/sudo ZeroGasActors and consensus params that
+// PrepareProposal also reads. No client tags or node-local mempool state are
+// involved. Each rejection is logged at Error level and counted in the
+// nibiru_bft.lane_rules.reject telemetry counter, labeled by reason.
 func NewLaneOrderProcessProposalHandler(
 	app *NibiruApp,
 	next sdk.ProcessProposalHandler,
@@ -229,14 +302,14 @@ func NewLaneOrderProcessProposalHandler(
 		ctx sdk.Context,
 		req abci.RequestProcessProposal,
 	) abci.ResponseProcessProposal {
-		doneHeight := app.UpgradeKeeper.GetDoneHeight(ctx, LaneRulesUpgradeName)
-		if !laneRulesActiveAt(doneHeight, req.Height) {
+		if !app.laneRulesActive(ctx, req.Height) {
 			return next(ctx, req)
 		}
 		if err := checkProposalLaneRules(ctx, app, req.Txs); err != nil {
-			ctx.Logger().Info(
+			countLaneRuleError(laneRulesRejectMetric, err)
+			ctx.Logger().Error(
 				"rejecting proposal: block lane rules",
-				"height", req.Height, "err", err,
+				"height", req.Height, "reason", laneRuleReason(err), "err", err,
 			)
 			return abci.ResponseProcessProposal{
 				Status: abci.ResponseProcessProposal_REJECT,

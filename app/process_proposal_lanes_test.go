@@ -16,6 +16,7 @@ import (
 	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
@@ -540,4 +541,32 @@ func TestLaneRulesUpgradeRegistered(t *testing.T) {
 		names = append(names, upgrade.UpgradeName)
 	}
 	require.Contains(t, names, app.LaneRulesUpgradeName)
+}
+
+// TestLaneRulesNodePolicy proves the app.toml "nibiru-bft.lane-rules"
+// policy: "on" enforces without the upgrade, as on a localnet or a chain
+// restarted from exported genesis, "off" stops enforcing after it, and
+// "auto" follows the upgrade.
+func TestLaneRulesNodePolicy(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	actors := setSaiProposalActors(&deps)
+	traderTx := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.trader, actors.perp, triggerFillMsg))
+	setPrices := buildProposalWasmTx(t, &deps,
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+	violating := [][]byte{traderTx, setPrices}
+	ctx := laneRulesCtx(&deps, 1_000_000, -1)
+	height := laneRulesDoneHeight + 1
+	t.Cleanup(func() { deps.App.SetLaneRulesMode(srvconfig.LaneRulesAuto) })
+
+	deps.App.SetLaneRulesMode(srvconfig.LaneRulesAuto)
+	require.True(t, processLaneRules(ctx, &deps, height, violating))
+	deps.App.SetLaneRulesMode(srvconfig.LaneRulesOn)
+	require.False(t, processLaneRules(ctx, &deps, height, violating))
+
+	activateLaneRules(t, &deps)
+	deps.App.SetLaneRulesMode(srvconfig.LaneRulesAuto)
+	require.False(t, processLaneRules(ctx, &deps, height, violating))
+	deps.App.SetLaneRulesMode(srvconfig.LaneRulesOff)
+	require.True(t, processLaneRules(ctx, &deps, height, violating))
 }

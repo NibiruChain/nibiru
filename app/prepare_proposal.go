@@ -267,15 +267,20 @@ func NewEVMPrepareProposalHandler(
 
 		// Defense in depth: once ProcessProposal enforces the lane rules, a
 		// proposal that breaks them would be rejected by every validator and
-		// lose the round. An empty proposal is always valid.
-		doneHeight := app.UpgradeKeeper.GetDoneHeight(ctx, LaneRulesUpgradeName)
-		if laneRulesActiveAt(doneHeight, req.Height) {
+		// lose the round. An empty proposal is always valid. This trades the
+		// inclusion of transactions for the round: if the check failed for a
+		// deterministic reason, every proposer would fall back to empty
+		// blocks while the trigger stays in the mempool, which is what the
+		// nibiru_bft.lane_rules.prepare_fallback counter and the
+		// "nibiru-bft.lane-rules" = "off" setting are for.
+		if app.laneRulesActive(ctx, req.Height) {
 			if err := verifyProposalLaneRules(
 				decode, selected, zeroGasActors, consensusPriorityMaxBytes,
 			); err != nil {
+				countLaneRuleError(laneRulesFallbackMetric, err)
 				ctx.Logger().Error(
 					"EVM PrepareProposal built a proposal breaking block lane rules",
-					"height", req.Height, "err", err,
+					"height", req.Height, "reason", laneRuleReason(err), "err", err,
 				)
 				return abci.ResponsePrepareProposal{Txs: nil}
 			}
