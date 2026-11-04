@@ -36,7 +36,7 @@ func (v *acceptingPrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) 
 // bytes, then restored on the decoded message for authenticated insertion.
 // Returns the original outer bytes that proposal selection must preserve.
 func insertProposalEVMTransaction(
-	t *testing.T,
+	t testing.TB,
 	deps *evmtest.TestDeps,
 	nonce uint64,
 	priority int64,
