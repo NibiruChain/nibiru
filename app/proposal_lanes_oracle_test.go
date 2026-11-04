@@ -3,6 +3,7 @@ package app_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -63,8 +64,9 @@ func setXOraclePlugin(t testing.TB, deps *evmtest.TestDeps, adapter string) {
 // address: from a proxy-mode adapter named by the x-oracle Wasm plugin. A
 // missing plugin and a fixture-mode adapter select the fallback without an
 // error log; a plugin naming an account with no contract makes the query
-// fail, which also selects the fallback. The lookup runs on its own gas
-// meter, so the caller's meter is not charged, even when nearly exhausted.
+// fail, which also selects the fallback, as does a query that panics. The
+// lookup runs on its own gas meter, so the caller's meter is not charged,
+// even when nearly exhausted.
 func TestResolveSaiOracleAddr(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	saiOracle := evmtest.NewEthPrivAcc().NibiruAddr.String()
@@ -94,6 +96,14 @@ func TestResolveSaiOracleAddr(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, saiOracle, addr)
 	require.Zero(t, meter.GasConsumed(), "caller's gas meter charged")
+
+	// The Wasm VM panics on a context without a block time. The bounded
+	// query turns that into an error, which selects the fallback.
+	addr, err = app.ResolveSaiOracleAddr(deps.App,
+		deps.Ctx().WithBlockTime(time.Time{}))
+	require.ErrorContains(t, err, "panicked")
+	require.NotErrorIs(t, err, app.ErrOracleAdapterNotConfigured)
+	require.Empty(t, addr)
 }
 
 // TestEVMPrepareProposalOracleLaneFollowsSaiOracle proves that, with the Sai
