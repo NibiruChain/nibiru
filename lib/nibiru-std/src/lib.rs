@@ -3,6 +3,7 @@ pub mod errors;
 pub mod math;
 pub mod proto;
 pub mod storage_txn;
+pub mod sudo;
 pub mod tutil;
 pub mod wasm;
 

@@ -76,8 +76,11 @@ type GenesisAccount struct {
 // BaseAppOption defines the additional operations that must be run on baseapp before app start.
 // AtGenesis defines if the app started should already have produced block or not.
 type StartupConfig struct {
-	ValidatorSet    func() (*cmttypes.ValidatorSet, error)
-	BaseAppOption   runtime.BaseAppOption
+	ValidatorSet  func() (*cmttypes.ValidatorSet, error)
+	BaseAppOption runtime.BaseAppOption
+	// InitApp registers explicitly wired modules after Build and before stores
+	// load or genesis runs. Injected keeper outputs are available to this hook.
+	InitApp         func(*runtime.App) error
 	AtGenesis       bool
 	GenesisAccounts []GenesisAccount
 }
@@ -144,6 +147,11 @@ func SetupWithConfiguration(appConfig depinject.Config, startupConfig StartupCon
 		app = appBuilder.Build(log.NewNopLogger(), dbm.NewMemDB(), nil, startupConfig.BaseAppOption)
 	} else {
 		app = appBuilder.Build(log.NewNopLogger(), dbm.NewMemDB(), nil)
+	}
+	if startupConfig.InitApp != nil {
+		if err := startupConfig.InitApp(app); err != nil {
+			return nil, fmt.Errorf("failed to initialize explicit modules: %w", err)
+		}
 	}
 	if err := app.Load(true); err != nil {
 		return nil, fmt.Errorf("failed to load app: %w", err)

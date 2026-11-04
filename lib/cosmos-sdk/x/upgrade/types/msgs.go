@@ -28,7 +28,7 @@ func (m *MsgSoftwareUpgrade) ValidateBasic() error {
 		return sdkerrors.Wrap(err, "authority")
 	}
 
-	if err := m.Plan.ValidateBasic(); err != nil {
+	if err := m.Plan.ValidateScheduleRequest(); err != nil {
 		return sdkerrors.Wrap(err, "plan")
 	}
 
