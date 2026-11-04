@@ -153,44 +153,206 @@ func proposalBlockLanes(
 	return own, promoted, nil
 }
 
-// orderPriorityProposalTxs reorders the transactions PrepareProposal selected
-// for [proposalLaneOracle] and [proposalLaneZeroGas] so the block satisfies
-// [verifyProposalLaneRules]. It recomputes promotion over the selected
-// transactions alone with [proposalBlockLanes] and groups them by the
-// recomputed lane, keeping relative order within each lane.
-//
-// The regrouping is needed because [splitNonEVMProposalTxs] promotes over
-// the full candidate list, but the block is a subsequence of it: the byte
-// cap, the gas limit, and the verifier skip candidates. A transaction
-// promoted into the oracle lane by a later same-signer price write whose
-// price write was skipped no longer has a reason to precede the other price
-// writes, and if it stayed ahead of them, every validator would reject the
-// block. Regrouping moves it behind the price writes instead of dropping it.
-//
-// Regrouping never reorders one signer's transactions (see
-// [promoteProposalLanes]), so each signer's sequence order, as verified,
-// still holds. It can move a transaction relative to transactions with which
-// it shares no signer. On error, which cannot happen for candidates that
-// [splitNonEVMProposalTxs] already decoded and classified, txs are returned
-// unchanged.
-func orderPriorityProposalTxs(
-	decode sdk.TxDecoder,
-	txs [][]byte,
-	zeroGasActors sudo.ZeroGasActors,
-) [][]byte {
-	_, lanes, err := proposalBlockLanes(decode, txs, zeroGasActors)
-	if err != nil {
-		return txs
+// choosePriorityProposalTxs picks the oracle and zero-gas candidates that
+// PrepareProposal will try to propose while the lane rules are active,
+// before any of them is verified. It walks lanes[proposalLaneOracle] then
+// lanes[proposalLaneZeroGas] from [splitNonEVMProposalTxs] and keeps each
+// candidate that fits the priority byte cap, the block byte limit maxBytes,
+// and the gas limit maxGas. A candidate that later fails verification still
+// counts against these budgets for this proposal; the EVM and default lanes
+// then get the space it would have used.
+func choosePriorityProposalTxs(
+	lanes [proposalLaneCount][]nonEVMProposalTx,
+	priorityMaxBytes, maxBytes, maxGas uint64,
+) []nonEVMProposalTx {
+	var chosen []nonEVMProposalTx
+	var priorityBytes, usedGas uint64
+	for _, lane := range []proposalLane{proposalLaneOracle, proposalLaneZeroGas} {
+		for _, candidate := range lanes[lane] {
+			size := proposalTxSize(candidate.txBytes)
+			if !proposalCapacityAllows(priorityBytes, size, priorityMaxBytes) ||
+				!proposalCapacityAllows(priorityBytes, size, maxBytes) ||
+				!proposalCapacityAllows(usedGas, candidate.gasWanted, maxGas) {
+				continue
+			}
+			chosen = append(chosen, candidate)
+			priorityBytes += size
+			usedGas += candidate.gasWanted
+		}
 	}
-	ordered := make([][]byte, 0, len(txs))
-	for lane := range proposalLaneCount {
-		for idx, txBytes := range txs {
-			if lanes[idx] == lane {
-				ordered = append(ordered, txBytes)
+	return chosen
+}
+
+// priorityProposalGroup is a run of priority transactions that
+// [verifyPriorityProposalTxs] verifies and proposes in order. A guarded
+// group is an oracle lane component holding promoted transactions as well
+// as price writes, whose price writes are proposed only when that keeps the
+// lane rules satisfiable.
+type priorityProposalGroup struct {
+	txs     []nonEVMProposalTx
+	guarded bool
+}
+
+// orderPriorityProposalTxs fixes the order in which PrepareProposal
+// verifies and proposes chosen, the result of [choosePriorityProposalTxs].
+// Ante has effects outside the signers' accounts, so the order in which
+// PrepareProposal verifies transactions must be the order it proposes them;
+// otherwise ProcessProposal, which replays ante in block order, can reject a
+// block that PrepareProposal accepted.
+//
+// Promotion is recomputed over chosen alone with [promoteProposalLanes],
+// because the budgets skip candidates: a transaction promoted for a price
+// write that was not chosen no longer precedes the price writes. The groups
+// are, in order:
+//
+//  1. Oracle lane components, grouped by shared signers, whose every member
+//     is a price write. Such a group never makes another transaction break
+//     the oracle-first rule.
+//  2. The other oracle lane components, guarded: each also holds
+//     transactions promoted ahead of a later price write of the component.
+//  3. The zero-gas lane.
+//
+// Components share no signers within the oracle lane, and each keeps its
+// candidate order, so no signer's transactions are reordered, and promotion
+// over the result equals promotion over chosen. The order is computed before
+// any transaction is verified.
+func orderPriorityProposalTxs(
+	chosen []nonEVMProposalTx,
+) []priorityProposalGroup {
+	entries := make([]proposalLaneEntry, len(chosen))
+	for idx, candidate := range chosen {
+		entries[idx] = candidate.entry
+	}
+	promoteProposalLanes(entries)
+
+	// Union the oracle lane by shared signer. component maps a signer to the
+	// index of the first oracle lane tx in its component; parents and the
+	// path halving in find keep the union-find near linear.
+	parents := make([]int, len(chosen))
+	find := func(idx int) int {
+		for parents[idx] != idx {
+			parents[idx] = parents[parents[idx]]
+			idx = parents[idx]
+		}
+		return idx
+	}
+	firstBySigner := make(map[string]int)
+	for idx, entry := range entries {
+		parents[idx] = idx
+		if entry.lane != proposalLaneOracle {
+			continue
+		}
+		for _, signer := range entry.signers {
+			if first, seen := firstBySigner[signer]; seen {
+				root, other := find(first), find(idx)
+				// Keep the earliest index as the root so components keep
+				// their order of first appearance.
+				parents[max(root, other)] = min(root, other)
+			} else {
+				firstBySigner[signer] = idx
 			}
 		}
 	}
-	return ordered
+
+	componentOf := make(map[int]int) // root index -> component position
+	var components []priorityProposalGroup
+	var zeroGas priorityProposalGroup
+	for idx, entry := range entries {
+		if entry.lane != proposalLaneOracle {
+			zeroGas.txs = append(zeroGas.txs, chosen[idx])
+			continue
+		}
+		root := find(idx)
+		pos, seen := componentOf[root]
+		if !seen {
+			pos = len(components)
+			componentOf[root] = pos
+			components = append(components, priorityProposalGroup{})
+		}
+		components[pos].txs = append(components[pos].txs, chosen[idx])
+		if chosen[idx].entry.lane != proposalLaneOracle {
+			components[pos].guarded = true
+		}
+	}
+
+	groups := make([]priorityProposalGroup, 0, len(components)+1)
+	for _, guarded := range []bool{false, true} {
+		for _, component := range components {
+			if component.guarded == guarded {
+				groups = append(groups, component)
+			}
+		}
+	}
+	return append(groups, zeroGas)
+}
+
+// verifyPriorityProposalTxs verifies groups from [orderPriorityProposalTxs]
+// in order and returns the transactions that passed, in that same order,
+// which is the order PrepareProposal proposes them.
+//
+// A verification failure can strand a promoted transaction: feeder A's call
+// X was verified and proposed ahead of A's price write, and then the price
+// write failed. X now has no later price write to justify it, so no price
+// write may follow it in the block. Since X cannot be withdrawn without
+// changing the state the later transactions were verified against, a price
+// write in a guarded group is proposed, and verified, only when every
+// transaction already proposed in its group is justified by the proposed
+// transactions of the group plus that price write, and no earlier guarded
+// group left a stranded transaction. A skipped price write stays in the
+// mempool for a later block. Price-write-only groups come first and cannot
+// strand anything, so a failure in a guarded group never costs them.
+//
+// The rule in ProcessProposal is not relaxed for this case instead, for
+// example by admitting before a price write any transaction whose signers
+// are all allowlisted senders, because that would let a proposer place
+// keeper and admin transactions ahead of the block's price writes, which is
+// what the rule exists to prevent.
+//
+// Every transaction proposed before the last proposed price write is then
+// justified by proposed transactions, and later transactions only add
+// promotions, so the block satisfies [verifyProposalLaneRules].
+func verifyPriorityProposalTxs(
+	groups []priorityProposalGroup,
+	verifier prepareProposalTxVerifier,
+) []nonEVMProposalTx {
+	var proposed []nonEVMProposalTx
+	stranded := false
+	for _, group := range groups {
+		var groupEntries []proposalLaneEntry
+		for _, candidate := range group.txs {
+			if group.guarded && candidate.entry.lane == proposalLaneOracle &&
+				(stranded || !allProposalEntriesOracle(
+					append(groupEntries, candidate.entry))) {
+				continue
+			}
+			if err := verifier.PrepareProposalVerifyTxBytes(candidate.txBytes); err != nil {
+				continue
+			}
+			proposed = append(proposed, candidate)
+			if group.guarded {
+				groupEntries = append(groupEntries, candidate.entry)
+			}
+		}
+		if group.guarded && !allProposalEntriesOracle(groupEntries) {
+			stranded = true
+		}
+	}
+	return proposed
+}
+
+// allProposalEntriesOracle reports whether [promoteProposalLanes] over
+// entries, in order, puts every entry in [proposalLaneOracle]. entries is
+// not modified.
+func allProposalEntriesOracle(entries []proposalLaneEntry) bool {
+	promoted := make([]proposalLaneEntry, len(entries))
+	copy(promoted, entries)
+	promoteProposalLanes(promoted)
+	for _, entry := range promoted {
+		if entry.lane != proposalLaneOracle {
+			return false
+		}
+	}
+	return true
 }
 
 // verifyProposalLaneRules checks the block lane rules that ProcessProposal

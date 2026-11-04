@@ -142,6 +142,9 @@ func isOraclePriceWriteMsg(raw []byte) bool {
 type nonEVMProposalTx struct {
 	txBytes   []byte
 	gasWanted uint64
+	// entry is the candidate's own lane from [classifyProposalTx], before
+	// promotion, and its tx-level signers.
+	entry proposalLaneEntry
 }
 
 // splitNonEVMProposalTxs decodes the CometBFT candidates once and groups the
@@ -187,12 +190,15 @@ func splitNonEVMProposalTxs(
 		if !ok || lane == proposalLaneEVM {
 			continue
 		}
-		item := nonEVMProposalTx{txBytes: txBytes}
+		item := nonEVMProposalTx{
+			txBytes: txBytes,
+			entry:   newProposalLaneEntry(lane, signers),
+		}
 		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
 			item.gasWanted = gasTx.GetGas()
 		}
 		items = append(items, item)
-		entries = append(entries, newProposalLaneEntry(lane, signers))
+		entries = append(entries, item.entry)
 	}
 
 	promoteProposalLanes(entries)

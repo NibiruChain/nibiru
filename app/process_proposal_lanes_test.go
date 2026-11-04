@@ -211,8 +211,10 @@ func TestLaneRulesInactiveBeforeUpgrade(t *testing.T) {
 // price write at sequence 1, which the verifier rejects. Feeder B's price
 // write follows. Kept in promotion order, A's call would precede B's price
 // write with no later A price write to justify it, and every validator would
-// reject the block. PrepareProposal regroups the selection so A's call moves
-// behind B's price write, and ProcessProposal accepts the result.
+// reject the block. PrepareProposal orders B's price-write-only group ahead of
+// A's group before verifying, so A's call follows B's price write, the
+// verification order equals the block order, and ProcessProposal accepts the
+// result.
 func TestLaneRulesPrepareRegroupsOrphanedPromotion(t *testing.T) {
 	f := newLaneRulesFixture(t)
 	a := f.actors
@@ -233,13 +235,13 @@ func TestLaneRulesPrepareRegroupsOrphanedPromotion(t *testing.T) {
 	require.False(t, f.process(feederACall, feederBPrices),
 		"unrepaired promotion order breaks the oracle-first rule")
 
-	verifier := &laneRulesPrepareVerifier{
+	verifier := &recordingPrepareVerifier{next: &laneRulesPrepareVerifier{
 		sequences: sequencePrepareVerifier{
 			decode: f.deps.App.GetTxConfig().TxDecoder(),
 			next:   map[string]uint64{},
 		},
 		reject: map[string]bool{string(feederAPrices): true},
-	}
+	}}
 	handler := app.NewEVMPrepareProposalHandler(f.deps.App, verifier)
 	response := handler(f.ctx, abci.RequestPrepareProposal{
 		Height:     laneRulesDoneHeight + 1,
@@ -249,6 +251,8 @@ func TestLaneRulesPrepareRegroupsOrphanedPromotion(t *testing.T) {
 
 	require.Equal(t,
 		[][]byte{feederBPrices, feederACall, f.evmTx}, response.Txs)
+	require.Equal(t, response.Txs, verifier.accepted,
+		"verified in the order proposed")
 	require.True(t, f.process(response.Txs...))
 }
 
@@ -543,6 +547,52 @@ func TestLaneRulesUpgradeRegistered(t *testing.T) {
 	require.Contains(t, names, app.LaneRulesUpgradeName)
 }
 
+// TestLaneRulesPrepareInactiveKeepsCandidateOrder proves that before the lane
+// rules are active, PrepareProposal builds the same block as without them:
+// oracle and zero-gas candidates are verified and proposed in promotion order
+// over all candidates, with no regrouping. Feeder A's call stays ahead of
+// feeder B's price write although A's own price write was rejected.
+func TestLaneRulesPrepareInactiveKeepsCandidateOrder(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(
+		deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	a := setSaiProposalActors(&deps)
+	otherContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	feederB := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders:   []string{a.feeder, feederB, a.keeper},
+		Contracts: []string{a.oracle, a.perp},
+	})
+
+	feederACall := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
+		proposalWasmExec(a.feeder, otherContract, `{"claim":{}}`))
+	feederAPrices := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{1},
+		proposalWasmExec(a.feeder, a.oracle, setPricesMsg))
+	feederBPrices := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
+		proposalWasmExec(feederB, a.oracle, setPricesMsg))
+
+	verifier := &recordingPrepareVerifier{next: &laneRulesPrepareVerifier{
+		sequences: sequencePrepareVerifier{
+			decode: deps.App.GetTxConfig().TxDecoder(),
+			next:   map[string]uint64{},
+		},
+		reject: map[string]bool{string(feederAPrices): true},
+	}}
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	response := handler(laneRulesCtx(&deps, 1_000_000, -1),
+		abci.RequestPrepareProposal{
+			Height:     laneRulesDoneHeight + 1,
+			MaxTxBytes: 1_000_000,
+			Txs:        [][]byte{feederACall, feederAPrices, feederBPrices},
+		})
+
+	require.Equal(t,
+		[][]byte{feederACall, feederBPrices, evmTx}, response.Txs)
+	require.Equal(t, response.Txs, verifier.accepted)
+}
+
 // TestLaneRulesNodePolicy proves the app.toml "nibiru-bft.lane-rules"
 // policy: "on" enforces without the upgrade, as on a localnet or a chain
 // restarted from exported genesis, "off" stops enforcing after it, and
@@ -569,4 +619,22 @@ func TestLaneRulesNodePolicy(t *testing.T) {
 	require.False(t, processLaneRules(ctx, &deps, height, violating))
 	deps.App.SetLaneRulesMode(srvconfig.LaneRulesOff)
 	require.True(t, processLaneRules(ctx, &deps, height, violating))
+}
+
+// recordingPrepareVerifier records, in order, the txs next accepted, so a
+// test can require that PrepareProposal verified exactly the txs it
+// proposed, in the order it proposed them.
+type recordingPrepareVerifier struct {
+	next     interface{ PrepareProposalVerifyTxBytes([]byte) error }
+	accepted [][]byte
+}
+
+func (v *recordingPrepareVerifier) PrepareProposalVerifyTxBytes(
+	txBytes []byte,
+) error {
+	if err := v.next.PrepareProposalVerifyTxBytes(txBytes); err != nil {
+		return err
+	}
+	v.accepted = append(v.accepted, txBytes)
+	return nil
 }

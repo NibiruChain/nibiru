@@ -135,17 +135,24 @@ const priorityLanesMaxBytesDivisor = 4
 // waits for a later block. Zero-gas actor keys do not send EVM transactions
 // in practice, so this case is accepted.
 //
-// Promotion runs over all candidates, but selection skips some, so the
-// selected oracle and zero-gas transactions are regrouped by promotion over
-// the selection alone ([orderPriorityProposalTxs]). A transaction promoted
-// for a price write that was then skipped moves behind the remaining price
-// writes, which keeps the block valid under the oracle-first rule.
+// Before the lane rules are active ([NibiruApp.laneRulesActive]), oracle and
+// zero-gas candidates are verified and selected one at a time in promotion
+// order. Once they are active, the handler first chooses the oracle and
+// zero-gas candidates that fit the budgets ([choosePriorityProposalTxs]),
+// then fixes their final order ([orderPriorityProposalTxs]), and only then
+// verifies them, in that order ([verifyPriorityProposalTxs]). The order in
+// which ante runs here is therefore the order in which ProcessProposal
+// replays it. Promotion is recomputed over the chosen transactions, so a
+// transaction promoted for a price write that was not chosen moves behind
+// the price writes, and a price write that would follow a transaction
+// stranded by a failed verification is skipped, which keeps the block valid
+// under the oracle-first rule.
 //
 // Every lane shares one byte and gas budget, filled in lane order; a candidate
 // that does not fit is skipped and stays in the CometBFT mempool. In addition,
 // lanes 1 and 2 together may use at most 1/[priorityLanesMaxBytesDivisor] of
-// RequestPrepareProposal.MaxTxBytes and of consensus Block.MaxBytes, filled
-// oracle lane first. The cap bounds what a compromised or runaway zero-gas
+// RequestPrepareProposal.MaxTxBytes, and, once the lane rules are active, of
+// consensus Block.MaxBytes, filled oracle lane first. The cap bounds what a compromised or runaway zero-gas
 // actor key, which pays no fees, can take from the EVM and default lanes.
 //
 // Gas is charged at each transaction's declared limit, because the default
@@ -208,30 +215,41 @@ func NewEVMPrepareProposalHandler(
 		decode := app.txConfig.TxDecoder()
 		zeroGasActors := app.SudoKeeper.GetZeroGasActors(ctx)
 		lanes := splitNonEVMProposalTxs(decode, req.Txs, zeroGasActors)
-		// Oracle and zero-gas lanes share the priority byte cap. The consensus
-		// cap from Block.MaxBytes is never tighter in practice, since
-		// MaxTxBytes is below Block.MaxBytes; taking the minimum makes the
-		// proposal fit ProcessProposal's check by construction.
+		laneRulesActive := app.laneRulesActive(ctx, req.Height)
 		consensusPriorityMaxBytes := priorityLanesMaxBytes(ctx)
-		priorityMaxBytes := min(
-			maxBytes/priorityLanesMaxBytesDivisor, consensusPriorityMaxBytes,
-		)
-		var priorityBytes uint64
-		for _, lane := range []proposalLane{proposalLaneOracle, proposalLaneZeroGas} {
-			for _, candidate := range lanes[lane] {
-				size := proposalTxSize(candidate.txBytes)
-				if !proposalCapacityAllows(priorityBytes, size, priorityMaxBytes) {
-					continue
-				}
-				if selectNonEVM(candidate) {
-					priorityBytes += size
+		if laneRulesActive {
+			// Oracle and zero-gas lanes share the priority byte cap. The
+			// consensus cap from Block.MaxBytes is never tighter in practice,
+			// since MaxTxBytes is below Block.MaxBytes; taking the minimum
+			// makes the proposal fit ProcessProposal's check by construction.
+			priorityMaxBytes := min(
+				maxBytes/priorityLanesMaxBytesDivisor, consensusPriorityMaxBytes,
+			)
+			chosen := choosePriorityProposalTxs(
+				lanes, priorityMaxBytes, maxBytes, maxGas)
+			for _, candidate := range verifyPriorityProposalTxs(
+				orderPriorityProposalTxs(chosen), verifier,
+			) {
+				selected = append(selected, candidate.txBytes)
+				usedBytes += proposalTxSize(candidate.txBytes)
+				usedGas += candidate.gasWanted
+			}
+		} else {
+			// Oracle and zero-gas lanes share the priority byte cap.
+			priorityMaxBytes := maxBytes / priorityLanesMaxBytesDivisor
+			var priorityBytes uint64
+			for _, lane := range []proposalLane{proposalLaneOracle, proposalLaneZeroGas} {
+				for _, candidate := range lanes[lane] {
+					size := proposalTxSize(candidate.txBytes)
+					if !proposalCapacityAllows(priorityBytes, size, priorityMaxBytes) {
+						continue
+					}
+					if selectNonEVM(candidate) {
+						priorityBytes += size
+					}
 				}
 			}
 		}
-		// Selection skipped some candidates, so promotion over the selected
-		// priority transactions can differ from promotion over all of them.
-		// Regroup so the block satisfies the oracle-first rule.
-		selected = orderPriorityProposalTxs(decode, selected, zeroGasActors)
 
 		// EVM lane: executable sender heads from the app EVM mempool.
 		chains := executableProposalChains(ctx, app.EvmKeeper, app.EvmMempool.Snapshot())
@@ -273,7 +291,7 @@ func NewEVMPrepareProposalHandler(
 		// blocks while the trigger stays in the mempool, which is what the
 		// nibiru_bft.lane_rules.prepare_fallback counter and the
 		// "nibiru-bft.lane-rules" = "off" setting are for.
-		if app.laneRulesActive(ctx, req.Height) {
+		if laneRulesActive {
 			if err := verifyProposalLaneRules(
 				decode, selected, zeroGasActors, consensusPriorityMaxBytes,
 			); err != nil {
