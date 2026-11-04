@@ -20,10 +20,11 @@ import (
 type proposalLane uint8
 
 const (
-	// proposalLaneOracle holds zero-gas actor transactions whose every message
-	// is an oracle price write ([isOraclePriceWriteMsg]), plus earlier
-	// transactions sharing a signer with them, which [splitNonEVMProposalTxs]
-	// promotes ahead of them.
+	// proposalLaneOracle holds zero-gas actor transactions that are oracle
+	// price writes ([isOraclePriceWriteTx]): every message is a price write
+	// and the first message's sender is the only tx-level signer. It also
+	// holds earlier transactions sharing a signer with them, which
+	// [splitNonEVMProposalTxs] promotes ahead of them.
 	proposalLaneOracle proposalLane = iota
 	// proposalLaneZeroGas holds the remaining zero-gas actor transactions
 	// ([ante.IsZeroGasActorTx]), such as keeper and admin calls.
@@ -52,8 +53,18 @@ func classifyProposalTx(tx sdk.Tx, zeroGasActors sudo.ZeroGasActors) proposalLan
 	}
 }
 
-// isOraclePriceWriteTx reports whether tx has at least one message and every
-// message is a Wasm execute carrying an oracle price write.
+// isOraclePriceWriteTx reports whether tx is an oracle price write: it has
+// at least one message, every message is a Wasm execute carrying an oracle
+// price write ([isOraclePriceWriteMsg]), and its only tx-level signer is the
+// first message's sender. A price write with a co-signer, a message from
+// another sender, or a distinct fee payer is not a price write; it is
+// classified by the remaining rules, normally into [proposalLaneZeroGas].
+//
+// The sole-signer condition keeps [promoteProposalLanes] from following a
+// price write to accounts other than its sender. Without it, any account that
+// co-signs or pays for a price write would have its earlier transactions, and
+// transitively those of every account sharing a transaction with it, admitted
+// ahead of the block's price writes.
 func isOraclePriceWriteTx(tx sdk.Tx) bool {
 	msgs := tx.GetMsgs()
 	if len(msgs) == 0 {
@@ -65,7 +76,25 @@ func isOraclePriceWriteTx(tx sdk.Tx) bool {
 			return false
 		}
 	}
-	return true
+	senders := msgs[0].GetSigners()
+	signers := proposalTxSigners(tx)
+	return len(senders) == 1 && len(signers) == 1 &&
+		signers[0].Equals(senders[0])
+}
+
+// proposalTxSigners returns the tx-level signers of a non-EVM transaction:
+// the message signers plus the fee payer, whose sequences ante checks. It
+// panics, through GetSigners, on an invalid bech32 signer or fee payer.
+func proposalTxSigners(tx sdk.Tx) (signers []sdk.AccAddress) {
+	// Ante checks and increments the sequence of every tx-level signer,
+	// which includes a fee payer that signs no message.
+	if sigTx, isSigTx := tx.(authsigning.SigVerifiableTx); isSigTx {
+		return sigTx.GetSigners()
+	}
+	for _, msg := range tx.GetMsgs() {
+		signers = append(signers, msg.GetSigners()...)
+	}
+	return signers
 }
 
 // oraclePriceWriteMsgKeys are the externally tagged (snake_case serde)
@@ -134,7 +163,10 @@ type nonEVMProposalTx struct {
 // fast-lane transaction also has its earlier transactions promoted. That
 // requires an allowlisted sender to sign a transaction naming that account,
 // and it is preferred to delaying the allowlisted sender's transaction behind
-// EVM.
+// EVM. A price write has its sender as its only signer
+// ([isOraclePriceWriteTx]), so promotion into [proposalLaneOracle] reaches
+// only the earlier transactions of price-write senders and of accounts that
+// share an earlier transaction with them.
 //
 // After the backward pass, lanes are non-decreasing along every signer's
 // transactions in candidate order, so no transaction at sequence N+1 is
@@ -240,13 +272,5 @@ func classifyProposalCandidate(
 	if lane == proposalLaneEVM {
 		return lane, nil, true
 	}
-	// Ante checks and increments the sequence of every tx-level signer,
-	// which includes a fee payer that signs no message.
-	if sigTx, isSigTx := tx.(authsigning.SigVerifiableTx); isSigTx {
-		return lane, sigTx.GetSigners(), true
-	}
-	for _, msg := range tx.GetMsgs() {
-		signers = append(signers, msg.GetSigners()...)
-	}
-	return lane, signers, true
+	return lane, proposalTxSigners(tx), true
 }

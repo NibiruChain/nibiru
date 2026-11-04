@@ -148,8 +148,9 @@ func TestLaneRulesRejectViolations(t *testing.T) {
 }
 
 // TestLaneRulesAcceptValidBlocks proves the lane rules accept a block with
-// no price write in any lane order, and a price write preceded by an earlier
-// tx from the same feeder or from the fee payer of a later price write.
+// no price write in any lane order and a price write preceded by an earlier
+// tx from the same feeder. A sponsored price write is classified zero-gas, so
+// its fee payer's earlier tx may not precede the block's price writes.
 func TestLaneRulesAcceptValidBlocks(t *testing.T) {
 	f := newLaneRulesFixture(t)
 	a := f.actors
@@ -170,12 +171,17 @@ func TestLaneRulesAcceptValidBlocks(t *testing.T) {
 	require.True(t, f.process(feederCall, setPrices, keeperFill, f.evmTx),
 		"promoted same-signer predecessor")
 
+	// A price write with a distinct fee payer is not a price write, so it
+	// promotes its payer's earlier tx only into the zero-gas lane, which may
+	// not precede a price write.
 	payerTx := buildSequencedProposalWasmTx(t, &f.deps, nil, []uint64{0},
 		proposalWasmExec(payer.String(), otherContract, `{"claim":{}}`))
 	sponsoredPrices := buildSequencedProposalWasmTx(t, &f.deps, payer,
 		[]uint64{2, 1}, proposalWasmExec(a.feeder, a.oracle, setPriceMsg))
-	require.True(t, f.process(payerTx, setPrices, sponsoredPrices, traderTx),
-		"promoted fee payer predecessor")
+	require.False(t, f.process(payerTx, setPrices, sponsoredPrices, traderTx),
+		"sponsored price write admits no fee payer predecessor")
+	require.True(t, f.process(setPrices, payerTx, sponsoredPrices, traderTx),
+		"sponsored price write in the zero-gas lane")
 }
 
 // TestLaneRulesInactiveBeforeUpgrade proves a block that breaks the lane

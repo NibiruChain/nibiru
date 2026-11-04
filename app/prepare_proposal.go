@@ -94,7 +94,8 @@ const priorityLanesMaxBytesDivisor = 4
 // [classifyProposalTx]:
 //
 //  1. Oracle lane: zero-gas actor transactions (x/sudo ZeroGasActors) whose
-//     every message is an oracle price write ([isOraclePriceWriteMsg]).
+//     every message is an oracle price write ([isOraclePriceWriteMsg]) and
+//     whose sender is the only tx-level signer ([isOraclePriceWriteTx]).
 //  2. Zero-gas lane: other zero-gas actor transactions, such as keeper and
 //     admin calls.
 //  3. EVM lane: the [proposalHeap] selection above.
