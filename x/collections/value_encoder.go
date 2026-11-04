@@ -15,6 +15,7 @@ var (
 	AccAddressValueEncoder ValueEncoder[sdk.AccAddress] = accAddressValueEncoder{}
 	DecValueEncoder        ValueEncoder[sdk.Dec]        = decValueEncoder{}
 	IntValueEncoder        ValueEncoder[sdkmath.Int]    = intValueEncoder{}
+	UintValueEncoder       ValueEncoder[sdkmath.Uint]   = uintValueEncoder{}
 	Uint64ValueEncoder     ValueEncoder[uint64]         = uint64Value{}
 )
 
@@ -85,25 +86,61 @@ func (a accAddressValueEncoder) Decode(b []byte) sdk.AccAddress        { return 
 func (a accAddressValueEncoder) Stringify(value sdk.AccAddress) string { return value.String() }
 func (a accAddressValueEncoder) Name() string                          { return "sdk.AccAddress" }
 
-// IntValueEncoder ValueEncoder[sdk.Int]
+// IntValueEncoder ValueEncoder[sdkmath.Int]
 
 type intValueEncoder struct{}
 
 func (intValueEncoder) Encode(value sdkmath.Int) []byte {
-	return IntKeyEncoder.Encode(value)
+	bz, err := value.Marshal()
+	if err != nil {
+		panic(fmt.Errorf("invalid math.Int %s: %w", value, err))
+	}
+	return bz
 }
 
 func (intValueEncoder) Decode(b []byte) sdkmath.Int {
-	_, got := IntKeyEncoder.Decode(b)
-	return got
+	n := new(sdkmath.Int)
+	if err := n.Unmarshal(b); err != nil {
+		panic(fmt.Errorf("decoding math.Int from bytes failed: %w", err))
+	}
+	return *n
 }
 
 func (intValueEncoder) Stringify(value sdkmath.Int) string {
-	return IntKeyEncoder.Stringify(value)
+	return value.String()
 }
 
 func (intValueEncoder) Name() string {
 	return "math.Int"
+}
+
+// UintValueEncoder ValueEncoder[sdkmath.Uint].
+
+type uintValueEncoder struct{}
+
+func (uintValueEncoder) Encode(value sdkmath.Uint) []byte {
+	if value.IsNil() {
+		panic("cannot encode invalid math.Uint")
+	}
+	be := value.BigInt().Bytes()
+	padded := make([]byte, maxIntKeyLen)
+	copy(padded[maxIntKeyLen-len(be):], be)
+	return padded
+}
+
+func (uintValueEncoder) Decode(b []byte) sdkmath.Uint {
+	if len(b) != maxIntKeyLen {
+		panic("invalid uint value length")
+	}
+	return sdkmath.NewUintFromBigInt(new(big.Int).SetBytes(b))
+}
+
+func (uintValueEncoder) Stringify(value sdkmath.Uint) string {
+	return value.String()
+}
+
+func (uintValueEncoder) Name() string {
+	return "math.Uint"
 }
 
 // IntKeyEncoder
