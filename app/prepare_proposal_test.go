@@ -637,9 +637,9 @@ func buildSequencedProposalWasmTx(
 // TestEVMPrepareProposalKeepsSignerOrderAcrossLanes proves lanes never move a
 // signer's tx ahead of its own earlier tx. The keeper sends A at sequence 0 to
 // an unlisted contract (default lane), then trigger fill B at sequence 1 to
-// the perp contract (zero-gas lane). B is demoted to the default lane behind
-// A, so both pass the sequence check and land in one block. The feeder's price
-// write is unaffected and still leads the block.
+// the perp contract (zero-gas lane). The keeper is an allowlisted sender, so A
+// is promoted to the zero-gas lane ahead of B, and both land before EVM. The
+// feeder's price write is unaffected and still leads the block.
 func TestEVMPrepareProposalKeepsSignerOrderAcrossLanes(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
@@ -668,14 +668,53 @@ func TestEVMPrepareProposalKeepsSignerOrderAcrossLanes(t *testing.T) {
 		Txs:        [][]byte{keeperA, keeperB, setPrices},
 	})
 
-	require.Equal(t, [][]byte{setPrices, evmTx, keeperA, keeperB}, response.Txs)
+	require.Equal(t, [][]byte{setPrices, keeperA, keeperB, evmTx}, response.Txs)
+}
+
+// TestEVMPrepareProposalPromotesFeederTxBeforePriceWrite proves an ordinary
+// feeder tx cannot push the feeder's price write behind EVM. The feeder sends
+// a default-lane call at sequence 0, then set_prices at sequence 1. The call
+// is promoted into the oracle lane ahead of the price write, so the price
+// write still precedes the keeper and EVM lanes and both pass the sequence
+// check.
+func TestEVMPrepareProposalPromotesFeederTxBeforePriceWrite(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	account := evmstate.NewEmptyAccount()
+	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))
+	evmTx := insertProposalEVMTransaction(t, &deps, 0, 100)
+	actors := setSaiProposalActors(&deps)
+	otherContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+
+	keeperFill := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
+		proposalWasmExec(actors.keeper, actors.perp, triggerFillMsg))
+	feederCall := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{0},
+		proposalWasmExec(actors.feeder, otherContract, `{"claim":{}}`))
+	setPrices := buildSequencedProposalWasmTx(t, &deps, nil, []uint64{1},
+		proposalWasmExec(actors.feeder, actors.oracle, setPricesMsg))
+
+	verifier := &sequencePrepareVerifier{
+		decode: deps.App.GetTxConfig().TxDecoder(),
+		next:   map[string]uint64{},
+	}
+	handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
+	ctx := deps.Ctx().WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxBytes: 1_000_000, MaxGas: -1},
+	})
+	response := handler(ctx, abci.RequestPrepareProposal{
+		MaxTxBytes: 1_000_000,
+		Txs:        [][]byte{keeperFill, feederCall, setPrices},
+	})
+
+	require.Equal(t,
+		[][]byte{feederCall, setPrices, keeperFill, evmTx}, response.Txs)
 }
 
 // TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes proves demotion counts
-// the fee payer as a signer, as ante does. Account P sends a default-lane tx
-// at sequence 0, then pays fees for a keeper trigger fill that carries P's
-// sequence 1. The fill shares signer P with the earlier tx, so it is demoted
-// behind it and both land in one block.
+// the fee payer as a signer, as ante does, and that promotion does not follow
+// signers outside the allowlist. Account P sends a default-lane tx at
+// sequence 0, then pays fees for a keeper trigger fill that carries P's
+// sequence 1. P is not allowlisted, so P's earlier tx is not promoted; the
+// fill is demoted behind it instead, and both land in one block.
 func TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
