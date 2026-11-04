@@ -248,9 +248,10 @@ func buildProposalWasmTx(
 // TestEVMPrepareProposalSelectsZeroGasActorTxsFirst proves that zero-gas
 // actor transactions are proposed ahead of every EVM transaction, so a trade
 // in the same block executes against the price written in that block. Every
-// message built by [buildProposalWasmExecuteTx] is a `set_prices` write, so
-// both the feeder's write and the keeper's batch to the perp and oracle
-// contracts land in the oracle lane. Every other non-EVM transaction,
+// message built by [buildProposalWasmExecuteTx] is a `set_prices` write, so,
+// with no x-oracle adapter in state, the fallback rule places both the
+// feeder's write and the keeper's batch to the perp and oracle contracts in
+// the oracle lane. Every other non-EVM transaction,
 // including a call to a zero-gas contract from an unlisted sender, a listed
 // sender calling an unlisted contract, or a batch that includes an unlisted
 // contract, keeps its place after the EVM transactions. Relative CometBFT
@@ -377,7 +378,8 @@ func setSaiProposalActors(deps *evmtest.TestDeps) saiProposalActors {
 }
 
 // TestEVMPrepareProposalOracleLaneBeforeZeroGasLane proves the four proposal
-// lanes: oracle price writes (`set_prices` and `set_price`), then other
+// lanes: oracle price writes (`set_prices` and `set_price`, matched by the
+// fallback rule since the test app has no x-oracle adapter), then other
 // zero-gas actor transactions, then EVM transactions, then everything else.
 // The keeper fill arrives first in RequestPrepareProposal.Txs but is proposed
 // after the price writes, so it executes against the price written in the
@@ -419,13 +421,14 @@ func TestEVMPrepareProposalOracleLaneBeforeZeroGasLane(t *testing.T) {
 	require.Equal(t, response.Txs, verifier.seen)
 }
 
-// TestEVMPrepareProposalOracleLaneRequiresPriceWrites proves the oracle lane
-// matches the message, not the contract: a zero-gas actor calling the oracle
-// contract with a non-price message, a batch mixing a price write with a
+// TestEVMPrepareProposalOracleLaneFallbackRequiresPriceWrites proves that
+// without an x-oracle adapter in state, the fallback oracle lane matches the
+// message, not the contract: a zero-gas actor calling the oracle contract
+// with a non-price message, a batch mixing a price write with a
 // non-price message, and a malformed or multi-key JSON message all fall to
 // the zero-gas lane. A `set_prices` call from an unlisted sender gets no
 // priority at all.
-func TestEVMPrepareProposalOracleLaneRequiresPriceWrites(t *testing.T) {
+func TestEVMPrepareProposalOracleLaneFallbackRequiresPriceWrites(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
 	require.NoError(t, deps.EvmKeeper.SetAccount(deps.Ctx(), deps.Sender.EthAddr, *account))

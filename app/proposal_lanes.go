@@ -3,13 +3,19 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/evm"
+	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	authsigning "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
+	"github.com/NibiruChain/nibiru/v2/x/collections"
+	xoracle "github.com/NibiruChain/nibiru/v2/x/oracle"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -20,10 +26,11 @@ import (
 type proposalLane uint8
 
 const (
-	// proposalLaneOracle holds zero-gas actor transactions whose every message
-	// is an oracle price write ([isOraclePriceWriteMsg]), plus earlier
-	// transactions sharing a signer with them, which [splitNonEVMProposalTxs]
-	// promotes ahead of them.
+	// proposalLaneOracle holds zero-gas actor transactions that call the Sai
+	// oracle contract ([isOracleLaneTx]): every message executes the oracle,
+	// and the first message's sender is the only tx-level signer. It also
+	// holds earlier transactions sharing a signer with them, which
+	// [splitNonEVMProposalTxs] promotes ahead of them.
 	proposalLaneOracle proposalLane = iota
 	// proposalLaneZeroGas holds the remaining zero-gas actor transactions
 	// ([ante.IsZeroGasActorTx]), such as keeper and admin calls.
@@ -38,34 +45,89 @@ const (
 )
 
 // classifyProposalTx assigns tx to its [proposalLane]. zeroGasActors is the
-// x/sudo allowlist from the proposal's state.
-func classifyProposalTx(tx sdk.Tx, zeroGasActors sudo.ZeroGasActors) proposalLane {
+// x/sudo allowlist and oracle the [oracleLaneRule], both from the proposal's
+// state.
+func classifyProposalTx(
+	tx sdk.Tx,
+	zeroGasActors sudo.ZeroGasActors,
+	oracle oracleLaneRule,
+) proposalLane {
 	switch {
 	case evm.IsEthTx(tx):
 		return proposalLaneEVM
 	case !ante.IsZeroGasActorTx(tx, zeroGasActors):
 		return proposalLaneDefault
-	case isOraclePriceWriteTx(tx):
+	case isOracleLaneTx(tx, oracle):
 		return proposalLaneOracle
 	default:
 		return proposalLaneZeroGas
 	}
 }
 
-// isOraclePriceWriteTx reports whether tx has at least one message and every
-// message is a Wasm execute carrying an oracle price write.
-func isOraclePriceWriteTx(tx sdk.Tx) bool {
+// oracleLaneRule identifies calls to the Sai oracle contract for
+// [proposalLaneOracle]. PrepareProposal builds it once per proposal with
+// [resolveOracleLaneRule].
+type oracleLaneRule struct {
+	// saiOracle is the bech32 address of the Sai oracle contract, as the
+	// x-oracle adapter reports it. Empty selects the fallback: a message
+	// counts as an oracle call when it is a price write by its JSON key
+	// ([isOraclePriceWriteMsg]), whatever contract it executes.
+	saiOracle string
+}
+
+// matches reports whether msg counts as a call to the Sai oracle: it executes
+// saiOracle, or, under the fallback, it carries a price write.
+func (r oracleLaneRule) matches(msg *wasm.MsgExecuteContract) bool {
+	if r.saiOracle != "" {
+		return msg.Contract == r.saiOracle
+	}
+	return isOraclePriceWriteMsg(msg.Msg)
+}
+
+// isOracleLaneTx reports whether tx belongs in [proposalLaneOracle]: it has at
+// least one message, every message is a Wasm execute that oracle matches
+// ([oracleLaneRule.matches]), and its only tx-level signer is the first
+// message's sender. Any execute of the oracle contract qualifies, including
+// price writes, expiration updates, and permission or admin calls. A call
+// with a co-signer, a message from another sender, or a distinct fee payer
+// does not; a fee payer equal to the sender adds no signer. Such a call is
+// classified by the remaining rules, normally into [proposalLaneZeroGas].
+//
+// The sole-signer condition keeps [splitNonEVMProposalTxs] from following an
+// oracle call to accounts other than its sender. Without it, any account that
+// co-signs or pays for an oracle call would have its earlier transactions,
+// and transitively those of every account sharing a transaction with it,
+// proposed ahead of the block's oracle calls.
+func isOracleLaneTx(tx sdk.Tx, oracle oracleLaneRule) bool {
 	msgs := tx.GetMsgs()
 	if len(msgs) == 0 {
 		return false
 	}
 	for _, msg := range msgs {
 		msgExec, ok := msg.(*wasm.MsgExecuteContract)
-		if !ok || !isOraclePriceWriteMsg(msgExec.Msg) {
+		if !ok || !oracle.matches(msgExec) {
 			return false
 		}
 	}
-	return true
+	senders := msgs[0].GetSigners()
+	signers := proposalTxSigners(tx)
+	return len(senders) == 1 && len(signers) == 1 &&
+		signers[0].Equals(senders[0])
+}
+
+// proposalTxSigners returns the tx-level signers of a non-EVM transaction:
+// the message signers plus the fee payer, whose sequences ante checks. It
+// panics, through GetSigners, on an invalid bech32 signer or fee payer.
+func proposalTxSigners(tx sdk.Tx) (signers []sdk.AccAddress) {
+	// Ante checks and increments the sequence of every tx-level signer,
+	// which includes a fee payer that signs no message.
+	if sigTx, isSigTx := tx.(authsigning.SigVerifiableTx); isSigTx {
+		return sigTx.GetSigners()
+	}
+	for _, msg := range tx.GetMsgs() {
+		signers = append(signers, msg.GetSigners()...)
+	}
+	return signers
 }
 
 // oraclePriceWriteMsgKeys are the externally tagged (snake_case serde)
@@ -76,11 +138,13 @@ var oraclePriceWriteMsgKeys = map[string]struct{}{
 }
 
 // isOraclePriceWriteMsg reports whether a Wasm execute message is a JSON
-// object with exactly one top-level key naming an oracle price write. It
-// matches the message rather than a contract address, so no per-network
-// configuration is needed. Malformed JSON, trailing data, or extra keys return
-// false. The variant payload is not validated; the contract does that on
-// execution.
+// object with exactly one top-level key naming an oracle price write. It is
+// the fallback of [oracleLaneRule] when the Sai oracle address cannot be read
+// from state, as on a localnet or in a test without the x-oracle adapter: it
+// matches the message rather than a contract address, so it needs no
+// configuration, but it admits only price writes, to any contract. Malformed
+// JSON, trailing data, or extra keys return false. The variant payload is not
+// validated; the contract does that on execution.
 func isOraclePriceWriteMsg(raw []byte) bool {
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
@@ -134,7 +198,17 @@ type nonEVMProposalTx struct {
 // fast-lane transaction also has its earlier transactions promoted. That
 // requires an allowlisted sender to sign a transaction naming that account,
 // and it is preferred to delaying the allowlisted sender's transaction behind
-// EVM.
+// EVM. An oracle-lane transaction has its sender as its only signer
+// ([isOracleLaneTx]), so promotion into [proposalLaneOracle] reaches only the
+// earlier transactions of oracle callers and of accounts that share an
+// earlier transaction with them.
+//
+// Promotion runs over all candidates, before verification and the byte and
+// gas budgets skip any of them. A transaction promoted for an oracle call that
+// is then skipped keeps its oracle-lane position. The block stays valid, since
+// the transaction still precedes its signer's later transactions and
+// ProcessProposal does not check lane order; the transaction merely leads the
+// block without the oracle call that justified it.
 //
 // After the backward pass, lanes are non-decreasing along every signer's
 // transactions in candidate order, so no transaction at sequence N+1 is
@@ -143,6 +217,7 @@ func splitNonEVMProposalTxs(
 	decode sdk.TxDecoder,
 	candidates [][]byte,
 	zeroGasActors sudo.ZeroGasActors,
+	oracle oracleLaneRule,
 ) (lanes [proposalLaneCount][]nonEVMProposalTx) {
 	type classified struct {
 		candidate nonEVMProposalTx
@@ -155,7 +230,7 @@ func splitNonEVMProposalTxs(
 		if err != nil {
 			continue
 		}
-		lane, signers, ok := classifyProposalCandidate(tx, zeroGasActors)
+		lane, signers, ok := classifyProposalCandidate(tx, zeroGasActors, oracle)
 		if !ok || lane == proposalLaneEVM {
 			continue
 		}
@@ -203,23 +278,113 @@ func splitNonEVMProposalTxs(
 func classifyProposalCandidate(
 	tx sdk.Tx,
 	zeroGasActors sudo.ZeroGasActors,
+	oracle oracleLaneRule,
 ) (lane proposalLane, signers []sdk.AccAddress, ok bool) {
 	defer func() {
 		if recover() != nil {
 			lane, signers, ok = proposalLaneDefault, nil, false
 		}
 	}()
-	lane = classifyProposalTx(tx, zeroGasActors)
+	lane = classifyProposalTx(tx, zeroGasActors, oracle)
 	if lane == proposalLaneEVM {
 		return lane, nil, true
 	}
-	// Ante checks and increments the sequence of every tx-level signer,
-	// which includes a fee payer that signs no message.
-	if sigTx, isSigTx := tx.(authsigning.SigVerifiableTx); isSigTx {
-		return lane, sigTx.GetSigners(), true
+	return lane, proposalTxSigners(tx), true
+}
+
+// oracleLaneQueryGasLimit bounds the gas of the x-oracle adapter config query
+// in [resolveOracleLaneRule], in SDK gas. It matches the x-consensus params
+// query limit (consensus QueryGasLimit), which is sized for one storage read
+// plus the fixed contract instance cost with ample headroom.
+const oracleLaneQueryGasLimit uint64 = 1_000_000
+
+// errOracleAdapterNotConfigured reports that state names no x-oracle adapter
+// or that the adapter runs in fixture mode, so there is no Sai oracle address
+// to match. It selects the [oracleLaneRule] fallback without an error log.
+var errOracleAdapterNotConfigured = errors.New("x-oracle adapter has no Sai oracle")
+
+// resolveOracleLaneRule returns the [oracleLaneRule] for one proposal from
+// the committed state in ctx. It reads the Sai oracle address in two steps:
+//
+//  1. The EVM params Wasm plugin [evm.WasmPluginNameXOracle] names the
+//     x-oracle adapter contract.
+//  2. A smart query `{"config":{}}` to the adapter returns its mode; in proxy
+//     mode, mode.proxy.sai_oracle_addr is the Sai oracle contract.
+//
+// The query runs through [wasmkeeper.Keeper.QuerySmartBounded]: on a branch of
+// ctx that is discarded, under its own gas meter limited to
+// [oracleLaneQueryGasLimit], with panics turned into errors. It therefore
+// consumes none of the block's gas, writes no state, and cannot panic out of
+// PrepareProposal; a recover here also covers the plugin read.
+//
+// On any failure the rule falls back to matching price writes by message key
+// ([isOraclePriceWriteMsg]), so a chain without the adapter, such as a
+// localnet or a test app, keeps an oracle lane. The returned error says why:
+// [errOracleAdapterNotConfigured] when the plugin is absent or the adapter is
+// in fixture mode, and another error when the query or its response fails.
+func resolveOracleLaneRule(
+	ctx sdk.Context,
+	evmKeeper *evmstate.Keeper,
+	wasmKeeper wasmkeeper.Keeper,
+) (rule oracleLaneRule, err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			rule, err = oracleLaneRule{}, fmt.Errorf(
+				"reading the Sai oracle address panicked: %v", recovered)
+		}
+	}()
+	saiOracle, err := saiOracleAddr(ctx, evmKeeper, wasmKeeper)
+	if err != nil {
+		return oracleLaneRule{}, err
 	}
-	for _, msg := range tx.GetMsgs() {
-		signers = append(signers, msg.GetSigners()...)
+	return oracleLaneRule{saiOracle: saiOracle.String()}, nil
+}
+
+// saiOracleAddr performs the lookup of [resolveOracleLaneRule].
+func saiOracleAddr(
+	ctx sdk.Context,
+	evmKeeper *evmstate.Keeper,
+	wasmKeeper wasmkeeper.Keeper,
+) (sdk.AccAddress, error) {
+	readCtx, _ := ctx.CacheContext()
+	readCtx = readCtx.WithGasMeter(sdk.NewGasMeter(oracleLaneQueryGasLimit))
+	adapter, err := evmKeeper.EVMState().WasmPlugins.Get(
+		readCtx, evm.WasmPluginNameXOracle)
+	if errors.Is(err, collections.ErrNotFound) {
+		return nil, errOracleAdapterNotConfigured
 	}
-	return lane, signers, true
+	if err != nil {
+		return nil, fmt.Errorf("reading the x-oracle Wasm plugin: %w", err)
+	}
+	if adapter.Empty() {
+		return nil, errOracleAdapterNotConfigured
+	}
+
+	req, err := json.Marshal(xoracle.XOracleAdapterQueryMsg{Config: &struct{}{}})
+	if err != nil {
+		return nil, err
+	}
+	respBz, _, err := wasmKeeper.QuerySmartBounded(
+		ctx, adapter, req, oracleLaneQueryGasLimit)
+	if err != nil {
+		return nil, fmt.Errorf("querying the x-oracle adapter config: %w", err)
+	}
+	var resp struct {
+		Mode xoracle.XOracleAdapterMode `json:"mode"`
+	}
+	if err := json.Unmarshal(respBz, &resp); err != nil {
+		return nil, fmt.Errorf("decoding the x-oracle adapter config: %w", err)
+	}
+	switch {
+	case resp.Mode.Proxy != nil:
+		saiOracle, err := sdk.AccAddressFromBech32(resp.Mode.Proxy.SaiOracleAddr)
+		if err != nil {
+			return nil, fmt.Errorf("x-oracle adapter Sai oracle address: %w", err)
+		}
+		return saiOracle, nil
+	case resp.Mode.Fixture != nil:
+		return nil, errOracleAdapterNotConfigured
+	default:
+		return nil, fmt.Errorf("x-oracle adapter config has no known mode: %s", respBz)
+	}
 }

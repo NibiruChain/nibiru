@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"container/heap"
+	"errors"
 	"math"
 	"sort"
 
@@ -92,19 +93,27 @@ const priorityLanesMaxBytesDivisor = 4
 // The proposal is built in [proposalLane] order, as assigned by
 // [classifyProposalTx]:
 //
-//  1. Oracle lane: zero-gas actor transactions (x/sudo ZeroGasActors) whose
-//     every message is an oracle price write ([isOraclePriceWriteMsg]).
-//  2. Zero-gas lane: other zero-gas actor transactions, such as keeper and
-//     admin calls.
+//  1. Oracle lane: zero-gas actor transactions (x/sudo ZeroGasActors) that
+//     call the Sai oracle contract, signed by their sender alone
+//     ([isOracleLaneTx]). Any oracle execute qualifies: price writes,
+//     expiration updates, and permission or admin calls.
+//  2. Zero-gas lane: other zero-gas actor transactions, such as keeper calls
+//     and oracle calls with a co-signer or a distinct fee payer.
 //  3. EVM lane: the [proposalHeap] selection above.
 //  4. Default lane: all other non-EVM transactions.
+//
+// The Sai oracle address is read once per proposal from committed state,
+// through the x-oracle adapter named by the EVM params Wasm plugins
+// ([resolveOracleLaneRule]). When the plugin is missing, the adapter is in
+// fixture mode, or the query fails, the oracle lane falls back to price
+// writes matched by message key ([isOraclePriceWriteMsg]).
 //
 // Lanes 1, 2, and 4 come from RequestPrepareProposal.Txs and keep their
 // CometBFT-provided relative order. EVM transactions present in req.Txs are
 // ignored so proposal construction does not rebuild the EVM index from Comet
 // candidates.
 //
-// Putting price writes first means that, in a block that contains a price
+// Putting oracle calls first means that, in a block that contains a price
 // write, every later transaction, including keeper actions and trades
 // submitted as EVM transactions, executes against that write rather than the
 // previous block's price. This holds only when all of the following are true:
@@ -122,8 +131,10 @@ const priorityLanesMaxBytesDivisor = 4
 //
 // A signer's non-EVM transactions are never reordered across lanes. Earlier
 // candidates are promoted to the lane of a later candidate sharing a signer,
-// so a fast-lane transaction keeps its lane (see [splitNonEVMProposalTxs]). This does not track the EVM
-// mempool, so if one account has an EVM transaction at nonce N and a zero-gas
+// so a fast-lane transaction keeps its lane (see [splitNonEVMProposalTxs]).
+// Promotion is computed over all candidates before selection, so a promoted
+// transaction keeps its lane even when the transaction that promoted it is
+// skipped; the block stays valid. This does not track the EVM mempool, so if one account has an EVM transaction at nonce N and a zero-gas
 // Cosmos transaction at sequence N+1, the Cosmos transaction is verified first,
 // fails its sequence check, and waits for a later block. Zero-gas actor keys do
 // not send EVM transactions in practice, so this case is accepted.
@@ -189,8 +200,14 @@ func NewEVMPrepareProposalHandler(
 			return true
 		}
 
+		oracle, err := resolveOracleLaneRule(ctx, app.EvmKeeper, app.WasmKeeper)
+		if err != nil && !errors.Is(err, errOracleAdapterNotConfigured) {
+			ctx.Logger().Error(
+				"oracle lane falls back to price writes by message key", "err", err)
+		}
 		lanes := splitNonEVMProposalTxs(
 			app.txConfig.TxDecoder(), req.Txs, app.SudoKeeper.GetZeroGasActors(ctx),
+			oracle,
 		)
 		// Oracle and zero-gas lanes share the priority byte cap.
 		priorityMaxBytes := maxBytes / priorityLanesMaxBytesDivisor
