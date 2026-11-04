@@ -638,3 +638,40 @@ func (v *recordingPrepareVerifier) PrepareProposalVerifyTxBytes(
 	v.accepted = append(v.accepted, txBytes)
 	return nil
 }
+
+// TestLaneRulesCheckLastPriceWrite pins that the oracle-first rule applies up
+// to the last price write in the block, not the first. Between feeder A's and
+// feeder B's price writes, a trader tx or an EVM tx is rejected. Feeder B's
+// own call at sequence 0, promoted by B's later price write, is accepted. A
+// call from A at sequence 1 after A's price write is promoted by nothing
+// later, so it is rejected before B's price write.
+func TestLaneRulesCheckLastPriceWrite(t *testing.T) {
+	f := newLaneRulesFixture(t)
+	a := f.actors
+	otherContract := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	feederB := evmtest.NewEthPrivAcc().NibiruAddr.String()
+	f.deps.App.SudoKeeper.ZeroGasActors.Set(f.deps.Ctx(), sudo.ZeroGasActors{
+		Senders:   []string{a.feeder, feederB, a.keeper},
+		Contracts: []string{a.oracle, a.perp},
+	})
+
+	pricesA := buildSequencedProposalWasmTx(t, &f.deps, nil, []uint64{0},
+		proposalWasmExec(a.feeder, a.oracle, setPricesMsg))
+	callA := buildSequencedProposalWasmTx(t, &f.deps, nil, []uint64{1},
+		proposalWasmExec(a.feeder, otherContract, `{"claim":{}}`))
+	callB := buildSequencedProposalWasmTx(t, &f.deps, nil, []uint64{0},
+		proposalWasmExec(feederB, otherContract, `{"claim":{}}`))
+	pricesB := buildSequencedProposalWasmTx(t, &f.deps, nil, []uint64{1},
+		proposalWasmExec(feederB, a.oracle, setPriceMsg))
+	traderTx := buildProposalWasmTx(t, &f.deps,
+		proposalWasmExec(a.trader, a.perp, triggerFillMsg))
+
+	require.False(t, f.process(pricesA, traderTx, pricesB),
+		"trader tx between price writes")
+	require.False(t, f.process(pricesA, f.evmTx, pricesB),
+		"EVM tx between price writes")
+	require.False(t, f.process(pricesA, callA, pricesB),
+		"call promoted only by an earlier price write")
+	require.True(t, f.process(pricesA, callB, pricesB, f.evmTx, traderTx),
+		"call promoted by a later same-signer price write")
+}
