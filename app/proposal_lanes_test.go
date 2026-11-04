@@ -45,13 +45,13 @@ func TestIsOraclePriceWriteMsg(t *testing.T) {
 // tests: two allowlisted feeders, a payer off the allowlist, and the oracle
 // and perp contracts on it.
 type classifyFixture struct {
-	t                          *testing.T
+	t                          testing.TB
 	feeder, otherFeeder, payer sdk.AccAddress
 	oracle, perp               string
 	zeroGasActors              sudo.ZeroGasActors
 }
 
-func newClassifyFixture(t *testing.T) classifyFixture {
+func newClassifyFixture(t testing.TB) classifyFixture {
 	newAddr := func(seed byte) sdk.AccAddress {
 		return sdk.AccAddress(bytes.Repeat([]byte{seed}, 20))
 	}
