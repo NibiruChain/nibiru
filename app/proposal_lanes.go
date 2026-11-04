@@ -22,8 +22,8 @@ type proposalLane uint8
 const (
 	// proposalLaneOracle holds zero-gas actor transactions whose every message
 	// is an oracle price write ([isOraclePriceWriteMsg]), plus earlier
-	// transactions from the same allowlisted sender that
-	// [splitNonEVMProposalTxs] promotes ahead of them.
+	// transactions sharing a signer with them, which [splitNonEVMProposalTxs]
+	// promotes ahead of them.
 	proposalLaneOracle proposalLane = iota
 	// proposalLaneZeroGas holds the remaining zero-gas actor transactions
 	// ([ante.IsZeroGasActorTx]), such as keeper and admin calls.
@@ -122,25 +122,23 @@ type nonEVMProposalTx struct {
 // panics is also dropped ([classifyProposalCandidate]).
 //
 // Lanes never reorder one signer's transactions, fee payers included, since
-// ante checks every tx-level signer's account sequence. Two passes keep that
-// order:
+// ante checks every tx-level signer's account sequence. Instead of pushing a
+// later transaction back, the split promotes earlier ones: walking the
+// candidates backward, each moves up to the earliest lane of any later
+// candidate that shares a signer with it. A fast-lane transaction therefore
+// keeps its lane, and same-signer transactions that precede it ride ahead of
+// it. A feeder that sends any tx at sequence N before its price write at N+1
+// keeps the price write in [proposalLaneOracle], with the earlier tx first.
 //
-//  1. Promotion, for allowlisted senders only (ZeroGasActors.Senders): a
-//     candidate moves up to the earliest lane of any later candidate that
-//     shares an allowlisted signer with it. A feeder that sends any tx at
-//     sequence N before its price write at N+1 therefore keeps the price write
-//     in [proposalLaneOracle], with the earlier tx ahead of it, instead of
-//     pushing the price write behind EVM.
-//  2. Demotion, for every signer: a candidate moves down to the latest lane
-//     already holding an earlier candidate that shares a signer with it. This
-//     covers signers outside the allowlist, such as a fee payer, whose
-//     transactions never gain priority. After pass 1 it moves a candidate
-//     only when some transaction in its chain of shared signers has a signer
-//     outside the allowlist.
+// Promotion follows every shared signer, so a co-signer or fee payer of a
+// fast-lane transaction also has its earlier transactions promoted. That
+// requires an allowlisted sender to sign a transaction naming that account,
+// and it is preferred to delaying the allowlisted sender's transaction behind
+// EVM.
 //
-// Without these passes, a transaction at sequence N+1 could be verified ahead
-// of the same account's transaction at N, fail the sequence check, and miss
-// the block.
+// After the backward pass, lanes are non-decreasing along every signer's
+// transactions in candidate order, so no transaction at sequence N+1 is
+// verified ahead of the same account's transaction at N.
 func splitNonEVMProposalTxs(
 	decode sdk.TxDecoder,
 	candidates [][]byte,
@@ -151,11 +149,6 @@ func splitNonEVMProposalTxs(
 		lane      proposalLane
 		signers   []string
 	}
-	allowlisted := make(map[string]struct{}, len(zeroGasActors.Senders))
-	for _, sender := range zeroGasActors.Senders {
-		allowlisted[sender] = struct{}{}
-	}
-
 	txs := make([]classified, 0, len(candidates))
 	for _, txBytes := range candidates {
 		tx, err := decode(txBytes)
@@ -180,38 +173,21 @@ func splitNonEVMProposalTxs(
 		txs = append(txs, item)
 	}
 
-	// Pass 1, backward: earliestLater maps an allowlisted signer to the
-	// earliest lane among its later candidates.
+	// earliestLater maps a signer to the lane of its nearest later
+	// candidate, which after promotion is the earliest lane of all of them.
 	earliestLater := make(map[string]proposalLane)
 	for i := len(txs) - 1; i >= 0; i-- {
 		for _, signer := range txs[i].signers {
-			if _, ok := allowlisted[signer]; !ok {
-				continue
-			}
 			if next, seen := earliestLater[signer]; seen && next < txs[i].lane {
 				txs[i].lane = next
 			}
 		}
 		for _, signer := range txs[i].signers {
-			if _, ok := allowlisted[signer]; ok {
-				earliestLater[signer] = txs[i].lane
-			}
+			earliestLater[signer] = txs[i].lane
 		}
 	}
-
-	// Pass 2, forward: latestLane maps any signer to the latest lane holding
-	// one of its earlier candidates.
-	latestLane := make(map[string]proposalLane)
-	for i := range txs {
-		for _, signer := range txs[i].signers {
-			if prev, seen := latestLane[signer]; seen && prev > txs[i].lane {
-				txs[i].lane = prev
-			}
-		}
-		for _, signer := range txs[i].signers {
-			latestLane[signer] = txs[i].lane
-		}
-		lanes[txs[i].lane] = append(lanes[txs[i].lane], txs[i].candidate)
+	for _, item := range txs {
+		lanes[item.lane] = append(lanes[item.lane], item.candidate)
 	}
 	return lanes
 }

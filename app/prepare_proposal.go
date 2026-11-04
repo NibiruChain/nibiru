@@ -120,10 +120,9 @@ const priorityLanesMaxBytesDivisor = 4
 // Closing the reap gap and enforcing lane order in ProcessProposal are scope
 // for the lane-enforcement follow-up; this handler is proposer-local.
 //
-// A signer's non-EVM transactions are never reordered across lanes. An
-// allowlisted sender's earlier candidates are promoted to the lane of its
-// later ones, so a feeder's price write stays first; other signers' later
-// candidates are demoted (see [splitNonEVMProposalTxs]). This does not track the EVM
+// A signer's non-EVM transactions are never reordered across lanes. Earlier
+// candidates are promoted to the lane of a later candidate sharing a signer,
+// so a fast-lane transaction keeps its lane (see [splitNonEVMProposalTxs]). This does not track the EVM
 // mempool, so if one account has an EVM transaction at nonce N and a zero-gas
 // Cosmos transaction at sequence N+1, the Cosmos transaction is verified first,
 // fails its sequence check, and waits for a later block. Zero-gas actor keys do

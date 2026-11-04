@@ -709,12 +709,12 @@ func TestEVMPrepareProposalPromotesFeederTxBeforePriceWrite(t *testing.T) {
 		[][]byte{feederCall, setPrices, keeperFill, evmTx}, response.Txs)
 }
 
-// TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes proves demotion counts
-// the fee payer as a signer, as ante does, and that promotion does not follow
-// signers outside the allowlist. Account P sends a default-lane tx at
-// sequence 0, then pays fees for a keeper trigger fill that carries P's
-// sequence 1. P is not allowlisted, so P's earlier tx is not promoted; the
-// fill is demoted behind it instead, and both land in one block.
+// TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes proves promotion counts
+// the fee payer as a signer, as ante does. Account P sends a default-lane tx
+// at sequence 0, then pays fees for a keeper trigger fill that carries P's
+// sequence 1. The fill keeps the zero-gas lane, P's earlier tx is promoted
+// ahead of it, and both land before EVM instead of the fill being pushed
+// behind EVM.
 func TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
@@ -741,7 +741,7 @@ func TestEVMPrepareProposalKeepsFeePayerOrderAcrossLanes(t *testing.T) {
 		Txs:        [][]byte{payerTx, sponsoredFill},
 	})
 
-	require.Equal(t, [][]byte{evmTx, payerTx, sponsoredFill}, response.Txs)
+	require.Equal(t, [][]byte{payerTx, sponsoredFill, evmTx}, response.Txs)
 }
 
 // TestEVMPrepareProposalDropsUnclassifiableCandidate proves a decodable
