@@ -392,7 +392,8 @@ func checkPreparedLanes(t testing.TB, c laneCheck, stats *laneCheckStats) {
 		require.NoErrorf(t, replay.PrepareProposalVerifyTxBytes(txBytes),
 			"%s: tx %d fails the sequence replay in block order", c.label, idx)
 	}
-	require.Equalf(t, c.proposed, c.verified,
+	require.Equalf(t,
+		append([][]byte{}, c.proposed...), append([][]byte{}, c.verified...),
 		"%s: verification order differs from block order", c.label)
 
 	isEVM := func(txBytes []byte) bool {

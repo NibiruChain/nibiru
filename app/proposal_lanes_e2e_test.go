@@ -36,7 +36,7 @@ type laneE2EAccount struct {
 
 // newLaneE2EAccount creates and funds an account in the uncommitted state of
 // deps.
-func newLaneE2EAccount(t *testing.T, deps *evmtest.TestDeps) laneE2EAccount {
+func newLaneE2EAccount(t testing.TB, deps *evmtest.TestDeps) laneE2EAccount {
 	t.Helper()
 	priv := evmtest.NewEthPrivAcc().PrivKey
 	addr := sdk.AccAddress(priv.PubKey().Address())
@@ -52,7 +52,7 @@ func newLaneE2EAccount(t *testing.T, deps *evmtest.TestDeps) laneE2EAccount {
 // the given sequences, with the fee paid by feePayer when set. corrupt flips
 // a byte of the first signature, so the app's ante handler rejects the tx.
 func signLaneE2ETx(
-	t *testing.T,
+	t testing.TB,
 	deps *evmtest.TestDeps,
 	feePayer *laneE2EAccount,
 	fee sdk.Coins,
@@ -111,9 +111,11 @@ type laneE2EFixture struct {
 	feederA, feederB, keep laneE2EAccount
 	payers, traders        []laneE2EAccount
 	oracle, perp, other    string
+	zeroGasActors          sudo.ZeroGasActors
+	saiOracle              string // resolved oracle address, empty on fallback
 }
 
-func newLaneE2EFixture(t *testing.T, resolved bool) *laneE2EFixture {
+func newLaneE2EFixture(t testing.TB, resolved bool) *laneE2EFixture {
 	t.Helper()
 	deps := evmtest.NewTestDeps()
 	f := &laneE2EFixture{
@@ -130,16 +132,18 @@ func newLaneE2EFixture(t *testing.T, resolved bool) *laneE2EFixture {
 		perp:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
 		other:  evmtest.NewEthPrivAcc().NibiruAddr.String(),
 	}
-	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+	f.zeroGasActors = sudo.ZeroGasActors{
 		Senders: []string{
 			f.feederA.addr.String(), f.feederB.addr.String(), f.keep.addr.String(),
 		},
 		Contracts: []string{f.oracle, f.perp},
-	})
+	}
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), f.zeroGasActors)
 	if resolved {
 		adapter := instantiateXOracleAdapter(t, &deps,
 			xoracle.XOracleAdapterProxyModeOf(f.oracle))
 		setXOraclePlugin(t, &deps, adapter.String())
+		f.saiOracle = f.oracle
 	}
 	deps.App.Commit()
 	f.deps = deps
@@ -269,9 +273,9 @@ func TestPrepareProposalLanesPassRealProcess(t *testing.T) {
 // laneRealCandidates generates one random candidate list of really signed
 // txs from the accounts of a [laneE2EFixture].
 type laneRealCandidates struct {
-	t       *testing.T
+	t       testing.TB
 	f       *laneE2EFixture
-	rng     *rand.Rand
+	rng     laneChooser
 	nextSeq map[string]uint64
 	txs     [][]byte
 }
@@ -378,17 +382,57 @@ func (c *laneRealCandidates) generate(n int) {
 	}
 }
 
+// runRealLaneCase generates n really signed candidates from choose, runs the
+// app's PrepareProposal and stock ProcessProposal under a MaxTxBytes drawn
+// from choose, and requires ProcessProposal to accept the block. It also
+// checks the block with [checkPreparedLanes]; the BaseApp verifier records
+// nothing, so the block stands in for the verified txs, and max gas is left
+// to the stock handler.
+func runRealLaneCase(
+	t testing.TB,
+	f *laneE2EFixture,
+	choose laneChooser,
+	n int,
+	label string,
+	stats *laneCheckStats,
+) {
+	t.Helper()
+	candidates := &laneRealCandidates{
+		t: t, f: f, rng: choose, nextSeq: map[string]uint64{},
+	}
+	candidates.generate(n)
+	maxTxBytes := max(1,
+		proposalTxsSize(candidates.txs...)*int64(10+choose.IntN(120))/100)
+	if choose.IntN(15) == 0 {
+		maxTxBytes = -1
+	}
+	txs, accepted := f.prepareAndProcess(maxTxBytes, candidates.txs...)
+	require.Truef(t, accepted,
+		"%s: ProcessProposal rejected PrepareProposal output", label)
+	checkPreparedLanes(t, laneCheck{
+		label:         label,
+		decode:        f.deps.App.GetTxConfig().TxDecoder(),
+		candidates:    candidates.txs,
+		zeroGasActors: f.zeroGasActors,
+		saiOracle:     f.saiOracle,
+		maxTxBytes:    maxTxBytes,
+		maxGas:        -1,
+		proposed:      txs,
+		verified:      txs,
+	}, stats)
+}
+
 // TestPrepareProposalLanesRealPropertyPassesProcess is a seeded property
 // test over the app's real handlers and the key liveness property of the
 // proposer-side lanes: for random candidate lists of really signed txs,
 // budgets, and ante outcomes, under both the resolved Sai oracle and the
 // message-key fallback, the block that PrepareProposal builds with the
 // BaseApp verifier and the app ante handler is always accepted by the app's
-// stock ProcessProposal. Set NIBIRU_LANE_REAL_PROPERTY_ITERS to raise the
-// iteration count (per oracle mode) and NIBIRU_LANE_PROPERTY_SEED to change
-// the seed.
+// stock ProcessProposal, and its lanes pass [checkPreparedLanes]. Set
+// NIBIRU_LANE_REAL_PROPERTY_ITERS to raise the iteration count (per oracle
+// mode) and NIBIRU_LANE_PROPERTY_SEED to change the seed.
 func TestPrepareProposalLanesRealPropertyPassesProcess(t *testing.T) {
-	iterations := lanePropertyEnvInt(t, "NIBIRU_LANE_REAL_PROPERTY_ITERS", 100)
+	iterations := lanePropertyEnvInt(t, "NIBIRU_LANE_REAL_PROPERTY_ITERS", 150)
 	if testing.Short() {
 		iterations = min(iterations, 20)
 	}
@@ -397,40 +441,17 @@ func TestPrepareProposalLanesRealPropertyPassesProcess(t *testing.T) {
 		t.Run(fmt.Sprintf("resolved=%t", resolved), func(t *testing.T) {
 			f := newLaneE2EFixture(t, resolved)
 			rng := rand.New(rand.NewPCG(seed, seed^0x5851f42d4c957f2d))
-			var proposed, withOracle int
+			var stats laneCheckStats
 			for iteration := range iterations {
-				candidates := &laneRealCandidates{
-					t: t, f: f, rng: rng, nextSeq: map[string]uint64{},
-				}
-				candidates.generate(4 + rng.IntN(25))
-				maxTxBytes := max(1,
-					proposalTxsSize(candidates.txs...)*int64(10+rng.IntN(120))/100)
-				if rng.IntN(15) == 0 {
-					maxTxBytes = -1
-				}
-				txs, accepted := f.prepareAndProcess(maxTxBytes, candidates.txs...)
-				require.Truef(t, accepted,
-					"seed %d iteration %d: ProcessProposal rejected PrepareProposal output",
-					seed, iteration)
-				proposed += len(txs)
-				if containsOracleCall(txs, f.oracle) {
-					withOracle++
-				}
+				runRealLaneCase(t, f, rng, 4+rng.IntN(25),
+					fmt.Sprintf("seed %d iteration %d", seed, iteration), &stats)
 			}
-			t.Logf("seed %d: %d iterations, %d txs proposed, %d blocks with an oracle call",
-				seed, iterations, proposed, withOracle)
-			require.Positive(t, withOracle)
+			t.Logf("seed %d: %d iterations, %d with an oracle-lane tx, %d with "+
+				"a promoted predecessor, %d with an orphaned promotion",
+				seed, iterations, stats.withOracleTx, stats.withPromotion,
+				stats.withOrphanedPromotion)
+			require.Positive(t, stats.withOracleTx)
+			require.Positive(t, stats.withPromotion)
 		})
 	}
-}
-
-// containsOracleCall reports whether any tx in txs names the oracle
-// contract. It scans raw bytes and is only a coverage statistic.
-func containsOracleCall(txs [][]byte, oracle string) bool {
-	for _, txBytes := range txs {
-		if strings.Contains(string(txBytes), oracle) {
-			return true
-		}
-	}
-	return false
 }
