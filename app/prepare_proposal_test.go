@@ -36,7 +36,7 @@ func (v *acceptingPrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) 
 // bytes, then restored on the decoded message for authenticated insertion.
 // Returns the original outer bytes that proposal selection must preserve.
 func insertProposalEVMTransaction(
-	t *testing.T,
+	t testing.TB,
 	deps *evmtest.TestDeps,
 	nonce uint64,
 	priority int64,
@@ -228,7 +228,7 @@ func proposalWasmExec(sender, contract, msg string) *wasm.MsgExecuteContract {
 // buildProposalWasmTx encodes an unsigned non-EVM transaction carrying msgs,
 // as CometBFT hands candidates to PrepareProposal.
 func buildProposalWasmTx(
-	t *testing.T,
+	t testing.TB,
 	deps *evmtest.TestDeps,
 	msgs ...*wasm.MsgExecuteContract,
 ) []byte {
@@ -601,7 +601,7 @@ func (v *sequencePrepareVerifier) PrepareProposalVerifyTxBytes(txBytes []byte) e
 // order (message signers, then feePayer when set and distinct). The signature
 // bytes are empty; only the sequences matter to [sequencePrepareVerifier].
 func buildSequencedProposalWasmTx(
-	t *testing.T,
+	t testing.TB,
 	deps *evmtest.TestDeps,
 	feePayer sdk.AccAddress,
 	seqs []uint64,

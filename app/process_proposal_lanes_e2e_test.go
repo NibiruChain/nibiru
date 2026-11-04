@@ -1,6 +1,9 @@
 package app_test
 
 import (
+	"math/rand/v2"
+	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -249,4 +252,190 @@ func (f *laneE2EFixture) process(txs ...[]byte) bool {
 		Height: laneRulesDoneHeight + 1,
 		Txs:    txs,
 	}).IsAccepted()
+}
+
+// laneRealPropertyIterations returns the iteration count for
+// [TestLaneRulesRealPrepareOutputPassesRealProcess], raised with
+// NIBIRU_LANE_REAL_PROPERTY_ITERS. Each iteration signs every candidate and
+// runs the real ante handler in both handlers, so the default is lower than
+// the stub property test's.
+func laneRealPropertyIterations(t *testing.T) int {
+	t.Helper()
+	iterations := 150
+	if raw := os.Getenv("NIBIRU_LANE_REAL_PROPERTY_ITERS"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		require.NoError(t, err)
+		iterations = parsed
+	}
+	if testing.Short() {
+		iterations = min(iterations, 30)
+	}
+	return iterations
+}
+
+// laneRealCandidates generates one random candidate list of really signed
+// txs from the accounts of a [laneE2EFixture] plus payers and traders.
+type laneRealCandidates struct {
+	t       *testing.T
+	f       *laneE2EFixture
+	payers  []laneE2EAccount
+	traders []laneE2EAccount
+	rng     *rand.Rand
+	nextSeq map[string]uint64
+	txs     [][]byte
+}
+
+// add signs a tx carrying msgs from senders, msgs[i] from senders[i], with
+// fee paid by feePayer when set. Tx-level signers are the distinct senders
+// in order, then feePayer when distinct. Some txs carry an out-of-sequence
+// number or a corrupted signature, which the real ante handler rejects.
+func (c *laneRealCandidates) add(
+	feePayer *laneE2EAccount,
+	senders []laneE2EAccount,
+	contracts, msgs []string,
+) {
+	var signers []laneE2EAccount
+	seen := map[string]bool{}
+	for _, sender := range senders {
+		if !seen[sender.addr.String()] {
+			seen[sender.addr.String()] = true
+			signers = append(signers, sender)
+		}
+	}
+	if feePayer != nil && !seen[feePayer.addr.String()] {
+		signers = append(signers, *feePayer)
+	}
+	outOfSequence := c.rng.IntN(25) == 0
+	seqs := make([]uint64, len(signers))
+	for i, signer := range signers {
+		seqs[i] = c.nextSeq[signer.addr.String()]
+		if outOfSequence {
+			seqs[i] += 2
+		} else {
+			c.nextSeq[signer.addr.String()]++
+		}
+	}
+	sdkMsgs := make([]sdk.Msg, len(msgs))
+	for i, msg := range msgs {
+		sdkMsgs[i] = &wasm.MsgExecuteContract{
+			Sender:   senders[i].addr.String(),
+			Contract: contracts[i],
+			Msg:      wasm.RawContractMessage(msg),
+		}
+	}
+	fee := sdk.NewCoins()
+	if c.rng.IntN(2) == 0 {
+		fee = sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI,
+			int64(1+c.rng.IntN(5_000))))
+	}
+	c.txs = append(c.txs, signLaneE2ETx(c.t, &c.f.deps, feePayer, fee,
+		signers, seqs, c.rng.IntN(20) == 0, sdkMsgs...))
+}
+
+// generate appends n random candidates: price writes, some sponsored or
+// batched across feeders; feeder and keeper calls outside the allowlist;
+// keeper fills, some sponsored or carrying a trader's message; calls signed
+// by three accounts; and trader txs.
+func (c *laneRealCandidates) generate(n int) {
+	f := c.f
+	feeders := []laneE2EAccount{f.feederA, f.feederB}
+	everyone := append(append(append([]laneE2EAccount{}, feeders...),
+		c.payers...), append(c.traders, f.keep)...)
+	maybePayer := func(oneIn int) *laneE2EAccount {
+		if c.rng.IntN(oneIn) == 0 {
+			payer := pick(c.rng, c.payers)
+			return &payer
+		}
+		return nil
+	}
+	one := func(sender laneE2EAccount, contract, msg string) (
+		[]laneE2EAccount, []string, []string,
+	) {
+		return []laneE2EAccount{sender}, []string{contract}, []string{msg}
+	}
+	for range n {
+		switch roll := c.rng.IntN(100); {
+		case roll < 28:
+			s, ct, m := one(pick(c.rng, feeders), f.oracle,
+				pick(c.rng, []string{setPricesMsg, setPriceMsg}))
+			c.add(maybePayer(6), s, ct, m)
+		case roll < 31:
+			c.add(nil, []laneE2EAccount{f.feederA, f.feederB},
+				[]string{f.oracle, f.oracle}, []string{setPricesMsg, setPriceMsg})
+		case roll < 45:
+			s, ct, m := one(pick(c.rng, feeders), f.other, `{"claim":{}}`)
+			c.add(nil, s, ct, m)
+		case roll < 58:
+			s, ct, m := one(f.keep, f.perp, triggerFillMsg)
+			c.add(maybePayer(4), s, ct, m)
+		case roll < 63:
+			c.add(maybePayer(3), []laneE2EAccount{f.keep, pick(c.rng, everyone)},
+				[]string{f.perp, f.perp}, []string{triggerFillMsg, triggerFillMsg})
+		case roll < 70:
+			c.add(maybePayer(2),
+				[]laneE2EAccount{pick(c.rng, everyone), pick(c.rng, everyone)},
+				[]string{f.other, f.perp}, []string{`{"claim":{}}`, triggerFillMsg})
+		default:
+			s, ct, m := one(pick(c.rng, c.traders), f.perp, triggerFillMsg)
+			c.add(maybePayer(4), s, ct, m)
+		}
+	}
+}
+
+// TestLaneRulesRealPrepareOutputPassesRealProcess is a seeded property test
+// over the app's real handlers: for random candidate lists of really signed
+// txs, budgets, and ante outcomes, the block that PrepareProposal builds with
+// the BaseApp verifier and the app ante handler is accepted by the app's
+// ProcessProposal, which runs the lane rules and then the stock handler's
+// ante replay in block order. Set NIBIRU_LANE_REAL_PROPERTY_ITERS to raise the
+// iteration count and NIBIRU_LANE_PROPERTY_SEED to change the seed.
+func TestLaneRulesRealPrepareOutputPassesRealProcess(t *testing.T) {
+	deps := evmtest.NewTestDeps()
+	f := &laneE2EFixture{
+		feederA: newLaneE2EAccount(t, &deps),
+		feederB: newLaneE2EAccount(t, &deps),
+		keep:    newLaneE2EAccount(t, &deps),
+		oracle:  evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		perp:    evmtest.NewEthPrivAcc().NibiruAddr.String(),
+		other:   evmtest.NewEthPrivAcc().NibiruAddr.String(),
+	}
+	payers := []laneE2EAccount{newLaneE2EAccount(t, &deps), newLaneE2EAccount(t, &deps)}
+	traders := []laneE2EAccount{newLaneE2EAccount(t, &deps), newLaneE2EAccount(t, &deps)}
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
+		Senders: []string{
+			f.feederA.addr.String(), f.feederB.addr.String(), f.keep.addr.String(),
+		},
+		Contracts: []string{f.oracle, f.perp},
+	})
+	activateLaneRules(t, &deps)
+	deps.App.Commit()
+	f.deps = deps
+
+	seed := laneRulesPropertySeed(t)
+	rng := rand.New(rand.NewPCG(seed, seed^0x5851f42d4c957f2d))
+	iterations := laneRealPropertyIterations(t)
+	var withPriceWrite, proposed int
+	for iteration := range iterations {
+		candidates := &laneRealCandidates{
+			t: t, f: f, payers: payers, traders: traders, rng: rng,
+			nextSeq: map[string]uint64{},
+		}
+		candidates.generate(4 + rng.IntN(25))
+		total := proposalTxsSize(candidates.txs...)
+		maxTxBytes := max(1, total*int64(10+rng.IntN(120))/100)
+		if rng.IntN(15) == 0 {
+			maxTxBytes = -1
+		}
+		txs, accepted := f.prepareAndProcess(t, maxTxBytes, candidates.txs...)
+		require.Truef(t, accepted,
+			"seed %d iteration %d: ProcessProposal rejected PrepareProposal output",
+			seed, iteration)
+		proposed += len(txs)
+		if containsPriceWrite(txs, f.oracle) {
+			withPriceWrite++
+		}
+	}
+	t.Logf("seed %d: %d iterations, %d txs proposed, %d blocks with a price write",
+		seed, iterations, proposed, withPriceWrite)
+	require.Positive(t, withPriceWrite)
 }

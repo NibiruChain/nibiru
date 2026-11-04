@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -311,14 +312,20 @@ func newLaneRulesPropertyWorld(deps *evmtest.TestDeps) laneRulesPropertyWorld {
 		perp:    newAddr(),
 		other:   newAddr(),
 	}
-	for range 4 {
+	for range 8 {
 		world.pubKeys = append(world.pubKeys, evmtest.NewEthPrivAcc().PrivKey.PubKey())
 	}
-	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), sudo.ZeroGasActors{
-		Senders:   append(append([]string{}, world.feeders...), world.keeper),
-		Contracts: []string{world.oracle, world.perp},
-	})
+	deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), world.zeroGasActors())
 	return world
+}
+
+// zeroGasActors returns the world's x/sudo allowlist: the feeders and the
+// keeper may send zero-gas calls to the oracle and perp contracts.
+func (w laneRulesPropertyWorld) zeroGasActors() sudo.ZeroGasActors {
+	return sudo.ZeroGasActors{
+		Senders:   append(append([]string{}, w.feeders...), w.keeper),
+		Contracts: []string{w.oracle, w.perp},
+	}
 }
 
 // laneRulesCandidates generates one random CometBFT candidate list.
@@ -336,15 +343,21 @@ func pick[T any](rng *rand.Rand, values []T) T {
 	return values[rng.IntN(len(values))]
 }
 
-// add encodes a tx from sender carrying msgs, optionally paid by feePayer,
-// with the next sequence of each tx-level signer. Some txs get an
-// out-of-sequence number, a large memo, or a verifier rejection.
+// add encodes a tx carrying msgs, optionally paid by feePayer, with the next
+// sequence of each tx-level signer: the distinct message senders in order,
+// then feePayer when set and distinct. Some txs get an out-of-sequence
+// number, a large memo, or a verifier rejection.
 func (c *laneRulesCandidates) add(
 	feePayer string,
 	msgs ...*wasm.MsgExecuteContract,
 ) {
-	signers := []string{msgs[0].Sender}
-	if feePayer != "" && feePayer != msgs[0].Sender {
+	var signers []string
+	for _, msg := range msgs {
+		if !slices.Contains(signers, msg.Sender) {
+			signers = append(signers, msg.Sender)
+		}
+	}
+	if feePayer != "" && !slices.Contains(signers, feePayer) {
 		signers = append(signers, feePayer)
 	}
 	outOfSequence := c.rng.IntN(20) == 0
@@ -393,9 +406,12 @@ func (c *laneRulesCandidates) add(
 }
 
 // generate appends n random candidates: price writes from several feeders,
-// some co-signed by a fee payer; feeder and keeper calls outside the
-// allowlist; keeper fills, some sponsored; trader and payer txs; and EVM txs,
-// which PrepareProposal ignores in RequestPrepareProposal.Txs.
+// some co-signed by a fee payer or batched with another feeder's write, which
+// makes them zero-gas rather than price writes; feeder and keeper calls
+// outside the allowlist; keeper fills, some sponsored and some carrying a
+// later message from a trader or payer; calls signed by three or more
+// accounts, chaining traders, payers, and feeders; trader and payer txs; and
+// EVM txs, which PrepareProposal ignores in RequestPrepareProposal.Txs.
 func (c *laneRulesCandidates) generate(n int, evmTxs [][]byte) {
 	w := c.world
 	maybePayer := func(oneIn int) string {
@@ -404,25 +420,42 @@ func (c *laneRulesCandidates) generate(n int, evmTxs [][]byte) {
 		}
 		return ""
 	}
+	anyone := func() string {
+		return pick(c.rng, [][]string{w.feeders, w.payers, w.traders,
+			{w.keeper}}[c.rng.IntN(4)])
+	}
 	for range n {
 		switch roll := c.rng.IntN(100); {
-		case roll < 25:
+		case roll < 22:
 			msg := pick(c.rng, []string{setPricesMsg, setPriceMsg})
 			c.add(maybePayer(5),
 				proposalWasmExec(pick(c.rng, w.feeders), w.oracle, msg))
-		case roll < 38:
+		case roll < 25:
+			c.add("",
+				proposalWasmExec(pick(c.rng, w.feeders), w.oracle, setPricesMsg),
+				proposalWasmExec(pick(c.rng, w.feeders), w.oracle, setPriceMsg))
+		case roll < 36:
 			c.add("", proposalWasmExec(
 				pick(c.rng, w.feeders), w.other, `{"claim":{}}`))
-		case roll < 53:
+		case roll < 48:
 			c.add(maybePayer(4),
 				proposalWasmExec(w.keeper, w.perp, triggerFillMsg))
-		case roll < 60:
+		case roll < 53:
+			c.add(maybePayer(3),
+				proposalWasmExec(w.keeper, w.perp, triggerFillMsg),
+				proposalWasmExec(anyone(), w.perp, triggerFillMsg))
+		case roll < 58:
 			c.add("", proposalWasmExec(w.keeper, w.other, `{"claim":{}}`))
-		case roll < 65:
+		case roll < 62:
 			feeder := pick(c.rng, w.feeders)
 			c.add("",
 				proposalWasmExec(feeder, w.oracle, setPricesMsg),
 				proposalWasmExec(feeder, w.other, `{"claim":{}}`))
+		case roll < 67:
+			c.add(maybePayer(2),
+				proposalWasmExec(anyone(), w.other, `{"claim":{}}`),
+				proposalWasmExec(anyone(), w.perp, triggerFillMsg),
+				proposalWasmExec(anyone(), w.other, `{"claim":{}}`))
 		case roll < 75:
 			c.add("", proposalWasmExec(
 				pick(c.rng, w.payers), w.perp, triggerFillMsg))
@@ -436,10 +469,13 @@ func (c *laneRulesCandidates) generate(n int, evmTxs [][]byte) {
 }
 
 // TestLaneRulesPrepareOutputPassesProcess is a seeded property test: for
-// random candidate lists, budgets, and verifier outcomes, the block that
-// [app.NewEVMPrepareProposalHandler] builds always passes the lane rules of
-// [app.NewLaneOrderProcessProposalHandler]. Set NIBIRU_LANE_PROPERTY_ITERS to
-// raise the iteration count and NIBIRU_LANE_PROPERTY_SEED to change the seed.
+// random candidate lists, budgets, allowlists, and verifier outcomes, the
+// block that [app.NewEVMPrepareProposalHandler] builds always passes the lane
+// rules of [app.NewLaneOrderProcessProposalHandler], every tx in it passes a
+// fresh account sequence replay in block order, as ProcessProposal's ante
+// replay requires, and the txs PrepareProposal verified are exactly the
+// block, in block order. Set NIBIRU_LANE_PROPERTY_ITERS to raise the
+// iteration count and NIBIRU_LANE_PROPERTY_SEED to change the seed.
 func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	account := evmstate.NewEmptyAccount()
@@ -449,12 +485,7 @@ func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 	world := newLaneRulesPropertyWorld(&deps)
 	activateLaneRules(t, &deps)
 
-	seed := uint64(20261104)
-	if raw := os.Getenv("NIBIRU_LANE_PROPERTY_SEED"); raw != "" {
-		parsed, err := strconv.ParseUint(raw, 10, 64)
-		require.NoError(t, err)
-		seed = parsed
-	}
+	seed := laneRulesPropertySeed(t)
 	rng := rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))
 	decode := deps.App.GetTxConfig().TxDecoder()
 
@@ -473,6 +504,13 @@ func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 		}
 		candidates.generate(4+rng.IntN(30), evmTxs)
 
+		// An allowlist without contracts disables zero-gas classification.
+		zeroGasActors := world.zeroGasActors()
+		if rng.IntN(20) == 0 {
+			zeroGasActors.Contracts = nil
+		}
+		deps.App.SudoKeeper.ZeroGasActors.Set(deps.Ctx(), zeroGasActors)
+
 		total := cmttypes.ComputeProtoSizeForTxs(
 			cmttypes.ToTxs(append(append([][]byte{}, candidates.txs...), evmTxs...)))
 		maxTxBytes := max(1, total*int64(10+rng.IntN(120))/100)
@@ -480,16 +518,19 @@ func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 		if rng.IntN(10) == 0 {
 			blockMaxBytes = max(1, maxTxBytes*int64(50+rng.IntN(50))/100)
 		}
+		if rng.IntN(15) == 0 {
+			maxTxBytes = -1
+		}
 		maxGas := int64(-1)
 		if rng.IntN(3) == 0 {
 			maxGas = int64(1+rng.IntN(15)) * 50_000_000
 		}
 		ctx := laneRulesCtx(&deps, blockMaxBytes, maxGas)
 
-		verifier := &laneRulesPrepareVerifier{
+		verifier := &recordingPrepareVerifier{next: &laneRulesPrepareVerifier{
 			sequences: sequencePrepareVerifier{decode: decode, next: map[string]uint64{}},
 			reject:    candidates.reject,
-		}
+		}}
 		handler := app.NewEVMPrepareProposalHandler(deps.App, verifier)
 		height := laneRulesDoneHeight + 1 + int64(iteration)
 		response := handler(ctx, abci.RequestPrepareProposal{
@@ -502,12 +543,25 @@ func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 			processLaneRules(ctx, &deps, height, response.Txs),
 			"seed %d iteration %d: ProcessProposal rejected PrepareProposal output",
 			seed, iteration)
-		require.LessOrEqual(t,
-			cmttypes.ComputeProtoSizeForTxs(cmttypes.ToTxs(response.Txs)), maxTxBytes)
+		replay := sequencePrepareVerifier{decode: decode, next: map[string]uint64{}}
+		for idx, txBytes := range response.Txs {
+			require.NoErrorf(t, replay.PrepareProposalVerifyTxBytes(txBytes),
+				"seed %d iteration %d: tx %d fails the sequence replay in block order",
+				seed, iteration, idx)
+		}
+		require.Equalf(t,
+			append([][]byte{}, response.Txs...),
+			append([][]byte{}, verifier.accepted...),
+			"seed %d iteration %d: verification order differs from block order",
+			seed, iteration)
+		if maxTxBytes >= 0 {
+			require.LessOrEqual(t,
+				cmttypes.ComputeProtoSizeForTxs(cmttypes.ToTxs(response.Txs)), maxTxBytes)
+		}
 		// The verifier accepts every EVM tx, so an empty proposal while one
 		// fits means PrepareProposal's own lane check fell back to empty,
 		// which would hide a construction bug from the assertion above.
-		if minEVMSize <= maxTxBytes {
+		if maxTxBytes < 0 || minEVMSize <= maxTxBytes {
 			require.NotEmptyf(t, response.Txs,
 				"seed %d iteration %d: PrepareProposal fell back to empty", seed, iteration)
 		}
@@ -522,6 +576,19 @@ func TestLaneRulesPrepareOutputPassesProcess(t *testing.T) {
 	t.Logf("seed %d: %d iterations, %d blocks with a price write, %d with verifier rejections",
 		seed, iterations, withPriceWrite, withRejections)
 	require.Positive(t, withPriceWrite)
+}
+
+// laneRulesPropertySeed returns the seed of the randomized lane tests, set
+// with NIBIRU_LANE_PROPERTY_SEED.
+func laneRulesPropertySeed(t *testing.T) uint64 {
+	t.Helper()
+	seed := uint64(20261104)
+	if raw := os.Getenv("NIBIRU_LANE_PROPERTY_SEED"); raw != "" {
+		parsed, err := strconv.ParseUint(raw, 10, 64)
+		require.NoError(t, err)
+		seed = parsed
+	}
+	return seed
 }
 
 // containsPriceWrite reports whether any tx in txs carries a price write
