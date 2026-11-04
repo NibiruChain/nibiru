@@ -6,6 +6,7 @@ import (
 
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
@@ -13,10 +14,10 @@ import (
 // LaneRulesUpgradeName is the software upgrade after which ProcessProposal
 // enforces the block lane rules ([verifyProposalLaneRules]). Before that
 // upgrade has run, ProcessProposal behaves exactly like the stock handler.
-//
-// TODO: Tie this to the v2.23.0 release. The upgrade itself needs no state
-// migration for the lane rules, but its plan name must match this constant.
-const LaneRulesUpgradeName = "v2.23.0"
+// It is the name of [upgrades.Upgrade2_23_0], which is registered in
+// [upgrades.AllUpgrades], so the binary that runs the upgrade at its plan
+// height is the one that starts enforcing at the next height.
+var LaneRulesUpgradeName = upgrades.Upgrade2_23_0.UpgradeName
 
 // laneRulesActiveAt reports whether the lane rules apply to a proposal at
 // height, given the height at which [LaneRulesUpgradeName] ran (0 when it has

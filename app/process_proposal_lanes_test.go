@@ -530,3 +530,14 @@ func containsPriceWrite(txs [][]byte, oracle string) bool {
 	}
 	return false
 }
+
+// TestLaneRulesUpgradeRegistered proves the lane rules are keyed on an
+// upgrade the binary registers, so activation happens in the binary that runs
+// the upgrade rather than in any binary that sees a plan of that name.
+func TestLaneRulesUpgradeRegistered(t *testing.T) {
+	var names []string
+	for _, upgrade := range app.Upgrades {
+		names = append(names, upgrade.UpgradeName)
+	}
+	require.Contains(t, names, app.LaneRulesUpgradeName)
+}
