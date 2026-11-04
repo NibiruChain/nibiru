@@ -108,9 +108,10 @@ var evmTracers = []string{"json", "markdown", "struct", "access_list"}
 type Config struct {
 	config.Config `mapstructure:",squash"`
 
-	EVM     EVMConfig     `mapstructure:"evm"`
-	JSONRPC JSONRPCConfig `mapstructure:"json-rpc"`
-	TLS     TLSConfig     `mapstructure:"tls"`
+	EVM       EVMConfig       `mapstructure:"evm"`
+	JSONRPC   JSONRPCConfig   `mapstructure:"json-rpc"`
+	TLS       TLSConfig       `mapstructure:"tls"`
+	NibiruBFT NibiruBFTConfig `mapstructure:"nibiru-bft"`
 }
 
 // EVMConfig defines the application configuration values for the EVM.
@@ -165,6 +166,68 @@ type JSONRPCConfig struct {
 	FixRevertGasRefundHeight int64 `mapstructure:"fix-revert-gas-refund-height"`
 }
 
+// LaneRulesMode is the node-local policy for the NibiruBFT block lane rules
+// (app.toml "nibiru-bft.lane-rules"). See [NibiruBFTConfig.LaneRules].
+type LaneRulesMode string
+
+const (
+	// LaneRulesAuto applies the lane rules from the height after the upgrade
+	// that activates them has run.
+	LaneRulesAuto LaneRulesMode = "auto"
+	// LaneRulesOn applies the lane rules at every height.
+	LaneRulesOn LaneRulesMode = "on"
+	// LaneRulesOff never applies the lane rules.
+	LaneRulesOff LaneRulesMode = "off"
+
+	// DefaultLaneRules is the default [NibiruBFTConfig.LaneRules].
+	DefaultLaneRules = LaneRulesAuto
+
+	// FlagLaneRules is the app.toml key of [NibiruBFTConfig.LaneRules].
+	FlagLaneRules = "nibiru-bft.lane-rules"
+)
+
+// ParseLaneRulesMode parses an app.toml "nibiru-bft.lane-rules" value. An
+// empty value, as in an app.toml written before the key existed, is
+// [DefaultLaneRules].
+func ParseLaneRulesMode(raw string) (LaneRulesMode, error) {
+	switch mode := LaneRulesMode(raw); mode {
+	case "":
+		return DefaultLaneRules, nil
+	case LaneRulesAuto, LaneRulesOn, LaneRulesOff:
+		return mode, nil
+	default:
+		return "", fmt.Errorf(
+			"invalid %s %q: expected %q, %q, or %q",
+			FlagLaneRules, raw, LaneRulesAuto, LaneRulesOn, LaneRulesOff,
+		)
+	}
+}
+
+// NibiruBFTConfig defines node-local NibiruBFT proposal settings.
+type NibiruBFTConfig struct {
+	// LaneRules is this node's policy for the block lane rules: "auto"
+	// (default), "on", or "off". ProcessProposal is a vote, not a state
+	// transition, so this is a per-node voting policy and never changes
+	// state or the app hash. "auto" follows the upgrade gate. "on" enforces
+	// at every height, for networks that never ran the upgrade, such as
+	// localnets, devnets, and chains restarted from exported genesis. "off"
+	// is an emergency recovery setting: the node neither rejects proposals
+	// for the lane rules nor checks its own proposals against them, and
+	// builds proposals as before the upgrade.
+	LaneRules string `mapstructure:"lane-rules"`
+}
+
+// DefaultNibiruBFTConfig returns the default NibiruBFT configuration.
+func DefaultNibiruBFTConfig() *NibiruBFTConfig {
+	return &NibiruBFTConfig{LaneRules: string(DefaultLaneRules)}
+}
+
+// Validate returns an error if LaneRules is not a known mode.
+func (c NibiruBFTConfig) Validate() error {
+	_, err := ParseLaneRulesMode(c.LaneRules)
+	return err
+}
+
 // TLSConfig defines the certificate and matching private key for the server.
 type TLSConfig struct {
 	// CertificatePath the file path for the certificate .pem file
@@ -209,10 +272,11 @@ func DefaultConfig() *Config {
 	defaultSDKConfig.Telemetry.Enabled = DefaultTelemetryEnable
 
 	return &Config{
-		Config:  *defaultSDKConfig,
-		EVM:     *DefaultEVMConfig(),
-		JSONRPC: *DefaultJSONRPCConfig(),
-		TLS:     *DefaultTLSConfig(),
+		Config:    *defaultSDKConfig,
+		EVM:       *DefaultEVMConfig(),
+		JSONRPC:   *DefaultJSONRPCConfig(),
+		TLS:       *DefaultTLSConfig(),
+		NibiruBFT: *DefaultNibiruBFTConfig(),
 	}
 }
 
@@ -375,6 +439,10 @@ func (c Config) ValidateBasic() error {
 		return sdkioerrors.Wrapf(sdkerrors.ErrAppConfig, "invalid tls config value: %s", err.Error())
 	}
 
+	if err := c.NibiruBFT.Validate(); err != nil {
+		return sdkioerrors.Wrapf(sdkerrors.ErrAppConfig, "invalid nibiru-bft config value: %s", err.Error())
+	}
+
 	return c.Config.ValidateBasic()
 }
 
@@ -493,4 +561,23 @@ certificate-path = "{{ .TLS.CertificatePath }}"
 
 # Key path defines the key.pem file path for the TLS configuration.
 key-path = "{{ .TLS.KeyPath }}"
+
+###############################################################################
+###                          NibiruBFT Configuration                        ###
+###############################################################################
+
+[nibiru-bft]
+
+# LaneRules is this node's policy for the block lane rules: price writes
+# first and a byte cap on the oracle and zero-gas lanes. ProcessProposal is a
+# vote, so this is a per-node voting policy; it never changes state.
+#   "auto" (default): apply the rules from the height after the v2.23.0
+#     upgrade has run.
+#   "on": apply the rules at every height. Use on localnets, devnets, and
+#     chains restarted from exported genesis, which have no upgrade record.
+#   "off": emergency recovery only. Do not reject proposals for the lane
+#     rules, and build proposals as before the upgrade. A proposal that
+#     breaks the rules commits only once validators with more than 2/3 of
+#     voting power set "off".
+lane-rules = "{{ .NibiruBFT.LaneRules }}"
 `

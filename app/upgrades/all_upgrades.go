@@ -61,6 +61,7 @@ var AllUpgrades = []Upgrade{
 	Upgrade2_20_0,
 	Upgrade2_21_0,
 	Upgrade2_22_0,
+	Upgrade2_23_0,
 }
 
 // HandlerImpl is a struct wrapper for custom upgrade handler implementations.

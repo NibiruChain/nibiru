@@ -86,6 +86,7 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
+	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	cryptocodec "github.com/NibiruChain/nibiru/v2/eth/crypto/codec"
@@ -214,6 +215,10 @@ type NibiruApp struct {
 
 	// simulation manager
 	sm *module.SimulationManager
+
+	// laneRulesMode is this node's app.toml "nibiru-bft.lane-rules" policy.
+	// See [NibiruApp.laneRulesActive].
+	laneRulesMode srvconfig.LaneRulesMode
 }
 
 func init() {
@@ -471,11 +476,20 @@ func NewNibiruApp(
 		EvmMempool:     app.EvmMempool,
 		AccountKeeper:  app.AccountKeeper,
 	}))
+	laneRulesMode, err := srvconfig.ParseLaneRulesMode(
+		cast.ToString(appOpts.Get(srvconfig.FlagLaneRules)))
+	if err != nil {
+		panic(err)
+	}
+	app.laneRulesMode = laneRulesMode
+	logger.Info("NibiruBFT block lane rules", "mode", laneRulesMode,
+		"upgrade", LaneRulesUpgradeName)
 	app.SetPrepareProposal(NewEVMPrepareProposalHandler(app, app.BaseApp))
-	app.SetProcessProposal(
+	app.SetProcessProposal(NewLaneOrderProcessProposalHandler(
+		app,
 		baseapp.NewDefaultProposalHandler(app.EvmMempool, app.BaseApp).
 			ProcessProposalHandler(),
-	)
+	))
 
 	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {
