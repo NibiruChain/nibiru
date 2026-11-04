@@ -472,10 +472,11 @@ func NewNibiruApp(
 		AccountKeeper:  app.AccountKeeper,
 	}))
 	app.SetPrepareProposal(NewEVMPrepareProposalHandler(app, app.BaseApp))
-	app.SetProcessProposal(
+	app.SetProcessProposal(NewLaneOrderProcessProposalHandler(
+		app,
 		baseapp.NewDefaultProposalHandler(app.EvmMempool, app.BaseApp).
 			ProcessProposalHandler(),
-	)
+	))
 
 	// register snapshot extensions
 	if snapshotManager := app.SnapshotManager(); snapshotManager != nil {

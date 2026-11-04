@@ -144,12 +144,8 @@ func splitNonEVMProposalTxs(
 	candidates [][]byte,
 	zeroGasActors sudo.ZeroGasActors,
 ) (lanes [proposalLaneCount][]nonEVMProposalTx) {
-	type classified struct {
-		candidate nonEVMProposalTx
-		lane      proposalLane
-		signers   []string
-	}
-	txs := make([]classified, 0, len(candidates))
+	items := make([]nonEVMProposalTx, 0, len(candidates))
+	entries := make([]proposalLaneEntry, 0, len(candidates))
 	for _, txBytes := range candidates {
 		tx, err := decode(txBytes)
 		if err != nil {
@@ -159,37 +155,68 @@ func splitNonEVMProposalTxs(
 		if !ok || lane == proposalLaneEVM {
 			continue
 		}
-		item := classified{
-			candidate: nonEVMProposalTx{txBytes: txBytes},
-			lane:      lane,
-			signers:   make([]string, len(signers)),
-		}
-		for i, signer := range signers {
-			item.signers[i] = signer.String()
-		}
+		item := nonEVMProposalTx{txBytes: txBytes}
 		if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
-			item.candidate.gasWanted = gasTx.GetGas()
+			item.gasWanted = gasTx.GetGas()
 		}
-		txs = append(txs, item)
+		items = append(items, item)
+		entries = append(entries, newProposalLaneEntry(lane, signers))
 	}
 
-	// earliestLater maps a signer to the lane of its nearest later
-	// candidate, which after promotion is the earliest lane of all of them.
-	earliestLater := make(map[string]proposalLane)
-	for i := len(txs) - 1; i >= 0; i-- {
-		for _, signer := range txs[i].signers {
-			if next, seen := earliestLater[signer]; seen && next < txs[i].lane {
-				txs[i].lane = next
-			}
-		}
-		for _, signer := range txs[i].signers {
-			earliestLater[signer] = txs[i].lane
-		}
-	}
-	for _, item := range txs {
-		lanes[item.lane] = append(lanes[item.lane], item.candidate)
+	promoteProposalLanes(entries)
+	for i, item := range items {
+		lanes[entries[i].lane] = append(lanes[entries[i].lane], item)
 	}
 	return lanes
+}
+
+// proposalLaneEntry is one transaction's [proposalLane] and tx-level signers
+// as bech32 strings, the input to [promoteProposalLanes].
+type proposalLaneEntry struct {
+	lane    proposalLane
+	signers []string
+}
+
+// newProposalLaneEntry returns a [proposalLaneEntry] for a classified
+// transaction.
+func newProposalLaneEntry(
+	lane proposalLane,
+	signers []sdk.AccAddress,
+) proposalLaneEntry {
+	entry := proposalLaneEntry{lane: lane, signers: make([]string, len(signers))}
+	for i, signer := range signers {
+		entry.signers[i] = signer.String()
+	}
+	return entry
+}
+
+// promoteProposalLanes is the backward promotion pass shared by
+// PrepareProposal ([splitNonEVMProposalTxs]) and ProcessProposal
+// ([proposalBlockLanes]). Walking entries backward, each moves up to the
+// earliest lane of any later entry that shares a signer with it. Afterward,
+// lanes are non-decreasing along every signer's entries, so grouping entries
+// by lane with a stable order never reorders one signer's transactions.
+//
+// [proposalLaneEVM] entries neither promote nor are promoted: EVM senders are
+// tracked by the EVM mempool, not by Cosmos signers.
+func promoteProposalLanes(entries []proposalLaneEntry) {
+	// earliestLater maps a signer to the lane of its nearest later entry,
+	// which after promotion is the earliest lane of all of them. It is only
+	// read by key, so map iteration order never affects the result.
+	earliestLater := make(map[string]proposalLane)
+	for i := len(entries) - 1; i >= 0; i-- {
+		if entries[i].lane == proposalLaneEVM {
+			continue
+		}
+		for _, signer := range entries[i].signers {
+			if next, seen := earliestLater[signer]; seen && next < entries[i].lane {
+				entries[i].lane = next
+			}
+		}
+		for _, signer := range entries[i].signers {
+			earliestLater[signer] = entries[i].lane
+		}
+	}
 }
 
 // classifyProposalCandidate returns the [classifyProposalTx] lane of a decoded
