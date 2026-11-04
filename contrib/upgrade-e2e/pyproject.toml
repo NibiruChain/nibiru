@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [dependency-groups]
-test = ["pytest>=8.4,<9"]
+test = ["pytest>=9.0.3,<10"]
 
 [tool.uv]
 package = false
