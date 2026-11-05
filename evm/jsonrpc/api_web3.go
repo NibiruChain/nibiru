@@ -21,7 +21,10 @@ func (a *APIWeb3) ClientVersion() string {
 	return appconst.RuntimeVersion()
 }
 
-// Sha3 returns the keccak-256 hash of the passed-in input.
+// Sha3 returns the Keccak-256 hash of input bytes. The JSON-RPC decoder
+// converts Ethereum DATA, a 0x-prefixed hex string, into [hexutil.Bytes]
+// before this method runs. Hashing the encoded string would produce a different
+// result; malformed hex must fail during parameter decoding.
 func (a *APIWeb3) Sha3(input hexutil.Bytes) hexutil.Bytes {
 	return crypto.Keccak256(input)
 }
