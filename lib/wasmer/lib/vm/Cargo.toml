@@ -1,0 +1,74 @@
+[package]
+name = "wasmer-vm"
+description = "Runtime library support for Wasmer"
+categories = ["wasm"]
+keywords = ["wasm", "webassembly"]
+license = "MIT OR Apache-2.0 WITH LLVM-exception"
+readme = "README.md"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+dashmap.workspace = true
+wasmer-types = { path = "../types", version = "=7.4.2" }
+libc.workspace = true
+indexmap.workspace = true
+thiserror.workspace = true
+more-asserts.workspace = true
+backtrace.workspace = true
+serde = { workspace = true, features = ["derive", "rc"], optional = true }
+enum-iterator.workspace = true
+scopeguard.workspace = true
+region.workspace = true
+corosensei.workspace = true
+fnv.workspace = true
+parking_lot.workspace = true
+# - Optional shared dependencies.
+tracing = { workspace = true, optional = true }
+crossbeam-queue.workspace = true
+loupe = { workspace = true, optional = true }
+gimli.workspace = true
+bytesize.workspace = true
+itertools.workspace = true
+
+[target.'cfg(any(target_family = "unix", all(target_family = "windows", target_env = "gnu")))'.dependencies]
+libunwind.workspace = true
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+mach2.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { workspace = true, features = [
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_Threading",
+  "Win32_System_Kernel",
+  "Win32_System_Memory",
+] }
+
+[build-dependencies]
+cc.workspace = true
+rustversion.workspace = true
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[features]
+default = []
+enable-serde = ["serde", "indexmap/serde", "wasmer-types/enable-serde"]
+artifact-size = ["dep:loupe", "wasmer-types/artifact-size"]
+sanitizer = ["corosensei/sanitizer"]
+
+experimental-host-interrupt = []
+
+# Compile the signal-free trap-handler backend instead of the OS signal-based one.
+# Enable when targeting platforms that lack OS signal infrastructure (ZK virtual
+# machines, embedded RTOSes, …) but still provide a Rust std environment.
+# This does NOT imply no_std support.
+baremetal = []
+
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs"]

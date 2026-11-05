@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

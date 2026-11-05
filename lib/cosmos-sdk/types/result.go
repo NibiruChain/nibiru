@@ -6,9 +6,10 @@ import (
 	"math"
 	"strings"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/gogoproto/proto"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"

@@ -15,6 +15,11 @@ plugins:
     out: proto-rs
     opt:
       - bytes=.
+      # The native Wasm Stargate allowlist returns sudo responses as JSON.
+      # Keep defaults and ignore additional fields while decoding that response.
+      - 'type_attribute=.nibiru.sudo.v1=#[derive(::serde::Serialize)]'
+      - 'type_attribute=.nibiru.sudo.v1=#[derive(::serde::Deserialize)]'
+      - 'type_attribute=.nibiru.sudo.v1=#[serde(default)]'
 
   # TODO(Unique-Divine): investigate whether JSON serialization trait 
   # implementations are needed for Rust protobufs used on Wasm::StargateMsg.

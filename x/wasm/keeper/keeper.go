@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
@@ -99,6 +99,7 @@ type Keeper struct {
 	// propagate gov authZ to sub-messages
 	propagateGovAuthorization    map[types.AuthorizationPolicyAction]struct{}
 	wasmBlockHooksContractSource types.WasmBlockHooksContractSource
+	wasmDeployerGuard            *wasmDeployerGuard
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -157,6 +158,10 @@ func (k Keeper) create(
 ) (codeID uint64, checksum []byte, err error) {
 	if creator == nil {
 		return 0, checksum, sdkioerrors.Wrap(sdkerrors.ErrInvalidAddress, "cannot be nil")
+	}
+	// Check admission before reading upload policy or compiling and storing code.
+	if err := k.requireActorIsAuthedDeployer(ctx, creator, authZ, wasmDeploymentUpload); err != nil {
+		return 0, checksum, err
 	}
 
 	// figure out proper instantiate access
@@ -272,7 +277,10 @@ func (k Keeper) instantiate(
 	}
 	contractAddress := addressGenerator(ctx, codeID, codeInfo.CodeHash)
 	if k.HasContractInfo(ctx, contractAddress) {
-		return nil, nil, types.ErrDuplicate.Wrap("instance with this code id, sender and label exists: try a different label")
+		// This case must only happen for instantiate2 because instantiate is based on a counter in state.
+		// So we create an instantiate2 specific error message here even though technically this function
+		// is used for both cases.
+		return nil, nil, types.ErrDuplicate.Wrap("contract address already exists, try a different combination of creator, checksum and salt")
 	}
 
 	// check account
@@ -431,6 +439,10 @@ func (k Keeper) migrate(
 	authZ types.AuthorizationPolicy,
 ) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "migrate")
+	// Check admission before loading the replacement code or invoking the VM.
+	if err := k.requireActorIsAuthedDeployer(ctx, caller, authZ, wasmDeploymentMigrate); err != nil {
+		return nil, err
+	}
 	migrateSetupCosts := k.gasRegister.InstantiateContractCosts(k.IsPinnedCode(ctx, newCodeID), len(msg))
 	ctx.GasMeter().ConsumeGas(migrateSetupCosts, "Loading CosmWasm module: migrate")
 
@@ -512,6 +524,18 @@ func (k Keeper) migrate(
 // The policy will be read in msgServer.selectAuthorizationPolicy and used for sub-message executions.
 // This is an extension point for some very advanced scenarios only. Use with care!
 func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error) {
+	return k.sudo(ctx, contractAddress, msg, false)
+}
+
+// SudoWithErrorCause preserves VM error types for trusted lifecycle callers
+// that distinguish contract rejection from engine/host failure. It has the same
+// authorization model as Sudo and does not recover panics or commit a cache.
+// The caller must provide its own deterministic gas bound and rollback context.
+func (k Keeper) SudoWithErrorCause(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error) {
+	return k.sudo(ctx, contractAddress, msg, true)
+}
+
+func (k Keeper) sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte, preserveCause bool) ([]byte, error) {
 	defer telemetry.MeasureSince(time.Now(), "wasm", "contract", "sudo")
 	contractInfo, codeInfo, prefixStore, err := k.contractInstance(ctx, contractAddress)
 	if err != nil {
@@ -529,6 +553,9 @@ func (k Keeper) Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte
 	res, gasUsed, execErr := k.wasmVM.Sudo(codeInfo.CodeHash, env, msg, prefixStore, cosmwasmAPI, querier, k.gasMeter(ctx), gas, costJSONDeserialization)
 	k.consumeRuntimeGas(ctx, gasUsed)
 	if execErr != nil {
+		if preserveCause {
+			return nil, execErr
+		}
 		return nil, sdkioerrors.Wrap(types.ErrExecuteFailed, execErr.Error())
 	}
 

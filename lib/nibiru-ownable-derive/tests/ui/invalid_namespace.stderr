@@ -1,0 +1,5 @@
+error: perm namespace must match [a-z][a-z0-9_]{0,63}
+ --> tests/ui/invalid_namespace.rs:4:21
+  |
+4 | #[perms(namespace = "Admin")]
+  |                     ^^^^^^^

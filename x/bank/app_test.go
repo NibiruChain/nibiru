@@ -3,11 +3,13 @@ package bank_test
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
@@ -16,14 +18,15 @@ import (
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth"
+	authkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/keeper"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx/config"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus"
-	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
 	govv1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 	_ "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/bank/testutil"
@@ -95,6 +98,9 @@ type suite struct {
 	App           *runtime.App
 }
 
+// createTestSuite registers governance explicitly before loading stores and
+// genesis. Bank authority tests require its module account and proposal message
+// decoder, which are no longer installed by governance depinject providers.
 func createTestSuite(t *testing.T, genesisAccounts []authtypes.GenesisAccount) suite {
 	res := suite{}
 
@@ -105,6 +111,13 @@ func createTestSuite(t *testing.T, genesisAccounts []authtypes.GenesisAccount) s
 
 	startupCfg := simtestutil.DefaultStartUpConfig()
 	startupCfg.GenesisAccounts = genAccounts
+	var cdc codec.Codec
+	var accounts authkeeper.AccountKeeper
+	var staking *stakingkeeper.Keeper
+	startupCfg.InitApp = func(app *runtime.App) error {
+		_, err := configurator.RegisterGovModule(app, cdc, accounts, res.BankKeeper, staking)
+		return err
+	}
 
 	app, err := simtestutil.SetupWithConfiguration(configurator.NewAppConfig(
 		configurator.ParamsModule(),
@@ -115,7 +128,7 @@ func createTestSuite(t *testing.T, genesisAccounts []authtypes.GenesisAccount) s
 		configurator.BankModule(),
 		configurator.GovModule(),
 	),
-		startupCfg, &res.BankKeeper, &res.AccountKeeper)
+		startupCfg, &res.BankKeeper, &res.AccountKeeper, &cdc, &accounts, &staking)
 
 	res.App = app
 
@@ -343,6 +356,9 @@ func TestMsgMultiSendDependent(t *testing.T) {
 	}
 }
 
+// TestMsgSetSendEnabled checks bank authority enforcement and proposal decoding
+// through the explicitly wired governance module. A missing governance fixture
+// must fail here rather than silently reducing coverage to direct bank messages.
 func TestMsgSetSendEnabled(t *testing.T) {
 	acc1 := authtypes.NewBaseAccountWithAddress(addr1)
 

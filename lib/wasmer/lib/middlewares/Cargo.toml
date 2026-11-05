@@ -1,0 +1,43 @@
+[package]
+name = "wasmer-middlewares"
+description = "A collection of various useful middlewares"
+categories = ["wasm"]
+keywords = ["webassembly", "wasm"]
+readme = "README.md"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+wasmer = { path = "../api", version = "=7.4.2", default-features = false, features = [
+  "compiler",
+  "wasmparser",
+  "headless",
+] }
+wasmer-types = { path = "../types", version = "=7.4.2" }
+wasmer-vm = { path = "../vm", version = "=7.4.2" }
+
+[target.'cfg(not(target_os = "windows"))'.dev-dependencies]
+wasmer = { path = "../api", version = "=7.4.2", default-features = false, features = [
+  "compiler",
+  "cranelift",
+  "wat",
+] }
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+wasmer = { path = "../api", version = "=7.4.2", default-features = false, features = [
+  "compiler",
+  "v8",
+  "wasmparser",
+] }
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs"]
+features = ["wasmer/cranelift"]

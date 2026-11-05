@@ -2,7 +2,8 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+
+	tmprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

@@ -23,7 +23,7 @@ end of 2022. It was awesome to see such positive responses from core SDK
 contributors.
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/yvlopExOzDkGNvJJ6JhRA/d5e26dfb69916d37ee8dc78d0f19b950/dev-comment.png" alt="Dev Ojha (ValarDragon) - Builder on Osmosis, Tendermint, Cosmos, Sikka Tech">
+<img src="../../img/contentful/pw8q0bmyjir7/yvlopExOzDkGNvJJ6JhRA/d5e26dfb69916d37ee8dc78d0f19b950/dev-comment.png" alt="Dev Ojha (ValarDragon) - Builder on Osmosis, Tendermint, Cosmos, Sikka Tech">
 <figcaption>Dev Ojha (ValarDragon) - Builder on Osmosis, Tendermint, Cosmos, Sikka Tech</figcaption>
 </figure>
 
@@ -86,7 +86,7 @@ them is to showcase how much work goes into getting the create, read, update,
 and delete (CRUD) behavior described in the previous section.
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/76ZKhdi148NVAwLxpAAOVs/da655dc47c477c2243f0d636553a75dd/x-staking-get-delegation.png" alt="Function for reading one item from the delegations store in the x/staking module">
+<img src="../../img/contentful/pw8q0bmyjir7/76ZKhdi148NVAwLxpAAOVs/da655dc47c477c2243f0d636553a75dd/x-staking-get-delegation.png" alt="Function for reading one item from the delegations store in the x/staking module">
 <figcaption>Function for reading one item from the delegations store in the x/staking module</figcaption>
 </figure>
 
@@ -106,14 +106,14 @@ Keys store prefixes in the keys.go file of the x/staking module
 Keys store prefixes | from keys.go in the x/staking module
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/2kbzZMBZNBExHrdiDo5jK3/163e667774a651bee85734cdc90760a2/x-staking-store-prefixes.png" alt="Function for reading one item from the delegations store in the x/staking module">
+<img src="../../img/contentful/pw8q0bmyjir7/2kbzZMBZNBExHrdiDo5jK3/163e667774a651bee85734cdc90760a2/x-staking-store-prefixes.png" alt="Function for reading one item from the delegations store in the x/staking module">
 <figcaption>Function for reading one item from the delegations store in the x/staking module</figcaption>
 </figure>
 
 ## 2 — Key encoder functions for each key type
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/2MiTbWHW9TdneO41R6ZtcD/646826c0a4d677d4ffcf06e304095812/x-staking-key-encoders.png" alt="Example functions for encoding keys | from keys.go in the x/staking module">
+<img src="../../img/contentful/pw8q0bmyjir7/2MiTbWHW9TdneO41R6ZtcD/646826c0a4d677d4ffcf06e304095812/x-staking-key-encoders.png" alt="Example functions for encoding keys | from keys.go in the x/staking module">
 <figcaption>Example functions for encoding keys | from keys.go in the x/staking module</figcaption>
 </figure>
 
@@ -157,7 +157,7 @@ The collections API is a Golang package that improves upon the storage abstracti
 In `collections`, storage types are defined on the `Keeper` struct. Because the Keeper is the king of a module's business logic, state definitions should be there, not scattered across multiple files. Let's see how we instantiate all this new collections types.
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/6rz0ugzlkpimgCULVJXSKw/c073686acb933b3eae24933aa8285102/coll-storage-types.png" alt="Storage types example - Collections">
+<img src="../../img/contentful/pw8q0bmyjir7/6rz0ugzlkpimgCULVJXSKw/c073686acb933b3eae24933aa8285102/coll-storage-types.png" alt="Storage types example - Collections">
 </figure>
 
 So in order to instantiate a `collections.Map`, we need four things:
@@ -180,14 +180,14 @@ So in order to instantiate a `collections.Map`, we need four things:
 Here's how some of the examples from earlier in the post look with collections.
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/3F2wCi0lh1MdTuQkZ7s351/8eabc56201f1ebd35f51101d829c5358/coll-mature-bonds.png" alt="Iterating over complex types with collections is simple.">
+<img src="../../img/contentful/pw8q0bmyjir7/3F2wCi0lh1MdTuQkZ7s351/8eabc56201f1ebd35f51101d829c5358/coll-mature-bonds.png" alt="Iterating over complex types with collections is simple.">
 <figcaption>Iterating over complex types with collections is simple.</figcaption>
 </figure>
 
 Now let’s see the positions case (note: `collections.Pair` is a type which defines a key composed of two other keys, `collections.PairRange` implements an interface which has a nicer API for working with `collections.Pair` keys):
 
 <figure>
-<img src="https://images.ctfassets.net/pw8q0bmyjir7/5Pjsrvt4XXEOzgzkBfkVc8/f7fcb120252bc63f29cda952ea8a5698/coll-positions-by.png" alt="Multi-part keys are also easy to work with and have built-in iteration methods.">
+<img src="../../img/contentful/pw8q0bmyjir7/5Pjsrvt4XXEOzgzkBfkVc8/f7fcb120252bc63f29cda952ea8a5698/coll-positions-by.png" alt="Multi-part keys are also easy to work with and have built-in iteration methods.">
 <figcaption>Multi-part keys are also easy to work with and have built-in iteration methods.</figcaption>
 </figure>
 

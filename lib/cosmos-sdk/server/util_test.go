@@ -11,10 +11,11 @@ import (
 	"testing"
 
 	db "github.com/cometbft/cometbft-db"
-	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -181,6 +182,40 @@ func TestInterceptConfigsPreRunHandlerReadsAppToml(t *testing.T) {
 	if testHaltTime != serverCtx.Viper.GetInt("halt-time") {
 		t.Error("Halt time was not set from app.toml")
 	}
+}
+
+func TestInterceptConfigsPreRunHandlerIgnoresConfigTableForScalarFlag(t *testing.T) {
+	tempDir := t.TempDir()
+	configDir := filepath.Join(tempDir, "config")
+	require.NoError(t, os.Mkdir(configDir, os.ModePerm))
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "app.toml"), []byte("halt-time = 1337\n[evm]\ntracer = \"\"\n"), 0o600))
+
+	cmd := server.StartCmd(nil, tempDir)
+	cmd.Flags().Bool("evm", false, "Show EVM transaction response")
+	cmd.PreRunE = preRunETestImpl
+
+	serverCtx := &server.Context{}
+	ctx := context.WithValue(context.Background(), server.ServerContextKey, serverCtx)
+	require.ErrorIs(t, cmd.ExecuteContext(ctx), cancelledInPreRun)
+
+	showEVM, err := cmd.Flags().GetBool("evm")
+	require.NoError(t, err)
+	require.False(t, showEVM)
+	haltTime, err := cmd.Flags().GetUint64("halt-time")
+	require.NoError(t, err)
+	require.Equal(t, uint64(1337), haltTime)
+	require.True(t, serverCtx.Viper.IsSet("evm"))
+
+	cmd = server.StartCmd(nil, tempDir)
+	cmd.Flags().Bool("evm", false, "Show EVM transaction response")
+	require.NoError(t, cmd.Flags().Set("evm", "true"))
+	cmd.PreRunE = preRunETestImpl
+	serverCtx = &server.Context{}
+	ctx = context.WithValue(context.Background(), server.ServerContextKey, serverCtx)
+	require.ErrorIs(t, cmd.ExecuteContext(ctx), cancelledInPreRun)
+	showEVM, err = cmd.Flags().GetBool("evm")
+	require.NoError(t, err)
+	require.True(t, showEVM)
 }
 
 func TestInterceptConfigsPreRunHandlerReadsFlags(t *testing.T) {

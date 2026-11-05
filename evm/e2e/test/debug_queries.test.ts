@@ -1,9 +1,11 @@
-import { beforeAll, describe, expect, it } from "bun:test"
+import { beforeAll, describe, expect, it, setDefaultTimeout } from "bun:test"
 import { parseEther, TransactionReceipt } from "ethers"
 
 import { TestERC20__factory } from "../types"
 import { provider, TEST_TIMEOUT } from "./testdeps"
 import { alice, deployContractTestERC20, hexify, txWait } from "./utils"
+
+setDefaultTimeout(8000)
 
 describe("debug queries", () => {
   let contractAddress: string
@@ -12,23 +14,26 @@ describe("debug queries", () => {
   let blockNumber: number
   let blockHash: string
 
-  beforeAll(async () => {
-    // Deploy ERC-20 contract
-    const contract = await deployContractTestERC20()
-    contractAddress = await contract.getAddress()
+  beforeAll(
+    async () => {
+      // Deploy ERC-20 contract
+      const contract = await deployContractTestERC20()
+      contractAddress = await contract.getAddress()
 
-    // Execute some contract TX
-    const txResponse = await contract.transfer(alice, parseEther("0.01"))
-    await txWait(txResponse, { label: "debug_queries transfer" })
+      // Execute some contract TX
+      const txResponse = await contract.transfer(alice, parseEther("0.01"))
+      await txWait(txResponse, { label: "debug_queries transfer" })
 
-    const receipt: TransactionReceipt = await provider.getTransactionReceipt(
-      txResponse.hash,
-    )
-    txHash = txResponse.hash
-    txIndex = txResponse.index
-    blockNumber = receipt.blockNumber
-    blockHash = receipt.blockHash
-  })
+      const receipt: TransactionReceipt = await provider.getTransactionReceipt(
+        txResponse.hash,
+      )
+      txHash = txResponse.hash
+      txIndex = txResponse.index
+      blockNumber = receipt.blockNumber
+      blockHash = receipt.blockHash
+    },
+    TEST_TIMEOUT,
+  )
 
   it("debug_traceBlockByNumber", async () => {
     const traceResult = await provider.send("debug_traceBlockByNumber", [

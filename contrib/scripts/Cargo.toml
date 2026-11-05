@@ -1,0 +1,21 @@
+[package]
+name = "scripts"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+walkdir = "2.4.0"
+regex = "1.9.6"
+anyhow = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+lazy_static = { workspace = true }
+tempfile = "3.8"
+
+# cargo run --bin proto_clean
+[[bin]]
+name = "proto_clean"
+path = "proto_clean.rs"

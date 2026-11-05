@@ -11,16 +11,16 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/upgrades"
 )
 
+// RunUpgrade invokes the full handler with a valid plan and persisted module
+// versions and the app configurator containing registered migrations. Like
+// UpgradeKeeper.ApplyUpgrade, it records returned versions only
+// after success so repeated calls do not rerun completed migrations.
 func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 	var (
 		// ---- Run the upgrade handler. ----
 		upgradeHandler = upgrade.Handler.Handler(
 			deps.App.ModuleManager,
-			module.NewConfigurator(
-				deps.App.AppCodec(),
-				deps.App.MsgServiceRouter(),
-				deps.App.GRPCQueryRouter(),
-			),
+			deps.App.Configurator(),
 			&deps.App.PublicKeepers,
 		)
 
@@ -52,10 +52,14 @@ func (deps *TestDeps) RunUpgrade(upgrade upgrades.Upgrade) error {
 
 	fromVm = deps.App.UpgradeKeeper.GetModuleVersionMap(deps.Ctx())
 
-	_, err = upgradeHandler(
+	updatedVm, err := upgradeHandler(
 		deps.Ctx(),
 		plan,
 		fromVm,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	deps.App.UpgradeKeeper.SetModuleVersionMap(deps.Ctx(), updatedVm)
+	return nil
 }

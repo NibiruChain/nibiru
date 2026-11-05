@@ -2,7 +2,8 @@ package store
 
 import (
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/cache"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/rootmulti"

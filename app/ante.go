@@ -57,6 +57,7 @@ func NewAnteHandlerNonEVM(
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1915
 		authante.NewExtensionOptionsDecorator(opts.ExtensionOptionChecker),
 		authante.NewValidateBasicDecorator(),
+		ante.AnteDecIncidentQuarantine{},
 		authante.NewTxTimeoutHeightDecorator(),
 		authante.NewValidateMemoDecorator(opts.AccountKeeper),
 		ante.AnteDecEnsureSinglePostPriceMessage{},
@@ -67,7 +68,10 @@ func NewAnteHandlerNonEVM(
 		// ticket: https://github.com/NibiruChain/nibiru/issues/1916
 		ante.NewDeductFeeDecorator(opts.AccountKeeper, opts.BankKeeper, opts.FeegrantKeeper, opts.TxFeeChecker),
 		// ----------- Ante Handlers:  devgas
-		devgasante.NewDevGasPayoutDecorator(opts.DevGasBankKeeper, opts.DevGasKeeper),
+		// Zero-gas actor txs pay no fee, so they produce no devgas payout.
+		ante.AnteDecSkipForZeroGas{
+			Next: devgasante.NewDevGasPayoutDecorator(opts.DevGasBankKeeper, opts.DevGasKeeper),
+		},
 		// ----------- Ante Handlers:  Keys and signatures
 		// NOTE: SetPubKeyDecorator must be called before all signature verification decorators
 		authante.NewSetPubKeyDecorator(opts.AccountKeeper),

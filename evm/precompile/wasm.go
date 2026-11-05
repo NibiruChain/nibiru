@@ -38,10 +38,13 @@ const (
 
 func (p precompileWasm) Run(
 	evmObj *vm.EVM,
+	// trueCaller is the address whose account a mutable precompile may act for.
+	//
+	//   - A top-level call sets trueCaller to the transaction sender.
+	//   - An ordinary CALL resets trueCaller to the called contract.
+	//   - DELEGATECALL copies the already-resolved trueCaller from the calling
+	//     frame, so delegation cannot reach back across an earlier CALL boundary.
 	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls
@@ -54,10 +57,13 @@ func (p precompileWasm) Run(
 // Run runs the precompiled contract
 func (p precompileWasm) DynamicRun(
 	evmObj *vm.EVM,
+	// trueCaller is the address whose account a mutable precompile may act for.
+	//
+	//   - A top-level call sets trueCaller to the transaction sender.
+	//   - An ordinary CALL resets trueCaller to the called contract.
+	//   - DELEGATECALL copies the already-resolved trueCaller from the calling
+	//     frame, so delegation cannot reach back across an earlier CALL boundary.
 	trueCaller gethcommon.Address,
-	// Note that we use "trueCaller" here to differentiate between a delegate
-	// caller ("parent.CallerAddress" in geth) and "contract.CallerAddress"
-	// because these two addresses may differ.
 	contract *vm.Contract,
 	readonly bool,
 	// isDelegatedCall: Flag to add conditional logic specific to delegate calls

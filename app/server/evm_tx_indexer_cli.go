@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/v2/eth/indexer"
+	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 
-	tmnode "github.com/cometbft/cometbft/node"
-	sm "github.com/cometbft/cometbft/state"
-	tmstore "github.com/cometbft/cometbft/store"
+	tmnode "github.com/NibiruChain/nibiru/v2/bft/node"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	tmstore "github.com/NibiruChain/nibiru/v2/bft/store"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"

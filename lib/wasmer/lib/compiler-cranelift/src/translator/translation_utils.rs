@@ -1,0 +1,175 @@
+//! Helper functions and structures for the translation.
+
+use crate::func_environ::FuncEnvironment;
+use crate::translator::EXN_REF_TYPE;
+use cranelift_codegen::{
+    binemit::Reloc,
+    cursor::FuncCursor,
+    ir::{self, InstBuilder},
+    isa::TargetFrontendConfig,
+};
+use cranelift_frontend::FunctionBuilder;
+use target_lexicon::Architecture;
+use wasmer_compiler::{
+    types::relocation::RelocationKind,
+    wasmparser::{self, RefType},
+};
+use wasmer_types::{FunctionType, LibCall, Type, WasmError, WasmResult};
+
+/// Materialize a global value as CLIF instructions.
+pub(crate) fn materialize_global_value(
+    pos: &mut FuncCursor<'_>,
+    pointer_type: ir::Type,
+    global_value: ir::GlobalValue,
+) -> ir::Value {
+    match pos.func.global_values[global_value] {
+        ir::GlobalValueData::VMContext => pos
+            .func
+            .special_param(ir::ArgumentPurpose::VMContext)
+            .expect("missing vmctx parameter"),
+        ir::GlobalValueData::IAddImm {
+            base,
+            offset,
+            global_type,
+        } => {
+            let base = materialize_global_value(pos, global_type, base);
+            pos.ins().iadd_imm_s(base, i64::from(offset))
+        }
+        ir::GlobalValueData::Load {
+            base,
+            offset,
+            global_type,
+            flags,
+        } => {
+            let base = materialize_global_value(pos, pointer_type, base);
+            let flags = pos.func.dfg.mem_flags[flags];
+            pos.ins().load(global_type, flags, base, offset)
+        }
+        ir::GlobalValueData::Symbol { tls, .. } => {
+            if tls {
+                pos.ins().tls_value(pointer_type, global_value)
+            } else {
+                pos.ins().symbol_value(pointer_type, global_value)
+            }
+        }
+        ir::GlobalValueData::DynScaleTargetConst { .. } => {
+            unreachable!("dynamic vector-scale global values are not created by Wasmer")
+        }
+    }
+}
+
+/// Helper function translate a Function signature into Cranelift Ir
+pub fn signature_to_cranelift_ir(
+    signature: &FunctionType,
+    target_config: TargetFrontendConfig,
+    architecture: Architecture,
+) -> ir::Signature {
+    crate::abi::signature_to_ir(signature, target_config, architecture)
+}
+
+/// Helper function translating wasmparser types to Cranelift types when possible.
+pub fn reference_type(target_config: TargetFrontendConfig) -> WasmResult<ir::Type> {
+    Ok(target_config.pointer_type())
+}
+
+/// Helper function translating wasmparser types to Cranelift types when possible.
+pub fn type_to_irtype(ty: Type, target_config: TargetFrontendConfig) -> WasmResult<ir::Type> {
+    match ty {
+        Type::I32 => Ok(ir::types::I32),
+        Type::I64 => Ok(ir::types::I64),
+        Type::F32 => Ok(ir::types::F32),
+        Type::F64 => Ok(ir::types::F64),
+        Type::V128 => Ok(ir::types::I8X16),
+        Type::ExternRef | Type::FuncRef => reference_type(target_config),
+        Type::ExceptionRef => Ok(EXN_REF_TYPE),
+        // ty => Err(wasm_unsupported!("type_to_type: wasm type {:?}", ty)),
+    }
+}
+
+/// Transform Cranelift LibCall into runtime LibCall
+pub fn irlibcall_to_libcall(libcall: ir::LibCall) -> LibCall {
+    match libcall {
+        ir::LibCall::Probestack => LibCall::Probestack,
+        ir::LibCall::CeilF32 => LibCall::CeilF32,
+        ir::LibCall::CeilF64 => LibCall::CeilF64,
+        ir::LibCall::FloorF32 => LibCall::FloorF32,
+        ir::LibCall::FloorF64 => LibCall::FloorF64,
+        ir::LibCall::TruncF32 => LibCall::TruncF32,
+        ir::LibCall::TruncF64 => LibCall::TruncF64,
+        ir::LibCall::NearestF32 => LibCall::NearestF32,
+        ir::LibCall::NearestF64 => LibCall::NearestF64,
+        _ => panic!("Unsupported libcall"),
+    }
+}
+
+/// Transform Cranelift Reloc to compiler Relocation
+pub fn irreloc_to_relocationkind(reloc: Reloc) -> RelocationKind {
+    match reloc {
+        Reloc::Abs4 => RelocationKind::Abs4,
+        Reloc::Abs8 => RelocationKind::Abs8,
+        Reloc::X86PCRel4 => RelocationKind::PCRel4,
+        Reloc::X86CallPCRel4 => RelocationKind::X86CallPCRel4,
+        Reloc::X86CallPLTRel4 => RelocationKind::X86CallPLTRel4,
+        Reloc::X86GOTPCRel4 => RelocationKind::X86GOTPCRel4,
+        Reloc::Arm64Call => RelocationKind::Arm64Call,
+        Reloc::RiscvCallPlt => RelocationKind::RiscvCall,
+        _ => panic!("The relocation {reloc} is not yet supported."),
+    }
+}
+
+/// Create a `Block` with the given Wasm parameters.
+pub fn block_with_params<'a>(
+    builder: &mut FunctionBuilder,
+    params: impl Iterator<Item = &'a wasmparser::ValType>,
+    environ: &FuncEnvironment<'_>,
+) -> WasmResult<ir::Block> {
+    let block = builder.create_block();
+    for ty in params.into_iter() {
+        match ty {
+            wasmparser::ValType::I32 => {
+                builder.append_block_param(block, ir::types::I32);
+            }
+            wasmparser::ValType::I64 => {
+                builder.append_block_param(block, ir::types::I64);
+            }
+            wasmparser::ValType::F32 => {
+                builder.append_block_param(block, ir::types::F32);
+            }
+            wasmparser::ValType::F64 => {
+                builder.append_block_param(block, ir::types::F64);
+            }
+            wasmparser::ValType::Ref(ty) => {
+                if ty.is_extern_ref() || ty.is_func_ref() {
+                    builder.append_block_param(block, environ.reference_type());
+                } else if ty == &RefType::EXNREF || ty == &RefType::EXN {
+                    // no `.is_exnref` yet
+                    builder.append_block_param(block, EXN_REF_TYPE);
+                } else {
+                    return Err(WasmError::Unsupported(format!(
+                        "unsupported reference type: {ty:?}"
+                    )));
+                }
+            }
+            wasmparser::ValType::V128 => {
+                builder.append_block_param(block, ir::types::I8X16);
+            }
+        }
+    }
+    Ok(block)
+}
+
+/// Turns a `wasmparser` `f32` into a `Cranelift` one.
+pub fn f32_translation(x: wasmparser::Ieee32) -> ir::immediates::Ieee32 {
+    ir::immediates::Ieee32::with_bits(x.bits())
+}
+
+/// Turns a `wasmparser` `f64` into a `Cranelift` one.
+pub fn f64_translation(x: wasmparser::Ieee64) -> ir::immediates::Ieee64 {
+    ir::immediates::Ieee64::with_bits(x.bits())
+}
+
+/// Special VMContext value label. It is tracked as 0xffff_fffe label.
+pub fn get_vmctx_value_label() -> ir::ValueLabel {
+    const VMCTX_LABEL: u32 = 0xffff_fffe;
+    ir::ValueLabel::from_u32(VMCTX_LABEL)
+}

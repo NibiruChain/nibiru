@@ -361,6 +361,236 @@ func (s *FuntokenSuite) TestHappyPath() {
 	})
 }
 
+// TestDelegatedFunTokenMutationsPreserveTransactionSender protects the normal
+// adapter path. An EOA calls a router that delegates into the FunToken
+// precompile, so sendToBank, sendToEvm, and bankMsgSend must use the EOA's
+// authority. The v2.18 fix must keep this path working while closing the
+// callback impersonation path tested below.
+func (s *FuntokenSuite) TestDelegatedFunTokenMutationsPreserveTransactionSender() {
+	deps := evmtest.NewTestDeps()
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "delegate-denom", &s.Suite)
+	erc20 := funtoken.Erc20Addr.Address
+	amount := big.NewInt(420)
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount))),
+	))
+	_, err := deps.EvmKeeper.ConvertCoinToEvm(
+		deps.GoCtx(),
+		&evm.MsgConvertCoinToEvm{
+			Sender:   deps.Sender.NibiruAddr.String(),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount)),
+			ToEthAddr: eth.EIP55Addr{
+				Address: deps.Sender.EthAddr,
+			},
+		},
+	)
+	s.Require().NoError(err)
+
+	routerResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestDelegatePrecompile)
+	s.Require().NoError(err)
+	router := routerResp.ContractAddr
+	recipient := testutil.NewAccAddress()
+	input, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"sendToBank",
+		erc20,
+		amount,
+		recipient.String(),
+	)
+	s.Require().NoError(err)
+
+	callRouter := func(input []byte) (*evm.MsgEthereumTxResponse, error) {
+		evmObj, _ := deps.NewEVM()
+		return deps.EvmKeeper.CallContract(
+			evmObj,
+			deps.Sender.EthAddr,
+			&router,
+			input,
+			evm.Erc20GasLimitExecute,
+			evm.COMMIT_ETH_TX,
+			nil,
+		)
+	}
+
+	resp, err := callRouter(input)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(recipient), amount, "delegatecall preserves the transaction sender",
+	)
+
+	sendToEvmAmount := big.NewInt(69)
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(sendToEvmAmount))),
+	))
+	evmRecipient := evmtest.NewEthPrivAcc()
+	sendToEvmInput, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"sendToEvm",
+		funtoken.BankDenom,
+		sendToEvmAmount,
+		evmRecipient.EthAddr.Hex(),
+	)
+	s.Require().NoError(err)
+	resp, err = callRouter(sendToEvmInput)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	evmObj, _ := deps.NewEVM()
+	evmtest.AssertERC20BalanceEqualWithDescription(
+		s.T(), deps, evmObj, erc20, evmRecipient.EthAddr, sendToEvmAmount, "delegatecall preserves the transaction sender",
+	)
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.OneInt())),
+	))
+	bankMsgSendInput, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"bankMsgSend",
+		recipient.String(),
+		funtoken.BankDenom,
+		big.NewInt(1),
+	)
+	s.Require().NoError(err)
+	resp, err = callRouter(bankMsgSendInput)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(recipient), new(big.Int).Add(amount, big.NewInt(1)), "bankMsgSend preserves the transaction sender",
+	)
+}
+
+// TestTrueCallerStopsCallbackImpersonation models the pool-drain call
+// shape: EOA -> router -> funded pool -> router callback -> DELEGATECALL into
+// FunToken. The callback may spend the router's balance, but it must not inherit
+// the pool's authority merely because the pool made the callback.
+func (s *FuntokenSuite) TestTrueCallerStopsCallbackImpersonation() {
+	deps := evmtest.NewTestDeps()
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "callback-denom", &s.Suite)
+	erc20 := funtoken.Erc20Addr.Address
+	amount := big.NewInt(420)
+
+	routerResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestDelegatePrecompile)
+	s.Require().NoError(err)
+	callbackResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestCallbackCaller)
+	s.Require().NoError(err)
+
+	// Give the callback caller ERC20 funds to model a funded pool. The router
+	// and transaction sender intentionally have no ERC20 balance.
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount))),
+	))
+	_, err = deps.EvmKeeper.ConvertCoinToEvm(
+		deps.GoCtx(),
+		&evm.MsgConvertCoinToEvm{
+			Sender:   deps.Sender.NibiruAddr.String(),
+			BankCoin: sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount)),
+			ToEthAddr: eth.EIP55Addr{
+				Address: callbackResp.ContractAddr,
+			},
+		},
+	)
+	s.Require().NoError(err)
+
+	recipient := testutil.NewAccAddress()
+	input, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"sendToBankThroughCallback",
+		callbackResp.ContractAddr,
+		erc20,
+		amount,
+		recipient.String(),
+	)
+	s.Require().NoError(err)
+	evmObj, _ := deps.NewEVM()
+	_, err = deps.EvmKeeper.CallContract(
+		evmObj,
+		deps.Sender.EthAddr,
+		&routerResp.ContractAddr,
+		input,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX,
+		nil,
+	)
+	s.Require().ErrorContains(err, "transfer amount exceeds balance")
+
+	evmObj, _ = deps.NewEVM()
+	evmtest.AssertERC20BalanceEqualWithDescription(
+		s.T(), deps, evmObj, erc20, callbackResp.ContractAddr, amount, "callback caller cannot be impersonated",
+	)
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(recipient), big.NewInt(0), "failed impersonation credits no bank funds",
+	)
+}
+
+// TestTrueCallerSurvivesProxy covers the Sai-compatible proxy path. An EOA
+// calls a proxy, the proxy delegates into its implementation, and the
+// implementation delegates into FunToken. Both delegate calls must preserve
+// the EOA as the account authorized to fund sendToBank.
+func (s *FuntokenSuite) TestTrueCallerSurvivesProxy() {
+	deps := evmtest.NewTestDeps()
+	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "proxy-denom", &s.Suite)
+	erc20 := funtoken.Erc20Addr.Address
+	amount := big.NewInt(420)
+
+	s.Require().NoError(testapp.FundAccount(
+		deps.App.BankKeeper,
+		deps.Ctx(),
+		deps.Sender.NibiruAddr,
+		sdk.NewCoins(sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount))),
+	))
+	_, err := deps.EvmKeeper.ConvertCoinToEvm(
+		deps.GoCtx(),
+		&evm.MsgConvertCoinToEvm{
+			Sender:    deps.Sender.NibiruAddr.String(),
+			BankCoin:  sdk.NewCoin(funtoken.BankDenom, sdk.NewIntFromBigInt(amount)),
+			ToEthAddr: eth.EIP55Addr{Address: deps.Sender.EthAddr},
+		},
+	)
+	s.Require().NoError(err)
+
+	implementationResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestDelegatePrecompile)
+	s.Require().NoError(err)
+	proxyResp, err := evmtest.DeployContract(
+		&deps,
+		embeds.SmartContract_TestDelegateProxy,
+		implementationResp.ContractAddr,
+	)
+	s.Require().NoError(err)
+
+	recipient := testutil.NewAccAddress()
+	input, err := embeds.SmartContract_TestDelegatePrecompile.ABI.Pack(
+		"sendToBank",
+		erc20,
+		amount,
+		recipient.String(),
+	)
+	s.Require().NoError(err)
+	evmObj, _ := deps.NewEVM()
+	resp, err := deps.EvmKeeper.CallContract(
+		evmObj,
+		deps.Sender.EthAddr,
+		&proxyResp.ContractAddr,
+		input,
+		evm.Erc20GasLimitExecute,
+		evm.COMMIT_ETH_TX,
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().Empty(resp.VmError)
+	evmtest.AssertBankBalanceEqualWithDescription(
+		s.T(), deps, funtoken.BankDenom, eth.NibiruAddrToEthAddr(recipient), amount, "proxy delegatecall preserves the transaction sender",
+	)
+}
+
 func (s *FuntokenSuite) TestPrecompileLocalGas() {
 	deps := evmtest.NewTestDeps()
 	funtoken := evmtest.CreateFunTokenForBankCoin(deps, "testdenom", &s.Suite)

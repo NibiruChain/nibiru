@@ -377,7 +377,7 @@ func TestToWasmVMGasConversion(t *testing.T) {
 	for name, spec := range specs {
 		t.Run(name, func(t *testing.T) {
 			if spec.expPanic {
-				assert.Panics(t, func() {
+				assert.PanicsWithValue(t, storetypes.ErrorGasOverflow{Descriptor: "ToWasmVMGas"}, func() {
 					r := NewWasmGasRegister(spec.srcConfig)
 					_ = r.ToWasmVMGas(spec.src)
 				})

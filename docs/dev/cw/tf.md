@@ -6,21 +6,23 @@ order: 6
 
 The `nibi-stargate` smart contract exemplifies the creation and management of fungible tokens on the Nibiru Chain. This guide presents steps for engaging with the smart contract, encompassing environment setup, contract deployment, transaction broadcasting, and message type comprehension.
 
-## Clone nibiru-wasm
+## Clone the Nibiru repository
 
-Start by cloning the `nibi-stargate` contract from the `nibiru-wasm` [repository](https://github.com/NibiruChain/nibiru-wasm/tree/main).
+Clone the [Nibiru repository](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts), which contains the `nibi-stargate` contract.
 
 ```bash
-git clone https://github.com/NibiruChain/nibiru-wasm.git
+git clone https://github.com/NibiruChain/nibiru.git
+cd nibiru/wasm-contracts/nibi-stargate
 ```
 
 To build and verify select contracts, you can use the [`just` comand runner](https://github.com/casey/just?tab=readme-ov-file#prerequisites).
 
 ```bash
-just
+cd ../..
+just rs --list
 ```
 
-The specific `nibi-stargate` contract is located under `contracts/`.
+The `nibi-stargate` contract is located at `wasm-contracts/nibi-stargate/`.
 
 ## Setting Environment Variables
 

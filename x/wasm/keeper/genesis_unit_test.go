@@ -10,12 +10,13 @@ import (
 	"time"
 
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	fuzz "github.com/google/gofuzz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 
@@ -60,6 +61,17 @@ func TestGenesisExportImport(t *testing.T) {
 		f.Fuzz(&codeInfo)
 		f.Fuzz(&contract)
 		f.Fuzz(&stateModels)
+		seenStateKeys := make(map[string]struct{}, len(stateModels))
+		uniqueStateModels := stateModels[:0]
+		for _, model := range stateModels {
+			key := string(model.Key)
+			if _, seen := seenStateKeys[key]; seen {
+				continue
+			}
+			seenStateKeys[key] = struct{}{}
+			uniqueStateModels = append(uniqueStateModels, model)
+		}
+		stateModels = uniqueStateModels
 		f.NilChance(0).Fuzz(&history)
 		f.Fuzz(&pinned)
 		f.Fuzz(&contractExtension)

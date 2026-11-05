@@ -3,8 +3,8 @@ package tendermint
 import (
 	"bytes"
 
-	"github.com/cometbft/cometbft/light"
-	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

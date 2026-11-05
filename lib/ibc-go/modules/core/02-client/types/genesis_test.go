@@ -3,7 +3,7 @@ package types_test
 import (
 	"time"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	client "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"

@@ -1,0 +1,100 @@
+//! This submodule has the concrete definitions for all the available implenters of the WebAssembly
+//! types needed to create a runtime.
+
+#[cfg(feature = "sys")]
+pub mod sys;
+
+#[cfg(feature = "v8")]
+pub mod v8;
+
+#[cfg(feature = "js")]
+pub mod js;
+
+#[non_exhaustive]
+#[derive(Debug, Clone, Copy)]
+/// An enumeration over all the supported runtimes.
+pub enum BackendKind {
+    #[cfg(feature = "cranelift")]
+    /// The `cranelift` runtime.
+    Cranelift,
+
+    #[cfg(feature = "llvm")]
+    /// The `llvm` runtime.
+    LLVM,
+
+    #[cfg(feature = "singlepass")]
+    /// The `singlepass` runtime.
+    Singlepass,
+
+    #[cfg(feature = "sys")]
+    /// The sys `headless` runtime.
+    Headless,
+
+    #[cfg(feature = "v8")]
+    /// The `v8` runtime.
+    V8,
+
+    #[cfg(feature = "js")]
+    /// The `js` runtime.
+    Js,
+}
+
+impl Default for BackendKind {
+    fn default() -> Self {
+        #[cfg(feature = "sys-default")]
+        {
+            #[cfg(feature = "cranelift")]
+            {
+                return Self::Cranelift;
+            }
+            #[cfg(feature = "singlepass")]
+            {
+                return Self::Singlepass;
+            }
+            #[cfg(feature = "llvm")]
+            {
+                return Self::LLVM;
+            }
+            return Self::Headless;
+        }
+
+        #[cfg(feature = "v8-default")]
+        {
+            return Self::V8;
+        }
+
+        #[cfg(feature = "js-default")]
+        {
+            return Self::Js;
+        }
+
+        #[cfg(feature = "sys")]
+        {
+            #[cfg(feature = "cranelift")]
+            {
+                return Self::Cranelift;
+            }
+            #[cfg(feature = "singlepass")]
+            {
+                return Self::Singlepass;
+            }
+            #[cfg(feature = "llvm")]
+            {
+                return Self::LLVM;
+            }
+            return Self::Headless;
+        }
+
+        #[cfg(feature = "v8")]
+        {
+            return Self::V8;
+        }
+
+        #[cfg(feature = "js")]
+        {
+            return Self::Js;
+        }
+
+        panic!("No runtime enabled!")
+    }
+}

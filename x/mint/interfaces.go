@@ -46,5 +46,5 @@ type StakingKeeper interface {
 
 type SudoKeeper interface {
 	GetRootAddr(ctx sdk.Context) (sdk.AccAddress, error)
-	CheckPermissions(contract sdk.AccAddress, ctx sdk.Context) error
+	CheckPermissions(actor sdk.AccAddress, ctx sdk.Context, role string) error
 }

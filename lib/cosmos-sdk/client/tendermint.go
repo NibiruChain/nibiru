@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 )
 
 // TendermintRPC defines the interface of a Tendermint RPC client needed for

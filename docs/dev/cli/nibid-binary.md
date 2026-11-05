@@ -3,154 +3,217 @@ order: 2
 footer:
   newsletter: false
 description: >-
-  Instructions on building and installing the nibid binary. nibid is a command line client for the Nibiru blockchain. Nibiru users can use nibid to send transactions to the Nibiru network, query data from the chain, and run nodes. To install the nibid binary, you can either (1) download the binary from the NibiruChain/nibiru releases page (2) or build the binary directly from the source code.
+  Install the Nibiru CLI to query chain data, send transactions, and run nodes.
+  Use Bun or npm, download a release binary, or build from source.
 ---
 
-# ⚙️ Installing the Nibiru Binary
+# Install the Nibiru CLI
 
 {{ $frontmatter.description }}
 
-## Install Option 1 | Use our bash script
+<!-- toc -->
+- [Option 1: Install with Bun or npm](#option-1-install-with-bun-or-npm)
+- [Option 2: Use the Bash installer](#option-2-use-the-bash-installer)
+- [Option 3: Download a release binary](#option-3-download-a-release-binary)
+- [Option 4: Build from source](#option-4-build-from-source)
+  - [Install build tools](#install-build-tools)
+  - [Install Go](#install-go)
+  - [Compile the source code](#compile-the-source-code)
+- [Post-installation](#post-installation)
+- [Local development](#local-development)
+- [Docker Engine](#docker-engine)
+- [Next steps](#next-steps)
+<!-- tocstop -->
+
+## Option 1: Install with Bun or npm
+
+Install the CLI globally with [Bun](https://bun.sh/docs/installation):
+
+```bash
+bun install --global @nibiruchain/nibiru
+nibiru version
+```
+
+Or use npm:
+
+```bash
+npm install --global @nibiruchain/nibiru
+nibiru version
+```
+
+These commands install the npm default version. The package supports Linux and
+macOS on x64 and arm64. On Windows, use WSL. Keep optional dependencies enabled
+so the package manager installs the binary for your platform.
+
+The launcher requires [Node.js](https://nodejs.org/en/download) on your `PATH`,
+including when you install with Bun. It exposes the command `nibiru`, which runs
+the native `nibid` binary and forwards all arguments. Replace `nibid` with
+`nibiru` when following the other CLI guides.
+
+## Option 2: Use the Bash installer
 
 ```bash
 curl -s https://get.nibiru.fi/! | bash
 ```
 
-Or, if you would like to get a specific version, use:
+To install a specific version:
 
 ```bash
-curl -s https://get.nibiru.fi/@v1.0.0! | bash
+curl -s https://get.nibiru.fi/@v2.19.0! | bash
 ```
 
-**NOTE**: The `!` sign in the URL makes the script move the binary to `/usr/local/bin` after downloading it. For this, it will ask you for `sudo` password. If you would like to skip this, just ommit the `!` sign from the URL.
+The `!` suffix moves the binary to `/usr/local/bin` and may prompt for your
+`sudo` password. Omit `!` to download without moving the binary.
 
-## Install Option 2 | Downloading the binary
+## Option 3: Download a release binary
 
-You'll need one of the `darwin_` binaries if you're using MacOS and one of the `linux_` binaries if you're using something like Ubuntu or WSL.
+Download an archive from the [Nibiru releases](https://github.com/NibiruChain/nibiru/releases)
+page. Expand the release's assets to find the download links. Choose `darwin`
+for macOS or `linux` for Linux and WSL.
 
-To know whether you'll need the `amd64` or `arm64`, run one of the following commands:
-
-```bash
-dpkg --print-architecture
-# returns "amd64" on Ubuntu
-```
+Check your CPU architecture:
 
 ```bash
 uname -m
-# returns values like x86_64, i686, arm, and aarch64
 ```
 
-Download the binary from the [NibiruChain/nibiru releases](https://github.com/NibiruChain/nibiru/releases) page (the current testnet is `v1.0.0`). The assets are at the bottom after the release notes.
+Use an `amd64` archive for `x86_64`, or an `arm64` archive for `arm64` or `aarch64`.
 
-![](../../img/release-assets.png)
+![Release download assets](../../img/release-assets.png)
 
-After downloading the tar file containing the binary, you'll need to unpack it. Here's an example command for unpacking the tar file.
+For example, extract the Linux amd64 archive for version `v2.19.0`:
 
 ```bash
-tar -xvf nibiru_linux_amd64.tar.gz && mv nibirud nibid
-# The tar file unpacks with "nibirud" as the default name, so we rename it here.
+tar -xzf nibid_2.19.0_linux_amd64.tar.gz
 ```
 
-Finally, add the `nibid` binary to your `$PATH` with one of the methods below.
+Add the directory containing `nibid` to your shell configuration, replacing
+`/path/to/nibid-directory` with its actual path:
 
 ```bash
-# Add to shell config
-export PATH=<path-to-nibid>:$PATH
+export PATH="/path/to/nibid-directory:$PATH"
 ```
+
+Or install the binary in `/usr/local/bin`:
 
 ```bash
-# Or, copy directly to a /bin folder
-cp nibid /bin/nibid
+sudo install -m 755 nibid /usr/local/bin/nibid
 ```
 
-## Install Option 3 | Building from the Source Code
+## Option 4: Build from source
 
-### 2.1 — Install make and gcc
+### Install build tools
+
+Install Git, a C compiler, and [just](https://github.com/casey/just#installation).
+On macOS, install the Command Line Tools and `just`:
+
+```bash
+xcode-select --install
+brew install just
+```
+
+On Ubuntu or WSL, install Git and the compiler tools, then install `just`
+using its installation guide:
 
 ```bash
 sudo apt-get update
-sudo apt-get upgrade
-sudo apt install git build-essential ufw curl jq snapd --yes
+sudo apt-get install --yes git build-essential
 ```
 
-### 2.2 — Install Go
+### Install Go
 
-The installation process for Go depends on your OS. Nibiru is meant to build with a Unix system such as MacOS, Ubuntu, or WSL. Please install Go v1.18 using the instructions at [go.dev/doc/install](https://go.dev/doc/install). For Ubuntu, you can use:
+Install Go with [Homebrew](https://brew.sh):
 
 ```bash
-wget https://golang.org/dl/go1.18.2.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.18.2.linux-amd64.tar.gz
+brew install go
+go version
 ```
 
-You'll also want to set the following environment variables in your shell config (e.g. `.bashrc`, `.zshrc`).
+For other installation methods, follow the [official Go installation instructions](https://go.dev/doc/install).
+Use a Go version that satisfies the selected release's `go.mod` requirement.
+
+### Compile the source code
+
+Clone the repository, select the release, and install `nibid`:
 
 ```bash
-export GOROOT=/usr/local/go
-export GOPATH=$HOME/go
-export GO111MODULE=on
-export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
-```
-
-### 2.3 — Compile the source code
-
-To build the binary from source, begin by cloning the `NibiruChain/nibiru` repo.
-
-```bash
-cd $HOME
 git clone https://github.com/NibiruChain/nibiru
 cd nibiru
-git checkout v1.0.0
 just install
 ```
 
 ## Post-installation
 
-Running these commands should have made `nibid` available in your `$PATH`. You should now be able to view a list of all available commands:
+For Bun or npm installs, check the version and available commands:
 
 ```bash
-nibid
+nibiru version
+nibiru --help
 ```
+
+For the Bash installer, manual download, or source build, use:
+
+```bash
+nibid version
+nibid --help
+```
+
+If your shell cannot find the command, check the installation's bin directory:
+
+- Bun: run `bun pm bin --global` and add that directory to your `PATH`.
+- npm: run `npm prefix --global` and add the returned directory's `bin` subdirectory to your `PATH`.
+- Bash installer: check `/usr/local/bin` if you used the `!` suffix.
+- Manual download: add the directory where you extracted `nibid`.
+- Source build: add Go's bin directory as described in the tip below.
 
 ::: tip
-If the "`nibid: command not found`" error message is returned, confirm that the Golang binary path is correctly configured by running the following command (or setting it in your shell config):
-```bash
-export PATH=$PATH:$(go env GOPATH)/bin
-```
-:::
+If you see `nibid: command not found` after building from source, add Go's bin
+directory to your `PATH`:
 
----
+```bash
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+Save this line in your shell configuration and reload it.
+:::
 
 ## Local development
 
-Lastly, you can run the chain for local development with
+Print and run the embedded single-node localnet script:
 
 ```bash
-make localnet
+nibid localnet --script | bash
 ```
 
-After opening another terminal, you'll be able to use the full suite of `nibid` commands.
+For Bun or npm installs, use:
+
+```bash
+nibiru localnet --script | BINARY=nibiru bash
+```
+
+Setting `BINARY=nibiru` makes the script use the npm launcher for node commands.
+Stop any running localnet before running the script. It resets local chain data
+under `$HOME/.nibid` before starting the node. Open another terminal to query the
+local chain or send transactions.
 
 ## Docker Engine
 
-You'll need Docker to run commands that use external containers like `make proto-gen`. Instructions for installing Docker can be found [here](https://docs.docker.com/engine/install/).
+Some repository workflows use Docker containers. Follow the
+[Docker Engine installation instructions](https://docs.docker.com/engine/install/)
+when working with those workflows.
 
 ---
 
-## Next Steps
+## Next steps
 
-#### Learn more about the [`nibid` Command-Line Interface][page-cli]
+- [Use the Nibiru CLI][page-cli]
+- [Set up Cosmovisor][page-cosmovisor]
+- [Run a full node][page-full-node]
+- [Set up a validator][page-validator]
+- [Learn about the node daemon][page-node-daemon]
 
-#### [Setup Cosmovisor][page-cosmovisor]
-
-#### Run a Full Node
-
-- [Run a Full Node on Testnet][page-testnet]
-- [Setup a Validator Node][page-validator]
-
-#### [What's a node?][page-node-daemon]
-
-[page-cosmovisor]: ../../run-nodes/testnet/cosmovisor
-[page-testnet]: ../../run-nodes/testnet
+[page-cosmovisor]: ../../run-nodes/full-nodes/cosmovisor.md
+[page-full-node]: ../../run-nodes/full-nodes/index.md
 [page-validator]: ../../run-nodes/validators
-[page-node-daemon]: ../../run-nodes/testnet/node-daemon
+[page-node-daemon]: ../../run-nodes/full-nodes/node-daemon.md
 [page-cli]: ./

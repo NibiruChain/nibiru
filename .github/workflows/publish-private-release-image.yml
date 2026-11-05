@@ -1,0 +1,119 @@
+# Publish a container from binaries attached to a published public release.
+#
+# Release-cut procedure
+# ---------------------
+# Use this workflow after the Release workflow has built and published a
+# release-cut tag such as v2.20.0-rc.1. This publishes the tested binary
+# artifacts as a multi-architecture image before the final production tag is
+# created.
+#
+# 1. For a release cut, create and publish a v<semver> tag. The normal Release
+#    workflow builds the Linux and Darwin archives and publishes their checksum
+#    manifest. For a hotfix, use the existing hotfix/v<semver> artifact-release
+#    process and attach its verified archives to the public release.
+#
+# 2. In Actions, run this workflow from main and enter the published release
+#    tag exactly, for example v2.20.0-rc.1. The workflow derives image tag
+#    2.20.0-rc.1, verifies the attached Linux files, and publishes
+#    ghcr.io/nibiruchain/nibiru:2.20.0-rc.1.
+#
+#    Before dispatching, a developer can run command `just release-image-verify
+#    v<semver> <semver>`. It downloads the release assets, checks the Linux
+#    archive digests, and checks that each archive contains an executable nibid.
+#    It does not build or publish a container.
+#
+# 3. Inspect the pushed manifest for linux/amd64 and linux/arm64. Do not add
+#    latest, a hotfix-prefixed image tag, or architecture-suffixed public tags.
+#    Create the final production tag only after the release checks pass.
+#
+# This workflow reads only the public artifact release. It uses its short-lived
+# GITHUB_TOKEN with packages: write, not a personal access token. A run fails
+# before publication if the tag is not v<semver> or hotfix/v<semver>, the
+# release is a draft, an expected archive is missing, or either Linux archive
+# fails SHA-256 checks.
+name: Publish Release Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Published release tag, for example v2.20.0-rc.1 or hotfix/v2.19.0"
+        required: true
+        type: string
+
+# The short-lived workflow token can read this repository's release assets and
+# publish its linked container package. No personal access token is required.
+permissions:
+  contents: read
+  packages: write
+
+# A second manual run for the same release waits instead of racing to move the
+# same immutable-looking image tag. Do not cancel a run that may be uploading.
+concurrency:
+  group: private-first-release-image-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Verify artifacts and publish image
+    runs-on: ubuntu-latest
+
+    steps:
+      # Dispatching from another branch would run unreviewed workflow code.
+      # Keep the publisher anchored to main, where the reviewed script lives.
+      - name: Require a main-branch dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main" || {
+            echo "::error::Run this workflow from the main branch."
+            exit 1
+          }
+
+      - name: Check out the trusted publisher
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Validate the release tag and derive its image version
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          case "$RELEASE_TAG" in
+            v*)
+              version="${RELEASE_TAG#v}"
+              ;;
+            hotfix/v*)
+              version="${RELEASE_TAG#hotfix/v}"
+              ;;
+            *)
+              echo "::error::release_tag must start with v or hotfix/v."
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::release_tag must end in a semver version."
+            exit 1
+          fi
+
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # gh reads GH_TOKEN. Docker reads GHCR_TOKEN. Both hold the same
+      # short-lived token, scoped by the permissions block above.
+      - name: Verify release assets and publish the multi-arch image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_USERNAME: ${{ github.actor }}
+        run: |
+          contrib/scripts/publish-release-image.sh \
+            --release-tag "${{ steps.release.outputs.tag }}" \
+            --version "${{ steps.release.outputs.version }}" \
+            --push

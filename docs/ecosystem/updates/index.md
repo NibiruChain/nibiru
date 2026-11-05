@@ -16,6 +16,38 @@ description: >
 
 {{ $frontmatter.description }}
 
+- [2026-09-30 - NAN 008: Defending Wasm in Layers, and Reading EVM State from
+  Wasm](./nan-008.md): NAN 008 covers Nibiru v2.19.0 and v2.20.0, two releases
+  that protected the network from a Wasm runtime vulnerability while we prepared
+  the repair. It also covers Wasm contracts reading EVM state, transaction
+  lookup by either hash, and clearer fees on Sai.
+
+- [2026-08-31 - NAN 007: A Month Spent on Speed, and Getting Block Time
+  Back](./nan-007.md): NAN 007 covers August 2026, a month we spent on speed.
+  Sai got faster to load and to trade, mainnet block time went back to about 1.5
+  seconds, and Sai launched Points and referral accounting that follows the
+  code.
+
+- [2026-07-31 - NAN 006: Owning Our Dependencies, a Nonce-Aware Mempool, and
+  24-Hour Votes](./nan-006.md): NAN 006 covers Nibiru v2.16.0 and v2.17.0. We
+  moved the Cosmos SDK, IBC Go, the Wasm module, and the Wasm VM into the Nibiru
+  repository, stopped spam from filling blocks with EVM transactions that can't
+  execute, cut governance votes to 24 hours, and turned off authz.
+
+- [2026-06-30 - NAN 005: Zero Gas in Browser Wallets, a Self-Governing Treasury,
+  and the Return of 0x0801](./nan-005.md): NAN 005 covers Nibiru v2.14.0 and
+  v2.15.0. New users can make gasless calls from ordinary browser wallets, the
+  Foundation Treasury now manages its own signers, and the old oracle address
+  0x0801 returns as a read-only price source so MIM OFT bridge fee quotes work
+  again.
+
+- [2026-04-30 - NAN 004: Retiring the Native Oracle with v2.12.0](./nan-004.md):
+  NAN 004 covers Nibiru v2.12.0. Validators no longer vote on prices, because
+  the chain's built-in oracle is retired. Mapping a token between Nibiru's
+  Cosmos and EVM sides now needs approval on mainnet, and indexers no longer see
+  events from failed EVM transactions. On Sai, stocks, ETFs, and commodities
+  arrived in one listing wave.
+
 - [2026-02-11 - NAN 003: A Smoother EVM for Sai, Passkey Signing, and Zero Gas with v2.11.0](./nan-003.md):
   This release makes Nibiru feel simpler at the surface and safer underneath. It
   fixes a confusing EVM reporting issue, expands gasless onboarding for approved

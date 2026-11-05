@@ -1,0 +1,32 @@
+[package]
+name = "wasmer-derive"
+description = "Wasmer derive macros"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true, features = [
+  "full",
+  "extra-traits",
+  "derive",
+  "parsing",
+  "proc-macro",
+  "printing",
+] }
+quote.workspace = true
+proc-macro2.workspace = true
+proc-macro-error2.workspace = true
+
+[dev-dependencies]
+wasmer-types = { path = "../types", default-features = false, features = [
+  "std",
+] }
+compiletest_rs.workspace = true
