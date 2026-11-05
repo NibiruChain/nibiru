@@ -193,8 +193,10 @@ func (c *laneCandidates) generate(n int) {
 		return ""
 	}
 	anyone := func() string {
-		return pick(c.choose, [][]string{w.feeders, w.payers, w.traders,
-			{w.keeper}}[c.choose.IntN(4)])
+		return pick(c.choose, [][]string{
+			w.feeders, w.payers, w.traders,
+			{w.keeper},
+		}[c.choose.IntN(4)])
 	}
 	oracleMsg := func() string {
 		return pick(c.choose,
@@ -322,8 +324,10 @@ func refProposalLanes(
 				class = refLaneZeroGas
 			}
 		}
-		entries = append(entries, entry{string(txBytes),
-			refTx{class: class, lane: class, signers: signers}})
+		entries = append(entries, entry{
+			string(txBytes),
+			refTx{class: class, lane: class, signers: signers},
+		})
 	}
 	earliest := map[string]refLane{}
 	for i := len(entries) - 1; i >= 0; i-- {
