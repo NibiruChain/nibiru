@@ -40,9 +40,8 @@ challenges of the Nibiru ecosystem. These include:
 1. **[Validator Clustering](./validator-clusters.md)**: Splits Nibiru validators into subgroups to reduce $n^2$ communication overhead to $O(n\log n)$, enabling scalable and larger validator sets for enhanced decentralization without sacrificing instant finality.
     - Key Benefits: Security and decentralization
 1. **[QUIC (Quick UDP Internet Connections)](./quic.md)**: Tackles the performance hurdles of traditional TCP while preserving instant finality and BFT robustness guarantees 
-1. **[Block and Mempool Lanes](./block-lanes.md)**: Block and mempool lanes refer to a segregation mechanism within Nibiru's mempool and block construction process. Transactions are categorized into different "lanes" based on their type, priority, or metadata. This structure allows for parallel processing and prioritization of specific transaction types without the inefficiencies of a single-lane mempool.
-    <!-- - Block SDK: Block SDK is what provides the tooling and framework necessary to implement much of the innovations that make up Nibiru BFT, such as mempool lanes. -->
-    - Key Benefits: Predictable resource allocation, prioritization of certain types of transactions over others, lower fee spikes, and streamlined congestion management.
+1. **[Block Lanes](./block-lanes.md)**: Nibiru builds each block in four fixed lanes: the Sai Oracle Fast Lane, the Sai Infra Fast Lane, the EVM Lane, and the Default Lane. Lanes are assigned by message, signer, and the x/sudo `ZeroGasActors` allowlist, so oracle price writes run first and later transactions execute against the latest price.
+    - Key Benefits: Price writes lead the block so trades see the latest price, bounded block space for gasless infrastructure calls, and no client changes.
 
 ## Core Principles of Nibiru BFT
 
