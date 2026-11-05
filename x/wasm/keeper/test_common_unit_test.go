@@ -69,10 +69,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
+	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/x/mint"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/keeper/wasmtesting"

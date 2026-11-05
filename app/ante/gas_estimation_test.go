@@ -46,6 +46,7 @@ func (c *appSimulationConn) Invoke(_ context.Context, _ string, request, respons
 	*response.(*txtypes.SimulateResponse) = txtypes.SimulateResponse{GasInfo: &info, Result: result}
 	return nil
 }
+
 func (*appSimulationConn) NewStream(context.Context, *grpc.StreamDesc, string, ...grpc.CallOption) (grpc.ClientStream, error) {
 	panic("unused")
 }

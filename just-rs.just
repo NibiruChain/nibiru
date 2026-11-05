@@ -12,6 +12,11 @@ install:
   # https://crates.io/crates/cosmwasm-check
   cargo install cosmwasm-check
 
+# Generate nibiru-std protobuf types and clean their Rust imports (accepts Buf filters).
+[positional-arguments]
+proto-gen *args:
+  bash proto/buf.gen.rs.sh "$@"
+
 # Build optimized contracts with the maintained optimizer (default mode: dev).
 wasm-all mode="dev":
   just rs optimizer build --manifest-path Cargo.toml --output-dir wasm-contracts/artifacts --mode {{quote(mode)}}
@@ -53,31 +58,60 @@ optimizer-oracle-test artifact:
 wasm-check:
   just rs optimizer check wasm-contracts/artifacts/*.wasm
 
-# The embedded x-consensus bytes become chain state at genesis and in the
-# upgrade handler, and their checksum fixes the contract address, so they must
-# match a fresh build of the source. Only decompressed bytes are compared,
-# since gzip output can differ between gzip versions. On a mismatch, commit the
-# printed .gz and set ContractWasmSHA256 in x/consensus/wasm.go.
-#
-# Check that x/consensus/x_consensus.wasm.gz is the release build of x-consensus.
+# Check embedded Chain contracts against release builds of their Rust source.
 wasm-embed-check:
   #!/usr/bin/env bash
   set -euo pipefail
-  out="wasm-contracts/artifacts/embed-check"
-  just rs optimizer build --manifest-path Cargo.toml -p x-consensus \
-    --output-dir "$out" --mode release
-  built="$(sha256sum "$out/x_consensus.wasm" | cut -d' ' -f1)"
-  embedded="$(gzip -dc x/consensus/x_consensus.wasm.gz | sha256sum | cut -d' ' -f1)"
-  constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' x/consensus/wasm.go)"
-  echo "release build:           $built"
-  echo "embedded (decompressed): $embedded"
-  echo "ContractWasmSHA256:      $constant"
-  if [ "$built" != "$embedded" ] || [ "$built" != "$constant" ]; then
-    gzip -9 -n -c "$out/x_consensus.wasm" > "$out/x_consensus.wasm.gz"
-    echo "x/consensus/x_consensus.wasm.gz is not the release build of wasm-contracts/x-consensus." >&2
-    echo "Commit $out/x_consensus.wasm.gz and set ContractWasmSHA256 to $built." >&2
+  source contrib/bashlib.sh
+  for required_command in just cargo gzip sha256sum sed cut; do
+    which_ok "$required_command"
+  done
+  shopt -s nullglob
+  manifests=(wasm-contracts/x-*/Cargo.toml)
+  if [ "${#manifests[@]}" -eq 0 ]; then
+    echo "No Chain contracts found under wasm-contracts/x-*/Cargo.toml." >&2
     exit 1
   fi
+  # Check the complete set before spending time on release builds. The x- crate
+  # convention requires an embedded artifact and checksum in its Go module.
+  for manifest in "${manifests[@]}"; do
+    crate_dir="${manifest%/Cargo.toml}"
+    crate_name="${crate_dir##*/}"
+    module_name="${crate_name#x-}"
+    artifact_name="${crate_name//-/_}"
+    for embedded_file in "x/$module_name/$artifact_name.wasm.gz" "x/$module_name/wasm.go"; do
+      if [ ! -f "$embedded_file" ]; then
+        echo "$crate_name: missing embedded Chain contract file $embedded_file" >&2
+        exit 1
+      fi
+    done
+    constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' "x/$module_name/wasm.go")"
+    if [[ ! "$constant" =~ ^[0-9a-f]{64}$ ]]; then
+      echo "$crate_name: expected one SHA-256 constant in x/$module_name/wasm.go" >&2
+      exit 1
+    fi
+  done
+  out="wasm-contracts/artifacts/embed-check"
+  for manifest in "${manifests[@]}"; do
+    crate_dir="${manifest%/Cargo.toml}"
+    crate_name="${crate_dir##*/}"
+    module_name="${crate_name#x-}"
+    artifact_name="${crate_name//-/_}"
+    just rs optimizer build --manifest-path Cargo.toml -p "$crate_name" \
+      --output-dir "$out" --mode release
+    built="$(sha256sum "$out/$artifact_name.wasm" | cut -d' ' -f1)"
+    embedded="$(gzip -dc "x/$module_name/$artifact_name.wasm.gz" | sha256sum | cut -d' ' -f1)"
+    constant="$(sed -n 's/^const ContractWasmSHA256 = "\([0-9a-f]*\)"$/\1/p' "x/$module_name/wasm.go")"
+    echo "$crate_name release build: $built"
+    echo "$crate_name embedded:      $embedded"
+    echo "$crate_name Go checksum:   $constant"
+    if [ "$built" != "$embedded" ] || [ "$built" != "$constant" ]; then
+      gzip -9 -n -c "$out/$artifact_name.wasm" > "$out/$artifact_name.wasm.gz"
+      echo "x/$module_name/$artifact_name.wasm.gz does not match its Rust source." >&2
+      echo "Commit $out/$artifact_name.wasm.gz and set ContractWasmSHA256 to $built." >&2
+      exit 1
+    fi
+  done
 
 # Compiles a single CW contract to wasm bytecode.
 # wasm-single:

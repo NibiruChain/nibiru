@@ -20,7 +20,7 @@ import (
 	// ---------------------------------------------------------------
 	// Nibiru Custom Modules
 
-	upgradekeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/keeper"
+	upgradekeeper "github.com/NibiruChain/nibiru/v2/x/upgrade/keeper"
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"

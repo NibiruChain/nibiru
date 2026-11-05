@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"cosmossdk.io/depinject"
 	dbm "github.com/cometbft/cometbft-db"
@@ -52,6 +53,7 @@ import (
 	feegrantmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 	paramsclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/client"
@@ -59,9 +61,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
 	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
 	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
@@ -268,6 +271,10 @@ func NewNibiruApp(
 	app := &NibiruApp{
 		EvmMempool: evmMempool,
 		keys: sdk.NewKVStoreKeys(
+			// Explicitly wired SDK modules retain their existing store names.
+			govtypes.StoreKey,
+			upgradetypes.StoreKey,
+
 			// ibc keys
 			ibctransfertypes.StoreKey,
 			// Retain the empty historical ICS-29 store as an inert tombstone.
@@ -348,8 +355,6 @@ func NewNibiruApp(
 		&app.crisisKeeper,
 		&app.capabilityKeeper,
 		&app.slashingKeeper,
-		&app.GovKeeper,
-		&app.UpgradeKeeper,
 		&app.paramsKeeper,
 		&app.authzKeeper,
 		&app.evidenceKeeper,
@@ -371,6 +376,9 @@ func NewNibiruApp(
 		}
 	}
 
+	// Construct these keepers before IBC and Wasm, which depend on them.
+	app.initGovKeeper()
+	app.initUpgradeKeeper(appOpts)
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
 	app.ConsensusKeeper = consensuskeeper.NewKeeper(
 		app.appCodec, app.keys[consensustypes.StoreKey], &app.WasmKeeper,
@@ -383,6 +391,9 @@ func NewNibiruApp(
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
+		gov.NewAppModule(app.appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
+		upgrade.NewAppModule(app.UpgradeKeeper),
+
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
 		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
@@ -446,8 +457,8 @@ func NewNibiruApp(
 	app.sm.RegisterStoreDecoders()
 
 	// Register the init chainer after manual modules are added to ModuleManager.
-	// The upgrade module's depinject path only seeds versions for app-wired modules,
-	// so InitChainer writes the full ModuleManager version map before InitGenesis.
+	// InitChainer seeds the complete version map for both explicitly wired and
+	// depinject modules before InitGenesis.
 	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
@@ -503,6 +514,9 @@ func NewNibiruApp(
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
 		app.warmXConsensusCommitWait()
+		if app.LastBlockHeight() > 0 {
+			app.UpgradeKeeper.WarmProtocolVersion(app.NewUncachedContext(true, cmtproto.Header{Height: app.LastBlockHeight(), Time: time.Unix(1, 0).UTC()}))
+		}
 	}
 
 	return app
@@ -528,8 +542,14 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err)
 	}
 	EnsureERC2470AuthAccount(app.appCodec, genesisState)
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	res := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	if req.ConsensusParams == nil {
+		// Like x-consensus, keep the legacy test harness with no consensus params
+		// free of chain contracts. Real chain genesis supplies consensus params.
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	} else if err := app.UpgradeKeeper.InitContract(ctx, app.ModuleManager.GetVersionMap()); err != nil {
+		panic(fmt.Errorf("initialize x-upgrade contract: %w", err))
+	}
 
 	// Create x-consensus after module genesis: it is seeded from the params
 	// baseapp stored before genesis, Wasm genesis must have run, and on an
