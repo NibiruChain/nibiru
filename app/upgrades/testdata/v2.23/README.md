@@ -42,26 +42,39 @@ stays with the upgrade tests.
 
 | Behavior | Coverage |
 | --- | --- |
-| Deploy real fixture, apply admin updates, read all candidates | Keeper happy path on localnet, nibiru-testnet-3, and cataclysm-1 |
-| Same instantiate2 address with different code IDs and initial contents | Real-bytecode Keeper test on all three chain IDs |
-| Wrong checksum, missing predeployment, invalid or unauthorized updates | Covered by focused registry tests |
-| Invoke the v2.23 handler through evmtest.RunUpgrade | Not implemented in this slice |
-| Convert bank coins, collect EOA ERC20, collect SaiEvm and preserve other contracts | Not implemented in this slice |
-| Reconstruct redistribution from upgrade-block events and prove rollback | Not implemented in this slice |
+| Deploy real fixture, apply final admin updates, read all candidates | Real Keeper tests on localnet, nibiru-testnet-3, and cataclysm-1 |
+| Same instantiate2 address despite different code IDs and initial contents | Real-bytecode Keeper parity tests |
+| Registered v2.23 handler through evmtest.RunUpgrade | Full collection happy path on explicit localnet/testnet/mainnet chain IDs |
+| Bank conversion, EOA and SaiEvm collection, protected contracts and Safe baseline | Exact balance and repayment/custody assertions in one run |
+| Failed bank/EOA transfers and balance queries | Rollback, failed-account visibility, and continued later collection |
+| Both bank and registry pagination at mainnet-like scale | 213 bank holders and 949 ERC20 holders in the complete collection fixture |
+| Returned block events rather than only the transient test event manager | Scheduled BeginBlock execution plus event-only reconstruction |
+| Repeated execution, source/readonly nonces, excess escrow | No duplicate collection, preserved nonces, reported donations |
+| Fixture checksum and production registry profile remain aligned | Direct regression check against decompressed bytecode |
 
-Current tests use `evmtest.NewTestDeps` and the Wasm Keeper directly. A passing
-registry test is not evidence that a full upgrade or fund collection ran.
+The handler runs required migrations and enabling transitions before custom
+collection, following the earlier upgrades. The registry is an activation
+signal on any chain. Missing deployment skips the USDC step explicitly; wrong
+bytecode, failed queries, or an invalid token/mapping/recipient profile report
+custom-step failure without moving funds. Each holder operation is cached so
+one failed collection does not undo successful collections or leak its own
+partial bank/EVM writes and success logs.
 
-The next handler test should invoke `deps.RunUpgrade` with an explicit chain ID
-and predeployed registry, then check bank conversion, EOA collection, controlled
-contract collection, unrelated-contract exclusion, and event reconstruction.
-It must distinguish required module migrations from best-effort custom steps,
-following the existing v2.21 handler's cached-operation convention.
+The default profile contains reviewed mainnet identities. Other networks must
+have matching, validated identities or receive an explicit deployment profile
+before a full live rehearsal; test fixture overrides are not proof that a live
+testnet is configured. The binary never guesses a token or recipient from a name.
 
-The proposed activation rule is a valid registry at the known shared address,
-not a blanket mainnet-only condition. Missing deployment would skip the custom
-USDC step with an explicit event; wrong bytecode or query failure would report a
-custom-step failure before transfers. Required schema migrations still run.
-This rule is a proposal for the collection handler, not code implemented here.
-Token mappings and the Safe recipient also require validated per-chain setup;
-registry presence alone does not establish those identities.
+The source is temporary and the fixture remains provisional until the final
+homebox build and predeployment verification. Local handler tests do not perform
+the later cross-chain bridge round trip or broadcast repayments.
+
+Use the read-only report helper after execution:
+
+```sh
+go run ./contrib/scripts/usdc-migration-report -input block-results.json > redistribution.json
+```
+
+It reconstructs from returned BeginBlock bank-conversion/EVM events and context
+markers, verifies matching actual movements, and separates repayment from already
+replaced custody. Missing or duplicate accounting is an error, not a partial plan.

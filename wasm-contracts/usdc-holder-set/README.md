@@ -71,8 +71,9 @@ bash wasm-contracts/usdc-holder-set/build-fixture.sh
 
 The script pins Rust 1.86.0, the Wasm MVP target, and Binaryen 116.0.0. Copy the
 resulting `.wasm.gz` and `build-info.json` back into `app/upgrades/testdata/v2.23`,
-update the decompressed checksum in the fixture test/reference, and rerun the
-Keeper tests. No native optimizer CLI is required by the build script.
+update the decompressed checksum in the fixture test/reference and the v2.23
+default deployment profile, and rerun the Keeper tests. The profile-alignment
+regression test detects a rebuild that leaves the shipped checksum/address stale. No native optimizer CLI is required by the build script.
 
 The first local development build exposed a compatibility difference: standalone
 native VM validation accepted bytes rejected by the runtime linked into Keeper
