@@ -442,13 +442,16 @@ func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 				break
 			}
 
+			// Chain identity is fixed when the backend is constructed. Fetching
+			// params here adds an unrelated query per pending message and can
+			// dereference a nil ChainConfig when that query fails.
 			rpctx := rpc.NewRPCTxFromMsgEthTx(
 				ethMsg,
 				common.Hash{},
 				uint64(0),
 				uint64(0),
 				nil,
-				e.backend.ChainConfig().ChainID,
+				e.backend.chainID,
 			)
 
 			result = append(result, rpctx)

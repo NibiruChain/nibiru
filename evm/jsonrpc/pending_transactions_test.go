@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"math/big"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 	"github.com/stretchr/testify/require"
@@ -38,8 +40,10 @@ import (
 type pendingSnapshotClient struct {
 	client.TendermintRPC
 	cmtclient.MempoolClient
-	txs cmttx.Txs
-	err error
+	txs         cmttx.Txs
+	err         error
+	paramsErr   error
+	paramsCalls *atomic.Int32
 }
 
 // UnconfirmedTxs returns the controlled snapshot or the injected transport error.
@@ -50,10 +54,16 @@ func (c *pendingSnapshotClient) UnconfirmedTxs(context.Context, *int) (*cmttypes
 	return &cmttypes.ResultUnconfirmedTxs{Txs: c.txs, Count: len(c.txs), Total: len(c.txs)}, nil
 }
 
-// ABCIQueryWithOptions supplies chain params used when formatting EVM messages.
-// Encoding, transaction decoding, EVM filtering and JSON output remain production
-// code, rather than reimplementations of eth_getPendingTransactions in the test.
+// ABCIQueryWithOptions records unnecessary params queries and can make that
+// unrelated upstream service fail. Pending transaction formatting needs only the
+// chain ID initialized by NewBackend, not a successful Params query.
 func (c *pendingSnapshotClient) ABCIQueryWithOptions(_ context.Context, path string, _ cmtbytes.HexBytes, _ cmtclient.ABCIQueryOptions) (*cmttypes.ResultABCIQuery, error) {
+	if c.paramsCalls != nil {
+		c.paramsCalls.Add(1)
+	}
+	if c.paramsErr != nil {
+		return nil, c.paramsErr
+	}
 	if path != "/eth.evm.v1.Query/Params" {
 		return nil, fmt.Errorf("unexpected query: %s", path)
 	}
@@ -87,6 +97,8 @@ func pendingRPCFixture(t *testing.T, snapshot *pendingSnapshotClient, enc app.En
 // are represented correctly without racing live block production. A Cosmos-only
 // transaction shares the mempool with signed EVM transactions, but is omitted
 // from Ethereum RPC. Pending block metadata must be JSON null, not zero values.
+// Neither normal operation nor a Params-service outage should cause a redundant
+// query or change the response: the backend already knows its chain identity.
 func TestPendingTransactionsRPCSnapshot(t *testing.T) {
 	enc := app.MakeEncodingConfig()
 	sender := evmtest.NewEthPrivAcc()
@@ -111,23 +123,39 @@ func TestPendingTransactionsRPCSnapshot(t *testing.T) {
 		wantHashes = append(wantHashes, msg.AsTransaction().Hash())
 	}
 
-	rpcClient := pendingRPCFixture(t, &pendingSnapshotClient{txs: txs}, enc)
-	var pending []map[string]json.RawMessage
-	require.NoError(t, rpcClient.Call(&pending, "eth_getPendingTransactions"))
-	require.Len(t, pending, 2)
-	gotHashes := make([]gethcommon.Hash, 0, len(pending))
-	for _, tx := range pending {
-		var hash gethcommon.Hash
-		var from gethcommon.Address
-		require.NoError(t, json.Unmarshal(tx["hash"], &hash))
-		require.NoError(t, json.Unmarshal(tx["from"], &from))
-		gotHashes = append(gotHashes, hash)
-		require.Equal(t, sender.EthAddr, from, "unmanaged sender must remain visible")
-		for _, field := range []string{"blockHash", "blockNumber", "transactionIndex"} {
-			require.JSONEq(t, "null", string(tx[field]), field)
-		}
+	for _, tc := range []struct {
+		name      string
+		paramsErr error
+	}{
+		{name: "params available"},
+		{name: "params unavailable", paramsErr: errors.New("params service unavailable")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			paramsCalls := new(atomic.Int32)
+			snapshot := &pendingSnapshotClient{txs: txs, paramsErr: tc.paramsErr, paramsCalls: paramsCalls}
+			rpcClient := pendingRPCFixture(t, snapshot, enc)
+			var pending []map[string]json.RawMessage
+			require.NoError(t, rpcClient.Call(&pending, "eth_getPendingTransactions"))
+			require.Len(t, pending, 2)
+			gotHashes := make([]gethcommon.Hash, 0, len(pending))
+			for _, tx := range pending {
+				var hash gethcommon.Hash
+				var from gethcommon.Address
+				var gotChainID hexutil.Big
+				require.NoError(t, json.Unmarshal(tx["hash"], &hash))
+				require.NoError(t, json.Unmarshal(tx["from"], &from))
+				require.NoError(t, json.Unmarshal(tx["chainId"], &gotChainID))
+				require.Equal(t, chainID, gotChainID.ToInt())
+				gotHashes = append(gotHashes, hash)
+				require.Equal(t, sender.EthAddr, from, "unmanaged sender must remain visible")
+				for _, field := range []string{"blockHash", "blockNumber", "transactionIndex"} {
+					require.JSONEq(t, "null", string(tx[field]), field)
+				}
+			}
+			require.ElementsMatch(t, wantHashes, gotHashes, "pending RPC must preserve transaction identity without promising an order")
+			require.Zero(t, paramsCalls.Load(), "formatting pending messages must not query chain params")
+		})
 	}
-	require.ElementsMatch(t, wantHashes, gotHashes, "pending RPC must preserve transaction identity without promising an order")
 }
 
 // TestPendingTransactionsRPCEmptyAndErrors distinguishes an empty mempool from a
