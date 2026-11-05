@@ -21,9 +21,9 @@ import (
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	cmtbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
 	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
-	cmtclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
-	cmttypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
-	cmttx "github.com/NibiruChain/nibiru/v2/bft/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
 	"github.com/NibiruChain/nibiru/v2/evm/jsonrpc"
@@ -39,25 +39,25 @@ import (
 // no implementation; an unexpected dependency fails the test instead of hiding it.
 type pendingSnapshotClient struct {
 	client.TendermintRPC
-	cmtclient.MempoolClient
-	txs         cmttx.Txs
+	cmtrpcclient.MempoolClient
+	txs         cmttypes.Txs
 	err         error
 	paramsErr   error
 	paramsCalls *atomic.Int32
 }
 
 // UnconfirmedTxs returns the controlled snapshot or the injected transport error.
-func (c *pendingSnapshotClient) UnconfirmedTxs(context.Context, *int) (*cmttypes.ResultUnconfirmedTxs, error) {
+func (c *pendingSnapshotClient) UnconfirmedTxs(context.Context, *int) (*tmrpctypes.ResultUnconfirmedTxs, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
-	return &cmttypes.ResultUnconfirmedTxs{Txs: c.txs, Count: len(c.txs), Total: len(c.txs)}, nil
+	return &tmrpctypes.ResultUnconfirmedTxs{Txs: c.txs, Count: len(c.txs), Total: len(c.txs)}, nil
 }
 
 // ABCIQueryWithOptions records unnecessary params queries and can make that
 // unrelated upstream service fail. Pending transaction formatting needs only the
 // chain ID initialized by NewBackend, not a successful Params query.
-func (c *pendingSnapshotClient) ABCIQueryWithOptions(_ context.Context, path string, _ cmtbytes.HexBytes, _ cmtclient.ABCIQueryOptions) (*cmttypes.ResultABCIQuery, error) {
+func (c *pendingSnapshotClient) ABCIQueryWithOptions(_ context.Context, path string, _ cmtbytes.HexBytes, _ cmtrpcclient.ABCIQueryOptions) (*tmrpctypes.ResultABCIQuery, error) {
 	if c.paramsCalls != nil {
 		c.paramsCalls.Add(1)
 	}
@@ -71,7 +71,7 @@ func (c *pendingSnapshotClient) ABCIQueryWithOptions(_ context.Context, path str
 	if err != nil {
 		return nil, err
 	}
-	return &cmttypes.ResultABCIQuery{Response: abci.ResponseQuery{Value: value, Height: 1}}, nil
+	return &tmrpctypes.ResultABCIQuery{Response: abci.ResponseQuery{Value: value, Height: 1}}, nil
 }
 
 // pendingRPCFixture runs the registered EthAPI over HTTP with a real SDK codec
@@ -104,7 +104,7 @@ func TestPendingTransactionsRPCSnapshot(t *testing.T) {
 	sender := evmtest.NewEthPrivAcc()
 	recipient := gethcommon.HexToAddress("0x1234")
 	chainID := big.NewInt(appconst.ETH_CHAIN_ID_DEFAULT)
-	encode := func(msg sdk.Msg) cmttx.Tx {
+	encode := func(msg sdk.Msg) cmttypes.Tx {
 		builder := enc.TxConfig.NewTxBuilder()
 		require.NoError(t, builder.SetMsgs(msg))
 		bz, err := enc.TxConfig.TxEncoder()(builder.GetTx())
@@ -114,7 +114,7 @@ func TestPendingTransactionsRPCSnapshot(t *testing.T) {
 
 	bankTx := encode(banktypes.NewMsgSend(sender.NibiruAddr, sender.NibiruAddr, sdk.NewCoins(sdk.NewInt64Coin("unibi", 1))))
 	wantHashes := make([]gethcommon.Hash, 0, 2)
-	txs := cmttx.Txs{bankTx}
+	txs := cmttypes.Txs{bankTx}
 	for nonce := uint64(0); nonce < 2; nonce++ {
 		msg := evm.NewTx(&evm.EvmTxArgs{ChainID: chainID, Nonce: nonce, To: &recipient, GasLimit: 21_000, GasPrice: big.NewInt(1), Amount: big.NewInt(123)})
 		msg.From = sender.EthAddr.Hex()
@@ -170,7 +170,7 @@ func TestPendingTransactionsRPCEmptyAndErrors(t *testing.T) {
 	}{
 		{name: "empty"},
 		{name: "upstream error", snapshot: pendingSnapshotClient{err: errors.New("mempool unavailable")}, wantError: true},
-		{name: "malformed Cosmos transaction", snapshot: pendingSnapshotClient{txs: cmttx.Txs{{0xff}}}, wantError: true},
+		{name: "malformed Cosmos transaction", snapshot: pendingSnapshotClient{txs: cmttypes.Txs{{0xff}}}, wantError: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rpcClient := pendingRPCFixture(t, &tc.snapshot, enc)
