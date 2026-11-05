@@ -61,9 +61,19 @@ func deployHolderSet(t *testing.T, deps evmtest.TestDeps, creator sdk.AccAddress
 // keeper. It models predeployment, batched SQL imports, and a last-minute
 // operator update before the migration reads every page. No balances are stored.
 func TestUSDCHolderSetKeeper(t *testing.T) {
+	for _, chainID := range []string{"localnet", "nibiru-testnet-3", "cataclysm-1"} {
+		t.Run(chainID, func(t *testing.T) {
+			testUSDCHolderSetKeeper(t, chainID)
+		})
+	}
+}
+
+func testUSDCHolderSetKeeper(t *testing.T, chainID string) {
+	t.Helper()
 	deps := evmtest.NewTestDeps()
-	deps.SetCtx(deps.Ctx().WithGasMeter(sdk.NewInfiniteGasMeter()))
+	deps.SetCtx(deps.Ctx().WithChainID(chainID).WithGasMeter(sdk.NewInfiniteGasMeter()))
 	creator := sdk.AccAddress(bytes.Repeat([]byte{17}, 20))
+	deps.App.SudoKeeper.Sudoers.Set(deps.Ctx(), sudo.Sudoers{Root: creator.String()})
 	contract, checksum := deployHolderSet(t, deps, creator, []string{}, []byte("usdc-holders-v1"))
 	empty, err := upgrades.ReadUSDCHolderSet(deps.Ctx(), deps.App.WasmKeeper, contract, checksum)
 	require.NoError(t, err)
