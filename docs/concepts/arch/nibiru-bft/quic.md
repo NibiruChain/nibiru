@@ -17,11 +17,11 @@ description: >-
 
 ## 1 - Summary
 
-Adopting QUIC (Quick UDP Internet Connections) in [CometBFT’s peer-to-peer (p2p)](https://docs.cometbft.com/v0.37/spec/p2p/) protocol presents a significant opportunity to upgrade blockchain networking. CometBFT—long a bedrock for several ecosystems—depends on a TCP/IP foundation that, while reliable, introduces bottlenecks such as head-of-line (HOL) blocking and time-consuming handshake overheads. 
+Adopting QUIC (Quick UDP Internet Connections) in [CometBFT’s peer-to-peer (p2p)](https://docs.cometbft.com/v0.37/spec/p2p/) protocol presents a significant opportunity to upgrade blockchain networking. CometBFT—long a bedrock for several ecosystems—depends on a TCP/IP foundation that, while reliable, introduces bottlenecks such as head-of-line (HOL) blocking and time-consuming handshake overheads.
 
 Although CometBFT remains dependable, the growing demands of Nibiru’s ecosystem highlight the need for an improved transport layer. **Nibiru BFT** extends CometBFT and benefits from the same networking stack; once QUIC is introduced, it can help preserve sub-2-second block times and robust BFT guarantees under heavier loads and more geographically distributed validators.
 
-QUIC’s implementation on the Solana blockchain has been proven to be battle-tested in a blockchain environment. Integrating QUIC as Nibiru BFT’s networking layer and taking advantage of QUIC’s architectural advantages—including stream multiplexing, RTT-driven flow control, and seamless connection migration—directly allows Nibiru to address networking bottlenecks without significant tradeoffs on security. 
+QUIC’s implementation on the Solana blockchain has been proven to be battle-tested in a blockchain environment. Integrating QUIC as Nibiru BFT’s networking layer and taking advantage of QUIC’s architectural advantages—including stream multiplexing, RTT-driven flow control, and seamless connection migration—directly allows Nibiru to address networking bottlenecks without significant tradeoffs on security.
 
 ## 2 - The Need for Improvement in CometBFT TCP-based Networking
 
@@ -57,7 +57,7 @@ When the network is congested, this domino effect can make entire streams of dat
 
 **Defining the Handshake**
 
-In Nibiru’s context, a handshake is the protocol by which two validators authenticate and confirm they’re running compatible software. CometBFT’s P2P networking, which operates over TCP, enforces a two-phase process: an **authentication handshake** (Station-to-Station, or STS) and a **verification handshake**. 
+In Nibiru’s context, a handshake is the protocol by which two validators authenticate and confirm they’re running compatible software. CometBFT’s P2P networking, which operates over TCP, enforces a two-phase process: an **authentication handshake** (Station-to-Station, or STS) and a **verification handshake**.
 
 <aside>
 
@@ -132,7 +132,7 @@ Picture the Nibiru network as a highway. Traditional flow control says only 10 v
 
 ### 5.3 Connection Migration Efficiency
 
-TCP connections bind to a specific IP and port. When that IP changes—perhaps due to load balancers, network failover, or a validator shifting from Wi-Fi to Ethernet—the entire connection resets. Under TCP, the receiver node cannot distinguish a reconnection, because the TCP connection is specified by a 4-tuple consisting of [Source IP, Source Port, Destination IP, Destination Port]. When any of these parameters in the tuple are changed, the receiver node sees this as a new connection. 
+TCP connections bind to a specific IP and port. When that IP changes—perhaps due to load balancers, network failover, or a validator shifting from Wi-Fi to Ethernet—the entire connection resets. Under TCP, the receiver node cannot distinguish a reconnection, because the TCP connection is specified by a 4-tuple consisting of [Source IP, Source Port, Destination IP, Destination Port]. When any of these parameters in the tuple are changed, the receiver node sees this as a new connection.
 
 On the other hand, QUIC replaces IP dependency with Connection IDs, decoupling the connection from IP and port. These Connection IDs facilitate connection migration, allowing receiver node to recognize that a reconnection is occurring. This allows QUIC to preserve session state: encryption keys are preserved without needing to re-establish the connection from scratch.
 
