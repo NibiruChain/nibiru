@@ -23,7 +23,7 @@ import (
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-const holderSetFixtureSHA256 = "ae3840f748807eb93400ea7d0208ae084c002148ed60177fbf276a1ee407003f"
+const holderSetFixtureSHA256 = "0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8"
 
 func holderSetBytecode(t *testing.T) ([]byte, []byte) {
 	t.Helper()

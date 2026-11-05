@@ -8,7 +8,7 @@ exercise the Go reader. No source-level contract mock substitutes for execution.
 Decompressed SHA-256:
 
 ```text
-ae3840f748807eb93400ea7d0208ae084c002148ed60177fbf276a1ee407003f
+0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8
 ```
 
 Temporary source: `wasm-contracts/usdc-holder-set`. Build on the x86_64 homebox
@@ -19,6 +19,11 @@ uses gzip timestamp zero. Update the fixture checksum after every rebuild.
 This is a development fixture. The contract source may change before release,
 so a final homebox rebuild and Keeper test pass are required even if the API
 is unchanged. Select the final deployment checksum/address only afterward.
+
+The current fixture was generated on homebox x86_64 from source revision
+`f6a5666cb765f6e339010e9a961d2305e4cdbeaa`. File `build-info.json` records the
+compiler, source revision, architecture, build flags, and both raw/gzip hashes.
+The exact copied bytes passed the focused Keeper and existing v2.22 tests.
 
 Run the focused keeper tests:
 

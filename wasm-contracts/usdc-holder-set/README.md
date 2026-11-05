@@ -60,7 +60,7 @@ just rs test usdc-holder-set
 ```
 
 Build artifacts on the x86_64 homebox from the pushed development branch.
-The build script refuses other architectures and tracked source edits that have
+The build script refuses other architectures and source edits or additions that have
 not been committed. It writes the Wasm, reproducible gzip, and build provenance
 outside testdata so the checked-in fixture is replaced deliberately.
 

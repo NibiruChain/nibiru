@@ -13,7 +13,7 @@ fi
 for tool in cargo rustup bun python3; do
   command -v "$tool" >/dev/null || { printf 'Missing build tool: %s\n' "$tool" >&2; exit 1; }
 done
-if ! git -C "$repo_dir" diff --quiet HEAD -- Cargo.lock wasm-contracts/usdc-holder-set; then
+if [[ -n $(git -C "$repo_dir" status --porcelain --untracked-files=all -- Cargo.toml Cargo.lock wasm-contracts/usdc-holder-set) ]]; then
   printf '%s\n' 'Commit and push the contract changes before building the fixture.' >&2
   exit 1
 fi
