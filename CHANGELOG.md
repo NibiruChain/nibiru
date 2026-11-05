@@ -38,6 +38,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### API Breaking
+
+- (evm/rpc) Remove Go runtime profiling, memory/GC statistics, and tuning methods from the EVM `debug` namespace. Calls return JSON-RPC method-not-found instead of runtime data or compatibility no-op responses. EVM transaction and block tracing remain available. Operator-selected CPU profiling and the separate CometBFT pprof listener are independent of this namespace.
+
+### Bug Fixes
+
+- (evm/rpc) #2787 Hash decoded Ethereum DATA bytes in `web3_sha3`, rather than the hexadecimal string's ASCII bytes. Reject malformed hex parameters.
+
 ## v2.21.0
 
 Nibiru v2.21 repairs the disclosed Wasmer Singlepass sandbox vulnerability and replaces v2.20's temporary root-only Wasm deployment policy with scoped deployment permissions. It also adds mainnet recovery of a quarantined Eris unbonding claim to the Foundation Treasury.

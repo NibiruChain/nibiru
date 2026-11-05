@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime" // #nosec G702
-	"runtime/debug"
 
 	"github.com/davecgh/go-spew/spew"
 
@@ -26,8 +24,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/rpc"
 )
 
-// DebugAPI is the collection of tracing APIs exposed over the private debugging
-// endpoint.
+// DebugAPI exposes EVM tracing and block inspection when the debug namespace
+// is enabled on the JSON-RPC server. The namespace does not grant access to
+// Go runtime profiling, memory statistics, or process-wide tuning controls.
 type DebugAPI struct {
 	ctx     *server.Context
 	logger  log.Logger
@@ -152,7 +151,7 @@ func (a *DebugAPI) PrintBlock(number uint64) (string, error) {
 }
 
 // --------------------------------------------------------------------------
-// Code beyond this point falls under the disbaled portion of the debug namespace
+// Remaining compatibility methods are intentionally disabled or unimplemented.
 // --------------------------------------------------------------------------
 
 func ErrNotImplemented(method string) error {
@@ -160,100 +159,6 @@ func ErrNotImplemented(method string) error {
 }
 
 func noOpMethod(method string) string { return fmt.Sprintf("%v (no-op)", method) }
-
-// BlockProfile turns on goroutine profiling for nsec seconds and writes profile data to file.
-func (a *DebugAPI) BlockProfile(file string, nsec uint) error {
-	methodName := "debug_blockProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file, "nsec", nsec)
-	return ErrNotImplemented(methodName)
-}
-
-// CpuProfile turns on CPU profiling for nsec seconds and writes profile data to file.
-func (a *DebugAPI) CpuProfile(file string, nsec uint) error { //nolint: golint, stylecheck, revive
-	methodName := "debug_cpuProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file, "nsec", nsec)
-	return ErrNotImplemented(methodName)
-}
-
-// GcStats returns GC statistics.
-func (a *DebugAPI) GcStats() *debug.GCStats {
-	a.logger.Debug("debug_gcStats")
-	s := new(debug.GCStats)
-	debug.ReadGCStats(s)
-	return s
-}
-
-// GoTrace turns on tracing for nsec seconds and writes trace data to file.
-func (a *DebugAPI) GoTrace(file string, nsec uint) error {
-	methodName := "debug_goTrace"
-	a.logger.Debug(noOpMethod(methodName), "file", file, "nsec", nsec)
-	return ErrNotImplemented(methodName)
-}
-
-// MemStats returns detailed runtime memory statistics.
-func (a *DebugAPI) MemStats() *runtime.MemStats {
-	a.logger.Debug("debug_memStats")
-	s := new(runtime.MemStats)
-	runtime.ReadMemStats(s)
-	return s
-}
-
-// SetBlockProfileRate sets the rate of goroutine block profile data collection.
-// rate 0 disables block profiling.
-func (a *DebugAPI) SetBlockProfileRate(rate int) {
-	a.logger.Debug(noOpMethod("debug_setBlockProfileRate"), "rate", rate)
-}
-
-// Stacks returns a printed representation of the stacks of all goroutines.
-func (a *DebugAPI) Stacks() string {
-	a.logger.Debug(noOpMethod("debug_stacks"))
-	return ""
-}
-
-// WriteBlockProfile writes a goroutine blocking profile to the given file.
-func (a *DebugAPI) WriteBlockProfile(file string) error {
-	methodName := "debug_writeBlockProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file)
-	return ErrNotImplemented(methodName)
-}
-
-// WriteMemProfile writes an allocation profile to the given file.
-func (a *DebugAPI) WriteMemProfile(file string) error {
-	methodName := "debug_writeMemProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file)
-	return ErrNotImplemented(methodName)
-}
-
-// MutexProfile turns on mutex profiling for nsec seconds and writes profile data to file.
-func (a *DebugAPI) MutexProfile(file string, nsec uint) error {
-	methodName := "debug_mutexProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file, "nsec", nsec)
-	return ErrNotImplemented(methodName)
-}
-
-// SetMutexProfileFraction sets the rate of mutex profiling.
-func (a *DebugAPI) SetMutexProfileFraction(rate int) {
-	a.logger.Debug(noOpMethod("debug_setMutexProfileFraction"), "rate", rate)
-}
-
-// WriteMutexProfile writes a goroutine blocking profile to the given file.
-func (a *DebugAPI) WriteMutexProfile(file string) error {
-	methodName := "debug_writeMutexProfile"
-	a.logger.Debug(noOpMethod(methodName), "file", file)
-	return ErrNotImplemented(methodName)
-}
-
-// FreeOSMemory forces a garbage collection.
-func (a *DebugAPI) FreeOSMemory() {
-	a.logger.Debug(noOpMethod("debug_freeOSMemory"))
-}
-
-// SetGCPercent sets the garbage collection target percentage. It returns the previous
-// setting. A negative value disables GC.
-func (a *DebugAPI) SetGCPercent(v int) int {
-	a.logger.Debug(noOpMethod("debug_setGCPercent"), "percent", v)
-	return -1
-}
 
 // IntermediateRoots executes a block, and returns a list
 // of intermediate roots: the stateroot after each transaction.
