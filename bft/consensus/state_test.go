@@ -841,12 +841,30 @@ func TestStateLockPOLUnlock(t *testing.T) {
 	ensureNewRound(newRoundCh, height, round+1)
 }
 
+// suppressProposeTimeout keeps the selected round open for a proposal while
+// allowing the real ticker to drive all other state transitions.
+type suppressProposeTimeout struct {
+	TimeoutTicker
+	round int32
+}
+
+func (ticker suppressProposeTimeout) ScheduleTimeout(info timeoutInfo) {
+	if info.Round == ticker.round && info.Step == cstypes.RoundStepPropose {
+		return
+	}
+	ticker.TimeoutTicker.ScheduleTimeout(info)
+}
+
 // 4 vals, v1 locks on proposed block in the first round but the other validators only prevote
 // In the second round, v1 misses the proposal but sees a majority prevote an unknown block so
 // v1 should unlock and precommit nil. In the third round another block is proposed, all vals
 // prevote and now v1 can lock onto the third block and precommit that
 func TestStateLockPOLUnlockOnUnknownBlock(t *testing.T) {
 	cs1, vss := randState(4)
+	// Round 2 tests the vote after a proposal arrives, not the proposal timeout.
+	// The real 42 ms deadline can fire while the test goroutine is paused before
+	// enqueueing that proposal, yielding a correct nil vote instead.
+	cs1.SetTimeoutTicker(suppressProposeTimeout{TimeoutTicker: NewTimeoutTicker(), round: 2})
 	vs2, vs3, vs4 := vss[1], vss[2], vss[3]
 	height, round := cs1.Height, cs1.Round
 
