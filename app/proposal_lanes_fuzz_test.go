@@ -74,14 +74,19 @@ func FuzzClassifyProposalCandidates(f *testing.F) {
 			oracle.saiOracle = fx.oracle
 		}
 		candidates := decodeFuzzTxs(data)
-		var want [proposalLaneCount][]string
+		want := make(map[proposalLane][]string)
 		for _, txBytes := range candidates {
 			tx, err := decode(txBytes)
 			if err != nil {
 				continue
 			}
 			lane, signers, ok := classifyProposalCandidate(tx, fx.zeroGasActors, oracle)
-			if !ok || lane == proposalLaneEVM {
+			if !ok {
+				continue
+			}
+			require.True(t, lane >= proposalLaneOracle && lane <= proposalLaneDefault,
+				"classifier returned lane %d outside the declared lanes", lane)
+			if lane == proposalLaneEVM {
 				continue
 			}
 			want[lane] = append(want[lane], string(txBytes))

@@ -19,10 +19,13 @@ import (
 	wasm "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
-// proposalLane is the block section a transaction is proposed in. Lanes are
-// declared in proposal order, so a lower value is proposed earlier: every
-// selected transaction of a lane precedes every selected transaction of a
-// later lane. See [classifyProposalTx] and [splitNonEVMProposalTxs].
+// proposalLane is the block section a transaction is proposed in. A lower
+// value is proposed earlier: every selected transaction of a lane precedes
+// every selected transaction of a later lane. See [classifyProposalTx] and
+// [splitNonEVMProposalTxs].
+//
+// Values are explicit and start at 1, so the zero value is no lane, and
+// promotion compares lanes by value. Keep them in proposal order.
 type proposalLane uint8
 
 const (
@@ -31,17 +34,15 @@ const (
 	// and the first message's sender is the only tx-level signer. It also
 	// holds earlier transactions sharing a signer with them, which
 	// [splitNonEVMProposalTxs] promotes ahead of them.
-	proposalLaneOracle proposalLane = iota
+	proposalLaneOracle proposalLane = 1
 	// proposalLaneZeroGas holds the remaining zero-gas actor transactions
 	// ([ante.IsZeroGasActorTx]), such as keeper and admin calls.
-	proposalLaneZeroGas
+	proposalLaneZeroGas proposalLane = 2
 	// proposalLaneEVM holds Ethereum transactions. PrepareProposal fills it
 	// from [evm.Mempool], not from RequestPrepareProposal.Txs.
-	proposalLaneEVM
+	proposalLaneEVM proposalLane = 3
 	// proposalLaneDefault holds every other non-EVM transaction.
-	proposalLaneDefault
-
-	proposalLaneCount
+	proposalLaneDefault proposalLane = 4
 )
 
 // classifyProposalTx assigns tx to its [proposalLane]. zeroGasActors is the
@@ -182,7 +183,7 @@ type nonEVMProposalTx struct {
 // splitNonEVMProposalTxs decodes the CometBFT candidates once and groups the
 // non-EVM transactions by [classifyProposalTx], preserving relative order
 // within each lane. Undecodable and EVM candidates are dropped, so the
-// [proposalLaneEVM] entry is always empty. A candidate whose classification
+// map has no [proposalLaneEVM] entry. A candidate whose classification
 // panics is also dropped ([classifyProposalCandidate]).
 //
 // Lanes never reorder one signer's transactions, fee payers included, since
@@ -218,7 +219,7 @@ func splitNonEVMProposalTxs(
 	candidates [][]byte,
 	zeroGasActors sudo.ZeroGasActors,
 	oracle oracleLaneRule,
-) (lanes [proposalLaneCount][]nonEVMProposalTx) {
+) map[proposalLane][]nonEVMProposalTx {
 	type classified struct {
 		candidate nonEVMProposalTx
 		lane      proposalLane
@@ -261,6 +262,7 @@ func splitNonEVMProposalTxs(
 			earliestLater[signer] = txs[i].lane
 		}
 	}
+	lanes := make(map[proposalLane][]nonEVMProposalTx)
 	for _, item := range txs {
 		lanes[item.lane] = append(lanes[item.lane], item.candidate)
 	}
@@ -298,10 +300,19 @@ func classifyProposalCandidate(
 // plus the fixed contract instance cost with ample headroom.
 const oracleLaneQueryGasLimit uint64 = 1_000_000
 
-// errOracleAdapterNotConfigured reports that state names no x-oracle adapter
+// ErrOracleAdapterNotConfigured reports that state names no x-oracle adapter
 // or that the adapter runs in fixture mode, so there is no Sai oracle address
 // to match. It selects the [oracleLaneRule] fallback without an error log.
-var errOracleAdapterNotConfigured = errors.New("x-oracle adapter has no Sai oracle")
+var ErrOracleAdapterNotConfigured = errors.New("x-oracle adapter has no Sai oracle")
+
+// ResolveSaiOracleAddr returns the Sai oracle address that PrepareProposal
+// uses for [proposalLaneOracle], read from the committed state in ctx. It is
+// empty when the lane uses the fallback; the error says why, as described in
+// [resolveOracleLaneRule].
+func (app *NibiruApp) ResolveSaiOracleAddr(ctx sdk.Context) (string, error) {
+	rule, err := resolveOracleLaneRule(ctx, app.EvmKeeper, app.WasmKeeper)
+	return rule.saiOracle, err
+}
 
 // resolveOracleLaneRule returns the [oracleLaneRule] for one proposal from
 // the committed state in ctx. It reads the Sai oracle address in two steps:
@@ -320,7 +331,7 @@ var errOracleAdapterNotConfigured = errors.New("x-oracle adapter has no Sai orac
 // On any failure the rule falls back to matching price writes by message key
 // ([isOraclePriceWriteMsg]), so a chain without the adapter, such as a
 // localnet or a test app, keeps an oracle lane. The returned error says why:
-// [errOracleAdapterNotConfigured] when the plugin is absent or the adapter is
+// [ErrOracleAdapterNotConfigured] when the plugin is absent or the adapter is
 // in fixture mode, and another error when the query or its response fails.
 func resolveOracleLaneRule(
 	ctx sdk.Context,
@@ -351,13 +362,13 @@ func saiOracleAddr(
 	adapter, err := evmKeeper.EVMState().WasmPlugins.Get(
 		readCtx, evm.WasmPluginNameXOracle)
 	if errors.Is(err, collections.ErrNotFound) {
-		return nil, errOracleAdapterNotConfigured
+		return nil, ErrOracleAdapterNotConfigured
 	}
 	if err != nil {
 		return nil, fmt.Errorf("reading the x-oracle Wasm plugin: %w", err)
 	}
 	if adapter.Empty() {
-		return nil, errOracleAdapterNotConfigured
+		return nil, ErrOracleAdapterNotConfigured
 	}
 
 	req, err := json.Marshal(xoracle.XOracleAdapterQueryMsg{Config: &struct{}{}})
@@ -383,7 +394,7 @@ func saiOracleAddr(
 		}
 		return saiOracle, nil
 	case resp.Mode.Fixture != nil:
-		return nil, errOracleAdapterNotConfigured
+		return nil, ErrOracleAdapterNotConfigured
 	default:
 		return nil, fmt.Errorf("x-oracle adapter config has no known mode: %s", respBz)
 	}

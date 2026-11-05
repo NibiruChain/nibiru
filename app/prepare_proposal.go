@@ -201,7 +201,7 @@ func NewEVMPrepareProposalHandler(
 		}
 
 		oracle, err := resolveOracleLaneRule(ctx, app.EvmKeeper, app.WasmKeeper)
-		if err != nil && !errors.Is(err, errOracleAdapterNotConfigured) {
+		if err != nil && !errors.Is(err, ErrOracleAdapterNotConfigured) {
 			ctx.Logger().Error(
 				"oracle lane falls back to price writes by message key", "err", err)
 		}

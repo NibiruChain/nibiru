@@ -71,19 +71,19 @@ func TestResolveSaiOracleAddr(t *testing.T) {
 	deps := evmtest.NewTestDeps()
 	saiOracle := evmtest.NewEthPrivAcc().NibiruAddr.String()
 
-	addr, err := app.ResolveSaiOracleAddr(deps.App, deps.Ctx())
+	addr, err := deps.App.ResolveSaiOracleAddr(deps.Ctx())
 	require.ErrorIs(t, err, app.ErrOracleAdapterNotConfigured, "no plugin")
 	require.Empty(t, addr)
 
 	fixture := instantiateXOracleAdapter(t, &deps,
 		xoracle.XOracleAdapterFixtureMode())
 	setXOraclePlugin(t, &deps, fixture.String())
-	addr, err = app.ResolveSaiOracleAddr(deps.App, deps.Ctx())
+	addr, err = deps.App.ResolveSaiOracleAddr(deps.Ctx())
 	require.ErrorIs(t, err, app.ErrOracleAdapterNotConfigured, "fixture mode")
 	require.Empty(t, addr)
 
 	setXOraclePlugin(t, &deps, evmtest.NewEthPrivAcc().NibiruAddr.String())
-	addr, err = app.ResolveSaiOracleAddr(deps.App, deps.Ctx())
+	addr, err = deps.App.ResolveSaiOracleAddr(deps.Ctx())
 	require.Error(t, err, "plugin without a contract")
 	require.NotErrorIs(t, err, app.ErrOracleAdapterNotConfigured)
 	require.Empty(t, addr)
@@ -92,15 +92,14 @@ func TestResolveSaiOracleAddr(t *testing.T) {
 		xoracle.XOracleAdapterProxyModeOf(saiOracle))
 	setXOraclePlugin(t, &deps, proxy.String())
 	meter := sdk.NewGasMeter(10)
-	addr, err = app.ResolveSaiOracleAddr(deps.App, deps.Ctx().WithGasMeter(meter))
+	addr, err = deps.App.ResolveSaiOracleAddr(deps.Ctx().WithGasMeter(meter))
 	require.NoError(t, err)
 	require.Equal(t, saiOracle, addr)
 	require.Zero(t, meter.GasConsumed(), "caller's gas meter charged")
 
 	// The Wasm VM panics on a context without a block time. The bounded
 	// query turns that into an error, which selects the fallback.
-	addr, err = app.ResolveSaiOracleAddr(deps.App,
-		deps.Ctx().WithBlockTime(time.Time{}))
+	addr, err = deps.App.ResolveSaiOracleAddr(deps.Ctx().WithBlockTime(time.Time{}))
 	require.ErrorContains(t, err, "panicked")
 	require.NotErrorIs(t, err, app.ErrOracleAdapterNotConfigured)
 	require.Empty(t, addr)

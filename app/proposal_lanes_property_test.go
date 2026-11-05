@@ -253,10 +253,10 @@ func (c *laneCandidates) generate(n int) {
 type refLane int
 
 const (
-	refLaneOracle refLane = iota
-	refLaneZeroGas
-	refLaneEVM
-	refLaneDefault
+	refLaneOracle  refLane = 1
+	refLaneZeroGas refLane = 2
+	refLaneEVM     refLane = 3
+	refLaneDefault refLane = 4
 )
 
 // refTx is a candidate as the reference model sees it.
