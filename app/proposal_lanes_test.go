@@ -120,17 +120,27 @@ func TestClassifyProposalTxOracleSoleSigner(t *testing.T) {
 			want proposalLane
 		}{
 			{"sole signer", f.build(nil, call(f.feeder)), proposalLaneOracle},
-			{"batch from one sender",
-				f.build(nil, call(f.feeder), call(f.feeder)), proposalLaneOracle},
-			{"fee payer is the sender",
-				f.build(f.feeder, call(f.feeder)), proposalLaneOracle},
-			{"distinct fee payer",
-				f.build(f.payer, call(f.feeder)), proposalLaneZeroGas},
-			{"second sender",
+			{
+				"batch from one sender",
+				f.build(nil, call(f.feeder), call(f.feeder)), proposalLaneOracle,
+			},
+			{
+				"fee payer is the sender",
+				f.build(f.feeder, call(f.feeder)), proposalLaneOracle,
+			},
+			{
+				"distinct fee payer",
+				f.build(f.payer, call(f.feeder)), proposalLaneZeroGas,
+			},
+			{
+				"second sender",
 				f.build(nil, call(f.feeder), call(f.otherFeeder)),
-				proposalLaneZeroGas},
-			{"sender off the allowlist",
-				f.build(nil, call(f.payer)), proposalLaneDefault},
+				proposalLaneZeroGas,
+			},
+			{
+				"sender off the allowlist",
+				f.build(nil, call(f.payer)), proposalLaneDefault,
+			},
 		} {
 			t.Run(rule.name+"/"+tc.name, func(t *testing.T) {
 				require.Equal(t, tc.want,
@@ -155,26 +165,38 @@ func TestClassifyProposalTxOracleContract(t *testing.T) {
 		tx                 sdk.Tx
 		resolved, fallback proposalLane
 	}{
-		{"price write to oracle",
+		{
+			"price write to oracle",
 			f.build(nil, f.exec(f.feeder, f.oracle, testSetPricesMsg)),
-			proposalLaneOracle, proposalLaneOracle},
-		{"expiration update to oracle",
+			proposalLaneOracle, proposalLaneOracle,
+		},
+		{
+			"expiration update to oracle",
 			f.build(nil, f.exec(f.feeder, f.oracle, testExpiryMsg)),
-			proposalLaneOracle, proposalLaneZeroGas},
-		{"permission call to oracle",
+			proposalLaneOracle, proposalLaneZeroGas,
+		},
+		{
+			"permission call to oracle",
 			f.build(nil, f.exec(f.feeder, f.oracle, testAdminMsg)),
-			proposalLaneOracle, proposalLaneZeroGas},
-		{"malformed JSON to oracle",
+			proposalLaneOracle, proposalLaneZeroGas,
+		},
+		{
+			"malformed JSON to oracle",
 			f.build(nil, f.exec(f.feeder, f.oracle, `{"set_prices":`)),
-			proposalLaneOracle, proposalLaneZeroGas},
-		{"price write to perp",
+			proposalLaneOracle, proposalLaneZeroGas,
+		},
+		{
+			"price write to perp",
 			f.build(nil, f.exec(f.feeder, f.perp, testSetPricesMsg)),
-			proposalLaneZeroGas, proposalLaneOracle},
-		{"oracle and perp batch",
+			proposalLaneZeroGas, proposalLaneOracle,
+		},
+		{
+			"oracle and perp batch",
 			f.build(nil,
 				f.exec(f.feeder, f.oracle, testExpiryMsg),
 				f.exec(f.feeder, f.perp, testExpiryMsg)),
-			proposalLaneZeroGas, proposalLaneZeroGas},
+			proposalLaneZeroGas, proposalLaneZeroGas,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			require.Equal(t, tc.resolved,
