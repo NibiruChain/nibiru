@@ -22,7 +22,7 @@ All of nodes that make up Nibiru run the [same code/binary (Nibiru)](https://git
 
 | Node Type | Description |
 | --- | --- |
-| **Validator Node** | Validators are responsible for producing blocks and participating in consensus (via NibiruBFT). They secure the chain by signing blocks, relaying transactions, and maintaining uptime. Validators must stake NIBI and are subject to rewards and slashing.                |
+| **Validator Node** | Validators are responsible for producing blocks and participating in consensus (via Nibiru BFT). They secure the chain by signing blocks, relaying transactions, and maintaining uptime. Validators must stake NIBI and are subject to rewards and slashing.                |
 | **Full Node**      | Full nodes maintain the full state of the blockchain and verify all blocks, but they do not participate in consensus. They are essential for decentralization, as they provide transaction relaying, independent verification, and serve as sentries for validator setups. |
 | **Sentry Node**    | Sentry nodes are a type of full node configured to sit between a validator and the public network. They protect validators from DDoS attacks by acting as a shield layer.                                                                                                  |
 | **RPC Node**       | RPC nodes expose APIs (both REST and gRPC) for developers, exchanges, wallets, and explorers to query chain data or broadcast transactions. They are often tuned for high availability and throughput.                                                                     |

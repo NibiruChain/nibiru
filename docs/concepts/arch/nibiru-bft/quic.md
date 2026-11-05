@@ -1,9 +1,9 @@
 ---
 description: >-
-  Within the Nibiru Lagrange Point roadmap, integrating QUIC (Quick UDP Internet Connections) into NibiruBFT's networking stack stands out as a critical step forward—tackling the performance hurdles of traditional TCP while preserving instant finality and robust BFT guarantees.
+  Within the Nibiru Lagrange Point roadmap, integrating QUIC (Quick UDP Internet Connections) into Nibiru BFT's networking stack stands out as a critical step forward—tackling the performance hurdles of traditional TCP while preserving instant finality and robust BFT guarantees.
 ---
 
-# NibiruBFT: QUIC
+# Nibiru BFT: QUIC
 
 {{ $frontmatter.description }}
 
@@ -19,9 +19,9 @@ description: >-
 
 Adopting QUIC (Quick UDP Internet Connections) in [CometBFT’s peer-to-peer (p2p)](https://docs.cometbft.com/v0.37/spec/p2p/) protocol presents a significant opportunity to upgrade blockchain networking. CometBFT—long a bedrock for several ecosystems—depends on a TCP/IP foundation that, while reliable, introduces bottlenecks such as head-of-line (HOL) blocking and time-consuming handshake overheads. 
 
-Although CometBFT remains dependable, the growing demands of Nibiru’s ecosystem highlight the need for an improved transport layer. **NibiruBFT** extends CometBFT and benefits from the same networking stack; once QUIC is introduced, it can help preserve sub-2-second block times and robust BFT guarantees under heavier loads and more geographically distributed validators.
+Although CometBFT remains dependable, the growing demands of Nibiru’s ecosystem highlight the need for an improved transport layer. **Nibiru BFT** extends CometBFT and benefits from the same networking stack; once QUIC is introduced, it can help preserve sub-2-second block times and robust BFT guarantees under heavier loads and more geographically distributed validators.
 
-QUIC’s implementation on the Solana blockchain has been proven to be battle-tested in a blockchain environment. Integrating QUIC as NibiruBFT’s networking layer and taking advantage of QUIC’s architectural advantages—including stream multiplexing, RTT-driven flow control, and seamless connection migration—directly allows Nibiru to address networking bottlenecks without significant tradeoffs on security. 
+QUIC’s implementation on the Solana blockchain has been proven to be battle-tested in a blockchain environment. Integrating QUIC as Nibiru BFT’s networking layer and taking advantage of QUIC’s architectural advantages—including stream multiplexing, RTT-driven flow control, and seamless connection migration—directly allows Nibiru to address networking bottlenecks without significant tradeoffs on security. 
 
 ## 2 - The Need for Improvement in CometBFT TCP-based Networking
 
@@ -31,7 +31,7 @@ Modern blockchain environments, especially as exemplified by Nibiru, handle soar
 
 ### 2.2 Where QUIC Fits
 
-QUIC shifts away from traditional TCP transport paradigms by offering stream multiplexing, dynamic flow control, and connection migration. The result is a protocol that preserves reliability while reducing many legacy constraints. For NibiruBFT, which inherits its networking layer from CometBFT, QUIC stands out as an evolutionary upgrade that can address specific bottlenecks—like head-of-line blocking and multi-RTT handshakes—without compromising the ordering guarantees needed for consensus.
+QUIC shifts away from traditional TCP transport paradigms by offering stream multiplexing, dynamic flow control, and connection migration. The result is a protocol that preserves reliability while reducing many legacy constraints. For Nibiru BFT, which inherits its networking layer from CometBFT, QUIC stands out as an evolutionary upgrade that can address specific bottlenecks—like head-of-line blocking and multi-RTT handshakes—without compromising the ordering guarantees needed for consensus.
 
 ## 3 - Overview: Key QUIC Features
 
@@ -41,7 +41,7 @@ The following sections outline the main upgrades QUIC brings:
 2. RTT-Driven Flow Control: Uses dynamic congestion algorithms to prevent overload and react swiftly to real-time network conditions.
 3. Connection Migration: Maintains active sessions even when validators switch IP addresses or network paths.
 
-By the end, we’ll see how these components can reshape CometBFT’s p2p architecture to better serve the demands of NibiruBFT.
+By the end, we’ll see how these components can reshape CometBFT’s p2p architecture to better serve the demands of Nibiru BFT.
 
 ## 4 - TCP Limitations
 
@@ -71,7 +71,7 @@ The STS handshake alone requires 2 round-trip times (RTTs): one for exchanging e
 
 **Impact on Decentralized, Global Networks**
 
-Over stable, low-latency connections, these RTTs might be tolerable. But in a worldwide setting, many validators function with high-latency or intermittent connections (e.g., mobile networks or distant data centers). Each time a validator goes offline, it must re-run the entire process, forcing it to spend 3 RTTs just to reconnect. This overhead disrupts throughput and finality across the Nibiru ecosystem, because CometBFT forms the backbone of NibiruBFT. The more global and large-scale the network, the more pronounced the pain becomes.
+Over stable, low-latency connections, these RTTs might be tolerable. But in a worldwide setting, many validators function with high-latency or intermittent connections (e.g., mobile networks or distant data centers). Each time a validator goes offline, it must re-run the entire process, forcing it to spend 3 RTTs just to reconnect. This overhead disrupts throughput and finality across the Nibiru ecosystem, because CometBFT forms the backbone of Nibiru BFT. The more global and large-scale the network, the more pronounced the pain becomes.
 
 ## 5 - QUIC Key Components
 
@@ -120,7 +120,7 @@ Once RTT or loss metrics exceed certain thresholds, the protocol exits slow star
 
 If packet loss happens, QUIC slashes its transmission window (e.g., down to 70% of the current size in MsQuic). This prevents further overload, stabilizing the flow. Unlike TCP’s fixed approaches, QUIC’s dynamic system adapts constantly based on real-time measurements, supporting agile shifts that match changing blockchain traffic patterns.
 
-### 5.2.3 Why Flow Control Matters for NibiruBFT
+### 5.2.3 Why Flow Control Matters for Nibiru BFT
 
 During consensus rounds, networks often alternate between heavy block traffic and bursts of smaller vote messages. A purely loss-triggered TCP mechanism might react too late, leading to “congestion collapse” or missed consensus deadlines. QUIC’s sophisticated feedback loops allow it to spot early signs of congestion (e.g., spiking RTT) and reduce data flow accordingly. Even better, these parameters can be tuned to meet blockchain timing requirements. If consensus demands sub-2-second finality, QUIC can tailor window sizes in real-time to ensure votes meet strict delivery requirements.
 
@@ -136,7 +136,7 @@ TCP connections bind to a specific IP and port. When that IP changes—perhaps d
 
 On the other hand, QUIC replaces IP dependency with Connection IDs, decoupling the connection from IP and port. These Connection IDs facilitate connection migration, allowing receiver node to recognize that a reconnection is occurring. This allows QUIC to preserve session state: encryption keys are preserved without needing to re-establish the connection from scratch.
 
-QUIC enforces a path validation step, requiring a 1-RTT check before fully switching data flow to the new path. This ensures a malicious actor can’t hijack a session simply by impersonating a different IP address. For NibiruBFT validators, which may use multiple internet routes, seamlessly migrating connections is invaluable to sustaining block propagation and consensus messaging.
+QUIC enforces a path validation step, requiring a 1-RTT check before fully switching data flow to the new path. This ensures a malicious actor can’t hijack a session simply by impersonating a different IP address. For Nibiru BFT validators, which may use multiple internet routes, seamlessly migrating connections is invaluable to sustaining block propagation and consensus messaging.
 
 ### 5.3.1 Further Comparison to TCP
 
@@ -150,7 +150,7 @@ For decentralized setups like Nibiru, where nodes often endure suboptimal connec
 
 ## 6 - Conclusion
 
-QUIC’s enhancements tackle the most pressing performance issues in CometBFT’s P2P architecture—the very foundation on which NibiruBFT operates. By combining stream multiplexing, RTT-based flow control, and connection migration, QUIC delivers a stronger blueprint for blockchain communication under heavy load or network stress.
+QUIC’s enhancements tackle the most pressing performance issues in CometBFT’s P2P architecture—the very foundation on which Nibiru BFT operates. By combining stream multiplexing, RTT-based flow control, and connection migration, QUIC delivers a stronger blueprint for blockchain communication under heavy load or network stress.
 
 Successfully implementing these features does require meticulous tuning to accommodate blockchain-specific needs such as tight consensus deadlines and multi-VM transaction bursts. Yet the payoff is clear: faster block propagation, fewer stalls, and better overall resilience. As Nibiru’s validator community grows and throughput demands escalate, QUIC-based networking becomes a critical component in ensuring that the chain can handle its global ambitions while maintaining sub-2-second finality.
 
