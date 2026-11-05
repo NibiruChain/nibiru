@@ -421,8 +421,10 @@ func (e *EthAPI) FillTransaction(
 	}, nil
 }
 
-// GetPendingTransactions returns the transactions that are in the transaction
-// pool and have a from address that is one of the accounts this node manages.
+// GetPendingTransactions formats EVM messages from the CometBFT mempool
+// snapshot returned by [Backend.PendingTransactions]. It does not restrict
+// senders to accounts managed by this node. Unconfirmed transactions have null
+// block metadata; Cosmos-only transactions are omitted.
 func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 	e.logger.Debug("eth_getPendingTransactions")
 
