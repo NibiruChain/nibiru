@@ -18,7 +18,7 @@ require (
 	github.com/armon/go-metrics v0.4.1
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816
 	github.com/btcsuite/btcd v0.24.2
-	github.com/btcsuite/btcd/btcec/v2 v2.5.0
+	github.com/btcsuite/btcd/btcec/v2 v2.5.1
 	github.com/btcsuite/btcd/btcutil v1.2.0
 	github.com/chzyer/readline v1.5.1
 	github.com/cockroachdb/errors v1.14.0
@@ -39,7 +39,7 @@ require (
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/creachadair/taskgroup v0.13.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
 	github.com/distribution/reference v0.6.0
 	github.com/ethereum/go-ethereum v1.14.13-nibiru.5
 	github.com/fortytw2/leaktest v1.3.0
