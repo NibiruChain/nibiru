@@ -7,12 +7,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmprotoversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	tmprotoversion "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/version"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

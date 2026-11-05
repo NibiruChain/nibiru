@@ -7,7 +7,7 @@ import (
 	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
 
-	cmtlog "github.com/cometbft/cometbft/libs/log"
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

@@ -10,7 +10,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/cli"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"

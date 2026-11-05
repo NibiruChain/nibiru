@@ -6,8 +6,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gethcoretypes "github.com/ethereum/go-ethereum/core/types"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 
@@ -21,6 +22,7 @@ func (k *Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {}
 // EndBlock also retrieves the bloom filter value from the transient store and commits it to the
 func (k *Keeper) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	k.faultInjection(ctx) // no-op unless built with a test-only tag
 
 	bloom := gethcoretypes.BytesToBloom(k.EvmState.GetBlockBloomTransient(ctx).Bytes())
 	_ = ctx.EventManager().EmitTypedEvent(&evm.EventBlockBloom{

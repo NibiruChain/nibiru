@@ -7,9 +7,10 @@ import (
 	"testing"
 	"time"
 
-	rpccore "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	rpccore "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 )

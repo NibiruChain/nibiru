@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 

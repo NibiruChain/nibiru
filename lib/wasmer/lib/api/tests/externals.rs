@@ -1,10 +1,10 @@
-use macro_wasmer_universal_test::universal_test;
+use macro_wasmer_engine_test::engine_test;
 #[cfg(feature = "js")]
 use wasm_bindgen_test::*;
 
 use wasmer::*;
 
-#[universal_test]
+#[engine_test]
 fn global_new() -> Result<(), String> {
     let mut store = Store::default();
     let global = Global::new(&mut store, Value::I32(10));
@@ -28,11 +28,7 @@ fn global_new() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
-#[cfg_attr(
-    feature = "wamr",
-    ignore = "wamr does not support globals unattached to instances"
-)]
+#[engine_test]
 fn global_get() -> Result<(), String> {
     let mut store = Store::default();
 
@@ -59,11 +55,7 @@ fn global_get() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
-#[cfg_attr(
-    feature = "wamr",
-    ignore = "wamr does not support globals unattached to instances"
-)]
+#[engine_test]
 fn global_set() -> Result<(), String> {
     let mut store = Store::default();
     let global_i32 = Global::new(&mut store, Value::I32(10));
@@ -83,14 +75,14 @@ fn global_set() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
-#[cfg_attr(feature = "wasmi", ignore = "wasmi does not support funcrefs")]
+#[engine_test]
 fn table_new() -> Result<(), String> {
     let mut store = Store::default();
     let table_type = TableType {
         ty: Type::FuncRef,
         minimum: 0,
         maximum: None,
+        readonly: false,
     };
     let f = Function::new_typed(&mut store, || {});
     let table = Table::new(&mut store, table_type, Value::FuncRef(Some(f)))
@@ -109,7 +101,7 @@ fn table_new() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn table_get() -> Result<(), String> {
     // Tables are not yet fully supported in Wasm
     // This test was marked as #[ignore] on -sys, which is why it is commented out.
@@ -130,7 +122,11 @@ fn table_get() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
+#[cfg_attr(
+    feature = "v8-default",
+    ignore = "extern refs are not supported by the default v8 backend"
+)]
 fn table_set() -> Result<(), String> {
     // Table set not yet tested
     #[cfg(feature = "sys")]
@@ -141,6 +137,7 @@ fn table_set() -> Result<(), String> {
             ty: Type::ExternRef,
             minimum: 1,
             maximum: None,
+            readonly: false,
         };
         let extern_ref = ExternRef::new(&mut store, 0u32);
         let table = Table::new(
@@ -157,7 +154,7 @@ fn table_set() -> Result<(), String> {
         let v = v.unwrap();
 
         let v = if let Value::ExternRef(Some(ext)) = v {
-            ext.downcast::<u32>(&mut store)
+            ext.downcast::<u32>(&store)
         } else {
             return Err("table.get does not match `ExternRef(Some(..))`!".into());
         };
@@ -175,7 +172,7 @@ fn table_set() -> Result<(), String> {
         let v = v.unwrap();
 
         let v = if let Value::ExternRef(Some(ext)) = v {
-            ext.downcast::<u32>(&mut store)
+            ext.downcast::<u32>(&store)
         } else {
             return Err("table.get does not match `ExternRef(Some(..))`!".into());
         };
@@ -194,7 +191,7 @@ fn table_set() -> Result<(), String> {
         let v = v.unwrap();
 
         let v = if let Value::ExternRef(Some(ext)) = v {
-            ext.downcast::<u32>(&mut store)
+            ext.downcast::<u32>(&store)
         } else {
             return Err("table.get does not match `ExternRef(Some(..))`!".into());
         };
@@ -207,7 +204,11 @@ fn table_set() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
+#[cfg_attr(
+    feature = "v8-default",
+    ignore = "function refs are not supported by the default v8 backend"
+)]
 fn table_grow() -> Result<(), String> {
     // Tables are not yet fully supported in Wasm
     #[cfg(feature = "sys")]
@@ -217,11 +218,11 @@ fn table_grow() -> Result<(), String> {
             ty: Type::FuncRef,
             minimum: 0,
             maximum: Some(10),
+            readonly: false,
         };
         let f = Function::new_typed(&mut store, |num: i32| num + 1);
-        let table =
-            Table::new(&mut store, table_type, Value::FuncRef(Some(f.clone())))
-                .map_err(|e| format!("{e:?}"))?;
+        let table = Table::new(&mut store, table_type, Value::FuncRef(Some(f.clone())))
+            .map_err(|e| format!("{e:?}"))?;
 
         let old_len = table.grow(&mut store, 1, Value::FuncRef(Some(f.clone())));
         assert_eq!(0, old_len.unwrap());
@@ -229,8 +230,7 @@ fn table_grow() -> Result<(), String> {
         assert_eq!(1, old_len.unwrap());
 
         // Growing to a bigger maximum should return None
-        let old_len =
-            table.grow(&mut store, 12, Value::FuncRef(Some(f.clone())));
+        let old_len = table.grow(&mut store, 12, Value::FuncRef(Some(f.clone())));
         assert!(old_len.is_err());
 
         let old_len = table
@@ -242,32 +242,45 @@ fn table_grow() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn table_copy() -> Result<(), String> {
     // TODO: table copy test not yet implemented
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn memory_new() -> Result<(), String> {
     let mut store = Store::default();
     let memory_type = MemoryType {
-        shared: if cfg!(feature = "wamr") { true } else { false },
+        shared: false,
         minimum: Pages(0),
         maximum: Some(Pages(10)),
     };
-    let memory =
-        Memory::new(&mut store, memory_type).map_err(|e| format!("{e:?}"))?;
+    let memory = Memory::new(&mut store, memory_type).map_err(|e| format!("{e:?}"))?;
     assert_eq!(memory.view(&store).size(), Pages(0));
     assert_eq!(memory.ty(&store), memory_type);
     Ok(())
 }
 
-#[universal_test]
-#[cfg_attr(
-    feature = "wamr",
-    ignore = "wamr does not support direct calls to grow memory"
-)]
+#[test]
+#[cfg(feature = "v8")]
+fn memory_ty_round_trips_in_v8() -> Result<(), String> {
+    let engine: Engine = wasmer::v8::V8::new().into();
+    let mut store = Store::new(engine);
+
+    for memory_type in [
+        MemoryType::new(Pages(1), None, false),
+        MemoryType::new(Pages(1), Some(Pages(2)), false),
+        MemoryType::new(Pages(1), Some(Pages(2)), true),
+    ] {
+        let memory = Memory::new(&mut store, memory_type).map_err(|e| format!("{e:?}"))?;
+        assert_eq!(memory.ty(&store), memory_type);
+    }
+
+    Ok(())
+}
+
+#[engine_test]
 fn memory_grow() -> Result<(), String> {
     let mut store = Store::default();
     let desc = MemoryType::new(Pages(10), Some(Pages(16)), false);
@@ -298,7 +311,7 @@ fn memory_grow() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn function_new() -> Result<(), String> {
     let mut store = Store::default();
     let function = Function::new_typed(&mut store, || {});
@@ -308,35 +321,25 @@ fn function_new() -> Result<(), String> {
         function.ty(&store),
         FunctionType::new(vec![Type::I32], vec![])
     );
-    let function =
-        Function::new_typed(&mut store, |_a: i32, _b: i64, _c: f32, _d: f64| {});
+    let function = Function::new_typed(&mut store, |_a: i32, _b: i64, _c: f32, _d: f64| {});
     assert_eq!(
         function.ty(&store),
-        FunctionType::new(
-            vec![Type::I32, Type::I64, Type::F32, Type::F64],
-            vec![]
-        )
+        FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![])
     );
     let function = Function::new_typed(&mut store, || -> i32 { 1 });
     assert_eq!(
         function.ty(&store),
         FunctionType::new(vec![], vec![Type::I32])
     );
-    let function =
-        Function::new_typed(&mut store, || -> (i32, i64, f32, f64) {
-            (1, 2, 3.0, 4.0)
-        });
+    let function = Function::new_typed(&mut store, || -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) });
     assert_eq!(
         function.ty(&store),
-        FunctionType::new(
-            vec![],
-            vec![Type::I32, Type::I64, Type::F32, Type::F64]
-        )
+        FunctionType::new(vec![], vec![Type::I32, Type::I64, Type::F32, Type::F64])
     );
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn function_new_env() -> Result<(), String> {
     let mut store = Store::default();
     #[derive(Clone)]
@@ -344,17 +347,10 @@ fn function_new_env() -> Result<(), String> {
 
     let my_env = MyEnv {};
     let env = FunctionEnv::new(&mut store, my_env);
-    let function = Function::new_typed_with_env(
-        &mut store,
-        &env,
-        |_env: FunctionEnvMut<MyEnv>| {},
-    );
+    let function = Function::new_typed_with_env(&mut store, &env, |_env: FunctionEnvMut<MyEnv>| {});
     assert_eq!(function.ty(&store), FunctionType::new(vec![], vec![]));
-    let function = Function::new_typed_with_env(
-        &mut store,
-        &env,
-        |_env: FunctionEnvMut<MyEnv>, _a: i32| {},
-    );
+    let function =
+        Function::new_typed_with_env(&mut store, &env, |_env: FunctionEnvMut<MyEnv>, _a: i32| {});
     assert_eq!(
         function.ty(&store),
         FunctionType::new(vec![Type::I32], vec![])
@@ -366,16 +362,10 @@ fn function_new_env() -> Result<(), String> {
     );
     assert_eq!(
         function.ty(&store),
-        FunctionType::new(
-            vec![Type::I32, Type::I64, Type::F32, Type::F64],
-            vec![]
-        )
+        FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![])
     );
-    let function = Function::new_typed_with_env(
-        &mut store,
-        &env,
-        |_env: FunctionEnvMut<MyEnv>| -> i32 { 1 },
-    );
+    let function =
+        Function::new_typed_with_env(&mut store, &env, |_env: FunctionEnvMut<MyEnv>| -> i32 { 1 });
     assert_eq!(
         function.ty(&store),
         FunctionType::new(vec![], vec![Type::I32])
@@ -383,21 +373,16 @@ fn function_new_env() -> Result<(), String> {
     let function = Function::new_typed_with_env(
         &mut store,
         &env,
-        |_env: FunctionEnvMut<MyEnv>| -> (i32, i64, f32, f64) {
-            (1, 2, 3.0, 4.0)
-        },
+        |_env: FunctionEnvMut<MyEnv>| -> (i32, i64, f32, f64) { (1, 2, 3.0, 4.0) },
     );
     assert_eq!(
         function.ty(&store),
-        FunctionType::new(
-            vec![],
-            vec![Type::I32, Type::I64, Type::F32, Type::F64]
-        )
+        FunctionType::new(vec![], vec![Type::I32, Type::I64, Type::F32, Type::F64])
     );
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn function_new_dynamic() -> Result<(), String> {
     let mut store = Store::default();
 
@@ -416,10 +401,7 @@ fn function_new_dynamic() -> Result<(), String> {
         |_values: &[Value]| unimplemented!(),
     );
     assert_eq!(function.ty(&store), function_type);
-    let function_type = FunctionType::new(
-        vec![Type::I32, Type::I64, Type::F32, Type::F64],
-        vec![],
-    );
+    let function_type = FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![]);
     let function = Function::new(
         &mut store,
         &function_type,
@@ -433,10 +415,7 @@ fn function_new_dynamic() -> Result<(), String> {
         |_values: &[Value]| unimplemented!(),
     );
     assert_eq!(function.ty(&store), function_type);
-    let function_type = FunctionType::new(
-        vec![],
-        vec![Type::I32, Type::I64, Type::F32, Type::F64],
-    );
+    let function_type = FunctionType::new(vec![], vec![Type::I32, Type::I64, Type::F32, Type::F64]);
     let function = Function::new(
         &mut store,
         &function_type,
@@ -444,8 +423,8 @@ fn function_new_dynamic() -> Result<(), String> {
     );
     assert_eq!(function.ty(&store), function_type);
 
-    // wasmi does not support V128 through its wasm_c_api bindings.
-    #[cfg(not(any(feature = "wasmi", feature = "v8")))]
+    // V8 does not support V128 through its wasm_c_api bindings.
+    #[cfg(not(feature = "v8"))]
     {
         // Using array signature
         let function_type = ([Type::V128], [Type::I32, Type::F32, Type::F64]);
@@ -464,7 +443,7 @@ fn function_new_dynamic() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn function_new_dynamic_env() -> Result<(), String> {
     let mut store = Store::default();
     #[derive(Clone)]
@@ -489,10 +468,7 @@ fn function_new_dynamic_env() -> Result<(), String> {
         |_env: FunctionEnvMut<MyEnv>, _values: &[Value]| unimplemented!(),
     );
     assert_eq!(function.ty(&store), function_type);
-    let function_type = FunctionType::new(
-        vec![Type::I32, Type::I64, Type::F32, Type::F64],
-        vec![],
-    );
+    let function_type = FunctionType::new(vec![Type::I32, Type::I64, Type::F32, Type::F64], vec![]);
     let function = Function::new_with_env(
         &mut store,
         &env,
@@ -508,10 +484,7 @@ fn function_new_dynamic_env() -> Result<(), String> {
         |_env: FunctionEnvMut<MyEnv>, _values: &[Value]| unimplemented!(),
     );
     assert_eq!(function.ty(&store), function_type);
-    let function_type = FunctionType::new(
-        vec![],
-        vec![Type::I32, Type::I64, Type::F32, Type::F64],
-    );
+    let function_type = FunctionType::new(vec![], vec![Type::I32, Type::I64, Type::F32, Type::F64]);
     let function = Function::new_with_env(
         &mut store,
         &env,
@@ -520,8 +493,8 @@ fn function_new_dynamic_env() -> Result<(), String> {
     );
     assert_eq!(function.ty(&store), function_type);
 
-    // wasmi does not support V128 through its wasm_c_api bindings.
-    #[cfg(not(any(feature = "wasmi", feature = "v8")))]
+    // V8 does not support V128 through its wasm_c_api bindings.
+    #[cfg(not(feature = "v8"))]
     {
         // Using array signature
         let function_type = ([Type::V128], [Type::I32, Type::F32, Type::F64]);

@@ -5,9 +5,7 @@
 
 use core::fmt::{self, Display, Formatter};
 use core::str::FromStr;
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -16,16 +14,7 @@ use thiserror::Error;
 ///
 /// All trap instructions have an explicit trap code.
 #[derive(
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Debug,
-    Hash,
-    Error,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Archive,
+    Clone, Copy, PartialEq, Eq, Debug, Hash, Error, RkyvSerialize, RkyvDeserialize, Archive,
 )]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
@@ -71,6 +60,22 @@ pub enum TrapCode {
 
     /// An atomic memory access was attempted with an unaligned pointer.
     UnalignedAtomic = 10,
+
+    /// An exception was thrown but it was left uncaught.
+    UncaughtException = 11,
+
+    /// A throw_ref was executed but the exnref was not initialized.
+    UninitializedExnRef = 12,
+
+    /// An async imported function tried to yield when not called
+    /// via `Function::call_async`.
+    YieldOutsideAsyncContext = 13,
+
+    /// Another host thread requested interruption of running WASM.
+    HostInterrupt = 14,
+
+    /// A table modification operation for a read-only table.
+    ReadonlyTableModified = 15,
 }
 
 impl TrapCode {
@@ -80,9 +85,7 @@ impl TrapCode {
             Self::StackOverflow => "call stack exhausted",
             Self::HeapAccessOutOfBounds => "out of bounds memory access",
             Self::HeapMisaligned => "misaligned heap",
-            Self::TableAccessOutOfBounds => {
-                "undefined element: out of bounds table access"
-            }
+            Self::TableAccessOutOfBounds => "undefined element: out of bounds table access",
             Self::IndirectCallToNull => "uninitialized element",
             Self::BadSignature => "indirect call type mismatch",
             Self::IntegerOverflow => "integer overflow",
@@ -90,6 +93,13 @@ impl TrapCode {
             Self::BadConversionToInteger => "invalid conversion to integer",
             Self::UnreachableCodeReached => "unreachable",
             Self::UnalignedAtomic => "unaligned atomic access",
+            Self::UncaughtException => "uncaught exception",
+            Self::UninitializedExnRef => "uninitialized exnref",
+            Self::YieldOutsideAsyncContext => {
+                "async imported function yielded when not called via `Function::call_async`"
+            }
+            Self::HostInterrupt => "interrupted by host",
+            Self::ReadonlyTableModified => "read-only table modified",
         }
     }
 }
@@ -108,6 +118,11 @@ impl Display for TrapCode {
             Self::BadConversionToInteger => "bad_toint",
             Self::UnreachableCodeReached => "unreachable",
             Self::UnalignedAtomic => "unalign_atom",
+            Self::UncaughtException => "uncaught_exception",
+            Self::UninitializedExnRef => "uninitialized_exnref",
+            Self::YieldOutsideAsyncContext => "yield_outside_async_context",
+            Self::HostInterrupt => "host_interrupt",
+            Self::ReadonlyTableModified => "readonly_table_modified",
         };
         f.write_str(identifier)
     }
@@ -129,6 +144,10 @@ impl FromStr for TrapCode {
             "bad_toint" => Ok(Self::BadConversionToInteger),
             "unreachable" => Ok(Self::UnreachableCodeReached),
             "unalign_atom" => Ok(Self::UnalignedAtomic),
+            "uncaught_exception" => Ok(Self::UncaughtException),
+            "uninitialized_exnref" => Ok(Self::UninitializedExnRef),
+            "yield_outside_async_context" => Ok(Self::YieldOutsideAsyncContext),
+            "host_interrupt" => Ok(Self::HostInterrupt),
             _ => Err(()),
         }
     }

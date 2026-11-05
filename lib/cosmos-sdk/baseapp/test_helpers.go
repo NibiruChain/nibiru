@@ -1,7 +1,7 @@
 package baseapp
 
 import (
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

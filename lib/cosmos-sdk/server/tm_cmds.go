@@ -5,17 +5,18 @@ package server
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/light"
-	"github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
-	pvm "github.com/cometbft/cometbft/privval"
-	cmtstore "github.com/cometbft/cometbft/proto/tendermint/store"
-	sm "github.com/cometbft/cometbft/state"
-	"github.com/cometbft/cometbft/statesync"
-	"github.com/cometbft/cometbft/store"
-	tversion "github.com/cometbft/cometbft/version"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
+
+	"github.com/NibiruChain/nibiru/v2/bft/light"
+	"github.com/NibiruChain/nibiru/v2/bft/node"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"
+	cmtstore "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/store"
+	sm "github.com/NibiruChain/nibiru/v2/bft/state"
+	"github.com/NibiruChain/nibiru/v2/bft/statesync"
+	"github.com/NibiruChain/nibiru/v2/bft/store"
+	tversion "github.com/NibiruChain/nibiru/v2/bft/version"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
@@ -107,11 +108,13 @@ func VersionCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			bs, err := yaml.Marshal(&struct {
 				Tendermint    string
+				NibiruBFT     string `json:"Nibiru BFT"`
 				ABCI          string
 				BlockProtocol uint64
 				P2PProtocol   uint64
 			}{
 				Tendermint:    tversion.TMCoreSemVer,
+				NibiruBFT:     tversion.NibiruBFTSemVer,
 				ABCI:          tversion.ABCIVersion,
 				BlockProtocol: tversion.BlockProtocol,
 				P2PProtocol:   tversion.P2PProtocol,

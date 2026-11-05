@@ -1,6 +1,13 @@
 //! Windows x64 ABI unwind information.
 
-use crate::unwind::UnwindOps;
+#[cfg(feature = "enable-serde")]
+use serde_derive::{Deserialize, Serialize};
+
+use crate::{
+    location::Reg,
+    unwind::{UnwindOps, UnwindRegister},
+    x64_decl::{GPR, XMM},
+};
 
 /// Maximum (inclusive) size of a "small" stack allocation
 const SMALL_ALLOC_MAX_SIZE: u32 = 128;
@@ -23,14 +30,12 @@ impl<'a> Writer<'a> {
     }
 
     fn write_u16_le(&mut self, v: u16) {
-        self.buf[self.offset..(self.offset + 2)]
-            .copy_from_slice(&v.to_le_bytes());
+        self.buf[self.offset..(self.offset + 2)].copy_from_slice(&v.to_le_bytes());
         self.offset += 2;
     }
 
     fn write_u32_le(&mut self, v: u32) {
-        self.buf[self.offset..(self.offset + 4)]
-            .copy_from_slice(&v.to_le_bytes());
+        self.buf[self.offset..(self.offset + 4)].copy_from_slice(&v.to_le_bytes());
         self.offset += 4;
     }
 }
@@ -42,6 +47,7 @@ impl<'a> Writer<'a> {
 /// Note: the Cranelift x86 ISA RU enum matches the Windows unwind GPR encoding values.
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub(crate) enum UnwindCode {
     PushRegister {
         instruction_offset: u8,
@@ -85,10 +91,7 @@ impl UnwindCode {
                 reg,
             } => {
                 writer.write_u8(*instruction_offset);
-                writer.write_u8(
-                    (*reg << 4)
-                        | (UnwindOperation::PushNonvolatileRegister as u8),
-                );
+                writer.write_u8((*reg << 4) | (UnwindOperation::PushNonvolatileRegister as u8));
             }
             Self::SaveReg {
                 instruction_offset,
@@ -131,16 +134,13 @@ impl UnwindCode {
                 writer.write_u8(*instruction_offset);
                 if *size <= SMALL_ALLOC_MAX_SIZE {
                     writer.write_u8(
-                        ((((*size - 8) / 8) as u8) << 4)
-                            | UnwindOperation::SmallStackAlloc as u8,
+                        ((((*size - 8) / 8) as u8) << 4) | UnwindOperation::SmallStackAlloc as u8,
                     );
                 } else if *size <= LARGE_ALLOC_16BIT_MAX_SIZE {
                     writer.write_u8(UnwindOperation::LargeStackAlloc as u8);
                     writer.write_u16_le((*size / 8) as u16);
                 } else {
-                    writer.write_u8(
-                        (1 << 4) | (UnwindOperation::LargeStackAlloc as u8),
-                    );
+                    writer.write_u8((1 << 4) | (UnwindOperation::LargeStackAlloc as u8));
                     writer.write_u32_le(*size);
                 }
             }
@@ -162,8 +162,7 @@ impl UnwindCode {
                     3
                 }
             }
-            Self::SaveXmm { stack_offset, .. }
-            | Self::SaveReg { stack_offset, .. } => {
+            Self::SaveXmm { stack_offset, .. } | Self::SaveReg { stack_offset, .. } => {
                 if *stack_offset <= u16::MAX as u32 {
                     2
                 } else {
@@ -194,13 +193,13 @@ impl UnwindInfo {
     pub fn emit_size(&self) -> usize {
         let node_count = self.node_count();
 
-        // Calculation of the size requires no SEH handler or chained info
+        // Calculation of the size requires no SHE handler or chained info
         assert!(self.flags == 0);
 
         // Size of fixed part of UNWIND_INFO is 4 bytes
         // Then comes the UNWIND_CODE nodes (2 bytes each)
         // Then comes 2 bytes of padding for the unwind codes if necessary
-        // Next would come the SEH data, but we assert above that the function doesn't have SEH data
+        // Next would come the SHE data, but we assert above that the function doesn't have SHE data
 
         4 + (node_count * 2) + if (node_count & 1) == 1 { 2 } else { 0 }
     }
@@ -250,14 +249,13 @@ impl UnwindInfo {
 const UNWIND_RBP_REG: u8 = 5;
 
 pub(crate) fn create_unwind_info_from_insts(
-    insts: &[(usize, UnwindOps)],
+    insts: &[(usize, UnwindOps<GPR, XMM>)],
 ) -> Option<UnwindInfo> {
     let mut unwind_codes = vec![];
     let mut frame_register_offset = 0;
     let mut max_unwind_offset = 0;
     for &(instruction_offset, ref inst) in insts {
-        let instruction_offset =
-            ensure_unwind_offset(instruction_offset as u32)?;
+        let instruction_offset = ensure_unwind_offset(instruction_offset as u32)?;
         match *inst {
             UnwindOps::PushFP { .. } => {
                 unwind_codes.push(UnwindCode::PushRegister {
@@ -270,30 +268,23 @@ pub(crate) fn create_unwind_info_from_insts(
                 unwind_codes.push(UnwindCode::SetFPReg { instruction_offset });
             }
             UnwindOps::SaveRegister { reg, bp_neg_offset } => match reg {
-                0..=15 => {
-                    // GPR reg
-                    static FROM_DWARF: [u8; 16] =
-                        [0, 2, 1, 3, 6, 7, 5, 4, 8, 9, 10, 11, 12, 13, 14, 15];
-                    unwind_codes.push(UnwindCode::SaveReg {
-                        instruction_offset,
-                        reg: FROM_DWARF[reg as usize],
-                        stack_offset: bp_neg_offset as u32,
-                    });
-                }
-                17..=32 => {
-                    unwind_codes.push(UnwindCode::SaveXmm {
-                        instruction_offset,
-                        reg: reg as u8 - 17,
-                        stack_offset: bp_neg_offset as u32,
-                    });
-                }
-                _ => {
-                    unreachable!("unknown register index {}", reg);
-                }
+                UnwindRegister::GPR(reg) => unwind_codes.push(UnwindCode::SaveReg {
+                    instruction_offset,
+                    // NOTE: We declare the register order in the same way as expected by the x64 exception handling ABI.
+                    reg: reg.into_index() as u8,
+                    stack_offset: bp_neg_offset as u32,
+                }),
+                UnwindRegister::FPR(reg) => unwind_codes.push(UnwindCode::SaveXmm {
+                    instruction_offset,
+                    // NOTE: We declare the register order in the same way as expected by the x64 exception handling ABI.
+                    reg: reg.into_index() as u8,
+                    stack_offset: bp_neg_offset as u32,
+                }),
             },
             UnwindOps::Push2Regs { .. } => {
                 unreachable!("no aarch64 on x64");
             }
+            UnwindOps::SubtractFP { .. } => unreachable!(),
         }
         max_unwind_offset = instruction_offset;
     }
@@ -309,9 +300,7 @@ pub(crate) fn create_unwind_info_from_insts(
 
 fn ensure_unwind_offset(offset: u32) -> Option<u8> {
     if offset > 255 {
-        panic!(
-            "function prologues cannot exceed 255 bytes in size for Windows x64"
-        );
+        panic!("function prologues cannot exceed 255 bytes in size for Windows x64");
     }
     Some(offset as u8)
 }

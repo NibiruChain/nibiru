@@ -21,7 +21,7 @@
 //! - the `get_global` and `set_global` instructions depend on how the globals are implemented;
 //! - `memory.size` and `memory.grow` are runtime functions;
 //! - `call_indirect` has to translate the function index into the address of where this
-//!    is;
+//!   is;
 //!
 //! That is why `translate_function_body` takes an object having the `WasmRuntime` trait as
 //! argument.
@@ -76,33 +76,34 @@
 
 mod bounds_checks;
 
-use super::func_environ::{FuncEnvironment, GlobalVariable};
+pub(crate) const TAG_TYPE: ir::Type = I32;
+pub(crate) const EXN_REF_TYPE: ir::Type = I32;
+
 use super::func_state::{ControlStackFrame, ElseData, FuncTranslationState};
 use super::translation_utils::{
-    block_with_params, f32_translation, f64_translation,
+    block_with_params, f32_translation, f64_translation, materialize_global_value,
 };
-use crate::{hash_map, HashMap};
+use crate::func_environ::{FuncEnvironment, GlobalVariable};
+use crate::{HashMap, hash_map};
 use core::convert::TryFrom;
 use cranelift_codegen::ir::condcodes::{FloatCC, IntCC};
 use cranelift_codegen::ir::immediates::Offset32;
-use cranelift_codegen::ir::types::*;
 use cranelift_codegen::ir::{
-    self, AtomicRmwOp, ConstantData, InstBuilder, JumpTableData, MemFlags,
-    Value, ValueLabel,
+    self, AtomicRmwOp, BlockArg, ConstantData, InstBuilder, JumpTableData, MemFlagsData, Value,
+    ValueLabel,
 };
+use cranelift_codegen::ir::{Function, types::*};
 use cranelift_codegen::packed_option::ReservedValue;
 use cranelift_frontend::{FunctionBuilder, Variable};
 use itertools::Itertools;
 use smallvec::SmallVec;
 use std::vec::Vec;
 
-use wasmer_compiler::wasmparser::{MemArg, Operator};
-use wasmer_compiler::{
-    from_binaryreadererror_wasmerror, wasm_unsupported, ModuleTranslationState,
-};
+use wasmer_compiler::wasmparser::{self, Catch, MemArg, Operator};
+use wasmer_compiler::{ModuleTranslationState, from_binaryreadererror_wasmerror, wasm_unsupported};
 use wasmer_types::{
-    FunctionIndex, GlobalIndex, MemoryIndex, SignatureIndex, TableIndex,
-    WasmResult,
+    CATCH_ALL_TAG_VALUE, FunctionIndex, GlobalIndex, MemoryIndex, SignatureIndex, TableIndex,
+    TagIndex, WasmError, WasmResult,
 };
 
 /// Given a `Reachability<T>`, unwrap the inner `T` or, when unreachable, set
@@ -123,25 +124,46 @@ macro_rules! unwrap_or_return_unreachable_state {
     };
 }
 
+pub(crate) enum MemoryAliasRegion {
+    Heap,
+    Table,
+}
+
+fn insert_mem_flags(func: &mut Function, flags: ir::MemFlagsData) -> ir::MemFlags {
+    func.dfg.mem_flags.insert(flags).unwrap()
+}
+
+pub fn set_memflags_alias_region(
+    func: &mut Function,
+    flags: &mut MemFlagsData,
+    region: MemoryAliasRegion,
+) {
+    flags.set_alias_region(Some(func.dfg.alias_regions.insert(match region {
+        MemoryAliasRegion::Heap => ir::AliasRegionData {
+            user_id: 0,
+            description: "heap".into(),
+        },
+        MemoryAliasRegion::Table => ir::AliasRegionData {
+            user_id: 1,
+            description: "table".into(),
+        },
+    })));
+}
+
 // Clippy warns about "align: _" but its important to document that the align field is ignored
 #[allow(clippy::unneeded_field_pattern, clippy::cognitive_complexity)]
 /// Translates wasm operators into Cranelift IR instructions. Returns `true` if it inserted
 /// a return.
-pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
+pub fn translate_operator(
     module_translation_state: &ModuleTranslationState,
     op: &Operator,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
+    allow_unaligned_memory_accesses: bool,
 ) -> WasmResult<()> {
     if !state.reachable {
-        translate_unreachable_operator(
-            module_translation_state,
-            op,
-            builder,
-            state,
-            environ,
-        )?;
+        translate_unreachable_operator(module_translation_state, op, builder, state, environ)?;
         return Ok(());
     }
 
@@ -187,37 +209,32 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
          *  `get_global` and `set_global` are handled by the environment.
          ***********************************************************************************/
         Operator::GlobalGet { global_index } => {
-            let val =
-                match state.get_global(builder.func, *global_index, environ)? {
-                    GlobalVariable::Const(val) => val,
-                    GlobalVariable::Memory { gv, offset, ty } => {
-                        let addr = builder
-                            .ins()
-                            .global_value(environ.pointer_type(), gv);
-                        let mut flags = ir::MemFlags::trusted();
-                        // Put globals in the "table" abstract heap category as well.
-                        flags.set_alias_region(Some(ir::AliasRegion::Table));
-                        builder.ins().load(ty, flags, addr, offset)
-                    }
-                    GlobalVariable::Custom => environ
-                        .translate_custom_global_get(
-                            builder.cursor(),
-                            GlobalIndex::from_u32(*global_index),
-                        )?,
-                };
+            let val = match state.get_global(builder.func, *global_index, environ)? {
+                GlobalVariable::Const(val) => val,
+                GlobalVariable::Memory { gv, offset, ty } => {
+                    let addr =
+                        materialize_global_value(&mut builder.cursor(), environ.pointer_type(), gv);
+                    let mut flags = ir::MemFlagsData::trusted();
+                    // Put globals in the "table" abstract heap category as well.
+                    set_memflags_alias_region(builder.func, &mut flags, MemoryAliasRegion::Table);
+                    builder.ins().load(ty, flags, addr, offset)
+                }
+                GlobalVariable::Custom => environ.translate_custom_global_get(
+                    builder.cursor(),
+                    GlobalIndex::from_u32(*global_index),
+                )?,
+            };
             state.push1(val);
         }
         Operator::GlobalSet { global_index } => {
             match state.get_global(builder.func, *global_index, environ)? {
-                GlobalVariable::Const(_) => {
-                    panic!("global #{} is a constant", *global_index)
-                }
+                GlobalVariable::Const(_) => panic!("global #{} is a constant", *global_index),
                 GlobalVariable::Memory { gv, offset, ty } => {
                     let addr =
-                        builder.ins().global_value(environ.pointer_type(), gv);
-                    let mut flags = ir::MemFlags::trusted();
+                        materialize_global_value(&mut builder.cursor(), environ.pointer_type(), gv);
+                    let mut flags = ir::MemFlagsData::trusted();
                     // Put globals in the "table" abstract heap category as well.
-                    flags.set_alias_region(Some(ir::AliasRegion::Table));
+                    set_memflags_alias_region(builder.func, &mut flags, MemoryAliasRegion::Table);
                     let mut val = state.pop1();
                     // Ensure SIMD values are cast to their default Cranelift type, I8x16.
                     if ty.is_vector() {
@@ -225,7 +242,6 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     }
                     debug_assert_eq!(ty, builder.func.dfg.value_type(val));
                     builder.ins().store(flags, val, addr, offset);
-                    environ.update_global(builder, *global_index, val);
                 }
                 GlobalVariable::Custom => {
                     let val = state.pop1();
@@ -271,7 +287,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             // We do nothing
         }
         Operator::Unreachable => {
-            builder.ins().trap(ir::TrapCode::UnreachableCodeReached);
+            environ.translate_unreachable(builder)?;
             state.reachable = false;
         }
         /***************************** Control flow blocks **********************************
@@ -286,21 +302,15 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
          *  possible `Block`'s arguments values.
          ***********************************************************************************/
         Operator::Block { blockty } => {
-            let (params, results) =
-                module_translation_state.blocktype_params_results(blockty)?;
+            let (params, results) = module_translation_state.blocktype_params_results(blockty)?;
             let next = block_with_params(builder, results.iter(), environ)?;
             state.push_block(next, params.len(), results.len());
         }
         Operator::Loop { blockty } => {
-            let (params, results) =
-                module_translation_state.blocktype_params_results(blockty)?;
+            let (params, results) = module_translation_state.blocktype_params_results(blockty)?;
             let loop_body = block_with_params(builder, params.iter(), environ)?;
             let next = block_with_params(builder, results.iter(), environ)?;
-            canonicalise_then_jump(
-                builder,
-                loop_body,
-                state.peekn(params.len()),
-            );
+            canonicalise_then_jump(builder, loop_body, state.peekn(params.len()));
             state.push_loop(loop_body, next, params.len(), results.len());
 
             // Pop the initial `Block` actuals and replace them with the `Block`'s
@@ -311,14 +321,12 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 .extend_from_slice(builder.block_params(loop_body));
 
             builder.switch_to_block(loop_body);
-            environ.translate_loop_header(builder.cursor())?;
         }
         Operator::If { blockty } => {
             let val = state.pop1();
 
             let next_block = builder.create_block();
-            let (params, results) =
-                module_translation_state.blocktype_params_results(blockty)?;
+            let (params, results) = module_translation_state.blocktype_params_results(blockty)?;
             let results: Vec<_> = results.iter().copied().collect();
             let (destination, else_data) = if params == results {
                 // It is possible there is no `else` block, so we will only
@@ -327,8 +335,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 // destination block following the whole `if...end`. If we do end
                 // up discovering an `else`, then we will allocate a block for it
                 // and go back and patch the jump.
-                let destination =
-                    block_with_params(builder, results.iter(), environ)?;
+                let destination = block_with_params(builder, results.iter(), environ)?;
                 let branch_inst = canonicalise_brif(
                     builder,
                     val,
@@ -347,10 +354,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             } else {
                 // The `if` type signature is not valid without an `else` block,
                 // so we eagerly allocate the `else` block here.
-                let destination =
-                    block_with_params(builder, results.iter(), environ)?;
-                let else_block =
-                    block_with_params(builder, params.iter(), environ)?;
+                let destination = block_with_params(builder, results.iter(), environ)?;
+                let else_block = block_with_params(builder, params.iter(), environ)?;
                 canonicalise_brif(
                     builder,
                     val,
@@ -408,18 +413,11 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                                 branch_inst,
                                 placeholder,
                             } => {
-                                let (params, _results) =
-                                    module_translation_state
-                                        .blocktype_params_results(&blocktype)?;
-                                debug_assert_eq!(
-                                    params.len(),
-                                    num_return_values
-                                );
-                                let else_block = block_with_params(
-                                    builder,
-                                    params.iter(),
-                                    environ,
-                                )?;
+                                let (params, _results) = module_translation_state
+                                    .blocktype_params_results(&blocktype)?;
+                                debug_assert_eq!(params.len(), num_return_values);
+                                let else_block =
+                                    block_with_params(builder, params.iter(), environ)?;
                                 canonicalise_then_jump(
                                     builder,
                                     destination,
@@ -467,6 +465,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         }
         Operator::End => {
             let frame = state.control_stack.pop().unwrap();
+            frame.restore_catch_handlers(&mut state.handlers, builder);
             let next_block = frame.following_code();
             let return_count = frame.num_return_values();
             let return_args = state.peekn_mut(return_count);
@@ -531,9 +530,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             state.popn(return_count);
             state.reachable = false;
         }
-        Operator::BrIf { relative_depth } => {
-            translate_br_if(*relative_depth, builder, state)
-        }
+        Operator::BrIf { relative_depth } => translate_br_if(*relative_depth, builder, state),
         Operator::BrTable { targets } => {
             let default = targets.default();
             let mut min_depth = default;
@@ -557,8 +554,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             if jump_args_count == 0 {
                 // No jump arguments
                 for depth in targets.targets() {
-                    let depth =
-                        depth.map_err(from_binaryreadererror_wasmerror)?;
+                    let depth = depth.map_err(from_binaryreadererror_wasmerror)?;
                     let block = {
                         let i = state.control_stack.len() - 1 - (depth as usize);
                         let frame = &mut state.control_stack[i];
@@ -574,8 +570,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     frame.br_destination()
                 };
                 let block = builder.func.dfg.block_call(block, &[]);
-                let jt =
-                    builder.create_jump_table(JumpTableData::new(block, &data));
+                let jt = builder.create_jump_table(JumpTableData::new(block, &data));
                 builder.ins().br_table(val, jt);
             } else {
                 // Here we have jump arguments, but Cranelift's br_table doesn't support them
@@ -584,10 +579,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 let mut dest_block_sequence = vec![];
                 let mut dest_block_map = HashMap::new();
                 for depth in targets.targets() {
-                    let depth =
-                        depth.map_err(from_binaryreadererror_wasmerror)?;
-                    let branch_block = match dest_block_map.entry(depth as usize)
-                    {
+                    let depth = depth.map_err(from_binaryreadererror_wasmerror)?;
+                    let branch_block = match dest_block_map.entry(depth as usize) {
                         hash_map::Entry::Occupied(entry) => *entry.get(),
                         hash_map::Entry::Vacant(entry) => {
                             let block = builder.create_block();
@@ -597,21 +590,16 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     };
                     data.push(builder.func.dfg.block_call(branch_block, &[]));
                 }
-                let default_branch_block =
-                    match dest_block_map.entry(default as usize) {
-                        hash_map::Entry::Occupied(entry) => *entry.get(),
-                        hash_map::Entry::Vacant(entry) => {
-                            let block = builder.create_block();
-                            dest_block_sequence.push((default as usize, block));
-                            *entry.insert(block)
-                        }
-                    };
-                let default_branch_block =
-                    builder.func.dfg.block_call(default_branch_block, &[]);
-                let jt = builder.create_jump_table(JumpTableData::new(
-                    default_branch_block,
-                    &data,
-                ));
+                let default_branch_block = match dest_block_map.entry(default as usize) {
+                    hash_map::Entry::Occupied(entry) => *entry.get(),
+                    hash_map::Entry::Vacant(entry) => {
+                        let block = builder.create_block();
+                        dest_block_sequence.push((default as usize, block));
+                        *entry.insert(block)
+                    }
+                };
+                let default_branch_block = builder.func.dfg.block_call(default_branch_block, &[]);
+                let jt = builder.create_jump_table(JumpTableData::new(default_branch_block, &data));
                 builder.ins().br_table(val, jt);
                 for (depth, dest_block) in dest_block_sequence {
                     builder.switch_to_block(dest_block);
@@ -623,11 +611,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                         frame.br_destination()
                     };
                     let destination_args = state.peekn_mut(return_count);
-                    canonicalise_then_jump(
-                        builder,
-                        real_dest_block,
-                        destination_args,
-                    );
+                    canonicalise_then_jump(builder, real_dest_block, destination_args);
                 }
                 state.popn(return_count);
             }
@@ -639,10 +623,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 frame.num_return_values()
             };
             {
-                let return_args = state.peekn_mut(return_count);
-                environ.handle_before_return(return_args, builder);
-                bitcast_wasm_returns(environ, return_args, builder);
-                builder.ins().return_(return_args);
+                let return_args = state.peekn(return_count).to_vec();
+                environ.emit_wasm_return(builder, &return_args);
             }
             state.popn(return_count);
             state.reachable = false;
@@ -651,7 +633,6 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         /********************************** Exception handing **********************************/
         Operator::Try { .. }
         | Operator::Catch { .. }
-        | Operator::Throw { .. }
         | Operator::Rethrow { .. }
         | Operator::Delegate { .. }
         | Operator::CatchAll => {
@@ -660,41 +641,95 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 op
             ));
         }
+        Operator::TryTable { try_table } => {
+            let body = builder.create_block();
+            let (params, results) =
+                module_translation_state.blocktype_params_results(&try_table.ty)?;
+            let next = block_with_params(builder, results.iter(), environ)?;
+            builder.ins().jump(body, &[]);
+            builder.seal_block(body);
+
+            let checkpoint = state.handlers.take_checkpoint();
+            let mut clauses = Vec::with_capacity(try_table.catches.len());
+            let outer_clauses = state.handlers.unique_clauses().into_iter().collect_vec();
+            let mut catch_blocks = Vec::with_capacity(try_table.catches.len() + 1);
+
+            let catches = try_table
+                .catches
+                .iter()
+                .unique_by(|v| match v {
+                    Catch::One { tag, .. } | Catch::OneRef { tag, .. } => *tag as i32,
+                    Catch::All { .. } | Catch::AllRef { .. } => CATCH_ALL_TAG_VALUE,
+                })
+                .collect_vec();
+
+            for catch in catches.iter().rev() {
+                let clause = create_catch_block(builder, state, catch, environ)?;
+                catch_blocks.push(clause.block);
+                state.handlers.add_clause(clause.clone());
+                clauses.push(clause);
+            }
+
+            let outer_clauses = outer_clauses
+                .into_iter()
+                .filter(|clause| clauses.iter().all(|c| c.tag_value != clause.tag_value))
+                .collect_vec();
+
+            if !clauses.is_empty() {
+                let dispatch_block = create_dispatch_block(
+                    builder,
+                    environ,
+                    clauses.iter().chain(outer_clauses.iter()).cloned(),
+                )?;
+                catch_blocks.push(dispatch_block);
+                state.handlers.add_handler(dispatch_block);
+            }
+
+            state.push_try_table_block(next, catch_blocks, params.len(), results.len(), checkpoint);
+
+            builder.switch_to_block(body);
+        }
+        Operator::Throw { tag_index } => {
+            let tag_index = TagIndex::from_u32(*tag_index);
+            let arity = environ.tag_param_arity(tag_index);
+            let args = state.peekn(arity);
+            environ.translate_exn_throw(builder, tag_index, args, state.handlers.landing_pad())?;
+            state.popn(arity);
+            state.reachable = false;
+        }
+        Operator::ThrowRef => {
+            let exnref = state.pop1();
+            environ.translate_exn_throw_ref(builder, exnref, state.handlers.landing_pad())?;
+            state.reachable = false;
+        }
         /************************************ Calls ****************************************
          * The call instructions pop off their arguments from the stack and append their
          * return values to it. `call_indirect` needs environment support because there is an
          * argument referring to an index in the external functions table of the module.
          ************************************************************************************/
         Operator::Call { function_index } => {
-            let (fref, num_args) =
-                state.get_direct_func(builder.func, *function_index, environ)?;
+            let (fref, num_args) = state.get_direct_func(builder.func, *function_index, environ)?;
 
             // Bitcast any vector arguments to their default type, I8X16, before calling.
-            let args = state.peekn_mut(num_args);
-            bitcast_wasm_params(
-                environ,
-                builder.func.dfg.ext_funcs[fref].signature,
-                args,
-                builder,
-            );
-
-            let call = environ.translate_call(
+            {
+                let args_mut = state.peekn_mut(num_args);
+                bitcast_wasm_params(
+                    environ,
+                    builder.func.dfg.ext_funcs[fref].signature,
+                    args_mut,
+                    builder,
+                );
+            }
+            let args = state.peekn(num_args);
+            let results = environ.translate_call(
                 builder,
                 FunctionIndex::from_u32(*function_index),
                 fref,
                 args,
+                state.handlers.landing_pad(),
             )?;
-            let inst_results = builder.inst_results(call);
-            debug_assert_eq!(
-                inst_results.len(),
-                builder.func.dfg.signatures
-                    [builder.func.dfg.ext_funcs[fref].signature]
-                    .returns
-                    .len(),
-                "translate_call results should match the call signature"
-            );
             state.popn(num_args);
-            state.pushn(inst_results);
+            state.pushn(results.as_slice());
         }
         Operator::CallIndirect {
             type_index,
@@ -704,56 +739,41 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             // `type_index` is the index of the function's signature and
             // `table_index` is the index of the table to search the function
             // in.
-            let (sigref, num_args) =
-                state.get_indirect_sig(builder.func, *type_index, environ)?;
+            let (sigref, num_args) = state.get_indirect_sig(builder.func, *type_index, environ)?;
             let callee = state.pop1();
 
             // Bitcast any vector arguments to their default type, I8X16, before calling.
-            let args = state.peekn_mut(num_args);
-            bitcast_wasm_params(environ, sigref, args, builder);
-
-            let call = environ.translate_call_indirect(
+            {
+                let args_mut = state.peekn_mut(num_args);
+                bitcast_wasm_params(environ, sigref, args_mut, builder);
+            }
+            let args = state.peekn(num_args);
+            let results = environ.translate_call_indirect(
                 builder,
                 TableIndex::from_u32(*table_index),
                 SignatureIndex::from_u32(*type_index),
                 sigref,
                 callee,
-                state.peekn(num_args),
+                args,
+                state.handlers.landing_pad(),
             )?;
-            let inst_results = builder.inst_results(call);
-            debug_assert_eq!(
-                inst_results.len(),
-                builder.func.dfg.signatures[sigref].returns.len(),
-                "translate_call_indirect results should match the call signature"
-            );
             state.popn(num_args);
-            state.pushn(inst_results);
+            state.pushn(results.as_slice());
         }
         /******************************* Memory management ***********************************
          * Memory management is handled by environment. It is usually translated into calls to
          * special functions.
          ************************************************************************************/
         Operator::MemoryGrow { mem } => {
-            // The WebAssembly MVP only supports one linear memory, but we expect the reserved
-            // argument to be a memory index.
             let heap_index = MemoryIndex::from_u32(*mem);
             let heap = state.get_heap(builder.func, *mem, environ)?;
             let val = state.pop1();
-            state.push1(environ.translate_memory_grow(
-                builder.cursor(),
-                heap_index,
-                heap,
-                val,
-            )?)
+            state.push1(environ.translate_memory_grow(builder.cursor(), heap_index, heap, val)?)
         }
         Operator::MemorySize { mem } => {
             let heap_index = MemoryIndex::from_u32(*mem);
             let heap = state.get_heap(builder.func, *mem, environ)?;
-            state.push1(environ.translate_memory_size(
-                builder.cursor(),
-                heap_index,
-                heap,
-            )?);
+            state.push1(environ.translate_memory_size(builder.cursor(), heap_index, heap)?);
         }
         /******************************* Load instructions ***********************************
          * Wasm specifies an integer alignment flag but we drop it in Cranelift.
@@ -768,7 +788,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -781,7 +802,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -794,7 +816,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -807,7 +830,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -820,7 +844,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -833,7 +858,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -846,7 +872,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -859,7 +886,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -872,7 +900,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -885,7 +914,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -898,7 +928,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -911,7 +942,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     F32,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -924,7 +956,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -937,7 +970,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     F64,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -950,7 +984,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     I8X16,
                     builder,
                     state,
-                    environ
+                    environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
         }
@@ -1011,7 +1046,14 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::I64Store { memarg }
         | Operator::F32Store { memarg }
         | Operator::F64Store { memarg } => {
-            translate_store(memarg, ir::Opcode::Store, builder, state, environ)?;
+            translate_store(
+                memarg,
+                ir::Opcode::Store,
+                builder,
+                state,
+                environ,
+                allow_unaligned_memory_accesses,
+            )?;
         }
         Operator::I32Store8 { memarg } | Operator::I64Store8 { memarg } => {
             translate_store(
@@ -1020,6 +1062,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 builder,
                 state,
                 environ,
+                allow_unaligned_memory_accesses,
             )?;
         }
         Operator::I32Store16 { memarg } | Operator::I64Store16 { memarg } => {
@@ -1029,6 +1072,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 builder,
                 state,
                 environ,
+                allow_unaligned_memory_accesses,
             )?;
         }
         Operator::I64Store32 { memarg } => {
@@ -1038,18 +1082,24 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 builder,
                 state,
                 environ,
+                allow_unaligned_memory_accesses,
             )?;
         }
         Operator::V128Store { memarg } => {
-            translate_store(memarg, ir::Opcode::Store, builder, state, environ)?;
+            translate_store(
+                memarg,
+                ir::Opcode::Store,
+                builder,
+                state,
+                environ,
+                allow_unaligned_memory_accesses,
+            )?;
         }
         /****************************** Nullary Operators ************************************/
         Operator::I32Const { value } => {
             state.push1(builder.ins().iconst(I32, *value as u32 as i64))
         }
-        Operator::I64Const { value } => {
-            state.push1(builder.ins().iconst(I64, *value))
-        }
+        Operator::I64Const { value } => state.push1(builder.ins().iconst(I64, *value)),
         Operator::F32Const { value } => {
             state.push1(builder.ins().f32const(f32_translation(*value)));
         }
@@ -1167,19 +1217,19 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         }
         Operator::F32ReinterpretI32 => {
             let val = state.pop1();
-            state.push1(builder.ins().bitcast(F32, MemFlags::new(), val));
+            state.push1(builder.ins().bitcast(F32, MemFlagsData::new(), val));
         }
         Operator::F64ReinterpretI64 => {
             let val = state.pop1();
-            state.push1(builder.ins().bitcast(F64, MemFlags::new(), val));
+            state.push1(builder.ins().bitcast(F64, MemFlagsData::new(), val));
         }
         Operator::I32ReinterpretF32 => {
             let val = state.pop1();
-            state.push1(builder.ins().bitcast(I32, MemFlags::new(), val));
+            state.push1(builder.ins().bitcast(I32, MemFlagsData::new(), val));
         }
         Operator::I64ReinterpretF64 => {
             let val = state.pop1();
-            state.push1(builder.ins().bitcast(I64, MemFlags::new(), val));
+            state.push1(builder.ins().bitcast(I64, MemFlagsData::new(), val));
         }
         Operator::I32Extend8S => {
             let val = state.pop1();
@@ -1327,30 +1377,18 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         }
         Operator::I32Eqz | Operator::I64Eqz => {
             let arg = state.pop1();
-            let val = builder.ins().icmp_imm(IntCC::Equal, arg, 0);
+            let val = builder.ins().icmp_imm_u(IntCC::Equal, arg, 0);
             state.push1(builder.ins().uextend(I32, val));
         }
-        Operator::I32Eq | Operator::I64Eq => {
-            translate_icmp(IntCC::Equal, builder, state)
-        }
-        Operator::F32Eq | Operator::F64Eq => {
-            translate_fcmp(FloatCC::Equal, builder, state)
-        }
-        Operator::I32Ne | Operator::I64Ne => {
-            translate_icmp(IntCC::NotEqual, builder, state)
-        }
-        Operator::F32Ne | Operator::F64Ne => {
-            translate_fcmp(FloatCC::NotEqual, builder, state)
-        }
-        Operator::F32Gt | Operator::F64Gt => {
-            translate_fcmp(FloatCC::GreaterThan, builder, state)
-        }
+        Operator::I32Eq | Operator::I64Eq => translate_icmp(IntCC::Equal, builder, state),
+        Operator::F32Eq | Operator::F64Eq => translate_fcmp(FloatCC::Equal, builder, state),
+        Operator::I32Ne | Operator::I64Ne => translate_icmp(IntCC::NotEqual, builder, state),
+        Operator::F32Ne | Operator::F64Ne => translate_fcmp(FloatCC::NotEqual, builder, state),
+        Operator::F32Gt | Operator::F64Gt => translate_fcmp(FloatCC::GreaterThan, builder, state),
         Operator::F32Ge | Operator::F64Ge => {
             translate_fcmp(FloatCC::GreaterThanOrEqual, builder, state)
         }
-        Operator::F32Lt | Operator::F64Lt => {
-            translate_fcmp(FloatCC::LessThan, builder, state)
-        }
+        Operator::F32Lt | Operator::F64Lt => translate_fcmp(FloatCC::LessThan, builder, state),
         Operator::F32Le | Operator::F64Le => {
             translate_fcmp(FloatCC::LessThanOrEqual, builder, state)
         }
@@ -1365,11 +1403,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let index = FunctionIndex::from_u32(*function_index);
             state.push1(environ.translate_ref_func(builder.cursor(), index)?);
         }
-        Operator::MemoryAtomicWait32 { memarg }
-        | Operator::MemoryAtomicWait64 { memarg } => {
-            // The WebAssembly MVP only supports one linear memory and
-            // wasmparser will ensure that the memory indices specified are
-            // zero.
+        Operator::MemoryAtomicWait32 { memarg } | Operator::MemoryAtomicWait64 { memarg } => {
             let implied_ty = match op {
                 Operator::MemoryAtomicWait64 { .. } => I64,
                 Operator::MemoryAtomicWait32 { .. } => I32,
@@ -1380,7 +1414,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let timeout = state.pop1(); // 64 (fixed)
             let expected = state.pop1(); // 32 or 64 (per the `Ixx` in `IxxAtomicWait`)
             let addr = state.pop1(); // 32 (fixed)
-            let addr = fold_atomic_mem_addr(addr, memarg, implied_ty, builder);
+            let addr = fold_atomic_mem_addr(addr, memarg, builder);
             assert!(builder.func.dfg.value_type(expected) == implied_ty);
             // `fn translate_atomic_wait` can inspect the type of `expected` to figure out what
             // code it needs to generate, if it wants.
@@ -1397,7 +1431,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                 }
                 Err(wasmer_types::WasmError::Unsupported(_err)) => {
                     // If multiple threads hit a mutex then the function will fail
-                    builder.ins().trap(ir::TrapCode::UnreachableCodeReached);
+                    builder.ins().trap(crate::TRAP_UNREACHABLE);
                     state.reachable = false;
                 }
                 Err(err) => {
@@ -1410,14 +1444,8 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let heap = state.get_heap(builder.func, memarg.memory, environ)?;
             let count = state.pop1(); // 32 (fixed)
             let addr = state.pop1(); // 32 (fixed)
-            let addr = fold_atomic_mem_addr(addr, memarg, I32, builder);
-            match environ.translate_atomic_notify(
-                builder.cursor(),
-                heap_index,
-                heap,
-                addr,
-                count,
-            ) {
+            let addr = fold_atomic_mem_addr(addr, memarg, builder);
+            match environ.translate_atomic_notify(builder.cursor(), heap_index, heap, addr, count) {
                 Ok(res) => {
                     state.push1(res);
                 }
@@ -1476,389 +1504,137 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             translate_atomic_store(I32, memarg, builder, state, environ)?
         }
 
-        Operator::I32AtomicRmwAdd { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwAdd { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8AddU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16AddU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8AddU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16AddU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32AddU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::Add,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwAdd { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwAdd { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8AddU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16AddU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8AddU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16AddU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32AddU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::Add, memarg, builder, state, environ)?
+        }
 
-        Operator::I32AtomicRmwSub { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwSub { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8SubU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16SubU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8SubU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16SubU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32SubU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::Sub,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwSub { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwSub { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8SubU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16SubU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8SubU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16SubU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32SubU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::Sub, memarg, builder, state, environ)?
+        }
 
-        Operator::I32AtomicRmwAnd { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwAnd { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8AndU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16AndU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8AndU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16AndU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32AndU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::And,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwAnd { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwAnd { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8AndU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16AndU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8AndU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16AndU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32AndU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::And, memarg, builder, state, environ)?
+        }
 
-        Operator::I32AtomicRmwOr { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwOr { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8OrU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16OrU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8OrU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16OrU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32OrU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::Or,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwOr { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwOr { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8OrU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16OrU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8OrU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16OrU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32OrU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::Or, memarg, builder, state, environ)?
+        }
 
-        Operator::I32AtomicRmwXor { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwXor { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8XorU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16XorU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8XorU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16XorU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32XorU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::Xor,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwXor { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwXor { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8XorU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16XorU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8XorU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16XorU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32XorU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::Xor, memarg, builder, state, environ)?
+        }
 
-        Operator::I32AtomicRmwXchg { memarg } => translate_atomic_rmw(
-            I32,
-            I32,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmwXchg { memarg } => translate_atomic_rmw(
-            I64,
-            I64,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw8XchgU { memarg } => translate_atomic_rmw(
-            I32,
-            I8,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I32AtomicRmw16XchgU { memarg } => translate_atomic_rmw(
-            I32,
-            I16,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw8XchgU { memarg } => translate_atomic_rmw(
-            I64,
-            I8,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw16XchgU { memarg } => translate_atomic_rmw(
-            I64,
-            I16,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
-        Operator::I64AtomicRmw32XchgU { memarg } => translate_atomic_rmw(
-            I64,
-            I32,
-            AtomicRmwOp::Xchg,
-            memarg,
-            builder,
-            state,
-            environ,
-        )?,
+        Operator::I32AtomicRmwXchg { memarg } => {
+            translate_atomic_rmw(I32, I32, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmwXchg { memarg } => {
+            translate_atomic_rmw(I64, I64, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw8XchgU { memarg } => {
+            translate_atomic_rmw(I32, I8, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I32AtomicRmw16XchgU { memarg } => {
+            translate_atomic_rmw(I32, I16, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw8XchgU { memarg } => {
+            translate_atomic_rmw(I64, I8, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw16XchgU { memarg } => {
+            translate_atomic_rmw(I64, I16, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
+        Operator::I64AtomicRmw32XchgU { memarg } => {
+            translate_atomic_rmw(I64, I32, AtomicRmwOp::Xchg, memarg, builder, state, environ)?
+        }
 
         Operator::I32AtomicRmwCmpxchg { memarg } => {
             translate_atomic_cas(I32, I32, memarg, builder, state, environ)?
@@ -1910,14 +1686,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let len = state.pop1();
             let val = state.pop1();
             let dest = state.pop1();
-            environ.translate_memory_fill(
-                builder.cursor(),
-                heap_index,
-                heap,
-                dest,
-                val,
-                len,
-            )?;
+            environ.translate_memory_fill(builder.cursor(), heap_index, heap, dest, val, len)?;
         }
         Operator::MemoryInit { data_index, mem } => {
             let heap_index = MemoryIndex::from_u32(*mem);
@@ -1939,10 +1708,9 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             environ.translate_data_drop(builder.cursor(), *data_index)?;
         }
         Operator::TableSize { table: index } => {
-            state.push1(environ.translate_table_size(
-                builder.cursor(),
-                TableIndex::from_u32(*index),
-            )?);
+            state.push1(
+                environ.translate_table_size(builder.cursor(), TableIndex::from_u32(*index))?,
+            );
         }
         Operator::TableGrow { table: index } => {
             let table_index = TableIndex::from_u32(*index);
@@ -1958,11 +1726,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         Operator::TableGet { table: index } => {
             let table_index = TableIndex::from_u32(*index);
             let index = state.pop1();
-            state.push1(environ.translate_table_get(
-                builder,
-                table_index,
-                index,
-            )?);
+            state.push1(environ.translate_table_get(builder, table_index, index)?);
         }
         Operator::TableSet { table: index } => {
             let table_index = TableIndex::from_u32(*index);
@@ -1991,13 +1755,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let len = state.pop1();
             let val = state.pop1();
             let dest = state.pop1();
-            environ.translate_table_fill(
-                builder.cursor(),
-                table_index,
-                dest,
-                val,
-                len,
-            )?;
+            environ.translate_table_fill(builder.cursor(), table_index, dest, val, len)?;
         }
         Operator::TableInit {
             elem_index,
@@ -2027,8 +1785,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             state.push1(value)
         }
         Operator::I8x16Splat | Operator::I16x8Splat => {
-            let reduced =
-                builder.ins().ireduce(type_of(op).lane_type(), state.pop1());
+            let reduced = builder.ins().ireduce(type_of(op).lane_type(), state.pop1());
             let splatted = builder.ins().splat(type_of(op), reduced);
             state.push1(splatted)
         }
@@ -2052,13 +1809,13 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     builder,
                     state,
                     environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
             let splatted = builder.ins().splat(type_of(op), state.pop1());
             state.push1(splatted)
         }
-        Operator::V128Load32Zero { memarg }
-        | Operator::V128Load64Zero { memarg } => {
+        Operator::V128Load32Zero { memarg } | Operator::V128Load64Zero { memarg } => {
             unwrap_or_return_unreachable_state!(
                 state,
                 translate_load(
@@ -2068,10 +1825,10 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     builder,
                     state,
                     environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
-            let as_vector =
-                builder.ins().scalar_to_vector(type_of(op), state.pop1());
+            let as_vector = builder.ins().scalar_to_vector(type_of(op), state.pop1());
             state.push1(as_vector)
         }
         Operator::V128Load8Lane { memarg, lane }
@@ -2088,6 +1845,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
                     builder,
                     state,
                     environ,
+                    allow_unaligned_memory_accesses,
                 )?
             );
             let replacement = state.pop1();
@@ -2099,16 +1857,21 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::V128Store64Lane { memarg, lane } => {
             let vector = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().extractlane(vector, *lane));
-            translate_store(memarg, ir::Opcode::Store, builder, state, environ)?;
+            translate_store(
+                memarg,
+                ir::Opcode::Store,
+                builder,
+                state,
+                environ,
+                allow_unaligned_memory_accesses,
+            )?;
         }
-        Operator::I8x16ExtractLaneS { lane }
-        | Operator::I16x8ExtractLaneS { lane } => {
+        Operator::I8x16ExtractLaneS { lane } | Operator::I16x8ExtractLaneS { lane } => {
             let vector = pop1_with_bitcast(state, type_of(op), builder);
             let extracted = builder.ins().extractlane(vector, *lane);
             state.push1(builder.ins().sextend(I32, extracted))
         }
-        Operator::I8x16ExtractLaneU { lane }
-        | Operator::I16x8ExtractLaneU { lane } => {
+        Operator::I8x16ExtractLaneU { lane } | Operator::I16x8ExtractLaneU { lane } => {
             let vector = pop1_with_bitcast(state, type_of(op), builder);
             let extracted = builder.ins().extractlane(vector, *lane);
             state.push1(builder.ins().uextend(I32, extracted));
@@ -2123,8 +1886,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let vector = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().extractlane(vector, *lane))
         }
-        Operator::I8x16ReplaceLane { lane }
-        | Operator::I16x8ReplaceLane { lane } => {
+        Operator::I8x16ReplaceLane { lane } | Operator::I16x8ReplaceLane { lane } => {
             let (vector, replacement) = state.pop2();
             let ty = type_of(op);
             let reduced = builder.ins().ireduce(ty.lane_type(), replacement);
@@ -2154,10 +1916,11 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let (a, b) = pop2_with_bitcast(state, I8X16, builder);
             state.push1(builder.ins().swizzle(a, b))
         }
-        Operator::I8x16Add
-        | Operator::I16x8Add
-        | Operator::I32x4Add
-        | Operator::I64x2Add => {
+        Operator::I8x16RelaxedSwizzle => {
+            let (a, b) = pop2_with_bitcast(state, I8X16, builder);
+            state.push1(builder.ins().swizzle(a, b))
+        }
+        Operator::I8x16Add | Operator::I16x8Add | Operator::I32x4Add | Operator::I64x2Add => {
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().iadd(a, b))
         }
@@ -2169,10 +1932,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().uadd_sat(a, b))
         }
-        Operator::I8x16Sub
-        | Operator::I16x8Sub
-        | Operator::I32x4Sub
-        | Operator::I64x2Sub => {
+        Operator::I8x16Sub | Operator::I16x8Sub | Operator::I32x4Sub | Operator::I64x2Sub => {
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().isub(a, b))
         }
@@ -2204,17 +1964,11 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().avg_round(a, b))
         }
-        Operator::I8x16Neg
-        | Operator::I16x8Neg
-        | Operator::I32x4Neg
-        | Operator::I64x2Neg => {
+        Operator::I8x16Neg | Operator::I16x8Neg | Operator::I32x4Neg | Operator::I64x2Neg => {
             let a = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().ineg(a))
         }
-        Operator::I8x16Abs
-        | Operator::I16x8Abs
-        | Operator::I32x4Abs
-        | Operator::I64x2Abs => {
+        Operator::I8x16Abs | Operator::I16x8Abs | Operator::I32x4Abs | Operator::I64x2Abs => {
             let a = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().iabs(a))
         }
@@ -2242,40 +1996,31 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let a = state.pop1();
             state.push1(builder.ins().bnot(a));
         }
-        Operator::I8x16Shl
-        | Operator::I16x8Shl
-        | Operator::I32x4Shl
-        | Operator::I64x2Shl => {
+        Operator::I8x16Shl | Operator::I16x8Shl | Operator::I32x4Shl | Operator::I64x2Shl => {
             let (a, b) = state.pop2();
             let bitcast_a = optionally_bitcast_vector(a, type_of(op), builder);
             let bitwidth = i64::from(type_of(op).lane_bits());
             // The spec expects to shift with `b mod lanewidth`; so, e.g., for 16 bit lane-width
             // we do `b AND 15`; this means fewer instructions than `iconst + urem`.
-            let b_mod_bitwidth = builder.ins().band_imm(b, bitwidth - 1);
+            let b_mod_bitwidth = builder.ins().band_imm_u(b, bitwidth - 1);
             state.push1(builder.ins().ishl(bitcast_a, b_mod_bitwidth))
         }
-        Operator::I8x16ShrU
-        | Operator::I16x8ShrU
-        | Operator::I32x4ShrU
-        | Operator::I64x2ShrU => {
+        Operator::I8x16ShrU | Operator::I16x8ShrU | Operator::I32x4ShrU | Operator::I64x2ShrU => {
             let (a, b) = state.pop2();
             let bitcast_a = optionally_bitcast_vector(a, type_of(op), builder);
             let bitwidth = i64::from(type_of(op).lane_bits());
             // The spec expects to shift with `b mod lanewidth`; so, e.g., for 16 bit lane-width
             // we do `b AND 15`; this means fewer instructions than `iconst + urem`.
-            let b_mod_bitwidth = builder.ins().band_imm(b, bitwidth - 1);
+            let b_mod_bitwidth = builder.ins().band_imm_u(b, bitwidth - 1);
             state.push1(builder.ins().ushr(bitcast_a, b_mod_bitwidth))
         }
-        Operator::I8x16ShrS
-        | Operator::I16x8ShrS
-        | Operator::I32x4ShrS
-        | Operator::I64x2ShrS => {
+        Operator::I8x16ShrS | Operator::I16x8ShrS | Operator::I32x4ShrS | Operator::I64x2ShrS => {
             let (a, b) = state.pop2();
             let bitcast_a = optionally_bitcast_vector(a, type_of(op), builder);
             let bitwidth = i64::from(type_of(op).lane_bits());
             // The spec expects to shift with `b mod lanewidth`; so, e.g., for 16 bit lane-width
             // we do `b AND 15`; this means fewer instructions than `iconst + urem`.
-            let b_mod_bitwidth = builder.ins().band_imm(b, bitwidth - 1);
+            let b_mod_bitwidth = builder.ins().band_imm_u(b, bitwidth - 1);
             state.push1(builder.ins().sshr(bitcast_a, b_mod_bitwidth))
         }
         Operator::V128Bitselect => {
@@ -2283,6 +2028,19 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let bitcast_a = optionally_bitcast_vector(a, I8X16, builder);
             let bitcast_b = optionally_bitcast_vector(b, I8X16, builder);
             let bitcast_c = optionally_bitcast_vector(c, I8X16, builder);
+            // The CLIF operand ordering is slightly different and the types of all three
+            // operands must match (hence the bitcast).
+            state.push1(builder.ins().bitselect(bitcast_c, bitcast_a, bitcast_b))
+        }
+        Operator::I8x16RelaxedLaneselect
+        | Operator::I16x8RelaxedLaneselect
+        | Operator::I32x4RelaxedLaneselect
+        | Operator::I64x2RelaxedLaneselect => {
+            let (a, b, c) = state.pop3();
+            let ty = type_of(op);
+            let bitcast_a = optionally_bitcast_vector(a, ty, builder);
+            let bitcast_b = optionally_bitcast_vector(b, ty, builder);
+            let bitcast_c = optionally_bitcast_vector(c, ty, builder);
             // The CLIF operand ordering is slightly different and the types of all three
             // operands must match (hence the bitcast).
             state.push1(builder.ins().bitselect(bitcast_c, bitcast_a, bitcast_b))
@@ -2307,85 +2065,38 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let a = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().vhigh_bits(I32, a));
         }
-        Operator::I8x16Eq
-        | Operator::I16x8Eq
-        | Operator::I32x4Eq
-        | Operator::I64x2Eq => {
+        Operator::I8x16Eq | Operator::I16x8Eq | Operator::I32x4Eq | Operator::I64x2Eq => {
             translate_vector_icmp(IntCC::Equal, type_of(op), builder, state)
         }
-        Operator::I8x16Ne
-        | Operator::I16x8Ne
-        | Operator::I32x4Ne
-        | Operator::I64x2Ne => {
+        Operator::I8x16Ne | Operator::I16x8Ne | Operator::I32x4Ne | Operator::I64x2Ne => {
             translate_vector_icmp(IntCC::NotEqual, type_of(op), builder, state)
         }
-        Operator::I8x16GtS
-        | Operator::I16x8GtS
-        | Operator::I32x4GtS
-        | Operator::I64x2GtS => translate_vector_icmp(
-            IntCC::SignedGreaterThan,
-            type_of(op),
-            builder,
-            state,
-        ),
-        Operator::I8x16LtS
-        | Operator::I16x8LtS
-        | Operator::I32x4LtS
-        | Operator::I64x2LtS => translate_vector_icmp(
-            IntCC::SignedLessThan,
-            type_of(op),
-            builder,
-            state,
-        ),
+        Operator::I8x16GtS | Operator::I16x8GtS | Operator::I32x4GtS | Operator::I64x2GtS => {
+            translate_vector_icmp(IntCC::SignedGreaterThan, type_of(op), builder, state)
+        }
+        Operator::I8x16LtS | Operator::I16x8LtS | Operator::I32x4LtS | Operator::I64x2LtS => {
+            translate_vector_icmp(IntCC::SignedLessThan, type_of(op), builder, state)
+        }
         Operator::I8x16GtU | Operator::I16x8GtU | Operator::I32x4GtU => {
-            translate_vector_icmp(
-                IntCC::UnsignedGreaterThan,
-                type_of(op),
-                builder,
-                state,
-            )
+            translate_vector_icmp(IntCC::UnsignedGreaterThan, type_of(op), builder, state)
         }
         Operator::I8x16LtU | Operator::I16x8LtU | Operator::I32x4LtU => {
-            translate_vector_icmp(
-                IntCC::UnsignedLessThan,
-                type_of(op),
-                builder,
-                state,
-            )
+            translate_vector_icmp(IntCC::UnsignedLessThan, type_of(op), builder, state)
         }
-        Operator::I8x16GeS
-        | Operator::I16x8GeS
-        | Operator::I32x4GeS
-        | Operator::I64x2GeS => translate_vector_icmp(
-            IntCC::SignedGreaterThanOrEqual,
+        Operator::I8x16GeS | Operator::I16x8GeS | Operator::I32x4GeS | Operator::I64x2GeS => {
+            translate_vector_icmp(IntCC::SignedGreaterThanOrEqual, type_of(op), builder, state)
+        }
+        Operator::I8x16LeS | Operator::I16x8LeS | Operator::I32x4LeS | Operator::I64x2LeS => {
+            translate_vector_icmp(IntCC::SignedLessThanOrEqual, type_of(op), builder, state)
+        }
+        Operator::I8x16GeU | Operator::I16x8GeU | Operator::I32x4GeU => translate_vector_icmp(
+            IntCC::UnsignedGreaterThanOrEqual,
             type_of(op),
             builder,
             state,
         ),
-        Operator::I8x16LeS
-        | Operator::I16x8LeS
-        | Operator::I32x4LeS
-        | Operator::I64x2LeS => translate_vector_icmp(
-            IntCC::SignedLessThanOrEqual,
-            type_of(op),
-            builder,
-            state,
-        ),
-        Operator::I8x16GeU | Operator::I16x8GeU | Operator::I32x4GeU => {
-            translate_vector_icmp(
-                IntCC::UnsignedGreaterThanOrEqual,
-                type_of(op),
-                builder,
-                state,
-            )
-        }
         Operator::I8x16LeU | Operator::I16x8LeU | Operator::I32x4LeU => {
-            translate_vector_icmp(
-                IntCC::UnsignedLessThanOrEqual,
-                type_of(op),
-                builder,
-                state,
-            )
+            translate_vector_icmp(IntCC::UnsignedLessThanOrEqual, type_of(op), builder, state)
         }
         Operator::F32x4Eq | Operator::F64x2Eq => {
             translate_vector_fcmp(FloatCC::Equal, type_of(op), builder, state)
@@ -2396,24 +2107,15 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         Operator::F32x4Lt | Operator::F64x2Lt => {
             translate_vector_fcmp(FloatCC::LessThan, type_of(op), builder, state)
         }
-        Operator::F32x4Gt | Operator::F64x2Gt => translate_vector_fcmp(
-            FloatCC::GreaterThan,
-            type_of(op),
-            builder,
-            state,
-        ),
-        Operator::F32x4Le | Operator::F64x2Le => translate_vector_fcmp(
-            FloatCC::LessThanOrEqual,
-            type_of(op),
-            builder,
-            state,
-        ),
-        Operator::F32x4Ge | Operator::F64x2Ge => translate_vector_fcmp(
-            FloatCC::GreaterThanOrEqual,
-            type_of(op),
-            builder,
-            state,
-        ),
+        Operator::F32x4Gt | Operator::F64x2Gt => {
+            translate_vector_fcmp(FloatCC::GreaterThan, type_of(op), builder, state)
+        }
+        Operator::F32x4Le | Operator::F64x2Le => {
+            translate_vector_fcmp(FloatCC::LessThanOrEqual, type_of(op), builder, state)
+        }
+        Operator::F32x4Ge | Operator::F64x2Ge => {
+            translate_vector_fcmp(FloatCC::GreaterThanOrEqual, type_of(op), builder, state)
+        }
         Operator::F32x4Add | Operator::F64x2Add => {
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().fadd(a, b))
@@ -2426,6 +2128,25 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().fmul(a, b))
         }
+        Operator::F32x4RelaxedMadd | Operator::F64x2RelaxedMadd => {
+            let ty = type_of(op);
+            let (a, b, c) = state.pop3();
+            let a = optionally_bitcast_vector(a, ty, builder);
+            let b = optionally_bitcast_vector(b, ty, builder);
+            let c = optionally_bitcast_vector(c, ty, builder);
+            let mul = builder.ins().fmul(a, b);
+            state.push1(builder.ins().fadd(mul, c))
+        }
+        Operator::F32x4RelaxedNmadd | Operator::F64x2RelaxedNmadd => {
+            let ty = type_of(op);
+            let (a, b, c) = state.pop3();
+            let a = optionally_bitcast_vector(a, ty, builder);
+            let b = optionally_bitcast_vector(b, ty, builder);
+            let c = optionally_bitcast_vector(c, ty, builder);
+            let a = builder.ins().fneg(a);
+            let mul = builder.ins().fmul(a, b);
+            state.push1(builder.ins().fadd(mul, c))
+        }
         Operator::F32x4Div | Operator::F64x2Div => {
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().fdiv(a, b))
@@ -2434,7 +2155,15 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().fmax(a, b))
         }
+        Operator::F32x4RelaxedMax | Operator::F64x2RelaxedMax => {
+            let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
+            state.push1(builder.ins().fmax(a, b))
+        }
         Operator::F32x4Min | Operator::F64x2Min => {
+            let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
+            state.push1(builder.ins().fmin(a, b))
+        }
+        Operator::F32x4RelaxedMin | Operator::F64x2RelaxedMin => {
             let (a, b) = pop2_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().fmin(a, b))
         }
@@ -2505,7 +2234,19 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let a = pop1_with_bitcast(state, F32X4, builder);
             state.push1(builder.ins().fcvt_to_sint_sat(I32X4, a))
         }
+        Operator::I32x4RelaxedTruncF32x4S => {
+            let a = pop1_with_bitcast(state, F32X4, builder);
+            state.push1(builder.ins().fcvt_to_sint_sat(I32X4, a))
+        }
         Operator::I32x4TruncSatF64x2SZero => {
+            let a = pop1_with_bitcast(state, F64X2, builder);
+            let converted_a = builder.ins().fcvt_to_sint_sat(I64X2, a);
+            let handle = builder.func.dfg.constants.insert(vec![0u8; 16].into());
+            let zero = builder.ins().vconst(I64X2, handle);
+
+            state.push1(builder.ins().snarrow(converted_a, zero));
+        }
+        Operator::I32x4RelaxedTruncF64x2SZero => {
             let a = pop1_with_bitcast(state, F64X2, builder);
             let converted_a = builder.ins().fcvt_to_sint_sat(I64X2, a);
             let handle = builder.func.dfg.constants.insert(vec![0u8; 16].into());
@@ -2517,7 +2258,19 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let a = pop1_with_bitcast(state, F32X4, builder);
             state.push1(builder.ins().fcvt_to_uint_sat(I32X4, a))
         }
+        Operator::I32x4RelaxedTruncF32x4U => {
+            let a = pop1_with_bitcast(state, F32X4, builder);
+            state.push1(builder.ins().fcvt_to_uint_sat(I32X4, a))
+        }
         Operator::I32x4TruncSatF64x2UZero => {
+            let a = pop1_with_bitcast(state, F64X2, builder);
+            let converted_a = builder.ins().fcvt_to_uint_sat(I64X2, a);
+            let handle = builder.func.dfg.constants.insert(vec![0u8; 16].into());
+            let zero = builder.ins().vconst(I64X2, handle);
+
+            state.push1(builder.ins().uunarrow(converted_a, zero));
+        }
+        Operator::I32x4RelaxedTruncF64x2UZero => {
             let a = pop1_with_bitcast(state, F64X2, builder);
             let converted_a = builder.ins().fcvt_to_uint_sat(I64X2, a);
             let handle = builder.func.dfg.constants.insert(vec![0u8; 16].into());
@@ -2643,6 +2396,16 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             let high = builder.ins().imul(ahigh, bhigh);
             state.push1(builder.ins().iadd_pairwise(low, high));
         }
+        Operator::I16x8RelaxedDotI8x16I7x16S => {
+            let (a, b) = pop2_with_bitcast(state, I8X16, builder);
+            let alow = builder.ins().swiden_low(a);
+            let blow = builder.ins().swiden_low(b);
+            let low = builder.ins().imul(alow, blow);
+            let ahigh = builder.ins().swiden_high(a);
+            let bhigh = builder.ins().swiden_high(b);
+            let high = builder.ins().imul(ahigh, bhigh);
+            state.push1(builder.ins().iadd_pairwise(low, high));
+        }
         Operator::I8x16Popcnt => {
             let arg = pop1_with_bitcast(state, type_of(op), builder);
             state.push1(builder.ins().popcnt(arg));
@@ -2650,6 +2413,27 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         Operator::I16x8Q15MulrSatS => {
             let (a, b) = pop2_with_bitcast(state, I16X8, builder);
             state.push1(builder.ins().sqmul_round_sat(a, b))
+        }
+        Operator::I16x8RelaxedQ15mulrS => {
+            let (a, b) = pop2_with_bitcast(state, I16X8, builder);
+            state.push1(builder.ins().sqmul_round_sat(a, b))
+        }
+        Operator::I32x4RelaxedDotI8x16I7x16AddS => {
+            let (a, b, c) = state.pop3();
+            let a = optionally_bitcast_vector(a, I8X16, builder);
+            let b = optionally_bitcast_vector(b, I8X16, builder);
+            let c = optionally_bitcast_vector(c, I32X4, builder);
+            let alow = builder.ins().swiden_low(a);
+            let blow = builder.ins().swiden_low(b);
+            let low = builder.ins().imul(alow, blow);
+            let ahigh = builder.ins().swiden_high(a);
+            let bhigh = builder.ins().swiden_high(b);
+            let high = builder.ins().imul(ahigh, bhigh);
+            let dot = builder.ins().iadd_pairwise(low, high);
+            let dotlo = builder.ins().swiden_low(dot);
+            let dothi = builder.ins().swiden_high(dot);
+            let dot32 = builder.ins().iadd_pairwise(dotlo, dothi);
+            state.push1(builder.ins().iadd(dot32, c));
         }
         Operator::I16x8ExtMulLowI8x16S => {
             let (a, b) = pop2_with_bitcast(state, I8X16, builder);
@@ -2724,40 +2508,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
             state.push1(builder.ins().imul(a_high, b_high));
         }
         Operator::ReturnCall { .. } | Operator::ReturnCallIndirect { .. } => {
-            return Err(wasm_unsupported!(
-                "proposed tail-call operator {:?}",
-                op
-            ));
-        }
-        Operator::I8x16RelaxedSwizzle
-        | Operator::I32x4RelaxedTruncF32x4S
-        | Operator::I32x4RelaxedTruncF32x4U
-        | Operator::I32x4RelaxedTruncF64x2SZero
-        | Operator::I32x4RelaxedTruncF64x2UZero
-        | Operator::F32x4RelaxedNmadd
-        | Operator::F32x4RelaxedMadd
-        | Operator::I8x16RelaxedLaneselect
-        | Operator::I16x8RelaxedLaneselect
-        | Operator::I32x4RelaxedLaneselect
-        | Operator::I64x2RelaxedLaneselect
-        | Operator::F32x4RelaxedMin
-        | Operator::F32x4RelaxedMax
-        | Operator::F64x2RelaxedMin
-        | Operator::F64x2RelaxedMax
-        | Operator::F64x2RelaxedMadd
-        | Operator::F64x2RelaxedNmadd
-        | Operator::I16x8RelaxedDotI8x16I7x16S
-        | Operator::I32x4RelaxedDotI8x16I7x16AddS
-        | Operator::I16x8RelaxedQ15mulrS => {
-            return Err(wasm_unsupported!(
-                "proposed relaxed-simd operator {:?}",
-                op
-            ));
-        }
-        Operator::TryTable { .. } | Operator::ThrowRef => {
-            return Err(wasm_unsupported!(
-                "exceptions are not supported (operator: {op:?})"
-            ));
+            return Err(wasm_unsupported!("proposed tail-call operator {:?}", op));
         }
         Operator::RefEq
         | Operator::StructNew { .. }
@@ -2798,10 +2549,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::RefAsNonNull
         | Operator::BrOnNull { .. }
         | Operator::BrOnNonNull { .. } => {
-            return Err(wasm_unsupported!(
-                "GC proposal not (operator: {:?})",
-                op
-            ));
+            return Err(wasm_unsupported!("GC proposal not (operator: {:?})", op));
         }
         Operator::GlobalAtomicGet { .. }
         | Operator::GlobalAtomicSet { .. }
@@ -2812,13 +2560,13 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::GlobalAtomicRmwXor { .. }
         | Operator::GlobalAtomicRmwXchg { .. }
         | Operator::GlobalAtomicRmwCmpxchg { .. } => {
-            return Err(wasm_unsupported!("Global atomics not supported yet!"))
+            return Err(wasm_unsupported!("Global atomics not supported yet!"));
         }
         Operator::TableAtomicGet { .. }
         | Operator::TableAtomicSet { .. }
         | Operator::TableAtomicRmwXchg { .. }
         | Operator::TableAtomicRmwCmpxchg { .. } => {
-            return Err(wasm_unsupported!("Table atomics not supported yet!"))
+            return Err(wasm_unsupported!("Table atomics not supported yet!"));
         }
         Operator::StructAtomicGet { .. }
         | Operator::StructAtomicGetS { .. }
@@ -2831,7 +2579,7 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::StructAtomicRmwXor { .. }
         | Operator::StructAtomicRmwXchg { .. }
         | Operator::StructAtomicRmwCmpxchg { .. } => {
-            return Err(wasm_unsupported!("Table atomics not supported yet!"))
+            return Err(wasm_unsupported!("Table atomics not supported yet!"));
         }
         Operator::ArrayAtomicGet { .. }
         | Operator::ArrayAtomicGetS { .. }
@@ -2844,8 +2592,50 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
         | Operator::ArrayAtomicRmwXor { .. }
         | Operator::ArrayAtomicRmwXchg { .. }
         | Operator::ArrayAtomicRmwCmpxchg { .. } => {
-            return Err(wasm_unsupported!("Array atomics not supported yet!"))
+            return Err(wasm_unsupported!("Array atomics not supported yet!"));
         }
+        Operator::ContNew { .. } => todo!(),
+        Operator::ContBind { .. } => todo!(),
+        Operator::Suspend { .. } => todo!(),
+        Operator::Resume { .. } => todo!(),
+        Operator::ResumeThrow { .. } => todo!(),
+        Operator::Switch { .. } => todo!(),
+        Operator::I64Add128 | Operator::I64Sub128 => {
+            let (rhs_lo, rhs_hi) = state.pop2();
+            let (lhs_lo, lhs_hi) = state.pop2();
+
+            let lhs = builder.ins().iconcat(lhs_lo, lhs_hi);
+            let rhs = builder.ins().iconcat(rhs_lo, rhs_hi);
+            let result = match op {
+                Operator::I64Add128 => builder.ins().iadd(lhs, rhs),
+                Operator::I64Sub128 => builder.ins().isub(lhs, rhs),
+                _ => unreachable!(),
+            };
+            let (result_lo, result_hi) = builder.ins().isplit(result);
+
+            state.push1(result_lo);
+            state.push1(result_hi);
+        }
+        Operator::I64MulWideS | Operator::I64MulWideU => {
+            let (lhs, rhs) = state.pop2();
+
+            let lhs = match op {
+                Operator::I64MulWideS => builder.ins().sextend(I128, lhs),
+                Operator::I64MulWideU => builder.ins().uextend(I128, lhs),
+                _ => unreachable!(),
+            };
+            let rhs = match op {
+                Operator::I64MulWideS => builder.ins().sextend(I128, rhs),
+                Operator::I64MulWideU => builder.ins().uextend(I128, rhs),
+                _ => unreachable!(),
+            };
+
+            let result = builder.ins().imul(lhs, rhs);
+            let (result_lo, result_hi) = builder.ins().isplit(result);
+            state.push1(result_lo);
+            state.push1(result_hi);
+        }
+        _ => todo!(),
     };
     Ok(())
 }
@@ -2855,12 +2645,12 @@ pub fn translate_operator<FE: FuncEnvironment + ?Sized>(
 /// Deals with a Wasm instruction located in an unreachable portion of the code. Most of them
 /// are dropped but special ones like `End` or `Else` signal the potential end of the unreachable
 /// portion so the translation state must be updated accordingly.
-fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
+fn translate_unreachable_operator(
     module_translation_state: &ModuleTranslationState,
     op: &Operator,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     debug_assert!(!state.reachable);
     match *op {
@@ -2878,7 +2668,9 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
                 blockty,
             );
         }
-        Operator::Loop { blockty: _ } | Operator::Block { blockty: _ } => {
+        Operator::Loop { blockty: _ }
+        | Operator::Block { blockty: _ }
+        | Operator::TryTable { try_table: _ } => {
             state.push_block(ir::Block::reserved_value(), 0, 0);
         }
         Operator::Else => {
@@ -2903,18 +2695,12 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
                                 branch_inst,
                                 placeholder,
                             } => {
-                                let (params, _results) =
-                                    module_translation_state
-                                        .blocktype_params_results(&blocktype)?;
-                                let else_block = block_with_params(
-                                    builder,
-                                    params.iter(),
-                                    environ,
-                                )?;
+                                let (params, _results) = module_translation_state
+                                    .blocktype_params_results(&blocktype)?;
+                                let else_block =
+                                    block_with_params(builder, params.iter(), environ)?;
                                 let frame = state.control_stack.last().unwrap();
-                                frame.truncate_value_stack_to_else_params(
-                                    &mut state.stack,
-                                );
+                                frame.truncate_value_stack_to_else_params(&mut state.stack);
 
                                 // We change the target of the branch instruction.
                                 builder.change_jump_destination(
@@ -2927,9 +2713,7 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
                             }
                             ElseData::WithElse { else_block } => {
                                 let frame = state.control_stack.last().unwrap();
-                                frame.truncate_value_stack_to_else_params(
-                                    &mut state.stack,
-                                );
+                                frame.truncate_value_stack_to_else_params(&mut state.stack);
                                 else_block
                             }
                         };
@@ -2949,6 +2733,7 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
             let stack = &mut state.stack;
             let control_stack = &mut state.control_stack;
             let frame = control_stack.pop().unwrap();
+            frame.restore_catch_handlers(&mut state.handlers, builder);
 
             // Pop unused parameters from stack.
             frame.truncate_value_stack_to_original_size(stack);
@@ -2988,9 +2773,7 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
 
                 // And add the return values of the block but only if the next block is reachable
                 // (which corresponds to testing if the stack depth is 1)
-                stack.extend_from_slice(
-                    builder.block_params(frame.following_code()),
-                );
+                stack.extend_from_slice(builder.block_params(frame.following_code()));
                 state.reachable = true;
             }
         }
@@ -3014,16 +2797,13 @@ fn translate_unreachable_operator<FE: FuncEnvironment + ?Sized>(
 /// Returns `None` when the Wasm access will unconditionally trap.
 ///
 /// Returns `(flags, wasm_addr, native_addr)`.
-fn prepare_addr<FE>(
+fn prepare_addr(
     memarg: &MemArg,
     access_size: u8,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
-) -> WasmResult<Reachability<(MemFlags, Value, Value)>>
-where
-    FE: FuncEnvironment + ?Sized,
-{
+    environ: &mut FuncEnvironment<'_>,
+) -> WasmResult<Reachability<(MemFlagsData, Value, Value)>> {
     let index = state.pop1();
     let heap = state.get_heap(builder.func, memarg.memory, environ)?;
 
@@ -3137,13 +2917,11 @@ where
         // relatively odd/rare. In the future if needed we can look into
         // optimizing this more.
         Err(_) => {
-            let offset =
-                builder.ins().iconst(heap.index_type, memarg.offset as i64);
-            let adjusted_index = builder.ins().uadd_overflow_trap(
-                index,
-                offset,
-                ir::TrapCode::HeapOutOfBounds,
-            );
+            let offset = builder.ins().iconst(heap.index_type, memarg.offset as i64);
+            let adjusted_index =
+                builder
+                    .ins()
+                    .uadd_overflow_trap(index, offset, ir::TrapCode::HEAP_OUT_OF_BOUNDS);
             bounds_checks::bounds_check_and_compute_addr(
                 builder,
                 environ,
@@ -3163,19 +2941,14 @@ where
     // alignment immediate may says it's aligned, because WebAssembly's
     // immediate field is just a hint, while Cranelift's aligned flag needs a
     // guarantee. WebAssembly memory accesses are always little-endian.
-    let mut flags = MemFlags::new();
+    let mut flags = MemFlagsData::new();
     flags.set_endianness(ir::Endianness::Little);
-
-    if heap.memory_type.is_some() {
-        // Proof-carrying code is enabled; check this memory access.
-        flags.set_checked();
-    }
 
     // The access occurs to the `heap` disjoint category of abstract
     // state. This may allow alias analysis to merge redundant loads,
     // etc. when heap accesses occur interleaved with other (table,
     // vmctx, stack) accesses.
-    flags.set_alias_region(Some(ir::AliasRegion::Heap));
+    set_memflags_alias_region(builder.func, &mut flags, MemoryAliasRegion::Heap);
 
     Ok(Reachability::Reachable((flags, index, addr)))
 }
@@ -3204,27 +2977,27 @@ fn align_atomic_addr(
         } else {
             builder
                 .ins()
-                .iadd_imm(addr, i64::from(memarg.offset as i32))
+                .iadd_imm_s(addr, i64::from(memarg.offset as i32))
         };
         debug_assert!(loaded_bytes.is_power_of_two());
         let misalignment = builder
             .ins()
-            .band_imm(effective_addr, i64::from(loaded_bytes - 1));
-        let f = builder.ins().icmp_imm(IntCC::NotEqual, misalignment, 0);
-        builder.ins().trapnz(f, ir::TrapCode::HeapMisaligned);
+            .band_imm_u(effective_addr, i64::from(loaded_bytes - 1));
+        let f = builder.ins().icmp_imm_u(IntCC::NotEqual, misalignment, 0);
+        builder.ins().trapnz(f, crate::TRAP_HEAP_MISALIGNED);
     }
 }
 
 /// Like `prepare_addr` but for atomic accesses.
 ///
 /// Returns `None` when the Wasm access will unconditionally trap.
-fn prepare_atomic_addr<FE: FuncEnvironment + ?Sized>(
+fn prepare_atomic_addr(
     memarg: &MemArg,
     loaded_bytes: u8,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
-) -> WasmResult<Reachability<(MemFlags, Value, Value)>> {
+    environ: &mut FuncEnvironment<'_>,
+) -> WasmResult<Reachability<(MemFlagsData, Value, Value)>> {
     align_atomic_addr(memarg, loaded_bytes, builder, state);
     prepare_addr(memarg, loaded_bytes, builder, state, environ)
 }
@@ -3242,59 +3015,166 @@ pub enum Reachability<T> {
     /// The Wasm execution state has been determined to be statically
     /// unreachable. It is the receiver of this value's responsibility to update
     /// `FuncTranslationState::reachable` as necessary.
+    #[allow(dead_code)]
     Unreachable,
 }
 
 /// Translate a load instruction.
 ///
 /// Returns the execution state's reachability after the load is translated.
-fn translate_load<FE: FuncEnvironment + ?Sized>(
+fn translate_load(
     memarg: &MemArg,
     opcode: ir::Opcode,
     result_ty: Type,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
+    allow_unaligned_memory_accesses: bool,
 ) -> WasmResult<Reachability<()>> {
     let mem_op_size = mem_op_size(opcode, result_ty);
-    let (flags, wasm_index, base) =
+    let (flags, _wasm_index, base) =
         match prepare_addr(memarg, mem_op_size, builder, state, environ)? {
             Reachability::Unreachable => return Ok(Reachability::Unreachable),
             Reachability::Reachable((f, i, b)) => (f, i, b),
         };
+    let raw_flags = insert_mem_flags(builder.func, flags);
 
-    environ.before_load(builder, mem_op_size, wasm_index, memarg.offset);
+    // TODO: maybe support also v128
+    if allow_unaligned_memory_accesses && mem_op_size > 1 && mem_op_size < 16 {
+        // Test and handle aligned / unaligned loads separately
+        let block_aligned = builder.create_block();
+        let block_unaligned = builder.create_block();
+        let block_merge = builder.create_block();
+        builder.append_block_param(block_merge, result_ty);
 
-    let (load, dfg) =
+        let alignment_check = builder.ins().band_imm_u(base, (mem_op_size - 1) as i64);
         builder
             .ins()
-            .Load(opcode, result_ty, flags, Offset32::new(0), base);
-    state.push1(dfg.first_result(load));
+            .brif(alignment_check, block_unaligned, &[], block_aligned, &[]);
+
+        builder.seal_block(block_aligned);
+        builder.seal_block(block_unaligned);
+
+        builder.switch_to_block(block_aligned);
+        let (fast_load, fast_dfg) =
+            builder
+                .ins()
+                .Load(opcode, result_ty, raw_flags, Offset32::new(0), base);
+        let fast_val = fast_dfg.first_result(fast_load);
+        builder.ins().jump(block_merge, &[fast_val.into()]);
+
+        builder.switch_to_block(block_unaligned);
+
+        // We're going to build the final value as an unsigned integer type that will be later bitcasted.
+        let result_uint_type = Type::int_with_byte_size(u16::try_from(result_ty.bytes()).unwrap())
+            .ok_or(WasmError::Generic(
+                "cannot get uint type for memory load".to_string(),
+            ))?;
+        let raw_uint_type = Type::int_with_byte_size(u16::from(mem_op_size)).ok_or(
+            WasmError::Generic("cannot get uint type for memory load".to_string()),
+        )?;
+        let mut slow_val = builder.ins().uload8(result_uint_type, flags, base, 0);
+        for i in 1..mem_op_size {
+            let byte = builder
+                .ins()
+                .uload8(result_uint_type, flags, base, i as i32);
+            let shifted = builder.ins().ishl_imm_u(byte, (i * 8) as i64);
+            slow_val = builder.ins().bor(slow_val, shifted);
+        }
+        if matches!(
+            opcode,
+            ir::Opcode::Sload8 | ir::Opcode::Sload16 | ir::Opcode::Sload32
+        ) {
+            let narrow = builder.ins().ireduce(raw_uint_type, slow_val);
+            slow_val = builder.ins().sextend(result_uint_type, narrow);
+        }
+        let slow_val = builder.ins().bitcast(
+            result_ty,
+            MemFlagsData::new().with_endianness(ir::Endianness::Little),
+            slow_val,
+        );
+        builder.ins().jump(block_merge, &[slow_val.into()]);
+
+        builder.seal_block(block_merge);
+        builder.switch_to_block(block_merge);
+        state.push1(builder.block_params(block_merge)[0]);
+    } else {
+        let (load, dfg) = builder
+            .ins()
+            .Load(opcode, result_ty, raw_flags, Offset32::new(0), base);
+        state.push1(dfg.first_result(load));
+    }
+
     Ok(Reachability::Reachable(()))
 }
 
 /// Translate a store instruction.
-fn translate_store<FE: FuncEnvironment + ?Sized>(
+fn translate_store(
     memarg: &MemArg,
     opcode: ir::Opcode,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
+    allow_unaligned_memory_accesses: bool,
 ) -> WasmResult<()> {
     let val = state.pop1();
     let val_ty = builder.func.dfg.value_type(val);
     let mem_op_size = mem_op_size(opcode, val_ty);
 
-    let (flags, wasm_index, base) = unwrap_or_return_unreachable_state!(
+    let (flags, _wasm_index, base) = unwrap_or_return_unreachable_state!(
         state,
         prepare_addr(memarg, mem_op_size, builder, state, environ)?
     );
+    let raw_flags = insert_mem_flags(builder.func, flags);
 
-    environ.before_store(builder, mem_op_size, wasm_index, memarg.offset);
+    if allow_unaligned_memory_accesses && mem_op_size > 1 && mem_op_size < 16 {
+        let block_aligned = builder.create_block();
+        let block_unaligned = builder.create_block();
+        let block_merge = builder.create_block();
 
-    builder
-        .ins()
-        .Store(opcode, val_ty, flags, Offset32::new(0), val, base);
+        let alignment_check = builder.ins().band_imm_u(base, (mem_op_size - 1) as i64);
+        builder
+            .ins()
+            .brif(alignment_check, block_unaligned, &[], block_aligned, &[]);
+
+        builder.seal_block(block_aligned);
+        builder.seal_block(block_unaligned);
+
+        builder.switch_to_block(block_aligned);
+        builder
+            .ins()
+            .Store(opcode, val_ty, raw_flags, Offset32::new(0), val, base);
+        builder.ins().jump(block_merge, &[]);
+
+        builder.switch_to_block(block_unaligned);
+        let val = if val_ty.is_int() {
+            val
+        } else {
+            let result_uint_type = Type::int_with_byte_size(u16::from(mem_op_size)).ok_or(
+                WasmError::Generic(format!(
+                    "cannot get uint type of size {mem_op_size} bytes for memory store from {val_ty:?}",
+                )),
+            )?;
+            builder.ins().bitcast(
+                result_uint_type,
+                MemFlagsData::new().with_endianness(ir::Endianness::Little),
+                val,
+            )
+        };
+        for i in 0..mem_op_size {
+            let shifted = builder.ins().ushr_imm_u(val, (i * 8) as i64);
+            builder.ins().istore8(flags, shifted, base, i as i32);
+        }
+        builder.ins().jump(block_merge, &[]);
+
+        builder.seal_block(block_merge);
+        builder.switch_to_block(block_merge);
+    } else {
+        builder
+            .ins()
+            .Store(opcode, val_ty, raw_flags, Offset32::new(0), val, base);
+    }
+
     Ok(())
 }
 
@@ -3303,18 +3183,12 @@ fn mem_op_size(opcode: ir::Opcode, ty: Type) -> u8 {
         ir::Opcode::Istore8 | ir::Opcode::Sload8 | ir::Opcode::Uload8 => 1,
         ir::Opcode::Istore16 | ir::Opcode::Sload16 | ir::Opcode::Uload16 => 2,
         ir::Opcode::Istore32 | ir::Opcode::Sload32 | ir::Opcode::Uload32 => 4,
-        ir::Opcode::Store | ir::Opcode::Load => {
-            u8::try_from(ty.bytes()).unwrap()
-        }
-        _ => panic!("unknown size of mem op for {:?}", opcode),
+        ir::Opcode::Store | ir::Opcode::Load => u8::try_from(ty.bytes()).unwrap(),
+        _ => panic!("unknown size of mem op for {opcode:?}"),
     }
 }
 
-fn translate_icmp(
-    cc: IntCC,
-    builder: &mut FunctionBuilder,
-    state: &mut FuncTranslationState,
-) {
+fn translate_icmp(cc: IntCC, builder: &mut FunctionBuilder, state: &mut FuncTranslationState) {
     let (arg0, arg1) = state.pop2();
     let val = builder.ins().icmp(cc, arg0, arg1);
     state.push1(builder.ins().uextend(I32, val));
@@ -3323,47 +3197,33 @@ fn translate_icmp(
 fn fold_atomic_mem_addr(
     linear_mem_addr: Value,
     memarg: &MemArg,
-    access_ty: Type,
     builder: &mut FunctionBuilder,
 ) -> Value {
-    let access_ty_bytes = access_ty.bytes();
-    let final_lma = if memarg.offset > 0 {
+    if memarg.offset > 0 {
         assert!(builder.func.dfg.value_type(linear_mem_addr) == I32);
         let linear_mem_addr = builder.ins().uextend(I64, linear_mem_addr);
         let a = builder
             .ins()
-            .iadd_imm(linear_mem_addr, memarg.offset as i64);
-        let r = builder.ins().icmp_imm(
-            IntCC::UnsignedGreaterThanOrEqual,
-            a,
-            0x1_0000_0000i64,
-        );
-        builder.ins().trapnz(r, ir::TrapCode::HeapOutOfBounds);
+            .iadd_imm_u(linear_mem_addr, memarg.offset as i64);
+        let r = builder
+            .ins()
+            .icmp_imm_u(IntCC::UnsignedGreaterThanOrEqual, a, 0x1_0000_0000);
+        builder.ins().trapnz(r, ir::TrapCode::HEAP_OUT_OF_BOUNDS);
         builder.ins().ireduce(I32, a)
     } else {
         linear_mem_addr
-    };
-    assert!(access_ty_bytes == 4 || access_ty_bytes == 8);
-    let final_lma_misalignment = builder
-        .ins()
-        .band_imm(final_lma, i64::from(access_ty_bytes - 1));
-    let f = builder.ins().icmp_imm(
-        IntCC::Equal,
-        final_lma_misalignment,
-        i64::from(0),
-    );
-    builder.ins().trapz(f, ir::TrapCode::HeapMisaligned);
-    final_lma
+    }
+    // Note the alignment is checked at the libcall side.
 }
 
-fn translate_atomic_rmw<FE: FuncEnvironment + ?Sized>(
+fn translate_atomic_rmw(
     widened_ty: Type,
     access_ty: Type,
     op: AtomicRmwOp,
     memarg: &MemArg,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     let mut arg2 = state.pop1();
     let arg2_ty = builder.func.dfg.value_type(arg2);
@@ -3376,7 +3236,7 @@ fn translate_atomic_rmw<FE: FuncEnvironment + ?Sized>(
             return Err(wasm_unsupported!(
                 "atomic_rmw: unsupported access type {:?}",
                 access_ty
-            ))
+            ));
         }
     };
     let w_ty_ok = matches!(widened_ty, I32 | I64);
@@ -3405,13 +3265,13 @@ fn translate_atomic_rmw<FE: FuncEnvironment + ?Sized>(
     state.push1(res);
     Ok(())
 }
-fn translate_atomic_cas<FE: FuncEnvironment + ?Sized>(
+fn translate_atomic_cas(
     widened_ty: Type,
     access_ty: Type,
     memarg: &MemArg,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     let (mut expected, mut replacement) = state.pop2();
     let expected_ty = builder.func.dfg.value_type(expected);
@@ -3425,7 +3285,7 @@ fn translate_atomic_cas<FE: FuncEnvironment + ?Sized>(
             return Err(wasm_unsupported!(
                 "atomic_cas: unsupported access type {:?}",
                 access_ty
-            ))
+            ));
         }
     };
     let w_ty_ok = matches!(widened_ty, I32 | I64);
@@ -3458,13 +3318,13 @@ fn translate_atomic_cas<FE: FuncEnvironment + ?Sized>(
     Ok(())
 }
 
-fn translate_atomic_load<FE: FuncEnvironment + ?Sized>(
+fn translate_atomic_load(
     widened_ty: Type,
     access_ty: Type,
     memarg: &MemArg,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     // The load is performed at type `access_ty`, and the loaded value is zero extended
     // to `widened_ty`.
@@ -3474,7 +3334,7 @@ fn translate_atomic_load<FE: FuncEnvironment + ?Sized>(
             return Err(wasm_unsupported!(
                 "atomic_load: unsupported access type {:?}",
                 access_ty
-            ))
+            ));
         }
     };
     let w_ty_ok = matches!(widened_ty, I32 | I64);
@@ -3498,12 +3358,12 @@ fn translate_atomic_load<FE: FuncEnvironment + ?Sized>(
     Ok(())
 }
 
-fn translate_atomic_store<FE: FuncEnvironment + ?Sized>(
+fn translate_atomic_store(
     access_ty: Type,
     memarg: &MemArg,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     let mut data = state.pop1();
     let data_ty = builder.func.dfg.value_type(data);
@@ -3516,7 +3376,7 @@ fn translate_atomic_store<FE: FuncEnvironment + ?Sized>(
             return Err(wasm_unsupported!(
                 "atomic_store: unsupported access type {:?}",
                 access_ty
-            ))
+            ));
         }
     };
     let d_ty_ok = matches!(data_ty, I32 | I64);
@@ -3552,11 +3412,7 @@ fn translate_vector_icmp(
     state.push1(builder.ins().icmp(cc, bitcast_a, bitcast_b))
 }
 
-fn translate_fcmp(
-    cc: FloatCC,
-    builder: &mut FunctionBuilder,
-    state: &mut FuncTranslationState,
-) {
+fn translate_fcmp(cc: FloatCC, builder: &mut FunctionBuilder, state: &mut FuncTranslationState) {
     let (arg0, arg1) = state.pop2();
     let val = builder.ins().fcmp(cc, arg0, arg1);
     state.push1(builder.ins().uextend(I32, val));
@@ -3631,6 +3487,8 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::I8x16ExtractLaneS { .. }
         | Operator::I8x16ExtractLaneU { .. }
         | Operator::I8x16ReplaceLane { .. }
+        | Operator::I8x16RelaxedSwizzle
+        | Operator::I8x16RelaxedLaneselect
         | Operator::I8x16Eq
         | Operator::I8x16Ne
         | Operator::I8x16LtS
@@ -3668,6 +3526,7 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::I16x8ExtractLaneS { .. }
         | Operator::I16x8ExtractLaneU { .. }
         | Operator::I16x8ReplaceLane { .. }
+        | Operator::I16x8RelaxedLaneselect
         | Operator::I16x8Eq
         | Operator::I16x8Ne
         | Operator::I16x8LtS
@@ -3696,6 +3555,8 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::I16x8MaxU
         | Operator::I16x8AvgrU
         | Operator::I16x8Mul
+        | Operator::I16x8RelaxedQ15mulrS
+        | Operator::I16x8RelaxedDotI8x16I7x16S
         | Operator::I16x8Bitmask => I16X8,
 
         Operator::I32x4Splat
@@ -3704,6 +3565,7 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::V128Store32Lane { .. }
         | Operator::I32x4ExtractLane { .. }
         | Operator::I32x4ReplaceLane { .. }
+        | Operator::I32x4RelaxedLaneselect
         | Operator::I32x4Eq
         | Operator::I32x4Ne
         | Operator::I32x4LtS
@@ -3730,6 +3592,11 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::I32x4Bitmask
         | Operator::I32x4TruncSatF32x4S
         | Operator::I32x4TruncSatF32x4U
+        | Operator::I32x4RelaxedTruncF32x4S
+        | Operator::I32x4RelaxedTruncF32x4U
+        | Operator::I32x4RelaxedTruncF64x2SZero
+        | Operator::I32x4RelaxedTruncF64x2UZero
+        | Operator::I32x4RelaxedDotI8x16I7x16AddS
         | Operator::V128Load32Zero { .. } => I32X4,
 
         Operator::I64x2Splat
@@ -3738,6 +3605,7 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::V128Store64Lane { .. }
         | Operator::I64x2ExtractLane { .. }
         | Operator::I64x2ReplaceLane { .. }
+        | Operator::I64x2RelaxedLaneselect
         | Operator::I64x2Eq
         | Operator::I64x2Ne
         | Operator::I64x2LtS
@@ -3776,6 +3644,10 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::F32x4Max
         | Operator::F32x4PMin
         | Operator::F32x4PMax
+        | Operator::F32x4RelaxedMin
+        | Operator::F32x4RelaxedMax
+        | Operator::F32x4RelaxedMadd
+        | Operator::F32x4RelaxedNmadd
         | Operator::F32x4ConvertI32x4S
         | Operator::F32x4ConvertI32x4U
         | Operator::F32x4Ceil
@@ -3803,6 +3675,10 @@ fn type_of(operator: &Operator) -> Type {
         | Operator::F64x2Max
         | Operator::F64x2PMin
         | Operator::F64x2PMax
+        | Operator::F64x2RelaxedMin
+        | Operator::F64x2RelaxedMax
+        | Operator::F64x2RelaxedMadd
+        | Operator::F64x2RelaxedNmadd
         | Operator::F64x2Ceil
         | Operator::F64x2Floor
         | Operator::F64x2Trunc
@@ -3826,7 +3702,7 @@ fn optionally_bitcast_vector(
     if builder.func.dfg.value_type(value) != needed_type {
         builder.ins().bitcast(
             needed_type,
-            MemFlags::new().with_endianness(ir::Endianness::Little),
+            MemFlagsData::new().with_endianness(ir::Endianness::Little),
             value,
         )
     } else {
@@ -3844,32 +3720,22 @@ fn is_non_canonical_v128(ty: ir::Type) -> bool {
 /// actually necessary, and if not, the original slice is returned.  Otherwise the cast values
 /// are returned in a slice that belongs to the caller-supplied `SmallVec`.
 fn canonicalise_v128_values<'a>(
-    tmp_canonicalised: &'a mut SmallVec<[ir::Value; 16]>,
+    tmp_canonicalised: &'a mut SmallVec<[ir::BlockArg; 16]>,
     builder: &mut FunctionBuilder,
     values: &'a [ir::Value],
-) -> &'a [ir::Value] {
+) -> &'a [ir::BlockArg] {
     debug_assert!(tmp_canonicalised.is_empty());
-    // First figure out if any of the parameters need to be cast.  Mostly they don't need to be.
-    let any_non_canonical = values
-        .iter()
-        .any(|v| is_non_canonical_v128(builder.func.dfg.value_type(*v)));
-    // Hopefully we take this exit most of the time, hence doing no heap allocation.
-    if !any_non_canonical {
-        return values;
-    }
-    // Otherwise we'll have to cast, and push the resulting `Value`s into `canonicalised`.
     for v in values {
-        tmp_canonicalised.push(
-            if is_non_canonical_v128(builder.func.dfg.value_type(*v)) {
-                builder.ins().bitcast(
-                    I8X16,
-                    MemFlags::new().with_endianness(ir::Endianness::Little),
-                    *v,
-                )
-            } else {
-                *v
-            },
-        );
+        let value = if is_non_canonical_v128(builder.func.dfg.value_type(*v)) {
+            builder.ins().bitcast(
+                I8X16,
+                MemFlagsData::new().with_endianness(ir::Endianness::Little),
+                *v,
+            )
+        } else {
+            *v
+        };
+        tmp_canonicalised.push(BlockArg::from(value));
     }
     tmp_canonicalised.as_slice()
 }
@@ -3882,9 +3748,8 @@ fn canonicalise_then_jump(
     destination: ir::Block,
     params: &[ir::Value],
 ) -> ir::Inst {
-    let mut tmp_canonicalised = SmallVec::<[ir::Value; 16]>::new();
-    let canonicalised =
-        canonicalise_v128_values(&mut tmp_canonicalised, builder, params);
+    let mut tmp_canonicalised = SmallVec::<[_; 16]>::new();
+    let canonicalised = canonicalise_v128_values(&mut tmp_canonicalised, builder, params);
     builder.ins().jump(destination, canonicalised)
 }
 
@@ -3897,18 +3762,12 @@ fn canonicalise_brif(
     block_else: ir::Block,
     params_else: &[ir::Value],
 ) -> ir::Inst {
-    let mut tmp_canonicalised_then = SmallVec::<[ir::Value; 16]>::new();
-    let canonicalised_then = canonicalise_v128_values(
-        &mut tmp_canonicalised_then,
-        builder,
-        params_then,
-    );
-    let mut tmp_canonicalised_else = SmallVec::<[ir::Value; 16]>::new();
-    let canonicalised_else = canonicalise_v128_values(
-        &mut tmp_canonicalised_else,
-        builder,
-        params_else,
-    );
+    let mut tmp_canonicalised_then = SmallVec::<[_; 16]>::new();
+    let canonicalised_then =
+        canonicalise_v128_values(&mut tmp_canonicalised_then, builder, params_then);
+    let mut tmp_canonicalised_else = SmallVec::<[_; 16]>::new();
+    let canonicalised_else =
+        canonicalise_v128_values(&mut tmp_canonicalised_else, builder, params_else);
     builder.ins().brif(
         cond,
         block_then,
@@ -3982,44 +3841,158 @@ pub fn bitcast_arguments<'a>(
         .collect()
 }
 
-/// A helper for bitcasting a sequence of return values for the function currently being built. If
-/// a value is a vector type that does not match its expected type, this will modify the value in
-/// place to point to the result of a `bitcast`. This conversion is necessary to translate Wasm
-/// code that uses `V128` as function parameters (or implicitly in block parameters) and still use
-/// specific CLIF types (e.g. `I32X4`) in the function body.
-pub fn bitcast_wasm_returns<FE: FuncEnvironment + ?Sized>(
-    environ: &mut FE,
-    arguments: &mut [Value],
-    builder: &mut FunctionBuilder,
-) {
-    let changes = bitcast_arguments(
-        builder,
-        arguments,
-        &builder.func.signature.returns,
-        |i| environ.is_wasm_return(&builder.func.signature, i),
-    );
-    for (t, arg) in changes {
-        let mut flags = MemFlags::new();
-        flags.set_endianness(ir::Endianness::Little);
-        *arg = builder.ins().bitcast(t, flags, *arg);
-    }
-}
-
 /// Like `bitcast_wasm_returns`, but for the parameters being passed to a specified callee.
-pub fn bitcast_wasm_params<FE: FuncEnvironment + ?Sized>(
-    environ: &mut FE,
+pub fn bitcast_wasm_params(
+    environ: &mut FuncEnvironment<'_>,
     callee_signature: ir::SigRef,
     arguments: &mut [Value],
     builder: &mut FunctionBuilder,
 ) {
     let callee_signature = &builder.func.dfg.signatures[callee_signature];
-    let changes =
-        bitcast_arguments(builder, arguments, &callee_signature.params, |i| {
-            environ.is_wasm_parameter(callee_signature, i)
-        });
+    let changes = bitcast_arguments(builder, arguments, &callee_signature.params, |i| {
+        environ.is_wasm_parameter(callee_signature, i)
+    });
     for (t, arg) in changes {
-        let mut flags = MemFlags::new();
+        let mut flags = MemFlagsData::new();
         flags.set_endianness(ir::Endianness::Little);
         *arg = builder.ins().bitcast(t, flags, *arg);
     }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct CatchClause {
+    pub(crate) wasm_tag: Option<u32>,
+    pub(crate) tag_value: i32,
+    pub(crate) block: ir::Block,
+}
+
+fn create_catch_block(
+    builder: &mut FunctionBuilder,
+    state: &mut FuncTranslationState,
+    catch: &wasmparser::Catch,
+    environ: &mut FuncEnvironment<'_>,
+) -> WasmResult<CatchClause> {
+    let (is_ref, wasm_tag, label) = match catch {
+        wasmparser::Catch::One { tag, label } => (false, Some(*tag), *label),
+        wasmparser::Catch::OneRef { tag, label } => (true, Some(*tag), *label),
+        wasmparser::Catch::All { label } => (false, None, *label),
+        wasmparser::Catch::AllRef { label } => (true, None, *label),
+    };
+
+    let tag_value = wasm_tag.map_or(CATCH_ALL_TAG_VALUE, |t| t as i32);
+
+    let block = builder.create_block();
+    let exnref = builder.append_block_param(block, EXN_REF_TYPE);
+
+    builder.switch_to_block(block);
+
+    let mut params = SmallVec::<[Value; 4]>::new();
+    if let Some(tag) = wasm_tag {
+        let tag_index = TagIndex::from_u32(tag);
+        params.extend(environ.translate_exn_unbox(builder, tag_index, exnref)?);
+    }
+    if is_ref {
+        params.push(exnref);
+    }
+
+    let depth = label as usize;
+    let idx = state.control_stack.len() - 1 - depth;
+    let frame = &mut state.control_stack[idx];
+    frame.set_branched_to_exit();
+    canonicalise_then_jump(builder, frame.br_destination(), params.as_slice());
+
+    Ok(CatchClause {
+        wasm_tag,
+        tag_value,
+        block,
+    })
+}
+
+fn create_dispatch_block(
+    builder: &mut FunctionBuilder,
+    environ: &mut FuncEnvironment<'_>,
+    clauses: impl Iterator<Item = CatchClause>,
+) -> WasmResult<ir::Block> {
+    let clauses = clauses.collect_vec();
+
+    let catch_block = builder.create_block();
+    let exn_ptr = builder.append_block_param(catch_block, environ.reference_type());
+    let pre_selector = builder.append_block_param(catch_block, I64);
+    let catch_all_block = builder.create_block();
+    let catch_one_block = builder.create_block();
+    let dispatch_block = builder.create_block();
+
+    builder.switch_to_block(catch_block);
+    let catch_all_tag = builder.ins().iconst(I64, 0);
+    let matches = builder
+        .ins()
+        .icmp(IntCC::Equal, pre_selector, catch_all_tag);
+    canonicalise_brif(builder, matches, catch_all_block, &[], catch_one_block, &[]);
+
+    builder.switch_to_block(catch_all_block);
+    let catch_all_tag = builder
+        .ins()
+        .iconst(TAG_TYPE, i64::from(CATCH_ALL_TAG_VALUE));
+    canonicalise_then_jump(builder, dispatch_block, &[catch_all_tag]);
+    builder.seal_block(catch_all_block);
+
+    builder.switch_to_block(catch_one_block);
+    let selector = environ.translate_exn_personality_selector(builder, exn_ptr)?;
+    canonicalise_then_jump(builder, dispatch_block, &[selector]);
+    builder.seal_block(catch_one_block);
+
+    builder.switch_to_block(dispatch_block);
+    let selector = builder.append_block_param(dispatch_block, TAG_TYPE);
+    let exnref = environ.translate_exn_pointer_to_ref(builder, exn_ptr)?;
+
+    let rethrow_block = builder.create_block();
+    builder.append_block_param(rethrow_block, EXN_REF_TYPE);
+
+    let mut current_selector = selector;
+    let mut current_exn = exnref;
+
+    for (idx, clause) in clauses.iter().enumerate() {
+        let tag_value = builder.ins().iconst(TAG_TYPE, i64::from(clause.tag_value));
+        let matches = builder
+            .ins()
+            .icmp(IntCC::Equal, current_selector, tag_value);
+
+        if idx + 1 == clauses.len() {
+            canonicalise_brif(
+                builder,
+                matches,
+                clause.block,
+                &[current_exn],
+                rethrow_block,
+                &[exnref],
+            );
+        } else {
+            let continue_block = builder.create_block();
+            builder.append_block_param(continue_block, TAG_TYPE);
+            builder.append_block_param(continue_block, EXN_REF_TYPE);
+
+            canonicalise_brif(
+                builder,
+                matches,
+                clause.block,
+                &[current_exn],
+                continue_block,
+                &[current_selector, current_exn],
+            );
+
+            builder.seal_block(continue_block);
+            builder.switch_to_block(continue_block);
+            let params = builder.func.dfg.block_params(continue_block);
+            current_selector = params[0];
+            current_exn = params[1];
+        }
+    }
+    builder.seal_block(dispatch_block);
+
+    builder.switch_to_block(rethrow_block);
+    let rethrow_exn = builder.func.dfg.block_params(rethrow_block)[0];
+    environ.translate_exn_reraise_unmatched(builder, rethrow_exn)?;
+    builder.seal_block(rethrow_block);
+
+    Ok(catch_block)
 }

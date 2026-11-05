@@ -7,10 +7,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmttypes "github.com/cometbft/cometbft/types"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
@@ -50,6 +51,18 @@ func NewNibiruTestAppAndContext() (*app.NibiruApp, sdk.Context) {
 	return app, ctx
 }
 
+// NewNibiruTestAppAndContextPreXConsensus is NewNibiruTestAppAndContext
+// without the genesis x-consensus contract (see
+// NewNibiruTestAppPreXConsensus). Use it for tests that assume an empty Wasm
+// genesis, such as code ID 1 being the first code they store.
+func NewNibiruTestAppAndContextPreXConsensus() (*app.NibiruApp, sdk.Context) {
+	app, _ := NewNibiruTestAppPreXConsensus()
+	ctx := NewContext(app)
+	app.OracleKeeper.SetPrice(ctx, types.NewPair(denoms.BTC, denoms.NUSD), sdkmath.LegacyNewDec(20000))
+	app.OracleKeeper.SetPrice(ctx, "xxx:yyy", sdkmath.LegacyNewDec(20000))
+	return app, ctx
+}
+
 // NewContext: Returns a fresh sdk.Context corresponding to the given NibiruApp.
 func NewContext(nibiru *app.NibiruApp) sdk.Context {
 	blockHeader := tmproto.Header{
@@ -83,8 +96,8 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 	encoding.Codec.MustUnmarshalJSON(gen[sudo.ModuleName], &sudoGen)
 	if err := sudoGen.Validate(); err != nil {
 		sudoGen.Sudoers = sudo.Sudoers{
-			Root:      testutil.ADDR_SUDO_ROOT,
-			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+			Root:  testutil.ADDR_SUDO_ROOT,
+			Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{testutil.ADDR_SUDO_ROOT}}},
 		}
 		gen[sudo.ModuleName] = encoding.Codec.MustMarshalJSON(&sudoGen)
 	}
@@ -96,9 +109,46 @@ func SetDefaultSudoGenesis(gen app.GenesisState) {
 func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	nibiruApp *app.NibiruApp, gen app.GenesisState,
 ) {
+	return NewNibiruTestAppWithDB(tmdb.NewMemDB(), customGenesisOverride)
+}
+
+// NewNibiruTestAppWithDB is NewNibiruTestApp on a caller-owned database, so a
+// test can commit blocks, then open a second app instance on the same
+// database to simulate a node restart.
+func NewNibiruTestAppWithDB(db tmdb.DB, customGenesisOverride app.GenesisState) (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
+) {
+	return newNibiruTestApp(db, customGenesisOverride, sims.DefaultConsensusParams)
+}
+
+// NewNibiruTestAppPreXConsensus returns a chain as it looked before the
+// v2.22 upgrade: the x/consensus store holds sims.DefaultConsensusParams, like
+// every test app, but no x-consensus contract exists and the Wasm store is
+// empty. Use it for upgrade tests, and for Wasm tests that assume an empty
+// Wasm genesis (code ID 1 free, no contracts).
+//
+// InitChain sends no consensus params, which is the only case where genesis
+// skips the contract (keeper.ErrNoStoredParams); the params are stored
+// right after, in the same uncommitted genesis state.
+func NewNibiruTestAppPreXConsensus() (
+	nibiruApp *app.NibiruApp, gen app.GenesisState,
+) {
+	nibiruApp, gen = newNibiruTestApp(tmdb.NewMemDB(), app.GenesisState{}, nil)
+	nibiruApp.ConsensusKeeper.Set(
+		NewContext(nibiruApp), sims.DefaultConsensusParams)
+	return nibiruApp, gen
+}
+
+// newNibiruTestApp builds the test app on db and runs InitChain with the
+// given consensus params (nil sends none).
+func newNibiruTestApp(
+	db tmdb.DB,
+	customGenesisOverride app.GenesisState,
+	consensusParams *tmproto.ConsensusParams,
+) (nibiruApp *app.NibiruApp, gen app.GenesisState) {
 	app := app.NewNibiruApp(
 		log.NewNopLogger(),
-		tmdb.NewMemDB(),
+		db,
 		/*traceStore=*/ nil,
 		/*loadLatest=*/ true,
 		/*appOpts=*/ sims.EmptyAppOptions{},
@@ -116,8 +166,8 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 	// Set happy genesis: sudo
 	sudoGenesis := sudo.GenesisState{
 		Sudoers: sudo.Sudoers{
-			Root:      testutil.ADDR_SUDO_ROOT,
-			Contracts: []string{testutil.ADDR_SUDO_ROOT},
+			Root:  testutil.ADDR_SUDO_ROOT,
+			Roles: []sudo.RoleMembers{{Role: sudo.RoleWasmDeployer, Members: []string{testutil.ADDR_SUDO_ROOT}}},
 		},
 	}
 	gen[sudo.ModuleName] = app.AppCodec().MustMarshalJSON(&sudoGenesis)
@@ -142,8 +192,11 @@ func NewNibiruTestApp(customGenesisOverride app.GenesisState) (
 		panic(err)
 	}
 
+	// Real genesis always has a time, and x-consensus is instantiated during
+	// InitChain, where Wasm requires a positive block time.
 	app.InitChain(abci.RequestInitChain{
-		ConsensusParams: sims.DefaultConsensusParams,
+		Time:            time.Now().UTC(),
+		ConsensusParams: consensusParams,
 		AppStateBytes:   stateBytes,
 	})
 

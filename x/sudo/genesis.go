@@ -7,9 +7,7 @@ import (
 )
 
 func (gen *GenesisState) Validate() error {
-	if gen.Sudoers.Contracts == nil {
-		return ErrGenesis("nil contract state must be []string")
-	} else if err := gen.Sudoers.Validate(); err != nil {
+	if err := gen.Sudoers.Validate(); err != nil {
 		return ErrGenesis(err.Error())
 	}
 	if gen.ZeroGasActors != nil {
@@ -32,8 +30,8 @@ func (gen *GenesisState) Validate() error {
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Sudoers: Sudoers{
-			Root:      "",
-			Contracts: []string{},
+			Root:  "",
+			Roles: []RoleMembers{},
 		},
 	}
 }

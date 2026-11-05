@@ -14,7 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots"
 	snapshottypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/snapshots/types"

@@ -8,18 +8,18 @@
 //! WebAssembly module and the runtime environment.
 
 use super::code_translator::translate_operator;
-use super::func_environ::{FuncEnvironment, ReturnMode};
 use super::func_state::FuncTranslationState;
 use super::translation_utils::get_vmctx_value_label;
-use crate::translator::code_translator::bitcast_wasm_returns;
+use crate::func_environ::FuncEnvironment;
+use crate::translator::EXN_REF_TYPE;
+use core::convert::TryFrom;
 use cranelift_codegen::entity::EntityRef;
 use cranelift_codegen::ir::{self, Block, InstBuilder, ValueLabel};
 use cranelift_codegen::timing;
-use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext, Variable};
+use cranelift_frontend::{FunctionBuilder, FunctionBuilderContext};
+use wasmer_compiler::wasmparser::RefType;
+use wasmer_compiler::{FunctionBinaryReader, ModuleTranslationState, wptype_to_type};
 use wasmer_compiler::{wasm_unsupported, wasmparser};
-use wasmer_compiler::{
-    wptype_to_type, FunctionBinaryReader, ModuleTranslationState,
-};
 use wasmer_types::{LocalFunctionIndex, WasmResult};
 
 /// WebAssembly to Cranelift IR function translator.
@@ -30,14 +30,18 @@ use wasmer_types::{LocalFunctionIndex, WasmResult};
 pub struct FuncTranslator {
     func_ctx: FunctionBuilderContext,
     state: FuncTranslationState,
+    allow_unaligned_memory_accesses: bool,
 }
+
+impl wasmer_compiler::FuncTranslator for FuncTranslator {}
 
 impl FuncTranslator {
     /// Create a new translator.
-    pub fn new() -> Self {
+    pub fn new(allow_unaligned_memory_accesses: bool) -> Self {
         Self {
             func_ctx: FunctionBuilderContext::new(),
             state: FuncTranslationState::new(),
+            allow_unaligned_memory_accesses,
         }
     }
 
@@ -59,30 +63,25 @@ impl FuncTranslator {
     /// regarded as WebAssembly local variables. Any signature arguments marked as
     /// `ArgumentPurpose::Normal` are made accessible as WebAssembly local variables.
     ///
-    pub fn translate<FE: FuncEnvironment + ?Sized>(
+    pub fn translate(
         &mut self,
         module_translation_state: &ModuleTranslationState,
         reader: &mut dyn FunctionBinaryReader,
         func: &mut ir::Function,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
         local_function_index: LocalFunctionIndex,
     ) -> WasmResult<()> {
         environ.push_params_on_stack(local_function_index);
-        self.translate_from_reader(
-            module_translation_state,
-            reader,
-            func,
-            environ,
-        )
+        self.translate_from_reader(module_translation_state, reader, func, environ)
     }
 
     /// Translate a binary WebAssembly function from a `FunctionBinaryReader`.
-    pub fn translate_from_reader<FE: FuncEnvironment + ?Sized>(
+    pub fn translate_from_reader(
         &mut self,
         module_translation_state: &ModuleTranslationState,
         reader: &mut dyn FunctionBinaryReader,
         func: &mut ir::Function,
-        environ: &mut FE,
+        environ: &mut FuncEnvironment<'_>,
     ) -> WasmResult<()> {
         let _tt = timing::wasm_translate_function();
         tracing::trace!(
@@ -106,14 +105,22 @@ impl FuncTranslator {
         // `environ`. The callback functions may need to insert things in the entry block.
         builder.ensure_inserted_block();
 
-        let num_params =
-            declare_wasm_parameters(&mut builder, entry_block, environ);
+        let num_params = declare_wasm_parameters(&mut builder, entry_block, environ);
 
         // Set up the translation state with a single pushed control block representing the whole
         // function and its return values.
         let exit_block = builder.create_block();
-        builder.append_block_params_for_function_returns(exit_block);
-        self.state.initialize(&builder.func.signature, exit_block);
+        for &ty in environ.return_types() {
+            builder.append_block_param(
+                exit_block,
+                crate::translator::type_to_irtype(ty, environ.target_config())?,
+            );
+        }
+        self.state.initialize(
+            &builder.func.signature,
+            exit_block,
+            environ.return_types().len(),
+        );
 
         parse_local_decls(reader, &mut builder, num_params, environ)?;
         parse_function_body(
@@ -122,9 +129,10 @@ impl FuncTranslator {
             &mut builder,
             &mut self.state,
             environ,
+            self.allow_unaligned_memory_accesses,
         )?;
 
-        builder.finalize();
+        builder.finalize(environ.target_config());
         Ok(())
     }
 }
@@ -132,10 +140,10 @@ impl FuncTranslator {
 /// Declare local variables for the signature parameters that correspond to WebAssembly locals.
 ///
 /// Return the number of local variables declared.
-fn declare_wasm_parameters<FE: FuncEnvironment + ?Sized>(
+fn declare_wasm_parameters(
     builder: &mut FunctionBuilder,
     entry_block: Block,
-    environ: &FE,
+    environ: &FuncEnvironment<'_>,
 ) -> usize {
     let sig_len = builder.func.signature.params.len();
     let mut next_local = 0;
@@ -145,8 +153,10 @@ fn declare_wasm_parameters<FE: FuncEnvironment + ?Sized>(
         // signature parameters. For example, a `vmctx` pointer.
         if environ.is_wasm_parameter(&builder.func.signature, i) {
             // This is a normal WebAssembly signature parameter, so create a local for it.
-            let local = Variable::new(next_local);
-            builder.declare_var(local, param_type.value_type);
+            let local = builder.declare_var(param_type.value_type);
+            let local_index = local.index();
+            debug_assert_eq!(local_index, next_local);
+            debug_assert!(u32::try_from(local_index).is_ok());
             next_local += 1;
 
             let param_value = builder.block_params(entry_block)[i];
@@ -164,11 +174,11 @@ fn declare_wasm_parameters<FE: FuncEnvironment + ?Sized>(
 /// Parse the local variable declarations that precede the function body.
 ///
 /// Declare local variables, starting from `num_params`.
-fn parse_local_decls<FE: FuncEnvironment + ?Sized>(
+fn parse_local_decls(
     reader: &mut dyn FunctionBinaryReader,
     builder: &mut FunctionBuilder,
     num_params: usize,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     let mut next_local = num_params;
     let local_count = reader.read_local_count()?;
@@ -185,12 +195,12 @@ fn parse_local_decls<FE: FuncEnvironment + ?Sized>(
 /// Declare `count` local variables of the same type, starting from `next_local`.
 ///
 /// Fail if the type is not valid for a local.
-fn declare_locals<FE: FuncEnvironment + ?Sized>(
+fn declare_locals(
     builder: &mut FunctionBuilder,
     count: u32,
     wasm_type: wasmparser::ValType,
     next_local: &mut usize,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
 ) -> WasmResult<()> {
     // All locals are initialized to 0.
     use wasmparser::ValType::*;
@@ -200,18 +210,17 @@ fn declare_locals<FE: FuncEnvironment + ?Sized>(
         F32 => builder.ins().f32const(ir::immediates::Ieee32::with_bits(0)),
         F64 => builder.ins().f64const(ir::immediates::Ieee64::with_bits(0)),
         V128 => {
-            let constant_handle =
-                builder.func.dfg.constants.insert([0; 16].to_vec().into());
+            let constant_handle = builder.func.dfg.constants.insert([0; 16].to_vec().into());
             builder.ins().vconst(ir::types::I8X16, constant_handle)
         }
         Ref(ty) => {
             if ty.is_func_ref() || ty.is_extern_ref() {
-                builder.ins().null(environ.reference_type())
+                builder.ins().iconst(environ.reference_type(), 0)
+            } else if ty == RefType::EXNREF || ty == RefType::EXN {
+                // no `.is_exnref` yet
+                builder.ins().iconst(EXN_REF_TYPE, 0)
             } else {
-                return Err(wasm_unsupported!(
-                    "unsupported reference type: {:?}",
-                    ty
-                ));
+                return Err(wasm_unsupported!("unsupported reference type: {:?}", ty));
             }
         }
     };
@@ -219,8 +228,10 @@ fn declare_locals<FE: FuncEnvironment + ?Sized>(
     let wasmer_ty = wptype_to_type(wasm_type).unwrap();
     let ty = builder.func.dfg.value_type(zeroval);
     for _ in 0..count {
-        let local = Variable::new(*next_local);
-        builder.declare_var(local, ty);
+        let local = builder.declare_var(ty);
+        let local_index = local.index();
+        debug_assert_eq!(local_index, *next_local);
+        debug_assert!(u32::try_from(local_index).is_ok());
         builder.def_var(local, zeroval);
         builder.set_val_label(zeroval, ValueLabel::new(*next_local));
         environ.push_local_decl_on_stack(wasmer_ty);
@@ -233,12 +244,13 @@ fn declare_locals<FE: FuncEnvironment + ?Sized>(
 ///
 /// This assumes that the local variable declarations have already been parsed and function
 /// arguments and locals are declared in the builder.
-fn parse_function_body<FE: FuncEnvironment + ?Sized>(
+fn parse_function_body(
     module_translation_state: &ModuleTranslationState,
     reader: &mut dyn FunctionBinaryReader,
     builder: &mut FunctionBuilder,
     state: &mut FuncTranslationState,
-    environ: &mut FE,
+    environ: &mut FuncEnvironment<'_>,
+    allow_unaligned_memory_accesses: bool,
 ) -> WasmResult<()> {
     // The control stack is initialized with a single block representing the whole function.
     debug_assert_eq!(state.control_stack.len(), 1, "State not initialized");
@@ -247,15 +259,14 @@ fn parse_function_body<FE: FuncEnvironment + ?Sized>(
     while !state.control_stack.is_empty() {
         builder.set_srcloc(cur_srcloc(reader));
         let op = reader.read_operator()?;
-        environ.before_translate_operator(&op, builder, state)?;
         translate_operator(
             module_translation_state,
             &op,
             builder,
             state,
             environ,
+            allow_unaligned_memory_accesses,
         )?;
-        environ.after_translate_operator(&op, builder, state)?;
     }
 
     // The final `End` operator left us in the exit block where we need to manually add a return
@@ -266,12 +277,7 @@ fn parse_function_body<FE: FuncEnvironment + ?Sized>(
     if state.reachable {
         //debug_assert!(builder.is_pristine());
         if !builder.is_unreachable() {
-            match environ.return_mode() {
-                ReturnMode::NormalReturns => {
-                    bitcast_wasm_returns(environ, &mut state.stack, builder);
-                    builder.ins().return_(&state.stack)
-                }
-            };
+            environ.emit_wasm_return(builder, &state.stack);
         }
     }
 

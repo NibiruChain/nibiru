@@ -6,5 +6,6 @@ import (
 )
 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) {
-	k.RemoveExpiredAllowances(ctx)
+	// Bound automatic cleanup so a shared expiry cannot cause unbounded block work.
+	k.RemoveExpiredAllowances(ctx, 200)
 }

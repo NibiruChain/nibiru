@@ -1,8 +1,8 @@
-FROM rust:1.90-bookworm
+FROM rust:1.95.0-bookworm
 
 # Install build dependencies
 RUN apt-get update \
-  && apt install -y clang gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev build-essential cmake \
+  && apt install -y clang llvm gcc g++ zlib1g-dev libmpc-dev libmpfr-dev libgmp-dev build-essential cmake \
   # Support for Windows cross-compile
   mingw-w64
 
@@ -13,30 +13,25 @@ WORKDIR /opt
 # Add macOS and Windows Rust targets
 RUN rustup target add x86_64-apple-darwin aarch64-apple-darwin x86_64-pc-windows-gnu
 
-# Build osxcross
-# See https://github.com/tpoechtrager/osxcross/blob/master/build.sh#L31-L49 for SDK overview.
-#
-# SDK availability is tricky. There is 10.10 and 10.11. at
-#   - https://s3.dockerproject.org/darwin/v2/MacOSX10.10.sdk.tar.xz
-#   - https://s3.dockerproject.org/darwin/v2/MacOSX10.11.sdk.tar.xz
-# and we have https://github.com/phracker/MacOSX-SDKs/releases.
-# At some point we might want to use our own package.
+# Wasmer 7's ARM64 compact-unwind registry needs the callback registration
+# symbols absent from the old macOS 11.3 SDK. Pin SDK contents and osxcross.
 RUN git clone https://github.com/tpoechtrager/osxcross \
   && cd osxcross \
-  && git checkout 28b7b67c937f4c620a7bf1e7b6dbce057bb7691e \
-  # Don't change file name when downloading because osxcross auto-detects the version from the name
-  && wget -nc https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.3.sdk.tar.xz \
-  && mv MacOSX11.3.sdk.tar.xz tarballs/ \
-  && UNATTENDED=1 BUILD_FLAVOR=stable OSX_VERSION_MIN=10.10 ./build.sh \
-  # Cleanups before Docker layer is finalized
+  && git checkout 27d21e4977c9751d01199c7a226a6faf494c3dd9 \
+  && wget -nc https://github.com/joseluisq/macosx-sdks/releases/download/14.5/MacOSX14.5.sdk.tar.xz \
+  && echo "6e146275d19f027faa2e8354da5e0267513abf013b8f16ad65a231653a2b1c5d  MacOSX14.5.sdk.tar.xz" | sha256sum -c - \
+  && mv MacOSX14.5.sdk.tar.xz tarballs/ \
+  && UNATTENDED=1 BUILD_FLAVOR=stable OSX_VERSION_MIN=14.5 ./build.sh \
   && rm -r tarballs/
+
+ENV MACOSX_DEPLOYMENT_TARGET=14.5
 RUN chmod +rx /opt/osxcross
 RUN chmod +rx /opt/osxcross/target
 RUN chmod -R +rx /opt/osxcross/target/bin
 
 # RUN ls -l /opt/osxcross/target/bin
-RUN /opt/osxcross/target/bin/x86_64-apple-darwin20.4-clang --version
-RUN /opt/osxcross/target/bin/aarch64-apple-darwin20.4-clang --version
+RUN /opt/osxcross/target/bin/x86_64-apple-darwin23.5-clang --version
+RUN /opt/osxcross/target/bin/aarch64-apple-darwin23.5-clang --version
 
 # allow non-root user to download more deps later
 RUN chmod -R 777 /usr/local/cargo

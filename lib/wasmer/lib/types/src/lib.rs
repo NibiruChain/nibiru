@@ -6,7 +6,6 @@
 
 #![deny(missing_docs, unused_extern_crates)]
 #![warn(unused_import_braces)]
-#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::new_without_default)]
 #![warn(
     clippy::float_arithmetic,
@@ -17,42 +16,10 @@
     clippy::unicode_not_nfc,
     clippy::use_self
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-
-#[cfg(all(feature = "std", feature = "core"))]
-compile_error!(
-    "The `std` and `core` features are both enabled, which is an error. Please enable only once."
-);
-
-#[cfg(all(not(feature = "std"), not(feature = "core")))]
-compile_error!("Both the `std` and `core` features are disabled. Please enable one of them.");
-
-#[cfg(feature = "core")]
-extern crate alloc;
-
-/// The `lib` module defines a `std` module that is identical whether
-/// the `core` or the `std` feature is enabled.
-pub mod lib {
-    /// Custom `std` module.
-    #[cfg(feature = "core")]
-    pub mod std {
-        pub use alloc::{borrow, boxed, format, iter, rc, slice, string, vec};
-        pub use core::{
-            any, cell, cmp, convert, fmt, hash, marker, mem, ops, ptr, sync,
-        };
-    }
-
-    /// Custom `std` module.
-    #[cfg(feature = "std")]
-    pub mod std {
-        pub use std::{
-            any, borrow, boxed, cell, cmp, convert, fmt, format, hash, iter,
-            marker, mem, ops, ptr, rc, slice, string, sync, vec,
-        };
-    }
-}
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod error;
+mod exception;
 mod features;
 mod indexes;
 mod initializers;
@@ -60,10 +27,12 @@ mod libcalls;
 mod memory;
 mod module;
 mod module_hash;
+mod progress;
 mod serialize;
 mod stack;
 mod store_id;
 mod table;
+pub mod target;
 mod trapcode;
 mod types;
 mod units;
@@ -73,35 +42,32 @@ mod vmoffsets;
 
 pub use error::{
     CompileError, DeserializeError, ImportError, MemoryError, MiddlewareError,
-    ParseCpuFeatureError, PreInstantiationError, SerializeError, WasmError,
-    WasmResult,
+    ParseCpuFeatureError, PreInstantiationError, SerializeError, WasmError, WasmResult,
 };
 
 /// The entity module, with common helpers for Rust structures
 pub mod entity;
 pub use crate::features::Features;
 pub use crate::indexes::{
-    CustomSectionIndex, DataIndex, ElemIndex, ExportIndex, FunctionIndex,
-    GlobalIndex, ImportIndex, LocalFunctionIndex, LocalGlobalIndex,
-    LocalMemoryIndex, LocalTableIndex, MemoryIndex, SignatureIndex, TableIndex,
+    CustomSectionIndex, DataIndex, ElemIndex, ExportIndex, FunctionIndex, GlobalIndex, ImportIndex,
+    LocalFunctionIndex, LocalGlobalIndex, LocalMemoryIndex, LocalTableIndex, LocalTagIndex,
+    MemoryIndex, SignatureHash, SignatureIndex, TableIndex, Tag, TagIndex,
 };
 pub use crate::initializers::{
-    ArchivedDataInitializerLocation, ArchivedOwnedDataInitializer,
-    DataInitializer, DataInitializerLike, DataInitializerLocation,
-    DataInitializerLocationLike, OwnedDataInitializer, TableInitializer,
+    ArchivedDataInitializerLocation, ArchivedOwnedDataInitializer, DataInitializer,
+    DataInitializerLike, DataInitializerLocation, DataInitializerLocationLike,
+    OwnedDataInitializer, TableInitializer,
 };
 pub use crate::memory::{Memory32, Memory64, MemorySize};
-pub use crate::module::{
-    ExportsIterator, ImportKey, ImportsIterator, ModuleInfo,
+pub use crate::module::{ExportsIterator, ImportKey, ImportsIterator, ModuleInfo};
+pub use crate::module_hash::ModuleHash;
+pub use crate::progress::{CompilationProgress, CompilationProgressCallback, UserAbort};
+pub use crate::types::{
+    ExportType, ExternType, FunctionType, GlobalInit, GlobalType, ImportType, InitExpr, InitExprOp,
+    MemoryType, Mutability, TableType, TagKind, TagType, Type, V128,
 };
-pub use crate::module_hash::{HashAlgorithm, ModuleHash};
 pub use crate::units::{
-    Bytes, PageCountOutOfRange, Pages, WASM_MAX_PAGES, WASM_MIN_PAGES,
-    WASM_PAGE_SIZE,
-};
-pub use types::{
-    ExportType, ExternType, FunctionType, GlobalInit, GlobalType, ImportType,
-    MemoryType, Mutability, TableType, Type, V128,
+    Bytes, PageCountOutOfRange, Pages, WASM_MAX_PAGES, WASM_MIN_PAGES, WASM_PAGE_SIZE,
 };
 pub use value::{RawValue, ValueType};
 
@@ -110,13 +76,12 @@ pub use crate::memory::MemoryStyle;
 pub use crate::table::TableStyle;
 pub use serialize::MetadataHeader;
 // TODO: OnCalledAction is needed for asyncify. It will be refactored with https://github.com/wasmerio/wasmer/issues/3451
+pub use crate::exception::CATCH_ALL_TAG_VALUE;
 pub use crate::stack::{FrameInfo, SourceLoc, TrapInformation};
 pub use crate::store_id::StoreId;
 pub use crate::trapcode::{OnCalledAction, TrapCode};
 pub use crate::utils::is_wasm;
-pub use crate::vmoffsets::{
-    TargetSharedSignatureIndex, VMBuiltinFunctionIndex, VMOffsets,
-};
+pub use crate::vmoffsets::{VMBuiltinFunctionIndex, VMOffsets, vmctx_offset};
 
 /// Offset in bytes from the beginning of the function.
 pub type CodeOffset = u32;
@@ -191,14 +156,12 @@ mod native {
     }
 
     impl NativeWasmType for Memory32 {
-        const WASM_TYPE: Type =
-            <<Self as MemorySize>::Native as NativeWasmType>::WASM_TYPE;
+        const WASM_TYPE: Type = <<Self as MemorySize>::Native as NativeWasmType>::WASM_TYPE;
         type Abi = <<Self as MemorySize>::Native as NativeWasmType>::Abi;
     }
 
     impl NativeWasmType for Memory64 {
-        const WASM_TYPE: Type =
-            <<Self as MemorySize>::Native as NativeWasmType>::WASM_TYPE;
+        const WASM_TYPE: Type = <<Self as MemorySize>::Native as NativeWasmType>::WASM_TYPE;
         type Abi = <<Self as MemorySize>::Native as NativeWasmType>::Abi;
     }
 

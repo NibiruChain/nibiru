@@ -1,8 +1,9 @@
 package types
 
 import (
-	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	ics23 "github.com/cosmos/ics23/go"
+
+	crypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 )

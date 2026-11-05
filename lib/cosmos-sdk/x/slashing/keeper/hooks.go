@@ -3,7 +3,7 @@ package keeper
 import (
 	"time"
 
-	"github.com/cometbft/cometbft/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"

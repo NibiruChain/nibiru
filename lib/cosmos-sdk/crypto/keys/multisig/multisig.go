@@ -3,7 +3,7 @@ package multisig
 import (
 	fmt "fmt"
 
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"

@@ -56,11 +56,20 @@ gen_tests! {
                 use super:: * ;
                 #[test_log::test]
                 #[cold]
-                #[cfg(feature = "universal")]
-                fn universal() {
+                #[cfg(feature = "singlepass")]
+                fn singlepass() {
                     foo(crate::Config::new(
                         crate::Compiler::Singlepass
                     ))
+                }
+                #[test_log::test]
+                #[cold]
+                #[cfg(feature = "singlepass")]
+                #[cfg(target_os = "linux")]
+                fn singlepass_exp_artifact() {
+                    foo(crate::Config::new(
+                        crate::Compiler::Singlepass
+                    ).with_experimental_artifact())
                 }
             }
 
@@ -69,11 +78,20 @@ gen_tests! {
                 use super:: * ;
                 #[test_log::test]
                 #[cold]
-                #[cfg(feature = "universal")]
-                fn universal() {
+                #[cfg(feature = "cranelift")]
+                fn cranelift() {
                     foo(crate::Config::new(
                         crate::Compiler::Cranelift
                     ))
+                }
+                #[test_log::test]
+                #[cold]
+                #[cfg(feature = "cranelift")]
+                #[cfg(target_os = "linux")]
+                fn cranelift_exp_artifact() {
+                    foo(crate::Config::new(
+                        crate::Compiler::Cranelift
+                    ).with_experimental_artifact())
                 }
             }
 
@@ -82,13 +100,36 @@ gen_tests! {
                 use super:: * ;
                 #[test_log::test]
                 #[cold]
-                #[cfg(feature = "universal")]
-                fn universal() {
+                #[cfg(feature = "llvm")]
+                fn llvm() {
                     foo(crate::Config::new(
                         crate::Compiler::LLVM
                     ))
                 }
+                #[test_log::test]
+                #[cold]
+                #[cfg(feature = "llvm")]
+                #[cfg(target_os = "linux")]
+                fn llvm_exp_artifact() {
+                    foo(crate::Config::new(
+                        crate::Compiler::LLVM
+                    ).with_experimental_artifact())
+                }
             }
+
+            #[cfg(feature = "v8")]
+            mod v8 {
+                use super:: * ;
+                #[test_log::test]
+                #[cold]
+                #[cfg(feature = "v8")]
+                fn v8() {
+                    foo(crate::Config::new(
+                        crate::Compiler::V8
+                    ))
+                }
+            }
+
         }
     };
 }

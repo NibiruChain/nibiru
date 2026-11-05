@@ -3,7 +3,7 @@ package staking
 import (
 	"fmt"
 
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

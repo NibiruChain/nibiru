@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/cometbft/cometbft/libs/log"
+	log "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 )

@@ -570,7 +570,7 @@ func TestDispatchSubMsgConditionalReplyOn(t *testing.T) {
 func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
-	rootSource := &stubSudoRootSource{}
+	rootSource := &stubSudoPermissionSource{}
 	var instanceLevel int
 	// mock wasvm to return new instantiate msgs with the response
 	mockWasmVM.InstantiateFn = func(codeID wasmvm.Checksum, env wvm.Env, info wvm.MessageInfo, initMsg []byte, store wasmvm.KVStore, goapi wasmvm.GoAPI, querier wasmvm.Querier, gasMeter wasmvm.GasMeter, gasLimit uint64, deserCost wvm.UFraction) (*wvm.Response, uint64, error) {
@@ -603,12 +603,15 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 	k := keepers.WasmKeeper
 	example1 := StoreRandomContract(t, ctx, keepers, mockWasmVM)
 	rootSource.root = example1.CreatorAddr
+	info := k.GetCodeInfo(ctx, example1.CodeID)
+	info.InstantiateConfig = types.AccessTypeAnyOfAddresses.With(example1.CreatorAddr)
+	k.storeCodeInfo(ctx, example1.CodeID, *info)
 
 	specs := map[string]struct {
 		policy types.AuthorizationPolicy
 		expErr *sdkioerrors.Error
 	}{
-		"sudo root authorization is not propagated": {
+		"ordinary instantiate access remains enforced": {
 			policy: DefaultAuthorizationPolicy{},
 			expErr: sdkerrors.ErrUnauthorized,
 		},
@@ -656,7 +659,7 @@ func TestInstantiateGovSubMsgAuthzPropagated(t *testing.T) {
 func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 	mockWasmVM := &wasmtesting.MockWasmEngine{}
 	wasmtesting.MakeInstantiable(mockWasmVM)
-	rootSource := &stubSudoRootSource{}
+	rootSource := &stubSudoPermissionSource{}
 	ctx, keepers := CreateTestInput(
 		t,
 		false,
@@ -695,14 +698,19 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 	}
 
 	specs := map[string]struct {
-		policy types.AuthorizationPolicy
-		caller sdk.AccAddress
-		expErr *sdkioerrors.Error
+		policy         types.AuthorizationPolicy
+		caller         sdk.AccAddress
+		contractMember bool
+		expErr         *sdkioerrors.Error
 	}{
 		"sudo root authorization is not propagated": {
 			policy: DefaultAuthorizationPolicy{},
 			caller: example1.CreatorAddr,
 			expErr: sdkerrors.ErrUnauthorized,
+		},
+		"contract member with admin can migrate without propagated governance": {
+			policy:         newGovAuthorizationPolicy(nil),
+			contractMember: true,
 		},
 		"propagating gov policy - accepted": {
 			policy: newGovAuthorizationPolicy(map[types.AuthorizationPolicyAction]struct{}{
@@ -724,6 +732,13 @@ func TestMigrateGovSubMsgAuthzPropagated(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			tCtx, _ := ctx.WithChainID(guardedChainID).CacheContext()
 			instanceLevel = 0
+			rootSource.members = nil
+			if spec.contractMember {
+				rootSource.members = map[string]bool{example1.Contract.String(): true}
+				contractInfo := k.GetContractInfo(tCtx, example1.Contract)
+				contractInfo.Admin = example1.Contract.String()
+				k.storeContractInfo(tCtx, example1.Contract, contractInfo)
+			}
 			caller := spec.caller
 			if caller == nil {
 				caller = RandomAccountAddress(t)

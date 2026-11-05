@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -119,6 +120,9 @@ func (am AppModule) Name() string {
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	sudo.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 	sudo.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	if err := cfg.RegisterMigration(sudo.ModuleName, 1, am.keeper.Migrate1To2); err != nil {
+		panic(err)
+	}
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -144,7 +148,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
+func (AppModule) ConsensusVersion() uint64 { return 2 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}

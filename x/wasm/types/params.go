@@ -30,7 +30,7 @@ func (a AccessType) With(addrs ...sdk.AccAddress) AccessConfig {
 		for i, v := range addrs {
 			bech32Addrs[i] = v.String()
 		}
-		if err := assertValidAddresses(bech32Addrs); err != nil {
+		if err := validateBech32Addresses(bech32Addrs); err != nil {
 			panic(sdkioerrors.Wrap(err, "addresses"))
 		}
 		return AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: bech32Addrs}
@@ -142,26 +142,9 @@ func (a AccessConfig) ValidateBasic() error {
 	case AccessTypeNobody, AccessTypeEverybody:
 		return nil
 	case AccessTypeAnyOfAddresses:
-		return sdkioerrors.Wrap(assertValidAddresses(a.Addresses), "addresses")
+		return sdkioerrors.Wrap(validateBech32Addresses(a.Addresses), "addresses")
 	}
 	return sdkioerrors.Wrapf(ErrInvalid, "unknown type: %q", a.Permission)
-}
-
-func assertValidAddresses(addrs []string) error {
-	if len(addrs) == 0 {
-		return ErrEmpty
-	}
-	idx := make(map[string]struct{}, len(addrs))
-	for _, a := range addrs {
-		if _, err := sdk.AccAddressFromBech32(a); err != nil {
-			return sdkioerrors.Wrapf(err, "address: %s", a)
-		}
-		if _, exists := idx[a]; exists {
-			return ErrDuplicate.Wrapf("address: %s", a)
-		}
-		idx[a] = struct{}{}
-	}
-	return nil
 }
 
 // Allowed returns if permission includes the actor.

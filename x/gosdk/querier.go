@@ -14,8 +14,8 @@ import (
 	inflation "github.com/NibiruChain/nibiru/v2/x/mint"
 	tokenfactory "github.com/NibiruChain/nibiru/v2/x/tokenfactory/types"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	cmtcoretypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	cmtcoretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 )
 
 type Querier struct {

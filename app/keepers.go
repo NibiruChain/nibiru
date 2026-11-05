@@ -29,8 +29,8 @@ import (
 	slashingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 
 	icacontroller "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/keeper"
@@ -292,8 +292,7 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		append(
 			GetWasmOpts(*app, appOpts, wmha),
 			wasmkeeper.WithWasmEngine(wasmVM),
-			// The EVM Wasm precompile wraps this same keeper in a default-permission
-			// keeper, so its instantiate path reaches the shared admission guard.
+			// Guard uploads and migrations at the shared keeper boundary.
 			wasmkeeper.WithWasmDeployerGuard(appconst.SDK_CHAIN_ID_MAINNET, app.SudoKeeper),
 		)...,
 	)

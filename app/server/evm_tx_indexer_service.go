@@ -6,9 +6,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/service"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/service"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 )

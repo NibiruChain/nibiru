@@ -1,5 +1,5 @@
 use anyhow::Result;
-use wasmer::*;
+use wasmer::{sys::engine::NativeEngineExt, *};
 
 #[test]
 fn sanity_test_artifact_deserialize() {
@@ -45,8 +45,7 @@ fn test_deserialize(config: crate::Config) -> Result<()> {
     let serialized_bytes = module.serialize()?;
 
     let headless_store = config.headless_store();
-    let deserialized_module =
-        unsafe { Module::deserialize(&headless_store, serialized_bytes)? };
+    let deserialized_module = unsafe { Module::deserialize(&headless_store, serialized_bytes)? };
     assert_eq!(deserialized_module.name(), Some("name"));
     assert_eq!(
         deserialized_module.exports().collect::<Vec<_>>(),

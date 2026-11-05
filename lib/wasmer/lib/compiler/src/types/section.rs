@@ -12,12 +12,10 @@
 //! it can be patched later by the engine (native or JIT).
 
 use super::relocation::{ArchivedRelocation, Relocation, RelocationLike};
-use crate::lib::std::vec::Vec;
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
+use std::vec::Vec;
 use wasmer_types::entity_impl;
 
 /// Index type of a Section defined inside a WebAssembly `Compilation`.
@@ -37,7 +35,7 @@ use wasmer_types::entity_impl;
 )]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[rkyv(derive(Debug), compare(PartialEq, PartialOrd))]
+#[rkyv(derive(Debug, Hash, PartialEq, Eq), compare(PartialEq, PartialOrd))]
 pub struct SectionIndex(u32);
 
 entity_impl!(SectionIndex);
@@ -47,9 +45,7 @@ entity_impl!(SectionIndex);
 /// Determines how a custom section may be used.
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq,
-)]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq)]
 #[rkyv(derive(Debug), compare(PartialEq, PartialOrd))]
 #[repr(u8)]
 pub enum CustomSectionProtection {
@@ -66,13 +62,15 @@ pub enum CustomSectionProtection {
 /// in the emitted module.
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq,
-)]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq)]
 #[rkyv(derive(Debug), compare(PartialEq))]
 pub struct CustomSection {
     /// Memory protection that applies to this section.
     pub protection: CustomSectionProtection,
+
+    /// Alignment of this section. When missing, the default value for
+    /// each platform shall be used.
+    pub alignment: Option<u64>,
 
     /// The bytes corresponding to this section.
     ///
@@ -92,8 +90,9 @@ pub trait CustomSectionLike<'a> {
     type Relocations: RelocationLike;
 
     fn protection(&self) -> CustomSectionProtection;
+    fn alignment(&self) -> Option<u64>;
     fn bytes(&self) -> &[u8];
-    fn relocations(&'a self) -> &[Self::Relocations];
+    fn relocations(&'a self) -> &'a [Self::Relocations];
 }
 
 impl<'a> CustomSectionLike<'a> for CustomSection {
@@ -103,11 +102,15 @@ impl<'a> CustomSectionLike<'a> for CustomSection {
         self.protection.clone()
     }
 
+    fn alignment(&self) -> Option<u64> {
+        self.alignment
+    }
+
     fn bytes(&self) -> &[u8] {
         self.bytes.0.as_ref()
     }
 
-    fn relocations(&'a self) -> &[Self::Relocations] {
+    fn relocations(&'a self) -> &'a [Self::Relocations] {
         self.relocations.as_slice()
     }
 }
@@ -116,16 +119,20 @@ impl<'a> CustomSectionLike<'a> for ArchivedCustomSection {
     type Relocations = ArchivedRelocation;
 
     fn protection(&self) -> CustomSectionProtection {
-        let protection =
-            rkyv::deserialize::<CustomSectionProtection, ()>(&self.protection);
+        let protection = rkyv::deserialize::<CustomSectionProtection, ()>(&self.protection);
         protection.unwrap()
+    }
+
+    fn alignment(&self) -> Option<u64> {
+        let alignment = rkyv::deserialize::<Option<u64>, ()>(&self.alignment);
+        alignment.unwrap()
     }
 
     fn bytes(&self) -> &[u8] {
         self.bytes.0.as_ref()
     }
 
-    fn relocations(&'a self) -> &[Self::Relocations] {
+    fn relocations(&'a self) -> &'a [Self::Relocations] {
         self.relocations.as_slice()
     }
 }
@@ -133,13 +140,9 @@ impl<'a> CustomSectionLike<'a> for ArchivedCustomSection {
 /// The bytes in the section.
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
-#[derive(
-    RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq, Default,
-)]
+#[derive(RkyvSerialize, RkyvDeserialize, Archive, Debug, Clone, PartialEq, Eq, Default)]
 #[rkyv(derive(Debug), compare(PartialEq, PartialOrd))]
-pub struct SectionBody(
-    #[cfg_attr(feature = "enable-serde", serde(with = "serde_bytes"))] Vec<u8>,
-);
+pub struct SectionBody(#[cfg_attr(feature = "enable-serde", serde(with = "serde_bytes"))] Vec<u8>);
 
 impl SectionBody {
     /// Create a new section body with the given contents.

@@ -1,4 +1,4 @@
-# `wasmer-compiler` [![Build Status](https://github.com/wasmerio/wasmer/workflows/build/badge.svg?style=flat-square)](https://github.com/wasmerio/wasmer/actions?query=workflow%3Abuild) [![Join Wasmer Slack](https://img.shields.io/static/v1?label=Slack&message=join%20chat&color=brighgreen&style=flat-square)](https://slack.wasmer.io) [![MIT License](https://img.shields.io/github/license/wasmerio/wasmer.svg?style=flat-square)](https://github.com/wasmerio/wasmer/blob/main/LICENSE)
+# `wasmer-compiler` [![Build Status](https://github.com/wasmerio/wasmer/actions/workflows/build.yml/badge.svg?style=flat-square)](https://github.com/wasmerio/wasmer/actions?query=workflow%3Abuild) [![Join Wasmer Slack](https://img.shields.io/static/v1?label=Slack&message=join%20chat&color=brighgreen&style=flat-square)](https://slack.wasmer.io) [![MIT License](https://img.shields.io/github/license/wasmerio/wasmer.svg?style=flat-square)](https://github.com/wasmerio/wasmer/blob/main/LICENSE)
 
 This crate is the base for Compiler implementations.
 
@@ -44,7 +44,7 @@ pub trait Compiler {
 
 ## Acknowledgments
 
-This project borrowed some of the code strucutre from the
+This project borrowed some of the code structure from the
 [`cranelift-wasm`] crate, however it's been adapted to not depend on
 any specific IR and be abstract of any compiler.
 

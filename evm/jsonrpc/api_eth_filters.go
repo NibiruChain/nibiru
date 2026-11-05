@@ -10,10 +10,10 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 
-	cmtlog "github.com/cometbft/cometbft/libs/log"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	cmttypes "github.com/cometbft/cometbft/types"
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

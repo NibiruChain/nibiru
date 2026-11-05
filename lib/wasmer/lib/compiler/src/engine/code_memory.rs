@@ -4,14 +4,12 @@
 //! Memory management for executable code.
 use super::unwind::UnwindRegistry;
 use crate::{
+    GlobalFrameInfoRegistration,
     types::{
         function::FunctionBodyLike,
         section::CustomSectionLike,
-        unwind::{
-            CompiledFunctionUnwindInfoLike, CompiledFunctionUnwindInfoReference,
-        },
+        unwind::{CompiledFunctionUnwindInfoLike, CompiledFunctionUnwindInfoReference},
     },
-    GlobalFrameInfoRegistration,
 };
 use wasmer_vm::{Mmap, VMFunctionBody};
 
@@ -118,14 +116,13 @@ impl CodeMemory {
             buf = next_buf;
             bytes += len;
 
-            let vmfunc =
-                Self::copy_function(&mut self.unwind_registry, *func, func_buf);
-            assert_eq!(vmfunc.as_ptr() as usize % ARCH_FUNCTION_ALIGNMENT, 0);
+            let vmfunc = Self::copy_function(&mut self.unwind_registry, *func, func_buf);
+            assert!((vmfunc.as_ptr() as usize).is_multiple_of(ARCH_FUNCTION_ALIGNMENT));
             function_result.push(vmfunc);
         }
         for section in executable_sections {
             let section = section.bytes();
-            assert_eq!(buf.as_mut_ptr() as usize % ARCH_FUNCTION_ALIGNMENT, 0);
+            assert!((buf.as_mut_ptr() as usize).is_multiple_of(ARCH_FUNCTION_ALIGNMENT));
             let len = round_up(section.len(), ARCH_FUNCTION_ALIGNMENT);
             let (s, next_buf) = buf.split_at_mut(len);
             buf = next_buf;
@@ -144,10 +141,7 @@ impl CodeMemory {
 
             for section in data_sections {
                 let section = section.bytes();
-                assert_eq!(
-                    buf.as_mut_ptr() as usize % DATA_SECTION_ALIGNMENT,
-                    0
-                );
+                assert!((buf.as_mut_ptr() as usize).is_multiple_of(DATA_SECTION_ALIGNMENT));
                 let len = round_up(section.len(), DATA_SECTION_ALIGNMENT);
                 let (s, next_buf) = buf.split_at_mut(len);
                 buf = next_buf;
@@ -180,15 +174,13 @@ impl CodeMemory {
     }
 
     /// Calculates the allocation size of the given compiled function.
-    fn function_allocation_size<'a>(
-        func: &'a impl FunctionBodyLike<'a>,
-    ) -> usize {
+    fn function_allocation_size<'a>(func: &'a impl FunctionBodyLike<'a>) -> usize {
         match &func.unwind_info().map(|o| o.get()) {
             Some(CompiledFunctionUnwindInfoReference::WindowsX64(info)) => {
                 // Windows unwind information is required to be emitted into code memory
                 // This is because it must be a positive relative offset from the start of the memory
                 // Account for necessary unwind information alignment padding (32-bit alignment)
-                ((func.body().len() + 3) & !3) + info.len()
+                func.body().len().next_multiple_of(4) + info.len()
             }
             _ => func.body().len(),
         }
@@ -202,7 +194,7 @@ impl CodeMemory {
         func: &'module impl FunctionBodyLike<'module>,
         buf: &'memory mut [u8],
     ) -> &'memory mut [VMFunctionBody] {
-        assert_eq!(buf.as_ptr() as usize % ARCH_FUNCTION_ALIGNMENT, 0);
+        assert!((buf.as_ptr() as usize).is_multiple_of(ARCH_FUNCTION_ALIGNMENT));
 
         let func_len = func.body().len();
 
@@ -211,15 +203,13 @@ impl CodeMemory {
         let vmfunc = Self::view_as_mut_vmfunc_slice(body);
 
         let unwind_info = func.unwind_info().map(|o| o.get());
-        if let Some(CompiledFunctionUnwindInfoReference::WindowsX64(info)) =
-            unwind_info
-        {
+        if let Some(CompiledFunctionUnwindInfoReference::WindowsX64(info)) = unwind_info {
             // Windows unwind information is written following the function body
             // Keep unwind information 32-bit aligned (round up to the nearest 4 byte boundary)
-            let unwind_start = (func_len + 3) & !3;
+            let unwind_start = func_len.next_multiple_of(4);
             let unwind_size = info.len();
             let padding = unwind_start - func_len;
-            assert_eq!((func_len + padding) % 4, 0);
+            assert!((func_len + padding).is_multiple_of(4));
             let slice = remainder.split_at_mut(padding + unwind_size).0;
             slice[padding..].copy_from_slice(info);
         }
@@ -240,18 +230,15 @@ impl CodeMemory {
         unsafe { &mut *body_ptr }
     }
 
-    /// Register the frame info, so it's free when the mememory gets freed
-    pub fn register_frame_info(
-        &mut self,
-        frame_info: GlobalFrameInfoRegistration,
-    ) {
+    /// Register the frame info, so it's free when the memory gets freed
+    pub fn register_frame_info(&mut self, frame_info: GlobalFrameInfoRegistration) {
         self.frame_info_registration = Some(frame_info);
     }
 }
 
 fn round_up(size: usize, multiple: usize) -> usize {
     debug_assert!(multiple.is_power_of_two());
-    (size + (multiple - 1)) & !(multiple - 1)
+    size.next_multiple_of(multiple)
 }
 
 #[cfg(test)]

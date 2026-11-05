@@ -6,10 +6,11 @@ import (
 	"sort"
 	"time"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
+
+	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

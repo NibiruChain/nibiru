@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
@@ -11,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/collections"
 
 	"github.com/NibiruChain/nibiru/v2/x/nutil"
-	"github.com/NibiruChain/nibiru/v2/x/nutil/set"
 	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
@@ -68,82 +68,6 @@ func (k Keeper) senderHasPermission(sender string, root string) error {
 	return nil
 }
 
-// AddContracts executes a MsgEditSudoers message with action type
-// "add_contracts". This adds contract addresses to the sudoer set.
-func (k Keeper) AddContracts(
-	goCtx context.Context, msg *sudo.MsgEditSudoers,
-) (msgResp *sudo.MsgEditSudoersResponse, err error) {
-	if msg.RootAction() != sudo.AddContracts {
-		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
-		return
-	}
-
-	// Read state
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	pbSudoersBefore, err := k.Sudoers.Get(ctx)
-	if err != nil {
-		return
-	}
-	sudoersBefore := SudoersFromPb(pbSudoersBefore)
-	err = k.senderHasPermission(msg.Sender, sudoersBefore.Root)
-	if err != nil {
-		return
-	}
-
-	// Update state
-	contracts, err := sudoersBefore.AddContracts(msg.Contracts)
-	if err != nil {
-		return
-	}
-	pbSudoers := Sudoers{Root: sudoersBefore.Root, Contracts: contracts}.ToPb()
-	k.Sudoers.Set(ctx, pbSudoers)
-	msgResp = new(sudo.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{
-		Sudoers: pbSudoers,
-		Action:  msg.Action,
-	})
-}
-
-// ————————————————————————————————————————————————————————————————————————————
-// RemoveContracts
-// ————————————————————————————————————————————————————————————————————————————
-
-func (k Keeper) RemoveContracts(
-	goCtx context.Context, msg *sudo.MsgEditSudoers,
-) (msgResp *sudo.MsgEditSudoersResponse, err error) {
-	if msg.RootAction() != sudo.RemoveContracts {
-		err = fmt.Errorf("invalid action type %s for msg add contracts", msg.Action)
-		return
-	}
-
-	// Skip "msg.ValidateBasic" since this is a remove' operation. That means we
-	// can only remove from state but can't write anything invalid that would
-	// corrupt it.
-
-	// Read state
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	pbSudoers, err := k.Sudoers.Get(ctx)
-	if err != nil {
-		return
-	}
-	sudoers := SudoersFromPb(pbSudoers)
-	err = k.senderHasPermission(msg.Sender, sudoers.Root)
-	if err != nil {
-		return
-	}
-
-	// Update state
-	sudoers.RemoveContracts(msg.Contracts)
-	pbSudoers = sudoers.ToPb()
-	k.Sudoers.Set(ctx, pbSudoers)
-
-	msgResp = new(sudo.MsgEditSudoersResponse)
-	return msgResp, ctx.EventManager().EmitTypedEvent(&sudo.EventUpdateSudoers{
-		Sudoers: pbSudoers,
-		Action:  msg.Action,
-	})
-}
-
 // EditWasmBlockHooksContract updates the optional Wasm contract address used by
 // x/wasm to discover ABCI block hook dispatch plans.
 func (k Keeper) EditWasmBlockHooksContract(
@@ -159,8 +83,7 @@ func (k Keeper) EditWasmBlockHooksContract(
 	if err != nil {
 		return nil, err
 	}
-	sudoers := SudoersFromPb(pbSudoers)
-	err = k.senderHasPermission(msg.Sender, sudoers.Root)
+	err = k.senderHasPermission(msg.Sender, pbSudoers.Root)
 	if err != nil {
 		return nil, err
 	}
@@ -182,31 +105,34 @@ func (k Keeper) EditWasmBlockHooksContract(
 	})
 }
 
-// CheckPermissions Checks if a contract is contained within the set of sudo
-// contracts defined in the x/sudo module. These smart contracts are able to
-// execute certain permissioned functions.
-func (k Keeper) CheckPermissions(
-	contract sdk.AccAddress, ctx sdk.Context,
-) error {
+// CheckPermissions allows root or a member of role. An empty role is root-only.
+func (k Keeper) CheckPermissions(actor sdk.AccAddress, ctx sdk.Context, role string) error {
 	state, err := k.Sudoers.Get(ctx)
 	if err != nil {
 		return err
 	}
-	contracts := state.Contracts
-
-	hasPermission := set.New(contracts...).Has(contract.String()) || contract.String() == state.Root
-	if !hasPermission {
-		return fmt.Errorf(
-			"%s: insufficient permissions on smart contract: %s. The sudo contracts are: %s",
-			sudo.ErrUnauthorized, contract, contracts,
-		)
+	if actor.String() == state.Root {
+		return nil
 	}
-	return nil
+	if role != "" {
+		for _, entry := range state.Roles {
+			if entry.Role == role && slices.Contains(entry.Members, actor.String()) {
+				return nil
+			}
+		}
+	}
+	if role == "" {
+		return sudo.ErrUnauthorized.Wrapf("address %s requires sudo root", actor)
+	}
+	return sudo.ErrUnauthorized.Wrapf("address %s requires root or role %q", actor, role)
 }
 
 // InitGenesis initializes the module's state from a provided genesis state JSON.
 func (k Keeper) InitGenesis(ctx sdk.Context, genState sudo.GenesisState) {
 	if err := genState.Validate(); err != nil {
+		panic(err)
+	}
+	if err := genState.Sudoers.NormalizeRoles(); err != nil {
 		panic(err)
 	}
 	k.Sudoers.Set(ctx, genState.Sudoers)

@@ -14,8 +14,8 @@ import (
 	v3gov "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/migrations/v3"
 	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 )
 
 func TestMigrateStore(t *testing.T) {

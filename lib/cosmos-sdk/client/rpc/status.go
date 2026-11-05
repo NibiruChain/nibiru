@@ -5,9 +5,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cometbft/cometbft/libs/bytes"
-	"github.com/cometbft/cometbft/p2p"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

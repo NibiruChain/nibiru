@@ -1,0 +1,325 @@
+//! Implementation of personality function and unwinding support for Wasmer.
+//!
+//! On a native platform, when an exception is thrown, the type info of the
+//! exception is known, and can be matched against the LSDA table within the
+//! personality function (e.g. __gxx_personality_v0 for Itanium ABI).
+//!
+//! However, in WASM, the exception "type" can change between compilation
+//! and instantiation because tags can be imported from other modules. Also,
+//! a single module can be instantiated many times, but all instances share
+//! the same code, differing only in their VMContext data. This means that,
+//! to be able to match the thrown exception against the expected tag in
+//! catch clauses, we need to go through the VMContext of the specific instance
+//! to which the stack frame belongs; nothing else can tell us exactly which
+//! instance we're currently looking at, including the IP which will be the
+//! same for all instances of the same module.
+//!
+//! To achieve this, we use a two-stage personality function. The first stage
+//! is the normal personality function which is called by libunwind; this
+//! function always catches the exception as long as it's a Wasmer exception,
+//! without looking at the specific tags. Afterwards, control is transferred
+//! to the module's landing pad, which can load its VMContext and pass it to
+//! the second stage of the personality function. Afterwards, the second stage
+//! can take the "local tag number" (the tag index as seen from the WASM
+//! module's point of view) from the LSDA and translate it to the unique tag
+//! within the Store, and match that against the thrown exception's tag.
+//!
+//! The throw function also uses the VMContext of its own instance to get the
+//! unique tag from the Store, and uses that as the final exception tag.
+//!
+//! It's important to note that we can't count on libunwind behaving properly
+//! if we make calls from the second stage of the personality function; this is
+//! why the first stage has to extract all the data necessary for the second
+//! stage and place it in the exception object. The second stage will clear
+//! out the data before returning, so further stack frames will not get stale
+//! data by mistake.
+
+use std::ffi::c_void;
+
+use libunwind::{self as uw};
+use wasmer_types::TagIndex;
+
+use crate::{InternalStoreHandle, StoreHandle, StoreObjects, VMContext, VMExceptionRef};
+
+use super::dwarf::eh::{self, EHAction, EHContext};
+
+// In case where multiple copies of std exist in a single process,
+// we use address of this static variable to distinguish an exception raised by
+// this copy and some other copy (which needs to be treated as foreign exception).
+static CANARY: u8 = 0;
+const WASMER_EXCEPTION_CLASS: uw::_Unwind_Exception_Class = u64::from_ne_bytes(*b"WMERWASM");
+
+const CATCH_ALL_TAG_VALUE: i32 = i32::MAX;
+// This constant is not reflected in the generated code, but the switch block
+// has a default action of rethrowing the exception, which this value should
+// trigger.
+const NO_MATCH_FOUND_TAG_VALUE: i32 = i32::MAX - 1;
+
+#[repr(C)]
+pub struct UwExceptionWrapper {
+    pub _uwe: uw::_Unwind_Exception,
+    pub canary: *const u8,
+    pub exnref: u32,
+
+    // First stage -> second stage communication
+    pub current_frame_info: Option<Box<CurrentFrameInfo>>,
+}
+
+#[repr(C)]
+pub struct CurrentFrameInfo {
+    pub catch_tags: Vec<u32>,
+    pub has_catch_all: bool,
+}
+
+impl UwExceptionWrapper {
+    pub fn new(exnref: u32) -> Self {
+        Self {
+            _uwe: uw::_Unwind_Exception {
+                exception_class: WASMER_EXCEPTION_CLASS,
+                exception_cleanup: Some(deallocate_exception),
+                private_1: core::ptr::null::<u8>() as usize as _,
+                private_2: 0,
+            },
+            canary: &CANARY,
+            exnref,
+            current_frame_info: None,
+        }
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+const UNWIND_DATA_REG: (i32, i32) = (0, 1); // RAX, RDX
+
+#[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
+const UNWIND_DATA_REG: (i32, i32) = (0, 1); // R0, R1 / X0, X1
+
+#[cfg(any(target_arch = "riscv64", target_arch = "riscv32"))]
+const UNWIND_DATA_REG: (i32, i32) = (10, 11); // x10, x11
+
+#[cfg(target_arch = "loongarch64")]
+const UNWIND_DATA_REG: (i32, i32) = (4, 5); // a0, a1
+
+#[cfg(target_arch = "powerpc64")]
+const UNWIND_DATA_REG: (i32, i32) = (3, 4); // R3, R4
+
+macro_rules! log {
+    ($e: expr) => {
+        if false {
+            eprintln!($e)
+        }
+
+    };
+
+    ($($e: expr),*) => {
+        if false {
+            eprintln!($($e),*)
+        }
+
+    };
+}
+
+#[unsafe(no_mangle)]
+/// The implementation of Wasmer's personality function.
+///
+/// # Safety
+///
+/// Performs libunwind unwinding magic.
+pub unsafe extern "C" fn wasmer_eh_personality(
+    version: std::ffi::c_int,
+    actions: uw::_Unwind_Action,
+    exception_class: uw::_Unwind_Exception_Class,
+    exception_object: *mut uw::_Unwind_Exception,
+    context: *mut uw::_Unwind_Context,
+) -> uw::_Unwind_Reason_Code {
+    unsafe {
+        if version != 1 {
+            return uw::_Unwind_Reason_Code__URC_FATAL_PHASE1_ERROR;
+        }
+
+        let uw_exc = std::mem::transmute::<*mut uw::_Unwind_Exception, *mut UwExceptionWrapper>(
+            exception_object,
+        );
+
+        if exception_class != WASMER_EXCEPTION_CLASS {
+            return uw::_Unwind_Reason_Code__URC_CONTINUE_UNWIND;
+        }
+
+        let eh_action = match find_eh_action(context) {
+            Ok(action) => action,
+            Err(_) => {
+                return uw::_Unwind_Reason_Code__URC_FATAL_PHASE1_ERROR;
+            }
+        };
+
+        let is_catch_specific_or_all = matches!(&eh_action, EHAction::CatchSpecificOrAll { .. });
+        log!("[wasmer][eh] stage1 action: {:?}", eh_action);
+
+        if actions as i32 & uw::_Unwind_Action__UA_SEARCH_PHASE as i32 != 0 {
+            match eh_action {
+                EHAction::None => uw::_Unwind_Reason_Code__URC_CONTINUE_UNWIND,
+                EHAction::CatchAll { .. }
+                | EHAction::CatchSpecific { .. }
+                | EHAction::CatchSpecificOrAll { .. } => uw::_Unwind_Reason_Code__URC_HANDLER_FOUND,
+                EHAction::Terminate => uw::_Unwind_Reason_Code__URC_FATAL_PHASE1_ERROR,
+            }
+        } else {
+            // For the catch-specific vs catch-specific-or-all case below, checked before
+            // we move eh_action out in the match
+            match eh_action {
+                EHAction::None => uw::_Unwind_Reason_Code__URC_CONTINUE_UNWIND,
+                EHAction::CatchAll { lpad } => {
+                    uw::_Unwind_SetGR(context, UNWIND_DATA_REG.0, uw_exc as _);
+                    // Zero means immediate catch-all
+                    uw::_Unwind_SetGR(context, UNWIND_DATA_REG.1, 0);
+                    uw::_Unwind_SetIP(context, lpad as usize as _);
+                    uw::_Unwind_Reason_Code__URC_INSTALL_CONTEXT
+                }
+                EHAction::CatchSpecific { lpad, tags }
+                | EHAction::CatchSpecificOrAll { lpad, tags } => {
+                    log!(
+                        "[wasmer][eh] stage1 catch tags={:?} catch_all={}",
+                        tags,
+                        is_catch_specific_or_all
+                    );
+                    (*uw_exc).current_frame_info = Some(Box::new(CurrentFrameInfo {
+                        catch_tags: tags,
+                        has_catch_all: is_catch_specific_or_all,
+                    }));
+                    uw::_Unwind_SetGR(context, UNWIND_DATA_REG.0, uw_exc as _);
+                    // One means enter phase 2
+                    uw::_Unwind_SetGR(context, UNWIND_DATA_REG.1, 1);
+                    uw::_Unwind_SetIP(context, lpad as usize as _);
+                    uw::_Unwind_Reason_Code__URC_INSTALL_CONTEXT
+                }
+                EHAction::Terminate => uw::_Unwind_Reason_Code__URC_FATAL_PHASE2_ERROR,
+            }
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+/// The second stage of the personality function. See module level documentation
+/// for an explanation of the exact procedure used during unwinding.
+///
+/// # Safety
+///
+/// Does pointer accesses, which must be valid.
+pub unsafe extern "C" fn wasmer_eh_personality2(
+    vmctx: *mut VMContext,
+    exception_object: *mut UwExceptionWrapper,
+) -> i32 {
+    unsafe {
+        let Some(current_frame_info) = (*exception_object).current_frame_info.take() else {
+            // This should never happen
+            unreachable!("wasmer_eh_personality2 called without current_frame_info");
+        };
+
+        log!(
+            "[wasmer][eh] stage2 catch_tags={:?} has_catch_all={}",
+            current_frame_info.catch_tags,
+            current_frame_info.has_catch_all
+        );
+
+        let instance = (*vmctx).instance();
+        let exn = super::exn_obj_from_exnref(vmctx, (*exception_object).exnref);
+
+        for tag in current_frame_info.catch_tags {
+            log!("[wasmer][eh] stage2 checking tag {}", tag);
+            let unique_tag = instance.shared_tag_ptr(TagIndex::from_u32(tag)).index();
+            if unique_tag == (*exn).tag_index() {
+                return tag as i32;
+            }
+        }
+
+        if current_frame_info.has_catch_all {
+            log!("[wasmer][eh] stage2 falling back to catch-all");
+            CATCH_ALL_TAG_VALUE
+        } else {
+            log!("[wasmer][eh] stage2 found no match");
+            NO_MATCH_FOUND_TAG_VALUE
+        }
+    }
+}
+
+unsafe fn find_eh_action(context: *mut uw::_Unwind_Context) -> Result<EHAction, ()> {
+    unsafe {
+        let lsda = uw::_Unwind_GetLanguageSpecificData(context) as *const u8;
+        let mut ip_before_instr: std::ffi::c_int = 0;
+        let ip = uw::_Unwind_GetIPInfo(context, &mut ip_before_instr);
+        let eh_context = EHContext {
+            // The return address points 1 byte past the call instruction,
+            // which could be in the next IP range in LSDA range table.
+            //
+            // `ip = -1` has special meaning, so use wrapping sub to allow for that
+            ip: if ip_before_instr != 0 {
+                ip as _
+            } else {
+                ip.wrapping_sub(1) as _
+            },
+            func_start: uw::_Unwind_GetRegionStart(context) as *const _,
+            get_text_start: &|| uw::_Unwind_GetTextRelBase(context) as *const _,
+            get_data_start: &|| uw::_Unwind_GetDataRelBase(context) as *const _,
+        };
+        eh::find_eh_action(lsda, &eh_context)
+    }
+}
+
+pub unsafe fn read_exnref(exception: *mut c_void) -> u32 {
+    if exception.is_null() {
+        0
+    } else {
+        unsafe { (*(exception as *mut UwExceptionWrapper)).exnref }
+    }
+}
+
+/// # Safety
+///
+/// Performs libunwind unwinding magic. Highly unsafe.
+pub unsafe fn throw(ctx: &StoreObjects, exnref: u32) -> ! {
+    unsafe {
+        log!("[wasmer][eh] throw resolved exnref={exnref}");
+        if exnref == 0 {
+            crate::raise_lib_trap(crate::Trap::lib(
+                wasmer_types::TrapCode::UninitializedExnRef,
+            ))
+        }
+
+        let exception = Box::new(UwExceptionWrapper::new(exnref));
+        let exception_ptr = Box::into_raw(exception);
+
+        // WARNING: The return code from _Unwind_RaiseException is unreliable on some targets
+        // due to GCC compiler issues (see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=114843).
+        // We proceed regardless of the actual return value (similarly to the libstdc++).
+        let exit_code =
+            uw::_Unwind_RaiseException(exception_ptr as *mut libunwind::_Unwind_Exception);
+        delete_exception(exception_ptr as *mut c_void);
+
+        let exnref = VMExceptionRef(StoreHandle::from_internal(
+            ctx.id(),
+            InternalStoreHandle::from_index(exnref as usize).unwrap(),
+        ));
+        log!(
+            "[wasmer][eh] throw -> _Unwind_RaiseException returned (personality={:p}) (exit_code={exit_code})",
+            wasmer_eh_personality as *const ()
+        );
+        crate::raise_lib_trap(crate::Trap::uncaught_exception(exnref, ctx))
+    }
+}
+
+pub unsafe fn delete_exception(exception: *mut c_void) {
+    unsafe {
+        if !exception.is_null() {
+            uw::_Unwind_DeleteException(exception as *mut uw::_Unwind_Exception);
+        }
+    }
+}
+
+unsafe extern "C" fn deallocate_exception(
+    _: uw::_Unwind_Reason_Code,
+    exception: *mut uw::_Unwind_Exception,
+) {
+    unsafe {
+        let exception = Box::from_raw(exception as *mut UwExceptionWrapper);
+        drop(exception);
+    }
+}

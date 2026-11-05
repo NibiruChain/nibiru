@@ -1,13 +1,11 @@
 use std::sync::Arc;
 use wasmer::sys::BaseTunables;
 #[cfg(feature = "cranelift")]
-use wasmer::Cranelift;
-use wasmer::NativeEngineExt;
+use wasmer::sys::Cranelift;
 #[cfg(not(feature = "cranelift"))]
-use wasmer::Singlepass;
-use wasmer::{
-    wasmparser::Operator, CompilerConfig, Engine, Pages, Target, WASM_PAGE_SIZE,
-};
+use wasmer::sys::Singlepass;
+use wasmer::sys::{CompilerConfig, NativeEngineExt};
+use wasmer::{wasmparser::Operator, Engine, Pages, WASM_PAGE_SIZE};
 
 use crate::size::Size;
 
@@ -42,7 +40,7 @@ fn cost(operator: &Operator) -> u64 {
 pub fn make_runtime_engine(memory_limit: Option<Size>) -> Engine {
     let mut engine = Engine::headless();
     if let Some(limit) = memory_limit {
-        let base = BaseTunables::for_target(&Target::default());
+        let base = BaseTunables::new();
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }
@@ -66,7 +64,7 @@ pub fn make_compiling_engine(memory_limit: Option<Size>) -> Engine {
     compiler.push_middleware(metering);
     let mut engine = Engine::from(compiler);
     if let Some(limit) = memory_limit {
-        let base = BaseTunables::for_target(&Target::default());
+        let base = BaseTunables::new();
         let tunables = LimitingTunables::new(base, limit_to_pages(limit));
         engine.set_tunables(tunables);
     }
@@ -90,6 +88,88 @@ fn limit_to_pages(limit: Size) -> Pages {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn instantiate(wat: &str) -> (wasmer::Store, wasmer::Instance) {
+        let mut store =
+            wasmer::Store::new(make_compiling_engine(Some(Size::mebi(16))));
+        let wasm = wat::parse_str(wat).unwrap();
+        let module = wasmer::Module::new(&store, wasm).unwrap();
+        let instance =
+            wasmer::Instance::new(&mut store, &module, &wasmer::imports! {})
+                .unwrap();
+        instance
+            .exports
+            .get_global("wasmer_metering_remaining_points")
+            .unwrap()
+            .set(&mut store, wasmer::Value::I64(i64::MAX))
+            .unwrap();
+        (store, instance)
+    }
+
+    #[test]
+    fn large_effective_memory_addresses_trap_and_instance_recovers() {
+        // Wasm32 addresses plus unsigned static offsets can approach 8 GiB.
+        // Exercise both reads and writes through the production engine/middleware.
+        for offset in [0u32, 0x8000_0000, 0xffff_ffff] {
+            let wat = format!(
+                r#"(module (memory 1)
+                (func (export "load") (param i32) (result i32)
+                    local.get 0 i32.load offset={offset})
+                (func (export "store") (param i32)
+                    local.get 0 i32.const 17 i32.store offset={offset})
+                (func (export "valid") (result i32)
+                    i32.const 0 i32.const 42 i32.store
+                    i32.const 0 i32.load))"#
+            );
+            let (mut store, instance) = instantiate(&wat);
+            let load = instance
+                .exports
+                .get_typed_function::<i32, i32>(&store, "load")
+                .unwrap();
+            let write = instance
+                .exports
+                .get_typed_function::<i32, ()>(&store, "store")
+                .unwrap();
+            let valid = instance
+                .exports
+                .get_typed_function::<(), i32>(&store, "valid")
+                .unwrap();
+            for address in [0x7fff_ffffu32, 0xffff_ffff] {
+                assert!(load
+                    .call(&mut store, address as i32)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("out of bounds"));
+                assert!(write
+                    .call(&mut store, address as i32)
+                    .unwrap_err()
+                    .to_string()
+                    .contains("out of bounds"));
+                assert_eq!(valid.call(&mut store).unwrap(), 42);
+            }
+        }
+    }
+
+    #[test]
+    fn large_integer_division_function_compiles_and_traps() {
+        // This exceeds ARM64 CBZ range: restoring the short branch produces
+        // ImpossibleRelocation during assembler finalization.
+        let mut body =
+            String::from("local.get 0 local.get 1 i64.div_u local.set 0 ");
+        for _ in 0..100000 {
+            body.push_str("local.get 0 i64.const 1 i64.add local.set 0 ");
+        }
+        body.push_str("local.get 0");
+        let wat = format!("(module (func (export \"divide\") (param i64 i64) (result i64) {body}))");
+        let (mut store, instance) = instantiate(&wat);
+        let divide = instance
+            .exports
+            .get_typed_function::<(i64, i64), i64>(&store, "divide")
+            .unwrap();
+        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 100050);
+        assert!(divide.call(&mut store, 100, 0).is_err());
+        assert_eq!(divide.call(&mut store, 100, 2).unwrap(), 100050);
+    }
 
     #[test]
     fn limit_to_pages_works() {

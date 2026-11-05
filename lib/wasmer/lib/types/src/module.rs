@@ -5,25 +5,26 @@
 //! `wasmer::Module`.
 
 use crate::entity::{EntityRef, PrimaryMap};
+use crate::indexes::SignatureHash;
 use crate::{
-    CustomSectionIndex, DataIndex, ElemIndex, ExportIndex, ExportType,
-    ExternType, FunctionIndex, FunctionType, GlobalIndex, GlobalInit,
-    GlobalType, ImportIndex, ImportType, LocalFunctionIndex, LocalGlobalIndex,
-    LocalMemoryIndex, LocalTableIndex, MemoryIndex, MemoryType, ModuleHash,
-    SignatureIndex, TableIndex, TableInitializer, TableType,
+    CustomSectionIndex, DataIndex, ElemIndex, ExportIndex, ExportType, ExternType, FunctionIndex,
+    FunctionType, GlobalIndex, GlobalInit, GlobalType, ImportIndex, ImportType, LocalFunctionIndex,
+    LocalGlobalIndex, LocalMemoryIndex, LocalTableIndex, LocalTagIndex, MemoryIndex, MemoryType,
+    ModuleHash, SignatureIndex, TableIndex, TableInitializer, TableType, TagIndex, TagType,
+    WasmError, WasmResult,
 };
 
 use indexmap::IndexMap;
+use itertools::Itertools;
 use rkyv::rancor::{Fallible, Source, Trace};
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fmt;
 use std::iter::ExactSizeIterator;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
 #[derive(Debug, Clone, RkyvSerialize, RkyvDeserialize, Archive)]
@@ -35,7 +36,7 @@ pub struct ModuleId {
 
 impl ModuleId {
     pub fn id(&self) -> String {
-        format!("{}", &self.id)
+        format!("{}", self.id)
     }
 }
 
@@ -49,17 +50,7 @@ impl Default for ModuleId {
 }
 
 /// Hash key of an import
-#[derive(
-    Debug,
-    Hash,
-    Eq,
-    PartialEq,
-    Clone,
-    Default,
-    RkyvSerialize,
-    RkyvDeserialize,
-    Archive,
-)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Default, RkyvSerialize, RkyvDeserialize, Archive)]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[rkyv(derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug))]
 pub struct ImportKey {
@@ -93,10 +84,7 @@ mod serde_imports {
     type SerializedType = Vec<(ImportKey, ImportIndex)>;
     // IndexMap<ImportKey, ImportIndex>
     // Vec<
-    pub fn serialize<S: Serializer>(
-        s: &InitialType,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
+    pub fn serialize<S: Serializer>(s: &InitialType, serializer: S) -> Result<S::Ok, S::Error> {
         let vec: SerializedType = s
             .iter()
             .map(|(a, b)| (a.clone(), b.clone()))
@@ -107,8 +95,7 @@ mod serde_imports {
     pub fn deserialize<'de, D: Deserializer<'de>>(
         deserializer: D,
     ) -> Result<InitialType, D::Error> {
-        let serialized =
-            <SerializedType as Deserialize>::deserialize(deserializer)?;
+        let serialized = <SerializedType as Deserialize>::deserialize(deserializer)?;
         Ok(serialized.into_iter().collect())
     }
 }
@@ -129,10 +116,7 @@ pub struct ModuleInfo {
     /// should be computed by the process.
     /// It's not skipped in rkyv, but that is okay, because even though it's skipped in bincode/serde
     /// it's still deserialized back as a garbage number, and later override from computed by the process
-    #[cfg_attr(
-        feature = "enable-serde",
-        serde(skip_serializing, skip_deserializing)
-    )]
+    #[cfg_attr(feature = "enable-serde", serde(skip_serializing, skip_deserializing))]
     pub id: ModuleId,
 
     /// hash of the module
@@ -162,7 +146,13 @@ pub struct ModuleInfo {
     pub passive_elements: HashMap<ElemIndex, Box<[FunctionIndex]>>,
 
     /// WebAssembly passive data segments.
-    pub passive_data: HashMap<DataIndex, Box<[u8]>>,
+    ///
+    /// Stored as `Arc<[u8]>` so that every instance created from this module can
+    /// share the same immutable segment bytes (a cheap refcount bump) instead of
+    /// deep-copying them. `memory.init` only ever reads these bytes, and
+    /// `data.drop` is tracked per-instance, so there is no reason to clone them
+    /// per instance.
+    pub passive_data: BTreeMap<DataIndex, Arc<[u8]>>,
 
     /// WebAssembly global initializers.
     pub global_initializers: PrimaryMap<LocalGlobalIndex, GlobalInit>,
@@ -172,6 +162,9 @@ pub struct ModuleInfo {
 
     /// WebAssembly function signatures.
     pub signatures: PrimaryMap<SignatureIndex, FunctionType>,
+
+    /// WebAssembly function signature hashes.
+    pub signature_hashes: PrimaryMap<SignatureIndex, SignatureHash>,
 
     /// WebAssembly functions (imported and local).
     pub functions: PrimaryMap<FunctionIndex, SignatureIndex>,
@@ -184,6 +177,9 @@ pub struct ModuleInfo {
 
     /// WebAssembly global variables (imported and local).
     pub globals: PrimaryMap<GlobalIndex, GlobalType>,
+
+    /// WebAssembly tag variables (imported and local).
+    pub tags: PrimaryMap<TagIndex, SignatureIndex>,
 
     /// Custom sections in the module.
     pub custom_sections: IndexMap<String, CustomSectionIndex>,
@@ -200,6 +196,9 @@ pub struct ModuleInfo {
     /// Number of imported memories in the module.
     pub num_imported_memories: usize,
 
+    /// Number of imported tags in the module.
+    pub num_imported_tags: usize,
+
     /// Number of imported globals in the module.
     pub num_imported_globals: usize,
 }
@@ -215,18 +214,21 @@ pub struct ArchivableModuleInfo {
     start_function: Option<FunctionIndex>,
     table_initializers: Vec<TableInitializer>,
     passive_elements: BTreeMap<ElemIndex, Box<[FunctionIndex]>>,
-    passive_data: BTreeMap<DataIndex, Box<[u8]>>,
+    passive_data: BTreeMap<DataIndex, Arc<[u8]>>,
     global_initializers: PrimaryMap<LocalGlobalIndex, GlobalInit>,
     function_names: BTreeMap<FunctionIndex, String>,
     signatures: PrimaryMap<SignatureIndex, FunctionType>,
+    signature_hashes: PrimaryMap<SignatureIndex, SignatureHash>,
     functions: PrimaryMap<FunctionIndex, SignatureIndex>,
     tables: PrimaryMap<TableIndex, TableType>,
     memories: PrimaryMap<MemoryIndex, MemoryType>,
     globals: PrimaryMap<GlobalIndex, GlobalType>,
+    tags: PrimaryMap<TagIndex, SignatureIndex>,
     custom_sections: IndexMap<String, CustomSectionIndex>,
     custom_sections_data: PrimaryMap<CustomSectionIndex, Box<[u8]>>,
     num_imported_functions: usize,
     num_imported_tables: usize,
+    num_imported_tags: usize,
     num_imported_memories: usize,
     num_imported_globals: usize,
 }
@@ -241,18 +243,21 @@ impl From<ModuleInfo> for ArchivableModuleInfo {
             start_function: it.start_function,
             table_initializers: it.table_initializers,
             passive_elements: it.passive_elements.into_iter().collect(),
-            passive_data: it.passive_data.into_iter().collect(),
+            passive_data: it.passive_data,
             global_initializers: it.global_initializers,
             function_names: it.function_names.into_iter().collect(),
             signatures: it.signatures,
+            signature_hashes: it.signature_hashes,
             functions: it.functions,
             tables: it.tables,
             memories: it.memories,
             globals: it.globals,
+            tags: it.tags,
             custom_sections: it.custom_sections,
             custom_sections_data: it.custom_sections_data,
             num_imported_functions: it.num_imported_functions,
             num_imported_tables: it.num_imported_tables,
+            num_imported_tags: it.num_imported_tags,
             num_imported_memories: it.num_imported_memories,
             num_imported_globals: it.num_imported_globals,
         }
@@ -270,18 +275,21 @@ impl From<ArchivableModuleInfo> for ModuleInfo {
             start_function: it.start_function,
             table_initializers: it.table_initializers,
             passive_elements: it.passive_elements.into_iter().collect(),
-            passive_data: it.passive_data.into_iter().collect(),
+            passive_data: it.passive_data,
             global_initializers: it.global_initializers,
             function_names: it.function_names.into_iter().collect(),
             signatures: it.signatures,
+            signature_hashes: it.signature_hashes,
             functions: it.functions,
             tables: it.tables,
             memories: it.memories,
             globals: it.globals,
+            tags: it.tags,
             custom_sections: it.custom_sections,
             custom_sections_data: it.custom_sections_data,
             num_imported_functions: it.num_imported_functions,
             num_imported_tables: it.num_imported_tables,
+            num_imported_tags: it.num_imported_tags,
             num_imported_memories: it.num_imported_memories,
             num_imported_globals: it.num_imported_globals,
         }
@@ -298,16 +306,12 @@ impl Archive for ModuleInfo {
     type Archived = <ArchivableModuleInfo as Archive>::Archived;
     type Resolver = <ArchivableModuleInfo as Archive>::Resolver;
 
-    fn resolve(
-        &self,
-        resolver: Self::Resolver,
-        out: rkyv::Place<Self::Archived>,
-    ) {
+    fn resolve(&self, resolver: Self::Resolver, out: rkyv::Place<Self::Archived>) {
         ArchivableModuleInfo::from(self).resolve(resolver, out)
     }
 }
 
-impl<S: rkyv::ser::Allocator + rkyv::ser::Writer + Fallible + ?Sized>
+impl<S: rkyv::ser::Allocator + rkyv::ser::Writer + rkyv::ser::Sharing + Fallible + ?Sized>
     RkyvSerialize<S> for ModuleInfo
 where
     <S as Fallible>::Error: rkyv::rancor::Source + rkyv::rancor::Trace,
@@ -317,16 +321,13 @@ where
     }
 }
 
-impl<D: Fallible + ?Sized> RkyvDeserialize<ModuleInfo, D>
+impl<D: rkyv::de::Pooling + Fallible + ?Sized> RkyvDeserialize<ModuleInfo, D>
     for ArchivedArchivableModuleInfo
 where
     D::Error: Source + Trace,
 {
     fn deserialize(&self, deserializer: &mut D) -> Result<ModuleInfo, D::Error> {
-        let archived = RkyvDeserialize::<ArchivableModuleInfo, D>::deserialize(
-            self,
-            deserializer,
-        )?;
+        let archived = RkyvDeserialize::<ArchivableModuleInfo, D>::deserialize(self, deserializer)?;
         Ok(ModuleInfo::from(archived))
     }
 }
@@ -344,14 +345,17 @@ impl PartialEq for ModuleInfo {
             && self.global_initializers == other.global_initializers
             && self.function_names == other.function_names
             && self.signatures == other.signatures
+            && self.signature_hashes == other.signature_hashes
             && self.functions == other.functions
             && self.tables == other.tables
             && self.memories == other.memories
             && self.globals == other.globals
+            && self.tags == other.tags
             && self.custom_sections == other.custom_sections
             && self.custom_sections_data == other.custom_sections_data
             && self.num_imported_functions == other.num_imported_functions
             && self.num_imported_tables == other.num_imported_tables
+            && self.num_imported_tags == other.num_imported_tags
             && self.num_imported_memories == other.num_imported_memories
             && self.num_imported_globals == other.num_imported_globals
     }
@@ -370,11 +374,30 @@ impl ModuleInfo {
         self.hash
     }
 
+    /// Returns the module hash as String if available
+    pub fn hash_string(&self) -> Option<String> {
+        self.hash.map(|m| m.to_string())
+    }
+
+    /// Validates invariants for the precomputed signature hashes.
+    pub fn validate_signature_hashes(&self) -> WasmResult<()> {
+        // TODO: the signatures are not distinct, thus we cannot just validate signature_hashes.
+        if self
+            .signatures
+            .iter()
+            .map(|(_, signature)| signature)
+            .unique()
+            .map(|signature| signature.signature_hash())
+            .all_unique()
+        {
+            Ok(())
+        } else {
+            Err(WasmError::Generic("signature hash collision".to_string()))
+        }
+    }
+
     /// Get the given passive element, if it exists.
-    pub fn get_passive_element(
-        &self,
-        index: ElemIndex,
-    ) -> Option<&[FunctionIndex]> {
+    pub fn get_passive_element(&self, index: ElemIndex) -> Option<&[FunctionIndex]> {
         self.passive_elements.get(&index).map(|es| &**es)
     }
 
@@ -394,9 +417,7 @@ impl ModuleInfo {
     }
 
     /// Get the export types of the module
-    pub fn exports(
-        &'_ self,
-    ) -> ExportsIterator<impl Iterator<Item = ExportType> + '_> {
+    pub fn exports(&'_ self) -> ExportsIterator<Box<dyn Iterator<Item = ExportType> + '_>> {
         let iter = self.exports.iter().map(move |(name, export_index)| {
             let extern_type = match export_index {
                 ExportIndex::Function(i) => {
@@ -416,55 +437,73 @@ impl ModuleInfo {
                     let global_type = self.globals.get(*i).unwrap();
                     ExternType::Global(*global_type)
                 }
+                ExportIndex::Tag(i) => {
+                    let signature = self.tags.get(*i).unwrap();
+                    let tag_type = self.signatures.get(*signature).unwrap();
+
+                    ExternType::Tag(TagType {
+                        kind: crate::types::TagKind::Exception,
+                        params: tag_type.params().into(),
+                    })
+                }
             };
             ExportType::new(name, extern_type)
         });
-        ExportsIterator::new(iter, self.exports.len())
+        ExportsIterator::new(Box::new(iter), self.exports.len())
     }
 
     /// Get the import types of the module
-    pub fn imports(
-        &'_ self,
-    ) -> ImportsIterator<impl Iterator<Item = ImportType> + '_> {
-        let iter = self.imports.iter().map(
-            move |(ImportKey { module, field, .. }, import_index)| {
-                let extern_type = match import_index {
-                    ImportIndex::Function(i) => {
-                        let signature = self.functions.get(*i).unwrap();
-                        let func_type = self.signatures.get(*signature).unwrap();
-                        ExternType::Function(func_type.clone())
-                    }
-                    ImportIndex::Table(i) => {
-                        let table_type = self.tables.get(*i).unwrap();
-                        ExternType::Table(*table_type)
-                    }
-                    ImportIndex::Memory(i) => {
-                        let memory_type = self.memories.get(*i).unwrap();
-                        ExternType::Memory(*memory_type)
-                    }
-                    ImportIndex::Global(i) => {
-                        let global_type = self.globals.get(*i).unwrap();
-                        ExternType::Global(*global_type)
-                    }
-                };
-                ImportType::new(module, field, extern_type)
-            },
-        );
-        ImportsIterator::new(iter, self.imports.len())
+    pub fn imports(&'_ self) -> ImportsIterator<Box<dyn Iterator<Item = ImportType> + '_>> {
+        let iter =
+            self.imports
+                .iter()
+                .map(move |(ImportKey { module, field, .. }, import_index)| {
+                    let extern_type = match import_index {
+                        ImportIndex::Function(i) => {
+                            let signature = self.functions.get(*i).unwrap();
+                            let func_type = self.signatures.get(*signature).unwrap();
+                            ExternType::Function(func_type.clone())
+                        }
+                        ImportIndex::Table(i) => {
+                            let table_type = self.tables.get(*i).unwrap();
+                            ExternType::Table(*table_type)
+                        }
+                        ImportIndex::Memory(i) => {
+                            let memory_type = self.memories.get(*i).unwrap();
+                            ExternType::Memory(*memory_type)
+                        }
+                        ImportIndex::Global(i) => {
+                            let global_type = self.globals.get(*i).unwrap();
+                            ExternType::Global(*global_type)
+                        }
+                        ImportIndex::Tag(i) => {
+                            let tag_type = self.tags.get(*i).unwrap();
+                            let func_type = self.signatures.get(*tag_type).unwrap();
+                            ExternType::Tag(TagType::from_fn_type(
+                                crate::TagKind::Exception,
+                                func_type.clone(),
+                            ))
+                        }
+                    };
+                    ImportType::new(module, field, extern_type)
+                });
+        ImportsIterator::new(Box::new(iter), self.imports.len())
     }
 
     /// Get the custom sections of the module given a `name`.
     pub fn custom_sections<'a>(
         &'a self,
         name: &'a str,
-    ) -> impl Iterator<Item = Box<[u8]>> + 'a {
-        self.custom_sections.iter().filter_map(
-            move |(section_name, section_index)| {
-                if name != section_name {
-                    return None;
-                }
-                Some(self.custom_sections_data[*section_index].clone())
-            },
+    ) -> Box<impl Iterator<Item = Box<[u8]>> + 'a> {
+        Box::new(
+            self.custom_sections
+                .iter()
+                .filter_map(move |(section_name, section_index)| {
+                    if name != section_name {
+                        return None;
+                    }
+                    Some(self.custom_sections_data[*section_index].clone())
+                }),
         )
     }
 
@@ -475,10 +514,7 @@ impl ModuleInfo {
 
     /// Convert a `FunctionIndex` into a `LocalFunctionIndex`. Returns None if the
     /// index is an imported function.
-    pub fn local_func_index(
-        &self,
-        func: FunctionIndex,
-    ) -> Option<LocalFunctionIndex> {
+    pub fn local_func_index(&self, func: FunctionIndex) -> Option<LocalFunctionIndex> {
         func.index()
             .checked_sub(self.num_imported_functions)
             .map(LocalFunctionIndex::new)
@@ -489,6 +525,11 @@ impl ModuleInfo {
         index.index() < self.num_imported_functions
     }
 
+    /// Get number of local functions.
+    pub fn local_func_count(&self) -> usize {
+        self.functions.len() - self.num_imported_functions
+    }
+
     /// Convert a `LocalTableIndex` into a `TableIndex`.
     pub fn table_index(&self, local_table: LocalTableIndex) -> TableIndex {
         TableIndex::new(self.num_imported_tables + local_table.index())
@@ -496,10 +537,7 @@ impl ModuleInfo {
 
     /// Convert a `TableIndex` into a `LocalTableIndex`. Returns None if the
     /// index is an imported table.
-    pub fn local_table_index(
-        &self,
-        table: TableIndex,
-    ) -> Option<LocalTableIndex> {
+    pub fn local_table_index(&self, table: TableIndex) -> Option<LocalTableIndex> {
         table
             .index()
             .checked_sub(self.num_imported_tables)
@@ -518,10 +556,7 @@ impl ModuleInfo {
 
     /// Convert a `MemoryIndex` into a `LocalMemoryIndex`. Returns None if the
     /// index is an imported memory.
-    pub fn local_memory_index(
-        &self,
-        memory: MemoryIndex,
-    ) -> Option<LocalMemoryIndex> {
+    pub fn local_memory_index(&self, memory: MemoryIndex) -> Option<LocalMemoryIndex> {
         memory
             .index()
             .checked_sub(self.num_imported_memories)
@@ -540,10 +575,7 @@ impl ModuleInfo {
 
     /// Convert a `GlobalIndex` into a `LocalGlobalIndex`. Returns None if the
     /// index is an imported global.
-    pub fn local_global_index(
-        &self,
-        global: GlobalIndex,
-    ) -> Option<LocalGlobalIndex> {
+    pub fn local_global_index(&self, global: GlobalIndex) -> Option<LocalGlobalIndex> {
         global
             .index()
             .checked_sub(self.num_imported_globals)
@@ -555,6 +587,29 @@ impl ModuleInfo {
         index.index() < self.num_imported_globals
     }
 
+    /// Get the type of a global by its index.
+    pub fn global_type(&self, global_index: GlobalIndex) -> Option<GlobalType> {
+        self.globals.get(global_index).copied()
+    }
+
+    /// Convert a `LocalTagIndex` into a `TagIndex`.
+    pub fn tag_index(&self, local_tag: LocalTagIndex) -> TagIndex {
+        TagIndex::new(self.num_imported_tags + local_tag.index())
+    }
+
+    /// Convert a `TagIndex` into a `LocalTagIndex`. Returns None if the
+    /// index is an imported tag.
+    pub fn local_tag_index(&self, tag: TagIndex) -> Option<LocalTagIndex> {
+        tag.index()
+            .checked_sub(self.num_imported_tags)
+            .map(LocalTagIndex::new)
+    }
+
+    /// Test whether the given tag index is for an imported tag.
+    pub fn is_imported_tag(&self, index: TagIndex) -> bool {
+        index.index() < self.num_imported_tags
+    }
+
     /// Get the Module name
     pub fn name(&self) -> String {
         match self.name {
@@ -564,13 +619,19 @@ impl ModuleInfo {
     }
 
     /// Get the imported function types of the module.
-    pub fn imported_function_types(
-        &'_ self,
-    ) -> impl Iterator<Item = FunctionType> + '_ {
+    pub fn imported_function_types(&'_ self) -> impl Iterator<Item = FunctionType> + '_ {
         self.functions
             .values()
             .take(self.num_imported_functions)
             .map(move |sig_index| self.signatures[*sig_index].clone())
+    }
+
+    /// Get the name of a function by its index.
+    pub fn get_function_name(&self, func_index: FunctionIndex) -> String {
+        self.function_names
+            .get(&func_index)
+            .cloned()
+            .unwrap_or_else(|| format!("function_{}", func_index.as_u32()))
     }
 }
 
@@ -597,9 +658,7 @@ impl<I: Iterator<Item = ExportType> + Sized> ExportsIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = ExportType> + Sized> ExactSizeIterator
-    for ExportsIterator<I>
-{
+impl<I: Iterator<Item = ExportType> + Sized> ExactSizeIterator for ExportsIterator<I> {
     // We can easily calculate the remaining number of iterations.
     fn len(&self) -> usize {
         self.size
@@ -608,20 +667,14 @@ impl<I: Iterator<Item = ExportType> + Sized> ExactSizeIterator
 
 impl<I: Iterator<Item = ExportType> + Sized> ExportsIterator<I> {
     /// Get only the functions
-    pub fn functions(
-        self,
-    ) -> impl Iterator<Item = ExportType<FunctionType>> + Sized {
+    pub fn functions(self) -> impl Iterator<Item = ExportType<FunctionType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
-            ExternType::Function(ty) => {
-                Some(ExportType::new(extern_.name(), ty.clone()))
-            }
+            ExternType::Function(ty) => Some(ExportType::new(extern_.name(), ty.clone())),
             _ => None,
         })
     }
     /// Get only the memories
-    pub fn memories(
-        self,
-    ) -> impl Iterator<Item = ExportType<MemoryType>> + Sized {
+    pub fn memories(self) -> impl Iterator<Item = ExportType<MemoryType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
             ExternType::Memory(ty) => Some(ExportType::new(extern_.name(), *ty)),
             _ => None,
@@ -635,11 +688,16 @@ impl<I: Iterator<Item = ExportType> + Sized> ExportsIterator<I> {
         })
     }
     /// Get only the globals
-    pub fn globals(
-        self,
-    ) -> impl Iterator<Item = ExportType<GlobalType>> + Sized {
+    pub fn globals(self) -> impl Iterator<Item = ExportType<GlobalType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
             ExternType::Global(ty) => Some(ExportType::new(extern_.name(), *ty)),
+            _ => None,
+        })
+    }
+    /// Get only the tags
+    pub fn tags(self) -> impl Iterator<Item = ExportType<TagType>> + Sized {
+        self.iter.filter_map(|extern_| match extern_.ty() {
+            ExternType::Tag(ty) => Some(ExportType::new(extern_.name(), ty.clone())),
             _ => None,
         })
     }
@@ -666,9 +724,7 @@ impl<I: Iterator<Item = ImportType> + Sized> ImportsIterator<I> {
     }
 }
 
-impl<I: Iterator<Item = ImportType> + Sized> ExactSizeIterator
-    for ImportsIterator<I>
-{
+impl<I: Iterator<Item = ImportType> + Sized> ExactSizeIterator for ImportsIterator<I> {
     // We can easily calculate the remaining number of iterations.
     fn len(&self) -> usize {
         self.size
@@ -677,9 +733,7 @@ impl<I: Iterator<Item = ImportType> + Sized> ExactSizeIterator
 
 impl<I: Iterator<Item = ImportType> + Sized> ImportsIterator<I> {
     /// Get only the functions
-    pub fn functions(
-        self,
-    ) -> impl Iterator<Item = ImportType<FunctionType>> + Sized {
+    pub fn functions(self) -> impl Iterator<Item = ImportType<FunctionType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
             ExternType::Function(ty) => Some(ImportType::new(
                 extern_.module(),
@@ -690,33 +744,34 @@ impl<I: Iterator<Item = ImportType> + Sized> ImportsIterator<I> {
         })
     }
     /// Get only the memories
-    pub fn memories(
-        self,
-    ) -> impl Iterator<Item = ImportType<MemoryType>> + Sized {
+    pub fn memories(self) -> impl Iterator<Item = ImportType<MemoryType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
-            ExternType::Memory(ty) => {
-                Some(ImportType::new(extern_.module(), extern_.name(), *ty))
-            }
+            ExternType::Memory(ty) => Some(ImportType::new(extern_.module(), extern_.name(), *ty)),
             _ => None,
         })
     }
     /// Get only the tables
     pub fn tables(self) -> impl Iterator<Item = ImportType<TableType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
-            ExternType::Table(ty) => {
-                Some(ImportType::new(extern_.module(), extern_.name(), *ty))
-            }
+            ExternType::Table(ty) => Some(ImportType::new(extern_.module(), extern_.name(), *ty)),
             _ => None,
         })
     }
     /// Get only the globals
-    pub fn globals(
-        self,
-    ) -> impl Iterator<Item = ImportType<GlobalType>> + Sized {
+    pub fn globals(self) -> impl Iterator<Item = ImportType<GlobalType>> + Sized {
         self.iter.filter_map(|extern_| match extern_.ty() {
-            ExternType::Global(ty) => {
-                Some(ImportType::new(extern_.module(), extern_.name(), *ty))
-            }
+            ExternType::Global(ty) => Some(ImportType::new(extern_.module(), extern_.name(), *ty)),
+            _ => None,
+        })
+    }
+    /// Get only the tags
+    pub fn tags(self) -> impl Iterator<Item = ImportType<TagType>> + Sized {
+        self.iter.filter_map(|extern_| match extern_.ty() {
+            ExternType::Tag(ty) => Some(ImportType::new(
+                extern_.module(),
+                extern_.name(),
+                ty.clone(),
+            )),
             _ => None,
         })
     }

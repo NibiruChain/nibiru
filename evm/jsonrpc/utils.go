@@ -18,11 +18,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmrpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
-	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/rpc"

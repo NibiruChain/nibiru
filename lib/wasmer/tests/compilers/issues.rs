@@ -1,5 +1,8 @@
 //! This file is mainly to assure specific issues are working well
-use anyhow::Result;
+
+use anyhow::{Context, Result};
+use bytesize::ByteSize;
+use itertools::Itertools;
 use wasmer::FunctionEnv;
 use wasmer::*;
 
@@ -88,6 +91,7 @@ fn call_with_static_data_pointers(mut config: crate::Config) -> Result<()> {
         memory: Option<Memory>,
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn banana(
         mut ctx: FunctionEnvMut<Env>,
         a: u64,
@@ -276,7 +280,7 @@ fn test_start(mut config: crate::Config) -> Result<()> {
     let instance = Instance::new(&mut store, &module, &imports);
     assert!(instance.is_err());
     if let InstantiationError::Start(err) = instance.unwrap_err() {
-        assert_eq!(err.message(), "unreachable");
+        assert!(err.message().contains("unreachable"));
     } else {
         panic!("_start should have failed with an unreachable error")
     }
@@ -324,14 +328,20 @@ fn test_popcnt(mut config: crate::Config) -> Result<()> {
     let mut num = 1;
     for _ in 1..10000 {
         let result = popcnt_i32.call(&mut store, &[Value::I32(num)]).unwrap();
-        assert_eq!(&Value::I32(num.count_ones() as i32), result.get(0).unwrap());
+        assert_eq!(
+            &Value::I32(num.count_ones() as i32),
+            result.first().unwrap()
+        );
         num = get_next_number_i32(num);
     }
 
     let mut num = 1;
     for _ in 1..10000 {
         let result = popcnt_i64.call(&mut store, &[Value::I64(num)]).unwrap();
-        assert_eq!(&Value::I64(num.count_ones() as i64), result.get(0).unwrap());
+        assert_eq!(
+            &Value::I64(num.count_ones() as i64),
+            result.first().unwrap()
+        );
         num = get_next_number_i64(num);
     }
 
@@ -343,7 +353,7 @@ fn test_popcnt(mut config: crate::Config) -> Result<()> {
 /// sequence
 ///   mov x17, #0x1010
 ///   sub xsp, xsp, x17
-/// will tranform to
+/// will transform to
 ///   mov x17, #0x1010
 ///   sub xzr, xzr, x17
 /// and the locals
@@ -427,6 +437,8 @@ fn large_number_local(mut config: crate::Config) -> Result<()> {
           i64.add
           local.get 16
           i64.add
+          local.get 512
+          i64.add
         )
       )
     "#;
@@ -439,11 +451,12 @@ fn large_number_local(mut config: crate::Config) -> Result<()> {
         .get_function("large_local")?
         .call(&mut store, &[])
         .unwrap();
-    assert_eq!(&Value::I64(1_i64), result.get(0).unwrap());
+    assert_eq!(&Value::I64(1_i64), result.first().unwrap());
     Ok(())
 }
 
-#[cfg(target_arch = "aarch64")]
+// TODO: the tests fails on RISC-V as the `j` instruction can reach only +- 1MiB offset.
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 #[compiler_test(issues)]
 /// Singlepass panics on aarch64 for long relocations.
 ///
@@ -460,38 +473,45 @@ fn issue_4519(mut config: crate::Config) -> Result<()> {
     Ok(())
 }
 
-#[cfg(target_arch = "aarch64")]
+// TODO: the tests fails on RISC-V as the `j` instruction can reach only +- 1MiB offset.
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 #[compiler_test(issues)]
 /// Singlepass panics on aarch64 for long relocations.
-/// This test specifically targets the emission of the sdiv64 binop.
+/// This test specifically targets the emission of sdiv64, srem64, urem64 binops.
 ///
 /// Note: this one is specific to Singlepass, but we want to test in all
 /// available compilers.
 ///
 /// https://github.com/wasmerio/wasmer/issues/4519
-fn issue_4519_sdiv64(mut config: crate::Config) -> Result<()> {
-    const REPEATS_TO_REPRODUCE: usize = 16_000;
+fn issue_4519_sdiv64_srem64_urem64(mut config: crate::Config) -> Result<()> {
+    const REPEATS_TO_REPRODUCE: usize = 30_000;
 
-    let sdiv64 = r#"
-        i64.const 3155225962131072202
-        i64.const -6717269760755396770
-        i64.div_s
-        drop
-    "#;
+    let ops = ["i64.div_s", "i64.rem_s", "i64.rem_u"];
 
-    let wat = format!(
-        r#"
-      (module
-        (func (;0;)
-            {}
+    for op in ops {
+        let sdiv64 = format!(
+            r#"
+            i64.const 3155225962131072202
+            i64.const -6717269760755396770
+            {op}
+            drop
+        "#
+        );
+
+        let wat = format!(
+            r#"
+        (module
+            (func (;0;)
+                {}
+            )
         )
-      )
-    "#,
-        sdiv64.repeat(REPEATS_TO_REPRODUCE)
-    );
+        "#,
+            sdiv64.repeat(REPEATS_TO_REPRODUCE)
+        );
 
-    let mut store = config.store();
-    let module = Module::new(&store, wat)?;
+        let mut store = config.store();
+        let module = Module::new(&store, wat)?;
+    }
 
     Ok(())
 }
@@ -507,17 +527,944 @@ fn issue_4519_sdiv64(mut config: crate::Config) -> Result<()> {
 ///
 /// https://github.com/wasmerio/wasmer/issues/5309
 fn issue_5309_reftype_panic(mut config: crate::Config) -> Result<()> {
-    let wat = format!(
-        r#"
+    let wat = r#"
       (module
         (type $x1 (func (param funcref)))
         (import "env" "abort" (func $f (type $x1)))
       )
-    "#,
-    );
+    "#
+    .to_string();
 
     let mut store = config.store();
     let _ = Module::new(&store, wat);
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn local_and_imported_tables(mut config: crate::Config) -> Result<()> {
+    let mut store = config.store();
+
+    let imported_table0 = Table::new(
+        &mut store,
+        TableType::new(Type::FuncRef, 1, Some(2)),
+        Value::FuncRef(None),
+    )?;
+    let imported_table1 = Table::new(
+        &mut store,
+        TableType::new(Type::FuncRef, 2, Some(3)),
+        Value::FuncRef(None),
+    )?;
+    let imports = imports! {
+        "env" => {
+            "imported_table0" => imported_table0,
+            "imported_table1" => imported_table1,
+        },
+    };
+
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+          (type $target_type (func (result i32)))
+          (import "env" "imported_table0" (table $imported0 1 2 funcref))
+          (import "env" "imported_table1" (table $imported1 2 3 funcref))
+          (table $local 3 4 funcref)
+
+          (func $target (type $target_type) (result i32)
+            i32.const 42)
+          (elem (table $imported0) (i32.const 0) func $target)
+
+          (func (export "size_imported0") (result i32)
+            table.size $imported0)
+          (func (export "get_imported0") (result i32)
+            i32.const 0
+            table.get $imported0
+            ref.is_null)
+          (func (export "set_imported0")
+            i32.const 0
+            ref.func $target
+            table.set $imported0)
+          (func (export "call_imported0") (result i32)
+            i32.const 0
+            call_indirect $imported0 (type $target_type))
+          (func (export "grow_imported0") (result i32)
+            ref.null func
+            i32.const 1
+            table.grow $imported0)
+
+          (func (export "size_imported1") (result i32)
+            table.size $imported1)
+          (func (export "get_imported1") (result i32)
+            i32.const 1
+            table.get $imported1
+            ref.is_null)
+          (func (export "set_imported1")
+            i32.const 1
+            ref.func $target
+            table.set $imported1)
+          (func (export "call_imported1") (result i32)
+            i32.const 1
+            call_indirect $imported1 (type $target_type))
+          (func (export "grow_imported1") (result i32)
+            ref.null func
+            i32.const 1
+            table.grow $imported1)
+
+          (func (export "size_local") (result i32)
+            table.size $local)
+          (func (export "get_local") (result i32)
+            i32.const 2
+            table.get $local
+            ref.is_null)
+          (func (export "set_local")
+            i32.const 2
+            ref.func $target
+            table.set $local)
+          (func (export "call_local") (result i32)
+            i32.const 2
+            call_indirect $local (type $target_type))
+          (func (export "grow_local") (result i32)
+            ref.null func
+            i32.const 1
+            table.grow $local)
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let instance = Instance::new(&mut store, &module, &imports)?;
+    let size_imported0 = instance.exports.get_function("size_imported0")?;
+    let get_imported0 = instance.exports.get_function("get_imported0")?;
+    let set_imported0 = instance.exports.get_function("set_imported0")?;
+    let call_imported0 = instance.exports.get_function("call_imported0")?;
+    let grow_imported0 = instance.exports.get_function("grow_imported0")?;
+
+    let size_imported1 = instance.exports.get_function("size_imported1")?;
+    let get_imported1 = instance.exports.get_function("get_imported1")?;
+    let set_imported1 = instance.exports.get_function("set_imported1")?;
+    let call_imported1 = instance.exports.get_function("call_imported1")?;
+    let grow_imported1 = instance.exports.get_function("grow_imported1")?;
+
+    let size_local = instance.exports.get_function("size_local")?;
+    let get_local = instance.exports.get_function("get_local")?;
+    let set_local = instance.exports.get_function("set_local")?;
+    let call_local = instance.exports.get_function("call_local")?;
+    let grow_local = instance.exports.get_function("grow_local")?;
+
+    // It's already initialized by 'elem'.
+    assert_eq!(&*get_imported0.call(&mut store, &[])?, &[Value::I32(0)]);
+    assert_eq!(&*size_imported0.call(&mut store, &[])?, &[Value::I32(1)]);
+    assert!(set_imported0.call(&mut store, &[])?.is_empty());
+    assert_eq!(&*call_imported0.call(&mut store, &[])?, &[Value::I32(42)]);
+    assert_eq!(&*grow_imported0.call(&mut store, &[])?, &[Value::I32(1)]);
+    assert_eq!(&*size_imported0.call(&mut store, &[])?, &[Value::I32(2)]);
+
+    assert_eq!(&*get_imported1.call(&mut store, &[])?, &[Value::I32(1)]);
+    assert_eq!(&*size_imported1.call(&mut store, &[])?, &[Value::I32(2)]);
+    assert!(set_imported1.call(&mut store, &[])?.is_empty());
+    assert_eq!(&*call_imported1.call(&mut store, &[])?, &[Value::I32(42)]);
+    assert_eq!(&*grow_imported1.call(&mut store, &[])?, &[Value::I32(2)]);
+    assert_eq!(&*size_imported1.call(&mut store, &[])?, &[Value::I32(3)]);
+
+    assert_eq!(&*get_local.call(&mut store, &[])?, &[Value::I32(1)]);
+    assert_eq!(&*size_local.call(&mut store, &[])?, &[Value::I32(3)]);
+    assert!(set_local.call(&mut store, &[])?.is_empty());
+    assert_eq!(&*call_local.call(&mut store, &[])?, &[Value::I32(42)]);
+    assert_eq!(&*grow_local.call(&mut store, &[])?, &[Value::I32(3)]);
+    assert_eq!(&*size_local.call(&mut store, &[])?, &[Value::I32(4)]);
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn issue_memory_atomic_notify_stack_offset(mut config: crate::Config) -> Result<()> {
+    let store = config.store();
+    let wat = r#"
+    (module
+      (table 1 externref)
+      (memory 7)
+      (func
+        loop
+          table.size
+          table.size
+          memory.atomic.notify
+          unreachable
+        end))
+    "#;
+
+    let _module = Module::new(&store, wat)?;
+    Ok(())
+}
+
+fn gen_wat_sum_function(arguments: usize) -> String {
+    assert!(arguments > 0);
+    let arg_types = std::iter::repeat_n("i64", arguments).collect_vec();
+    let params = (0..arguments)
+        .map(|idx| format!("(param $p{} i64)", idx + 1))
+        .collect_vec();
+    let fn_body = (2..=arguments)
+        .map(|idx| format!("local.get $p{idx}\ni64.add"))
+        .collect_vec();
+
+    format!(
+        r#"
+    (module
+    (type $sum_t (func (param {}) (result i64)))
+    (func $sum_f (type $sum_t)
+    {}
+    (result i64)
+    local.get $p1
+    {}
+    )
+    (export "sum" (func $sum_f)))
+    "#,
+        arg_types.join(" "),
+        params.join(" "),
+        fn_body.join("\n")
+    )
+}
+
+#[compiler_test(issues)]
+fn huge_number_of_arguments_fn(
+    mut config: crate::Config,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for params in [1, 10, 100, 500, 1000] {
+        println!("Testing sum fn with {params} parameters");
+        let mut store = config.store();
+        let wat_body = gen_wat_sum_function(params as usize);
+        let wat = wat2wasm(wat_body.as_bytes())
+            .with_context(|| format!("Cannot build sum function with {params} parameters"))?;
+
+        let mut env = FunctionEnv::new(&mut store, ());
+        let module = Module::new(&store, wat).unwrap();
+        let imports: Imports = imports! {};
+        let instance = Instance::new(&mut store, &module, &imports)?;
+        let args = (1..=params).map(Value::I64).collect_vec();
+        let result = instance
+            .exports
+            .get_function("sum")?
+            .call(&mut store, &args)
+            .unwrap();
+        assert_eq!(&Value::I64((1..=params).sum()), result.first().unwrap());
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "llvm")]
+#[compiler_test(issues)]
+fn compiler_debug_dir_test(mut config: crate::Config) {
+    use tempfile::TempDir;
+    use wasmer_compiler::EngineBuilder;
+    use wasmer_compiler_llvm::LLVMCallbacks;
+
+    let mut compiler_config = wasmer_compiler_llvm::LLVM::default();
+    let temp = TempDir::new().expect("temp folder creation failed");
+    compiler_config.callbacks(Some(LLVMCallbacks::new(temp.path().to_path_buf()).unwrap()));
+    let mut store = Store::new(EngineBuilder::new(compiler_config));
+
+    let mut wat = include_str!("../wast/wasmer/fac.wast").to_string();
+    wat.truncate(
+        wat.find("(assert_return")
+            .expect("assert expected in the test"),
+    );
+
+    assert!(Module::new(&store, wat).is_ok());
+}
+
+#[compiler_test(issues)]
+fn issue_5795_memory_reset_size(mut config: crate::Config) {
+    // TODO: V8 appears to handle this differently
+    if config.compiler == crate::Compiler::V8 {
+        return;
+    }
+
+    let wasm_bytes = wat2wasm(
+        r#"
+(module
+   (memory (export "memory") 1 65536)
+   (func (export "mem_size") (result i32)
+       memory.size)
+   (func (export "grow") (param i32) (result i32)
+       local.get 0
+       memory.grow))
+"#
+        .as_bytes(),
+    )
+    .expect("wat2wasm must succeed");
+
+    let mut store = config.store();
+    let module = Module::new(&store, wasm_bytes).unwrap();
+    let instance = Instance::new(&mut store, &module, &imports! {}).unwrap();
+    let memory = instance.exports.get_memory("memory").unwrap();
+
+    let _ = memory.grow(&mut store, 999).unwrap();
+    memory.reset(&mut store);
+
+    assert_eq!(memory.size(&store).bytes().0, 0);
+    assert_eq!(memory.view(&store).size().0, 0);
+
+    assert_eq!(memory.grow(&mut store, 1).unwrap().0, 0);
+
+    assert_eq!(memory.view(&store).size().0, 1);
+}
+
+#[cfg(not(target_os = "windows"))]
+#[compiler_test(issues)]
+fn issue_6004_exception(mut config: crate::Config) {
+    let wasm_bytes = wat2wasm(
+        r#"
+(module
+  (tag $e)
+
+  (func (export "throw-expect-42") (result i32)
+    (block $h1 (result exnref)
+      (try_table (result exnref) (catch_all_ref $h1)
+        (block $h2 (result exnref)
+          (try_table (result exnref) (catch_ref $e $h2)
+            (throw $e)
+          )
+        )
+        (i32.const 42)
+        (return)
+      )
+    )
+    (drop)
+    (i32.const 1)
+  )
+)
+"#
+        .as_bytes(),
+    )
+    .expect("wat2wasm must succeed");
+
+    let mut store = config.store();
+    let module = match Module::new(&store, wasm_bytes) {
+        Err(CompileError::Validate(message))
+            if message.contains("exceptions proposal not enabled") =>
+        {
+            // Skip the test in that case.
+            return;
+        }
+        Ok(module) => module,
+        _ => unreachable!(),
+    };
+    let instance = Instance::new(&mut store, &module, &imports! {}).unwrap();
+    let result = instance
+        .exports
+        .get_function("throw-expect-42")
+        .unwrap()
+        .call(&mut store, &[])
+        .unwrap();
+    assert_eq!(&Value::I32(42), result.first().unwrap());
+}
+
+#[cfg(not(target_os = "windows"))]
+#[compiler_test(issues)]
+fn issue_5719_shared_catch_clause_block(mut config: crate::Config) {
+    let wasm_bytes = wat2wasm(
+        r#"
+(module
+    (tag $err (param))
+    (tag $err2 (param))
+    (export "f" (func $f))
+    (func $f (result i32)
+        block
+            block
+                try_table (catch $err 0) (catch $err2 0)
+                    throw $err2
+                end
+                unreachable
+            end
+            i32.const 42
+            return
+        end
+        i32.const 13
+        return
+    )
+)
+"#
+        .as_bytes(),
+    )
+    .expect("wat2wasm must succeed");
+
+    let mut store = config.store();
+    let module = match Module::new(&store, wasm_bytes) {
+        Err(CompileError::Validate(message))
+            if message.contains("exceptions proposal not enabled") =>
+        {
+            // Skip the test in that case.
+            return;
+        }
+        Ok(module) => module,
+        _ => unreachable!(),
+    };
+    let instance = Instance::new(&mut store, &module, &imports! {}).unwrap();
+    let result = instance
+        .exports
+        .get_function("f")
+        .unwrap()
+        .call(&mut store, &[])
+        .unwrap();
+    assert_eq!(&Value::I32(42), result.first().unwrap());
+}
+
+#[compiler_test(issues)]
+fn issue_4169_funcref_externref_import(mut config: crate::Config) -> Result<()> {
+    let wasm_bytes = wat2wasm(
+        r#"
+        (module
+            (type $t0 (func (param funcref externref)))
+            (import "" "" (func $hello (type $t0)))
+        )
+        "#
+        .as_bytes(),
+    )
+    .unwrap();
+
+    let mut store = config.store();
+    let module = Module::new(&store, wasm_bytes).unwrap();
+    let imports: Imports = imports! {
+        "" => {
+            "" => Function::new_typed(
+                &mut store,
+                |_fr: Option<Function>, _er: Option<ExternRef>| {},
+            ),
+        }
+    };
+
+    let _instance = Instance::new(&mut store, &module, &imports)?;
+
+    Ok(())
+}
+
+#[cfg(feature = "llvm")]
+#[compiler_test(issues)]
+fn issue_return_call_import(mut config: crate::Config) -> Result<()> {
+    if config.compiler != crate::Compiler::LLVM {
+        return Ok(());
+    }
+
+    let mut features = wasmer::sys::Features::new();
+    features.tail_call(true);
+    config.set_features(features);
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (type $t0 (func (param i32) (result i32)))
+            (import "env" "add_one" (func $add_one (type $t0)))
+            (memory 1 1)
+            (func (export "run") (param i32) (result i32)
+                local.get 0
+                return_call $add_one
+            )
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let imports: Imports = imports! {
+        "env" => {
+            "add_one" => Function::new_typed(&mut store, |value: i32| value + 1),
+        }
+    };
+    let instance = Instance::new(&mut store, &module, &imports)?;
+    let result = instance
+        .exports
+        .get_function("run")?
+        .call(&mut store, &[Value::I32(41)])?;
+
+    assert_eq!(&*result, &[Value::I32(42)]);
+
+    Ok(())
+}
+
+#[cfg(feature = "llvm")]
+#[compiler_test(issues)]
+fn issue_return_call_indirect_mixed_local_import(mut config: crate::Config) -> Result<()> {
+    if config.compiler != crate::Compiler::LLVM {
+        return Ok(());
+    }
+
+    let mut features = wasmer::sys::Features::new();
+    features.tail_call(true);
+    config.set_features(features);
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (type $t0 (func (param i32) (result i32)))
+            (import "env" "add_one" (func $add_one (type $t0)))
+            (memory 1 1)
+            (table 2 funcref)
+            (elem (i32.const 0) func $add_one $add_ten)
+            (func $add_ten (type $t0) (param i32) (result i32)
+                local.get 0
+                i32.const 10
+                i32.add
+            )
+            (func $dispatch (param i32 i32) (result i32)
+                local.get 0
+                local.get 1
+                return_call_indirect (type $t0)
+            )
+            (func (export "run") (param i32 i32) (result i32)
+                local.get 0
+                local.get 1
+                call $dispatch
+            )
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let imports: Imports = imports! {
+        "env" => {
+            "add_one" => Function::new_typed(&mut store, |value: i32| value + 1),
+        }
+    };
+    let instance = Instance::new(&mut store, &module, &imports)?;
+    let run = instance.exports.get_function("run")?;
+
+    let imported = run.call(&mut store, &[Value::I32(41), Value::I32(0)])?;
+    assert_eq!(&*imported, &[Value::I32(42)]);
+
+    let local = run.call(&mut store, &[Value::I32(32), Value::I32(1)])?;
+    assert_eq!(&*local, &[Value::I32(42)]);
+
+    Ok(())
+}
+
+#[cfg(feature = "llvm")]
+#[compiler_test(issues)]
+fn issue_return_call_sret_multivalue(mut config: crate::Config) -> Result<()> {
+    if config.compiler != crate::Compiler::LLVM {
+        return Ok(());
+    }
+
+    let mut features = wasmer::sys::Features::new();
+    features.tail_call(true);
+    config.set_features(features);
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (type $t0 (func (result i64 i64 i64)))
+            (func $values (type $t0) (result i64 i64 i64)
+                i64.const 11
+                i64.const 22
+                i64.const 33
+            )
+            (func (export "run") (type $t0) (result i64 i64 i64)
+                return_call $values
+            )
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let instance = Instance::new(&mut store, &module, &imports! {})?;
+    let run: TypedFunction<(), (i64, i64, i64)> =
+        instance.exports.get_typed_function(&store, "run")?;
+
+    assert_eq!(run.call(&mut store)?, (11, 22, 33));
+
+    Ok(())
+}
+
+#[cfg(feature = "llvm")]
+#[compiler_test(issues)]
+fn issue_return_call_indirect_import(mut config: crate::Config) -> Result<()> {
+    // Reproducer for LLVM `musttail` selection based only on wasm signatures:
+    // the caller has static memory and therefore an `m0` parameter, but the
+    // imported target does not.
+    if config.compiler != crate::Compiler::LLVM {
+        return Ok(());
+    }
+
+    let mut features = wasmer::sys::Features::new();
+    features.tail_call(true);
+    config.set_features(features);
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (type $t0 (func (param i32) (result i32)))
+            (import "env" "add_one" (func $add_one (type $t0)))
+            (memory 1 1)
+            (table 1 funcref)
+            (elem (i32.const 0) func $add_one)
+            (func $dispatch (param i32) (result i32)
+                local.get 0
+                i32.const 0
+                return_call_indirect (type $t0)
+            )
+            (func (export "run") (param i32) (result i32)
+                local.get 0
+                call $dispatch
+            )
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let imports: Imports = imports! {
+        "env" => {
+            "add_one" => Function::new_typed(&mut store, |value: i32| value + 1),
+        }
+    };
+    let instance = Instance::new(&mut store, &module, &imports)?;
+    let result = instance
+        .exports
+        .get_function("run")?
+        .call(&mut store, &[Value::I32(41)])?;
+
+    assert_eq!(&*result, &[Value::I32(42)]);
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn issue_6334_foldable_comparison_expressions(mut config: crate::Config) -> Result<()> {
+    if config.compiler != crate::Compiler::Singlepass {
+        return Ok(());
+    }
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (func (export "i32_ge_u_false") (result i32)
+                i32.const 1
+                i32.const 2
+                i32.ge_u
+            )
+            (func (export "i32_ge_u_true") (result i32)
+                i32.const 2
+                i32.const 1
+                i32.ge_u
+            )
+            (func (export "i32_gt_u_false") (result i32)
+                i32.const 1
+                i32.const 2
+                i32.gt_u
+            )
+            (func (export "i32_gt_u_true") (result i32)
+                i32.const 2
+                i32.const 1
+                i32.gt_u
+            )
+            (func (export "i32_eq_false") (result i32)
+                i32.const 1
+                i32.const 2
+                i32.eq
+            )
+            (func (export "i32_eq_true") (result i32)
+                i32.const 2
+                i32.const 2
+                i32.eq
+            )
+            (func (export "i32_ne_false") (result i32)
+                i32.const 2
+                i32.const 2
+                i32.ne
+            )
+            (func (export "i32_ne_true") (result i32)
+                i32.const 1
+                i32.const 2
+                i32.ne
+            )
+            (func (export "i64_ge_u_false") (result i32)
+                i64.const 1
+                i64.const 2
+                i64.ge_u
+            )
+            (func (export "i64_ge_u_true") (result i32)
+                i64.const 2
+                i64.const 1
+                i64.ge_u
+            )
+            (func (export "i64_gt_u_false") (result i32)
+                i64.const 1
+                i64.const 2
+                i64.gt_u
+            )
+            (func (export "i64_gt_u_true") (result i32)
+                i64.const 2
+                i64.const 1
+                i64.gt_u
+            )
+            (func (export "i64_eq_false") (result i32)
+                i64.const 1
+                i64.const 2
+                i64.eq
+            )
+            (func (export "i64_eq_true") (result i32)
+                i64.const 2
+                i64.const 2
+                i64.eq
+            )
+            (func (export "i64_ne_false") (result i32)
+                i64.const 2
+                i64.const 2
+                i64.ne
+            )
+            (func (export "i64_ne_true") (result i32)
+                i64.const 1
+                i64.const 2
+                i64.ne
+            )
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let instance = Instance::new(&mut store, &module, &imports! {})?;
+
+    let i32_ge_u_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_ge_u_false")?;
+    let i32_ge_u_true: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_ge_u_true")?;
+    let i32_gt_u_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_gt_u_false")?;
+    let i32_gt_u_true: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_gt_u_true")?;
+    let i32_eq_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_eq_false")?;
+    let i32_eq_true: TypedFunction<(), i32> =
+        instance.exports.get_typed_function(&store, "i32_eq_true")?;
+    let i32_ne_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i32_ne_false")?;
+    let i32_ne_true: TypedFunction<(), i32> =
+        instance.exports.get_typed_function(&store, "i32_ne_true")?;
+    let i64_ge_u_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_ge_u_false")?;
+    let i64_ge_u_true: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_ge_u_true")?;
+    let i64_gt_u_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_gt_u_false")?;
+    let i64_gt_u_true: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_gt_u_true")?;
+    let i64_eq_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_eq_false")?;
+    let i64_eq_true: TypedFunction<(), i32> =
+        instance.exports.get_typed_function(&store, "i64_eq_true")?;
+    let i64_ne_false: TypedFunction<(), i32> = instance
+        .exports
+        .get_typed_function(&store, "i64_ne_false")?;
+    let i64_ne_true: TypedFunction<(), i32> =
+        instance.exports.get_typed_function(&store, "i64_ne_true")?;
+
+    assert_eq!(i32_ge_u_false.call(&mut store)?, 0);
+    assert_eq!(i32_ge_u_true.call(&mut store)?, 1);
+    assert_eq!(i32_gt_u_false.call(&mut store)?, 0);
+    assert_eq!(i32_gt_u_true.call(&mut store)?, 1);
+    assert_eq!(i32_eq_false.call(&mut store)?, 0);
+    assert_eq!(i32_eq_true.call(&mut store)?, 1);
+    assert_eq!(i32_ne_false.call(&mut store)?, 0);
+    assert_eq!(i32_ne_true.call(&mut store)?, 1);
+    assert_eq!(i64_ge_u_false.call(&mut store)?, 0);
+    assert_eq!(i64_ge_u_true.call(&mut store)?, 1);
+    assert_eq!(i64_gt_u_false.call(&mut store)?, 0);
+    assert_eq!(i64_gt_u_true.call(&mut store)?, 1);
+    assert_eq!(i64_eq_false.call(&mut store)?, 0);
+    assert_eq!(i64_eq_true.call(&mut store)?, 1);
+    assert_eq!(i64_ne_false.call(&mut store)?, 0);
+    assert_eq!(i64_ne_true.call(&mut store)?, 1);
+
+    Ok(())
+}
+
+/// Regression test for LLVM `v128.load16x4_s` near memory end.
+/// Default config must trap (`HeapAccessOutOfBounds`); non-volatile memops currently do not
+/// as it's a dead load.
+#[cfg(feature = "llvm")]
+#[test]
+fn issue_6401_llvm_v128_load16x4_s_oob() -> Result<()> {
+    use wasmer_compiler::CompilerConfig;
+    use wasmer_compiler::EngineBuilder;
+
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+          (memory 1)
+          (func (export "main")
+              i32.const 0xFFFFFFFE
+              v128.load16x4_s align=1
+              drop
+          )
+        )
+        "#,
+    )?;
+
+    let config = wasmer_compiler_llvm::LLVM::default();
+    let mut store = Store::new(EngineBuilder::new(config));
+
+    let module = Module::new(&store, &wasm_bytes)?;
+    let instance = Instance::new(&mut store, &module, &imports! {})?;
+    let result = instance
+        .exports
+        .get_function("main")?
+        .call(&mut store, &[])
+        .unwrap_err();
+    assert_eq!(
+        result.to_trap(),
+        Some(wasmer_types::TrapCode::HeapAccessOutOfBounds)
+    );
+
+    let mut config = wasmer_compiler_llvm::LLVM::default();
+    config.enable_non_volatile_memops();
+    let mut store = Store::new(EngineBuilder::new(config));
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let instance = Instance::new(&mut store, &module, &imports! {})?;
+    let result = instance.exports.get_function("main")?.call(&mut store, &[]);
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn issue_6534_declared_element_segment_with_global(config: crate::Config) -> Result<()> {
+    // #6570
+    if config.compiler == crate::Compiler::V8 {
+        return Ok(());
+    }
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+          (type $add_one_ty (func (param i32) (result i32)))
+          (import "env" "g" (global funcref))
+          (table 1 funcref)
+
+          (elem declare funcref (global.get 0))
+
+          (func (export "run") (param i32) (result i32)
+            i32.const 0
+            global.get 0
+            table.set 0
+
+            local.get 0
+            i32.const 0
+            call_indirect (type $add_one_ty))
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let add_one = Function::new_typed(&mut store, |value: i32| value + 1);
+    let g = Global::new(&mut store, Value::FuncRef(Some(add_one)));
+    let imports = imports! {
+        "env" => {
+            "g" => g,
+        },
+    };
+    let instance = Instance::new(&mut store, &module, &imports)?;
+    let run: TypedFunction<i32, i32> = instance.exports.get_typed_function(&store, "run")?;
+
+    assert_eq!(run.call(&mut store, 41)?, 42);
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn nested_blocks_with_large_br_table(mut config: crate::Config) -> Result<()> {
+    const MAX_NESTED_BLOCKS: usize = 4096;
+    const MAX_BR_TABLE_VALUES: usize = 10_000;
+
+    let mut store = config.store();
+
+    let nested_blocks = MAX_NESTED_BLOCKS;
+    let branch_depth = nested_blocks - 1;
+    let branch_targets =
+        std::iter::repeat_n(branch_depth.to_string(), MAX_BR_TABLE_VALUES).join(" ");
+    let wat = format!(
+        "(module
+                (func (export \"run\") (result i32)
+                    {}
+                    i64.const 0
+                    i32.const 100
+                    br_table {}
+                    {}
+                    drop
+                    i32.const 0))",
+        "block (result i64)\n".repeat(nested_blocks),
+        branch_targets,
+        "end\n".repeat(nested_blocks),
+    );
+
+    let module = Module::new(&store, wat)?;
+    let artifact_size = module.serialize()?.len();
+    assert!(artifact_size < ByteSize::mib(1).as_u64() as usize);
+    let instance = Instance::new(&mut store, &module, &imports! {})?;
+    let run: TypedFunction<(), i32> = instance.exports.get_typed_function(&store, "run")?;
+    assert_eq!(run.call(&mut store)?, 0);
+
+    Ok(())
+}
+
+#[compiler_test(issues)]
+fn functions_max_stack_usage(mut config: crate::Config) -> Result<()> {
+    if config.compiler == crate::Compiler::V8 {
+        return Ok(());
+    }
+
+    let mut store = config.store();
+    let wasm_bytes = wat2wasm(
+        br#"
+        (module
+            (func $foo (param i32 i32 i32 i32) (result i32)
+                (local.get 0)
+                (local.get 1)
+                (local.get 2)
+                (local.get 3)
+                i32.add
+                i32.add
+                i32.add
+            )
+            (func $bar)
+        )
+        "#,
+    )?;
+
+    let module = Module::new(&store, wasm_bytes)?;
+    let finished_functions_max_stack_usage = module
+        .sys_artifact()
+        .expect("sys back-end expected")
+        .finished_functions_max_stack_usage()
+        .expect("max stack usage must be available")
+        .iter()
+        .map(|(_, stack_usage)| *stack_usage)
+        .collect_vec();
+
+    match config.compiler {
+        crate::Compiler::Singlepass => {
+            assert!(finished_functions_max_stack_usage[0].is_some_and(|u| u >= 72));
+            assert!(finished_functions_max_stack_usage[1].is_some_and(|u| u >= 40));
+        }
+        crate::Compiler::Cranelift | crate::Compiler::LLVM => {
+            assert_eq!(finished_functions_max_stack_usage, [None, None])
+        }
+        crate::Compiler::V8 => unreachable!(),
+    }
 
     Ok(())
 }

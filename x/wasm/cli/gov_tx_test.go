@@ -1,12 +1,24 @@
 package cli
 
 import (
+	"bytes"
+	"context"
+	"encoding/hex"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
+	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
+	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	authtx "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
+	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 
 	"github.com/NibiruChain/nibiru/v2/x/wasm/testdata"
 	wasmtestutil "github.com/NibiruChain/nibiru/v2/x/wasm/testutil"
@@ -158,4 +170,56 @@ func TestParseCodeInfoFlags(t *testing.T) {
 			require.NoError(t, gotErr)
 		})
 	}
+}
+
+func TestProposalInstantiateContract2Cmd(t *testing.T) {
+	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
+	v1.RegisterInterfaces(registry)
+	cdc := codec.NewProtoCodec(registry)
+	txConfig := authtx.NewTxConfig(cdc, authtx.DefaultSignModes)
+
+	proposer := sdk.AccAddress(bytes.Repeat([]byte{1}, 20))
+	salt := []byte("my salt")
+	out := &bytes.Buffer{}
+	clientCtx := client.Context{}.
+		WithCodec(cdc).
+		WithInterfaceRegistry(registry).
+		WithTxConfig(txConfig).
+		WithKeyring(keyring.NewInMemory(cdc)).
+		WithChainID("test-chain").
+		WithOutput(out)
+
+	cmd := ProposalInstantiateContract2Cmd()
+	cmd.SetArgs([]string{
+		"1",
+		`{"foo":"bar"}`,
+		hex.EncodeToString(salt),
+		"--" + flagLabel, "testing",
+		"--" + flagNoAdmin,
+		"--" + flagFixMsg,
+		"--title", "my title",
+		"--summary", "my summary",
+		"--" + flags.FlagFrom, proposer.String(),
+		"--" + flags.FlagGenerateOnly,
+	})
+	ctx := context.WithValue(context.Background(), client.ClientContextKey, &clientCtx)
+	require.NoError(t, cmd.ExecuteContext(ctx))
+
+	gotTx, err := txConfig.TxJSONDecoder()(out.Bytes())
+	require.NoError(t, err)
+	require.Len(t, gotTx.GetMsgs(), 1)
+	proposal, ok := gotTx.GetMsgs()[0].(*v1.MsgSubmitProposal)
+	require.True(t, ok, "got %T", gotTx.GetMsgs()[0])
+	propMsgs, err := proposal.GetMsgs()
+	require.NoError(t, err)
+	require.Len(t, propMsgs, 1)
+	gotMsg, ok := propMsgs[0].(*types.MsgInstantiateContract2)
+	require.True(t, ok, "got %T", propMsgs[0])
+	assert.Equal(t, DefaultGovAuthority.String(), gotMsg.Sender)
+	assert.Equal(t, uint64(1), gotMsg.CodeID)
+	assert.Equal(t, "testing", gotMsg.Label)
+	assert.Equal(t, types.RawContractMessage(`{"foo":"bar"}`), gotMsg.Msg)
+	assert.Equal(t, salt, gotMsg.Salt)
+	assert.True(t, gotMsg.FixMsg)
 }

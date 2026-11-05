@@ -13,7 +13,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { constants } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import { Command } from "commander";
 
@@ -182,7 +182,7 @@ export async function resolveRelease(
   input: string,
   runner: CommandRunner = runCommand,
 ): Promise<Release> {
-  console.log(`resolving GitHub release ${input}`);
+  console.log(`Resolving GitHub release ${input}`);
   // GitHub tags and visible release versions are different namespaces here.
   // Resolve a friendly version only when it maps to one release. Otherwise a
   // human must choose the source explicitly with a tag or release URL.
@@ -405,9 +405,9 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
   const release = await resolveRelease(input, runner);
   const { version, names } = assetsForRelease(release);
   const directory = join(artifactsRoot, cacheKey(release));
-  console.log(`checking cached assets for ${release.tagName}`);
+  console.log(`Checking cached assets for ${release.tagName}`);
   if (await readValidCache(directory, release, version, names)) {
-    console.log(`using verified cache for ${release.tagName}`);
+    console.log(`Using verified cache for ${release.tagName}`);
     return { release, version, directory, cached: true };
   }
 
@@ -415,7 +415,7 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
   const temporary = await mkdtemp(join(artifactsRoot, ".download-"));
   try {
     for (const name of names) {
-      console.log(`downloading ${name}`);
+      console.log(`Downloading ${name}`);
       await mustRun(runner, "gh", [
         "release",
         "download",
@@ -428,7 +428,7 @@ export async function getArtifacts(input: string, runner: CommandRunner = runCom
         name,
       ]);
     }
-    console.log(`verifying checksums for ${release.tagName}`);
+    console.log(`Verifying checksums for ${release.tagName}`);
     await verifyFiles(temporary, names);
     await writeFile(
       join(temporary, "release.json"),
@@ -556,14 +556,15 @@ async function prepareFetchedRelease(
 ): Promise<PreparedRelease> {
   const output = join(distRoot, cacheKey(fetched.release), distributionVersion);
   const workspace = join(output, "workspace");
-  console.log(`building ${distributionVersion} packages from ${fetched.release.tagName}`);
+  console.log(`Building ${distributionVersion} packages from ${fetched.release.tagName}`);
+  console.log("[Phase 1/3] Staging binaries for bun pack");
   await rm(output, { recursive: true, force: true });
   await mkdir(workspace, { recursive: true });
   await cp(templatePackages, workspace, { recursive: true, filter: (source) => !source.endsWith("/bin/nibid") });
   await setPackageVersions(workspace, distributionVersion);
   await addPackageLicenses(workspace);
   for (const [target, platform] of Object.entries(TARGETS)) {
-    console.log(`staging ${target} native binary`);
+    console.log(`Staging ${target} native binary`);
     await stageBinary(
       join(fetched.directory, `nibid_${fetched.version}_${platform.artifact}.tar.gz`),
       join(workspace, target, "bin", "nibid"),
@@ -571,9 +572,10 @@ async function prepareFetchedRelease(
     );
   }
   await verifyWorkspace(workspace, distributionVersion);
+  console.log("[Phase 2/3] Packing each npm package");
   const tarballs: string[] = [];
   for (const packageDir of [...Object.keys(TARGETS), "cli"]) {
-    console.log(`packing ${packageDir}`);
+    console.log(`Packing ${packageDir}`);
     await mustRun(runner, "bun", ["pm", "pack", "--destination", output], join(workspace, packageDir));
   }
   for (const entry of await readdir(output)) {
@@ -599,13 +601,13 @@ export function packageVersionIsUnpublished(result: CommandResult): boolean {
   return /404|not found|no version .* satisfying/i.test(`${result.stdout}\n${result.stderr}`);
 }
 
-async function assertUnpublished(workspace: string, version: string, runner: CommandRunner): Promise<void> {
-  for (const directory of packageDirectories(workspace)) {
+async function assertUnpublished(version: string, runner: CommandRunner): Promise<void> {
+  for (const directory of packageDirectories(templatePackages)) {
     const manifest = await Bun.file(join(directory, "package.json")).json();
-    console.log(`checking npm for ${manifest.name}@${version}`);
+    console.log(`Checking npm for ${manifest.name}@${version}`);
     const result = await runner("bun", ["pm", "view", `${manifest.name}@${version}`, "version"]);
     // npm cannot replace a published version. Check every package before the
-    // first upload so a known collision does not create a partial release.
+    // staging step so a known collision does not waste a package build.
     if (result.code === 0) throw new Error(`${manifest.name}@${version} is already published`);
     if (!packageVersionIsUnpublished(result)) {
       failCommand("bun", ["pm", "view", `${manifest.name}@${version}`, "version"], result);
@@ -613,14 +615,65 @@ async function assertUnpublished(workspace: string, version: string, runner: Com
   }
 }
 
+/** Authentication is required only for uploads, so anonymous dry runs still work. */
+export async function publishPreflight(
+  run: boolean,
+  runner: CommandRunner = runCommand,
+  config: { home: string; xdg?: string } = { home: homedir(), xdg: process.env.XDG_CONFIG_HOME },
+): Promise<void> {
+  console.log("[Phase 0/3] Checking Bun capabilities and release prerequisites");
+  await mustRun(runner, "gh", ["--version"]);
+  await mustRun(runner, "tar", ["--version"]);
+  const publishHelp = await mustRun(runner, "bun", ["publish", "--help"], root);
+  const packHelp = await mustRun(runner, "bun", ["pm", "pack", "--help"], root);
+  if (!publishHelp.includes("--access") || !packHelp.includes("--destination")) {
+    throw new Error("This Bun version does not support the required publish and pack options. Update Bun before retrying.");
+  }
+  if (!run) {
+    console.log("Skipping npm authentication for this dry run; nothing will be uploaded.");
+    return;
+  }
+  console.log("Checking npm authentication with bun pm whoami");
+  const identity = await runner("bun", ["pm", "whoami"], join(templatePackages, "linux-x64"));
+  if (identity.code !== 0 || !identity.stdout.trim()) {
+    const homeConfigExists = await Bun.file(join(config.home, ".npmrc")).exists();
+    const xdgConfigExists = config.xdg && await Bun.file(join(config.xdg, ".npmrc")).exists();
+    const hint = config.xdg && homeConfigExists && !xdgConfigExists
+      ? "XDG_CONFIG_HOME is set, ~/.npmrc exists, and the XDG .npmrc is missing. Bun may be looking in the wrong location. Try `bun upgrade`, then `bun pm whoami`. If upgrading is unavailable or the problem persists, check with `env -u XDG_CONFIG_HOME bun pm whoami`; if that succeeds, retry this release-helper command with `env -u XDG_CONFIG_HOME` too."
+      : "Run `bunx npm login`, then verify `bun pm whoami` succeeds before retrying this release-helper command.";
+    // Do not echo authentication command output, configuration, or credentials.
+    throw new Error(`Bun could not verify npm authentication. ${hint} No release assets were processed or packages uploaded.`);
+  }
+  console.log("Verified npm authentication. npm may still require a browser confirmation or one-time password, and publication requires package write permission.");
+}
+
+/** Injectable release operations keep workflow tests independent of large binaries and npm writes. */
+interface PublishOperations {
+  fetch: typeof getArtifacts;
+  prepare: typeof prepareFetchedRelease;
+  publish: typeof publishInteractively;
+}
+
 export async function publishRelease(
   fromGh: string,
   distributionVersion: string,
   run: boolean,
   runner: CommandRunner = runCommand,
+  operations: Partial<PublishOperations> = {},
 ): Promise<PreparedRelease> {
   const expectedVersion = normalizeDistributionVersion(distributionVersion);
-  const fetched = await getArtifacts(fromGh, runner);
+  console.log([
+    "/**",
+    ` * ${run ? "Publish" : "Prepare a dry run of"} npm version ${expectedVersion} from GitHub release ${fromGh}.`,
+    " * Download release binaries if needed, reuse verified cached archives, and check SHA-256 checksums.",
+    " * Pack four OS and CPU binary packages and the user-facing @nibiruchain/nibiru package.",
+    " * Optional dependencies install the matching platform binary for the user's operating system and architecture.",
+    run ? " * Upload the platform packages first and @nibiruchain/nibiru last." : " * Print the ordered publish commands. Nothing will be uploaded.",
+    " */",
+  ].join("\n"));
+  await publishPreflight(run, runner);
+  await assertUnpublished(expectedVersion, runner);
+  const fetched = await (operations.fetch ?? getArtifacts)(fromGh, runner);
   const sourceVersion = parseVersion(fetched.version);
   const expectedCore = parseVersion(expectedVersion).core;
   if (sourceVersion.core !== expectedCore) {
@@ -628,24 +681,29 @@ export async function publishRelease(
       `GitHub release ${fetched.release.tagName} contains binary version ${fetched.version}, whose SemVer core ${sourceVersion.core} does not match --dist-ver ${expectedVersion}`,
     );
   }
-  // The suffix is npm-release metadata, not a claim that the binary changed.
-  // `2.19.0-rc.1` may wrap a verified `2.19.0` binary. `2.19.1-rc.1` may not.
-  const prepared = await prepareFetchedRelease(fetched, expectedVersion, runner);
-  await assertUnpublished(prepared.workspace, prepared.distributionVersion, runner);
+  // The suffix describes the npm distribution, not a different native binary.
+  const prepared = await (operations.prepare ?? prepareFetchedRelease)(fetched, expectedVersion, runner);
+  console.log(run
+    ? "[Phase 3/3] Publishing all npm packages with bun publish"
+    : "[Phase 3/3] Previewing npm publish commands; nothing will be uploaded");
+  const published: string[] = [];
   for (const directory of packageDirectories(prepared.workspace)) {
-    // Do not expose npm registry channel labels as a release-helper choice.
-    // The immutable package version is `--dist-ver`; npm applies its own normal
-    // default registry behavior when Bun publishes without `--tag`.
+    // Preserve npm's default registry channel behavior; do not pass --tag.
     const args = ["publish", "--access", "public"];
     if (!run) {
-      console.log(`[dry run] (cd ${directory} && bun ${args.join(" ")})`);
+      console.log(`[Dry run] (cd ${directory} && bun ${args.join(" ")})`);
       continue;
     }
     const manifest = await Bun.file(join(directory, "package.json")).json();
-    console.log(`publishing ${manifest.name}@${prepared.distributionVersion}`);
-    // Publishing deliberately bypasses the captured command runner so npm can
-    // ask the operator to complete the account's write-time 2FA challenge.
-    await publishInteractively(directory, args);
+    const name = `${manifest.name}@${prepared.distributionVersion}`;
+    console.log(`Publishing ${name}`);
+    try {
+      // Inherit the terminal so write-time authentication prompts remain usable.
+      await (operations.publish ?? publishInteractively)(directory, args);
+      published.push(name);
+    } catch (error) {
+      throw new Error(`Failed to publish ${name}: ${error instanceof Error ? error.message : String(error)}. Successfully published packages: ${published.join(", ") || "none"}. Publication stopped; later packages were not attempted. Inspect npm before retrying; this helper refuses existing versions.`, { cause: error });
+    }
   }
   return prepared;
 }
@@ -722,7 +780,7 @@ export function createProgram(): Command {
     .argument("<github-release>", "exact GitHub tag, unique release version, or release URL")
     .action(async (input: string) => {
       const fetched = await getArtifacts(input);
-      console.log(`${fetched.cached ? "using cached" : "downloaded"} ${fetched.version} at ${fetched.directory}`);
+      console.log(`${fetched.cached ? "Using cached" : "Downloaded"} ${fetched.version} at ${fetched.directory}`);
     });
 
   program
@@ -731,7 +789,7 @@ export function createProgram(): Command {
     .argument("<github-release>", "exact GitHub tag, unique release version, or release URL")
     .action(async (input: string) => {
       const prepared = await prepareRelease(input);
-      console.log(`prepared ${prepared.distributionVersion} at ${prepared.output}`);
+      console.log(`Prepared ${prepared.distributionVersion} at ${prepared.output}`);
     });
 
   program
@@ -746,7 +804,7 @@ export function createProgram(): Command {
     )
     .action(async (options: PublishOptions) => {
       const prepared = await publishRelease(options.fromGh, options.distVer, options.run ?? false);
-      console.log(`${options.run ? "published" : "dry-run complete for"} ${prepared.distributionVersion}`);
+      console.log(`${options.run ? "Published" : "Dry-run complete for"} ${prepared.distributionVersion}`);
     });
 
   return program;

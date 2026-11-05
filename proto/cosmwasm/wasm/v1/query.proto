@@ -180,7 +180,7 @@ message CodeInfoResponse {
       [(gogoproto.customname) = "CodeID",
        (gogoproto.jsontag)    = "id"];  // id for legacy support
   string creator   = 2;
-  bytes  data_hash = 3 [(gogoproto.casttype) = "github.com/cometbft/cometbft/libs/bytes.HexBytes"];
+  bytes  data_hash = 3 [(gogoproto.casttype) = "github.com/NibiruChain/nibiru/v2/bft/libs/bytes.HexBytes"];
   // Used in v1beta1
   reserved 4, 5;
   AccessConfig instantiate_permission = 6

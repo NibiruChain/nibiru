@@ -3,8 +3,8 @@ package tendermint
 import (
 	"time"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmttypes "github.com/cometbft/cometbft/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 

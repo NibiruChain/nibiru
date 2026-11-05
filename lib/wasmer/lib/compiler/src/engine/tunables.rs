@@ -1,14 +1,12 @@
 use crate::engine::error::LinkError;
-use crate::types::target::{PointerWidth, Target};
 use std::ptr::NonNull;
-use wasmer_types::entity::{EntityRef, PrimaryMap};
 use wasmer_types::{
-    GlobalType, LocalGlobalIndex, LocalMemoryIndex, LocalTableIndex,
-    MemoryIndex, MemoryType, ModuleInfo, Pages, TableIndex, TableType,
+    FunctionType, GlobalType, LocalGlobalIndex, LocalMemoryIndex, LocalTableIndex, MemoryIndex,
+    MemoryType, ModuleInfo, TableIndex, TableType, TagKind, entity::PrimaryMap,
 };
-use wasmer_vm::{InternalStoreHandle, MemoryError, StoreObjects};
+use wasmer_vm::{InternalStoreHandle, MemoryError, StoreObjects, VMTag};
 use wasmer_vm::{MemoryStyle, TableStyle};
-use wasmer_vm::{VMConfig, VMGlobal, VMMemory, VMTable};
+use wasmer_vm::{VMConfig, VMGlobal, VMGlobalDefinition, VMMemory, VMTable};
 use wasmer_vm::{VMMemoryDefinition, VMTableDefinition};
 
 /// An engine delegates the creation of memories, tables, and globals
@@ -39,11 +37,7 @@ pub trait Tunables {
     ) -> Result<VMMemory, MemoryError>;
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
-    fn create_host_table(
-        &self,
-        ty: &TableType,
-        style: &TableStyle,
-    ) -> Result<VMTable, String>;
+    fn create_host_table(&self, ty: &TableType, style: &TableStyle) -> Result<VMTable, String>;
 
     /// Create a table owned by the VM given a [`TableType`] and a [`TableStyle`].
     ///
@@ -61,6 +55,23 @@ pub trait Tunables {
         Ok(VMGlobal::new(ty))
     }
 
+    /// Create a global owned by the VM with backing storage in the `VMContext`.
+    ///
+    /// # Safety
+    /// - `vm_definition_location` must point to a valid location in VM memory.
+    unsafe fn create_vm_global(
+        &self,
+        ty: GlobalType,
+        vm_definition_location: NonNull<VMGlobalDefinition>,
+    ) -> Result<VMGlobal, String> {
+        unsafe { Ok(VMGlobal::new_instance(ty, vm_definition_location)) }
+    }
+
+    /// Create a new tag.
+    fn create_tag(&self, kind: TagKind, ty: FunctionType) -> Result<VMTag, String> {
+        Ok(VMTag::new(kind, ty))
+    }
+
     /// Allocate memory for just the memories of the current module.
     ///
     /// # Safety
@@ -72,33 +83,27 @@ pub trait Tunables {
         module: &ModuleInfo,
         memory_styles: &PrimaryMap<MemoryIndex, MemoryStyle>,
         memory_definition_locations: &[NonNull<VMMemoryDefinition>],
-    ) -> Result<
-        PrimaryMap<LocalMemoryIndex, InternalStoreHandle<VMMemory>>,
-        LinkError,
-    > {
-        let num_imports = module.num_imported_memories;
-        let mut memories: PrimaryMap<LocalMemoryIndex, _> =
-            PrimaryMap::with_capacity(module.memories.len() - num_imports);
-        for (index, mdl) in memory_definition_locations
-            .iter()
-            .enumerate()
-            .take(module.memories.len())
-            .skip(num_imports)
-        {
-            let mi = MemoryIndex::new(index);
-            let ty = &module.memories[mi];
-            let style = &memory_styles[mi];
-            memories.push(InternalStoreHandle::new(
-                context,
-                self.create_vm_memory(ty, style, *mdl).map_err(|e| {
-                    LinkError::Resource(format!(
-                        "Failed to create memory: {}",
-                        e
-                    ))
-                })?,
-            ));
+    ) -> Result<PrimaryMap<LocalMemoryIndex, InternalStoreHandle<VMMemory>>, LinkError> {
+        unsafe {
+            let num_imports = module.num_imported_memories;
+            let mut memories: PrimaryMap<LocalMemoryIndex, _> =
+                PrimaryMap::with_capacity(module.memories.len() - num_imports);
+            for ((mi, ty), mdl) in module
+                .memories
+                .iter()
+                .skip(num_imports)
+                .zip(memory_definition_locations)
+            {
+                let style = &memory_styles[mi];
+                memories.push(InternalStoreHandle::new(
+                    context,
+                    self.create_vm_memory(ty, style, *mdl).map_err(|e| {
+                        LinkError::Resource(format!("Failed to create memory: {e}"))
+                    })?,
+                ));
+            }
+            Ok(memories)
         }
-        Ok(memories)
     }
 
     /// Allocate memory for just the tables of the current module.
@@ -113,29 +118,26 @@ pub trait Tunables {
         module: &ModuleInfo,
         table_styles: &PrimaryMap<TableIndex, TableStyle>,
         table_definition_locations: &[NonNull<VMTableDefinition>],
-    ) -> Result<
-        PrimaryMap<LocalTableIndex, InternalStoreHandle<VMTable>>,
-        LinkError,
-    > {
-        let num_imports = module.num_imported_tables;
-        let mut tables: PrimaryMap<LocalTableIndex, _> =
-            PrimaryMap::with_capacity(module.tables.len() - num_imports);
-        for (index, tdl) in table_definition_locations
-            .iter()
-            .enumerate()
-            .take(module.tables.len())
-            .skip(num_imports)
-        {
-            let ti = TableIndex::new(index);
-            let ty = &module.tables[ti];
-            let style = &table_styles[ti];
-            tables.push(InternalStoreHandle::new(
-                context,
-                self.create_vm_table(ty, style, *tdl)
-                    .map_err(LinkError::Resource)?,
-            ));
+    ) -> Result<PrimaryMap<LocalTableIndex, InternalStoreHandle<VMTable>>, LinkError> {
+        unsafe {
+            let num_imports = module.num_imported_tables;
+            let mut tables: PrimaryMap<LocalTableIndex, _> =
+                PrimaryMap::with_capacity(module.tables.len() - num_imports);
+            for ((ti, ty), tdl) in module
+                .tables
+                .iter()
+                .skip(num_imports)
+                .zip(table_definition_locations)
+            {
+                let style = &table_styles[ti];
+                tables.push(InternalStoreHandle::new(
+                    context,
+                    self.create_vm_table(ty, style, *tdl)
+                        .map_err(LinkError::Resource)?,
+                ));
+            }
+            Ok(tables)
         }
-        Ok(tables)
     }
 
     /// Allocate memory for just the globals of the current module,
@@ -145,20 +147,19 @@ pub trait Tunables {
         &self,
         context: &mut StoreObjects,
         module: &ModuleInfo,
-    ) -> Result<
-        PrimaryMap<LocalGlobalIndex, InternalStoreHandle<VMGlobal>>,
-        LinkError,
-    > {
+        vm_definition_locations: &[NonNull<VMGlobalDefinition>],
+    ) -> Result<PrimaryMap<LocalGlobalIndex, InternalStoreHandle<VMGlobal>>, LinkError> {
         let num_imports = module.num_imported_globals;
-        let mut vmctx_globals =
-            PrimaryMap::with_capacity(module.globals.len() - num_imports);
+        let mut vmctx_globals = PrimaryMap::with_capacity(module.globals.len() - num_imports);
 
-        for &global_type in module.globals.values().skip(num_imports) {
-            vmctx_globals.push(InternalStoreHandle::new(
-                context,
-                self.create_global(global_type)
-                    .map_err(LinkError::Resource)?,
-            ));
+        for (i, &global_type) in module.globals.values().skip(num_imports).enumerate() {
+            let location = vm_definition_locations
+                .get(i)
+                .ok_or_else(|| LinkError::Resource("global definition location missing".into()))?;
+            vmctx_globals.push(InternalStoreHandle::new(context, unsafe {
+                self.create_vm_global(global_type, *location)
+                    .map_err(LinkError::Resource)?
+            }));
         }
 
         Ok(vmctx_globals)
@@ -185,75 +186,20 @@ pub trait Tunables {
 /// implementation or use composition to wrap your Tunables around
 /// this one. The later approach is demonstrated in the
 /// tunables-limit-memory example.
-#[derive(Clone)]
-pub struct BaseTunables {
-    /// For static heaps, the size in wasm pages of the heap protected by bounds checking.
-    pub static_memory_bound: Pages,
-
-    /// The size in bytes of the offset guard for static heaps.
-    pub static_memory_offset_guard_size: u64,
-
-    /// The size in bytes of the offset guard for dynamic heaps.
-    pub dynamic_memory_offset_guard_size: u64,
-}
+#[derive(Clone, Default)]
+pub struct BaseTunables {}
 
 impl BaseTunables {
-    /// Get the `BaseTunables` for a specific Target
-    pub fn for_target(target: &Target) -> Self {
-        let triple = target.triple();
-        let pointer_width: PointerWidth = triple.pointer_width().unwrap();
-        let (static_memory_bound, static_memory_offset_guard_size): (
-            Pages,
-            u64,
-        ) = match pointer_width {
-            PointerWidth::U16 => (0x400.into(), 0x1000),
-            PointerWidth::U32 => (0x4000.into(), 0x1_0000),
-            // Static Memory Bound:
-            //   Allocating 4 GiB of address space let us avoid the
-            //   need for explicit bounds checks.
-            // Static Memory Guard size:
-            //   Allocating 2 GiB of address space lets us translate wasm
-            //   offsets into x86 offsets as aggressively as we can.
-            PointerWidth::U64 => (0x1_0000.into(), 0x8000_0000),
-        };
-
-        // Allocate a small guard to optimize common cases but without
-        // wasting too much memory.
-        // The Windows memory manager seems more laxed than the other ones
-        // And a guard of just 1 page may not be enough is some borderline cases
-        // So using 2 pages for guard on this platform
-        #[cfg(target_os = "windows")]
-        let dynamic_memory_offset_guard_size: u64 = 0x2_0000;
-        #[cfg(not(target_os = "windows"))]
-        let dynamic_memory_offset_guard_size: u64 = 0x1_0000;
-
-        Self {
-            static_memory_bound,
-            static_memory_offset_guard_size,
-            dynamic_memory_offset_guard_size,
-        }
+    /// Get the default `BaseTunables`.
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
 impl Tunables for BaseTunables {
-    /// Get a `MemoryStyle` for the provided `MemoryType`
-    fn memory_style(&self, memory: &MemoryType) -> MemoryStyle {
-        // A heap with a maximum that doesn't exceed the static memory bound specified by the
-        // tunables make it static.
-        //
-        // If the module doesn't declare an explicit maximum treat it as 4GiB.
-        let maximum = memory.maximum.unwrap_or_else(Pages::max_value);
-        if maximum <= self.static_memory_bound {
-            MemoryStyle::Static {
-                // Bound can be larger than the maximum for performance reasons
-                bound: self.static_memory_bound,
-                offset_guard_size: self.static_memory_offset_guard_size,
-            }
-        } else {
-            MemoryStyle::Dynamic {
-                offset_guard_size: self.dynamic_memory_offset_guard_size,
-            }
-        }
+    /// Always return Static memory style.
+    fn memory_style(&self, _memory: &MemoryType) -> MemoryStyle {
+        MemoryStyle::Static
     }
 
     /// Get a [`TableStyle`] for the provided [`TableType`].
@@ -281,15 +227,11 @@ impl Tunables for BaseTunables {
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
     ) -> Result<VMMemory, MemoryError> {
-        VMMemory::from_definition(ty, style, vm_definition_location)
+        unsafe { VMMemory::from_definition(ty, style, vm_definition_location) }
     }
 
     /// Create a table owned by the host given a [`TableType`] and a [`TableStyle`].
-    fn create_host_table(
-        &self,
-        ty: &TableType,
-        style: &TableStyle,
-    ) -> Result<VMTable, String> {
+    fn create_host_table(&self, ty: &TableType, style: &TableStyle) -> Result<VMTable, String> {
         VMTable::new(ty, style)
     }
 
@@ -304,7 +246,7 @@ impl Tunables for BaseTunables {
         style: &TableStyle,
         vm_definition_location: NonNull<VMTableDefinition>,
     ) -> Result<VMTable, String> {
-        VMTable::from_definition(ty, style, vm_definition_location)
+        unsafe { VMTable::from_definition(ty, style, vm_definition_location) }
     }
 }
 
@@ -331,15 +273,13 @@ impl Tunables for Box<dyn Tunables + Send + Sync> {
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
     ) -> Result<VMMemory, MemoryError> {
-        self.as_ref()
-            .create_vm_memory(ty, style, vm_definition_location)
+        unsafe {
+            self.as_ref()
+                .create_vm_memory(ty, style, vm_definition_location)
+        }
     }
 
-    fn create_host_table(
-        &self,
-        ty: &TableType,
-        style: &TableStyle,
-    ) -> Result<VMTable, String> {
+    fn create_host_table(&self, ty: &TableType, style: &TableStyle) -> Result<VMTable, String> {
         self.as_ref().create_host_table(ty, style)
     }
 
@@ -349,8 +289,10 @@ impl Tunables for Box<dyn Tunables + Send + Sync> {
         style: &TableStyle,
         vm_definition_location: NonNull<VMTableDefinition>,
     ) -> Result<VMTable, String> {
-        self.as_ref()
-            .create_vm_table(ty, style, vm_definition_location)
+        unsafe {
+            self.as_ref()
+                .create_vm_table(ty, style, vm_definition_location)
+        }
     }
 }
 
@@ -377,15 +319,13 @@ impl Tunables for std::sync::Arc<dyn Tunables + Send + Sync> {
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
     ) -> Result<VMMemory, MemoryError> {
-        self.as_ref()
-            .create_vm_memory(ty, style, vm_definition_location)
+        unsafe {
+            self.as_ref()
+                .create_vm_memory(ty, style, vm_definition_location)
+        }
     }
 
-    fn create_host_table(
-        &self,
-        ty: &TableType,
-        style: &TableStyle,
-    ) -> Result<VMTable, String> {
+    fn create_host_table(&self, ty: &TableType, style: &TableStyle) -> Result<VMTable, String> {
         self.as_ref().create_host_table(ty, style)
     }
 
@@ -395,7 +335,9 @@ impl Tunables for std::sync::Arc<dyn Tunables + Send + Sync> {
         style: &TableStyle,
         vm_definition_location: NonNull<VMTableDefinition>,
     ) -> Result<VMTable, String> {
-        self.as_ref()
-            .create_vm_table(ty, style, vm_definition_location)
+        unsafe {
+            self.as_ref()
+                .create_vm_table(ty, style, vm_definition_location)
+        }
     }
 }

@@ -7,8 +7,9 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/cometbft/cometbft/crypto"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 )
 
 func TestSKSuite(t *testing.T) {

@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
@@ -334,11 +335,19 @@ type suite struct {
 	App           *runtime.App
 }
 
-// returns context and an app with updated mint keeper
+// createTestSuite registers governance before loading the SDK test app, using
+// the injected account, bank, staking, and codec dependencies. Simulation
+// operations then exercise the explicitly constructed keeper and its services.
 func createTestSuite(t *testing.T, isCheckTx bool) (suite, sdk.Context) {
 	res := suite{}
+	startup := simtestutil.DefaultStartUpConfig()
+	startup.InitApp = func(app *runtime.App) error {
+		var err error
+		res.GovKeeper, err = configurator.RegisterGovModule(app, res.cdc, res.AccountKeeper, res.BankKeeper, res.StakingKeeper)
+		return err
+	}
 
-	app, err := simtestutil.Setup(configurator.NewAppConfig(
+	app, err := simtestutil.SetupWithConfiguration(configurator.NewAppConfig(
 		configurator.AuthModule(),
 		configurator.TxModule(),
 		configurator.ParamsModule(),
@@ -346,7 +355,7 @@ func createTestSuite(t *testing.T, isCheckTx bool) (suite, sdk.Context) {
 		configurator.StakingModule(),
 		configurator.ConsensusModule(),
 		configurator.GovModule(),
-	), &res.AccountKeeper, &res.BankKeeper, &res.GovKeeper, &res.StakingKeeper, &res.cdc)
+	), startup, &res.AccountKeeper, &res.BankKeeper, &res.StakingKeeper, &res.cdc)
 	require.NoError(t, err)
 
 	ctx := app.NewContext(isCheckTx, tmproto.Header{})

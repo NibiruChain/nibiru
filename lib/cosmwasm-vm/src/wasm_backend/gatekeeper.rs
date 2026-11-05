@@ -1,8 +1,7 @@
+use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
-use wasmer::{
-    FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
-};
+use wasmer::LocalFunctionIndex;
+use wasmer_types::MiddlewareError;
 
 #[derive(Debug, Clone, Copy)]
 struct GatekeeperConfig {
@@ -74,10 +73,10 @@ impl Default for Gatekeeper {
 
 impl ModuleMiddleware for Gatekeeper {
     /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a>> {
         Box::new(FunctionGatekeeper::new(self.config))
     }
 }
@@ -97,7 +96,7 @@ impl FunctionGatekeeper {
 /// The name used in errors
 const MIDDLEWARE_NAME: &str = "Gatekeeper";
 
-impl FunctionMiddleware for FunctionGatekeeper {
+impl FunctionMiddleware<'_> for FunctionGatekeeper {
     fn feed<'a>(
         &mut self,
         operator: Operator<'a>,
@@ -115,7 +114,7 @@ impl FunctionMiddleware for FunctionGatekeeper {
         }
         /// Matches on the given operator and calls the corresponding handler function.
         macro_rules! gatekeep {
-            ($( @$proposal:ident $op:ident $({ $($payload:tt)* })? => $visit:ident)*) => {{
+            ($( @$proposal:ident $op:ident $({ $($payload:tt)* })? => $visit:ident ($($annotation:tt)*))*) => {{
                 use wasmer::wasmparser::Operator::*;
 
                 let mut proposal_validator = ProposalValidator {
@@ -128,8 +127,9 @@ impl FunctionMiddleware for FunctionGatekeeper {
                     $(
                         match_op!($op $({ $($payload)* })?) => {
                             proposal_validator.$proposal(operator)
-                        }
+                        },
                     )*
+                    _ => Err(MiddlewareError::new(MIDDLEWARE_NAME, "Unsupported Wasm operator")),
                 }
             }}
         }
@@ -413,13 +413,44 @@ impl<'a, 'b> ProposalValidator<'a, 'b> {
         );
         Err(MiddlewareError::new(MIDDLEWARE_NAME, msg))
     }
+    // These proposals are outside the v1 contract feature policy.
+    fn custom_descriptors(
+        &mut self,
+        operator: Operator<'a>,
+    ) -> Result<(), MiddlewareError> {
+        Err(MiddlewareError::new(
+            MIDDLEWARE_NAME,
+            format!("Custom descriptors are not supported: {operator:?}"),
+        ))
+    }
+
+    fn stack_switching(
+        &mut self,
+        operator: Operator<'a>,
+    ) -> Result<(), MiddlewareError> {
+        Err(MiddlewareError::new(
+            MIDDLEWARE_NAME,
+            format!("Stack switching is not supported: {operator:?}"),
+        ))
+    }
+
+    fn wide_arithmetic(
+        &mut self,
+        operator: Operator<'a>,
+    ) -> Result<(), MiddlewareError> {
+        Err(MiddlewareError::new(
+            MIDDLEWARE_NAME,
+            format!("Wide arithmetic is not supported: {operator:?}"),
+        ))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Module, Singlepass, Store};
+    use wasmer::sys::{CompilerConfig, Singlepass};
+    use wasmer::{Module, Store};
 
     #[test]
     fn valid_wasm_instance_sanity() {

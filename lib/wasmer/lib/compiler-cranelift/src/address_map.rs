@@ -3,9 +3,7 @@
 
 use cranelift_codegen::{Context, MachSrcLoc};
 use std::ops::Range;
-use wasmer_compiler::types::address_map::{
-    FunctionAddressMap, InstructionAddressMap,
-};
+use wasmer_compiler::types::address_map::{FunctionAddressMap, InstructionAddressMap};
 use wasmer_types::SourceLoc;
 
 pub fn get_function_address_map(

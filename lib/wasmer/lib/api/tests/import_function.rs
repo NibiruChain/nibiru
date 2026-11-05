@@ -1,11 +1,11 @@
-use macro_wasmer_universal_test::universal_test;
+use macro_wasmer_engine_test::engine_test;
 #[cfg(feature = "js")]
 use wasm_bindgen_test::*;
 
 use anyhow::Result;
 use wasmer::*;
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     all(target_os = "windows", feature = "v8"),
     ignore = "flaky test on windows when using v8"
@@ -29,8 +29,7 @@ fn pass_i64_between_host_and_plugin() -> Result<(), String> {
         }
     };
 
-    let instance = Instance::new(&mut store, &module, &imports)
-        .map_err(|e| format!("{e:?}"))?;
+    let instance = Instance::new(&mut store, &module, &imports).map_err(|e| format!("{e:?}"))?;
     let add_three_i64 = instance
         .exports
         .get_typed_function::<i64, i64>(&store, "add_three_i64")
@@ -52,7 +51,7 @@ fn pass_i64_between_host_and_plugin() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     all(target_os = "windows", feature = "v8"),
     ignore = "flaky test on windows when using v8"
@@ -76,8 +75,7 @@ fn pass_u64_between_host_and_plugin() -> Result<(), String> {
         }
     };
 
-    let instance = Instance::new(&mut store, &module, &imports)
-        .map_err(|e| format!("{e:?}"))?;
+    let instance = Instance::new(&mut store, &module, &imports).map_err(|e| format!("{e:?}"))?;
     let add_three_u64 = instance
         .exports
         .get_typed_function::<u64, u64>(&store, "add_three_u64")
@@ -99,7 +97,7 @@ fn pass_u64_between_host_and_plugin() -> Result<(), String> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn calling_function_exports() -> Result<()> {
     let mut store = Store::default();
     let wat = r#"(module
@@ -119,8 +117,7 @@ fn calling_function_exports() -> Result<()> {
     };
     let instance = Instance::new(&mut store, &module, &imports)?;
 
-    let add: TypedFunction<(i32, i32), i32> =
-        instance.exports.get_typed_function(&store, "add")?;
+    let add: TypedFunction<(i32, i32), i32> = instance.exports.get_typed_function(&store, "add")?;
 
     let result = add.call(&mut store, 10, 20)?;
     assert_eq!(result, 30);
@@ -128,7 +125,7 @@ fn calling_function_exports() -> Result<()> {
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 fn back_and_forth_with_imports() -> Result<()> {
     let mut store = Store::default();
     // We can use the WAT syntax as well!
@@ -143,7 +140,7 @@ fn back_and_forth_with_imports() -> Result<()> {
     )?;
 
     fn sum(a: i32, b: i32) -> i32 {
-        println!("Summing: {}+{}", a, b);
+        println!("Summing: {a}+{b}");
         a + b
     }
 

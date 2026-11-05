@@ -3,7 +3,7 @@ package tendermint_test
 import (
 	"time"
 
-	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	tmprotocrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	clienttypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/02-client/types"
 	"github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/core/exported"

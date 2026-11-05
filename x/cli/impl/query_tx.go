@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
+
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/eth"

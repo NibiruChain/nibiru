@@ -1,10 +1,11 @@
 use std::fmt;
 use std::sync::{Arc, Mutex};
+use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::{BlockType as WpTypeOrFuncType, Operator};
 use wasmer::{
-    ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, LocalFunctionIndex,
-    MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
+    ExportIndex, GlobalInit, GlobalType, LocalFunctionIndex, Mutability, Type,
 };
+use wasmer_types::MiddlewareError;
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 #[derive(Clone)]
@@ -48,7 +49,7 @@ impl fmt::Debug for MeteringGlobalIndexes {
 ///
 /// ```rust
 /// use std::sync::Arc;
-/// use wasmer::{wasmparser::Operator, CompilerConfig};
+/// use wasmer::{wasmparser::Operator, sys::CompilerConfig};
 /// use wasmer_middlewares::Metering;
 ///
 /// fn create_metering_middleware(compiler_config: &mut dyn CompilerConfig) {
@@ -152,10 +153,10 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync + 'static> ModuleMiddleware
     for Metering<F>
 {
     /// Generates a `FunctionMiddleware` for a given function.
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a>> {
         Box::new(FunctionMetering {
             cost_function: self.cost_function.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
@@ -219,7 +220,7 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> fmt::Debug for FunctionMetering<F> {
     }
 }
 
-impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware
+impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware<'_>
     for FunctionMetering<F>
 {
     fn feed<'a>(

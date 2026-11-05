@@ -1,72 +1,76 @@
 //! Define `Artifact`, based on `ArtifactBuild`
 //! to allow compiling and instantiating to be done as separate steps.
 
-use std::sync::{
-    atomic::{AtomicUsize, Ordering::SeqCst},
-    Arc,
+use std::{
+    fs::File,
+    io::BufReader,
+    mem::size_of,
+    path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering::SeqCst},
+    },
 };
 
+#[cfg(feature = "compiler")]
+use crate::ModuleEnvironment;
 use crate::{
-    engine::link::link_module,
-    lib::std::vec::IntoIter,
-    register_frame_info, resolve_imports,
-    serialize::{MetadataHeader, SerializableModule},
-    types::target::{CpuFeature, Target},
-    ArtifactBuild, ArtifactBuildFromArchive, ArtifactCreate, Engine,
-    EngineInner, Features, FrameInfosVariant, FunctionExtent,
-    GlobalFrameInfoRegistration, InstantiationError, ModuleEnvironment,
-    Tunables,
-};
-#[cfg(any(
-    feature = "static-artifact-create",
-    feature = "static-artifact-load"
-))]
-use crate::{
-    serialize::SerializableCompilation, types::symbols::ModuleMetadata,
+    ArtifactBuild, ArtifactBuildFromArchive, ArtifactCreate, Engine, EngineInner, Features,
+    FrameInfosVariant, FunctionExtent, GlobalFrameInfoRegistration, InstantiationError, Tunables,
+    WASMER_TRAP_FUNCTION_OFFSETS_SECTION_NAME, WASMER_TRAPS_SECTION_NAME,
+    engine::{link::link_module, resolver::resolve_tags, trap::register_frame_info_source},
+    resolve_imports,
+    serialize::{MetadataHeader, SerializableCompilation, SerializableModule},
+    types::relocation::{RelocationLike, RelocationTarget},
 };
 #[cfg(feature = "static-artifact-create")]
-use crate::{
-    types::module::CompileModuleInfo, Compiler, FunctionBodyData,
-    ModuleTranslationState,
-};
+use crate::{Compiler, FunctionBodyData, ModuleTranslationState, types::module::CompileModuleInfo};
+#[cfg(any(feature = "static-artifact-create", feature = "static-artifact-load"))]
+use crate::{serialize::RkyvSerializableCompilation, types::symbols::ModuleMetadata};
+use itertools::Itertools;
+#[cfg(unix)]
+use std::os::fd::AsRawFd;
+use std::vec::IntoIter;
+#[cfg(feature = "compiler")]
+use wasmer_types::CompilationProgressCallback;
 
 use enumset::EnumSet;
+use object::{Object as _, ObjectSection as _, ReadCache, ReadRef};
 use shared_buffer::OwnedBuffer;
 
-#[cfg(any(
-    feature = "static-artifact-create",
-    feature = "static-artifact-load"
-))]
+use crate::engine::mapped_binary::DebugInfoSource;
+
+#[cfg(any(feature = "static-artifact-create", feature = "static-artifact-load"))]
 use std::mem;
 
 #[cfg(feature = "static-artifact-create")]
 use crate::object::{
-    emit_compilation, emit_data, get_object_for_target, Object,
+    Object, ObjectMetadataBuilder, emit_compilation, emit_data, get_object_for_target,
 };
 
 use wasmer_types::{
-    entity::{BoxedSlice, PrimaryMap},
-    ArchivedDataInitializerLocation, ArchivedOwnedDataInitializer, CompileError,
-    DataInitializer, DataInitializerLike, DataInitializerLocation,
-    DataInitializerLocationLike, DeserializeError, FunctionIndex, HashAlgorithm,
-    LocalFunctionIndex, MemoryIndex, ModuleInfo, OwnedDataInitializer,
-    SerializeError, SignatureIndex, TableIndex,
+    ArchivedDataInitializerLocation, ArchivedOwnedDataInitializer, CompileError, DataInitializer,
+    DataInitializerLike, DataInitializerLocation, DataInitializerLocationLike, DeserializeError,
+    FunctionIndex, LocalFunctionIndex, MemoryIndex, ModuleInfo, OwnedDataInitializer,
+    SerializeError, SignatureIndex, TableIndex, TrapCode, TrapInformation,
+    entity::{BoxedSlice, EntityRef, PrimaryMap},
+    target::{CpuFeature, Target},
 };
 
+use wasmer_types::VMOffsets;
 use wasmer_vm::{
-    FunctionBodyPtr, InstanceAllocator, MemoryStyle, StoreObjects, TableStyle,
-    TrapHandlerFn, VMConfig, VMExtern, VMInstance, VMSharedSignatureIndex,
-    VMTrampoline,
+    FunctionBodyPtr, InstanceAllocator, MemoryStyle, StoreObjects, TableStyle, TrapHandlerFn,
+    VMConfig, VMExtern, VMInstance, VMSignatureHash, VMTrampoline,
 };
 
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
 pub struct AllocatedArtifact {
-    // This shows if the frame info has been regestered already or not.
-    // Because the 'GlobalFrameInfoRegistration' ownership can be transfered to EngineInner
+    // This shows if the frame info has been registered already or not.
+    // Because the 'GlobalFrameInfoRegistration' ownership can be transferred to EngineInner
     // this bool is needed to track the status, as 'frame_info_registration' will be None
-    // after the ownership is transfered.
+    // after the ownership is transferred.
     frame_info_registered: bool,
-    // frame_info_registered is not staying there but transfered to CodeMemory from EngineInner
+    // frame_info_registered is not staying there but transferred to CodeMemory from EngineInner
     // using 'Artifact::take_frame_info_registration' method
     // so the GloabelFrameInfo and MMap stays in sync and get dropped at the same time
     frame_info_registration: Option<GlobalFrameInfoRegistration>,
@@ -74,10 +78,50 @@ pub struct AllocatedArtifact {
 
     #[cfg_attr(feature = "artifact-size", loupe(skip))]
     finished_function_call_trampolines: BoxedSlice<SignatureIndex, VMTrampoline>,
-    finished_dynamic_function_trampolines:
-        BoxedSlice<FunctionIndex, FunctionBodyPtr>,
-    signatures: BoxedSlice<SignatureIndex, VMSharedSignatureIndex>,
+    finished_dynamic_function_trampolines: BoxedSlice<FunctionIndex, FunctionBodyPtr>,
+    signatures: BoxedSlice<SignatureIndex, VMSignatureHash>,
     finished_function_lengths: BoxedSlice<LocalFunctionIndex, usize>,
+    // The maximum stack size used for each function (available only for the Singlepass compiler).
+    function_max_stack_usage: BoxedSlice<LocalFunctionIndex, Option<usize>>,
+
+    /// Precomputed `VMOffsets` for this artifact's module, cloned by
+    /// `Artifact::instantiate` instead of recomputing on every call.
+    ///
+    /// Safe to cache because `VMOffsets::new(pointer_size, module_info)`
+    /// is deterministic, `module_info` is immutable after compile (the
+    /// only mutable field `name` is not a `VMOffsets` input), and the
+    /// host's pointer size is a runtime constant.
+    ///
+    /// Built once in `from_parts` and in the deserialization path
+    /// (`deserialize_object_native`); `VMOffsets::new` was ~9% of
+    /// `Instance::new` time on profile traces of a per-request wasm
+    /// host calling `Module::instantiate` in a tight loop.
+    #[cfg_attr(feature = "artifact-size", loupe(skip))]
+    vm_offsets: VMOffsets,
+
+    /// The base address the module's code was loaded at, and the raw ELF
+    /// image bytes it was loaded from, when this artifact was built from a
+    /// native ELF image. Used to lazily build DWARF debug info for frame
+    /// symbolication. `None` for non-ELF artifacts.
+    #[cfg_attr(feature = "artifact-size", loupe(skip))]
+    elf_image: Option<(usize, DebugInfoSource)>,
+}
+
+impl AllocatedArtifact {
+    fn function_extents(&self) -> PrimaryMap<LocalFunctionIndex, FunctionExtent> {
+        assert_eq!(
+            self.finished_functions.len(),
+            self.finished_function_lengths.len(),
+            "finished_functions and finished_function_lengths must have equal length"
+        );
+        self.finished_functions
+            .iter()
+            .map(|(index, &ptr)| {
+                let length = self.finished_function_lengths[index];
+                FunctionExtent { ptr, length }
+            })
+            .collect()
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -91,7 +135,7 @@ pub struct ArtifactId {
 impl ArtifactId {
     /// Format this identifier as a string.
     pub fn id(&self) -> String {
-        format!("{}", &self.id)
+        format!("{}", self.id)
     }
 }
 
@@ -115,6 +159,8 @@ impl Default for ArtifactId {
 pub struct Artifact {
     id: ArtifactId,
     artifact: ArtifactBuildVariant,
+    #[cfg_attr(feature = "artifact-size", loupe(skip))]
+    module_file: Option<PathBuf>,
     // The artifact will only be allocated in memory in case we can execute it
     // (that means, if the target != host then this will be None).
     allocated: Option<AllocatedArtifact>,
@@ -124,6 +170,7 @@ pub struct Artifact {
 /// module, corresponding to `ArtifactBuildVariant::Plain`, or loaded
 /// from an archive, corresponding to `ArtifactBuildVariant::Archived`.
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
+#[allow(clippy::large_enum_variant)]
 pub enum ArtifactBuildVariant {
     Plain(ArtifactBuild),
     Archived(ArtifactBuildFromArchive),
@@ -136,7 +183,7 @@ impl Artifact {
         engine: &Engine,
         data: &[u8],
         tunables: &dyn Tunables,
-        hash_algorithm: Option<HashAlgorithm>,
+        progress_callback: Option<CompilationProgressCallback>,
     ) -> Result<Self, CompileError> {
         let mut inner_engine = engine.inner_mut();
         let environ = ModuleEnvironment::new();
@@ -159,13 +206,14 @@ impl Artifact {
             engine.target(),
             memory_styles,
             table_styles,
-            hash_algorithm,
+            progress_callback.as_ref(),
         )?;
 
-        Self::from_parts(
+        Self::from_parts_with_module_file(
             &mut inner_engine,
             ArtifactBuildVariant::Plain(artifact),
             engine.target(),
+            None,
         )
         .map_err(|e| match e {
             DeserializeError::Compiler(c) => c,
@@ -206,6 +254,85 @@ impl Artifact {
         ))
     }
 
+    /// Load an ELF artifact directly from a file-backed memory map.
+    ///
+    /// Unlike [`Self::deserialize`], this entrypoint only accepts ELF artifacts.
+    ///
+    /// # Safety
+    /// This function loads executable code into memory. The file must be trusted
+    /// and must not be modified while the returned artifact is in use.
+    pub unsafe fn deserialize_file(
+        engine: &Engine,
+        path: impl AsRef<Path>,
+    ) -> Result<Self, DeserializeError> {
+        let path = path.as_ref().to_path_buf();
+        let file = File::open(&path)?;
+        let cache = ReadCache::new(BufReader::new(file));
+        let image = object::File::parse(&cache)
+            .map_err(|e| DeserializeError::CorruptedBinary(format!("cannot parse image: {e}")))?;
+        if image.format() != object::BinaryFormat::Elf {
+            return Err(DeserializeError::Incompatible(
+                "Artifact::deserialize_file only supports ELF artifacts".to_string(),
+            ));
+        }
+
+        let module_info = image
+            .section_by_name_bytes(crate::WASMER_MODULE_INFO_SECTION_NAME)
+            .ok_or_else(|| {
+                DeserializeError::CorruptedBinary("missing ModuleInfo section".to_string())
+            })?
+            .data()
+            .map_err(|e| {
+                DeserializeError::CorruptedBinary(format!(
+                    "cannot load ModuleInfo section data: {e}"
+                ))
+            })?;
+        let serializable = unsafe { SerializableModule::deserialize(module_info)? };
+        if !matches!(serializable.compilation, SerializableCompilation::Elf(_)) {
+            return Err(DeserializeError::Incompatible(
+                "file does not contain an ELF artifact".to_string(),
+            ));
+        }
+
+        let artifact = ArtifactBuildVariant::Plain(ArtifactBuild::from_serializable(serializable));
+        let mut inner_engine = engine.inner_mut();
+        Self::from_parts_with_module_file(&mut inner_engine, artifact, engine.target(), Some(path))
+    }
+
+    /// Deserialize an ELF artifact held in memory, if the bytes contain one.
+    fn deserialize_elf(engine: &Engine, bytes: &[u8]) -> Result<Option<Self>, DeserializeError> {
+        if !bytes.starts_with(&object::elf::ELFMAG) {
+            return Ok(None);
+        }
+
+        let image = object::File::parse(bytes)
+            .map_err(|e| DeserializeError::CorruptedBinary(format!("cannot parse image: {e}")))?;
+        let module_info = image
+            .section_by_name_bytes(crate::WASMER_MODULE_INFO_SECTION_NAME)
+            .ok_or_else(|| {
+                DeserializeError::CorruptedBinary("missing ModuleInfo section".to_string())
+            })?
+            .data()
+            .map_err(|e| {
+                DeserializeError::CorruptedBinary(format!(
+                    "cannot load ModuleInfo section data: {e}"
+                ))
+            })?;
+        let mut serializable = unsafe { SerializableModule::deserialize(module_info)? };
+        let SerializableCompilation::Elf(elf) = &mut serializable.compilation else {
+            return Err(DeserializeError::Incompatible(
+                "ELF image does not contain an ELF artifact".to_string(),
+            ));
+        };
+        // The copy embedded in the image has an empty ELF placeholder to avoid
+        // embedding the image in itself. Restore it for allocation and reserialization.
+        *elf = bytes.to_vec();
+
+        let artifact = ArtifactBuildVariant::Plain(ArtifactBuild::from_serializable(serializable));
+        let mut inner_engine = engine.inner_mut();
+        Self::from_parts(&mut inner_engine, artifact, engine.target()).map(Some)
+    }
+
     /// Deserialize a serialized artifact.
     ///
     /// # Safety
@@ -218,43 +345,43 @@ impl Artifact {
         engine: &Engine,
         bytes: OwnedBuffer,
     ) -> Result<Self, DeserializeError> {
-        if !ArtifactBuild::is_deserializable(bytes.as_ref()) {
-            let static_artifact = Self::deserialize_object(engine, bytes);
-            match static_artifact {
-                Ok(v) => {
-                    return Ok(v);
+        unsafe {
+            if !ArtifactBuild::is_deserializable(bytes.as_ref()) {
+                if let Some(artifact) = Self::deserialize_elf(engine, bytes.as_ref())? {
+                    return Ok(artifact);
                 }
-                Err(_) => {
-                    return Err(DeserializeError::Incompatible(
-                        "The provided bytes are not wasmer-universal"
-                            .to_string(),
-                    ));
+
+                let static_artifact = Self::deserialize_object(engine, bytes);
+                match static_artifact {
+                    Ok(v) => {
+                        return Ok(v);
+                    }
+                    Err(e) => {
+                        return Err(DeserializeError::Incompatible(format!(
+                            "The provided bytes are not a Wasmer engine artifact: {e}"
+                        )));
+                    }
                 }
             }
+
+            let artifact = ArtifactBuildFromArchive::try_new(bytes, |bytes| {
+                let bytes =
+                    Self::get_byte_slice(bytes, ArtifactBuild::MAGIC_HEADER.len(), bytes.len())?;
+
+                let metadata_len = MetadataHeader::parse(bytes)?;
+                let metadata_slice = Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
+                let metadata_slice = Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
+
+                SerializableModule::archive_from_slice_checked(metadata_slice)
+            })?;
+
+            let mut inner_engine = engine.inner_mut();
+            Self::from_parts(
+                &mut inner_engine,
+                ArtifactBuildVariant::Archived(artifact),
+                engine.target(),
+            )
         }
-
-        let artifact = ArtifactBuildFromArchive::try_new(bytes, |bytes| {
-            let bytes = Self::get_byte_slice(
-                bytes,
-                ArtifactBuild::MAGIC_HEADER.len(),
-                bytes.len(),
-            )?;
-
-            let metadata_len = MetadataHeader::parse(bytes)?;
-            let metadata_slice =
-                Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
-            let metadata_slice =
-                Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
-
-            SerializableModule::archive_from_slice_checked(metadata_slice)
-        })?;
-
-        let mut inner_engine = engine.inner_mut();
-        Self::from_parts(
-            &mut inner_engine,
-            ArtifactBuildVariant::Archived(artifact),
-            engine.target(),
-        )
     }
 
     /// Deserialize a serialized artifact.
@@ -269,43 +396,43 @@ impl Artifact {
         engine: &Engine,
         bytes: OwnedBuffer,
     ) -> Result<Self, DeserializeError> {
-        if !ArtifactBuild::is_deserializable(bytes.as_ref()) {
-            let static_artifact = Self::deserialize_object(engine, bytes);
-            match static_artifact {
-                Ok(v) => {
-                    return Ok(v);
+        unsafe {
+            if !ArtifactBuild::is_deserializable(bytes.as_ref()) {
+                if let Some(artifact) = Self::deserialize_elf(engine, bytes.as_ref())? {
+                    return Ok(artifact);
                 }
-                Err(_) => {
-                    return Err(DeserializeError::Incompatible(
-                        "The provided bytes are not wasmer-universal"
-                            .to_string(),
-                    ));
+
+                let static_artifact = Self::deserialize_object(engine, bytes);
+                match static_artifact {
+                    Ok(v) => {
+                        return Ok(v);
+                    }
+                    Err(e) => {
+                        return Err(DeserializeError::Incompatible(format!(
+                            "The provided bytes are not a Wasmer engine artifact: {e}"
+                        )));
+                    }
                 }
             }
+
+            let artifact = ArtifactBuildFromArchive::try_new(bytes, |bytes| {
+                let bytes =
+                    Self::get_byte_slice(bytes, ArtifactBuild::MAGIC_HEADER.len(), bytes.len())?;
+
+                let metadata_len = MetadataHeader::parse(bytes)?;
+                let metadata_slice = Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
+                let metadata_slice = Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
+
+                SerializableModule::archive_from_slice(metadata_slice)
+            })?;
+
+            let mut inner_engine = engine.inner_mut();
+            Self::from_parts(
+                &mut inner_engine,
+                ArtifactBuildVariant::Archived(artifact),
+                engine.target(),
+            )
         }
-
-        let artifact = ArtifactBuildFromArchive::try_new(bytes, |bytes| {
-            let bytes = Self::get_byte_slice(
-                bytes,
-                ArtifactBuild::MAGIC_HEADER.len(),
-                bytes.len(),
-            )?;
-
-            let metadata_len = MetadataHeader::parse(bytes)?;
-            let metadata_slice =
-                Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
-            let metadata_slice =
-                Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
-
-            SerializableModule::archive_from_slice(metadata_slice)
-        })?;
-
-        let mut inner_engine = engine.inner_mut();
-        Self::from_parts(
-            &mut inner_engine,
-            ArtifactBuildVariant::Archived(artifact),
-            engine.target(),
-        )
     }
 
     /// Construct a `ArtifactBuild` from component parts.
@@ -314,10 +441,20 @@ impl Artifact {
         artifact: ArtifactBuildVariant,
         target: &Target,
     ) -> Result<Self, DeserializeError> {
+        Self::from_parts_with_module_file(engine_inner, artifact, target, None)
+    }
+
+    fn from_parts_with_module_file(
+        engine_inner: &mut EngineInner,
+        artifact: ArtifactBuildVariant,
+        target: &Target,
+        module_file: Option<PathBuf>,
+    ) -> Result<Self, DeserializeError> {
         if !target.is_native() {
             return Ok(Self {
                 id: Default::default(),
                 artifact,
+                module_file,
                 allocated: None,
             });
         } else {
@@ -331,118 +468,267 @@ impl Artifact {
             }
         }
         let module_info = artifact.module_info();
-        let (
-            finished_functions,
-            finished_function_call_trampolines,
-            finished_dynamic_function_trampolines,
-            custom_sections,
-        ) = match &artifact {
-            ArtifactBuildVariant::Plain(p) => engine_inner.allocate(
-                module_info,
-                p.get_function_bodies_ref().values(),
-                p.get_function_call_trampolines_ref().values(),
-                p.get_dynamic_function_trampolines_ref().values(),
-                p.get_custom_sections_ref().values(),
-            )?,
-            ArtifactBuildVariant::Archived(a) => engine_inner.allocate(
-                module_info,
-                a.get_function_bodies_ref().values(),
-                a.get_function_call_trampolines_ref().values(),
-                a.get_dynamic_function_trampolines_ref().values(),
-                a.get_custom_sections_ref().values(),
-            )?,
-        };
 
-        match &artifact {
-            ArtifactBuildVariant::Plain(p) => link_module(
-                module_info,
-                &finished_functions,
-                p.get_function_relocations()
-                    .iter()
-                    .map(|(k, v)| (k, v.iter())),
-                &custom_sections,
-                p.get_custom_section_relocations_ref()
-                    .iter()
-                    .map(|(k, v)| (k, v.iter())),
-                p.get_libcall_trampolines(),
-                p.get_libcall_trampoline_len(),
-            ),
-            ArtifactBuildVariant::Archived(a) => link_module(
-                module_info,
-                &finished_functions,
-                a.get_function_relocations()
-                    .iter()
-                    .map(|(k, v)| (k, v.iter())),
-                &custom_sections,
-                a.get_custom_section_relocations_ref()
-                    .iter()
-                    .map(|(k, v)| (k, v.iter())),
-                a.get_libcall_trampolines(),
-                a.get_libcall_trampoline_len(),
-            ),
-        };
-
-        // Compute indices into the shared signature table.
-        let signatures = {
-            let signature_registry = engine_inner.signatures();
-            module_info
-                .signatures
-                .values()
-                .map(|sig| signature_registry.register(sig))
-                .collect::<PrimaryMap<_, _>>()
-        };
-
-        let debug_ref = match &artifact {
-            // Why clone? See comment at the top of ./lib/types/src/indexes.rs.
-            ArtifactBuildVariant::Plain(p) => p.get_debug_ref().cloned(),
-            ArtifactBuildVariant::Archived(a) => a.get_debug_ref(),
-        };
-        let eh_frame = match debug_ref {
-            Some(debug) => {
-                let eh_frame_section_size = match &artifact {
-                    ArtifactBuildVariant::Plain(p) => {
-                        p.get_custom_sections_ref()[debug.eh_frame].bytes.len()
-                    }
-                    ArtifactBuildVariant::Archived(a) => {
-                        a.get_custom_sections_ref()[debug.eh_frame].bytes.len()
-                    }
-                };
-                let eh_frame_section_pointer = custom_sections[debug.eh_frame];
-                Some(unsafe {
-                    std::slice::from_raw_parts(
-                        *eh_frame_section_pointer,
-                        eh_frame_section_size,
-                    )
-                })
+        let elf_file_data = match &artifact {
+            ArtifactBuildVariant::Plain(p) => {
+                if let SerializableCompilation::Elf(data) = &p.serializable.compilation {
+                    Some(data.as_ref())
+                } else {
+                    None
+                }
             }
-            None => None,
+            ArtifactBuildVariant::Archived(a) => a.get_elf_file(),
         };
+        let mut allocated = if let Some(module_file) = module_file.as_ref() {
+            if elf_file_data.is_none() {
+                return Err(DeserializeError::Incompatible(
+                    "file-backed loading only supports ELF artifacts".to_string(),
+                ));
+            }
+            Self::allocate_elf_artifact_from_path(engine_inner, module_info, module_file)?
+        } else if let Some(elf_file_data) = elf_file_data {
+            Self::allocate_elf_artifact(engine_inner, module_info, elf_file_data)?
+        } else {
+            let (
+                finished_functions,
+                finished_function_call_trampolines,
+                finished_dynamic_function_trampolines,
+                custom_sections,
+            ) = match &artifact {
+                ArtifactBuildVariant::Plain(p) => engine_inner.allocate(
+                    module_info,
+                    p.get_function_bodies_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    p.get_function_call_trampolines_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    p.get_dynamic_function_trampolines_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    p.get_custom_sections_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                )?,
 
-        // Make all code compiled thus far executable.
-        engine_inner.publish_compiled_code();
+                ArtifactBuildVariant::Archived(a) => engine_inner.allocate(
+                    module_info,
+                    a.get_function_bodies_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    a.get_function_call_trampolines_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    a.get_dynamic_function_trampolines_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                    a.get_custom_sections_ref()
+                        .expect("RKYV path expected")
+                        .values(),
+                )?,
+            };
 
-        engine_inner.publish_eh_frame(eh_frame)?;
+            let get_got_address: Box<dyn Fn(RelocationTarget) -> Option<usize>> = match &artifact {
+                ArtifactBuildVariant::Plain(p) => {
+                    if let Some(got) = p.get_got_ref().expect("RKYV path expected").index {
+                        let relocs: Vec<_> = p
+                            .get_custom_section_relocations_ref()
+                            .expect("RKYV path expected")[got]
+                            .iter()
+                            .map(|v| (v.reloc_target, v.offset))
+                            .collect();
+                        let got_base = custom_sections[got].0 as usize;
+                        Box::new(move |t: RelocationTarget| {
+                            relocs
+                                .iter()
+                                .find(|(v, _)| v == &t)
+                                .map(|(_, o)| got_base + (*o as usize))
+                        })
+                    } else {
+                        Box::new(|_: RelocationTarget| None)
+                    }
+                }
 
-        let finished_function_lengths = finished_functions
-            .values()
-            .map(|extent| extent.length)
-            .collect::<PrimaryMap<LocalFunctionIndex, usize>>()
-            .into_boxed_slice();
-        let finished_functions = finished_functions
-            .values()
-            .map(|extent| extent.ptr)
-            .collect::<PrimaryMap<LocalFunctionIndex, FunctionBodyPtr>>()
-            .into_boxed_slice();
-        let finished_function_call_trampolines =
-            finished_function_call_trampolines.into_boxed_slice();
-        let finished_dynamic_function_trampolines =
-            finished_dynamic_function_trampolines.into_boxed_slice();
-        let signatures = signatures.into_boxed_slice();
+                ArtifactBuildVariant::Archived(p) => {
+                    if let Some(got) = p.get_got_ref().expect("RKYV path expected").index {
+                        let relocs: Vec<_> = p
+                            .get_custom_section_relocations_ref()
+                            .expect("RKYV path expected")[got]
+                            .iter()
+                            .map(|v| (v.reloc_target(), v.offset))
+                            .collect();
+                        let got_base = custom_sections[got].0 as usize;
+                        Box::new(move |t: RelocationTarget| {
+                            relocs
+                                .iter()
+                                .find(|(v, _)| v == &t)
+                                .map(|(_, o)| got_base + (o.to_native() as usize))
+                        })
+                    } else {
+                        Box::new(|_: RelocationTarget| None)
+                    }
+                }
+            };
+            let functions_max_stack_usage = match &artifact {
+                ArtifactBuildVariant::Plain(p) => p
+                    .get_function_max_stack_usage()
+                    .expect("RKYV path expected")
+                    .values()
+                    .cloned()
+                    .collect::<PrimaryMap<LocalFunctionIndex, _>>(),
+                ArtifactBuildVariant::Archived(a) => a
+                    .get_function_max_stack_usage()
+                    .expect("RKYV path expected")
+                    .values()
+                    .cloned()
+                    .collect::<PrimaryMap<LocalFunctionIndex, _>>(),
+            };
 
-        let mut artifact = Self {
-            id: Default::default(),
-            artifact,
-            allocated: Some(AllocatedArtifact {
+            match &artifact {
+                ArtifactBuildVariant::Plain(p) => link_module(
+                    module_info,
+                    &finished_functions,
+                    &finished_dynamic_function_trampolines,
+                    p.get_function_relocations()
+                        .expect("RKYV path expected")
+                        .iter()
+                        .map(|(k, v)| (k, v.iter())),
+                    &custom_sections,
+                    p.get_custom_section_relocations_ref()
+                        .expect("RKYV path expected")
+                        .iter()
+                        .map(|(k, v)| (k, v.iter())),
+                    p.get_libcall_trampolines().expect("RKYV path expected"),
+                    p.get_libcall_trampoline_len().expect("RKYV path expected"),
+                    &get_got_address,
+                ),
+                ArtifactBuildVariant::Archived(a) => link_module(
+                    module_info,
+                    &finished_functions,
+                    &finished_dynamic_function_trampolines,
+                    a.get_function_relocations()
+                        .expect("RKYV path expected")
+                        .iter()
+                        .map(|(k, v)| (k, v.iter())),
+                    &custom_sections,
+                    a.get_custom_section_relocations_ref()
+                        .expect("RKYV path expected")
+                        .iter()
+                        .map(|(k, v)| (k, v.iter())),
+                    a.get_libcall_trampolines().expect("RKYV path expected"),
+                    a.get_libcall_trampoline_len().expect("RKYV path expected"),
+                    &get_got_address,
+                ),
+            };
+
+            // Compute indices into the shared signature table.
+            let signatures = {
+                let signature_registry = engine_inner.signatures();
+                module_info
+                    .signatures
+                    .values()
+                    .zip(module_info.signature_hashes.values())
+                    .map(|(sig, sig_hash)| signature_registry.register(sig, *sig_hash))
+                    .collect::<PrimaryMap<_, _>>()
+            };
+
+            #[allow(unused_variables)]
+            let eh_frame = match &artifact {
+                ArtifactBuildVariant::Plain(p) => p
+                    .get_unwind_info()
+                    .expect("RKYV path expected")
+                    .eh_frame
+                    .map(|v| unsafe {
+                        std::slice::from_raw_parts(
+                            *custom_sections[v],
+                            p.get_custom_sections_ref().expect("RKYV path expected")[v]
+                                .bytes
+                                .len(),
+                        )
+                    }),
+                ArtifactBuildVariant::Archived(a) => a
+                    .get_unwind_info()
+                    .expect("RKYV path expected")
+                    .eh_frame
+                    .map(|v| unsafe {
+                        std::slice::from_raw_parts(
+                            *custom_sections[v],
+                            a.get_custom_sections_ref().expect("RKYV path expected")[v]
+                                .bytes
+                                .len(),
+                        )
+                    }),
+            };
+            #[allow(unused_variables)]
+            let compact_unwind = match &artifact {
+                ArtifactBuildVariant::Plain(p) => p
+                    .get_unwind_info()
+                    .expect("RKYV path expected")
+                    .compact_unwind
+                    .map(|v| unsafe {
+                        std::slice::from_raw_parts(
+                            *custom_sections[v],
+                            p.get_custom_sections_ref().expect("RKYV path expected")[v]
+                                .bytes
+                                .len(),
+                        )
+                    }),
+                ArtifactBuildVariant::Archived(a) => a
+                    .get_unwind_info()
+                    .expect("RKYV path expected")
+                    .compact_unwind
+                    .map(|v| unsafe {
+                        std::slice::from_raw_parts(
+                            *custom_sections[v],
+                            a.get_custom_sections_ref().expect("RKYV path expected")[v]
+                                .bytes
+                                .len(),
+                        )
+                    }),
+            };
+
+            #[cfg(all(not(target_arch = "wasm32"), feature = "compiler"))]
+            {
+                engine_inner.register_perfmap(&finished_functions, module_info)?;
+            }
+
+            // Make all code compiled thus far executable.
+            engine_inner.publish_compiled_code();
+
+            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+            if let Some(compact_unwind) = compact_unwind {
+                engine_inner.publish_compact_unwind(
+                    compact_unwind,
+                    get_got_address(RelocationTarget::LibCall(wasmer_vm::LibCall::EHPersonality)),
+                )?;
+            }
+            #[cfg(not(any(
+                target_arch = "wasm32",
+                all(target_os = "macos", target_arch = "aarch64")
+            )))]
+            engine_inner.publish_eh_frame(eh_frame)?;
+
+            drop(get_got_address);
+
+            let finished_function_lengths = finished_functions
+                .values()
+                .map(|extent| extent.length)
+                .collect::<PrimaryMap<LocalFunctionIndex, usize>>()
+                .into_boxed_slice();
+            let finished_functions = finished_functions
+                .values()
+                .map(|extent| extent.ptr)
+                .collect::<PrimaryMap<LocalFunctionIndex, FunctionBodyPtr>>()
+                .into_boxed_slice();
+            let finished_function_call_trampolines =
+                finished_function_call_trampolines.into_boxed_slice();
+            let finished_dynamic_function_trampolines =
+                finished_dynamic_function_trampolines.into_boxed_slice();
+            let signatures = signatures.into_boxed_slice();
+
+            let vm_offsets = VMOffsets::new(std::mem::size_of::<usize>() as u8, module_info);
+
+            AllocatedArtifact {
                 frame_info_registered: false,
                 frame_info_registration: None,
                 finished_functions,
@@ -450,19 +736,255 @@ impl Artifact {
                 finished_dynamic_function_trampolines,
                 signatures,
                 finished_function_lengths,
-            }),
+                vm_offsets,
+                function_max_stack_usage: functions_max_stack_usage.into_boxed_slice(),
+                elf_image: None,
+            }
         };
 
-        artifact.internal_register_frame_info().map_err(|e| {
-            DeserializeError::CorruptedBinary(format!("{:?}", e))
-        })?;
-        if let Some(frame_info) =
-            artifact.internal_take_frame_info_registration()
-        {
-            engine_inner.register_frame_info(frame_info);
+        // ELF allocation recovers function addresses from the linked image, but
+        // maximum stack usage is compile metadata rather than an ELF property.
+        // Preserve it from the metadata embedded in the artifact, just as the
+        // in-memory Rkyv path does above.
+        if allocated.elf_image.is_some() {
+            allocated.function_max_stack_usage = match &artifact {
+                ArtifactBuildVariant::Plain(p) => p
+                    .get_function_max_stack_usage()
+                    .expect("function stack usage metadata expected")
+                    .values()
+                    .cloned()
+                    .collect::<PrimaryMap<LocalFunctionIndex, _>>()
+                    .into_boxed_slice(),
+                ArtifactBuildVariant::Archived(a) => a
+                    .get_function_max_stack_usage()
+                    .expect("function stack usage metadata expected")
+                    .values()
+                    .cloned()
+                    .collect::<PrimaryMap<LocalFunctionIndex, _>>()
+                    .into_boxed_slice(),
+            };
+        }
+
+        let mut artifact = Self {
+            id: Default::default(),
+            artifact,
+            module_file,
+            allocated: Some(allocated),
+        };
+
+        let is_elf = artifact
+            .allocated
+            .as_ref()
+            .expect("It must be allocated")
+            .elf_image
+            .is_some();
+
+        artifact
+            .internal_register_frame_info()
+            .map_err(|e| DeserializeError::CorruptedBinary(format!("{e:?}")))?;
+        if let Some(frame_info) = artifact.internal_take_frame_info_registration() {
+            if is_elf {
+                engine_inner.register_elf_frame_info(frame_info);
+            } else {
+                engine_inner.register_frame_info(frame_info);
+            }
         }
 
         Ok(artifact)
+    }
+
+    /// Build an [`AllocatedArtifact`] from a compiled native ELF image.
+    ///
+    /// Note that, unlike [`Self::allocate_elf_artifact_from_path`], no debugger
+    /// command file is registered here: the image only exists in memory, so
+    /// there is no path a debugger could load symbols from.
+    fn allocate_elf_artifact(
+        engine_inner: &mut EngineInner,
+        module_info: &ModuleInfo,
+        elf_file_data: &[u8],
+    ) -> Result<AllocatedArtifact, DeserializeError> {
+        let image = object::File::parse(elf_file_data)
+            .map_err(|e| DeserializeError::CorruptedBinary(format!("cannot parse image: {e}")))?;
+        let base = engine_inner.map_elf_binary(&image, elf_file_data)?;
+        Self::allocate_elf_artifact_from_image(
+            engine_inner,
+            module_info,
+            &image,
+            base,
+            DebugInfoSource::Bytes(Arc::from(elf_file_data)),
+        )
+    }
+
+    #[cfg(unix)]
+    fn allocate_elf_artifact_from_path(
+        engine_inner: &mut EngineInner,
+        module_info: &ModuleInfo,
+        path: &Path,
+    ) -> Result<AllocatedArtifact, DeserializeError> {
+        let file = File::open(path)?;
+        let fd = file.as_raw_fd();
+        let debug_file = Arc::new(file.try_clone()?);
+        let cache = ReadCache::new(BufReader::new(file));
+        let image = object::File::parse(&cache)
+            .map_err(|e| DeserializeError::CorruptedBinary(format!("cannot parse image: {e}")))?;
+        if image.format() != object::BinaryFormat::Elf {
+            return Err(DeserializeError::Incompatible(
+                "file-backed Artifact is not ELF".to_string(),
+            ));
+        }
+        let base = engine_inner.map_elf_binary_file(&image, fd)?;
+        #[cfg(feature = "compiler")]
+        if let Some(debugger) = engine_inner.debugger() {
+            engine_inner.register_debugger(path, base, debugger)?;
+        }
+        Self::allocate_elf_artifact_from_image(
+            engine_inner,
+            module_info,
+            &image,
+            base,
+            DebugInfoSource::File(debug_file),
+        )
+    }
+
+    #[cfg(not(unix))]
+    fn allocate_elf_artifact_from_path(
+        _engine_inner: &mut EngineInner,
+        _module_info: &ModuleInfo,
+        _path: &Path,
+    ) -> Result<AllocatedArtifact, DeserializeError> {
+        Err(DeserializeError::Incompatible(
+            "file-backed ELF artifacts are only supported on Unix".to_string(),
+        ))
+    }
+
+    fn allocate_elf_artifact_from_image<'a, R: object::ReadRef<'a>>(
+        engine_inner: &mut EngineInner,
+        module_info: &ModuleInfo,
+        image: &object::File<'a, R>,
+        base: *mut std::ffi::c_void,
+        debug_info: DebugInfoSource,
+    ) -> Result<AllocatedArtifact, DeserializeError> {
+        let mut function_offsets = None;
+        for section in image.sections() {
+            let Ok(section_name) = section.name_bytes() else {
+                continue;
+            };
+            match section_name {
+                crate::WASMER_FUNCTION_OFFSETS_SECTION_NAME => {
+                    let data = section.data().map_err(|e| {
+                        DeserializeError::CorruptedBinary(format!(
+                            "cannot load image section data: {e}"
+                        ))
+                    })?;
+                    function_offsets = Some(
+                        data.chunks_exact(std::mem::size_of::<usize>())
+                            .map(|chunk| usize::from_le_bytes(chunk.try_into().unwrap()))
+                            .collect_vec(),
+                    );
+                }
+                crate::EH_FRAME_SECTION_NAME => {
+                    engine_inner.publish_elf_eh_frame(section.address(), section.size())?;
+                }
+                _ => {}
+            }
+        }
+
+        let Some(function_offsets) = function_offsets else {
+            return Err(DeserializeError::CorruptedBinary(
+                "missing function offset section in the image".to_string(),
+            ));
+        };
+
+        let local_function_count = module_info.local_func_count();
+        let corrupted_offsets = || {
+            DeserializeError::CorruptedBinary(format!(
+                "corrupted {} section",
+                String::from_utf8_lossy(crate::WASMER_FUNCTION_OFFSETS_SECTION_NAME)
+            ))
+        };
+        let signature_count = module_info.signatures.len();
+        let dynamic_trampoline_count = module_info.imported_function_types().count();
+        let expected_offset_count = local_function_count
+            .checked_add(signature_count)
+            .and_then(|count| count.checked_add(dynamic_trampoline_count))
+            .ok_or_else(&corrupted_offsets)?;
+        if function_offsets.len() != expected_offset_count {
+            return Err(corrupted_offsets());
+        }
+
+        let (local_fn_offsets, rest) = function_offsets.split_at(local_function_count);
+        let (trampoline_offsets, dynamic_trampoline_offsets) = rest.split_at(signature_count);
+
+        // Right now, we calculate function sizes as the difference from the next function.
+        let local_fn_sizes = function_offsets
+            .iter()
+            .skip(1)
+            .take(local_function_count)
+            .zip(function_offsets.iter())
+            .map(|(f1, f0)| f1.checked_sub(*f0).ok_or_else(&corrupted_offsets))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let signatures = {
+            let signature_registry = engine_inner.signatures();
+            module_info
+                .signatures
+                .values()
+                .zip(module_info.signature_hashes.values())
+                .map(|(sig, sig_hash)| signature_registry.register(sig, *sig_hash))
+                .collect::<PrimaryMap<_, _>>()
+                .into_boxed_slice()
+        };
+
+        let finished_functions = local_fn_offsets
+            .iter()
+            .map(|&offset| FunctionBodyPtr(unsafe { base.add(offset) as _ }))
+            .collect::<PrimaryMap<LocalFunctionIndex, _>>();
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "compiler"))]
+        let finished_function_extents = local_fn_offsets
+            .iter()
+            .zip(local_fn_sizes.iter())
+            .map(|(&ptr, &length)| FunctionExtent {
+                ptr: FunctionBodyPtr(unsafe { base.add(ptr) as _ }),
+                length,
+            })
+            .collect::<PrimaryMap<LocalFunctionIndex, _>>();
+        #[cfg(all(not(target_arch = "wasm32"), feature = "compiler"))]
+        engine_inner.register_perfmap(&finished_function_extents, module_info)?;
+        let finished_function_call_trampolines = trampoline_offsets
+            .iter()
+            .map(|&offset| unsafe {
+                std::mem::transmute::<*mut std::ffi::c_void, VMTrampoline>(base.add(offset))
+            })
+            .collect::<PrimaryMap<SignatureIndex, _>>()
+            .into_boxed_slice();
+        let finished_dynamic_function_trampolines = dynamic_trampoline_offsets
+            .iter()
+            .map(|&offset| FunctionBodyPtr(unsafe { base.add(offset) as _ }))
+            .collect::<PrimaryMap<FunctionIndex, _>>()
+            .into_boxed_slice();
+        let finished_function_lengths =
+            PrimaryMap::<LocalFunctionIndex, _>::from_iter(local_fn_sizes).into_boxed_slice();
+        let function_max_stack_usage = finished_functions
+            .iter()
+            .map(|_| None)
+            .collect::<PrimaryMap<LocalFunctionIndex, Option<usize>>>()
+            .into_boxed_slice();
+
+        let vm_offsets = VMOffsets::new(std::mem::size_of::<usize>() as u8, module_info);
+
+        Ok(AllocatedArtifact {
+            frame_info_registered: false,
+            frame_info_registration: None,
+            finished_functions: finished_functions.into_boxed_slice(),
+            finished_function_call_trampolines,
+            finished_dynamic_function_trampolines,
+            signatures,
+            finished_function_lengths,
+            vm_offsets,
+            function_max_stack_usage,
+            elf_image: Some((base as usize, debug_info)),
+        })
     }
 
     /// Check if the provided bytes look like a serialized `ArtifactBuild`.
@@ -488,8 +1010,7 @@ impl std::fmt::Debug for Artifact {
 }
 
 impl<'a> ArtifactCreate<'a> for Artifact {
-    type OwnedDataInitializer =
-        <ArtifactBuildVariant as ArtifactCreate<'a>>::OwnedDataInitializer;
+    type OwnedDataInitializer = <ArtifactBuildVariant as ArtifactCreate<'a>>::OwnedDataInitializer;
     type OwnedDataInitializerIterator =
         <ArtifactBuildVariant as ArtifactCreate<'a>>::OwnedDataInitializerIterator;
 
@@ -526,6 +1047,11 @@ impl<'a> ArtifactCreate<'a> for Artifact {
     }
 
     fn serialize(&self) -> Result<Vec<u8>, SerializeError> {
+        if let Some(module_file) = &self.module_file {
+            return std::fs::read(module_file).map_err(|e| {
+                SerializeError::Generic(format!("Failed to serialize Artifact file: {e}"))
+            });
+        }
         self.artifact.serialize()
     }
 }
@@ -617,9 +1143,7 @@ impl<'a> DataInitializerLike<'a> for OwnedDataInitializerVariant<'a> {
 
     fn location(&self) -> Self::Location {
         match self {
-            Self::Plain(plain) => {
-                DataInitializerLocationVariant::Plain(plain.location())
-            }
+            Self::Plain(plain) => DataInitializerLocationVariant::Plain(plain.location()),
             Self::Archived(archived) => {
                 DataInitializerLocationVariant::Archived(archived.location())
             }
@@ -640,20 +1164,19 @@ pub enum DataInitializerLocationVariant<'a> {
     Archived(&'a ArchivedDataInitializerLocation),
 }
 
-impl<'a> DataInitializerLocationVariant<'a> {
+impl DataInitializerLocationVariant<'_> {
     pub fn clone_to_plain(&self) -> DataInitializerLocation {
         match self {
             Self::Plain(p) => (*p).clone(),
             Self::Archived(a) => DataInitializerLocation {
                 memory_index: a.memory_index(),
-                base: a.base(),
-                offset: a.offset(),
+                offset_expr: a.offset_expr(),
             },
         }
     }
 }
 
-impl<'a> DataInitializerLocationLike for DataInitializerLocationVariant<'a> {
+impl DataInitializerLocationLike for DataInitializerLocationVariant<'_> {
     fn memory_index(&self) -> MemoryIndex {
         match self {
             Self::Plain(plain) => plain.memory_index(),
@@ -661,17 +1184,10 @@ impl<'a> DataInitializerLocationLike for DataInitializerLocationVariant<'a> {
         }
     }
 
-    fn base(&self) -> Option<wasmer_types::GlobalIndex> {
+    fn offset_expr(&self) -> wasmer_types::InitExpr {
         match self {
-            Self::Plain(plain) => plain.base(),
-            Self::Archived(archived) => archived.base(),
-        }
-    }
-
-    fn offset(&self) -> usize {
-        match self {
-            Self::Plain(plain) => plain.offset(),
-            Self::Archived(archived) => archived.offset(),
+            Self::Plain(plain) => plain.offset_expr(),
+            Self::Archived(archived) => archived.offset_expr(),
         }
     }
 }
@@ -687,43 +1203,52 @@ impl Artifact {
             return Ok(()); // already done
         }
 
-        let finished_function_extents = self
+        // ELF artifacts don't carry the RKYV frame-info section (per-instruction
+        // address maps); they get symbolicated from DWARF debug info instead,
+        // lazily loaded from the ELF image (see `elf_image` below).
+        let frame_infos = match &self.artifact {
+            ArtifactBuildVariant::Plain(p) => p
+                .get_frame_info_ref()
+                .map(|f| FrameInfosVariant::Owned(f.clone())),
+            ArtifactBuildVariant::Archived(a) => a
+                .get_frame_info_ref()
+                .map(|_| FrameInfosVariant::Archived(a.clone())),
+        };
+
+        let elf_image = self
             .allocated
             .as_ref()
             .expect("It must be allocated")
-            .finished_functions
-            .values()
-            .copied()
-            .zip(
-                self.allocated
-                    .as_ref()
-                    .expect("It must be allocated")
-                    .finished_function_lengths
-                    .values()
-                    .copied(),
-            )
-            .map(|(ptr, length)| FunctionExtent { ptr, length })
-            .collect::<PrimaryMap<LocalFunctionIndex, _>>()
-            .into_boxed_slice();
+            .elf_image
+            .clone();
 
-        let frame_info_registration = &mut self
-            .allocated
-            .as_mut()
-            .expect("It must be allocated")
-            .frame_info_registration;
+        if frame_infos.is_some() || elf_image.is_some() {
+            let finished_function_extents = self
+                .allocated
+                .as_ref()
+                .expect("It must be allocated")
+                .function_extents()
+                .into_boxed_slice();
 
-        *frame_info_registration = register_frame_info(
-            self.artifact.create_module_info(),
-            &finished_function_extents,
-            match &self.artifact {
-                ArtifactBuildVariant::Plain(p) => {
-                    FrameInfosVariant::Owned(p.get_frame_info_ref().clone())
-                }
-                ArtifactBuildVariant::Archived(a) => {
-                    FrameInfosVariant::Archived(a.clone())
-                }
-            },
-        );
+            let (image_base, elf_data) = match elf_image {
+                Some((base, data)) => (base, Some(data)),
+                None => (0, None),
+            };
+
+            let frame_info_registration = &mut self
+                .allocated
+                .as_mut()
+                .expect("It must be allocated")
+                .frame_info_registration;
+
+            *frame_info_registration = register_frame_info_source(
+                self.artifact.create_module_info(),
+                &finished_function_extents,
+                frame_infos,
+                image_base,
+                elf_data,
+            );
+        }
 
         self.allocated
             .as_mut()
@@ -733,9 +1258,7 @@ impl Artifact {
         Ok(())
     }
 
-    fn internal_take_frame_info_registration(
-        &mut self,
-    ) -> Option<GlobalFrameInfoRegistration> {
+    fn internal_take_frame_info_registration(&mut self) -> Option<GlobalFrameInfoRegistration> {
         let frame_info_registration = &mut self
             .allocated
             .as_mut()
@@ -747,9 +1270,7 @@ impl Artifact {
 
     /// Returns the functions allocated in memory or this `Artifact`
     /// ready to be run.
-    pub fn finished_functions(
-        &self,
-    ) -> &BoxedSlice<LocalFunctionIndex, FunctionBodyPtr> {
+    pub fn finished_functions(&self) -> &BoxedSlice<LocalFunctionIndex, FunctionBodyPtr> {
         &self
             .allocated
             .as_ref()
@@ -757,11 +1278,39 @@ impl Artifact {
             .finished_functions
     }
 
+    /// Returns the start address and byte length of each locally-defined
+    /// function body in this artifact.
+    ///
+    /// Returns `None` for cross-compiled artifacts (where the artifact has not
+    /// been allocated into the host process).
+    ///
+    /// # Security
+    ///
+    /// The returned addresses are host-process pointers. They are not stable
+    /// across runs and must not be forwarded to untrusted parties, as they
+    /// reveal ASLR layout information.
+    pub fn finished_function_extents(&self) -> Option<Vec<(LocalFunctionIndex, FunctionExtent)>> {
+        let allocated = self.allocated.as_ref()?;
+        Some(allocated.function_extents().into_iter().collect())
+    }
+
+    /// Return the maximum stack size used for each function (available only for the Singlepass compiler).
+    pub fn finished_functions_max_stack_usage(
+        &self,
+    ) -> Option<Vec<(LocalFunctionIndex, Option<usize>)>> {
+        let allocated = self.allocated.as_ref()?;
+        Some(
+            allocated
+                .function_max_stack_usage
+                .into_iter()
+                .map(|f| (f.0, *f.1))
+                .collect(),
+        )
+    }
+
     /// Returns the function call trampolines allocated in memory of this
     /// `Artifact`, ready to be run.
-    pub fn finished_function_call_trampolines(
-        &self,
-    ) -> &BoxedSlice<SignatureIndex, VMTrampoline> {
+    pub fn finished_function_call_trampolines(&self) -> &BoxedSlice<SignatureIndex, VMTrampoline> {
         &self
             .allocated
             .as_ref()
@@ -782,9 +1331,7 @@ impl Artifact {
     }
 
     /// Returns the associated VM signatures for this `Artifact`.
-    pub fn signatures(
-        &self,
-    ) -> &BoxedSlice<SignatureIndex, VMSharedSignatureIndex> {
+    pub fn signatures(&self) -> &BoxedSlice<SignatureIndex, VMSignatureHash> {
         &self
             .allocated
             .as_ref()
@@ -810,71 +1357,87 @@ impl Artifact {
         imports: &[VMExtern],
         context: &mut StoreObjects,
     ) -> Result<VMInstance, InstantiationError> {
-        // Validate the CPU features this module was compiled with against the
-        // host CPU features.
-        let host_cpu_features = CpuFeature::for_host();
-        if !host_cpu_features.is_superset(self.cpu_features()) {
-            return Err(InstantiationError::CpuFeature(format!(
-                "{:?}",
-                self.cpu_features().difference(host_cpu_features)
-            )));
-        }
+        unsafe {
+            // Validate the CPU features this module was compiled with against the
+            // host CPU features.
+            let host_cpu_features = CpuFeature::for_host();
+            if !host_cpu_features.is_superset(self.cpu_features()) {
+                return Err(InstantiationError::CpuFeature(format!(
+                    "{:?}",
+                    self.cpu_features().difference(host_cpu_features)
+                )));
+            }
 
-        self.preinstantiate()?;
+            self.preinstantiate()?;
 
-        let module = self.create_module_info();
-        let imports = resolve_imports(
-            &module,
-            imports,
-            context,
-            self.finished_dynamic_function_trampolines(),
-            self.memory_styles(),
-            self.table_styles(),
-        )
-        .map_err(InstantiationError::Link)?;
+            let module = self.create_module_info();
 
-        // Get pointers to where metadata about local memories should live in VM memory.
-        // Get pointers to where metadata about local tables should live in VM memory.
+            let tags = resolve_tags(&module, imports, context).map_err(InstantiationError::Link)?;
 
-        let (allocator, memory_definition_locations, table_definition_locations) =
-            InstanceAllocator::new(&module);
-        let finished_memories = tunables
-            .create_memories(
-                context,
+            let imports = resolve_imports(
                 &module,
+                imports,
+                context,
+                self.finished_dynamic_function_trampolines(),
                 self.memory_styles(),
-                &memory_definition_locations,
-            )
-            .map_err(InstantiationError::Link)?
-            .into_boxed_slice();
-        let finished_tables = tunables
-            .create_tables(
-                context,
-                &module,
                 self.table_styles(),
-                &table_definition_locations,
             )
-            .map_err(InstantiationError::Link)?
-            .into_boxed_slice();
-        let finished_globals = tunables
-            .create_globals(context, &module)
-            .map_err(InstantiationError::Link)?
-            .into_boxed_slice();
+            .map_err(InstantiationError::Link)?;
 
-        let handle = VMInstance::new(
-            allocator,
-            module,
-            context,
-            self.finished_functions().clone(),
-            self.finished_function_call_trampolines().clone(),
-            finished_memories,
-            finished_tables,
-            finished_globals,
-            imports,
-            self.signatures().clone(),
-        )
-        .map_err(InstantiationError::Start)?;
-        Ok(handle)
+            // Get pointers to where metadata about local memories should live in VM memory.
+            // Get pointers to where metadata about local tables should live in VM memory.
+
+            let cached_offsets = self
+                .allocated
+                .as_ref()
+                .map(|a| a.vm_offsets.clone())
+                .expect("Artifact::instantiate called on a non-host artifact");
+
+            let (
+                allocator,
+                memory_definition_locations,
+                table_definition_locations,
+                global_definition_locations,
+            ) = InstanceAllocator::new_with_offsets(cached_offsets, &module);
+            let finished_memories = tunables
+                .create_memories(
+                    context,
+                    &module,
+                    self.memory_styles(),
+                    &memory_definition_locations,
+                )
+                .map_err(InstantiationError::Link)?
+                .into_boxed_slice();
+            let finished_tables = tunables
+                .create_tables(
+                    context,
+                    &module,
+                    self.table_styles(),
+                    &table_definition_locations,
+                )
+                .map_err(InstantiationError::Link)?
+                .into_boxed_slice();
+            let finished_globals = tunables
+                .create_globals(context, &module, &global_definition_locations)
+                .map_err(InstantiationError::Link)?
+                .into_boxed_slice();
+
+            let handle = VMInstance::new(
+                allocator,
+                module,
+                context,
+                self.finished_functions().clone(),
+                self.finished_function_call_trampolines().clone(),
+                finished_memories,
+                finished_tables,
+                finished_globals,
+                tags,
+                imports,
+                self.signatures().clone(),
+            )
+            .map_err(InstantiationError::Start)?;
+            Ok(handle)
+        }
     }
 
     /// Finishes the instantiation of a just created `VMInstance`.
@@ -889,16 +1452,18 @@ impl Artifact {
         trap_handler: Option<*const TrapHandlerFn<'static>>,
         handle: &mut VMInstance,
     ) -> Result<(), InstantiationError> {
-        let data_initializers = self
-            .data_initializers()
-            .map(|init| DataInitializer {
-                location: init.location().clone_to_plain(),
-                data: init.data(),
-            })
-            .collect::<Vec<_>>();
-        handle
-            .finish_instantiation(config, trap_handler, &data_initializers)
-            .map_err(InstantiationError::Start)
+        unsafe {
+            let data_initializers = self
+                .data_initializers()
+                .map(|init| DataInitializer {
+                    location: init.location().clone_to_plain(),
+                    data: init.data(),
+                })
+                .collect::<Vec<_>>();
+            handle
+                .finish_instantiation(config, trap_handler, &data_initializers)
+                .map_err(InstantiationError::Start)
+        }
     }
 
     #[allow(clippy::type_complexity)]
@@ -945,6 +1510,7 @@ impl Artifact {
             features: features.clone(),
             memory_styles,
             table_styles,
+            function_max_stack_usage: PrimaryMap::new(),
         };
         Ok((
             compile_info,
@@ -973,12 +1539,8 @@ impl Artifact {
         CompileError,
     > {
         #[allow(dead_code)]
-        let (
-            compile_info,
-            function_body_inputs,
-            data_initializers,
-            module_translation,
-        ) = Self::generate_metadata(data, compiler, tunables, features)?;
+        let (compile_info, function_body_inputs, data_initializers, module_translation) =
+            Self::generate_metadata(data, compiler, tunables, features)?;
 
         let data_initializers = data_initializers
             .iter()
@@ -1029,25 +1591,19 @@ impl Artifact {
         ),
         CompileError,
     > {
-        use crate::types::symbols::{
-            ModuleMetadataSymbolRegistry, SymbolRegistry,
+        use crate::types::{
+            function::Compilation,
+            symbols::{ModuleMetadataSymbolRegistry, SymbolRegistry},
         };
 
         fn to_compile_error(err: impl std::error::Error) -> CompileError {
-            CompileError::Codegen(format!("{}", err))
+            CompileError::Codegen(format!("{err}"))
         }
 
         let target_triple = target.triple();
         let (mut metadata, module_translation, function_body_inputs) =
-            Self::metadata(
-                compiler,
-                data,
-                metadata_prefix,
-                target,
-                tunables,
-                features,
-            )
-            .map_err(to_compile_error)?;
+            Self::metadata(compiler, data, metadata_prefix, target, tunables, features)
+                .map_err(to_compile_error)?;
 
         /*
         In the C file we need:
@@ -1063,41 +1619,73 @@ impl Artifact {
         - TableIndex -> TableStyle
         - LocalFunctionIndex -> FunctionBodyPtr // finished functions
         - FunctionIndex -> FunctionBodyPtr // finished dynamic function trampolines
-        - SignatureIndex -> VMSharedSignatureindextureIndex // signatures
+        - SignatureIndex -> VMSignatureHash // signatures
          */
 
-        let serialized_data = metadata.serialize().map_err(to_compile_error)?;
-        let mut metadata_binary = vec![];
-        metadata_binary
-            .extend(MetadataHeader::new(serialized_data.len()).into_bytes());
-        metadata_binary.extend(serialized_data);
+        let compilation = compiler.compile_module(
+            target,
+            &metadata.compile_info,
+            &[],
+            module_translation.as_ref().unwrap(),
+            function_body_inputs,
+            None,
+        )?;
+        let Compilation::Rkyv {
+            compilation,
+            function_max_stack_usage,
+        } = compilation
+        else {
+            return Err(CompileError::Codegen(
+                "ELF compilation unsupported yet".to_string(),
+            ));
+        };
+        metadata.compile_info.function_max_stack_usage = function_max_stack_usage;
 
+        let mut metadata_builder =
+            ObjectMetadataBuilder::new(&metadata, target_triple).map_err(to_compile_error)?;
         let (_compile_info, symbol_registry) = metadata.split();
-
-        let compilation: crate::types::function::Compilation = compiler
-            .compile_module(
-                target,
-                &metadata.compile_info,
-                module_translation.as_ref().unwrap(),
-                function_body_inputs,
-            )?;
-        let mut obj =
-            get_object_for_target(target_triple).map_err(to_compile_error)?;
+        let mut obj = get_object_for_target(target_triple).map_err(to_compile_error)?;
 
         let object_name = ModuleMetadataSymbolRegistry {
             prefix: metadata_prefix.unwrap_or_default().to_string(),
         }
         .symbol_to_name(crate::types::symbols::Symbol::Metadata);
 
-        emit_data(&mut obj, object_name.as_bytes(), &metadata_binary, 1)
-            .map_err(to_compile_error)?;
+        let default_align = match target_triple.architecture {
+            target_lexicon::Architecture::Aarch64(_) => {
+                if matches!(
+                    target_triple.operating_system,
+                    target_lexicon::OperatingSystem::Darwin(_)
+                ) {
+                    8
+                } else {
+                    4
+                }
+            }
+            _ => 1,
+        };
 
-        emit_compilation(&mut obj, compilation, &symbol_registry, target_triple)
-            .map_err(to_compile_error)?;
+        let offset = emit_data(
+            &mut obj,
+            object_name.as_bytes(),
+            metadata_builder.placeholder_data(),
+            std::cmp::max(MetadataHeader::ALIGN as u64, default_align),
+        )
+        .map_err(to_compile_error)?;
+        metadata_builder.set_section_offset(offset);
+
+        emit_compilation(
+            &mut obj,
+            compilation,
+            &symbol_registry,
+            target_triple,
+            &metadata_builder,
+        )
+        .map_err(to_compile_error)?;
         Ok((
             Arc::try_unwrap(metadata.compile_info.module).unwrap(),
             obj,
-            metadata_binary.len(),
+            metadata_builder.placeholder_data().len(),
             Box::new(symbol_registry),
         ))
     }
@@ -1112,17 +1700,11 @@ impl Artifact {
         _bytes: OwnedBuffer,
     ) -> Result<Self, DeserializeError> {
         Err(DeserializeError::Compiler(
-            CompileError::UnsupportedFeature(
-                "static load is not compiled in".to_string(),
-            ),
+            CompileError::UnsupportedFeature("static load is not compiled in".to_string()),
         ))
     }
 
-    fn get_byte_slice(
-        input: &[u8],
-        start: usize,
-        end: usize,
-    ) -> Result<&[u8], DeserializeError> {
+    fn get_byte_slice(input: &[u8], start: usize, end: usize) -> Result<&[u8], DeserializeError> {
         if (start == end && input.len() > start)
             || (start < end && input.len() > start && input.len() >= end)
         {
@@ -1144,123 +1726,223 @@ impl Artifact {
         engine: &Engine,
         bytes: OwnedBuffer,
     ) -> Result<Self, DeserializeError> {
-        let bytes = bytes.as_slice();
-        let metadata_len = MetadataHeader::parse(bytes)?;
-        let metadata_slice =
-            Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
-        let metadata_slice =
-            Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
-        let metadata: ModuleMetadata =
-            ModuleMetadata::deserialize(metadata_slice)?;
+        unsafe {
+            use crate::serialize::SerializableCompilation;
 
-        const WORD_SIZE: usize = mem::size_of::<usize>();
-        let mut byte_buffer = [0u8; WORD_SIZE];
+            let bytes = bytes.as_slice();
+            let metadata_len = MetadataHeader::parse(bytes)?;
+            let metadata_slice = Self::get_byte_slice(bytes, MetadataHeader::LEN, bytes.len())?;
+            let metadata_slice = Self::get_byte_slice(metadata_slice, 0, metadata_len)?;
+            let metadata: ModuleMetadata = ModuleMetadata::deserialize(metadata_slice)?;
 
-        let mut cur_offset = MetadataHeader::LEN + metadata_len;
+            const WORD_SIZE: usize = mem::size_of::<usize>();
+            let mut byte_buffer = [0u8; WORD_SIZE];
 
-        let byte_buffer_slice =
-            Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
-        byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-        cur_offset += WORD_SIZE;
+            let mut cur_offset = MetadataHeader::LEN + metadata_len;
 
-        let num_finished_functions = usize::from_ne_bytes(byte_buffer);
-        let mut finished_functions: PrimaryMap<
-            LocalFunctionIndex,
-            FunctionBodyPtr,
-        > = PrimaryMap::new();
-
-        let engine_inner = engine.inner();
-        let signature_registry = engine_inner.signatures();
-
-        // read finished functions in order now...
-        for _i in 0..num_finished_functions {
             let byte_buffer_slice =
                 Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
             byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-            let fp = FunctionBodyPtr(usize::from_ne_bytes(byte_buffer) as _);
             cur_offset += WORD_SIZE;
 
-            // TODO: we can read back the length here if we serialize it. This will improve debug output.
-            finished_functions.push(fp);
-        }
+            let num_finished_functions = usize::from_ne_bytes(byte_buffer);
+            let mut finished_functions: PrimaryMap<LocalFunctionIndex, FunctionBodyPtr> =
+                PrimaryMap::new();
 
-        // We register all the signatures
-        let signatures = {
-            metadata
-                .compile_info
-                .module
-                .signatures
+            let engine_inner = engine.inner();
+            let signature_registry = engine_inner.signatures();
+
+            // read finished functions in order now...
+            for _i in 0..num_finished_functions {
+                let byte_buffer_slice =
+                    Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
+                byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
+                let fp = FunctionBodyPtr(usize::from_ne_bytes(byte_buffer) as _);
+                cur_offset += WORD_SIZE;
+
+                // TODO: we can read back the length here if we serialize it. This will improve debug output.
+                finished_functions.push(fp);
+            }
+
+            // We register all the signatures
+            let signatures = {
+                let module = &metadata.compile_info.module;
+                module
+                    .signatures
+                    .values()
+                    .zip(module.signature_hashes.values())
+                    .map(|(sig, sig_hash)| signature_registry.register(sig, *sig_hash))
+                    .collect::<PrimaryMap<_, _>>()
+            };
+
+            // read trampolines in order
+            let mut finished_function_call_trampolines = PrimaryMap::new();
+
+            let byte_buffer_slice =
+                Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
+            byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
+            cur_offset += WORD_SIZE;
+            let num_function_trampolines = usize::from_ne_bytes(byte_buffer);
+            for _ in 0..num_function_trampolines {
+                let byte_buffer_slice =
+                    Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
+                byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
+                cur_offset += WORD_SIZE;
+                let trampoline_ptr_bytes = usize::from_ne_bytes(byte_buffer);
+                let trampoline = mem::transmute::<usize, VMTrampoline>(trampoline_ptr_bytes);
+                finished_function_call_trampolines.push(trampoline);
+                // TODO: we can read back the length here if we serialize it. This will improve debug output.
+            }
+
+            // read dynamic function trampolines in order now...
+            let mut finished_dynamic_function_trampolines = PrimaryMap::new();
+            let byte_buffer_slice =
+                Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
+            byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
+            cur_offset += WORD_SIZE;
+            let num_dynamic_trampoline_functions = usize::from_ne_bytes(byte_buffer);
+            for _i in 0..num_dynamic_trampoline_functions {
+                let byte_buffer_slice =
+                    Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
+                byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
+                let fp = FunctionBodyPtr(usize::from_ne_bytes(byte_buffer) as _);
+                cur_offset += WORD_SIZE;
+
+                // TODO: we can read back the length here if we serialize it. This will improve debug output.
+
+                finished_dynamic_function_trampolines.push(fp);
+            }
+
+            let artifact = ArtifactBuild::from_serializable(SerializableModule {
+                compilation: SerializableCompilation::Rkyv(RkyvSerializableCompilation::default()),
+                compile_info: metadata.compile_info,
+                data_initializers: metadata.data_initializers,
+                cpu_features: metadata.cpu_features,
+            });
+
+            let finished_function_lengths = finished_functions
                 .values()
-                .map(|sig| signature_registry.register(sig))
-                .collect::<PrimaryMap<_, _>>()
-        };
+                .map(|_| 0)
+                .collect::<PrimaryMap<LocalFunctionIndex, usize>>()
+                .into_boxed_slice();
+            let function_max_stack_usage = finished_functions
+                .iter()
+                .map(|_| None)
+                .collect::<PrimaryMap<LocalFunctionIndex, Option<usize>>>()
+                .into_boxed_slice();
 
-        // read trampolines in order
-        let mut finished_function_call_trampolines = PrimaryMap::new();
+            // Variant is built first so its module_info is available for
+            // the cached VMOffsets before it is moved into Self.
+            let artifact_variant = ArtifactBuildVariant::Plain(artifact);
+            let vm_offsets = VMOffsets::new(
+                std::mem::size_of::<usize>() as u8,
+                artifact_variant.module_info(),
+            );
 
-        let byte_buffer_slice =
-            Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
-        byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-        cur_offset += WORD_SIZE;
-        let num_function_trampolines = usize::from_ne_bytes(byte_buffer);
-        for _ in 0..num_function_trampolines {
-            let byte_buffer_slice =
-                Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
-            byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-            cur_offset += WORD_SIZE;
-            let trampoline_ptr_bytes = usize::from_ne_bytes(byte_buffer);
-            let trampoline =
-                mem::transmute::<usize, VMTrampoline>(trampoline_ptr_bytes);
-            finished_function_call_trampolines.push(trampoline);
-            // TODO: we can read back the length here if we serialize it. This will improve debug output.
+            Ok(Self {
+                id: Default::default(),
+                artifact: artifact_variant,
+                module_file: None,
+                allocated: Some(AllocatedArtifact {
+                    frame_info_registered: false,
+                    frame_info_registration: None,
+                    finished_functions: finished_functions.into_boxed_slice(),
+                    finished_function_call_trampolines: finished_function_call_trampolines
+                        .into_boxed_slice(),
+                    finished_dynamic_function_trampolines: finished_dynamic_function_trampolines
+                        .into_boxed_slice(),
+                    signatures: signatures.into_boxed_slice(),
+                    finished_function_lengths,
+                    vm_offsets,
+                    function_max_stack_usage,
+                    elf_image: None,
+                }),
+            })
         }
+    }
+}
 
-        // read dynamic function trampolines in order now...
-        let mut finished_dynamic_function_trampolines = PrimaryMap::new();
-        let byte_buffer_slice =
-            Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
-        byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-        cur_offset += WORD_SIZE;
-        let num_dynamic_trampoline_functions = usize::from_ne_bytes(byte_buffer);
-        for _i in 0..num_dynamic_trampoline_functions {
-            let byte_buffer_slice =
-                Self::get_byte_slice(bytes, cur_offset, cur_offset + WORD_SIZE)?;
-            byte_buffer[0..WORD_SIZE].clone_from_slice(byte_buffer_slice);
-            let fp = FunctionBodyPtr(usize::from_ne_bytes(byte_buffer) as _);
-            cur_offset += WORD_SIZE;
+/// On-demand reader of per-function trap information from an ELF artifact.
+///
+/// Trap lookups only happen when a trap fires, so the ELF trap sections are
+/// parsed lazily instead of duplicating all trap tables in memory.
+pub(crate) struct TrapReader {
+    source: DebugInfoSource,
+}
 
-            // TODO: we can read back the length here if we serialize it. This will improve debug output.
+impl TrapReader {
+    pub(crate) fn new(source: DebugInfoSource) -> Self {
+        Self { source }
+    }
 
-            finished_dynamic_function_trampolines.push(fp);
+    /// Looks up the trap information for `local_index` at `rel_pos`, the offset
+    /// relative to the start of the function.
+    pub(crate) fn lookup(
+        &self,
+        local_index: LocalFunctionIndex,
+        rel_pos: u32,
+    ) -> Option<TrapInformation> {
+        match &self.source {
+            DebugInfoSource::Bytes(data) => {
+                let image = object::File::parse(&data[..]).ok()?;
+                Self::lookup_in_image(&image, local_index, rel_pos)
+            }
+            DebugInfoSource::File(file) => {
+                let cache = ReadCache::new(BufReader::new(file.try_clone().ok()?));
+                let image = object::File::parse(&cache).ok()?;
+                Self::lookup_in_image(&image, local_index, rel_pos)
+            }
         }
+    }
 
-        let artifact = ArtifactBuild::from_serializable(SerializableModule {
-            compilation: SerializableCompilation::default(),
-            compile_info: metadata.compile_info,
-            data_initializers: metadata.data_initializers,
-            cpu_features: metadata.cpu_features,
-        });
+    fn lookup_in_image<'data, R: ReadRef<'data>>(
+        image: &object::File<'data, R>,
+        local_index: LocalFunctionIndex,
+        rel_pos: u32,
+    ) -> Option<TrapInformation> {
+        let traps_section = image.section_by_name_bytes(WASMER_TRAPS_SECTION_NAME)?;
+        let trap_offsets = image
+            .section_by_name_bytes(WASMER_TRAP_FUNCTION_OFFSETS_SECTION_NAME)?
+            .data()
+            .ok()?;
+        let slot = local_index.index().checked_mul(size_of::<usize>())?;
+        let offset_bytes = trap_offsets.get(slot..slot + size_of::<usize>())?;
 
-        let finished_function_lengths = finished_functions
-            .values()
-            .map(|_| 0)
-            .collect::<PrimaryMap<LocalFunctionIndex, usize>>()
-            .into_boxed_slice();
+        // These slots contain relocated virtual addresses, not section-relative
+        // offsets. ELF currently emitted by Wasmer is native and little-endian.
+        let trap_address = usize::from_le_bytes(offset_bytes.try_into().ok()?);
+        let trap_offset = trap_address.checked_sub(traps_section.address() as usize)?;
+        let traps = Self::parse_function_traps(traps_section.data().ok()?, trap_offset)?;
+        traps
+            .binary_search_by_key(&rel_pos, |info| info.code_offset)
+            .ok()
+            .map(|index| traps[index])
+    }
 
-        Ok(Self {
-            id: Default::default(),
-            artifact: ArtifactBuildVariant::Plain(artifact),
-            allocated: Some(AllocatedArtifact {
-                frame_info_registered: false,
-                frame_info_registration: None,
-                finished_functions: finished_functions.into_boxed_slice(),
-                finished_function_call_trampolines:
-                    finished_function_call_trampolines.into_boxed_slice(),
-                finished_dynamic_function_trampolines:
-                    finished_dynamic_function_trampolines.into_boxed_slice(),
-                signatures: signatures.into_boxed_slice(),
-                finished_function_lengths,
-            }),
-        })
+    fn parse_function_traps(
+        traps_section: &[u8],
+        trap_offset: usize,
+    ) -> Option<Vec<TrapInformation>> {
+        const WORD_SIZE: usize = size_of::<u32>();
+        const RECORD_SIZE: usize = 2 * WORD_SIZE;
+
+        let data = traps_section.get(trap_offset..)?;
+        let count = u32::from_le_bytes(data.get(..WORD_SIZE)?.try_into().ok()?) as usize;
+        let records_len = count.checked_mul(RECORD_SIZE)?;
+        let records = data.get(WORD_SIZE..WORD_SIZE.checked_add(records_len)?)?;
+
+        records
+            .chunks_exact(RECORD_SIZE)
+            .map(|record| {
+                let code_offset = u32::from_le_bytes(record[..WORD_SIZE].try_into().ok()?);
+                let code = u32::from_le_bytes(record[WORD_SIZE..].try_into().ok()?);
+                // SAFETY: the trap sections is emitted by us
+                let trap_code = unsafe { std::mem::transmute::<u32, TrapCode>(code) };
+                Some(TrapInformation {
+                    code_offset,
+                    trap_code,
+                })
+            })
+            .collect()
     }
 }

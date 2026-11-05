@@ -21,7 +21,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/evm/evmstate"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"

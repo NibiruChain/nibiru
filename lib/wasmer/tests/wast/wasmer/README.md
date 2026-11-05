@@ -11,7 +11,7 @@ are deterministic regardless of the environment/chipset where it executes in.
 
 ## Call Indirect Spilled Stack: `call-indirect-spilledd-stack.wast`
 
-We had an issue occuring that was making singlepass not working properly
+We had an issue occurring that was making singlepass not working properly
 on the WebAssembly benchmark: https://00f.net/2019/10/22/updated-webassembly-benchmark/.
 
 This is a test case to ensure it doesn't reproduce again in the future.
@@ -36,3 +36,7 @@ This is a simple test to check that a divide by zero is correctly trapped
 ## Atomic Load: `atomic_load.wast`
 
 This is a simple test to check that load an atomic "to far" in memory trigger a OutOfBound trap
+
+## Nested Unreachable Blocks: `nested_unreachable_blocks.wast`
+
+This was broken at one point in our LLVM backend. Otherwise, it's nothing specific.

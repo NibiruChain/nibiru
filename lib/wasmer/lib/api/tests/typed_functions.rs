@@ -1,10 +1,10 @@
-use macro_wasmer_universal_test::universal_test;
+use macro_wasmer_engine_test::engine_test;
 use wasmer::*;
 
 #[cfg(feature = "js")]
 use wasm_bindgen_test::wasm_bindgen_test;
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     feature = "js",
     ignore = "Closures with context are not supported in JS yet"
@@ -14,13 +14,13 @@ fn typed_host_function_closure_panics() -> Result<(), String> {
     let state = 3;
 
     Function::new_typed(&mut store, move |_: i32| {
-        println!("{}", state);
+        println!("{state}");
     });
 
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     feature = "js",
     ignore = "Closures with context are not supported in JS yet"
@@ -34,14 +34,14 @@ fn typed_with_env_host_function_closure_panics() -> Result<(), String> {
         &mut store,
         &env,
         move |_env: FunctionEnvMut<i32>, _: i32| {
-            println!("{}", state);
+            println!("{state}");
         },
     );
 
     Ok(())
 }
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     feature = "js",
     ignore = "Closures with context are not supported in JS yet"
@@ -96,7 +96,7 @@ fn non_typed_functions_and_closures_with_no_env_work() -> anyhow::Result<()> {
     let instance = Instance::new(&mut store, &module, &import_object)?;
 
     let test: TypedFunction<(i32, i32, i32, i32, i32), i32> =
-        instance.exports.get_typed_function(&mut store, "test")?;
+        instance.exports.get_typed_function(&store, "test")?;
 
     let result = test.call(&mut store, 2, 3, 4, 5, 6)?;
     let manually_computed_result = 6 * (5 * (4 * (3 * 2 * 20) * 10 * 20)) * 10;
@@ -106,7 +106,7 @@ fn non_typed_functions_and_closures_with_no_env_work() -> anyhow::Result<()> {
 
 static STATIC_CONTEXT_VAL: i32 = 1234;
 
-#[universal_test]
+#[engine_test]
 #[cfg_attr(
     feature = "js",
     ignore = "Closures with context are not supported in JS yet"
@@ -155,8 +155,7 @@ fn holochain_typed_function() -> anyhow::Result<()> {
     };
 
     // Define the host function and WASM instance
-    let multiply_typed =
-        Function::new_typed_with_env(&mut store, &env, multiply_by_3);
+    let multiply_typed = Function::new_typed_with_env(&mut store, &env, multiply_by_3);
     let import_object = imports! {
         "env" => {
             "multiply_typed" => multiply_typed,
@@ -166,7 +165,7 @@ fn holochain_typed_function() -> anyhow::Result<()> {
 
     // Execute the WASM function 'sum'
     let sum: TypedFunction<(i32, i32), i32> =
-        instance.exports.get_function("sum")?.typed(&mut store)?;
+        instance.exports.get_function("sum")?.typed(&store)?;
     let result = sum.call(&mut store, 1, 2)?;
     assert_eq!(result, 6);
 

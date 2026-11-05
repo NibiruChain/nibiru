@@ -10,7 +10,7 @@ import (
 	assert "github.com/cosmos/rosetta-sdk-go/asserter"
 	"github.com/cosmos/rosetta-sdk-go/server"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/internal/service"
 	crgtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/types"

@@ -3,9 +3,9 @@ package maps
 import (
 	"encoding/binary"
 
-	"github.com/cometbft/cometbft/crypto/merkle"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/merkle"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/kv"
 )

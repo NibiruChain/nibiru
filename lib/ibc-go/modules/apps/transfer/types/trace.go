@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmttypes "github.com/cometbft/cometbft/types"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

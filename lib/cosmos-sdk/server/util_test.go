@@ -11,10 +11,11 @@ import (
 	"testing"
 
 	db "github.com/cometbft/cometbft-db"
-	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"

@@ -1,7 +1,8 @@
 mod frame_info;
 mod stack;
+pub(crate) use frame_info::register_with_source as register_frame_info_source;
 pub use frame_info::{
-    register as register_frame_info, CompiledFunctionFrameInfoVariant,
-    FrameInfosVariant, FunctionExtent, GlobalFrameInfoRegistration, FRAME_INFO,
+    CompiledFunctionFrameInfoVariant, FRAME_INFO, FrameInfosVariant, FunctionExtent,
+    GlobalFrameInfoRegistration, register as register_frame_info,
 };
-pub use stack::get_trace_and_trapcode;
+pub use stack::{get_trace_and_trapcode, wasm_trace_from_current_stack};

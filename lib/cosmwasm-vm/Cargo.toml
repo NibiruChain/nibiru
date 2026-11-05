@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "1.6.0"
+version = "1.6.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"
 description = "VM bindings to run cosmwams contracts"
@@ -57,10 +57,8 @@ serde = { version = "1.0.103", default-features = false, features = ["derive", "
 serde_json = "1.0.40"
 sha2 = "0.10.3"
 thiserror = "1.0.26"
-# Keep this vendored source on the Wasmer 5 line: 5.0.6 is the latest
-# MIT-licensed Singlepass release we validated, while Wasmer 6+ relicenses
-# Singlepass to BUSL. The local source lets us patch wasmer-vm's probestack
-# implementation for newer Rust toolchains without moving to Wasmer 6.
+# Wasmer 7 Singlepass is covered by the downstream license in CWA-2026-006.
+# Keep every runtime crate on the same vendored revision.
 wasmer = { path = "../wasmer/lib/api", default-features = false, features = ["cranelift", "singlepass"] }
 wasmer-types = { path = "../wasmer/lib/types" }
 wasmer-middlewares = { path = "../wasmer/lib/middlewares" }
@@ -86,7 +84,7 @@ wat = "1.0"
 clap = "4"
 rand = "0.8"
 leb128 = "0.2"
-target-lexicon = "0.12"
+target-lexicon = "0.13.5"
 
 [[bench]]
 name = "main"

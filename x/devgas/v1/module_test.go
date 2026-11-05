@@ -1,7 +1,7 @@
 package devgas_test
 
 import (
-	abci "github.com/cometbft/cometbft/abci/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	devgas "github.com/NibiruChain/nibiru/v2/x/devgas/v1"

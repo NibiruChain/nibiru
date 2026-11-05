@@ -2,8 +2,9 @@ package testutil
 
 import (
 	sdkmath "cosmossdk.io/math"
-	tmcrypto "github.com/cometbft/cometbft/crypto"
-	cmttypes "github.com/cometbft/cometbft/types"
+
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	cryptocodec "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"

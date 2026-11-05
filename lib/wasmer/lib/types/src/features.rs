@@ -1,14 +1,14 @@
-use rkyv::{
-    Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "detect-wasm-features")]
+use wasmparser::{Parser, Payload, Validator, WasmFeatures};
 
 /// Controls which experimental features will be enabled.
 /// Features usually have a corresponding [WebAssembly proposal].
 ///
 /// [WebAssembly proposal]: https://github.com/WebAssembly/proposals
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "artifact-size", derive(loupe::MemoryUsage))]
 #[derive(RkyvSerialize, RkyvDeserialize, Archive)]
@@ -22,7 +22,7 @@ pub struct Features {
     pub simd: bool,
     /// Bulk Memory proposal should be enabled
     pub bulk_memory: bool,
-    /// Multi Value proposal should be enabled
+    /// Multi-value proposal should be enabled
     pub multi_value: bool,
     /// Tail call proposal should be enabled
     pub tail_call: bool,
@@ -38,6 +38,8 @@ pub struct Features {
     pub relaxed_simd: bool,
     /// Extended constant expressions proposal should be enabled
     pub extended_const: bool,
+    /// Wide Arithmetic proposal should be enabled
+    pub wide_arithmetic: bool,
 }
 
 impl Features {
@@ -55,11 +57,52 @@ impl Features {
             multi_value: true,
             tail_call: false,
             module_linking: false,
+            // Multi-memory should be on by default
+            multi_memory: true,
+            memory64: false,
+            exceptions: false,
+            relaxed_simd: false,
+            wide_arithmetic: false,
+            // Extended Constant Expressions should be on by default
+            extended_const: true,
+        }
+    }
+
+    /// Create a new feature set with all features enabled.
+    pub fn all() -> Self {
+        Self {
+            threads: true,
+            reference_types: true,
+            simd: true,
+            bulk_memory: true,
+            multi_value: true,
+            tail_call: true,
+            module_linking: true,
+            multi_memory: true,
+            memory64: true,
+            exceptions: true,
+            relaxed_simd: true,
+            extended_const: true,
+            wide_arithmetic: true,
+        }
+    }
+
+    /// Create a new feature set with all features disabled.
+    pub fn none() -> Self {
+        Self {
+            threads: false,
+            reference_types: false,
+            simd: false,
+            bulk_memory: false,
+            multi_value: false,
+            tail_call: false,
+            module_linking: false,
             multi_memory: false,
             memory64: false,
             exceptions: false,
             relaxed_simd: false,
             extended_const: false,
+            wide_arithmetic: false,
         }
     }
 
@@ -72,7 +115,7 @@ impl Features {
     /// This feature gates items such as shared memories and atomic
     /// instructions.
     ///
-    /// This is `false` by default.
+    /// This is `true` by default.
     ///
     /// [threads]: https://github.com/webassembly/threads
     pub fn threads(&mut self, enable: bool) -> &mut Self {
@@ -105,19 +148,35 @@ impl Features {
     /// Configures whether the WebAssembly SIMD proposal will be
     /// enabled.
     ///
-    /// The [WebAssembly SIMD proposal][proposal] is not currently
-    /// fully standardized and is undergoing development. Support for this
-    /// feature can be enabled through this method for appropriate WebAssembly
-    /// modules.
+    /// The [WebAssembly SIMD proposal][proposal] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
     ///
     /// This feature gates items such as the `v128` type and all of its
     /// operators being in a module.
     ///
-    /// This is `false` by default.
+    /// This is `true` by default.
     ///
     /// [proposal]: https://github.com/webassembly/simd
     pub fn simd(&mut self, enable: bool) -> &mut Self {
         self.simd = enable;
+        self
+    }
+
+    /// Configures whether the WebAssembly Relaxed SIMD proposal will be
+    /// enabled.
+    ///
+    /// The [WebAssembly Relaxed SIMD proposal][proposal] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
+    ///
+    /// This is `false` by default.
+    ///
+    /// [proposal]: https://github.com/WebAssembly/relaxed-simd
+    pub fn relaxed_simd(&mut self, enable: bool) -> &mut Self {
+        self.relaxed_simd = enable;
         self
     }
 
@@ -147,11 +206,13 @@ impl Features {
     /// be enabled.
     ///
     /// The [WebAssembly multi-value proposal][proposal] is now fully
-    /// standardized and enabled by default, except with the singlepass
-    /// compiler which does not support it.
+    /// standardized and enabled by default.
     ///
     /// This feature gates functions and blocks returning multiple values in a
     /// module, for example.
+    ///
+    /// Singlepass support for multi-value is experimental and does not include
+    /// integration with host functions returning multiple values.
     ///
     /// This is `true` by default.
     ///
@@ -164,10 +225,10 @@ impl Features {
     /// Configures whether the WebAssembly tail-call proposal will
     /// be enabled.
     ///
-    /// The [WebAssembly tail-call proposal][proposal] is not
-    /// currently fully standardized and is undergoing development.
-    /// Support for this feature can be enabled through this method for
-    /// appropriate WebAssembly modules.
+    /// The [WebAssembly tail-call proposal][proposal] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
     ///
     /// This feature gates tail-call functions in WebAssembly.
     ///
@@ -201,15 +262,15 @@ impl Features {
     /// Configures whether the WebAssembly multi-memory proposal will
     /// be enabled.
     ///
-    /// The [WebAssembly multi-memory proposal][proposal] is not
-    /// currently fully standardized and is undergoing development.
-    /// Support for this feature can be enabled through this method for
-    /// appropriate WebAssembly modules.
+    /// The [WebAssembly multi-memory proposal][proposal] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
     ///
     /// This feature adds the ability to use multiple memories within a
     /// single Wasm module.
     ///
-    /// This is `false` by default.
+    /// This is `true` by default.
     ///
     /// [proposal]: https://github.com/WebAssembly/multi-memory
     pub fn multi_memory(&mut self, enable: bool) -> &mut Self {
@@ -220,10 +281,10 @@ impl Features {
     /// Configures whether the WebAssembly 64-bit memory proposal will
     /// be enabled.
     ///
-    /// The [WebAssembly 64-bit memory proposal][proposal] is not
-    /// currently fully standardized and is undergoing development.
-    /// Support for this feature can be enabled through this method for
-    /// appropriate WebAssembly modules.
+    /// The [WebAssembly 64-bit memory proposal][proposal] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
     ///
     /// This feature gates support for linear memory of sizes larger than
     /// 2^32 bits.
@@ -234,6 +295,237 @@ impl Features {
     pub fn memory64(&mut self, enable: bool) -> &mut Self {
         self.memory64 = enable;
         self
+    }
+
+    /// Configures whether the WebAssembly exception-handling proposal will be enabled.
+    ///
+    /// The [WebAssembly exception-handling proposal][eh] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
+    ///
+    /// This is `false` by default.
+    ///
+    /// [eh]: https://github.com/webassembly/exception-handling
+    pub fn exceptions(&mut self, enable: bool) -> &mut Self {
+        self.exceptions = enable;
+        self
+    }
+
+    /// Configures whether the WebAssembly wide arithmetic proposal will be enabled.
+    ///
+    /// The [Wide Arithmetic][wa] is not currently fully
+    /// standardized and is undergoing development. Support for this feature can
+    /// be enabled through this method for appropriate WebAssembly modules.
+    ///
+    /// This is `false` by default.
+    ///
+    /// [wa]: https://github.com/WebAssembly/wide-arithmetic
+    pub fn wide_arithmetic(&mut self, enable: bool) -> &mut Self {
+        self.wide_arithmetic = enable;
+        self
+    }
+
+    /// Configures whether the WebAssembly Extended Constant Expressions proposal will be enabled.
+    ///
+    /// The [WebAssembly Extended Constant Expressions][extended-const] is now
+    /// fully standardized.
+    /// Support for this feature can be enabled through this method
+    /// for appropriate WebAssembly modules.
+    ///
+    /// This is `true` by default.
+    ///
+    /// [extended-const]: https://github.com/WebAssembly/extended-const
+    pub fn extended_const(&mut self, enable: bool) -> &mut Self {
+        self.extended_const = enable;
+        self
+    }
+
+    /// Checks if this features set contains all the features required by another set
+    pub fn contains_features(&self, required: &Self) -> bool {
+        // Check all required features
+        (!required.simd || self.simd)
+            && (!required.bulk_memory || self.bulk_memory)
+            && (!required.reference_types || self.reference_types)
+            && (!required.threads || self.threads)
+            && (!required.multi_value || self.multi_value)
+            && (!required.exceptions || self.exceptions)
+            && (!required.tail_call || self.tail_call)
+            && (!required.module_linking || self.module_linking)
+            && (!required.multi_memory || self.multi_memory)
+            && (!required.memory64 || self.memory64)
+            && (!required.relaxed_simd || self.relaxed_simd)
+            && (!required.extended_const || self.extended_const)
+            && (!required.wide_arithmetic || self.wide_arithmetic)
+    }
+
+    #[cfg(feature = "detect-wasm-features")]
+    /// Detects required WebAssembly features from a module binary.
+    ///
+    /// This method analyzes a WebAssembly module's binary to determine which
+    /// features it requires. It does this by:
+    /// 1. Attempting to validate the module with different feature sets
+    /// 2. Analyzing validation errors to detect required features
+    /// 3. Parsing the module to detect certain common patterns
+    ///
+    /// # Arguments
+    ///
+    /// * `wasm_bytes` - The binary content of the WebAssembly module
+    ///
+    /// # Returns
+    ///
+    /// A new `Features` instance with the detected features enabled.
+    pub fn detect_from_wasm(wasm_bytes: &[u8]) -> Result<Self, wasmparser::BinaryReaderError> {
+        let mut features = Self::default();
+
+        // Simple test for exceptions - try to validate with exceptions disabled
+        let mut exceptions_test = WasmFeatures::default();
+        // Enable most features except exceptions
+        exceptions_test.set(WasmFeatures::BULK_MEMORY, true);
+        exceptions_test.set(WasmFeatures::REFERENCE_TYPES, true);
+        exceptions_test.set(WasmFeatures::SIMD, true);
+        exceptions_test.set(WasmFeatures::MULTI_VALUE, true);
+        exceptions_test.set(WasmFeatures::THREADS, true);
+        exceptions_test.set(WasmFeatures::TAIL_CALL, true);
+        exceptions_test.set(WasmFeatures::MULTI_MEMORY, true);
+        exceptions_test.set(WasmFeatures::MEMORY64, true);
+        exceptions_test.set(WasmFeatures::EXCEPTIONS, false);
+
+        let mut validator = Validator::new_with_features(exceptions_test);
+
+        if let Err(e) = validator.validate_all(wasm_bytes) {
+            let err_msg = e.to_string();
+            if err_msg.contains("exception") {
+                features.exceptions(true);
+            }
+        }
+
+        // Now try with all features enabled to catch anything we might have missed
+        let mut wasm_features = WasmFeatures::default();
+        wasm_features.set(WasmFeatures::EXCEPTIONS, true);
+        wasm_features.set(WasmFeatures::BULK_MEMORY, true);
+        wasm_features.set(WasmFeatures::REFERENCE_TYPES, true);
+        wasm_features.set(WasmFeatures::SIMD, true);
+        wasm_features.set(WasmFeatures::MULTI_VALUE, true);
+        wasm_features.set(WasmFeatures::THREADS, true);
+        wasm_features.set(WasmFeatures::TAIL_CALL, true);
+        wasm_features.set(WasmFeatures::MULTI_MEMORY, true);
+        wasm_features.set(WasmFeatures::MEMORY64, true);
+        wasm_features.set(WasmFeatures::RELAXED_SIMD, false);
+
+        let mut validator = Validator::new_with_features(wasm_features);
+        match validator.validate_all(wasm_bytes) {
+            Err(e) => {
+                // If validation fails due to missing feature support, check which feature it is
+                let err_msg = e.to_string().to_lowercase();
+
+                if err_msg.contains("exception") || err_msg.contains("try/catch") {
+                    features.exceptions(true);
+                }
+
+                if err_msg.contains("bulk memory") {
+                    features.bulk_memory(true);
+                }
+
+                if err_msg.contains("reference type") {
+                    features.reference_types(true);
+                }
+
+                if err_msg.contains("relaxed simd") {
+                    features.relaxed_simd(true);
+                } else if err_msg.contains("simd") {
+                    features.simd(true);
+                }
+
+                if err_msg.contains("multi value") || err_msg.contains("multiple values") {
+                    features.multi_value(true);
+                }
+
+                if err_msg.contains("thread") || err_msg.contains("shared memory") {
+                    features.threads(true);
+                }
+
+                if err_msg.contains("tail call") {
+                    features.tail_call(true);
+                }
+
+                if err_msg.contains("module linking") {
+                    features.module_linking(true);
+                }
+
+                if err_msg.contains("multi memory") {
+                    features.multi_memory(true);
+                }
+
+                if err_msg.contains("memory64") {
+                    features.memory64(true);
+                }
+                if err_msg.contains("wide arithmetic") {
+                    features.wide_arithmetic(true);
+                }
+                if err_msg.contains("constant expression") {
+                    features.extended_const(true);
+                }
+            }
+            Ok(_) => {
+                // The module validated successfully with all features enabled,
+                // which means it could potentially use any of them.
+                // We'll do a more detailed analysis by parsing the module.
+            }
+        }
+
+        // A simple pass to detect certain common patterns
+        for payload in Parser::new(0).parse_all(wasm_bytes) {
+            let payload = payload?;
+            if let Payload::CustomSection(section) = payload {
+                let name = section.name();
+                // Exception handling has a custom section
+                if name.contains("exception") {
+                    features.exceptions(true);
+                }
+            }
+        }
+
+        Ok(features)
+    }
+
+    /// Extend this feature set with another set.
+    ///
+    /// Self will be modified to include all features that are required by
+    /// either set.
+    pub fn extend(&mut self, other: &Self) {
+        // Written this way to cause compile errors when new features are added.
+        let Self {
+            threads,
+            reference_types,
+            simd,
+            bulk_memory,
+            multi_value,
+            tail_call,
+            module_linking,
+            multi_memory,
+            memory64,
+            exceptions,
+            relaxed_simd,
+            extended_const,
+            wide_arithmetic,
+        } = other.clone();
+
+        *self = Self {
+            threads: self.threads || threads,
+            reference_types: self.reference_types || reference_types,
+            simd: self.simd || simd,
+            bulk_memory: self.bulk_memory || bulk_memory,
+            multi_value: self.multi_value || multi_value,
+            tail_call: self.tail_call || tail_call,
+            module_linking: self.module_linking || module_linking,
+            multi_memory: self.multi_memory || multi_memory,
+            memory64: self.memory64 || memory64,
+            exceptions: self.exceptions || exceptions,
+            relaxed_simd: self.relaxed_simd || relaxed_simd,
+            extended_const: self.extended_const || extended_const,
+            wide_arithmetic: self.wide_arithmetic || wide_arithmetic,
+        };
     }
 }
 
@@ -259,13 +551,22 @@ mod test_features {
                 multi_value: true,
                 tail_call: false,
                 module_linking: false,
-                multi_memory: false,
+                multi_memory: true,
                 memory64: false,
                 exceptions: false,
                 relaxed_simd: false,
-                extended_const: false,
+                extended_const: true,
+                wide_arithmetic: false
             }
         );
+    }
+
+    #[test]
+    fn features_extend() {
+        let all = Features::all();
+        let mut target = Features::none();
+        target.extend(&all);
+        assert_eq!(target, all);
     }
 
     #[test]

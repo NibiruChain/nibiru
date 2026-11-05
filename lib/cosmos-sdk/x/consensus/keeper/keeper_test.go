@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"testing"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
+
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil"
@@ -12,8 +13,8 @@ import (
 	moduletestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	consensusparamkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/keeper"
-	consensusparamtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
+	consensusparamtypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 type KeeperTestSuite struct {

@@ -386,6 +386,19 @@ impl Name for nibiru::sudo::QuerySudoersRequest {
     const PACKAGE: &'static str = PACKAGE_SUDO;
 }
 
+impl Name for nibiru::sudo::MsgEditZeroGasActors {
+    const NAME: &'static str = "MsgEditZeroGasActors";
+    const PACKAGE: &'static str = PACKAGE_SUDO;
+}
+impl Name for nibiru::sudo::MsgUpdateRoleMembers {
+    const NAME: &'static str = "MsgUpdateRoleMembers";
+    const PACKAGE: &'static str = PACKAGE_SUDO;
+}
+impl Name for nibiru::sudo::QueryZeroGasActorsRequest {
+    const NAME: &'static str = "QueryZeroGasActorsRequest";
+    const PACKAGE: &'static str = PACKAGE_SUDO;
+}
+
 // EVM tx msg
 
 impl Name for eth::evm::MsgEthereumTx {

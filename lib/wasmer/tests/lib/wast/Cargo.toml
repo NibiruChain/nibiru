@@ -1,25 +1,22 @@
 [package]
 name = "wasmer-wast"
-version = "5.0.6"
-authors = ["Wasmer Engineering Team <engineering@wasmer.io>"]
 description = "wast testing support for wasmer"
+version.workspace = true
+authors.workspace = true
 license = "MIT OR Apache-2.0 WITH LLVM-exception"
 categories = ["wasm"]
 keywords = ["wasm", "webassembly"]
 repository = "https://github.com/wasmerio/wasmer"
 readme = "README.md"
-edition = "2018"
+edition.workspace = true
 
 [dependencies]
-wasmer-types = { path = "../../../lib/types", version = "=5.0.6" }
-wasmer = { path = "../../../lib/api", version = "=5.0.6", default-features = false }
+wasmer = { path = "../../../lib/api", version = "=7.4.2", default-features = false }
 
-anyhow = "1.0"
-wast = "216.0.0"
-serde = "1"
-tempfile = "3.6.0"
-thiserror = "1.0"
-futures = "0.3"
+anyhow.workspace = true
+wast.workspace = true
+serde.workspace = true
+thiserror.workspace = true
 
 [features]
 default = ["wat"]

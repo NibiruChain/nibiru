@@ -1,6 +1,6 @@
 [package]
 name = "wasmvm"
-version = "1.5.9"
+version = "1.5.10-nibiru.1"
 publish = false
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2021"

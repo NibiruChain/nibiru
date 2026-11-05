@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 )
 
 func randCompactBitArray(bits int) (*CompactBitArray, []byte) {

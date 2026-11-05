@@ -3,7 +3,7 @@ package appconst
 import (
 	"time"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 )
 
 // NewDefaultTendermintConfig returns a consensus "Config" (CometBFT) with new

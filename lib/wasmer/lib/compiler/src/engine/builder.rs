@@ -1,21 +1,22 @@
 use super::Engine;
-use crate::{types::target::Target, CompilerConfig};
-use wasmer_types::{Features, HashAlgorithm};
+#[cfg(feature = "compiler")]
+use crate::CompilerConfig;
+use wasmer_types::{Features, target::Target};
 
 /// The Builder contents of `Engine`
 pub struct EngineBuilder {
     /// The compiler
+    #[cfg(feature = "compiler")]
     compiler_config: Option<Box<dyn CompilerConfig>>,
     /// The machine target
     target: Option<Target>,
     /// The features to compile the Wasm module with
     features: Option<Features>,
-    /// The hashing algorithm
-    hash_algorithm: Option<HashAlgorithm>,
 }
 
 impl EngineBuilder {
     /// Create a new builder with pre-made components
+    #[cfg(feature = "compiler")]
     pub fn new<T>(compiler_config: T) -> Self
     where
         T: Into<Box<dyn CompilerConfig>>,
@@ -24,17 +25,16 @@ impl EngineBuilder {
             compiler_config: Some(compiler_config.into()),
             target: None,
             features: None,
-            hash_algorithm: None,
         }
     }
 
     /// Create a new headless Backend
     pub fn headless() -> Self {
         Self {
+            #[cfg(feature = "compiler")]
             compiler_config: None,
             target: None,
             features: None,
-            hash_algorithm: None,
         }
     }
 
@@ -50,28 +50,15 @@ impl EngineBuilder {
         self
     }
 
-    /// Set the hashing algorithm
-    pub fn set_hash_algorithm(
-        mut self,
-        hash_algorithm: Option<HashAlgorithm>,
-    ) -> Self {
-        self.hash_algorithm = hash_algorithm;
-        self
-    }
-
     /// Build the `Engine` for this configuration
     #[cfg(feature = "compiler")]
     pub fn engine(self) -> Engine {
         let target = self.target.unwrap_or_default();
         if let Some(compiler_config) = self.compiler_config {
-            let features = self.features.unwrap_or_else(|| {
-                compiler_config.default_features_for_target(&target)
-            });
-            let mut engine = Engine::new(compiler_config, target, features);
-
-            engine.set_hash_algorithm(self.hash_algorithm);
-
-            engine
+            let features = self
+                .features
+                .unwrap_or_else(|| compiler_config.default_features_for_target(&target));
+            Engine::new(compiler_config, target, features)
         } else {
             Engine::headless()
         }

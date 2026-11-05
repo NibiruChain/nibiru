@@ -3,12 +3,12 @@ package cli
 import (
 	"context"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
-	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	cmttypes "github.com/cometbft/cometbft/types"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmbytes "github.com/NibiruChain/nibiru/v2/bft/libs/bytes"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	rpcclientmock "github.com/NibiruChain/nibiru/v2/bft/rpc/client/mock"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 )

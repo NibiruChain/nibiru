@@ -17,6 +17,9 @@ coverage.txt
 coverage.html
 temp
 temp*
+!bft/libs/tempfile/
+!bft/libs/tempfile/*
+!bft/test/e2e/pkg/templates/
 txout.json
 vote.json
 **__pycache**
@@ -383,3 +386,7 @@ evm/passkey-bundler/.tmp
 evm-e2e/.nibid-*/
 evm-e2e/.passkey-*-privkey.txt
 evm-e2e/.passkey-*-wallet.json
+
+# Wasmer function environments are source code, not Python virtualenvs.
+!lib/wasmer/lib/api/src/entities/function/env/
+!lib/wasmer/lib/api/src/entities/function/env/*.rs

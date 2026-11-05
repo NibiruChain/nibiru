@@ -1,9 +1,7 @@
 // This file contains code from external sources.
 // Attributions: https://github.com/wasmerio/wasmer/blob/main/docs/ATTRIBUTIONS.md
 
-use crate::vmcontext::{
-    VMFunctionImport, VMGlobalImport, VMMemoryImport, VMTableImport,
-};
+use crate::vmcontext::{VMFunctionImport, VMGlobalImport, VMMemoryImport, VMTableImport};
 use wasmer_types::entity::{BoxedSlice, PrimaryMap};
 use wasmer_types::{FunctionIndex, GlobalIndex, MemoryIndex, TableIndex};
 

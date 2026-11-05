@@ -3,24 +3,21 @@
 
 //! Densely numbered entity references as mapping keys.
 
+use crate::entity::EntityRef;
 use crate::entity::iter::{Iter, IterMut};
 use crate::entity::keys::Keys;
-use crate::entity::EntityRef;
-use crate::lib::std::cmp::min;
-use crate::lib::std::marker::PhantomData;
-use crate::lib::std::ops::{Index, IndexMut};
-use crate::lib::std::slice;
-use crate::lib::std::vec::Vec;
-use rkyv::{
-    Archive, Archived, Deserialize as RkyvDeserialize,
-    Serialize as RkyvSerialize,
-};
+use rkyv::{Archive, Archived, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 #[cfg(feature = "enable-serde")]
 use serde::{
+    Deserialize, Serialize,
     de::{Deserializer, SeqAccess, Visitor},
     ser::{SerializeSeq, Serializer},
-    Deserialize, Serialize,
 };
+use std::cmp::min;
+use std::marker::PhantomData;
+use std::ops::{Index, IndexMut};
+use std::slice;
+use std::vec::Vec;
 
 /// A mapping `K -> V` for densely indexed entity references.
 ///
@@ -52,9 +49,7 @@ where
             + self
                 .elems
                 .iter()
-                .map(|value| {
-                    value.size_of_val(tracker) - std::mem::size_of_val(value)
-                })
+                .map(|value| value.size_of_val(tracker) - std::mem::size_of_val(value))
                 .sum::<usize>()
     }
 }
@@ -126,12 +121,12 @@ where
     }
 
     /// Iterate over all the keys and values in this map.
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         Iter::new(self.elems.iter())
     }
 
     /// Iterate over all the keys and values in this map, mutable edition.
-    pub fn iter_mut(&mut self) -> IterMut<K, V> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, K, V> {
         IterMut::new(self.elems.iter_mut())
     }
 
@@ -141,12 +136,12 @@ where
     }
 
     /// Iterate over all the values in this map.
-    pub fn values(&self) -> slice::Iter<V> {
+    pub fn values(&self) -> slice::Iter<'_, V> {
         self.elems.iter()
     }
 
     /// Iterate over all the values in this map, mutable edition.
-    pub fn values_mut(&mut self) -> slice::IterMut<V> {
+    pub fn values_mut(&mut self) -> slice::IterMut<'_, V> {
         self.elems.iter_mut()
     }
 
@@ -167,12 +162,12 @@ where
     }
 
     /// Iterator over all values in the `ArchivedPrimaryMap`
-    pub fn values(&self) -> slice::Iter<Archived<V>> {
+    pub fn values(&self) -> slice::Iter<'_, Archived<V>> {
         self.elems.iter()
     }
 
     /// Iterate over all the keys and values in this map.
-    pub fn iter(&self) -> Iter<K, Archived<V>> {
+    pub fn iter(&self) -> Iter<'_, K, Archived<V>> {
         Iter::new(self.elems.iter())
     }
 }
@@ -273,11 +268,7 @@ where
         seq.serialize_element(&Some(self.default.clone()))?;
         for e in self.elems.iter().take(elems_cnt) {
             let some_e = Some(e);
-            seq.serialize_element(if *e == self.default {
-                &None
-            } else {
-                &some_e
-            })?;
+            seq.serialize_element(if *e == self.default { &None } else { &some_e })?;
         }
         seq.end()
     }
@@ -293,7 +284,7 @@ where
     where
         D: Deserializer<'de>,
     {
-        use crate::lib::std::fmt;
+        use std::fmt;
 
         struct SecondaryMapVisitor<K, V> {
             unused: PhantomData<fn(K) -> V>,
@@ -317,13 +308,11 @@ where
                 match seq.next_element()? {
                     Some(Some(default_val)) => {
                         let default_val: V = default_val; // compiler can't infer the type
-                        let mut m =
-                            SecondaryMap::with_default(default_val.clone());
+                        let mut m = SecondaryMap::with_default(default_val.clone());
                         let mut idx = 0;
                         while let Some(val) = seq.next_element()? {
                             let val: Option<_> = val; // compiler can't infer the type
-                            m[K::new(idx)] =
-                                val.unwrap_or_else(|| default_val.clone());
+                            m[K::new(idx)] = val.unwrap_or_else(|| default_val.clone());
                             idx += 1;
                         }
                         Ok(m)

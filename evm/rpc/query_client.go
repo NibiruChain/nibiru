@@ -9,8 +9,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/tx"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 

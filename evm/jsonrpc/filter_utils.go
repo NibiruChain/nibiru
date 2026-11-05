@@ -5,9 +5,10 @@ import (
 	"math/big"
 
 	sdkioerrors "cosmossdk.io/errors"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	gogoproto "github.com/cosmos/gogoproto/proto"
 

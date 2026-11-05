@@ -2,22 +2,25 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"cosmossdk.io/depinject"
 	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
@@ -44,13 +47,13 @@ import (
 	authzmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/keeper"
-	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	distr "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution"
 	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence"
 	feegrantmodule "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/module"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/genutil/types"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov"
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params"
 	paramsclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/client"
@@ -58,8 +61,10 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing"
 	stakingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/client"
+	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
+	upgradeclient "github.com/NibiruChain/nibiru/v2/x/upgrade/client"
 
 	ica "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts"
 	icacontrollertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/types"
@@ -91,6 +96,8 @@ import (
 	"github.com/NibiruChain/nibiru/v2/evm/evmante"
 	"github.com/NibiruChain/nibiru/v2/evm/evmmodule"
 	bankkeeper "github.com/NibiruChain/nibiru/v2/x/bank/keeper"
+	consensusmodule "github.com/NibiruChain/nibiru/v2/x/consensus"
+	consensuskeeper "github.com/NibiruChain/nibiru/v2/x/consensus/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/devgas/v1"
 	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/epochs"
@@ -264,6 +271,10 @@ func NewNibiruApp(
 	app := &NibiruApp{
 		EvmMempool: evmMempool,
 		keys: sdk.NewKVStoreKeys(
+			// Explicitly wired SDK modules retain their existing store names.
+			govtypes.StoreKey,
+			upgradetypes.StoreKey,
+
 			// ibc keys
 			ibctransfertypes.StoreKey,
 			// Retain the empty historical ICS-29 store as an inert tombstone.
@@ -274,6 +285,13 @@ func NewNibiruApp(
 			ibcwasmtypes.StoreKey,
 
 			// nibiru x/ keys
+			//
+			// consensustypes.StoreKey ("consensus") is the store the Cosmos SDK
+			// x/consensus module mounted through depinject. It must be mounted
+			// exactly once and keep its name: unmounted, it drops out of the
+			// commit info and changes the app hash; mounted twice, the store
+			// panics at load.
+			consensustypes.StoreKey,
 			epochs.StoreKey,
 			oracletypes.StoreKey,
 			mint.StoreKey,
@@ -337,13 +355,10 @@ func NewNibiruApp(
 		&app.crisisKeeper,
 		&app.capabilityKeeper,
 		&app.slashingKeeper,
-		&app.GovKeeper,
-		&app.UpgradeKeeper,
 		&app.paramsKeeper,
 		&app.authzKeeper,
 		&app.evidenceKeeper,
 		&app.FeeGrantKeeper,
-		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -361,10 +376,24 @@ func NewNibiruApp(
 		}
 	}
 
+	// Construct these keepers before IBC and Wasm, which depend on them.
+	app.initGovKeeper()
+	app.initUpgradeKeeper(appOpts)
 	wasmConfig := app.initNonDepinjectKeepers(appOpts)
+	app.ConsensusKeeper = consensuskeeper.NewKeeper(
+		app.appCodec, app.keys[consensustypes.StoreKey], &app.WasmKeeper,
+		app.SudoKeeper)
+	// The x/consensus Keeper is baseapp's param store: InitChain stores the
+	// genesis consensus params through it, and BeginBlock, every tx and
+	// EndBlock read them. depinject used to set this through the Cosmos SDK
+	// module's BaseAppOption. It must be set before app.Load seals the app.
+	app.SetParamStore(app.ConsensusKeeper)
 
 	// register non-depinject modules
 	if err := app.RegisterModules(
+		gov.NewAppModule(app.appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.getSubspace(govtypes.ModuleName)),
+		upgrade.NewAppModule(app.UpgradeKeeper),
+
 		// Nibiru modules
 		epochsmod.NewAppModule(app.appCodec, app.EpochsKeeper),
 		oraclemod.NewAppModule(app.appCodec, app.OracleKeeper),
@@ -383,15 +412,9 @@ func NewNibiruApp(
 		wasm.NewAppModule(app.appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.getSubspace(wasmtypes.ModuleName)),
 		devgas.NewAppModule(app.DevGasKeeper, app.AccountKeeper),
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper),
+		consensusmodule.NewAppModule(app.ConsensusKeeper),
 	); err != nil {
 		panic(err)
-	}
-
-	// remove consensus module from the module manager as we didn't have consensus module from the first place
-	for name := range app.ModuleManager.Modules {
-		if name == consensustypes.ModuleName {
-			delete(app.ModuleManager.Modules, name)
-		}
 	}
 
 	// make sure to get the ibc tendermint client interface types
@@ -434,8 +457,8 @@ func NewNibiruApp(
 	app.sm.RegisterStoreDecoders()
 
 	// Register the init chainer after manual modules are added to ModuleManager.
-	// The upgrade module's depinject path only seeds versions for app-wired modules,
-	// so InitChainer writes the full ModuleManager version map before InitGenesis.
+	// InitChainer seeds the complete version map for both explicitly wired and
+	// depinject modules before InitGenesis.
 	app.SetInitChainer(app.InitChainer)
 
 	// initialize custom antehandler
@@ -490,6 +513,10 @@ func NewNibiruApp(
 		if err := ibcwasmkeeper.InitializePinnedCodes(app.NewUncachedContext(true, cmtproto.Header{}), app.appCodec); err != nil {
 			cmtos.Exit(fmt.Sprintf("failed to initialize pinned codes %s", err))
 		}
+		app.warmXConsensusCommitWait()
+		if app.LastBlockHeight() > 0 {
+			app.UpgradeKeeper.WarmProtocolVersion(app.NewUncachedContext(true, cmtproto.Header{Height: app.LastBlockHeight(), Time: time.Unix(1, 0).UTC()}))
+		}
 	}
 
 	return app
@@ -515,8 +542,38 @@ func (app *NibiruApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) ab
 		panic(err)
 	}
 	EnsureERC2470AuthAccount(app.appCodec, genesisState)
-	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	res := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	if req.ConsensusParams == nil {
+		// Like x-consensus, keep the legacy test harness with no consensus params
+		// free of chain contracts. Real chain genesis supplies consensus params.
+		app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
+	} else if err := app.UpgradeKeeper.InitContract(ctx, app.ModuleManager.GetVersionMap()); err != nil {
+		panic(fmt.Errorf("initialize x-upgrade contract: %w", err))
+	}
+
+	// Create x-consensus after module genesis: it is seeded from the params
+	// baseapp stored before genesis, Wasm genesis must have run, and on an
+	// imported genesis the contract already exists, so this is a no-op. It is
+	// not a module InitGenesis because Manager.InitGenesis skips modules that
+	// are missing from the genesis JSON. A chain without the contract would
+	// silently keep static params, so fail loudly instead. The one exception
+	// is a genesis without consensus params, which only test harnesses send.
+	err := app.ConsensusKeeper.EnsureXConsensus(ctx)
+	switch {
+	case errors.Is(err, consensuskeeper.ErrNoStoredParams):
+		ctx.Logger().Info("x-consensus not created: genesis has no consensus params",
+			"module", consensustypes.ModuleName)
+	case err != nil:
+		panic(fmt.Errorf("create x-consensus at genesis: %w", err))
+	default:
+		// An imported genesis can carry a set commit wait. Load it so the
+		// first height already uses it.
+		if err := app.ConsensusKeeper.WarmCommitWait(ctx); err != nil {
+			ctx.Logger().Error("could not load the x-consensus commit wait",
+				"module", consensustypes.ModuleName, "err", err)
+		}
+	}
+	return res
 }
 
 // LoadHeight loads a particular height

@@ -9,12 +9,12 @@ import (
 
 	pkgerrors "github.com/pkg/errors"
 
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	tmquery "github.com/cometbft/cometbft/libs/pubsub/query"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
-	cmttypes "github.com/cometbft/cometbft/types"
+	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmquery "github.com/NibiruChain/nibiru/v2/bft/libs/pubsub/query"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
+	rpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/jsonrpc/client"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"

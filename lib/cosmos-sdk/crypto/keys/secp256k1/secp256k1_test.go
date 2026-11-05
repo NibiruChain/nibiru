@@ -9,11 +9,12 @@ import (
 
 	btcSecp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	btcecdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
-	"github.com/cometbft/cometbft/crypto"
-	tmsecp256k1 "github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cosmos/btcutil/base58"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/NibiruChain/nibiru/v2/bft/crypto"
+	tmsecp256k1 "github.com/NibiruChain/nibiru/v2/bft/crypto/secp256k1"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"

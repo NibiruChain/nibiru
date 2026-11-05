@@ -20,7 +20,7 @@ fn run_mode(src: &'static str, mode: &'static str) {
     let mut config = ct::Config {
         mode: mode.parse().expect("invalid mode"),
         target_rustcflags: Some("-L ../../target/debug/deps".to_owned()),
-        src_base: format!("tests/{}", src).into(),
+        src_base: format!("tests/{src}").into(),
         ..Default::default()
     };
 
@@ -44,7 +44,7 @@ fn run_mode(src: &'static str, mode: &'static str) {
 
 #[test]
 #[ignore] // ignored by default because it needs to essentially run `cargo clean` to work correctly
-          // and that's really, really slow
+// and that's really, really slow
 fn compile_test() {
     run_mode("compile-fail", "compile-fail");
 }

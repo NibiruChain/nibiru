@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethcore "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 

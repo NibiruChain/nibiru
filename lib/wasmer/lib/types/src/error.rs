@@ -1,5 +1,5 @@
 //! The WebAssembly possible errors
-use crate::{ExternType, Pages};
+use crate::{ExternType, Pages, progress::UserAbort};
 use std::io;
 use thiserror::Error;
 
@@ -93,12 +93,31 @@ pub enum MemoryError {
         /// Message describing the unsupported operation.
         message: String,
     },
-    /// The memory does not support atomic operations.
-    #[error("The memory does not support atomic operations")]
-    AtomicsNotSupported,
+    /// An atomic operation failed.
+    #[error("Atomic operation failed: {0}")]
+    AtomicOperationFailed(AtomicsError),
     /// A user defined error value, used for error cases not listed above.
     #[error("A user-defined error occurred: {0}")]
     Generic(String),
+}
+
+/// Error that can occur during atomic operations. (notify/wait)
+// Non-exhaustive to allow for future variants without breaking changes!
+#[derive(PartialEq, Eq, Debug, Error, Clone, Copy, Hash)]
+#[non_exhaustive]
+pub enum AtomicsError {
+    /// Atomic operations are not supported by this memory.
+    #[error("The memory does not support atomic operations")]
+    Unimplemented,
+    /// Too many waiters for address.
+    #[error("Too many waiters for address")]
+    TooManyWaiters,
+    /// Atomic operations are disabled.
+    #[error("Atomic operations are disabled for this memory")]
+    AtomicsDisabled,
+    /// The memory was already dropped.
+    #[error("The memory was already dropped")]
+    MemoryDropped,
 }
 
 /// An ImportError.
@@ -132,53 +151,49 @@ pub enum PreInstantiationError {
     CpuFeature(String),
 }
 
-use crate::lib::std::string::String;
+use std::string::String;
 
 // Compilation Errors
-//
-// If `std` feature is enable, we can't use `thiserror` until
-// https://github.com/dtolnay/thiserror/pull/64 is merged.
 
 /// The WebAssembly.CompileError object indicates an error during
 /// WebAssembly decoding or validation.
 ///
-/// This is based on the [Wasm Compile Error][compile-error] API.
-///
-/// [compiler-error]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/CompileError
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(Error))]
+/// This mirrors the WebAssembly `CompileError` API described at
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/CompileError>.
+#[derive(Error, Debug)]
 pub enum CompileError {
-    /// A Wasm translation error occured.
-    #[cfg_attr(feature = "std", error("WebAssembly translation error: {0}"))]
+    /// A Wasm translation error occurred.
+    #[error("WebAssembly translation error: {0}")]
     Wasm(WasmError),
 
-    /// A compilation error occured.
-    #[cfg_attr(feature = "std", error("Compilation error: {0}"))]
+    /// A compilation error occurred.
+    #[error("Compilation error: {0}")]
     Codegen(String),
 
     /// The module did not pass validation.
-    #[cfg_attr(feature = "std", error("Validation error: {0}"))]
+    #[error("Validation error: {0}")]
     Validate(String),
 
     /// The compiler doesn't support a Wasm feature
-    #[cfg_attr(feature = "std", error("Feature {0} is not yet supported"))]
+    #[error("Feature {0} is not yet supported")]
     UnsupportedFeature(String),
 
     /// The compiler cannot compile for the given target.
     /// This can refer to the OS, the chipset or any other aspect of the target system.
-    #[cfg_attr(
-        feature = "std",
-        error("The target {0} is not yet supported (see https://docs.wasmer.io/runtime/features)")
-    )]
+    #[error("The target {0} is not yet supported (see https://docs.wasmer.io/runtime/features)")]
     UnsupportedTarget(String),
 
     /// Insufficient resources available for execution.
-    #[cfg_attr(feature = "std", error("Insufficient resources: {0}"))]
+    #[error("Insufficient resources: {0}")]
     Resource(String),
 
     /// Middleware error occurred.
-    #[cfg_attr(feature = "std", error("Middleware error: {0}"))]
+    #[error("Middleware error: {0}")]
     MiddlewareError(String),
+
+    /// Compilation aborted by a user callback.
+    #[error("Compilation aborted: {0}")]
+    Aborted(UserAbort),
 }
 
 impl From<WasmError> for CompileError {
@@ -187,10 +202,15 @@ impl From<WasmError> for CompileError {
     }
 }
 
+impl From<UserAbort> for CompileError {
+    fn from(abort: UserAbort) -> Self {
+        Self::Aborted(abort)
+    }
+}
+
 /// A error in the middleware.
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(Error))]
-#[cfg_attr(feature = "std", error("Error in middleware {name}: {message}"))]
+#[derive(Error, Debug)]
+#[error("Error in middleware {name}: {message}")]
 pub struct MiddlewareError {
     /// The name of the middleware where the error was created
     pub name: String,
@@ -208,21 +228,23 @@ impl MiddlewareError {
     }
 }
 
+impl From<MiddlewareError> for CompileError {
+    fn from(error: MiddlewareError) -> Self {
+        WasmError::Middleware(error).into()
+    }
+}
+
 /// A WebAssembly translation error.
 ///
 /// When a WebAssembly function can't be translated, one of these error codes will be returned
 /// to describe the failure.
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(Error))]
+#[derive(Error, Debug)]
 pub enum WasmError {
     /// The input WebAssembly code is invalid.
     ///
     /// This error code is used by a WebAssembly translator when it encounters invalid WebAssembly
     /// code. This should never happen for validated WebAssembly code.
-    #[cfg_attr(
-        feature = "std",
-        error("Invalid input WebAssembly code at offset {offset}: {message}")
-    )]
+    #[error("Invalid input WebAssembly code at offset {offset}: {message}")]
     InvalidWebAssembly {
         /// A string describing the validation error.
         message: String,
@@ -233,19 +255,19 @@ pub enum WasmError {
     /// A feature used by the WebAssembly code is not supported by the embedding environment.
     ///
     /// Embedding environments may have their own limitations and feature restrictions.
-    #[cfg_attr(feature = "std", error("Unsupported feature: {0}"))]
+    #[error("Unsupported feature: {0}")]
     Unsupported(String),
 
     /// An implementation limit was exceeded.
-    #[cfg_attr(feature = "std", error("Implementation limit exceeded"))]
+    #[error("Implementation limit exceeded")]
     ImplLimitExceeded,
 
     /// An error from the middleware error.
-    #[cfg_attr(feature = "std", error("{0}"))]
+    #[error("{0}")]
     Middleware(MiddlewareError),
 
     /// A generic error.
-    #[cfg_attr(feature = "std", error("{0}"))]
+    #[error("{0}")]
     Generic(String),
 }
 
@@ -256,12 +278,11 @@ impl From<MiddlewareError> for WasmError {
 }
 
 /// The error that can happen while parsing a `str`
-/// to retrieve a [`CpuFeature`](crate::CpuFeature).
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(Error))]
+/// to retrieve a [`CpuFeature`](crate::target::CpuFeature).
+#[derive(Error, Debug)]
 pub enum ParseCpuFeatureError {
     /// The provided string feature doesn't exist
-    #[cfg_attr(feature = "std", error("CpuFeature {0} not recognized"))]
+    #[error("CpuFeature {0} not recognized")]
     Missing(String),
 }
 
@@ -282,14 +303,13 @@ mod tests {
 
     #[test]
     fn middleware_error_be_converted_to_wasm_error() {
-        let error =
-            WasmError::from(MiddlewareError::new("manipulator3000", "foo"));
+        let error = WasmError::from(MiddlewareError::new("manipulator3000", "foo"));
         match error {
             WasmError::Middleware(MiddlewareError { name, message }) => {
                 assert_eq!(name, "manipulator3000");
                 assert_eq!(message, "foo");
             }
-            err => panic!("Unexpected error: {:?}", err),
+            err => panic!("Unexpected error: {err:?}"),
         }
     }
 }

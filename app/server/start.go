@@ -17,7 +17,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/evm/indexer"
 
-	cmtrpcclient "github.com/cometbft/cometbft/rpc/client"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"
@@ -29,14 +29,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	dbm "github.com/cometbft/cometbft-db"
-	abciserver "github.com/cometbft/cometbft/abci/server"
-	tcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/node"
-	"github.com/cometbft/cometbft/p2p"
-	pvm "github.com/cometbft/cometbft/privval"
-	"github.com/cometbft/cometbft/proxy"
-	"github.com/cometbft/cometbft/rpc/client/local"
+
+	abciserver "github.com/NibiruChain/nibiru/v2/bft/abci/server"
+	tcmd "github.com/NibiruChain/nibiru/v2/bft/cmd/nibiru-bft/commands"
+	cs "github.com/NibiruChain/nibiru/v2/bft/consensus"
+	tmos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
+	"github.com/NibiruChain/nibiru/v2/bft/node"
+	"github.com/NibiruChain/nibiru/v2/bft/p2p"
+	pvm "github.com/NibiruChain/nibiru/v2/bft/privval"
+	"github.com/NibiruChain/nibiru/v2/bft/proxy"
+	"github.com/NibiruChain/nibiru/v2/bft/rpc/client/local"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta"
 	crgserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/rosetta/lib/server"
@@ -344,6 +346,7 @@ func startInProcess(ctx *sdkserver.Context, clientCtx client.Context, opts Start
 			node.DefaultDBProvider,
 			node.DefaultMetricsProvider(cfg.Instrumentation),
 			ctx.Logger.With("server", "node"),
+			commitTimeoutOptions(app)...,
 		)
 		if err != nil {
 			logger.Error("failed init node", "error", err.Error())
@@ -692,4 +695,21 @@ func wrapCPUProfile(ctx *sdkserver.Context, callback func() error) error {
 	}
 
 	return WaitForQuitSignals()
+}
+
+// commitTimeoutSource is implemented by apps that own the chain-wide commit
+// wait, such as NibiruApp, whose value comes from the x-consensus contract.
+type commitTimeoutSource interface {
+	CommitTimeoutFunc() cs.CommitTimeoutFunc
+}
+
+// commitTimeoutOptions passes the app's commit wait hook to Nibiru BFT, so
+// min_block_commit_duration_ms replaces config.toml timeout_commit once set.
+// Apps without the hook get no option and keep config.toml behavior.
+func commitTimeoutOptions(app types.Application) []node.Option {
+	source, ok := app.(commitTimeoutSource)
+	if !ok {
+		return nil
+	}
+	return []node.Option{node.CommitTimeoutFunc(source.CommitTimeoutFunc())}
 }

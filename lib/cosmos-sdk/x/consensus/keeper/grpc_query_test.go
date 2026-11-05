@@ -1,11 +1,11 @@
 package keeper_test
 
 import (
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	cmttypes "github.com/cometbft/cometbft/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	cmttypes "github.com/NibiruChain/nibiru/v2/bft/types"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
+	"github.com/NibiruChain/nibiru/v2/x/consensus/types"
 )
 
 func (s *KeeperTestSuite) TestGRPCQueryConsensusParams() {

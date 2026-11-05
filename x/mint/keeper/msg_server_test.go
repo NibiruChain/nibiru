@@ -10,6 +10,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/x/mint/keeper"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 )
 
 func TestMsgToggleInflation(t *testing.T) {
@@ -24,7 +25,7 @@ func TestMsgToggleInflation(t *testing.T) {
 		Enable: false,
 	}
 	_, err := msgServer.ToggleInflation(ctx, &msg)
-	require.ErrorContains(t, err, "insufficient permissions on smart contract")
+	require.ErrorIs(t, err, sudo.ErrUnauthorized)
 
 	params = app.InflationKeeper.GetParams(ctx)
 	require.False(t, params.InflationEnabled)
@@ -54,7 +55,7 @@ func TestMsgEditInflationParams(t *testing.T) {
 		EpochsPerPeriod: &newEpochPerPeriod,
 	}
 	_, err := msgServer.EditInflationParams(ctx, &msg)
-	require.ErrorContains(t, err, "insufficient permissions on smart contract")
+	require.ErrorIs(t, err, sudo.ErrUnauthorized)
 
 	params = app.InflationKeeper.GetParams(ctx)
 	require.NotEqualValues(t, params.EpochsPerPeriod, 42)

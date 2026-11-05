@@ -137,7 +137,8 @@ impl<'a> ParsedWasm<'a> {
                                     );
                                 }
                                 CompositeInnerType::Array(_)
-                                | CompositeInnerType::Struct(_) => {
+                                | CompositeInnerType::Struct(_)
+                                | CompositeInnerType::Cont(_) => {
                                     // ignoring these for now, as they are only available with the GC
                                     // proposal and we explicitly disabled that above
                                 }
@@ -164,7 +165,7 @@ impl<'a> ParsedWasm<'a> {
                 Payload::Version { num, .. } => this.version = num,
                 Payload::ImportSection(i) => {
                     this.imports =
-                        i.into_iter().collect::<Result<Vec<_>, _>>()?;
+                        i.into_imports().collect::<Result<Vec<_>, _>>()?;
                 }
                 Payload::TableSection(t) => {
                     this.tables = t
@@ -201,10 +202,9 @@ impl<'a> ParsedWasm<'a> {
         Ok(this)
     }
 
-    /// Perform the expensive operation of validating each function body
-    ///
-    /// Note: This function caches the output of this function into the field `func_validator` so repeated invocations are cheap.
-    #[allow(dead_code)]
+    /// Validate the function bodies deferred by `parse` against the VM's Wasm features.
+    /// Lightweight analysis can skip this work, but upload validation must call it.
+    /// The field `func_validator` caches success or failure for subsequent calls.
     pub fn validate_funcs(&mut self) -> VmResult<()> {
         match self.func_validator {
             FunctionValidator::Pending(OpaqueDebug(ref mut funcs)) => {

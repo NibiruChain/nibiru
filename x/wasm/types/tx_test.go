@@ -5,10 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	sdkioerrors "cosmossdk.io/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
+	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
@@ -1465,6 +1467,61 @@ func TestMsgUpdateContractLabel(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+// TestMsgFundsValidationReason checks that invalid funds keep the
+// ErrInvalidCoins code (sdk/10) and that the error log names the reason.
+func TestMsgFundsValidationReason(t *testing.T) {
+	goodAddress := sdk.AccAddress(make([]byte, 20)).String()
+	sdk.GetConfig().SetAddressVerifier(VerifyAddressLen())
+	unsortedFunds := sdk.Coins{
+		sdk.NewInt64Coin("zzz", 1),
+		sdk.NewInt64Coin("aaa", 1),
+	}
+	const expReason = "funds: denomination aaa is not sorted"
+
+	specs := map[string]sdk.Msg{
+		"instantiate": &MsgInstantiateContract{
+			Sender: goodAddress,
+			CodeID: firstCodeID,
+			Label:  "foo",
+			Msg:    []byte("{}"),
+			Funds:  unsortedFunds,
+		},
+		"instantiate2": &MsgInstantiateContract2{
+			Sender: goodAddress,
+			CodeID: firstCodeID,
+			Label:  "foo",
+			Msg:    []byte("{}"),
+			Funds:  unsortedFunds,
+			Salt:   []byte("salt"),
+		},
+		"execute": &MsgExecuteContract{
+			Sender:   goodAddress,
+			Contract: goodAddress,
+			Msg:      []byte("{}"),
+			Funds:    unsortedFunds,
+		},
+		"store and instantiate": &MsgStoreAndInstantiateContract{
+			Authority:    goodAddress,
+			Label:        "foo",
+			Msg:          []byte("{}"),
+			WASMByteCode: []byte("foo"),
+			Funds:        unsortedFunds,
+		},
+	}
+	for name, msg := range specs {
+		t.Run(name, func(t *testing.T) {
+			validator, ok := msg.(interface{ ValidateBasic() error })
+			require.True(t, ok)
+			gotErr := validator.ValidateBasic()
+			require.ErrorIs(t, gotErr, sdkerrors.ErrInvalidCoins)
+			codespace, code, log := sdkioerrors.ABCIInfo(gotErr, false)
+			assert.Equal(t, sdkerrors.ErrInvalidCoins.Codespace(), codespace)
+			assert.Equal(t, uint32(10), code)
+			assert.Contains(t, log, expReason)
 		})
 	}
 }

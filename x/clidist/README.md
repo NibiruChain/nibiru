@@ -62,9 +62,11 @@ a different binary patch version. The generated workspace path includes the npm
 distribution version, so separate prerelease packages from one GitHub release do
 not overwrite one another.
 
-Command `publish` checks that none of the five package versions already exist on
-npm, then handles the native packages first and the umbrella package last. It
-requires `--from-gh` to name the GitHub release source and `--dist-ver` to name
+Command `publish` checks tools and required Bun options before resolving the
+release. For uploads, it verifies authentication with `bun pm whoami`. It checks
+that none of the five package versions already exist on npm before downloading
+or packing binaries, then handles the native packages first and the umbrella
+package last. It requires `--from-gh` to name the GitHub release source and `--dist-ver` to name
 the npm package version. The version can include a leading `v` and a prerelease
 suffix, but its SemVer core must match the downloaded assets. The command rejects
 values such as `latest`, `next`, and build metadata.
@@ -74,6 +76,48 @@ that the exact npm version does not exist, then prints the ordered publish
 commands. It does not accept or pass a caller-selected npm registry tag.
 
 With `--run`, command `publish` writes to npm. Authenticate first with command
-`bunx npm login`. If the npm account requires two-factor authentication for
-writes, Bun prints the browser or one-time-password prompt in the terminal and
-waits for the operator to complete it.
+`bunx npm login`, then verify that command `bun pm whoami` succeeds. The helper
+stops before processing release assets if Bun cannot verify authentication.
+A successful preflight confirms login, but npm can still require write-time
+confirmation or reject uploads if the account lacks package write permission.
+If the npm account requires two-factor authentication for writes, Bun prints
+the browser or one-time-password prompt in the terminal and waits for the
+operator to complete it.
+
+## Authentication and progress
+
+Older Bun versions can read a different credential file than npm when
+environment variable `XDG_CONFIG_HOME` is set. On this workstation, upgrading
+from Bun 1.3.14 to 1.4.3 restored authentication with `XDG_CONFIG_HOME` set and
+credentials in `~/.npmrc`. Try command `bun upgrade`, then `bun pm whoami`,
+before using an environment override.
+
+If upgrading is unavailable, npm recognizes your login, and Bun still reports
+missing authentication with credentials in `~/.npmrc`, check this command:
+
+```bash
+env -u XDG_CONFIG_HOME bun pm whoami
+```
+
+If that succeeds, use the same environment override for the release helper:
+
+```bash
+env -u XDG_CONFIG_HOME bun run main.ts publish \
+  --from-gh v2.19.0 --dist-ver 2.19.0 --run
+```
+
+The override applies only to that command. It does not change your shell or
+credential files. Run the release helper from this directory. Running command
+`bun publish` directly here attempts to publish the private tooling workspace;
+the helper publishes from generated public package directories under `dist/`.
+
+Each publish run starts with an explanation of its source, version, and purpose.
+Phase 0 checks prerequisites and npm versions. Phase 1 stages verified binaries,
+phase 2 packs five npm packages, and phase 3 publishes or previews the commands.
+Dry runs skip authentication and explicitly report that nothing will be uploaded.
+The npm version check runs once, during phase 0.
+
+If an upload fails, the helper names the failed package and lists packages whose
+uploads completed successfully. Inspect npm before retrying. Published versions
+cannot be overwritten, and the helper refuses a run if any requested package
+version already exists. A failed upload can leave a partial release.

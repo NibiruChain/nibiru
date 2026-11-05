@@ -1,11 +1,10 @@
 package keeper
 
 import (
-	sdkioerrors "cosmossdk.io/errors"
-
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 
+	"github.com/NibiruChain/nibiru/v2/x/sudo"
 	"github.com/NibiruChain/nibiru/v2/x/wasm/types"
 )
 
@@ -15,31 +14,20 @@ import (
 type wasmDeploymentOperation string
 
 const (
-	wasmDeploymentUpload      wasmDeploymentOperation = "code upload"
-	wasmDeploymentInstantiate wasmDeploymentOperation = "contract instantiation"
-	wasmDeploymentMigrate     wasmDeploymentOperation = "contract migration"
+	wasmDeploymentUpload  wasmDeploymentOperation = "code upload"
+	wasmDeploymentMigrate wasmDeploymentOperation = "contract migration"
 )
 
-// wasmDeployerGuard limits ordinary deployment operations on one exact chain.
-// Keeping the chain ID and root source in the keeper makes the policy apply to
-// message-server, contract-submessage, authz, and direct keeper callers.
-//
-// NOTE: [Temporary v2.20 Wasm deployment policy](https://github.com/NibiruChain/nibiru/pull/2762).
-// Remove or replace it in the planned follow-up upgrade.
+// wasmDeployerGuard restricts code upload and migration on one exact chain.
+// All entrypoints resolve actor permissions through the central keeper guard.
 type wasmDeployerGuard struct {
-	chainID        string
-	sudoRootSource types.SudoRootSource
+	chainID         string
+	sudoPermissions types.SudoPermissionSource
 }
 
-// requireActorIsAuthedDeployer applies the temporary deployment policy before
-// a caller can compile, instantiate, or migrate Wasm code. It is a no-op when
-// the guard is not configured or the context has another chain ID.
-//
-// Existing governance authorization bypasses the root comparison. Ordinary
-// calls resolve the current x/sudo root on every attempt, so root rotation takes
-// effect without copying an address into Wasm state. A lookup failure rejects
-// the operation. Passing this guard does not bypass later Wasm access or admin
-// checks.
+// requireActorIsAuthedDeployer allows governance, root, or wasm_deployer members.
+// Membership is read on each call, so revocation and root rotation take effect
+// immediately. Wasm access and contract admin checks still run afterward.
 func (k Keeper) requireActorIsAuthedDeployer(
 	ctx sdk.Context,
 	actor sdk.AccAddress,
@@ -54,21 +42,10 @@ func (k Keeper) requireActorIsAuthedDeployer(
 		return nil
 	}
 
-	root, err := guard.sudoRootSource.GetRootAddr(ctx)
-	if err != nil {
-		return sdkioerrors.Wrapf(err, "get x/sudo root for Wasm %s", operation)
+	if err := guard.sudoPermissions.CheckPermissions(actor, ctx, sudo.RoleWasmDeployer); err != nil {
+		return sdkerrors.ErrUnauthorized.Wrapf("Wasm %s: %s", operation, err)
 	}
-	if root.Equals(actor) {
-		return nil
-	}
-
-	return sdkioerrors.Wrapf(
-		sdkerrors.ErrUnauthorized,
-		"Wasm %s requires x/sudo root %q; actor %q is not authorized",
-		operation,
-		root.String(),
-		actor.String(),
-	)
+	return nil
 }
 
 // govPolicyAllowsDeployment recognizes the keeper's existing governance
@@ -101,8 +78,6 @@ func partialGovPolicyAllowsDeployment(
 	operation wasmDeploymentOperation,
 ) bool {
 	switch operation {
-	case wasmDeploymentInstantiate:
-		return policy.action == types.AuthZActionInstantiate
 	case wasmDeploymentMigrate:
 		return policy.action == types.AuthZActionMigrateContract
 	default:

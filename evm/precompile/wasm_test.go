@@ -43,7 +43,7 @@ func TestWasmSuite(t *testing.T) {
 }
 
 func (s *WasmSuite) TestInstantiate() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	evmObj, _ := deps.NewEVM()
 
 	test.SetupWasmContracts(&deps, &s.Suite)
@@ -80,10 +80,9 @@ func (s *WasmSuite) TestInstantiate() {
 	evmObj.StateDB.(*evmstate.SDB).Commit()
 }
 
-// TestInstantiateRejectedByMainnetWasmDeployerGuard proves that the precompile's
-// default-permission keeper reaches the shared guard in Keeper.instantiate.
-func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
-	deps := evmtest.NewTestDeps()
+// TestInstantiateAllowedOnMainnet verifies ordinary EVM precompile instantiation.
+func (s *WasmSuite) TestInstantiateAllowedOnMainnet() {
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	test.SetupWasmContracts(&deps, &s.Suite)
 	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
 	evmObj, _ := deps.NewEVM()
@@ -93,7 +92,7 @@ func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
 		"",
 		uint64(1),
 		[]byte(`{}`),
-		"denied on mainnet",
+		"ordinary on mainnet",
 		[]precompile.WasmBankCoin{},
 	)
 	s.Require().NoError(err)
@@ -107,14 +106,14 @@ func (s *WasmSuite) TestInstantiateRejectedByMainnetWasmDeployerGuard() {
 		evm.COMMIT_ETH_TX,
 		nil,
 	)
-	s.Require().ErrorContains(err, "is not authorized")
+	s.Require().NoError(err)
 }
 
 // TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard verifies that the guard
 // is limited to bytecode deployment and migration. Existing contracts remain
 // executable and queryable through the EVM precompile.
 func (s *WasmSuite) TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1]
 	deps.SetCtx(deps.Ctx().WithChainID(appconst.SDK_CHAIN_ID_MAINNET))
@@ -175,14 +174,14 @@ func (s *WasmSuite) TestExecuteAndQueryAllowedByMainnetWasmDeployerGuard() {
 }
 
 func (s *WasmSuite) TestExecute() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[0] // nibi_stargate.wasm
 	sudoers, err := deps.App.SudoKeeper.Sudoers.Get(deps.Ctx())
 	s.Require().NoError(err)
-	sudoers.Contracts = append(sudoers.Contracts, wasmContract.String())
+	sudoers.Root = wasmContract.String()
 	deps.App.SudoKeeper.Sudoers.Set(deps.Ctx(), sudoers)
 
 	s.Run("create denom", func() {
@@ -254,7 +253,7 @@ func (s *WasmSuite) TestExecute() {
 }
 
 func (s *WasmSuite) TestDelegatedExecutePreservesTransactionSender() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	wasmContract := test.SetupWasmContracts(&deps, &s.Suite)[1]
 	routerResp, err := evmtest.DeployContract(&deps, embeds.SmartContract_TestDelegatePrecompile)
 	s.Require().NoError(err)
@@ -287,7 +286,7 @@ func (s *WasmSuite) TestDelegatedExecutePreservesTransactionSender() {
 }
 
 func (s *WasmSuite) TestExecuteMulti() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	evmObj, _ := deps.NewEVM()
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
@@ -307,7 +306,7 @@ func (s *WasmSuite) TestExecuteMulti() {
 }
 
 func (s *WasmSuite) TestQueryRaw() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -347,7 +346,7 @@ func (s *WasmSuite) TestQueryRaw() {
 }
 
 func (s *WasmSuite) TestQuerySmart() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[1] // hello_world_counter.wasm
 
@@ -518,7 +517,7 @@ func (s *WasmSuite) TestSadArgsExecute() {
 	abi := embeds.SmartContract_Wasm.ABI
 	for _, tc := range testcases {
 		s.Run(tc.name, func() {
-			deps := evmtest.NewTestDeps()
+			deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 
 			contractInput, err := abi.Pack(
 				string(tc.methodName),
@@ -549,7 +548,7 @@ type WasmExecuteMsg struct {
 }
 
 func (s *WasmSuite) TestExecuteMultiValidation() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 
 	s.Require().NoError(testapp.FundAccount(
 		deps.App.BankKeeper,
@@ -689,7 +688,7 @@ func (s *WasmSuite) TestExecuteMultiValidation() {
 // TestExecuteMultiPartialExecution ensures that no state changes occur if any message
 // in the batch fails validation
 func (s *WasmSuite) TestExecuteMultiPartialExecution() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 	evmObj, _ := deps.NewEVM()
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
@@ -750,7 +749,7 @@ func (s *WasmSuite) TestExecuteMultiPartialExecution() {
 // - Test contract funds: 9 NIBI
 // - Alice: 1 NIBI
 func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[2] // bank_transfer.wasm
@@ -824,7 +823,7 @@ func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack4() {
 // - Staked NIBI from wasm contract: 5 NIBI
 // - Wasm contract: 0 NIBI
 func (s *WasmSuite) TestWasmPrecompileDirtyStateAttack5() {
-	deps := evmtest.NewTestDeps()
+	deps := evmtest.NewTestDepsPreXConsensus() // code IDs from an empty Wasm genesis
 
 	wasmContracts := test.SetupWasmContracts(&deps, &s.Suite)
 	wasmContract := wasmContracts[3] // staking.wasm
