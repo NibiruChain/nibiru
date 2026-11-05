@@ -3,7 +3,7 @@ package wasmtesting
 import (
 	"bytes"
 
-	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 
 	wasmvm "github.com/NibiruChain/nibiru/v2/lib/wasmvm"
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"

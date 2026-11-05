@@ -3,9 +3,10 @@ package keeper
 import (
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"

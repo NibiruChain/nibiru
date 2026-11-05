@@ -7,8 +7,9 @@ import (
 	"context"
 	"log/slog"
 
-	cmtlog "github.com/cometbft/cometbft/libs/log"
 	gethlog "github.com/ethereum/go-ethereum/log"
+
+	cmtlog "github.com/NibiruChain/nibiru/v2/bft/libs/log"
 )
 
 // Ensure LogHandler implements slog.Handler
@@ -16,7 +17,7 @@ var _ slog.Handler = (*LogHandler)(nil)
 
 // LogHandler implements slog.Handler, which is needed to construct the
 // conventional go-ethereum.Logger, using a CometBFT logger
-// ("github.com/cometbft/cometbft/libs/log".Logger).
+// ("github.com/NibiruChain/nibiru/v2/bft/libs/log".Logger).
 type LogHandler struct {
 	CmtLogger cmtlog.Logger
 	attrs     []slog.Attr // Attributes gathered via WithAttrs

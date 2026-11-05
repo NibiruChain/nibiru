@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	pkgerrors "github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keyring"

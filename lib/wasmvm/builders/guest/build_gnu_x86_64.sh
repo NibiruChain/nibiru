@@ -9,5 +9,5 @@ export TARGET_DIR="/target" # write to the guest filesystem instead of the host 
 echo "Starting x86_64-unknown-linux-gnu build"
 export CC=clang
 export CXX=clang++
-cargo build --release --target-dir="$TARGET_DIR" --target x86_64-unknown-linux-gnu
+cargo build --locked --release --target-dir="$TARGET_DIR" --target x86_64-unknown-linux-gnu
 cp "$TARGET_DIR/x86_64-unknown-linux-gnu/release/libwasmvm.so" artifacts/libwasmvm.x86_64.so

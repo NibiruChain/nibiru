@@ -29,8 +29,8 @@ import (
 	slashingkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	"github.com/NibiruChain/nibiru/v2/x/upgrade"
 
 	icacontroller "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/controller/keeper"
@@ -54,6 +54,7 @@ import (
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/keepers"
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/evm"
@@ -288,7 +289,12 @@ func (app *NibiruApp) initNonDepinjectKeepers(
 		supportedWasmVMFeatures,
 		app.SudoKeeper,
 		govModuleAddr,
-		append(GetWasmOpts(*app, appOpts, wmha), wasmkeeper.WithWasmEngine(wasmVM))...,
+		append(
+			GetWasmOpts(*app, appOpts, wmha),
+			wasmkeeper.WithWasmEngine(wasmVM),
+			// Guard uploads and migrations at the shared keeper boundary.
+			wasmkeeper.WithWasmDeployerGuard(appconst.SDK_CHAIN_ID_MAINNET, app.SudoKeeper),
+		)...,
 	)
 
 	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(

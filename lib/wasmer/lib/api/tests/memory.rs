@@ -1,0 +1,172 @@
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use wasmer::{Instance, Memory, MemoryLocation, MemoryType, Module, Store, imports};
+
+#[test]
+#[allow(unused_attributes)]
+#[cfg_attr(
+    feature = "v8",
+    ignore = "v8 does not currently support shared memory through wasm_c_api"
+)]
+fn test_shared_memory_atomics_notify_send() {
+    let mut store = Store::default();
+    let wat = r#"(module
+(import "host" "memory" (memory 10 65536 shared))
+)"#;
+    let module = Module::new(&store, wat)
+        .map_err(|e| format!("{e:?}"))
+        .unwrap();
+
+    let mem = Memory::new(&mut store, MemoryType::new(10, Some(65536), true)).unwrap();
+
+    let imports = imports! {
+        "host" => {
+            "memory" => mem.clone(),
+        },
+    };
+
+    let _inst = Instance::new(&mut store, &module, &imports).unwrap();
+
+    let mem = if let Some(m) = mem.as_shared(&store) {
+        m
+    } else {
+        #[cfg(feature = "sys")]
+        panic!("Memory is not shared");
+        #[cfg(not(feature = "sys"))]
+        return;
+    };
+
+    // Test basic notify.
+    let mem2 = mem.clone();
+    std::thread::spawn(move || {
+        loop {
+            if mem2.notify(MemoryLocation::new_32(10), 1).unwrap() > 0 {
+                break;
+            }
+        }
+    });
+
+    mem.wait(MemoryLocation::new_32(10), None).unwrap();
+
+    // Test wake_all
+
+    let done = Arc::new(AtomicBool::new(false));
+
+    std::thread::spawn({
+        let mem = mem.clone();
+        let done = done.clone();
+        move || {
+            while !done.load(Ordering::SeqCst) {
+                mem.wake_all_atomic_waiters().ok();
+            }
+        }
+    });
+
+    mem.wait(MemoryLocation::new_32(10), None).unwrap();
+    done.store(true, Ordering::SeqCst);
+}
+
+#[cfg(feature = "sys")]
+#[test]
+#[cfg_attr(
+    feature = "v8-default",
+    ignore = "shared memory atomics are not supported by the default v8 backend"
+)]
+fn test_shared_memory_disable_atomics() {
+    use wasmer::AtomicsError;
+
+    let mut store = Store::default();
+    let mem = Memory::new(&mut store, MemoryType::new(10, Some(65536), true)).unwrap();
+
+    let mem = mem.as_shared(&store).unwrap();
+    mem.disable_atomics().unwrap();
+
+    let err = mem.wait(MemoryLocation::new_32(1), None).unwrap_err();
+    assert_eq!(err, AtomicsError::AtomicsDisabled);
+}
+
+#[cfg(feature = "sys")]
+#[test]
+fn test_shared_memory_copy_is_independent() {
+    let mut store = Store::default();
+    let memory = Memory::new(&mut store, MemoryType::new(1, Some(2), true)).unwrap();
+
+    memory.view(&store).write(0, b"before").unwrap();
+
+    let mut copy_store = Store::default();
+    let copied = memory.copy(&store).unwrap().attach(&mut copy_store);
+
+    memory.view(&store).write(0, b"after!").unwrap();
+
+    let mut buf = [0; 6];
+    copied.view(&copy_store).read(0, &mut buf).unwrap();
+    assert_eq!(&buf, b"before");
+}
+
+/// See https://github.com/wasmerio/wasmer/issues/5444
+#[test]
+#[cfg(feature = "sys")]
+fn test_wasm_slice_issue_5444() {
+    let mut store = Store::default();
+    let wat = r#"(module
+(import "host" "memory" (memory 10 65536))
+)"#;
+    let module = Module::new(&store, wat)
+        .map_err(|e| format!("{e:?}"))
+        .unwrap();
+
+    let mem = Memory::new(&mut store, MemoryType::new(10, Some(65536), false)).unwrap();
+
+    let imports = imports! {
+        "host" => {
+            "memory" => mem.clone(),
+        },
+    };
+
+    let _inst = Instance::new(&mut store, &module, &imports).unwrap();
+
+    let view = mem.view(&store);
+    let slice = wasmer::WasmSlice::<u64>::new(&view, 1, 10).unwrap();
+    let access = slice.access();
+
+    assert!(matches!(
+        access.err(),
+        Some(wasmer::MemoryAccessError::UnalignedPointerRead)
+    ))
+}
+
+#[test]
+fn test_wasm_slice_new_rejects_out_of_bounds_ranges() {
+    let mut store = Store::default();
+    let memory = Memory::new(&mut store, MemoryType::new(1, Some(1), false)).unwrap();
+    let view = memory.view(&store);
+
+    let slice = wasmer::WasmSlice::<u64>::new(&view, 0, 8193);
+    assert!(matches!(
+        slice.err(),
+        Some(wasmer::MemoryAccessError::HeapOutOfBounds)
+    ));
+}
+
+#[test]
+fn test_wasm_memory_size() {
+    let mut store = Store::default();
+
+    // Test once with not-shared memory...
+    {
+        let memory = Memory::new(&mut store, MemoryType::new(10, Some(65536), false)).unwrap();
+        assert_eq!(memory.size(&store).0, 10);
+        memory.grow(&mut store, wasmer::Pages(1)).unwrap();
+        assert_eq!(memory.size(&store).0, 11);
+    }
+
+    // ... and once with shared memory, since JS has different representations for it
+    {
+        let memory = Memory::new(&mut store, MemoryType::new(10, Some(65536), true)).unwrap();
+        assert_eq!(memory.size(&store).0, 10);
+        memory.grow(&mut store, wasmer::Pages(1)).unwrap();
+        assert_eq!(memory.size(&store).0, 11);
+    }
+}

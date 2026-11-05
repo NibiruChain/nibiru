@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/hex"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -227,4 +228,15 @@ func TestParseStoreCodeGrants(t *testing.T) {
 			assert.Equal(t, spec.exp, got)
 		})
 	}
+}
+
+// TestGrantAuthorizationCmdUsage checks that the help text matches the
+// positional order the command parses: grantee, message type, contract.
+func TestGrantAuthorizationCmdUsage(t *testing.T) {
+	cmd := GrantAuthorizationCmd()
+	assert.True(t, strings.HasPrefix(cmd.Use,
+		`contract [grantee] [message_type="execution"|"migration"] [contract_addr_bech32]`),
+		cmd.Use)
+	assert.Contains(t, cmd.Long, "tx grant contract <grantee_addr> execution <contract_addr>")
+	assert.NotContains(t, cmd.Long, "tx grant contract execution <grantee_addr>")
 }

@@ -34,6 +34,7 @@ func GetTxCmd() *cobra.Command {
 	// Add subcommands
 	txCmd.AddCommand(
 		CmdEditSudoers(),
+		CmdUpdateRoleMembers(),
 		CmdEditZeroGasActors(),
 		CmdChangeRoot(),
 	)
@@ -70,21 +71,12 @@ func CmdEditSudoers() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-sudoers [edit-json]",
 		Args:  cobra.ExactArgs(1),
-		Short: "Edit the x/sudo state (sudoers) by adding or removing contracts",
+		Short: "Configure the Wasm block-hook registry",
 		Example: heredoc.Docf(`
 %s tx sudo edit-sudoers <path/to/edit.json> --from=<key_or_address>`, version.AppName),
-		Long: heredoc.Doc(`
-Adds or removes contracts from the x/sudo state, giving the 
-contracts permissioned access to certain bindings in x/wasm.
-
-The edit.json for 'EditSudoers' is of the form:
-{
-  "action": "add_contracts",
-  "contracts": "..."
-}
-
-- Valid action types: "add_contracts", "remove_contracts"	
-			`),
+		Long: `Configure the Wasm block-hook registry with action "edit_wasm_block_hooks_contract".
+Use "contracts": ["nibi1..."] to set the registry, or "contracts": [""] to clear it.
+Only root can configure the registry.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -272,5 +264,37 @@ func CmdQueryZeroGasActors() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 
+	return cmd
+}
+
+// CmdUpdateRoleMembers reads membership changes from a JSON file.
+func CmdUpdateRoleMembers() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-role-members [edit-json]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Grant or revoke members of an x/sudo role",
+		Long: `Only root can edit roles. The JSON file contains "role", "add", and "remove".
+Example: {"role":"wasm_deployer","add":["nibi1..."],"remove":[]}`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			contents, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+			msg := new(sudo.MsgUpdateRoleMembers)
+			if err := clientCtx.Codec.UnmarshalJSON(contents, msg); err != nil {
+				return err
+			}
+			msg.Sender = clientCtx.GetFromAddress().String()
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

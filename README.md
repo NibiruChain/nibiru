@@ -28,6 +28,7 @@
 - [Complete Golang reference docs](https://pkg.go.dev/github.com/NibiruChain/nibiru/v2#section-readme): (`pkg.go.dev`) For the blockchain implementation.
 - [Nibiru RPC Endpoints](https://nibiru.fi/docs/dev/networks/)
 - [Core Tools and Language Clients](https://nibiru.fi/docs/dev/#core-tools-and-language-clients)
+- [Repository specifications](./spec/README.md): Internal technical records for this source repository.
 
 ## Community
 
@@ -47,9 +48,9 @@ These sections of the codebase extend or augment core runtime behavior.
 
 | Module | Description |
 | --- | --- |
-| [EVM](https://github.com/NibiruChain/nibiru/tree/main/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
-| [Wasm][code-x-wasm]           | Implements the execution environment for WebAssembly (WASM) smart contracts. CosmWasm smart contracts are Rust-based, Wasm smart contracts built for enhanced security, performance, and interoperability. See our [CosmWasm sandbox monorepo (nibiru-wasm)](https://github.com/NibiruChain/nibiru-wasm/tree/main) for the protocol's core smart contracts. |
-| [Eth][code-x-eth]             | Ethereum integration utilities: EVM JSON-RPC server (HTTP/WebSocket) and APIs (eth/net/web3/debug/txpool), EVM transaction indexer for fast lookups, EIP-155 chain IDs, and EIP-712 signing helpers. See also [server][code-app-server] for JSON-RPC bootstrap and config. |
+| [EVM](https://github.com/NibiruChain/nibiru/tree/main/evm) | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" and includes the EVM JSON-RPC server, APIs, and transaction indexer. |
+| [Wasm][code-x-wasm]           | Implements the execution environment for WebAssembly (WASM) smart contracts. CosmWasm smart contracts are Rust-based Wasm contracts. The [Rust workspace](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts) includes the protocol's core smart contracts. |
+| [Eth][code-x-eth]             | Shared Ethereum integration utilities for accounts, address encoding, EIP-155 chain IDs, EIP-712 signing, and Ethereum-compatible cryptography. |
 | [App][code-app]               | Core application logic including custom ante handlers for transaction preprocessing, gas management, signature verification, and EVM integration. Key features include oracle gas optimization, zero-gas actors, and enhanced security guards. |
 | [x/nutil][code-x-nutil]       | Helper and utility functions to be utilized by other `x/` modules. |
 
@@ -124,7 +125,7 @@ just install  # to build the node software to make a Nibiru binary
 just localnet # to run a local instance of Nibiru as a live network
 ```
 
-For installation instructions from scratch, please see [INSTALL.md](./INSTALL.md).
+For source-build instructions, see [Building Nibiru from source](./spec/01-building-nibiru-from-source.md).
 
 Usage instructions for the `nibid` CLI are available at [nibiru.fi/docs/dev/cli](https://nibiru.fi/docs/dev/cli) and the [Nibiru Module Reference](https://nibiru.fi/docs/concepts/arch/#modules-%E2%80%94-nibiru).
 

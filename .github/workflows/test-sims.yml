@@ -14,46 +14,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: taiki-e/install-action@just
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
       - name: TestAppStateDeterminism
         run: |
-          make test-sim-nondeterminism
+          just test-sim-nondeterminism
 
   test-sim-default-genesis-fast:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: taiki-e/install-action@just
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
       - name: TestFullAppSimulation
         run: |
-          make test-sim-default-genesis-fast
+          just test-sim-default-genesis-fast
 
   test-sim-import-export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: taiki-e/install-action@just
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
       - name: TestAppImportExport
         run: |
-          make test-sim-import-export
+          just test-sim-import-export
 
   test-sim-after-import:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: taiki-e/install-action@just
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
       - name: TestAppSimulationAfterImport
         run: |
-          make test-sim-after-import
+          just test-sim-after-import

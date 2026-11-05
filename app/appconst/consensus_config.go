@@ -3,12 +3,12 @@ package appconst
 import (
 	"time"
 
-	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtcfg "github.com/NibiruChain/nibiru/v2/bft/config"
 )
 
 // NewDefaultTendermintConfig returns a consensus "Config" (CometBFT) with new
 // default values for the "consensus" and "db_backend" fields to be enforced upon
-// node initialization. See the "nibiru/cmd/nibid/InitCmd" function for more
+// node initialization. See the "nibiru/x/cli/InitCmd" function for more
 // information.
 func NewDefaultTendermintConfig() *cmtcfg.Config {
 	cfg := cmtcfg.DefaultConfig()

@@ -14,7 +14,5 @@ This package includes all of the protobuf types for compatibility with the Nibir
 blockchain in addition to convenient traits and functions make smart contract
 development on Nibiru much easier.
 
-The `nibiru-std` crate is implemented in the [NibiruChain/nibiru-wasm GitHub
-repository](https://github.com/NibiruChain/nibiru-wasm), which is a mono-repo
-including many production smart contracts and useful packages. Many contracts in
-this repo are used in production, and some are included for educational purposes.
+The `nibiru-std` crate lives in the [Nibiru repository](https://github.com/NibiruChain/nibiru/tree/main/lib/nibiru-std).
+The same repository contains smart contracts and supporting Rust packages.

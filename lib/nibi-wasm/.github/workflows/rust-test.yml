@@ -1,0 +1,136 @@
+name: Rust tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-test:
+    name: rust-test (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: "Checkout branch"
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: "Set up Rust caches"
+        uses: actions/cache@v4
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ matrix.runner }}-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: "Run tests"
+        # Test all packages
+        run: cargo test --all --verbose
+        # Test single package (e.g. contracts/whitelist)
+        # run: cargo test --package whitelist --verbose
+
+  rust-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout branch"
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: "Set up Rust caches"
+        uses: actions/cache@v4
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: "Compile all Rust code in workspace"
+        run: cargo build
+
+  wasmer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout branch"
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: "Set up Rust caches"
+        uses: actions/cache@v4
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            packages/wasmer/target/
+          key: ${{ runner.os }}-wasmer-cargo-${{ hashFiles('packages/wasmer/Cargo.lock') }}
+      - name: "Install just"
+        uses: taiki-e/install-action@just
+      - name: "Run Wasmer tests"
+        run: just test-wasmer
+
+  coverage:
+    if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    name: ubuntu / stable / coverage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: "Set up Rust caches"
+        uses: actions/cache@v4
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+      - name: "Install stable rust-toolchain"
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - name: "cargo install cargo-llvm-cov"
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: "cargo generate-lockfile"
+        if: hashFiles('Cargo.lock') == ''
+        run: cargo generate-lockfile
+
+      - name: "Install just"
+        # casey/just: https://just.systems/man/en/chapter_6.html
+        # taiki-e/install-action: https://github.com/taiki-e/install-action
+        uses: taiki-e/install-action@just
+      - name: "cargo llvm-cov"
+        # Outputs the code coverage in a format that codecov.io can understand
+        run: just test-coverage
+        # run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -112,6 +112,11 @@ func NewFactoryCLI(clientCtx client.Context, flagSet *pflag.FlagSet) (Factory, e
 	f = f.WithTips(tipsStr, clientCtx.FromAddress.String())
 
 	gasPricesStr, _ := flagSet.GetString(flags.FlagGasPrices)
+	// An explicit empty or zero price opts out. Explicit fees also suppress
+	// the default, so the two fee options remain mutually exclusive.
+	if gasPricesStr == "" && !flagSet.Changed(flags.FlagGasPrices) && !flagSet.Changed(flags.FlagFees) && feesStr == "" {
+		gasPricesStr = "0.025unibi"
+	}
 	f = f.WithGasPrices(gasPricesStr)
 
 	f = f.WithPreprocessTxHook(clientCtx.PreprocessTxHook)
@@ -332,7 +337,7 @@ func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
 			return nil, errors.New("cannot provide both fees and gas prices")
 		}
 
-		glDec := sdkmath.LegacyNewDec(int64(f.gas))
+		glDec := sdkmath.LegacyNewDecFromInt(sdkmath.NewIntFromUint64(f.gas))
 
 		// Derive the fees based on the provided gas prices, where
 		// fee = ceil(gasPrice * gasLimit).
@@ -374,7 +379,7 @@ func (f Factory) BuildUnsignedTx(msgs ...sdk.Msg) (client.TxBuilder, error) {
 // simulated and also printed to the same writer before the transaction is
 // printed.
 func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) error {
-	if f.SimulateAndExecute() {
+	if f.SimulateAndExecute() || clientCtx.Simulate {
 		if clientCtx.Offline {
 			return errors.New("cannot estimate gas in offline mode")
 		}
@@ -386,13 +391,13 @@ func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) erro
 			return err
 		}
 
-		_, adjusted, err := CalculateGas(clientCtx, preparedTxf, msgs...)
+		simRes, adjusted, err := CalculateGas(clientCtx, preparedTxf, msgs...)
 		if err != nil {
 			return err
 		}
 
 		f = f.WithGas(adjusted)
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", GasEstimateResponse{GasEstimate: f.Gas()})
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEstimateResponse(simRes, f, msgs...))
 	}
 
 	unsignedTx, err := f.BuildUnsignedTx(msgs...)
@@ -412,6 +417,9 @@ func (f Factory) PrintUnsignedTx(clientCtx client.Context, msgs ...sdk.Msg) erro
 // the encoded transaction or an error if the unsigned transaction cannot be
 // built.
 func (f Factory) BuildSimTx(msgs ...sdk.Msg) ([]byte, error) {
+	if f.signMode == signing.SignMode_SIGN_MODE_UNSPECIFIED {
+		f = f.WithSignMode(f.txConfig.SignModeHandler().DefaultMode())
+	}
 	txb, err := f.BuildUnsignedTx(msgs...)
 	if err != nil {
 		return nil, err

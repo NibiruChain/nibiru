@@ -32,6 +32,25 @@ func WithWasmEngine(x types.WasmEngine) Option {
 	})
 }
 
+// WithWasmDeployerGuard restricts ordinary upload and migration on one exact
+// chain to root or wasm_deployer members, preserving governance authorization.
+// Instantiation follows normal Wasm permissions.
+func WithWasmDeployerGuard(chainID string, sudoPermissions types.SudoPermissionSource) Option {
+	if chainID == "" {
+		panic("wasm deployer guard chain ID must not be empty")
+	}
+	if sudoPermissions == nil {
+		panic("wasm deployer guard sudo permission source must not be nil")
+	}
+
+	return optsFn(func(k *Keeper) {
+		k.wasmDeployerGuard = &wasmDeployerGuard{
+			chainID:         chainID,
+			sudoPermissions: sudoPermissions,
+		}
+	})
+}
+
 // WithWasmEngineDecorator is an optional constructor parameter to decorate the default wasmVM engine.
 func WithWasmEngineDecorator(d func(old types.WasmEngine) types.WasmEngine) Option {
 	return postOptsFn(func(k *Keeper) {

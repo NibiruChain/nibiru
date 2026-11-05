@@ -16,17 +16,17 @@ linters:
           alias: sdkmath
         - pkg: github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types
           alias: sdk
-        - pkg: github.com/cometbft/cometbft/rpc/core
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/rpc/core
           alias: cmtrpccoretypes
-        - pkg: github.com/cometbft/cometbft/rpc/client
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/rpc/client
           alias: cmtrpcclient
-        - pkg: github.com/cometbft/cometbft/config
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/config
           alias: cmtcfg
-        - pkg: github.com/cometbft/cometbft/libs/cli
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/libs/cli
           alias: cmtcli
-        - pkg: github.com/cometbft/cometbft/libs/rand
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/libs/rand
           alias: cmtrand
-        - pkg: github.com/cometbft/cometbft/types
+        - pkg: github.com/NibiruChain/nibiru/v2/bft/types
           alias: cmttypes
       no-unaliased: true
       no-extra-aliases: false
@@ -55,6 +55,9 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      # Nibiru BFT keeps upstream CometBFT style so diffs against upstream
+      # stay readable. It gets its own lint rules in a follow-up issue.
+      - ^bft/
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
@@ -74,3 +77,6 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      # Nibiru BFT keeps upstream CometBFT style so diffs against upstream
+      # stay readable. It gets its own lint rules in a follow-up issue.
+      - ^bft/

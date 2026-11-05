@@ -100,7 +100,7 @@ For more information on working with Bank Coins in your applications or modules,
 
 ## References
 
-- [GitHub - Nibiru Rust (nibiru-wasm)](https://github.com/NibiruChain/nibiru-wasm)
+- [GitHub - Nibiru Rust workspace](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts)
 - [GitHub - Nibiru Blockchain (nibiru)](https://github.com/NibiruChain/nibiru)
 - [Token Factory Module | Nibiru](../arch/tokenfactory.md)
 - [Bank Module | Nibiru](../arch/advanced/cosmos-sdk/bank.md)

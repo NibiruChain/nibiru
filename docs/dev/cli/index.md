@@ -3,12 +3,11 @@ order: 1
 footer:
   newsletter: false
 description: >
-  An introduction to the using the Nibiru Command-Line Interface (CLI) along with a
-  brief description of its commands and flags. After installation, you can use the
-  nibid command to send transactions and query the Nibiru blockchain.
+  Use the Nibiru CLI to query chain data, send transactions, and run nodes.
+  This guide introduces its configuration, commands, and flags.
 ---
 
-# Nibiru Command-Line Interface (CLI)
+# Nibiru CLI (Command-Line Interface)
 
 {{ $frontmatter.description }}
 
@@ -17,61 +16,65 @@ description: >
 1. [Nibiru CLI - How to Install the Nibiru CLI](./nibid-binary.md)
 2. [Nibiru CLI - Creating Fungible Tokens](./tf.md)
 
-## Working Directory
+The native CLI command is `nibid`. Bun and npm installs expose it as `nibiru`,
+which forwards all arguments to the native binary. For those installs, replace
+`nibid` with `nibiru` in the examples below and in the linked guides.
 
-The default working directory for the `nibid` is `$HOME/.nibid`, which is mainly used to store configuration files and blockchain data. The Nibiru `key` data is saved in the working directory of `nibid`. You can also specify the `nibid` working directory by using the `--home` flag when executing `nibid`.
+## Working directory
 
-## Connecting to a Full-Node
+The CLI stores configuration, blockchain data, and local keyring files under
+`$HOME/.nibid` by default. Use the `--home` flag to select another directory.
 
-By default, `nibid` uses `tcp://localhost:26657` as the RPC address to connect to the Nibiru network. This default configuration assumes that the machine executing `nibid` is running as a full-node.
+## Connect to a full node
 
-The RPC address can be specified to connect to any full-node with an exposed RPC port by adding the `--node` flag when executing `nibid`
+By default, `nibid` connects to the RPC endpoint at `tcp://localhost:26657`.
+Use the `--node` flag to connect to a full node on another machine.
 
-## Global Flags
+## Global flags
 
-#### GET Commands
+### Query commands
 
-All GET commands have the following global flags:
+Query commands use the following global flags:
 
-| Name, shorthand | type   | Default Value | Description                          |
+| Name, shorthand | Type   | Default value | Description                          |
 | --------------- | ------ | ------------- | ------------------------------------ |
-| --chain-id      | string |               | The network Chain ID                 |
+| --chain-id      | string |               | Network chain ID                     |
 | --home          | string | $HOME/.nibid  | Directory for config and data        |
 | --trace         | string |               | Print out full stack trace on errors |
-| --log\_format   | string | plain         | Logging format (json \| plain)       |
+| --log\_format   | string | plain         | Log format: json or plain            |
 
-#### POST Commands
+### Transaction commands
 
-All POST commands have the following global flags:
+Transaction commands use the following global flags:
 
-| Name, shorthand   | type   | Default               | Description
+| Name, shorthand   | Type   | Default               | Description
 | ----------------- | ------ | --------------------- | -------------------------------------------------------------------------------------------------------------- |
 | --account-number  | int    | 0                     | `AccountNumber` to sign the tx
-| --broadcast-mode  | string | sync                  | Transaction broadcasting mode (sync \| async \| block)
-| --dry-run         | bool   | false                 | Ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it                        |
+| --broadcast-mode  | string | sync                  | Broadcast mode: sync, async, or block |
+| --dry-run         | bool   | false                 | Simulate the transaction without broadcasting it |
 | --fees            | string |                       | Fees to pay along with transaction
 | --from            | string |                       | Name of private key with which to sign
-| --gas             | string | 200000                | Gas limit to set per-transaction; set to "simulate" to calculate required gas automatically                    |
-| --gas-adjustment  | float  | 1                     | Adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set |
+| --gas             | string | 200000                | Gas limit per transaction; use "simulate" to estimate it |
+| --gas-adjustment  | float  | 1                     | Multiplier applied to the simulated gas estimate |
 | --gas-prices      | string |                       | Gas prices in decimal format to determine the transaction fee                                                  |
-| --generate-only   | bool   | false                 | Build an unsigned transaction and write it to STDOUT 
+| --generate-only   | bool   | false                 | Write an unsigned transaction to standard output |
 | --help, -h        | string |                       | Print help message
 | --keyring-backend | string | os                    | Select keyring's backend
 | --ledger          | bool   | false                 | Use a connected Ledger device
 | --memo            | string |                       | Memo to send along with transaction
-| --node            | string | tcp://localhost:26657 | specifies `<host>:<port>` for the Tendermint RPC interface endpoint for this chain                                                     |
-| --offline         | string |                       | Offline mode (does not allow any online functionality)
+| --node            | string | tcp://localhost:26657 | RPC endpoint for the full node |
+| --offline         | string |                       | Run without connecting to a node |
 | --sequence        | int    | 0                     | Sequence number to sign the tx
-| --sign-mode       | string |                       | Choose sign mode (direct \| amino-json), this is an advanced feature                                           |
+| --sign-mode       | string |                       | Signing mode: direct or amino-json |
 | --trust-node      | bool   | true                  | Don't verify proofs for responses
-| --yes             | bool   | true                  | Skip tx broadcasting prompt confirmation
-| --chain-id        | string |                       | The network Chain ID
+| --yes             | bool   | true                  | Skip the transaction confirmation prompt |
+| --chain-id        | string |                       | Network chain ID |
 | --home            | string | $HOME/.nibid          | Directory for config and data
 | --trace           | string |                       | Print out full stack trace on errors
 
-### Module Commands
+### Module commands
 
-| **Subcommand**                            | **Description**                                                    |
+| Subcommand                            | Description                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------ |
 | [devgas](../../concepts/arch/advanced/devgas.md#cli) | Devgas subcommands for smart contract usage.                       |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |

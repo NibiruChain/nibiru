@@ -7,18 +7,15 @@ import (
 	authzmodulev1 "cosmossdk.io/api/cosmos/authz/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
 	capabilitymodulev1 "cosmossdk.io/api/cosmos/capability/module/v1"
-	consensusmodulev1 "cosmossdk.io/api/cosmos/consensus/module/v1"
 	crisismodulev1 "cosmossdk.io/api/cosmos/crisis/module/v1"
 	distrmodulev1 "cosmossdk.io/api/cosmos/distribution/module/v1"
 	evidencemodulev1 "cosmossdk.io/api/cosmos/evidence/module/v1"
 	feegrantmodulev1 "cosmossdk.io/api/cosmos/feegrant/module/v1"
 	genutilmodulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
-	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	slashingmodulev1 "cosmossdk.io/api/cosmos/slashing/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
-	upgrademodulev1 "cosmossdk.io/api/cosmos/upgrade/module/v1"
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
@@ -28,7 +25,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/authz"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	capabilitytypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/capability/types"
-	consensustypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/evidence/types"
@@ -40,6 +36,7 @@ import (
 	slashingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/upgrade/types"
+	consensustypes "github.com/NibiruChain/nibiru/v2/x/consensus/types"
 
 	icatypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/NibiruChain/nibiru/v2/lib/ibc-go/modules/apps/transfer/types"
@@ -165,6 +162,14 @@ var (
 
 		// Everything else should be before genmsg
 		genmsg.ModuleName,
+
+		// NOTE (EndBlocker requirement): x/consensus must be last. Its
+		// EndBlocker copies the x-consensus contract params into the
+		// x/consensus store after every module that can execute the contract
+		// in this block (for example gov proposals), and baseapp returns that
+		// store to Nibiru BFT right after the last EndBlocker. It has no
+		// genesis or BeginBlocker, so its place in those orders is moot.
+		consensustypes.ModuleName,
 	}
 
 	AppConfig depinject.Config
@@ -252,16 +257,6 @@ func init() {
 				Config: appconfig.WrapAny(&paramsmodulev1.Module{}),
 			},
 			{
-				Name: govtypes.ModuleName,
-				Config: appconfig.WrapAny(&govmodulev1.Module{
-					Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-				}),
-			},
-			{
-				Name:   upgradetypes.ModuleName,
-				Config: appconfig.WrapAny(&upgrademodulev1.Module{}),
-			},
-			{
 				Name:   authz.ModuleName,
 				Config: appconfig.WrapAny(&authzmodulev1.Module{}),
 			},
@@ -276,10 +271,6 @@ func init() {
 			{
 				Name:   genutiltypes.ModuleName,
 				Config: appconfig.WrapAny(&genutilmodulev1.Module{}),
-			},
-			{
-				Name:   consensustypes.ModuleName,
-				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 		},
 	})

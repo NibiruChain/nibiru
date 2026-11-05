@@ -122,3 +122,4 @@ nibid config # Prints your new config to verify correctness
 ## Related Pages
 
 - [Developer Hub: Build on Nibiru](../)
+- [OpenChainBench](https://openchainbench.com/benchmarks/nibiru-rpc) — live p50/p90/p99 latency leaderboard for free Nibiru RPC endpoints, updated every 60 s

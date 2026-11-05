@@ -11,7 +11,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking"
 	stakingtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/staking/types"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis

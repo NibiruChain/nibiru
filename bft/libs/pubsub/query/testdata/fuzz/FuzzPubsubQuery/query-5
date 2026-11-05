@@ -1,0 +1,2 @@
+go test fuzz v1
+string("tx.time >= TIME 2013-05-03T14:45:00Z")

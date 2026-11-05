@@ -14,7 +14,7 @@ const config = {
    * controls the order in which imports are sorted.
    *
    * 1. "<BUILT_IN_MODULES>" - Built-in Node.js modules like "fs", "path", and
-   * "http" that don't require an npm installation.
+   * "http" that don't require a package installation.
    *
    * 2. "<THIRD_PARTY_MODULES>" - Module like "react", "lodash", or "bun"
    *

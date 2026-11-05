@@ -66,7 +66,10 @@ func (s *Suite) TestWasmAcceptedStargateQueries() {
 	// to this convention is when our response type isn't stripped of its
 	// "Response" suffix and "Query" prefix is not the same as the method name.
 	// This happens when "QueryAAARequest" does not return a "QueryAAAResponse".
-	exceptionPaths := set.New[string]()
+	exceptionPaths := set.New[string](
+		// EthCall returns MsgEthereumTxResponse, not QueryEthCallResponse.
+		"/eth.evm.v1.MsgEthereumTxResponse",
+	)
 
 	gotQueryPaths := []string{}
 	for queryPath, protobufResponse := range wasmbinding.WasmAcceptedStargateQueries() {

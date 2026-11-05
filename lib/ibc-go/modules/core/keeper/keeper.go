@@ -96,7 +96,7 @@ func (k *Keeper) SetRouter(rtr *porttypes.Router) {
 // to an empty struct
 func isEmpty(keeper interface{}) bool {
 	switch reflect.TypeOf(keeper).Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if reflect.ValueOf(keeper).Elem().IsZero() {
 			return true
 		}

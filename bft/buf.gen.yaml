@@ -1,0 +1,14 @@
+# bft/buf.gen.yaml: gogofaster template for the CometBFT protos in bft/proto.
+# The root buf.work.yaml owns the workspace. Run from the repo root:
+#   buf generate bft/proto --template bft/buf.gen.yaml -o bft
+#   mv bft/proto/tendermint/abci/types.pb.go bft/abci/types/
+#   cp bft/proto/tendermint/rpc/grpc/types.pb.go bft/rpc/grpc/
+version: v1
+plugins:
+  - name: gogofaster
+    out: ./proto/
+    opt:
+      - Mgoogle/protobuf/timestamp.proto=github.com/cosmos/gogoproto/types
+      - Mgoogle/protobuf/duration.proto=github.com/golang/protobuf/ptypes/duration
+      - plugins=grpc
+      - paths=source_relative

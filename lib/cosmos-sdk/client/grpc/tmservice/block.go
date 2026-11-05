@@ -3,8 +3,8 @@ package tmservice
 import (
 	"context"
 
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
+	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 )

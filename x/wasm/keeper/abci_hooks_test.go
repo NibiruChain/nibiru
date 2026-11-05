@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	sdktestdata "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -49,6 +50,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
 		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(false), []keeper.WasmSudoMsgCall{})
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
@@ -65,6 +67,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 			{ContractAddr: targetAddr.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
 		})
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
@@ -82,6 +85,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 			{ContractAddr: targetAddr.String(), Msg: json.RawMessage(`{"increment":{"by":7}}`)},
 		})
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "end")
@@ -96,6 +100,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 		registryAddr := instantiateWasmBlockHooksTester(t, wasmApp, ctx, sender, codeID)
 		executeWasmBlockHooksTesterConfig(t, wasmApp, ctx, sender, registryAddr, nil, ptr(true), nil)
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "begin")
@@ -116,6 +121,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 			{ContractAddr: targetB.String(), Msg: json.RawMessage(`{"increment":{"by":3}}`)},
 		})
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "end")
@@ -140,6 +146,7 @@ func TestWasmBlockHooksTestApp(t *testing.T) {
 			{ContractAddr: targetC.String(), Msg: json.RawMessage(`{"increment":{"by":3}}`)},
 		})
 		wasmApp.SudoKeeper.WasmBlockHooksContract.Set(ctx, registryAddr.String())
+		require.NoError(t, wasmApp.SudoKeeper.Migrate1To2(ctx))
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		events := runWasmBlockHook(t, wasmApp, ctx, "end")

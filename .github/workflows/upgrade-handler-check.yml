@@ -1,6 +1,12 @@
 name: Upgrade Handler Check
 
 on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to check with the current checker
+        required: true
+        type: string
   push:
     tags:
       - 'v*.*.*'
@@ -20,6 +26,10 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Test release compatibility checks
+        run: go test ./contrib/scripts
+
       - name: Run Upgrade Handler Checker
-        run: |
-          go run ./contrib/scripts/upgrade-handler-check.go "${{ github.ref_name }}"
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+        run: go run ./contrib/scripts/upgrade-handler-check.go "$RELEASE_TAG"

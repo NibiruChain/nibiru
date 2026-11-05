@@ -3,10 +3,11 @@ package baseapp
 import (
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/encoding"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/grpc/reflection"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"

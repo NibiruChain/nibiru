@@ -3,9 +3,9 @@ package types_test
 import (
 	"fmt"
 
-	abcitypes "github.com/cometbft/cometbft/abci/types"
-	tmprotostate "github.com/cometbft/cometbft/proto/tendermint/state"
-	tmstate "github.com/cometbft/cometbft/state"
+	abcitypes "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	tmprotostate "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/state"
+	tmstate "github.com/NibiruChain/nibiru/v2/bft/state"
 
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"
 

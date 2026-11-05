@@ -9,9 +9,10 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/gogoproto/jsonpb"
 	proto "github.com/cosmos/gogoproto/proto"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 )
@@ -138,7 +139,7 @@ func ParseTypedEvent(event abci.Event) (proto.Message, error) {
 	}
 
 	var value reflect.Value
-	if concreteGoType.Kind() == reflect.Ptr {
+	if concreteGoType.Kind() == reflect.Pointer {
 		value = reflect.New(concreteGoType.Elem())
 	} else {
 		value = reflect.Zero(concreteGoType)

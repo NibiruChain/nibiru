@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math/big"
 
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmcrypto "github.com/NibiruChain/nibiru/v2/bft/crypto"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/address"
 	sdkerrors "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/errors"

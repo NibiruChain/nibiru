@@ -11,8 +11,16 @@ message Sudoers {
   // Root: The "root" user.
   string root = 1;
 
-  // Contracts: The set of contracts with elevated permissions.
-  repeated string contracts = 2;
+  reserved 2;
+  reserved "contracts";
+
+  // Roles grant specific permissions to account or contract addresses.
+  repeated RoleMembers roles = 3 [(gogoproto.nullable) = false];
+}
+
+message RoleMembers {
+  string          role    = 1;
+  repeated string members = 2;
 }
 
 // GenesisState: State for migrations and genesis for the x/sudo module.

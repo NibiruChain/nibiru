@@ -4,7 +4,7 @@ package wasmvm
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ const IBC_TEST_CONTRACT = "./testdata/ibc_reflect.wasm"
 func TestIBC(t *testing.T) {
 	vm := withVM(t)
 
-	wasm, err := ioutil.ReadFile(IBC_TEST_CONTRACT)
+	wasm, err := os.ReadFile(IBC_TEST_CONTRACT)
 	require.NoError(t, err)
 
 	checksum, err := vm.StoreCode(wasm)
@@ -281,7 +281,7 @@ func TestAnalyzeCode(t *testing.T) {
 	vm := withVM(t)
 
 	// Store non-IBC contract
-	wasm, err := ioutil.ReadFile(HACKATOM_TEST_CONTRACT)
+	wasm, err := os.ReadFile(HACKATOM_TEST_CONTRACT)
 	require.NoError(t, err)
 	checksum, err := vm.StoreCode(wasm)
 	require.NoError(t, err)
@@ -293,7 +293,7 @@ func TestAnalyzeCode(t *testing.T) {
 	require.Equal(t, "", report.RequiredCapabilities)
 
 	// Store IBC contract
-	wasm2, err := ioutil.ReadFile(IBC_TEST_CONTRACT)
+	wasm2, err := os.ReadFile(IBC_TEST_CONTRACT)
 	require.NoError(t, err)
 	checksum2, err := vm.StoreCode(wasm2)
 	require.NoError(t, err)

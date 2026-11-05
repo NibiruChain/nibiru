@@ -70,8 +70,8 @@ func TestMintAndAllocateInflation(t *testing.T) {
 
 			t.Logf("setting root account to %s", tc.rootAccount)
 			nibiruApp.SudoKeeper.Sudoers.Set(ctx, sudo.Sudoers{
-				Root:      tc.rootAccount,
-				Contracts: []string{},
+				Root:  tc.rootAccount,
+				Roles: []sudo.RoleMembers{},
 			})
 
 			staking, strategic, community, err := nibiruApp.InflationKeeper.MintAndAllocateInflation(ctx, tc.coinsToMint, mint.DefaultParams())

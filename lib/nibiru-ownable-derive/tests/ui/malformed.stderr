@@ -1,0 +1,5 @@
+error: owner_or_any values must be string literals
+ --> tests/ui/malformed.rs:5:26
+  |
+5 |     #[perms(owner_or_any(sai_oper))]
+  |                          ^^^^^^^^

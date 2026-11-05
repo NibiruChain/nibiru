@@ -11,7 +11,7 @@ description: >
 {{ $frontmatter.description }}
 
 - [Full Go Reference Docs: gonibi](https://pkg.go.dev/github.com/Unique-Divine/gonibi)
-- Repo: [NibiruChain/nibiru/gosdk](https://github.com/NibiruChain/nibiru/tree/main/gosdk)
+- Repo: [NibiruChain/nibiru/x/gosdk](https://github.com/NibiruChain/nibiru/tree/main/x/gosdk)
 
 ## Installation
 
@@ -64,7 +64,7 @@ import (
   "time"
 
   wasm "github.com/CosmWasm/wasmd/x/wasm/types"
-  gosdk "github.com/NibiruChain/nibiru/v2/gosdk"
+  gosdk "github.com/NibiruChain/nibiru/v2/x/gosdk"
   tokenfactory "github.com/NibiruChain/nibiru/x/tokenfactory/types"
   sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types" // Import cosmos SDK types
 )

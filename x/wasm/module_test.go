@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
@@ -88,7 +89,10 @@ func (f *testFaucet) Fund(ctx sdk.Context, addr sdk.AccAddress, coins ...sdk.Coi
 
 func setupTest(t *testing.T) testData {
 	t.Helper()
-	nibiru, ctx := testapp.NewNibiruTestAppAndContext()
+	// These tests assert code IDs and counts from an empty Wasm genesis, so
+	// they use an app without the genesis x-consensus code.
+	nibiru, _ := testapp.NewNibiruTestAppPreXConsensus()
+	ctx := testapp.NewContext(nibiru)
 	encConf := nibiruapp.MakeEncodingConfig()
 	queryRouter := baseapp.NewGRPCQueryRouter()
 	serviceRouter := baseapp.NewMsgServiceRouter()

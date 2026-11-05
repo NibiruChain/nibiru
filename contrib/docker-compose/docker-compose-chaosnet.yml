@@ -1,5 +1,38 @@
 name: chaosnet
 
+# Shared settings for the multival profile services below.
+x-multival-node: &multival-node
+  image: ${MULTIVAL_IMAGE:-nibiru-multival:local}
+  # multival-genesis builds the image; the validators reuse it.
+  pull_policy: never
+  profiles: [multival]
+  environment:
+    MULTIVAL_N: 4
+    CHAIN_ID: nibiru-localnet-3
+    NET_DIR: /net
+    # Funded for EVM load. Must match contrib/scripts/determinism keys.
+    EVM_LOAD_ADDRS: >-
+      0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+      0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+      0x4751b483f683278FcD86CB1B0581a292aabE8eD9
+      0x90F79bf6EB2c4f870365E785982E1f101E93b906
+  volumes:
+    - multival-data:/net:rw
+    - type: bind
+      source: ../scripts
+      target: /scripts
+      read_only: true
+  healthcheck:
+    test: ["CMD", "curl", "-sf", "http://localhost:26657/status"]
+    interval: 5s
+    timeout: 5s
+    retries: 12
+    start_period: 10s
+
+x-multival-after-genesis: &multival-after-genesis
+  multival-genesis:
+    condition: service_completed_successfully
+
 services:
   nibiru-0:
     build:
@@ -212,7 +245,58 @@ services:
       heartmonitor:
         condition: service_started
 
+  # ----- Profile "multival": 4 validators on one chain ----------
+  # One genesis with a gentx per validator, built by
+  # contrib/scripts/multival-genesis.sh into the multival-data volume.
+  # Used by `just chaos up-multival` and `just chaos determinism`.
+  # See spec/02-chaosnet.md.
+  multival-genesis:
+    <<: *multival-node
+    build:
+      context: ../.. # nibiru project folder
+      dockerfile: contrib/docker-compose/Dockerfile.multival
+      args:
+        NIBID_EXTRA_TAGS: ${MULTIVAL_BUILD_TAGS:-}
+    restart: "no"
+    entrypoint: ["bash", "/scripts/multival-genesis.sh"]
+    command: !reset []
+    healthcheck:
+      disable: true
+
+  nibiru-val-0:
+    <<: *multival-node
+    command: ["start", "--home", "/net/val-0"]
+    depends_on: *multival-after-genesis
+    ports:
+      - 46657:26657 # Nibiru BFT RPC
+      - 48545:8545 # EVM JSON-RPC
+
+  nibiru-val-1:
+    <<: *multival-node
+    command: ["start", "--home", "/net/val-1"]
+    depends_on: *multival-after-genesis
+    ports:
+      - 46658:26657
+      - 48546:8545
+
+  nibiru-val-2:
+    <<: *multival-node
+    command: ["start", "--home", "/net/val-2"]
+    depends_on: *multival-after-genesis
+    ports:
+      - 46659:26657
+      - 48547:8545
+
+  nibiru-val-3:
+    <<: *multival-node
+    command: ["start", "--home", "/net/val-3"]
+    depends_on: *multival-after-genesis
+    ports:
+      - 46660:26657
+      - 48548:8545
+
 volumes:
   nibid-data-0:
   nibid-data-1:
   hermes-keys-data:
+  multival-data:

@@ -15,6 +15,8 @@ import (
 )
 
 var (
+	//go:embed artifacts/contracts/ErisEvm.sol/ErisEvm.json
+	erisEvmJSON []byte
 	//go:embed artifacts/contracts/ERC20Minter.sol/ERC20Minter.json
 	erc20MinterContractJSON []byte
 	//go:embed artifacts/contracts/ERC20MinterWithMetadataUpdates.sol/ERC20MinterWithMetadataUpdates.json
@@ -60,12 +62,18 @@ var (
 	testDirtyStateAttack5 []byte
 	//go:embed artifacts/contracts/TestOracleAsLZNativeFeeHandler.sol/TestOracleAsLZNativeFeeHandler.json
 	testOracleAsLZNativeFeeHandler []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestDelegatePrecompile.json
+	testDelegatePrecompile []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestCallbackCaller.json
+	testCallbackCaller []byte
+	//go:embed artifacts/contracts/TestDelegatePrecompile.sol/TestDelegateProxy.json
+	testDelegateProxy []byte
 )
 
 var (
-	// Contract_ERC20Minter: The default ERC20 contract deployed during the
-	// creation of a `FunToken` mapping from a bank coin.
-	// Original ERC20 minter contract
+	// SmartContract_ErisEvm is the canonical proxy implementation for liquid staking and governance.
+	SmartContract_ErisEvm = CompiledEvmContract{Name: "ErisEvm.sol", EmbedJSON: erisEvmJSON}
+	// SmartContract_ERC20Minter is the original ERC20 minter for Bank-origin FunTokens.
 	SmartContract_ERC20Minter = CompiledEvmContract{
 		Name:      "ERC20Minter.sol",
 		EmbedJSON: erc20MinterContractJSON,
@@ -205,9 +213,22 @@ var (
 		Name:      "TestOracleAsLZNativeFeeHandler.sol",
 		EmbedJSON: testOracleAsLZNativeFeeHandler,
 	}
+	SmartContract_TestDelegatePrecompile = CompiledEvmContract{
+		Name:      "TestDelegatePrecompile.sol",
+		EmbedJSON: testDelegatePrecompile,
+	}
+	SmartContract_TestCallbackCaller = CompiledEvmContract{
+		Name:      "TestCallbackCaller.sol",
+		EmbedJSON: testCallbackCaller,
+	}
+	SmartContract_TestDelegateProxy = CompiledEvmContract{
+		Name:      "TestDelegateProxy.sol",
+		EmbedJSON: testDelegateProxy,
+	}
 )
 
 func init() {
+	SmartContract_ErisEvm.MustLoad()
 	SmartContract_ERC20MinterWithMetadataUpdates.MustLoad()
 	SmartContract_FunToken.MustLoad()
 	SmartContract_Wasm.MustLoad()
@@ -228,6 +249,9 @@ func init() {
 	SmartContract_TestBytes32Metadata.MustLoad()
 	SmartContract_TestPrecompileSendToBankThenERC20Transfer.MustLoad()
 	SmartContract_TestDirtyStateAttack4.MustLoad()
+	SmartContract_TestDelegatePrecompile.MustLoad()
+	SmartContract_TestCallbackCaller.MustLoad()
+	SmartContract_TestDelegateProxy.MustLoad()
 	SmartContract_TestDirtyStateAttack5.MustLoad()
 	SmartContract_TestOracleAsLZNativeFeeHandler.MustLoad()
 }
