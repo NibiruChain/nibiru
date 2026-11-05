@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
+- (evm/rpc) #2693 Format pending transactions with the backend's initialized chain ID, avoiding redundant Params queries and a nil-config panic when that unrelated query fails.
 - (evm/rpc) #2787 Hash decoded Ethereum DATA bytes in `web3_sha3`, rather than the hexadecimal string's ASCII bytes. Reject malformed hex parameters.
 
 ## v2.21.0
