@@ -1,0 +1,18 @@
+[package]
+name = "usdc-holder-set"
+version = "0.1.0"
+edition = "2021"
+description = "Temporary address-set input for the v2.23 USDC migration"
+homepage = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+library = []
+
+[dependencies]
+cosmwasm-std = { workspace = true }
+cosmwasm-schema = { workspace = true }
+cw-storage-plus = { workspace = true }
