@@ -115,17 +115,19 @@ func TestPendingTransactionsRPCSnapshot(t *testing.T) {
 	var pending []map[string]json.RawMessage
 	require.NoError(t, rpcClient.Call(&pending, "eth_getPendingTransactions"))
 	require.Len(t, pending, 2)
-	for i, tx := range pending {
+	gotHashes := make([]gethcommon.Hash, 0, len(pending))
+	for _, tx := range pending {
 		var hash gethcommon.Hash
 		var from gethcommon.Address
 		require.NoError(t, json.Unmarshal(tx["hash"], &hash))
 		require.NoError(t, json.Unmarshal(tx["from"], &from))
-		require.Equal(t, wantHashes[i], hash)
+		gotHashes = append(gotHashes, hash)
 		require.Equal(t, sender.EthAddr, from, "unmanaged sender must remain visible")
 		for _, field := range []string{"blockHash", "blockNumber", "transactionIndex"} {
 			require.JSONEq(t, "null", string(tx[field]), field)
 		}
 	}
+	require.ElementsMatch(t, wantHashes, gotHashes, "pending RPC must preserve transaction identity without promising an order")
 }
 
 // TestPendingTransactionsRPCEmptyAndErrors distinguishes an empty mempool from a
