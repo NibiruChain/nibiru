@@ -1,12 +1,12 @@
 ---
-title: "NibiruBFT: Reducing Overhead in Consensus with BLS Signatures"
+title: "Nibiru BFT: Reducing Overhead in Consensus with BLS Signatures"
 description: >-
-  NibiruBFT integrates BLS signatures to aggregate validator approvals, reducing
+  Nibiru BFT integrates BLS signatures to aggregate validator approvals, reducing
   signature overhead, optimizing block validation, and improving blockchain
   efficiency.
 ---
 
-# NibiruBFT: BLS Signatures
+# Nibiru BFT: BLS Signatures
 
 <img src="./25-01-31-nibirubft-bls-signatures-wide.png" />
 
@@ -16,7 +16,7 @@ description: >-
 
 <img src="./25-01-31-nibirubft-bls-summary.png" />
 
-1. As one element of NibiruBFT, Nibiru's consensus mechanism, we propose the integration of BLS signatures to reduce consensus overhead, enabling faster block times and higher network efficiency.
+1. As one element of Nibiru BFT, Nibiru's consensus mechanism, we propose the integration of BLS signatures to reduce consensus overhead, enabling faster block times and higher network efficiency.
 2. Current signature validation in consensus is inefficient—each validator must
    sign and verify individually, increasing storage and bandwidth costs. Signature aggregation significantly reduces storage and network overhead.
 3. BLS verification scales more efficiently in large validator sets, lowering block finalization times and improving transaction throughput.
@@ -26,7 +26,7 @@ description: >-
 
 Digital signatures play a critical role in blockchain consensus, ensuring that validator approvals are verifiable and tamper-resistant. However, as validator sets grow, the storage and communication overhead of handling individual signatures increases. This overhead directly impacts transaction throughput and block finalization times, creating a bottleneck in high-performance blockchain environments.
 
-NibiruBFT, the consensus engine underpinning Nibiru, aims to mitigate these constraints. This research article proposes one avenue for improvement in the adoption of **Boneh–Lynn–Shacham (BLS) signatures**, which allow for **signature aggregation** in NibiruBFT by combining multiple validator signatures into a single compact proof. This significantly reduces network bandwidth consumption and computational overhead while maintaining security guarantees.
+Nibiru BFT, the consensus engine underpinning Nibiru, aims to mitigate these constraints. This research article proposes one avenue for improvement in the adoption of **Boneh–Lynn–Shacham (BLS) signatures**, which allow for **signature aggregation** in Nibiru BFT by combining multiple validator signatures into a single compact proof. This significantly reduces network bandwidth consumption and computational overhead while maintaining security guarantees.
 
 ## 2 - The Need for Scalable Blockchain Infrastructure
 
@@ -58,13 +58,13 @@ Nibiru, similar to many chains built with the Cosmos-SDK, currently use Elliptic
 
 With ECC, each signature is 64 bytes.  Therefore, a block signed by, for example, 100 validators incurs a 6.4 KB overhead just for these signatures. This overhead presents a significant challenge to scaling. By reducing this overhead, we can free up space for the inclusion of additional transactions in the block, further increasing TPS. Alternatively, if block size is held constant, then faster block times can be achieved by reducing the network overhead of communicating 6.4KB.
 
-While ECC supports batch verification—allowing multiple signatures to be verified simultaneously—this doesn't reduce the storage or transmission costs associated with the individual signatures.  The `verifyCommitBatch` function in CometBFT, which NibiruBFT uses, can indeed verify multiple Ed25519 signatures at once, but the underlying complexity remains O(N), meaning the verification time scales linearly with the number of validators.  Furthermore, if any signature in the batch fails verification, the system falls back to verifying each signature individually, further increasing the computational load.
+While ECC supports batch verification—allowing multiple signatures to be verified simultaneously—this doesn't reduce the storage or transmission costs associated with the individual signatures.  The `verifyCommitBatch` function in CometBFT, which Nibiru BFT uses, can indeed verify multiple Ed25519 signatures at once, but the underlying complexity remains O(N), meaning the verification time scales linearly with the number of validators.  Furthermore, if any signature in the batch fails verification, the system falls back to verifying each signature individually, further increasing the computational load.
 
-This linear scaling of verification time, coupled with the substantial storage and bandwidth requirements for propagating individual ECC signatures, makes it a limiting factor for NibiruBFT as the validator set grows.  For larger validator sets, the overhead becomes increasingly burdensome, impacting both throughput and block finality times.
+This linear scaling of verification time, coupled with the substantial storage and bandwidth requirements for propagating individual ECC signatures, makes it a limiting factor for Nibiru BFT as the validator set grows.  For larger validator sets, the overhead becomes increasingly burdensome, impacting both throughput and block finality times.
 
 ## 4 - **Boneh–Lynn–Shacham (BLS) Signatures: Compact Aggregation and Verification**
 
-Boneh-Lynn-Shacham (BLS) signatures offer a powerful alternative to traditional signature schemes like ECC, primarily due to their unique property of signature aggregation.  This property allows multiple individual signatures to be combined into a single, compact signature, drastically reducing storage and bandwidth overhead.  This section delves into the mechanics of BLS signatures and explains why this matters for consensus mechanisms like NibiruBFT.
+Boneh-Lynn-Shacham (BLS) signatures offer a powerful alternative to traditional signature schemes like ECC, primarily due to their unique property of signature aggregation.  This property allows multiple individual signatures to be combined into a single, compact signature, drastically reducing storage and bandwidth overhead.  This section delves into the mechanics of BLS signatures and explains why this matters for consensus mechanisms like Nibiru BFT.
 
 ### 4.1 - How BLS Signatures Work
 
@@ -122,7 +122,7 @@ The security of BLS signatures relies on the hardness of the Bilinear Diffie-Hel
 
 ### 4.4 - Why This Matters for Consensus
 
-In a consensus mechanism like NibiruBFT, validators need to sign their votes or proposals.  Without BLS, each validator's signature must be individually transmitted, stored, and verified.  As the number of validators grows, this overhead becomes a significant bottleneck.
+In a consensus mechanism like Nibiru BFT, validators need to sign their votes or proposals.  Without BLS, each validator's signature must be individually transmitted, stored, and verified.  As the number of validators grows, this overhead becomes a significant bottleneck.
 
 With BLS, validators can aggregate their individual signatures into a single compact proof before broadcasting it.  This drastically reduces the amount of data that needs to be transmitted and stored.  Furthermore, because the aggregated signature can be verified with a single pairing operation, the computational cost of verification is also significantly reduced.  This translates to faster block times and improved overall consensus efficiency.
 
@@ -138,9 +138,9 @@ Consensus Flow With and Without BLS:
 
 This difference in workflow highlights the substantial performance gains achievable with BLS signatures, particularly in large validator sets.  The reduced storage, bandwidth, and computation requirements make BLS signatures a compelling choice for optimizing blockchain consensus mechanisms.
 
-## **5 - Implementation in NibiruBFT**
+## **5 - Implementation in Nibiru BFT**
 
-Implementing BLS signatures in NibiruBFT presents several challenges.  A naive approach of incrementally aggregating signatures as they are received risks double-counting due to the gossip protocol's inherent redundancy. Double-counting can artificially inflate the perceived supermajority, potentially leading to incorrect block commitments. While validators could individually check if their signature is already included before adding it to an aggregation, this introduces significant computational overhead due to the required cryptographic operations.
+Implementing BLS signatures in Nibiru BFT presents several challenges.  A naive approach of incrementally aggregating signatures as they are received risks double-counting due to the gossip protocol's inherent redundancy. Double-counting can artificially inflate the perceived supermajority, potentially leading to incorrect block commitments. While validators could individually check if their signature is already included before adding it to an aggregation, this introduces significant computational overhead due to the required cryptographic operations.
 
 ### 5.1 - Optimizing Signature Collection and Aggregation
 
@@ -170,7 +170,7 @@ This example emphasizes that there is no single correct choice of curve for impl
 
 ## 6 - Computational Trade-offs and Network Impact
 
-Implementing BLS signatures in NibiruBFT offers significant advantages in terms of computational efficiency and network performance, especially as the validator set grows.  This section analyzes these trade-offs and quantifies the potential benefits.
+Implementing BLS signatures in Nibiru BFT offers significant advantages in terms of computational efficiency and network performance, especially as the validator set grows.  This section analyzes these trade-offs and quantifies the potential benefits.
 
 ### 6.1 - Comparison to ECC in Large Validator Sets
 
@@ -205,14 +205,14 @@ While BLS12-381 is a strong candidate, exploring alternative curves is worthwhil
 
 ### 7.3 - Future Considerations
 
-The optimal curve selection depends on NibiruBFT's specific use cases and performance requirements.  Future research will involve benchmarking different curves, including BLS12-381 and BLS12-377, to quantify the performance trade-offs and determine the most suitable curve for Nibiru.  We will also continue to monitor advancements in elliptic curve cryptography and explore new curves as they emerge.
+The optimal curve selection depends on Nibiru BFT's specific use cases and performance requirements.  Future research will involve benchmarking different curves, including BLS12-381 and BLS12-377, to quantify the performance trade-offs and determine the most suitable curve for Nibiru.  We will also continue to monitor advancements in elliptic curve cryptography and explore new curves as they emerge.
 
-## 8 - Why it Matters: Implications for NibiruBFT
+## 8 - Why it Matters: Implications for Nibiru BFT
 
 BLS signatures offer a compelling approach to optimizing consensus mechanisms
-like NibiruBFT.  Aggregating validator signatures into a single compact proof
+like Nibiru BFT.  Aggregating validator signatures into a single compact proof
 provides substantial benefits in terms of storage, network bandwidth, and
-computational efficiency.  By implementing BLS signatures, NibiruBFT can achieve
+computational efficiency.  By implementing BLS signatures, Nibiru BFT can achieve
 faster block times, improved transaction throughput, and enhanced scalability,
 particularly as the validator set grows.
 
@@ -226,7 +226,7 @@ Key Takeaways:
 
 1. Signature aggregation significantly reduces storage and network overhead.
 1. BLS verification scales more efficiently in large validator sets.
-1. NibiruBFT’s implementation of BLS will improve block times and consensus efficiency.
+1. Nibiru BFT’s implementation of BLS will improve block times and consensus efficiency.
 
 <img src="./25-01-31-nibirubft-bls-summary.png" />
 

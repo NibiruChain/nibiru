@@ -50,7 +50,33 @@ determinism-selftest:
     rm -f "$log"
     exit 1
 
-# Run `determinism-selftest`, then `determinism`. Stops if the self-test fails: a clean run means nothing if the check is blind.
+# Self-test: run only nibiru-val-2 on the planted-bug image and pass only if `determinism` names val-2 alone.
+determinism-selftest-one:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    log="$(mktemp)"
+    compose="docker compose -f contrib/docker-compose/docker-compose-chaosnet.yml --profile multival"
+    MULTIVAL_IMAGE=nibiru-multival:fault-injection \
+      MULTIVAL_BUILD_TAGS=nibiru_fault_injection \
+      $compose build multival-genesis || exit 1
+    # Perturbation stays off: taking down a healthy node while val-2 is out
+    # leaves 2 of 4 validators, and the chain halts.
+    MULTIVAL_IMAGE_VAL2=nibiru-multival:fault-injection \
+      PERTURB=false LOAD_SECONDS="${LOAD_SECONDS:-20}" STALL_SECONDS=20 \
+      bash contrib/scripts/determinism.sh 2>&1 | tee "$log"
+    status="${PIPESTATUS[0]}"
+    if [[ "$status" -ne 0 ]] \
+      && grep -q "first height where app hashes differ" "$log" \
+      && grep -qx "\[determinism\] stopped: val-2" "$log"; then
+      echo "✅ determinism caught the planted bug on val-2 alone"
+      rm -f "$log"
+      exit 0
+    fi
+    echo "❌ determinism did not name val-2 alone (exit $status)"
+    rm -f "$log"
+    exit 1
+
+# Run both self-tests, then `determinism`. Stops if a self-test fails: a clean run means nothing if the check is blind.
 determinism-all:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -58,6 +84,9 @@ determinism-all:
     just --justfile just-chaos.just determinism-selftest
     selftest="$((SECONDS - start))"
     echo "[determinism-all] determinism-selftest passed in ${selftest}s"
+    start="$SECONDS"
+    just --justfile just-chaos.just determinism-selftest-one
+    echo "[determinism-all] determinism-selftest-one passed in $((SECONDS - start))s"
     start="$SECONDS"
     just --justfile just-chaos.just determinism
     echo "[determinism-all] determinism passed in $((SECONDS - start))s"

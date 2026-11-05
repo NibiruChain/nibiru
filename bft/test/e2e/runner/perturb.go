@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
@@ -27,22 +28,24 @@ func Perturb(testnet *e2e.Testnet) error {
 // after recovering.
 func PerturbNode(node *e2e.Node, perturbation e2e.Perturbation) (*rpctypes.ResultStatus, error) {
 	testnet := node.Testnet
-	// Empty output means the upgrade perturbation stopped <node> and started
-	// <node>_u. Count only running containers, so a stopped <node> does not
-	// hide <node>_u.
-	out, err := execComposeOutput(
-		testnet.Dir, "ps", "-q", "--status", "running", node.Name)
-	if err != nil {
-		return nil, err
-	}
 	name := node.Name
 	upgraded := false
-	if len(out) == 0 {
-		name = name + "_u"
-		upgraded = true
-		logger.Info("perturb node", "msg",
-			log.NewLazySprintf("Node %v already upgraded, operating on alternate container %v",
-				node.Name, name))
+	// The upgrade perturbation stops <node> and starts <node>_u. Look for a
+	// running <node>_u by name, so a crashed <node> is not taken for an
+	// upgraded one. Only nodes with an upgrade perturbation have <node>_u.
+	if slices.Contains(node.Perturbations, e2e.PerturbationUpgrade) {
+		out, err := execComposeOutput(
+			testnet.Dir, "ps", "-q", "--status", "running", node.Name+"_u")
+		if err != nil {
+			return nil, err
+		}
+		if len(out) > 0 {
+			name = node.Name + "_u"
+			upgraded = true
+			logger.Info("perturb node", "msg",
+				log.NewLazySprintf("Node %v already upgraded, operating on alternate container %v",
+					node.Name, name))
+		}
 	}
 
 	switch perturbation {

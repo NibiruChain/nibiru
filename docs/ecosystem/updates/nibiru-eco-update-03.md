@@ -26,7 +26,7 @@ Prepared by [The Nibiru Team](https://nibiru.fi/team)
 1. **Nibiru V2 ("Nibiru EVM Upgrade"):** Nibiru Multi VM unifies EVM and Wasm into
    a single environment without requiring Layer 2 or bridge dependencies.
 2. **Nibiru Lagrange Point:** 
-    1. NibiruBFT: A modified CometBFT consensus engine, NibiruBFT touts faster
+    1. Nibiru BFT: A modified CometBFT consensus engine, Nibiru BFT touts faster
        block times, priority-enshrined block and mempool lanes, more robust and
     seamless networking, and increasingly lightweight storage and verification.
     2. Nibiru Adaptive Execution: This enhancement of Nibiru's execution engine
@@ -68,8 +68,8 @@ of stNIBI, SyrupUSDC, and Sai Liquidity Provision (SLP) vaults.
   - [3 | Near-Term Execution Plans](#3--near-term-execution-plans)
     - [3.1 - Sai Perps Nears Launch on Nibiru](#31---sai-perps-nears-launch-on-nibiru)
     - [3.2 - Onchain Usage Campaigns | Nibiru EVM Points Program (Update)](#32---onchain-usage-campaigns--nibiru-evm-points-program-update)
-  - [4 - Lagrange Point, NibiruBFT, and the Nibiru Execution Engine](#4---lagrange-point-nibirubft-and-the-nibiru-execution-engine)
-    - [4.1 - NibiruBFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, \&](#41---nibirubft---validator-clusters-bls-signatures-multi-lane-blocks-)
+  - [4 - Lagrange Point, Nibiru BFT, and the Nibiru Execution Engine](#4---lagrange-point-nibiru-bft-and-the-nibiru-execution-engine)
+    - [4.1 - Nibiru BFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, \&](#41---nibiru-bft---validator-clusters-bls-signatures-multi-lane-blocks-)
     - [4.2 Nibiru Adaptive Execution: The Next Evolution of PARE](#42-nibiru-adaptive-execution-the-next-evolution-of-pare)
     - [4.3 MultiVM Architecture: Seamless EVM \& Wasm (and More)](#43-multivm-architecture-seamless-evm--wasm-and-more)
     - [4.4 Quantum-Resistant Cryptography (QRC)](#44-quantum-resistant-cryptography-qrc)
@@ -247,7 +247,7 @@ is actively onboarding new protocols with incentives such as multipliers for
 those that contribute meaningful TVL and revenue that is particularly valuable to
 the ecosystem's long-term health.
 
-## 4 - Lagrange Point, NibiruBFT, and the Nibiru Execution Engine
+## 4 - Lagrange Point, Nibiru BFT, and the Nibiru Execution Engine
 
 In the last Nibiru Ecosystem Update, we introduced a forward-thinking suite of
 upgrades to tackle blockchain’s hardest challenges: unified EVM–Wasm assets
@@ -256,13 +256,13 @@ parallelization, MEV minimization (Block Lanes), validator scaling, and even
 post-quantum cryptography. Since then, Nibiru has evolved and fleshed out those
 concepts into a coherent, production-focused package.
 
-### 4.1 - NibiruBFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, &
+### 4.1 - Nibiru BFT - Validator Clusters, BLS Signatures, Multi-Lane Blocks, &
 QUIC
 
 **4.1.1 Validator Clustering**
 
 Previously, the “validator groupings” concept aimed to fix CometBFT’s n²
-messaging overhead. Now, under NibiruBFT consensus:
+messaging overhead. Now, under Nibiru BFT consensus:
 
 - Clusters: Validators are dynamically shuffled into clusters each epoch for an
 intra-cluster consensus to achieve a precommit state.
@@ -312,7 +312,7 @@ behavior solely to this lane.
 **4.1.4 QUIC Networking for Faster Consensus**
 
 Traditional TCP-based networking can suffer from latency spikes and cumbersome
-handshakes (connection establishment). QUIC integration in NibiruBFT networking
+handshakes (connection establishment). QUIC integration in Nibiru BFT networking
 facilitates:
 
 - Faster Connection Setup: Fewer round-trips, so validators synchronize quickly.
@@ -378,7 +378,7 @@ When “Nibiru Lagrange Point” was first introduced, a roadmap outline to unif
 VMs, mitigate MEV, handle concurrency, and prepare for quantum safety was
 created. Now, the core pieces have evolved into:
 
-1. NibiruBFT → A reimagined consensus layer with validator clustering, BLS
+1. Nibiru BFT → A reimagined consensus layer with validator clustering, BLS
 signatures, multi-lane mempools/blocks, and QUIC.
 2. Adaptive Execution → Next-gen concurrency management (the new face of PARE).
 3. MultiVM → EVM, Wasm, and future VMs all secured by one chain.

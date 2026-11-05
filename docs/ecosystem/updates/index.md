@@ -67,7 +67,7 @@ Sai.
 - [Nibiru Ecosystem Update #3 - May 2025](./nibiru-eco-update-03.md): Nibiru V2
 is live with its first wave of ecosystem app deployments. This update further
 details Nibiru Lagrange Point, a roadmap for long-term scalability (including
-NibiruBFT and Nibiru Adaptive execution), and highlights progress across
+Nibiru BFT and Nibiru Adaptive execution), and highlights progress across
 real-world assets, structured products, and programs designed to drive durable
 adoption.
 
