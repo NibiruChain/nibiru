@@ -59,25 +59,30 @@ From the repository root:
 just rs test usdc-holder-set
 ```
 
-The checked-in fixture was built natively using Rust 1.86.0 and release profile:
+Build artifacts on the x86_64 homebox from the pushed development branch.
+The build script refuses other architectures and tracked source edits that have
+not been committed. It writes the Wasm, reproducible gzip, and build provenance
+outside testdata so the checked-in fixture is replaced deliberately.
 
 ```sh
-rustup target add --toolchain 1.86.0 wasm32-unknown-unknown
-RUSTFLAGS='-C target-cpu=mvp' cargo +1.86.0 build --locked --release --target wasm32-unknown-unknown -p usdc-holder-set
-bunx --package binaryen@116.0.0 wasm-opt \
-  target/wasm32-unknown-unknown/release/usdc_holder_set.wasm \
-  -o target/wasm32-unknown-unknown/release/usdc_holder_set.optimized.wasm \
-  -Os --signext-lowering --mvp-features
-sai-wasm-optimizer check target/wasm32-unknown-unknown/release/usdc_holder_set.optimized.wasm
+# On homebox, in the checkout of the pushed branch:
+bash wasm-contracts/usdc-holder-set/build-fixture.sh
 ```
 
-The maintained optimizer's container build was unavailable during this slice
-because the Docker daemon was not running. Its native `check` command validated
-and compiled the fixture through Nibiru's maintained VM. Binaryen 116 lowers
-the artifact to the instruction set accepted by the Keeper-linked runtime.
-The real Keeper tests are required: standalone native validation accepted an
-earlier build that the Keeper-linked runtime rejected. This is a native build,
-not a claim that the pinned AMD64 optimizer-container release mode was used.
+The script pins Rust 1.86.0, the Wasm MVP target, and Binaryen 116.0.0. Copy the
+resulting `.wasm.gz` and `build-info.json` back into `app/upgrades/testdata/v2.23`,
+update the decompressed checksum in the fixture test/reference, and rerun the
+Keeper tests. No native optimizer CLI is required by the build script.
+
+The first local development build exposed a compatibility difference: standalone
+native VM validation accepted bytes rejected by the runtime linked into Keeper
+tests. Binaryen MVP lowering produced compatible bytes. Treat real Keeper
+execution of the homebox artifact as the acceptance check.
+
+The bytecode is provisional while the contract is being edited. Rebuild on
+homebox after the final source changes even if the query API stays unchanged.
+Keep the deployment checksum and predicted instantiate2 address provisional
+until those final bytes are selected.
 
 See `app/upgrades/testdata/v2.23/README.md` for the fixture checksum and gzip
 reproduction command. Changing compiler settings or optimizing the bytes changes

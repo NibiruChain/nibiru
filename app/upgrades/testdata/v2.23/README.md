@@ -11,18 +11,14 @@ Decompressed SHA-256:
 ae3840f748807eb93400ea7d0208ae084c002148ed60177fbf276a1ee407003f
 ```
 
-Temporary source: `wasm-contracts/usdc-holder-set`. Build with Rust 1.86.0 as
-specified in that package's README, then compress with timestamp zero:
+Temporary source: `wasm-contracts/usdc-holder-set`. Build on the x86_64 homebox
+from the pushed branch using `build-fixture.sh`, then copy back the generated
+`.wasm.gz` and build provenance. The script pins compiler/lowering settings and
+uses gzip timestamp zero. Update the fixture checksum after every rebuild.
 
-```sh
-python3 - <<'PY'
-import gzip
-from pathlib import Path
-source = Path('target/wasm32-unknown-unknown/release/usdc_holder_set.optimized.wasm')
-target = Path('app/upgrades/testdata/v2.23/usdc_holder_set.wasm.gz')
-target.write_bytes(gzip.compress(source.read_bytes(), compresslevel=9, mtime=0))
-PY
-```
+This is a development fixture. The contract source may change before release,
+so a final homebox rebuild and Keeper test pass are required even if the API
+is unchanged. Select the final deployment checksum/address only afterward.
 
 Run the focused keeper tests:
 
