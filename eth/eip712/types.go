@@ -4,7 +4,7 @@ package eip712
 import (
 	"bytes"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -221,8 +221,10 @@ func recursivelyAddTypesToRoot(
 	return addTypesToRoot(typeMap, typeDef, typesToAdd)
 }
 
-// sortedJSONKeys returns the sorted JSON keys for the input object,
-// to be used for deterministic iteration.
+// sortedJSONKeys returns object keys in descending lexical order.
+// [recursivelyAddTypesToRoot] uses this order to construct deterministic EIP-712
+// field definitions. Preserve the descending order when changing the sorter;
+// field order contributes to the signed typed-data encoding.
 func sortedJSONKeys(json gjson.Result) ([]string, error) {
 	if !json.IsObject() {
 		return nil, sdkioerrors.Wrap(sdkerrors.ErrInvalidType, "expected JSON map to parse")
@@ -238,8 +240,8 @@ func sortedJSONKeys(json gjson.Result) ([]string, error) {
 		i++
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		return strings.Compare(keys[i], keys[j]) > 0
+	slices.SortFunc(keys, func(a, b string) int {
+		return strings.Compare(b, a)
 	})
 
 	return keys, nil
