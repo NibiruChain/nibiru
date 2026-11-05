@@ -421,8 +421,10 @@ func (e *EthAPI) FillTransaction(
 	}, nil
 }
 
-// GetPendingTransactions returns the transactions that are in the transaction
-// pool and have a from address that is one of the accounts this node manages.
+// GetPendingTransactions formats EVM messages from the CometBFT mempool
+// snapshot returned by [Backend.PendingTransactions]. It does not restrict
+// senders to accounts managed by this node. Unconfirmed transactions have null
+// block metadata; Cosmos-only transactions are omitted.
 func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 	e.logger.Debug("eth_getPendingTransactions")
 
@@ -440,13 +442,16 @@ func (e *EthAPI) GetPendingTransactions() ([]*rpc.EthTxJsonRPC, error) {
 				break
 			}
 
+			// Chain identity is fixed when the backend is constructed. Fetching
+			// params here adds an unrelated query per pending message and can
+			// dereference a nil ChainConfig when that query fails.
 			rpctx := rpc.NewRPCTxFromMsgEthTx(
 				ethMsg,
 				common.Hash{},
 				uint64(0),
 				uint64(0),
 				nil,
-				e.backend.ChainConfig().ChainID,
+				e.backend.chainID,
 			)
 
 			result = append(result, rpctx)
