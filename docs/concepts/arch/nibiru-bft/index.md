@@ -1,16 +1,16 @@
 ---
 order: 0
-title: "NibiruBFT Consensus Optimizations"
+title: "Nibiru BFT Consensus Optimizations"
 description: >-
-  Nibiru uses NibiruBFT as its consensus mechanism. NibiruBFT encompasses a suite
+  Nibiru uses Nibiru BFT as its consensus mechanism. Nibiru BFT encompasses a suite
   of consensus-related improvements developed as part of the Nibiru Lagrange Point
   roadmap, a long-term initiative aimed at enhancing the scalability and
   decentralization of the Nibiru blockchain. Similar to the gradual release of the
-  Ethereum roadmap, upgrades for NibiruBFT will roll out phase-wise after Nibiru
+  Ethereum roadmap, upgrades for Nibiru BFT will roll out phase-wise after Nibiru
   V2.
 ---
 
-# NibiruBFT Consensus
+# Nibiru BFT Consensus
 
 {{ $frontmatter.description }}
 
@@ -28,10 +28,10 @@ nodes can fail, exhibit malicious behavior, or deviate from the protocol
 arbitrarily. In a blockchain context, BFT ensures that validators (or miners)
 agree on the order of transactions, even if some validators are faulty.
 
-## NibiruBFT Optimizations for Scalability
+## Nibiru BFT Optimizations for Scalability
 
 Building upon the foundation of existing Byzantine Fault Tolerance (BFT)
-protocols, NibiruBFT introduces several key innovations to address the specific
+protocols, Nibiru BFT introduces several key innovations to address the specific
 challenges of the Nibiru ecosystem. These include:
 
 1. **[Reducing Overhead in Consensus with BLS Signatures](./bls-signatures.md)**: Aggregates multiple validator signatures into a single proof through BLS, lowering block verification overhead and paving the way for higher throughput and faster block times.
@@ -41,23 +41,23 @@ challenges of the Nibiru ecosystem. These include:
     - Key Benefits: Security and decentralization
 1. **[QUIC (Quick UDP Internet Connections)](./quic.md)**: Tackles the performance hurdles of traditional TCP while preserving instant finality and BFT robustness guarantees 
 1. **[Block and Mempool Lanes](./block-lanes.md)**: Block and mempool lanes refer to a segregation mechanism within Nibiru's mempool and block construction process. Transactions are categorized into different "lanes" based on their type, priority, or metadata. This structure allows for parallel processing and prioritization of specific transaction types without the inefficiencies of a single-lane mempool.
-    <!-- - Block SDK: Block SDK is what provides the tooling and framework necessary to implement much of the innovations that make up NibiruBFT, such as mempool lanes. -->
+    <!-- - Block SDK: Block SDK is what provides the tooling and framework necessary to implement much of the innovations that make up Nibiru BFT, such as mempool lanes. -->
     - Key Benefits: Predictable resource allocation, prioritization of certain types of transactions over others, lower fee spikes, and streamlined congestion management.
 
-## Core Principles of NibiruBFT
+## Core Principles of Nibiru BFT
 
-NibiruBFT builds upon the established foundation of BFT protocols, introducing key advancements to address the unique challenges of the Nibiru ecosystem:
+Nibiru BFT builds upon the established foundation of BFT protocols, introducing key advancements to address the unique challenges of the Nibiru ecosystem:
 
 - **Instant Finality**: 
 Transactions are finalized immediately upon block creation. This eliminates the need for multiple confirmations or waiting periods, enhancing security and user experience (unlike blockchains like Bitcoin or Ethereum).
 
-- **State Machine Replication**: NibiruBFT is an extension building from Tendermint, which can be used to create arbitrary Web3 applications through the Application Blockchain Interface (ABCI). This empowers NibiruBFT to serve not just cryptocurrencies but also a broad spectrum of distributed applications.
+- **State Machine Replication**: Nibiru BFT is an extension building from Tendermint, which can be used to create arbitrary Web3 applications through the Application Blockchain Interface (ABCI). This empowers Nibiru BFT to serve not just cryptocurrencies but also a broad spectrum of distributed applications.
 
 - **Byzantine Fault Tolerance**: Nibiru utilizes PBFT (Practical Byzantine Fault Tolerance), a specific BFT consensus protocol. PBFT ensures all network nodes agree on the transaction order within the blockchain, even if up to one-third of nodes exhibit Byzantine behavior (i.e., malicious or faulty). PBFT achieves consensus through a two-phase commit process: nodes first propose a block, followed by validation via multiple voting rounds. This process safeguards network integrity by guaranteeing agreement on transaction order and preventing malicious nodes from compromising the system.
 
 - **Rotating Proposers**: To ensure fairness, the responsibility of proposing the next block rotates among validators based on their stake and proposal history.
 
-- **Evolution from Proven Technology**: NibiruBFT inherits security guarantees from the battle-tested Tendermint Core consensus algorithm, building upon CometBFT's foundation.
+- **Evolution from Proven Technology**: Nibiru BFT inherits security guarantees from the battle-tested Tendermint Core consensus algorithm, building upon CometBFT's foundation.
 
 ## Byzantine Fault Tolerance
 
