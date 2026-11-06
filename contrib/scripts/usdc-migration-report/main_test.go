@@ -7,13 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
+
 	tmjson "github.com/NibiruChain/nibiru/v2/bft/libs/json"
 	rpctypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
 
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
