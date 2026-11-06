@@ -16,3 +16,4 @@ library = []
 cosmwasm-std = { workspace = true }
 cosmwasm-schema = { workspace = true }
 cw-storage-plus = { workspace = true }
+nibiru-std = { workspace = true }

@@ -7,9 +7,16 @@ use cosmwasm_std::{
     Order, Response, StdError, StdResult,
 };
 use cw_storage_plus::{Bound, Item, Map};
+use nibiru_std::address::UserAddr;
 use std::collections::BTreeSet;
 
 const ADMIN: Item<Addr> = Item::new("admin");
+const HOLDING_ADDRESS: Item<UserAddr> = Item::new("holding_address");
+const MAINNET: &str = "cataclysm-1";
+const TESTNET: &str = "nibiru-testnet-2";
+const LOCALNET: &str = "nibiru-localnet-0";
+const SAFE: &str = "0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2";
+const OP_B: &str = "0x447fC0471f5d8150A790e19000930108aCCe0BC7";
 const ADDRESSES: Map<&str, bool> = Map::new("addresses");
 pub const MAX_BATCH: usize = 500;
 pub const DEFAULT_LIMIT: u32 = 200;
@@ -24,6 +31,9 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    SetHoldingAddress {
+        holding_address: UserAddr,
+    },
     UpdateAddresses {
         #[serde(default)]
         add: Vec<String>,
@@ -35,11 +45,20 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    #[returns(ConfigResponse)]
+    Config {},
     #[returns(AddressesResponse)]
     Addresses {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+}
+
+#[cw_serde]
+pub struct ConfigResponse {
+    pub chain_id: String,
+    pub holding_address: UserAddr,
+    pub admin: Addr,
 }
 
 #[cw_serde]
@@ -94,7 +113,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
@@ -103,6 +122,28 @@ pub fn execute(
     }
     no_funds(&info)?;
     match msg {
+        ExecuteMsg::SetHoldingAddress { holding_address } => {
+            match env.block.chain_id.as_str() {
+                MAINNET => {
+                    return Err(StdError::generic_err(
+                        "mainnet holding address is immutable",
+                    ))
+                }
+                TESTNET | LOCALNET => {}
+                _ => return Err(StdError::generic_err("unsupported chain ID")),
+            }
+            if holding_address != parse_target(SAFE)?
+                && holding_address != parse_target(OP_B)?
+            {
+                return Err(StdError::generic_err(
+                    "holding address must be the approved Safe or op-b",
+                ));
+            }
+            HOLDING_ADDRESS.save(deps.storage, &holding_address)?;
+            Ok(Response::new()
+                .add_attribute("action", "set_holding_address")
+                .add_attribute("holding_address", holding_address.to_hex()))
+        }
         ExecuteMsg::UpdateAddresses { add, remove } => {
             // Validate the whole message before changing any storage.
             let add = validate_batch(add)?;
@@ -126,9 +167,33 @@ pub fn execute(
     }
 }
 
+fn parse_target(address: &str) -> StdResult<UserAddr> {
+    address
+        .parse()
+        .map_err(|err: nibiru_std::errors::NibiruError| {
+            StdError::generic_err(err.to_string())
+        })
+}
+
+fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
+    let holding_address = match env.block.chain_id.as_str() {
+        MAINNET => parse_target(SAFE)?,
+        TESTNET | LOCALNET => HOLDING_ADDRESS
+            .may_load(deps.storage)?
+            .unwrap_or(parse_target(OP_B)?),
+        _ => return Err(StdError::generic_err("unsupported chain ID")),
+    };
+    Ok(ConfigResponse {
+        chain_id: env.block.chain_id,
+        holding_address,
+        admin: ADMIN.load(deps.storage)?,
+    })
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
         QueryMsg::Addresses { start_after, limit } => {
             let limit = limit.unwrap_or(DEFAULT_LIMIT);
             if limit == 0 || limit > MAX_LIMIT {
@@ -337,5 +402,283 @@ mod tests {
         .unwrap();
         assert_eq!(second.addresses, vec![address(200), address(201)]);
         assert_eq!(second.next_start_after, None);
+    }
+
+    #[test]
+    fn config_defaults_use_exact_chain_policies() {
+        for (chain_id, expected) in
+            [(MAINNET, SAFE), (TESTNET, OP_B), (LOCALNET, OP_B)]
+        {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+            env.block.chain_id = chain_id.into();
+            instantiate(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("creator", &[]),
+                InstantiateMsg {
+                    admin: "admin".into(),
+                    addresses: vec![],
+                },
+            )
+            .unwrap();
+            let encoded =
+                query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
+            let config: ConfigResponse = from_json(encoded.clone()).unwrap();
+            assert_eq!(config.chain_id, chain_id);
+            assert_eq!(config.admin, Addr::unchecked("admin"));
+            assert_eq!(config.holding_address, parse_target(expected).unwrap());
+            assert!(String::from_utf8(encoded.to_vec())
+                .unwrap()
+                .contains(&parse_target(expected).unwrap().to_hex()));
+        }
+    }
+
+    #[test]
+    fn test_network_admin_can_select_only_the_two_approved_targets() {
+        for chain_id in [TESTNET, LOCALNET] {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+            env.block.chain_id = chain_id.into();
+            instantiate(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("creator", &[]),
+                InstantiateMsg {
+                    admin: "admin".into(),
+                    addresses: vec![],
+                },
+            )
+            .unwrap();
+            let safe = parse_target(SAFE).unwrap();
+            let set_safe = ExecuteMsg::SetHoldingAddress {
+                holding_address: safe,
+            };
+            assert!(execute(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("outsider", &[]),
+                set_safe
+            )
+            .is_err());
+            assert_eq!(
+                query_config(deps.as_ref(), env.clone())
+                    .unwrap()
+                    .holding_address,
+                parse_target(OP_B).unwrap()
+            );
+            // UserAddr accepts equivalent bech32 identities and emits EIP-55.
+            let msg: ExecuteMsg = from_json(
+                format!(
+                    r#"{{"set_holding_address":{{"holding_address":"{}"}}}}"#,
+                    safe.to_bech32_addr()
+                )
+                .as_bytes(),
+            )
+            .unwrap();
+            execute(deps.as_mut(), env.clone(), mock_info("admin", &[]), msg)
+                .unwrap();
+            assert_eq!(
+                query_config(deps.as_ref(), env.clone())
+                    .unwrap()
+                    .holding_address,
+                safe
+            );
+            for unapproved in [address(42), address(0)] {
+                assert!(execute(
+                    deps.as_mut(),
+                    env.clone(),
+                    mock_info("admin", &[]),
+                    ExecuteMsg::SetHoldingAddress {
+                        holding_address: unapproved.parse().unwrap()
+                    }
+                )
+                .is_err());
+                assert_eq!(
+                    query_config(deps.as_ref(), env.clone())
+                        .unwrap()
+                        .holding_address,
+                    safe
+                );
+            }
+            execute(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("admin", &[]),
+                ExecuteMsg::SetHoldingAddress {
+                    holding_address: parse_target(OP_B).unwrap(),
+                },
+            )
+            .unwrap();
+            assert_eq!(
+                query_config(deps.as_ref(), env).unwrap().holding_address,
+                parse_target(OP_B).unwrap()
+            );
+        }
+    }
+
+    #[test]
+    fn mainnet_destination_is_immutable_even_with_test_override_storage() {
+        let mut deps = mock_dependencies();
+        let mut env = mock_env();
+        env.block.chain_id = MAINNET.into();
+        instantiate(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("creator", &[]),
+            InstantiateMsg {
+                admin: "admin".into(),
+                addresses: vec![],
+            },
+        )
+        .unwrap();
+        HOLDING_ADDRESS
+            .save(deps.as_mut().storage, &parse_target(OP_B).unwrap())
+            .unwrap();
+        for target in [SAFE, OP_B] {
+            let error = execute(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("admin", &[]),
+                ExecuteMsg::SetHoldingAddress {
+                    holding_address: parse_target(target).unwrap(),
+                },
+            )
+            .unwrap_err();
+            assert!(error.to_string().contains("immutable"));
+            assert_eq!(
+                query_config(deps.as_ref(), env.clone())
+                    .unwrap()
+                    .holding_address,
+                parse_target(SAFE).unwrap()
+            );
+        }
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("admin", &[]),
+            ExecuteMsg::UpdateAddresses {
+                add: vec![address(1)],
+                remove: vec![],
+            },
+        )
+        .unwrap();
+        let holders: AddressesResponse = from_json(
+            query(
+                deps.as_ref(),
+                env,
+                QueryMsg::Addresses {
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(holders.addresses, vec![address(1)]);
+    }
+
+    #[test]
+    fn unsupported_networks_reject_config_without_changing_the_holder_api() {
+        for chain_id in [
+            "unknown",
+            "localnet",
+            "nibiru-testnet-3",
+            "cataclysm-1-extra",
+        ] {
+            let mut deps = mock_dependencies();
+            let mut env = mock_env();
+            env.block.chain_id = chain_id.into();
+            instantiate(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("creator", &[]),
+                InstantiateMsg {
+                    admin: "admin".into(),
+                    addresses: vec![address(1)],
+                },
+            )
+            .unwrap();
+            assert!(
+                query(deps.as_ref(), env.clone(), QueryMsg::Config {}).is_err()
+            );
+            assert!(execute(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("admin", &[]),
+                ExecuteMsg::SetHoldingAddress {
+                    holding_address: parse_target(OP_B).unwrap()
+                }
+            )
+            .is_err());
+            assert_eq!(
+                HOLDING_ADDRESS.may_load(deps.as_ref().storage).unwrap(),
+                None
+            );
+            let holders: AddressesResponse = from_json(
+                query(
+                    deps.as_ref(),
+                    env,
+                    QueryMsg::Addresses {
+                        start_after: None,
+                        limit: None,
+                    },
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(holders.addresses, vec![address(1)]);
+        }
+    }
+
+    #[test]
+    fn every_write_rejects_attached_funds_before_state_changes() {
+        use cosmwasm_std::coins;
+        let mut deps = mock_dependencies();
+        let mut env = mock_env();
+        env.block.chain_id = TESTNET.into();
+        assert!(instantiate(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("creator", &coins(1, "unibi")),
+            InstantiateMsg {
+                admin: "admin".into(),
+                addresses: vec![]
+            }
+        )
+        .is_err());
+        assert_eq!(ADMIN.may_load(deps.as_ref().storage).unwrap(), None);
+        instantiate(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("creator", &[]),
+            InstantiateMsg {
+                admin: "admin".into(),
+                addresses: vec![],
+            },
+        )
+        .unwrap();
+        for msg in [
+            ExecuteMsg::SetHoldingAddress {
+                holding_address: parse_target(SAFE).unwrap(),
+            },
+            ExecuteMsg::UpdateAddresses {
+                add: vec![address(1)],
+                remove: vec![],
+            },
+        ] {
+            assert!(execute(
+                deps.as_mut(),
+                env.clone(),
+                mock_info("admin", &coins(1, "unibi")),
+                msg
+            )
+            .is_err());
+        }
+        assert_eq!(
+            HOLDING_ADDRESS.may_load(deps.as_ref().storage).unwrap(),
+            None
+        );
+        assert!(!ADDRESSES.has(deps.as_ref().storage, &address(1)));
     }
 }

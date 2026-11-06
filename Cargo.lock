@@ -3827,6 +3827,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus",
+ "nibiru-std",
 ]
 
 [[package]]
