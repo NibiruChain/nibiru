@@ -64,7 +64,16 @@ func setupUSDCUpgradeFromDeps(t *testing.T, chainID string, deps evmtest.TestDep
 		require.NoError(t, err)
 		return r.ContractAddr
 	}
-	token, safe, saiEvm, unrelated := deploy(), deploy(), deploy(), deploy()
+	token, safeCode, saiEvm, unrelated := deploy(), deploy(), deploy(), deploy()
+	safe := gethcommon.HexToAddress(upgrades.USDCOperatorV223)
+	if chainID == appconst.SDK_CHAIN_ID_MAINNET {
+		safe = gethcommon.HexToAddress(upgrades.USDCMainnetSafeV223)
+		// Pin the receiving identity while deploying genuine runtime code in
+		// the fixture. Asset addresses remain explicit test deployments.
+		sdb := deps.EvmKeeper.NewSDB(deps.Ctx(), deps.EvmKeeper.TxConfig(deps.Ctx(), gethcommon.Hash{}))
+		sdb.SetCode(safe, sdb.GetCode(safeCode))
+		sdb.Commit()
+	}
 	cfg := upgrades.USDCMigrationConfigV223{Registry: registry, RegistryChecksum: checksum, Token: token, BankDenom: "erc20/" + token.Hex(), Safe: safe, SaiEvm: saiEvm, ReplacedBankHolders: []sdk.AccAddress{registry}}
 	require.NoError(t, deps.EvmKeeper.FunTokens.SafeInsert(deps.Ctx(), token, cfg.BankDenom, false))
 	eoa := gethcommon.HexToAddress("0x0000000000000000000000000000000000000200")
@@ -117,7 +126,7 @@ func usdcBalance(t *testing.T, f *usdcUpgradeFixture, address gethcommon.Address
 }
 
 func TestUpgrade2_23_0USDCCollectionHappyPath(t *testing.T) {
-	for _, chainID := range []string{"localnet", "nibiru-testnet-3", "cataclysm-1"} {
+	for _, chainID := range []string{"nibiru-localnet-0", "nibiru-testnet-2", "cataclysm-1"} {
 		t.Run(chainID, func(t *testing.T) {
 			var f usdcUpgradeFixture
 			if chainID == "cataclysm-1" {
@@ -183,7 +192,9 @@ func TestUpgrade2_23_0USDCPreflight(t *testing.T) {
 			case "wrong_mapping":
 				f.cfg.BankDenom = "erc20/wrong"
 			case "missing_safe":
-				f.cfg.Safe = f.zero
+				sdb := f.deps.EvmKeeper.NewSDB(f.deps.Ctx(), f.deps.EvmKeeper.TxConfig(f.deps.Ctx(), gethcommon.Hash{}))
+				sdb.SetCode(f.cfg.Safe, nil)
+				sdb.Commit()
 			}
 			require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
 			require.Equal(t, "70", f.deps.App.BankKeeper.GetSupply(f.deps.Ctx(), "erc20/"+f.cfg.Token.Hex()).Amount.String())
@@ -435,7 +446,7 @@ func preUpgradeChain(
 // governance permission keeper passes.
 func TestUpgrade2_23_0CreatesXConsensus(t *testing.T) {
 	for _, chainID := range []string{
-		appconst.SDK_CHAIN_ID_MAINNET, "nibiru-testnet-2", "localnet",
+		appconst.SDK_CHAIN_ID_MAINNET, "nibiru-testnet-2", "nibiru-localnet-0",
 	} {
 		t.Run(chainID, func(t *testing.T) {
 			pre := preUpgradeParams()
@@ -494,7 +505,7 @@ func TestUpgrade2_23_0CreatesXConsensus(t *testing.T) {
 func TestUpgrade2_23_0FailureContinues(t *testing.T) {
 	broken := preUpgradeParams()
 	broken.Validator = nil
-	nibiru, ctx := preUpgradeChain(t, "localnet", &broken)
+	nibiru, ctx := preUpgradeChain(t, "nibiru-localnet-0", &broken)
 	events := runConsensusUpgrade2_23(t, nibiru, ctx)
 
 	var failed bool
@@ -518,7 +529,7 @@ func TestUpgrade2_23_0FailureContinues(t *testing.T) {
 // a missing mount would drop it from the commit info and split the app hash.
 func TestUpgrade2_23_0KeepsConsensusStore(t *testing.T) {
 	pre := preUpgradeParams()
-	nibiru, ctx := preUpgradeChain(t, "localnet", &pre)
+	nibiru, ctx := preUpgradeChain(t, "nibiru-localnet-0", &pre)
 	require.True(t, nibiru.ConsensusKeeper.Has(ctx))
 
 	runConsensusUpgrade2_23(t, nibiru, ctx)
@@ -564,7 +575,7 @@ func countOf(names []string, want string) int {
 	return n
 }
 
-const holderSetFixtureSHA256 = "24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e"
+const holderSetFixtureSHA256 = "fe453d5690f836f231b79b039b8561702a70d20cc5e34415a8faa6773037d4ca"
 
 func holderSetBytecode(t *testing.T) ([]byte, []byte) {
 	t.Helper()
@@ -602,7 +613,7 @@ func deployHolderSet(t *testing.T, deps evmtest.TestDeps, creator sdk.AccAddress
 // keeper. It models predeployment, batched SQL imports, and a last-minute
 // operator update before the migration reads every page. No balances are stored.
 func TestUSDCHolderSetKeeper(t *testing.T) {
-	for _, chainID := range []string{"localnet", "nibiru-testnet-3", "cataclysm-1"} {
+	for _, chainID := range []string{"nibiru-localnet-0", "nibiru-testnet-2", "cataclysm-1"} {
 		t.Run(chainID, func(t *testing.T) {
 			testUSDCHolderSetKeeper(t, chainID)
 		})
@@ -674,7 +685,7 @@ func testUSDCHolderSetKeeper(t *testing.T, chainID string) {
 func TestUSDCHolderSetInstantiate2Parity(t *testing.T) {
 	var shared sdk.AccAddress
 	creator := sdk.AccAddress(bytes.Repeat([]byte{17}, 20))
-	for index, chainID := range []string{"localnet", "nibiru-testnet-3", "cataclysm-1"} {
+	for index, chainID := range []string{"nibiru-localnet-0", "nibiru-testnet-2", "cataclysm-1"} {
 		t.Run(chainID, func(t *testing.T) {
 			deps := evmtest.NewTestDeps()
 			deps.SetCtx(deps.Ctx().WithChainID(chainID).WithGasMeter(sdk.NewInfiniteGasMeter()))
@@ -843,6 +854,7 @@ func TestUSDCMigrationReportSkippedOrFailedPreflight(t *testing.T) {
 type holderSetResponseKeeper struct {
 	checksum []byte
 	pages    []string
+	config   string
 	queryErr error
 	cursors  []string
 }
@@ -856,6 +868,9 @@ func (k *holderSetResponseKeeper) GetCodeInfo(sdk.Context, uint64) *wasmtypes.Co
 }
 
 func (k *holderSetResponseKeeper) QuerySmart(_ sdk.Context, _ sdk.AccAddress, msg []byte) ([]byte, error) {
+	if bytes.Contains(msg, []byte(`"config"`)) {
+		return []byte(k.config), k.queryErr
+	}
 	var query struct {
 		Addresses struct {
 			StartAfter *string `json:"start_after"`
@@ -876,6 +891,163 @@ func (k *holderSetResponseKeeper) QuerySmart(_ sdk.Context, _ sdk.AccAddress, ms
 		return nil, fmt.Errorf("unexpected extra registry query")
 	}
 	return []byte(k.pages[len(k.cursors)-1]), nil
+}
+
+func TestUSDCHolderConfigChecksChainAndDestination(t *testing.T) {
+	registry := sdk.AccAddress(bytes.Repeat([]byte{7}, 32))
+	admin := sdk.AccAddress(bytes.Repeat([]byte{8}, 20)).String()
+	checksum := bytes.Repeat([]byte{9}, 32)
+	for _, tc := range []struct {
+		name, chain, reportedChain, target, admin string
+		queryError, wrongChecksum, wantError      bool
+	}{
+		{name: "mainnet Safe", chain: "cataclysm-1", target: upgrades.USDCMainnetSafeV223},
+		{name: "mainnet operator rejected", chain: "cataclysm-1", target: upgrades.USDCOperatorV223, wantError: true},
+		{name: "testnet operator", chain: upgrades.USDCTestnetChainV223, target: upgrades.USDCOperatorV223},
+		{name: "testnet Safe", chain: upgrades.USDCTestnetChainV223, target: upgrades.USDCMainnetSafeV223},
+		{name: "localnet operator", chain: upgrades.USDCLocalnetChainV223, target: upgrades.USDCOperatorV223},
+		{name: "localnet Safe", chain: upgrades.USDCLocalnetChainV223, target: upgrades.USDCMainnetSafeV223},
+		{name: "unapproved target", chain: upgrades.USDCTestnetChainV223, target: holderSetAddress(1), wantError: true},
+		{name: "malformed target", chain: upgrades.USDCTestnetChainV223, target: "0x1", wantError: true},
+		{name: "chain mismatch", chain: upgrades.USDCTestnetChainV223, reportedChain: "cataclysm-1", target: upgrades.USDCOperatorV223, wantError: true},
+		{name: "unsupported chain", chain: "nibiru-testnet-3", target: upgrades.USDCOperatorV223, wantError: true},
+		{name: "missing admin", chain: upgrades.USDCTestnetChainV223, target: upgrades.USDCOperatorV223, admin: "invalid", wantError: true},
+		{name: "query failure", chain: upgrades.USDCTestnetChainV223, target: upgrades.USDCOperatorV223, queryError: true, wantError: true},
+		{name: "wrong bytecode", chain: upgrades.USDCTestnetChainV223, target: upgrades.USDCOperatorV223, wrongChecksum: true, wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.reportedChain == "" {
+				tc.reportedChain = tc.chain
+			}
+			if tc.admin == "" {
+				tc.admin = admin
+			}
+			data, err := json.Marshal(upgrades.USDCHolderConfigV223{ChainID: tc.reportedChain, HoldingAddress: tc.target, Admin: tc.admin})
+			require.NoError(t, err)
+			keeper := &holderSetResponseKeeper{checksum: checksum, config: string(data)}
+			expected := checksum
+			if tc.wrongChecksum {
+				expected = bytes.Repeat([]byte{10}, 32)
+			}
+			if tc.queryError {
+				keeper.queryErr = fmt.Errorf("config query failed")
+			}
+			ctx := sdk.Context{}.WithChainID(tc.chain)
+			got, err := upgrades.ReadUSDCHolderConfigV223(ctx, keeper, registry, expected)
+			if tc.wantError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.chain, got.ChainID)
+				require.Equal(t, tc.target, got.HoldingAddress)
+				require.Equal(t, admin, got.Admin)
+			}
+		})
+	}
+}
+
+func TestUSDCMigrationProfilesUseExactSDKChainIDs(t *testing.T) {
+	mainnet := upgrades.DefaultUSDCMigrationConfigV223()
+	for _, chainID := range []string{"cataclysm-1", upgrades.USDCTestnetChainV223, upgrades.USDCLocalnetChainV223} {
+		profile, ok := upgrades.USDCMigrationConfigForChainV223(chainID)
+		require.True(t, ok)
+		require.Equal(t, mainnet.Registry, profile.Registry)
+		require.Equal(t, mainnet.RegistryChecksum, profile.RegistryChecksum)
+		if chainID == "cataclysm-1" {
+			require.Equal(t, mainnet, profile)
+		} else {
+			require.Equal(t, gethcommon.HexToAddress(upgrades.USDCTestnetTokenV223), profile.Token)
+			require.NotEqual(t, gethcommon.Address{}, profile.Token)
+			require.Equal(t, "erc20/"+profile.Token.Hex(), profile.BankDenom)
+			require.Equal(t, gethcommon.HexToAddress(upgrades.USDCOperatorV223), profile.Safe)
+			require.Equal(t, []sdk.AccAddress{wasmkeeper.BuildContractAddressPredictable(profile.RegistryChecksum,
+				sdk.MustAccAddressFromBech32(upgrades.USDCHolderSetCreatorV223), []byte("usdc-recovery-fixture-v1"), nil)}, profile.ReplacedBankHolders)
+			require.NotEqual(t, mainnet.ReplacedBankHolders, profile.ReplacedBankHolders)
+		}
+	}
+	for _, chainID := range []string{"localnet", "nibiru-testnet-3", "6911", "", "cataclysm-2"} {
+		_, ok := upgrades.USDCMigrationConfigForChainV223(chainID)
+		require.False(t, ok)
+	}
+}
+
+func setHolderHoldingAddress(t *testing.T, f usdcUpgradeFixture, sender sdk.AccAddress, target string) error {
+	t.Helper()
+	msg, err := json.Marshal(map[string]any{"set_holding_address": map[string]any{"holding_address": target}})
+	require.NoError(t, err)
+	_, err = wasmkeeper.NewDefaultPermissionKeeper(f.deps.App.WasmKeeper).Execute(f.deps.Ctx(), f.cfg.Registry, sender, msg, sdk.Coins{})
+	return err
+}
+
+func TestUpgrade2_23_0RegistryConfigAuthorizesDestination(t *testing.T) {
+	creator := sdk.AccAddress(bytes.Repeat([]byte{17}, 20))
+	for _, chainID := range []string{"cataclysm-1", upgrades.USDCTestnetChainV223, upgrades.USDCLocalnetChainV223} {
+		t.Run(chainID, func(t *testing.T) {
+			f := setupUSDCUpgrade(t, chainID)
+			config, err := upgrades.ReadUSDCHolderConfigV223(f.deps.Ctx(), f.deps.App.WasmKeeper, f.cfg.Registry, f.cfg.RegistryChecksum)
+			require.NoError(t, err)
+			require.Equal(t, chainID, config.ChainID)
+			require.Equal(t, creator.String(), config.Admin)
+			require.Equal(t, f.cfg.Safe, gethcommon.HexToAddress(config.HoldingAddress))
+			require.Error(t, setHolderHoldingAddress(t, f, f.bankUser, upgrades.USDCMainnetSafeV223))
+			require.Error(t, setHolderHoldingAddress(t, f, creator, holderSetAddress(1)))
+			if chainID == "cataclysm-1" {
+				require.ErrorContains(t, setHolderHoldingAddress(t, f, creator, upgrades.USDCOperatorV223), "immutable")
+				return
+			}
+			require.NoError(t, setHolderHoldingAddress(t, f, creator, upgrades.USDCMainnetSafeV223))
+			safe := gethcommon.HexToAddress(upgrades.USDCMainnetSafeV223)
+			sdb := f.deps.EvmKeeper.NewSDB(f.deps.Ctx(), f.deps.EvmKeeper.TxConfig(f.deps.Ctx(), gethcommon.Hash{}))
+			sdb.SetCode(safe, sdb.GetCode(f.cfg.SaiEvm))
+			sdb.Commit()
+			f.deps.SetCtx(f.deps.Ctx().WithEventManager(sdk.NewEventManager()))
+			// Keep cfg.Safe at op-b deliberately. The live Config query must
+			// determine the destination before either collection path starts.
+			require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
+			report, err := upgrades.ReconstructUSDCMigration(f.deps.Ctx().EventManager().ABCIEvents())
+			require.NoError(t, err)
+			require.Equal(t, "completed", report.Status)
+			require.Equal(t, safe.Hex(), report.Safe)
+			// The former op-b destination is itself an indexed EOA holder,
+			// so its five units now join the collection at the selected Safe.
+			require.Equal(t, "93", report.Collected)
+			require.Equal(t, "93", usdcBalance(t, &f, safe).String())
+			require.Zero(t, usdcBalance(t, &f, f.cfg.Safe).Sign())
+		})
+	}
+}
+
+func TestUpgrade2_23_0RegistryConfigFailureMovesNothing(t *testing.T) {
+	for _, mode := range []string{"unapproved_holding", "undeployed_safe", "unsupported_chain"} {
+		t.Run(mode, func(t *testing.T) {
+			f := setupUSDCUpgrade(t, upgrades.USDCTestnetChainV223)
+			switch mode {
+			case "unapproved_holding":
+				value, err := json.Marshal(holderSetAddress(1))
+				require.NoError(t, err)
+				key := append(wasmtypes.GetContractStorePrefix(f.cfg.Registry), []byte("holding_address")...)
+				f.deps.Ctx().KVStore(f.deps.App.GetKey(wasmtypes.StoreKey)).Set(key, value)
+			case "undeployed_safe":
+				require.NoError(t, setHolderHoldingAddress(t, f, sdk.AccAddress(bytes.Repeat([]byte{17}, 20)), upgrades.USDCMainnetSafeV223))
+			case "unsupported_chain":
+				f.deps.SetCtx(f.deps.Ctx().WithChainID("nibiru-testnet-3"))
+			}
+			f.deps.SetCtx(f.deps.Ctx().WithEventManager(sdk.NewEventManager()))
+			require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
+			report, err := upgrades.ReconstructUSDCMigration(f.deps.Ctx().EventManager().ABCIEvents())
+			require.NoError(t, err)
+			require.Equal(t, "0", report.Collected)
+			if mode == "unsupported_chain" {
+				require.Equal(t, "skipped", report.Status)
+				require.Equal(t, "unsupported_chain", report.Reason)
+			} else {
+				require.Equal(t, "failed", report.Status)
+			}
+			require.Equal(t, "70", f.deps.App.BankKeeper.GetSupply(f.deps.Ctx(), f.cfg.BankDenom).Amount.String())
+			require.Equal(t, "7", usdcBalance(t, &f, f.eoa).String())
+			require.Equal(t, "5", usdcBalance(t, &f, f.cfg.Safe).String())
+		})
+	}
 }
 
 func holderSetPage(t *testing.T, addresses []string, next *string) string {

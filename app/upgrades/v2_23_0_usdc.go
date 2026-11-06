@@ -31,14 +31,20 @@ import (
 )
 
 const (
-	USDCHolderSetChecksumV223 = "24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e"
+	USDCHolderSetChecksumV223 = "fe453d5690f836f231b79b039b8561702a70d20cc5e34415a8faa6773037d4ca"
 	USDCHolderSetSaltV223     = "usdc-holders-v1"
 	USDCHolderSetCreatorV223  = "nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l"
+	USDCMainnetSafeV223       = "0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2"
+	USDCOperatorV223          = "0x447fC0471f5d8150A790e19000930108aCCe0BC7"
+	USDCTestnetChainV223      = "nibiru-testnet-2"
+	USDCLocalnetChainV223     = "nibiru-localnet-0"
+	// Disposable six-decimal ERC20-origin rehearsal asset on testnet-2.
+	USDCTestnetTokenV223 = "0x0F1fD9763cC431d7fceC1AFA925747619bbb7b96"
 )
 
-// USDCMigrationConfigV223 identifies one reviewed deployment. The same profile
-// can be exercised on any chain with matching predeployed contracts and mapping.
-// Tests supply their own explicit profile rather than mutating production state.
+// USDCMigrationConfigV223 identifies one reviewed asset deployment. Safe is
+// populated from the validated registry Config query before collection. Tests
+// supply explicit asset fixtures without bypassing chain or destination policy.
 type USDCMigrationConfigV223 struct {
 	Registry            sdk.AccAddress
 	RegistryChecksum    []byte
@@ -51,8 +57,6 @@ type USDCMigrationConfigV223 struct {
 
 // DefaultUSDCMigrationConfigV223 returns the reviewed mainnet identities.
 // Contract bytes and creator/salt must be finalized before registry deployment.
-// Testnet activation requires these same identities to be provisioned explicitly;
-// merely deploying an address set does not bypass token/mapping/recipient checks.
 func DefaultUSDCMigrationConfigV223() USDCMigrationConfigV223 {
 	checksum, err := hex.DecodeString(USDCHolderSetChecksumV223)
 	if err != nil {
@@ -64,13 +68,34 @@ func DefaultUSDCMigrationConfigV223() USDCMigrationConfigV223 {
 		RegistryChecksum: checksum,
 		Token:            gethcommon.HexToAddress("0x0829F361A05D993d5CEb035cA6DF3446b060970b"),
 		BankDenom:        "erc20/0x0829F361A05D993d5CEb035cA6DF3446b060970b",
-		Safe:             gethcommon.HexToAddress("0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2"),
+		Safe:             gethcommon.HexToAddress(USDCMainnetSafeV223),
 		SaiEvm:           gethcommon.HexToAddress("0x25589C8071fa10B7a8c62CdCA7035c539242A774"),
 		ReplacedBankHolders: []sdk.AccAddress{
 			sdk.MustAccAddressFromBech32("nibi1ntmw2dfvd0qnw5fnwdu9pev2hsnqfdj9ny9n0nzh2a5u8v0scflq930mph"),
 			sdk.MustAccAddressFromBech32("nibi193m2a00pmdsvkcvugrfewqzhtq6k0srkjzvxp2sk357vlpspx5vqxu8d7p"),
 			sdk.MustAccAddressFromBech32("nibi1waf5c8z55qvjay4de8wkm9cxyt6wa8zdnrvlexjrq77lqgqf258q3yn7l8"),
 		},
+	}
+}
+
+// USDCMigrationConfigForChainV223 selects fixed assets independently of the
+// registry's mutable candidate set and restricted holding-address choice.
+func USDCMigrationConfigForChainV223(chainID string) (USDCMigrationConfigV223, bool) {
+	profile := DefaultUSDCMigrationConfigV223()
+	switch chainID {
+	case appconst.SDK_CHAIN_ID_MAINNET:
+		return profile, true
+	case USDCTestnetChainV223, USDCLocalnetChainV223:
+		profile.Token = gethcommon.HexToAddress(USDCTestnetTokenV223)
+		profile.BankDenom = "erc20/" + profile.Token.Hex()
+		profile.Safe = gethcommon.HexToAddress(USDCOperatorV223)
+		profile.ReplacedBankHolders = []sdk.AccAddress{
+			wasmkeeper.BuildContractAddressPredictable(profile.RegistryChecksum,
+				sdk.MustAccAddressFromBech32(USDCHolderSetCreatorV223), []byte("usdc-recovery-fixture-v1"), nil),
+		}
+		return profile, true
+	default:
+		return profile, false
 	}
 }
 
@@ -100,7 +125,11 @@ func (h Handler_v2_23) Handler(mm *module.Manager, cfg module.Configurator, nibi
 		if err := nibiru.UpgradeKeeper.ActivateContract(ctx); err != nil {
 			return nil, fmt.Errorf("activate x-upgrade: %w", err)
 		}
-		profile := DefaultUSDCMigrationConfigV223()
+		profile, supported := USDCMigrationConfigForChainV223(ctx.ChainID())
+		if !supported {
+			usdcSummaryV223(ctx, profile, "skipped", "unsupported_chain")
+			return versions, nil
+		}
 		if h.USDC != nil {
 			profile = *h.USDC
 		}
@@ -159,6 +188,11 @@ func runUSDCMigrationV223(ctx sdk.Context, nibiru *keepers.PublicKeepers, cfg US
 		usdcSummaryV223(ctx, cfg, "skipped", "registry_not_deployed")
 		return nil
 	}
+	registryConfig, err := ReadUSDCHolderConfigV223(ctx, nibiru.WasmKeeper, cfg.Registry, cfg.RegistryChecksum)
+	if err != nil {
+		return err
+	}
+	cfg.Safe = gethcommon.HexToAddress(registryConfig.HoldingAddress)
 	candidates, err := ReadUSDCHolderSet(ctx, nibiru.WasmKeeper, cfg.Registry, cfg.RegistryChecksum)
 	if err != nil {
 		return err
@@ -295,8 +329,11 @@ func validateUSDCProfileV223(ctx sdk.Context, nibiru *keepers.PublicKeepers, cfg
 		return fmt.Errorf("USDC profile requires the exact ERC20-originated FunToken mapping")
 	}
 	sdb := nibiru.EvmKeeper.NewSDB(ctx, nibiru.EvmKeeper.TxConfig(ctx, gethcommon.Hash{}))
-	if sdb.GetCodeSize(cfg.Token) == 0 || sdb.GetCodeSize(cfg.Safe) == 0 || sdb.GetCodeSize(cfg.SaiEvm) == 0 {
-		return fmt.Errorf("USDC token, Safe and SaiEvm must be deployed for this profile")
+	if sdb.GetCodeSize(cfg.Token) == 0 || sdb.GetCodeSize(cfg.SaiEvm) == 0 {
+		return fmt.Errorf("USDC token and SaiEvm must be deployed for this profile")
+	}
+	if cfg.Safe == gethcommon.HexToAddress(USDCMainnetSafeV223) && sdb.GetCodeSize(cfg.Safe) == 0 {
+		return fmt.Errorf("USDC Safe destination must be deployed")
 	}
 	abi := embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI
 	zeroValue := new(big.Int)
@@ -426,6 +463,74 @@ type USDCHolderSetKeeper interface {
 	QuerySmart(sdk.Context, sdk.AccAddress, []byte) ([]byte, error)
 }
 
+type USDCHolderConfigV223 struct {
+	ChainID        string `json:"chain_id"`
+	HoldingAddress string `json:"holding_address"`
+	Admin          string `json:"admin"`
+}
+
+// ReadUSDCHolderConfigV223 authenticates the contract and checks the destination
+// against chain policy. Mutable registry state cannot choose an arbitrary payee.
+func ReadUSDCHolderConfigV223(ctx sdk.Context, keeper USDCHolderSetKeeper, contract sdk.AccAddress, checksum []byte) (USDCHolderConfigV223, error) {
+	var config USDCHolderConfigV223
+	if err := validateUSDCHolderContractV223(ctx, keeper, contract, checksum); err != nil {
+		return config, err
+	}
+	data, err := keeper.QuerySmart(ctx, contract, []byte(`{"config":{}}`))
+	if err != nil {
+		return config, fmt.Errorf("query USDC holder config: %w", err)
+	}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return config, fmt.Errorf("decode USDC holder config: %w", err)
+	}
+	if config.ChainID != ctx.ChainID() {
+		return config, fmt.Errorf("USDC holder config chain %q differs from %q", config.ChainID, ctx.ChainID())
+	}
+	admin, err := sdk.GetFromBech32(config.Admin, appconst.AccountAddressPrefix)
+	if err != nil {
+		return config, fmt.Errorf("USDC holder config admin: %w", err)
+	}
+	if err := sdk.VerifyAddressFormat(admin); err != nil {
+		return config, fmt.Errorf("USDC holder config admin: %w", err)
+	}
+	if len(config.HoldingAddress) != 42 || !gethcommon.IsHexAddress(config.HoldingAddress) || !strings.EqualFold(config.HoldingAddress[:2], "0x") {
+		return config, fmt.Errorf("USDC holder config has invalid holding address")
+	}
+	destination := gethcommon.HexToAddress(config.HoldingAddress)
+	safe, operator := gethcommon.HexToAddress(USDCMainnetSafeV223), gethcommon.HexToAddress(USDCOperatorV223)
+	switch ctx.ChainID() {
+	case appconst.SDK_CHAIN_ID_MAINNET:
+		if destination != safe {
+			return config, fmt.Errorf("USDC mainnet holding address must be the Nibiru Safe")
+		}
+	case USDCTestnetChainV223, USDCLocalnetChainV223:
+		if destination != safe && destination != operator {
+			return config, fmt.Errorf("USDC rehearsal holding address must be the Nibiru Safe or operator")
+		}
+	default:
+		return config, fmt.Errorf("USDC holder config has unsupported chain %q", ctx.ChainID())
+	}
+	return config, nil
+}
+
+func validateUSDCHolderContractV223(ctx sdk.Context, keeper USDCHolderSetKeeper, contract sdk.AccAddress, checksum []byte) error {
+	if err := sdk.VerifyAddressFormat(contract); err != nil {
+		return fmt.Errorf("USDC holder set: invalid contract address: %w", err)
+	}
+	if len(checksum) != 32 {
+		return fmt.Errorf("USDC holder set: expected a 32-byte checksum")
+	}
+	info := keeper.GetContractInfo(ctx, contract)
+	if info == nil {
+		return fmt.Errorf("USDC holder set %s is not deployed", contract)
+	}
+	code := keeper.GetCodeInfo(ctx, info.CodeID)
+	if code == nil || !bytes.Equal(code.CodeHash, checksum) {
+		return fmt.Errorf("USDC holder set %s has unexpected bytecode", contract)
+	}
+	return nil
+}
+
 // ReadUSDCHolderSet reads candidates, not balances or transfer permissions.
 // It checks the deployed bytecode and pagination before returning candidates.
 // Malformed individual addresses are reported and skipped. Structural failures
@@ -434,19 +539,8 @@ type USDCHolderSetKeeper interface {
 func ReadUSDCHolderSet(
 	ctx sdk.Context, keeper USDCHolderSetKeeper, contract sdk.AccAddress, checksum []byte,
 ) ([]gethcommon.Address, error) {
-	if err := sdk.VerifyAddressFormat(contract); err != nil {
-		return nil, fmt.Errorf("USDC holder set: invalid contract address: %w", err)
-	}
-	if len(checksum) != 32 {
-		return nil, fmt.Errorf("USDC holder set: expected a 32-byte checksum")
-	}
-	info := keeper.GetContractInfo(ctx, contract)
-	if info == nil {
-		return nil, fmt.Errorf("USDC holder set %s is not deployed", contract)
-	}
-	code := keeper.GetCodeInfo(ctx, info.CodeID)
-	if code == nil || !bytes.Equal(code.CodeHash, checksum) {
-		return nil, fmt.Errorf("USDC holder set %s has unexpected bytecode", contract)
+	if err := validateUSDCHolderContractV223(ctx, keeper, contract, checksum); err != nil {
+		return nil, err
 	}
 
 	var candidates []gethcommon.Address
