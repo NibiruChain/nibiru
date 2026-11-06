@@ -1,8 +1,9 @@
 # Temporary USDC Holder Set
 
 One-time deployment input for the v2.23 legacy-USDC migration. The contract
-stores only EVM candidate addresses. The migration reads balances and contract
-code from the chain at upgrade execution.
+stores EVM candidate addresses, its execute admin, and an optional rehearsal
+holding address. The migration reads balances and contract code from the chain
+at upgrade execution. The registry itself holds no migration transfer authority.
 
 This is temporary source kept to build and review the deployment artifact.
 After the registry is deployed and the migration no longer needs it, remove
@@ -38,9 +39,35 @@ the final page, including when the final page is exactly full.
 {"addresses":["0x0000000000000000000000000000000000000001"],"next_start_after":null}
 ```
 
-The execute admin stored in contract state is separate from the optional Wasm
-migration admin. No migrate entry point is provided. Deployment must explicitly
-choose whether to set a migration admin; tests instantiate with none.
+The public configuration query returns the execution chain, holding address, and
+execute admin:
+
+```json
+{"config":{}}
+```
+
+```json
+{"chain_id":"nibiru-testnet-2","holding_address":"0x447fC0471f5d8150A790e19000930108aCCe0BC7","admin":"nibi1..."}
+```
+
+Only the stored execute admin may change the rehearsal holding address:
+
+```json
+{"set_holding_address":{"holding_address":"0x447fC0471f5d8150A790e19000930108aCCe0BC7"}}
+```
+
+On `cataclysm-1`, Config always returns the immutable Safe
+`0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2` and destination edits fail.
+On `nibiru-testnet-2` and `nibiru-localnet-0`, Config defaults to op-b above.
+The execute admin may select only op-b or that Safe. The chain comes from Env,
+not a query argument. Unsupported chains reject Config and destination updates.
+`UserAddr` accepts equivalent hexadecimal or Nibiru account forms by byte
+identity. Go independently validates the destination and requires deployed code
+when the Safe is selected.
+
+The execute admin differs from the Wasm migration admin. Deploy with `ud-prod`
+as execute admin and `--no-admin` for Wasm. There is no migrate entry point or
+execute-admin rotation message. Every execute rejects attached funds.
 
 ## Deterministic Deployment
 
@@ -48,8 +75,11 @@ Deploy before the upgrade on every target network. Use the same Wasm checksum,
 actual instantiate-message creator and salt, with `fix_msg=false`. Code IDs,
 chain IDs, execute admin, and initial holder contents may differ without changing
 the predicted address. A multisig executing instantiate2 is the creator, not its
-signer. The operator creator, deployment salt, and final shared address still
-need to be selected and recorded before release wiring.
+signer. The selected creator and execute admin is `ud-prod`,
+`nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l`, with salt `usdc-holders-v1`.
+Current bytes derive `nibi1yrflth2rznwwj3u8h5autuq55hdgmlz6kshgarvnj7ylqup8cpnsefl0se`.
+The testnet recovery fixture uses the distinct salt `usdc-recovery-fixture-v1`.
+Verify the fixture checksum and on-chain metadata before using either instance.
 
 ## Build and Test
 

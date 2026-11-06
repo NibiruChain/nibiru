@@ -8,7 +8,7 @@ exercise the Go reader. No source-level contract mock substitutes for execution.
 Decompressed SHA-256:
 
 ```text
-24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e
+fe453d5690f836f231b79b039b8561702a70d20cc5e34415a8faa6773037d4ca
 ```
 
 Temporary source: `wasm-contracts/usdc-holder-set`. Build on the x86_64 homebox
@@ -21,16 +21,18 @@ so a final homebox rebuild and Keeper test pass are required even if the API
 is unchanged. Select the final deployment checksum/address only afterward.
 
 The current fixture was generated on homebox x86_64 from source revision
-`5cfe5f54f6ef694962d8472ee72fb116f2186a3a`. File `build-info.json` records the
+`20780e729`. File `build-info.json` records the
 compiler, source revision, architecture, build flags, and both raw/gzip hashes.
-This rebuild allows opaque pagination cursors so a malformed boundary key does
-not prevent later valid holders from being read. The complete upgrade, app,
-and report suites pass with this fixture on ARM64 and homebox x86_64.
+This rebuild adds the chain-bound holding-address query and restricted admin
+update. Opaque pagination cursors still allow reading beyond a malformed boundary
+key. The complete upgrade, app, and report suites execute these exact bytes.
+Build provenance identifies the source revision used for the Wasm, independently
+of later Go and documentation commits.
 
 Run the focused keeper tests:
 
 ```sh
-go test ./app/upgrades -run TestUSDCHolderSet -count=1
+go test ./app/upgrades -run 'TestUSDCHolder|TestUpgrade2_23_0' -count=1
 ```
 
 The tests cover an admin's final update before reading, unauthorized and invalid
@@ -44,7 +46,7 @@ stays with the upgrade tests.
 
 | Behavior | Coverage |
 | --- | --- |
-| Deploy real fixture, apply final admin updates, read all candidates | Real Keeper tests on localnet, nibiru-testnet-3, and cataclysm-1 |
+| Deploy real fixture, apply final admin updates, read all candidates | Real Keeper tests on nibiru-localnet-0, nibiru-testnet-2, and cataclysm-1 |
 | Same instantiate2 address despite different code IDs and initial contents | Real-bytecode Keeper parity tests |
 | Registered v2.23 handler through evmtest.RunUpgrade | Full collection happy path on explicit localnet/testnet/mainnet chain IDs |
 | Bank conversion, EOA and SaiEvm collection, protected contracts and Safe baseline | Exact balance and repayment/custody assertions in one run |
@@ -55,25 +57,31 @@ stays with the upgrade tests.
 | Fixture checksum and production registry profile remain aligned | Direct regression check against decompressed bytecode |
 
 The handler runs required migrations and enabling transitions before custom
-collection, following the earlier upgrades. The registry is an activation
-signal on any chain. Missing deployment skips the USDC step explicitly; wrong
-bytecode, failed queries, or an invalid token/mapping/recipient profile report
-custom-step failure without moving funds. Each holder operation is cached so
-one failed collection does not undo successful collections or leak its own
-partial bank/EVM writes and success logs.
+collection, following the earlier upgrades. The registry activates collection only
+on the explicitly supported chains. Missing deployment skips collection; invalid
+bytecode, configuration, pagination, mapping, or recipient checks report failure
+before moving funds. Bank conversions retain an outer SDK cache. ERC20 transfers
+use their StateDB snapshot and isolated events, committing only after postchecks.
 
-The default profile contains reviewed mainnet identities. Other networks must
-have matching, validated identities or receive a reviewed profile in the Go
-handler before the shared binary is frozen. The registered handler selects only
-the mainnet profile today; its fixture override is not runtime configuration.
-The recorded testnet Sai collateral is bank-origin, so an ERC20-origin rehearsal
-asset and verified Safe/custody identities are still needed. Deploying the
-registry alone cannot prove collection there. The binary never guesses a token
-or recipient from a name.
+The mainnet profile pins the legacy asset and already-replaced bank custody.
+The testnet/localnet profile pins the disposable six-decimal ERC20-origin asset
+`0x0F1fD9763cC431d7fceC1AFA925747619bbb7b96` and its deterministic recovery
+fixture. Existing testnet Sai bank-origin collateral is not the rehearsal asset.
 
-The source is temporary and the fixture remains provisional until the final
-homebox build and predeployment verification. Local handler tests do not perform
-the later cross-chain bridge round trip or broadcast repayments.
+The authenticated Config query supplies the destination. Mainnet always uses
+`0x22CBd7CbF3b33681abB3Ced4D64d71acB9a9dCd2`; testnet/localnet default to
+`0x447fC0471f5d8150A790e19000930108aCCe0BC7`. Only those two addresses are
+permitted on rehearsal chains, and selecting the Safe requires deployed code.
+Unknown chains do not collect. Registry presence alone cannot select an asset
+or an arbitrary recipient.
+
+With the pinned creator `nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l`, salt
+`usdc-holders-v1`, and `fix_msg=false`, these bytes derive
+`nibi1yrflth2rznwwj3u8h5autuq55hdgmlz6kshgarvnj7ylqup8cpnsefl0se`.
+Deploy with that creator as execute admin and no Wasm migration admin. Further
+Rust edits require another homebox build, checksum/address update, and Keeper
+pass before deployment. Keeper tests do not perform cross-chain bridging or
+broadcast repayments.
 
 Use the read-only report helper after execution:
 
