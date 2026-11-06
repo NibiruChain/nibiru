@@ -9,6 +9,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -202,7 +203,11 @@ func ReconstructUSDCMigration(events []abci.Event) (*USDCMigrationReport, error)
 			}
 			switch account.Representation {
 			case "bank":
-				if _, err := sdk.AccAddressFromBech32(account.Source); err != nil {
+				address, err := sdk.GetFromBech32(account.Source, appconst.AccountAddressPrefix)
+				if err != nil {
+					return nil, fmt.Errorf("USDC migration: invalid bank holder: %w", err)
+				}
+				if err := sdk.VerifyAddressFormat(address); err != nil {
 					return nil, fmt.Errorf("USDC migration: invalid bank holder: %w", err)
 				}
 			case "erc20":

@@ -39,8 +39,10 @@ func reportTyped(t *testing.T, event interface {
 func reportFixture(t *testing.T) []abci.Event {
 	t.Helper()
 	token, safe := gethcommon.HexToAddress("0x100"), gethcommon.HexToAddress("0x200")
-	bankUser := sdk.AccAddress(bytes.Repeat([]byte{3}, 20)).String()
-	bankCore := sdk.AccAddress(bytes.Repeat([]byte{4}, 32)).String()
+	bankUser, err := sdk.Bech32ifyAddressBytes("nibi", bytes.Repeat([]byte{3}, 20))
+	require.NoError(t, err)
+	bankCore, err := sdk.Bech32ifyAddressBytes("nibi", bytes.Repeat([]byte{4}, 32))
+	require.NoError(t, err)
 	eoa, sai := gethcommon.HexToAddress("0x300"), gethcommon.HexToAddress("0x400")
 	denom := "erc20/" + token.Hex()
 	frame := func(status string) abci.Event {
@@ -93,7 +95,9 @@ func TestUSDCMigrationReportFromBlockEvents(t *testing.T) {
 	require.Equal(t, "400", report.Repayment)
 	require.Equal(t, "600", report.CustodyRecovery)
 	require.Len(t, report.Accounts, 7)
-	require.Equal(t, sdk.AccAddress(bytes.Repeat([]byte{4}, 32)).String(), report.Accounts[1].Source)
+	wantCore, err := sdk.Bech32ifyAddressBytes("nibi", bytes.Repeat([]byte{4}, 32))
+	require.NoError(t, err)
+	require.Equal(t, wantCore, report.Accounts[1].Source)
 	readable, err := json.MarshalIndent(report, "", "  ")
 	require.NoError(t, err)
 	t.Log(string(readable))
