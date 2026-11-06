@@ -136,8 +136,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                     "limit must be between 1 and 500",
                 ));
             }
-            let start_after =
-                start_after.as_deref().map(normalize).transpose()?;
+            // Pagination cursors are opaque stored keys, not candidates to
+            // validate. A malformed key returned at a page boundary must still
+            // let the reader resume after it and reach later valid holders.
             // Read one extra key to distinguish a full final page from more data.
             let mut addresses = ADDRESSES
                 .keys(
@@ -274,14 +275,67 @@ mod tests {
             )
             .is_err());
         }
-        assert!(query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Addresses {
-                start_after: Some("bad".into()),
-                limit: None
-            }
+        let page: AddressesResponse = from_json(
+            query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::Addresses {
+                    start_after: Some("bad".into()),
+                    limit: None,
+                },
+            )
+            .unwrap(),
         )
-        .is_err());
+        .unwrap();
+        assert!(page.addresses.is_empty());
+        assert_eq!(page.next_start_after, None);
+    }
+
+    #[test]
+    fn opaque_cursor_resumes_after_a_malformed_boundary_key() {
+        let mut deps = mock_dependencies();
+        instantiate(
+            deps.as_mut(),
+            mock_env(),
+            mock_info("creator", &[]),
+            InstantiateMsg {
+                admin: "admin".into(),
+                addresses: (1..=201).map(address).collect(),
+            },
+        )
+        .unwrap();
+        // Admin updates still reject malformed candidates. Inject storage only
+        // to prove defensive pagination can cross a malformed returned key.
+        let bad = format!("{}z", address(199));
+        ADDRESSES.save(deps.as_mut().storage, &bad, &true).unwrap();
+        let first: AddressesResponse = from_json(
+            query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::Addresses {
+                    start_after: None,
+                    limit: Some(200),
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(first.addresses.len(), 200);
+        assert_eq!(first.addresses.last(), Some(&bad));
+        assert_eq!(first.next_start_after, Some(bad.clone()));
+        let second: AddressesResponse = from_json(
+            query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::Addresses {
+                    start_after: first.next_start_after,
+                    limit: Some(200),
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(second.addresses, vec![address(200), address(201)]);
+        assert_eq!(second.next_start_after, None);
     }
 }
