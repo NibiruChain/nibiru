@@ -40,6 +40,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
+
+- Public release: November 6, 2026.
+
+Nibiru v2.23 brings Nibiru BFT to mainnet, gives the chain an on-chain control for faster block pacing, and introduces named proposal lanes that place oracle updates ahead of keeper activity and EVM transactions. Contract-backed consensus and upgrade management make those controls explicit, inspectable chain state.
+
+The performance opportunity is demonstrated. A live testnet pacing experiment reduced median block intervals from **5.33 seconds to 0.53 seconds**, with approximately tenfold shorter mean intervals. v2.23 delivers the control path behind that result to mainnet; the authorized pacing choice is a separate on-chain action.
+
+- Source range: `v2.21.2` through `v2.23.0`.
+- Release commit: `2a0ed1446bba9d2f76a4338270f135d433c2694b`, the same source tested by `v2.23.0-rc.1`.
+- Upgrade plan name: `v2.23.0`.
+- [Release artifacts](https://github.com/NibiruChain/nibiru/releases/tag/v2.23.0) · [Full source comparison](https://github.com/NibiruChain/nibiru/compare/v2.21.2...v2.23.0).
+
+### 1 - Main Highlights
+
+- **Nibiru BFT becomes first-party chain infrastructure**, bringing the consensus engine into the same maintained source tree as the SDK, IBC, and Wasm runtime.
+- **Chain-wide block pacing supports demonstrated subsecond operation**, with one authorized contract execution applying the selected interval across nodes.
+- **Four named proposal lanes prioritize oracle updates**, followed by other eligible zero-gas traffic, EVM transactions, and default transactions.
+- **Consensus parameters and upgrade state move into dedicated Wasm contracts**, with existing state preserved and native interfaces retained where applicable.
+- **Runtime, RPC, and developer tooling improve**, including verified WasmVM libraries, corrected Ethereum DATA hashing, and native Wasm optimizer distribution.
+- **The legacy-USDC collection handler ships with a completed live testnet rehearsal**, preserving holder entitlements and leaving unrelated EVM contract balances in place.
+
+### 2 - Nibiru BFT and Measured Faster Blocks
+
+Nibiru BFT brings the deployed CometBFT v0.37.18 engine in-tree under `bft/`. Consensus changes, application integration, and their tests can evolve together in one release. Protocol message identities and existing RPC compatibility remain intact. Builds stamp the Nibiru BFT version alongside the node version, while existing `cometbft_` metrics and `nibid tendermint` commands remain available. [PR #2835](https://github.com/NibiruChain/nibiru/pull/2835)
+
+Timing research identified next-height pacing as a substantial part of the block interval. The contract-backed control replaces independently configured commit waits with one chain-wide value. In the published testnet experiment, a 200 ms pacing setting produced:
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Mean block interval | 5.41 s | 0.56 s |
+| Median block interval | 5.33 s | 0.53 s |
+| Observed blocks | 154 | 699 |
+
+![Live testnet block intervals before and after selecting 200 ms chain-wide pacing. This historical experiment used the preceding testnet candidate; v2.23 brings the capability to mainnet.](https://uniquedivine.com/f/26/nibiru/261029-testnet-blocktime-200ms.png)
+
+Our controlled timing research also demonstrated **57.45 ms block intervals**, measured as the median of healthy-run mean intervals, compared with 1,338.29 ms in the control. Client-observed indexed-result p95 fell from 1,790.68 ms to 275.99 ms. This experiment used four validators and an RPC follower on one host, at one bank transfer per second. It tuned pacing, gossip, and flushing together while retaining both voting phases, execution, and persistence. These are laboratory results from the research build that preceded v2.23. The live testnet experiment above demonstrates subsecond operation on a deployed network.
+
+<details>
+<summary>Controlled Timing Research Configuration</summary>
+
+The healthy comparison used three repetitions per configuration, with 120 measured transfers per repetition. Both configurations used the same research binary and retained a 3,000 ms proposal timeout and 1,000 ms precommit-wait timeout.
+
+| Setting | Control | Faster Configuration |
+| --- | ---: | ---: |
+| Next-height pacing | 1,000 ms | 0 ms |
+| Peer gossip sleep | 100 ms | 1 ms |
+| Connection flush throttle | 100 ms | 1 ms |
+
+The wider availability campaign comprised 42 runs and 5,040 measured transfers. All measured transfers had matching execution results at the ingress validator and RPC follower, including fault scenarios. The single-host setup isolates scheduling overhead; mainnet performance also depends on validator geography, workload, and its chosen configuration.
+
+</details>
+
+Setting `min_block_commit_duration_ms` controls the minimum commit-phase duration before the next height. It retains proposal execution, voting, and state persistence. The upgrade preserves existing consensus parameters and initially leaves this override unset, allowing the authorized operator to select pacing separately. [PR #2861](https://github.com/NibiruChain/nibiru/pull/2861)
+
+### 3 - Oracle-First Proposal Lanes
+
+Previously, EVM transactions were selected ahead of Cosmos transactions, including oracle updates. An EVM trade could therefore execute before an available price update in the same block. v2.23 makes proposal ordering explicit:
+
+| Lane | Proposed Traffic |
+| --- | --- |
+| 1. Oracle | Eligible calls to the configured Sai oracle, including price writes |
+| 2. Other zero-gas | Remaining eligible traffic, including keeper actions, administration, and relayed user trades |
+| 3. EVM | Ethereum transactions selected through the nonce-aware EVM mempool |
+| 4. Default | Other non-EVM transactions |
+
+![Four proposal lanes: oracle, other eligible zero-gas traffic, EVM, and default transactions. The second lane also includes eligible relayed user trades.](https://uniquedivine.com/f/26/261105-block-lanes-01-four-lanes.png)
+
+When an available oracle update is selected, later keeper actions and trades can execute against that update. The oracle address comes from committed chain configuration. Classification retains the existing zero-gas authorization policy.
+
+The first two lanes share a quarter of the proposal's transaction-byte budget, with the oracle lane filling first. Selection preserves signer and fee-payer sequence dependencies by promoting earlier transactions when needed. The EVM lane retains contiguous nonce selection. These lanes govern how upgraded proposers construct blocks; lane ordering is not a new consensus acceptance rule. Property, signed-transaction, and fuzz tests cover ordering, budgets, and acceptance of constructed proposals. [PR #2864](https://github.com/NibiruChain/nibiru/pull/2864)
+
+### 4 - Contract-Backed Consensus and Upgrades
+
+The `x-consensus` contract owns consensus parameters and the optional pacing override. It authorizes changes against the live `x/sudo` root. At EndBlock, a bounded query validates and persists the contract's parameters; the corresponding settings apply to the next height. Restarted nodes load the committed state.
+
+Consensus parameter changes use this contract interface rather than the retired native parameter-update handler. Existing parameter values are imported during the enabling migration. [PR #2861](https://github.com/NibiruChain/nibiru/pull/2861)
+
+The `x-upgrade` contract becomes canonical storage for upgrade plans, completion history, module versions, and scheduling state. The migration imports and verifies the legacy state before activating the contract-backed keeper. Governance remains the scheduling authority.
+
+Existing height-based plans and cancellation messages retain their native interfaces. Time-target requests select a concrete height when a block reaches the target timestamp, then add a configured block delay, initially 1,000 blocks. This gives operators a fixed execution height and a preparation cushion; the timestamp is not an exact activation-time promise. Native Go handlers still execute module migrations, and validators still switch binaries through their normal upgrade mechanism at the scheduled height. Validator tooling receives the finalized height plan. Additive CLI commands expose status, parameters, history, and applied records without requiring an old block lookup. [PR #2872](https://github.com/NibiruChain/nibiru/pull/2872)
+
+### 5 - Runtime, RPC, and Developer Improvements
+
+Node builds pin checksum-verified WasmVM `v1.13.2` native libraries. The release carries runtime validation, gas-accounting, and cleanup maintenance while retaining the existing C ABI and Wasmer 7.4.2 baseline. These libraries are part of the coordinated node upgrade. The release also improves bounded feegrant maintenance and Wasm permission validation. [PR #2847](https://github.com/NibiruChain/nibiru/pull/2847), [PR #2826](https://github.com/NibiruChain/nibiru/pull/2826)
+
+Ethereum RPC compatibility improves for DATA hashing, parameter handling, and pending-transaction responses. Pending-transaction formatting and tests distinguish a mempool observation from a confirmed receipt. The release also tightens diagnostic exposure while retaining EVM tracing. [PR #2883](https://github.com/NibiruChain/nibiru/pull/2883)
+
+The Sai Wasm optimizer supports native ARM64 development builds, pinned compiler environments, VM compatibility checks, and versioned native executable distribution. Contract builds retain source and toolchain provenance. The shared Rust library also adds a storage overlay so smart queries can run existing execution logic without persisting writes; returned messages are not dispatched by that simulation. [PR #2820](https://github.com/NibiruChain/nibiru/pull/2820), [PR #2821](https://github.com/NibiruChain/nibiru/pull/2821), [PR #2870](https://github.com/NibiruChain/nibiru/pull/2870)
+
+The canonical Eris EVM wrapper source adds voting-escrow management and validator-allocation voting for EVM receipt holders. The wrapper preserves caller identity through Wasm and FunToken operations. These are allocation preferences for Eris liquid staking, separate from chain governance voting. The corresponding Eris proxy implementation was deployed separately; the v2.23 chain upgrade does not perform another proxy upgrade. [PR #2799](https://github.com/NibiruChain/nibiru/pull/2799)
+
+The four-validator determinism harness checks block IDs, app hashes, transaction results, and gas usage through validator kills and restarts. It requires submitted EVM, Wasm, and bank workloads and tests its own ability to catch a deliberately diverging validator. The combined pre-release branch passed the load comparison across 93 heights and 1,257 transactions. [PR #2854](https://github.com/NibiruChain/nibiru/pull/2854)
+
+### 6 - Legacy USDC Collection
+
+LayerZero is ending support for Nibiru. The upgrade collects eligible legacy LayerZero USDC so holders who miss the bridge-support deadline can be migrated to Sai USDC at an intended one-to-one token amount. Sai USDC is USDC bridged from Base. This protects legacy holders alongside the protocol custody that also needs migration. Bank holdings convert through FunToken into ERC20 at the Nibiru EVM Safe. Eligible EOA balances and controlled SaiEvm custody join them. Unrelated EVM contract balances stay in place.
+
+A predeployed registry supplies updated holder candidates. The handler verifies its bytecode, chain-bound destination, and pinned asset profile before collection. Each successful movement preserves the original address, representation, amount, and repayment or custody-recovery disposition. Failed holder operations remain isolated and visible.
+
+The released source passed a live testnet upgrade with 74 bank holders, 1,000 funded ERC20 EOAs, and 38 funded EVM contracts. It collected 83,294.317829 mock USDC, preserved all 37 excluded contract balances, reconciled every account from block events, and left bank supply and module escrow at zero.
+
+Collection creates the verified record for later bridging and redistribution. The subsequent bridge round trip and restoration of Sai USDC to holders are separate operator actions. Custody whose collateral was already replaced is recovered without a second payout. [PR #2886](https://github.com/NibiruChain/nibiru/pull/2886)
+
+![Verified testnet collection using a six-decimal mock token, matching mainnet snapshot amounts with 1,000 funded ERC20 EOAs. These are rehearsal results.](https://uniquedivine.com/f/26/261106-usdc-testnet-rehearsal-results.png)
+
+### 7 - Validator Activation
+
+Mainnet upgrades directly from v2.21 to v2.23 through the single `v2.23.0` handler, including its consensus and upgrade-state migrations. Stage the verified stable release binary or image for the governance plan's execution height. Switch at that height; starting a binary containing the pending handler early triggers the upgrade guard.
+
+Verify archive checksums and confirm command `nibid version --long` reports the intended version and release commit. Container users should use `ghcr.io/nibiruchain/nibiru:2.23.0` and verify its published architecture manifests. After activation, check block production, the applied-upgrade record, consensus configuration, and USDC collection events.
+
 ### API Breaking
 
 - (evm/rpc) Remove Go runtime profiling, memory/GC statistics, and tuning methods from the EVM `debug` namespace. Calls return JSON-RPC method-not-found instead of runtime data or compatibility no-op responses. EVM transaction and block tracing remain available. Operator-selected CPU profiling and the separate CometBFT pprof listener are independent of this namespace.
