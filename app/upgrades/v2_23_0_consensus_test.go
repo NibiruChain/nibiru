@@ -25,7 +25,7 @@ import (
 )
 
 // preUpgradeParams stands in for the x/consensus params of a live chain
-// before v2.22, with a Version that the upgrade must keep.
+// before the enabling migration, with a Version that the upgrade must keep.
 func preUpgradeParams() cmtproto.ConsensusParams {
 	return cmtproto.ConsensusParams{
 		Block: &cmtproto.BlockParams{MaxBytes: 22_020_096, MaxGas: 300_000_000},
@@ -39,18 +39,18 @@ func preUpgradeParams() cmtproto.ConsensusParams {
 	}
 }
 
-// runUpgrade2_22 runs the v2.22 handler like x/upgrade does: with the stored
+// runConsensusUpgrade2_23 runs the v2.23 handler like x/upgrade does: with the stored
 // version map, recording the result only on success. It returns the events
 // the handler emitted.
-func runUpgrade2_22(
+func runConsensusUpgrade2_23(
 	t *testing.T, nibiru *app.NibiruApp, ctx sdk.Context,
 ) sdk.Events {
 	t.Helper()
-	handler := upgrades.Upgrade2_22_0.Handler.Handler(
+	handler := upgrades.Upgrade2_23_0.Handler.Handler(
 		nibiru.ModuleManager, nibiru.Configurator(), &nibiru.PublicKeepers)
 	ctx = ctx.WithEventManager(sdk.NewEventManager())
 	plan := upgradetypes.Plan{
-		Name: upgrades.Upgrade2_22_0.UpgradeName, Height: ctx.BlockHeight(),
+		Name: upgrades.Upgrade2_23_0.UpgradeName, Height: ctx.BlockHeight(),
 	}
 	versions, err := handler(ctx, plan,
 		nibiru.UpgradeKeeper.GetModuleVersionMap(ctx))
@@ -77,13 +77,13 @@ func preUpgradeChain(
 	return nibiru, ctx
 }
 
-// TestUpgrade2_22_0CreatesXConsensus checks the upgrade on mainnet and
+// TestUpgrade2_23_0CreatesXConsensus checks the upgrade on mainnet and
 // testnet chain IDs: x-consensus is created at the predicted address, as its
 // own Wasm admin and a wasm_deployer member, with exactly the stored params and the commit wait unset,
 // and the stored params, Version included, are unchanged by the next refresh. A second run is a
 // no-op. The mainnet chain ID exercises the Wasm deployer guard, which the
 // governance permission keeper passes.
-func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
+func TestUpgrade2_23_0CreatesXConsensus(t *testing.T) {
 	for _, chainID := range []string{
 		appconst.SDK_CHAIN_ID_MAINNET, "nibiru-testnet-2", "localnet",
 	} {
@@ -91,7 +91,7 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 			pre := preUpgradeParams()
 			nibiru, ctx := preUpgradeChain(t, chainID, &pre)
 
-			events := runUpgrade2_22(t, nibiru, ctx)
+			events := runConsensusUpgrade2_23(t, nibiru, ctx)
 			for _, ev := range events {
 				require.NotEqual(t, "upgrade_failure", ev.Type, ev.Attributes)
 			}
@@ -128,7 +128,7 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 			require.Equal(t, pre, *nibiru.GetConsensusParams(ctx))
 
 			// Running the handler again creates nothing.
-			runUpgrade2_22(t, nibiru, ctx)
+			runConsensusUpgrade2_23(t, nibiru, ctx)
 			var count int
 			nibiru.WasmKeeper.IterateContractsByCreator(ctx, consensuskeeper.CreatorAddr(),
 				func(sdk.AccAddress) bool { count++; return false })
@@ -137,15 +137,15 @@ func TestUpgrade2_22_0CreatesXConsensus(t *testing.T) {
 	}
 }
 
-// TestUpgrade2_22_0FailureContinues checks the failure path: with stored
+// TestUpgrade2_23_0FailureContinues checks the failure path: with stored
 // params that cannot seed the contract (no validator params), the handler
 // reports an upgrade_failure event, keeps the migrations, creates no
 // contract, and does not halt.
-func TestUpgrade2_22_0FailureContinues(t *testing.T) {
+func TestUpgrade2_23_0FailureContinues(t *testing.T) {
 	broken := preUpgradeParams()
 	broken.Validator = nil
 	nibiru, ctx := preUpgradeChain(t, "localnet", &broken)
-	events := runUpgrade2_22(t, nibiru, ctx)
+	events := runConsensusUpgrade2_23(t, nibiru, ctx)
 
 	var failed bool
 	for _, ev := range events {
@@ -160,18 +160,18 @@ func TestUpgrade2_22_0FailureContinues(t *testing.T) {
 	require.Equal(t, uint64(1), versions[consensustypes.ModuleName])
 }
 
-// TestUpgrade2_22_0KeepsConsensusStore checks that moving the x/consensus
+// TestUpgrade2_23_0KeepsConsensusStore checks that moving the x/consensus
 // store from the Cosmos SDK module to the Nibiru module loses nothing at the
 // upgrade: params written before the upgrade read back identical after the
 // upgrade, the following EndBlock and Commit, and the committed store list
 // still includes the "consensus" store. The app mounts that store itself now;
 // a missing mount would drop it from the commit info and split the app hash.
-func TestUpgrade2_22_0KeepsConsensusStore(t *testing.T) {
+func TestUpgrade2_23_0KeepsConsensusStore(t *testing.T) {
 	pre := preUpgradeParams()
 	nibiru, ctx := preUpgradeChain(t, "localnet", &pre)
 	require.True(t, nibiru.ConsensusKeeper.Has(ctx))
 
-	runUpgrade2_22(t, nibiru, ctx)
+	runConsensusUpgrade2_23(t, nibiru, ctx)
 	require.Equal(t, pre, *nibiru.GetConsensusParams(ctx))
 
 	res := nibiru.EndBlock(abci.RequestEndBlock{Height: ctx.BlockHeight()})

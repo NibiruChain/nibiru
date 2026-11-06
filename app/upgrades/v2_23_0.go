@@ -65,15 +65,17 @@ type Handler_v2_23 struct {
 
 var _ HandlerImpl = Handler_v2_23{}
 
-// Handler preserves v2.22's required migrations and enabling transitions before
-// the independent best-effort USDC collection. A missing registry skips only the
-// custom step; a malformed deployment is reported without moving any funds.
+// Handler includes the enabling migrations before best-effort USDC collection.
+// Mainnet upgrades directly from v2.21; testnet upgrades from its completed
+// v2.22 release. A missing registry skips only the custom USDC step.
 func (h Handler_v2_23) Handler(mm *module.Manager, cfg module.Configurator, nibiru *keepers.PublicKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		versions, err := mm.RunMigrations(ctx, cfg, fromVM)
 		if err != nil {
 			return nil, err
 		}
+		// Consensus creation can use the existing native parameter store as a
+		// fallback. Upgrade-state activation is required for completion.
 		if err := ensureXConsensus(ctx, nibiru); err != nil {
 			ctx.Logger().Error("v2.23.0 upgrade failure", "err", err)
 			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.23.0", err))
@@ -91,6 +93,15 @@ func (h Handler_v2_23) Handler(mm *module.Manager, cfg module.Configurator, nibi
 		}
 		return versions, nil
 	}
+}
+
+func ensureXConsensus(ctx sdk.Context, nibiru *keepers.PublicKeepers) (err error) {
+	defer func() {
+		if value := recover(); value != nil {
+			err = fmt.Errorf("create x-consensus: panic: %v", value)
+		}
+	}()
+	return nibiru.ConsensusKeeper.EnsureXConsensus(ctx)
 }
 
 func usdcPanicErrorV223(value any) error {
