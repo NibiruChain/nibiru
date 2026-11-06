@@ -418,8 +418,9 @@ type USDCHolderSetKeeper interface {
 }
 
 // ReadUSDCHolderSet reads candidates, not balances or transfer permissions.
-// It checks the deployed bytecode and validates every page before returning any
-// candidates. Callers must not start moving funds until this succeeds.
+// It checks the deployed bytecode and pagination before returning candidates.
+// Malformed individual addresses are reported and skipped. Structural failures
+// still reject the complete read before callers start moving funds.
 // The gzipped contract fixture is test-only; this function never deploys code.
 func ReadUSDCHolderSet(
 	ctx sdk.Context, keeper USDCHolderSetKeeper, contract sdk.AccAddress, checksum []byte,
@@ -441,7 +442,8 @@ func ReadUSDCHolderSet(
 
 	var candidates []gethcommon.Address
 	var cursor *string
-	previous := ""
+	previousValid := ""
+	seenCursors := make(map[string]bool)
 	for {
 		request := struct {
 			Addresses struct {
@@ -466,26 +468,40 @@ func ReadUSDCHolderSet(
 		if err := json.Unmarshal(bz, &page); err != nil {
 			return nil, fmt.Errorf("decode USDC holder set: %w", err)
 		}
+		if page.Addresses == nil {
+			return nil, fmt.Errorf("USDC holder set: addresses must be an array")
+		}
 		if len(page.Addresses) > usdcHolderPageSize {
 			return nil, fmt.Errorf("USDC holder set: oversized page")
 		}
 		for _, address := range page.Addresses {
-			if !gethcommon.IsHexAddress(address) || len(address) != 42 ||
-				!strings.HasPrefix(address, "0x") || address != strings.ToLower(address) {
-				return nil, fmt.Errorf("USDC holder set: noncanonical address %q", address)
+			if len(address) != 42 || !gethcommon.IsHexAddress(address) || !strings.EqualFold(address[:2], "0x") {
+				ctx.EventManager().EmitEvent(sdk.NewEvent("usdc_migration_candidate_skipped",
+					sdk.NewAttribute("upgrade", "v2.23.0"), sdk.NewAttribute("registry", contract.String()),
+					sdk.NewAttribute("source", address), sdk.NewAttribute("reason", "invalid_evm_address")))
+				continue
 			}
-			if address <= previous {
+			// Ordering concerns valid normalized addresses only. A malformed
+			// candidate must not change the ordering baseline for later holders.
+			normalized := strings.ToLower(address)
+			if normalized <= previousValid {
 				return nil, fmt.Errorf("USDC holder set: addresses are not strictly increasing")
 			}
-			previous = address
+			previousValid = normalized
 			candidates = append(candidates, gethcommon.HexToAddress(address))
 		}
 		if page.NextStartAfter == nil {
 			return candidates, nil
 		}
-		if len(page.Addresses) == 0 || *page.NextStartAfter != previous {
+		// Cursors refer to raw registry keys, including malformed last entries.
+		// Keep them separate from parsed candidates and reject cycles explicitly.
+		if len(page.Addresses) == 0 || *page.NextStartAfter != page.Addresses[len(page.Addresses)-1] {
 			return nil, fmt.Errorf("USDC holder set: cursor does not match the last address")
 		}
+		if seenCursors[*page.NextStartAfter] {
+			return nil, fmt.Errorf("USDC holder set: repeated cursor")
+		}
+		seenCursors[*page.NextStartAfter] = true
 		cursor = page.NextStartAfter
 	}
 }

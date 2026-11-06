@@ -837,3 +837,156 @@ func TestUSDCMigrationReportSkippedOrFailedPreflight(t *testing.T) {
 		})
 	}
 }
+
+// Response fixtures exercise defensive reader behavior that the pinned Rust
+// admin API prevents from being introduced through ordinary updates.
+type holderSetResponseKeeper struct {
+	checksum []byte
+	pages    []string
+	queryErr error
+	cursors  []string
+}
+
+func (k *holderSetResponseKeeper) GetContractInfo(sdk.Context, sdk.AccAddress) *wasmtypes.ContractInfo {
+	return &wasmtypes.ContractInfo{CodeID: 1}
+}
+
+func (k *holderSetResponseKeeper) GetCodeInfo(sdk.Context, uint64) *wasmtypes.CodeInfo {
+	return &wasmtypes.CodeInfo{CodeHash: k.checksum}
+}
+
+func (k *holderSetResponseKeeper) QuerySmart(_ sdk.Context, _ sdk.AccAddress, msg []byte) ([]byte, error) {
+	var query struct {
+		Addresses struct {
+			StartAfter *string `json:"start_after"`
+		} `json:"addresses"`
+	}
+	if err := json.Unmarshal(msg, &query); err != nil {
+		return nil, err
+	}
+	cursor := "<first>"
+	if query.Addresses.StartAfter != nil {
+		cursor = *query.Addresses.StartAfter
+	}
+	k.cursors = append(k.cursors, cursor)
+	if k.queryErr != nil {
+		return nil, k.queryErr
+	}
+	if len(k.cursors) > len(k.pages) {
+		return nil, fmt.Errorf("unexpected extra registry query")
+	}
+	return []byte(k.pages[len(k.cursors)-1]), nil
+}
+
+func holderSetPage(t *testing.T, addresses []string, next *string) string {
+	t.Helper()
+	bz, err := json.Marshal(map[string]any{"addresses": addresses, "next_start_after": next})
+	require.NoError(t, err)
+	return string(bz)
+}
+
+func TestUSDCHolderSetSkipsMalformedCandidates(t *testing.T) {
+	first, second := holderSetAddress(10), strings.ToUpper(holderSetAddress(11))
+	boundary := "not-an-address"
+	for _, tc := range []struct {
+		name    string
+		pages   []string
+		invalid []string
+		cursors []string
+	}{
+		{"middle", []string{holderSetPage(t, []string{first, "", "0x1", "0x" + strings.Repeat("a", 42), second}, nil)},
+			[]string{"", "0x1", "0x" + strings.Repeat("a", 42)}, []string{"<first>"}},
+		{"page boundary", []string{holderSetPage(t, []string{first, boundary}, &boundary), holderSetPage(t, []string{second}, nil)},
+			[]string{boundary}, []string{"<first>", boundary}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
+			registry := sdk.AccAddress(bytes.Repeat([]byte{7}, 32))
+			checksum := bytes.Repeat([]byte{8}, 32)
+			keeper := &holderSetResponseKeeper{checksum: checksum, pages: tc.pages}
+			addresses, err := upgrades.ReadUSDCHolderSet(ctx, keeper, registry, checksum)
+			require.NoError(t, err)
+			require.Equal(t, []gethcommon.Address{gethcommon.HexToAddress(first), gethcommon.HexToAddress(second)}, addresses)
+			require.Equal(t, tc.cursors, keeper.cursors)
+			var skipped []string
+			for _, event := range ctx.EventManager().Events() {
+				require.Equal(t, "usdc_migration_candidate_skipped", event.Type)
+				attrs := map[string]string{}
+				for _, attr := range event.Attributes {
+					attrs[attr.Key] = attr.Value
+				}
+				require.Equal(t, "v2.23.0", attrs["upgrade"])
+				require.Equal(t, registry.String(), attrs["registry"])
+				require.Equal(t, "invalid_evm_address", attrs["reason"])
+				skipped = append(skipped, attrs["source"])
+			}
+			require.Equal(t, tc.invalid, skipped)
+		})
+	}
+}
+
+func TestUSDCHolderSetRejectsStructuralFailures(t *testing.T) {
+	first, second, invalid := holderSetAddress(1), holderSetAddress(2), "bad-cursor"
+	oversized := make([]string, 201)
+	for i := range oversized {
+		oversized[i] = holderSetAddress(i + 1)
+	}
+	for name, pages := range map[string][]string{
+		"malformed JSON":               {"{"},
+		"missing address array":        {`{}`},
+		"null page":                    {`null`},
+		"wrong address type":           {`{"addresses":[42],"next_start_after":null}`},
+		"oversized page":               {holderSetPage(t, oversized, nil)},
+		"valid addresses out of order": {holderSetPage(t, []string{second, "malformed", first}, nil)},
+		"duplicate valid address":      {holderSetPage(t, []string{first, first}, nil)},
+		"cursor mismatch":              {holderSetPage(t, []string{first, invalid}, &first)},
+		"empty advancing page":         {holderSetPage(t, []string{}, &invalid)},
+		"repeated malformed cursor":    {holderSetPage(t, []string{invalid}, &invalid), holderSetPage(t, []string{invalid}, &invalid)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
+			checksum := bytes.Repeat([]byte{8}, 32)
+			keeper := &holderSetResponseKeeper{checksum: checksum, pages: pages}
+			addresses, err := upgrades.ReadUSDCHolderSet(ctx, keeper, sdk.AccAddress(bytes.Repeat([]byte{7}, 32)), checksum)
+			require.Error(t, err)
+			require.Nil(t, addresses)
+		})
+	}
+	for _, queryError := range []bool{false, true} {
+		ctx := sdk.Context{}.WithEventManager(sdk.NewEventManager())
+		checksum := bytes.Repeat([]byte{8}, 32)
+		keeper := &holderSetResponseKeeper{checksum: checksum}
+		expected := bytes.Repeat([]byte{9}, 32)
+		if queryError {
+			expected = checksum
+			keeper.queryErr = fmt.Errorf("query failed")
+		}
+		addresses, err := upgrades.ReadUSDCHolderSet(ctx, keeper, sdk.AccAddress(bytes.Repeat([]byte{7}, 32)), expected)
+		require.Error(t, err)
+		require.Nil(t, addresses)
+	}
+}
+
+func TestUpgrade2_23_0MalformedCandidateDoesNotStopCollection(t *testing.T) {
+	f := setupUSDCUpgrade(t, "cataclysm-1")
+	// The real contract rejects malformed admin input. Inject only a malformed
+	// map key in test storage to exercise defensive reading through real Wasm.
+	bad := "0x000000000000000000000000000000000000025z"
+	key := append([]byte{0, 9}, []byte("addresses"+bad)...)
+	fullKey := append(wasmtypes.GetContractStorePrefix(f.cfg.Registry), key...)
+	f.deps.Ctx().KVStore(f.deps.App.GetKey(wasmtypes.StoreKey)).Set(fullKey, []byte("true"))
+	require.Equal(t, []byte("true"), f.deps.App.WasmKeeper.QueryRaw(f.deps.Ctx(), f.cfg.Registry, key))
+	require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
+	report, err := upgrades.ReconstructUSDCMigration(f.deps.Ctx().EventManager().ABCIEvents())
+	require.NoError(t, err)
+	require.Equal(t, "completed", report.Status)
+	require.Equal(t, "88", report.Collected)
+	require.Equal(t, "93", usdcBalance(t, &f, f.cfg.Safe).String())
+	var skips int
+	for _, event := range f.deps.Ctx().EventManager().Events() {
+		if event.Type == "usdc_migration_candidate_skipped" {
+			skips++
+		}
+	}
+	require.Equal(t, 1, skips)
+}
