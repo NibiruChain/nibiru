@@ -21,9 +21,10 @@ so a final homebox rebuild and Keeper test pass are required even if the API
 is unchanged. Select the final deployment checksum/address only afterward.
 
 The current fixture was generated on homebox x86_64 from source revision
-`f6a5666cb765f6e339010e9a961d2305e4cdbeaa`. File `build-info.json` records the
+`c244372a204a8e2f89fd510e14860226f5863b62`. File `build-info.json` records the
 compiler, source revision, architecture, build flags, and both raw/gzip hashes.
-The exact copied bytes passed the focused Keeper and existing v2.22 tests.
+The rebuilt bytes match the previous fixture exactly. The complete upgrade, app,
+and report suites pass with this fixture on ARM64 and homebox x86_64.
 
 Run the focused keeper tests:
 
@@ -61,9 +62,13 @@ one failed collection does not undo successful collections or leak its own
 partial bank/EVM writes and success logs.
 
 The default profile contains reviewed mainnet identities. Other networks must
-have matching, validated identities or receive an explicit deployment profile
-before a full live rehearsal; test fixture overrides are not proof that a live
-testnet is configured. The binary never guesses a token or recipient from a name.
+have matching, validated identities or receive a reviewed profile in the Go
+handler before the shared binary is frozen. The registered handler selects only
+the mainnet profile today; its fixture override is not runtime configuration.
+The recorded testnet Sai collateral is bank-origin, so an ERC20-origin rehearsal
+asset and verified Safe/custody identities are still needed. Deploying the
+registry alone cannot prove collection there. The binary never guesses a token
+or recipient from a name.
 
 The source is temporary and the fixture remains provisional until the final
 homebox build and predeployment verification. Local handler tests do not perform
