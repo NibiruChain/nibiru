@@ -1,0 +1,20 @@
+{
+  "source_revision": "20780e729cc4f3fd32f5bc0c8602f4f43e6c695a",
+  "built_at_utc": "2026-11-06T03:58:30.651006+00:00",
+  "host": "homebox",
+  "architecture": "x86_64",
+  "rustc": "rustc 1.86.0 (05f9846f8 2025-03-31)",
+  "rustflags": "-C target-cpu=mvp",
+  "binaryen": "116.0.0",
+  "wasm_opt_flags": [
+    "-Os",
+    "--signext-lowering",
+    "--mvp-features"
+  ],
+  "cargo_lock_sha256": "465a19771f05e92fa484c7cc9125df199fe4d50377d3566012600893d183a4ae",
+  "wasm_sha256": "fe453d5690f836f231b79b039b8561702a70d20cc5e34415a8faa6773037d4ca",
+  "wasm_bytes": 225578,
+  "gzip_sha256": "92430401602e727547aa4fa7f8155520be61d5c37a35378d7fad846ed10b2556",
+  "gzip_bytes": 84991,
+  "status": "development artifact; requires Keeper tests before deployment"
+}
