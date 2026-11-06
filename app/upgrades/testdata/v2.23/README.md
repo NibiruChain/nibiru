@@ -8,7 +8,7 @@ exercise the Go reader. No source-level contract mock substitutes for execution.
 Decompressed SHA-256:
 
 ```text
-0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8
+24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e
 ```
 
 Temporary source: `wasm-contracts/usdc-holder-set`. Build on the x86_64 homebox
@@ -21,9 +21,10 @@ so a final homebox rebuild and Keeper test pass are required even if the API
 is unchanged. Select the final deployment checksum/address only afterward.
 
 The current fixture was generated on homebox x86_64 from source revision
-`c244372a204a8e2f89fd510e14860226f5863b62`. File `build-info.json` records the
+`5cfe5f54f6ef694962d8472ee72fb116f2186a3a`. File `build-info.json` records the
 compiler, source revision, architecture, build flags, and both raw/gzip hashes.
-The rebuilt bytes match the previous fixture exactly. The complete upgrade, app,
+This rebuild allows opaque pagination cursors so a malformed boundary key does
+not prevent later valid holders from being read. The complete upgrade, app,
 and report suites pass with this fixture on ARM64 and homebox x86_64.
 
 Run the focused keeper tests:

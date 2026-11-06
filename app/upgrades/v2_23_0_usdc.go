@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	USDCHolderSetChecksumV223 = "0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8"
+	USDCHolderSetChecksumV223 = "24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e"
 	USDCHolderSetSaltV223     = "usdc-holders-v1"
 	USDCHolderSetCreatorV223  = "nibi1rlvdjfmxkyfj4tzu73p8m4g2h4y89xccf9622l"
 )
@@ -226,8 +226,16 @@ func runUSDCMigrationV223(ctx sdk.Context, nibiru *keepers.PublicKeepers, cfg US
 		}
 		amount := new(big.Int)
 		status, reason := "collected", ""
-		err := cachedUSDCOperationV223(ctx, func(cached sdk.Context) error {
-			sdb := nibiru.EvmKeeper.NewSDB(cached, nibiru.EvmKeeper.TxConfig(cached, gethcommon.Hash{}))
+		err := func() (err error) {
+			defer func() {
+				if value := recover(); value != nil {
+					err = usdcPanicErrorV223(value)
+				}
+			}()
+			// NewSDB already snapshots all SDK stores. Isolate events too,
+			// since SDB snapshots share their context's event manager.
+			opCtx := ctx.WithEventManager(sdk.NewEventManager())
+			sdb := nibiru.EvmKeeper.NewSDB(opCtx, nibiru.EvmKeeper.TxConfig(opCtx, gethcommon.Hash{}))
 			queriedAmount, err := loadERC20ValueV218(nibiru.EvmKeeper, sdb, embeds.SmartContract_ERC20MinterWithMetadataUpdates.ABI, cfg.Token, "balanceOf", source)
 			if err != nil {
 				return err
@@ -250,8 +258,9 @@ func runUSDCMigrationV223(ctx sdk.Context, nibiru *keepers.PublicKeepers, cfg US
 				return err
 			}
 			sdb.Commit()
+			ctx.EventManager().EmitEvents(opCtx.EventManager().Events())
 			return nil
-		})
+		}()
 		if err != nil {
 			status = "failed"
 			reason = err.Error()

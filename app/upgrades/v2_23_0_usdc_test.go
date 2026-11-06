@@ -564,7 +564,7 @@ func countOf(names []string, want string) int {
 	return n
 }
 
-const holderSetFixtureSHA256 = "0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8"
+const holderSetFixtureSHA256 = "24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e"
 
 func holderSetBytecode(t *testing.T) ([]byte, []byte) {
 	t.Helper()
@@ -989,4 +989,172 @@ func TestUpgrade2_23_0MalformedCandidateDoesNotStopCollection(t *testing.T) {
 		}
 	}
 	require.Equal(t, 1, skips)
+}
+
+func TestUpgrade2_23_0MalformedBoundaryDoesNotStopCollection(t *testing.T) {
+	f := setupUSDCUpgrade(t, "cataclysm-1")
+	creator := sdk.AccAddress(bytes.Repeat([]byte{17}, 20))
+	addresses := make([]string, 0, 202)
+	for i := 1; i <= 201; i++ {
+		addresses = append(addresses, holderSetAddress(i))
+	}
+	addresses = append(addresses, f.eoa.Hex())
+	registry, checksum := deployHolderSet(t, f.deps, creator, addresses, []byte("malformed-boundary"))
+	f.cfg.Registry, f.cfg.RegistryChecksum = registry, checksum
+
+	// The 200th raw key is malformed. Its cursor must remain usable by the
+	// actual Wasm query so holders 200/201 and the original EOA stay reachable.
+	bad := holderSetAddress(199) + "z"
+	key := append([]byte{0, 9}, []byte("addresses"+bad)...)
+	fullKey := append(wasmtypes.GetContractStorePrefix(registry), key...)
+	f.deps.Ctx().KVStore(f.deps.App.GetKey(wasmtypes.StoreKey)).Set(fullKey, []byte("true"))
+	first, err := f.deps.App.WasmKeeper.QuerySmart(f.deps.Ctx(), registry, []byte(`{"addresses":{"start_after":null,"limit":200}}`))
+	require.NoError(t, err)
+	var page struct {
+		Addresses []string `json:"addresses"`
+		Next      *string  `json:"next_start_after"`
+	}
+	require.NoError(t, json.Unmarshal(first, &page))
+	require.Len(t, page.Addresses, 200)
+	require.Equal(t, bad, page.Addresses[199])
+	require.NotNil(t, page.Next)
+	require.Equal(t, bad, *page.Next)
+
+	got, err := upgrades.ReadUSDCHolderSet(f.deps.Ctx(), f.deps.App.WasmKeeper, registry, checksum)
+	require.NoError(t, err)
+	want := make([]gethcommon.Address, len(addresses))
+	for i, address := range addresses {
+		want[i] = gethcommon.HexToAddress(address)
+	}
+	require.Equal(t, want, got, "all valid holders beyond the malformed cursor must be read")
+
+	obj, sdb := f.deps.NewEVM()
+	for i, amount := range []int64{3, 5} {
+		_, err := f.deps.EvmKeeper.ERC20().Mint(f.cfg.Token, f.deps.Sender.EthAddr, want[199+i], big.NewInt(amount), sdb.Ctx(), obj)
+		require.NoError(t, err)
+	}
+	sdb.Commit()
+	f.deps.SetCtx(f.deps.Ctx().WithEventManager(sdk.NewEventManager()))
+	require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
+	report, err := upgrades.ReconstructUSDCMigration(f.deps.Ctx().EventManager().ABCIEvents())
+	require.NoError(t, err)
+	require.Equal(t, "completed", report.Status)
+	require.Equal(t, "96", report.Collected)
+	require.Equal(t, "45", report.Repayment)
+	require.Equal(t, "51", report.CustodyRecovery)
+	require.Equal(t, "101", usdcBalance(t, &f, f.cfg.Safe).String())
+	require.Zero(t, usdcBalance(t, &f, want[199]).Sign())
+	require.Zero(t, usdcBalance(t, &f, want[200]).Sign())
+	require.Zero(t, usdcBalance(t, &f, f.eoa).Sign())
+	require.Zero(t, f.deps.App.BankKeeper.GetSupply(f.deps.Ctx(), f.cfg.BankDenom).Amount.Sign())
+	var skips int
+	for _, event := range f.deps.Ctx().EventManager().Events() {
+		if event.Type == "usdc_migration_candidate_skipped" {
+			for _, attr := range event.Attributes {
+				if attr.Key == "source" {
+					require.Equal(t, bad, attr.Value)
+				}
+			}
+			skips++
+		}
+	}
+	require.Equal(t, 1, skips)
+}
+
+func TestUpgrade2_23_0ERC20PostcheckDiscardsStateAndEvents(t *testing.T) {
+	f := setupUSDCUpgrade(t, "cataclysm-1")
+	k, ctx := f.deps.EvmKeeper, f.deps.Ctx()
+	nativeRecipient := gethcommon.HexToAddress("0x000000000000000000000000000000000000ee01")
+	tokenBankAddr := eth.EthAddrToNibiruAddr(f.cfg.Token)
+	recipientBankAddr := eth.EthAddrToNibiruAddr(nativeRecipient)
+	require.NoError(t, testapp.FundAccount(f.deps.App.BankKeeper, ctx, tokenBankAddr, sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, 1))))
+	nativeBefore := f.deps.App.BankKeeper.GetWeiBalance(ctx, tokenBankAddr).ToBig()
+	eoaNonce := k.GetAccNonce(ctx, f.eoa)
+	readonlyNonce := k.GetAccNonce(ctx, evm.EVM_READONLY_ADDR)
+
+	// Delegate to real ERC20 runtime, but report the source balance as one.
+	// Its transfer really moves one token and one native wei before the
+	// nonzero-remaining-source postcheck fails. Both stores and events must drop.
+	sdb := k.NewSDB(ctx, k.TxConfig(ctx, gethcommon.Hash{}))
+	originalCode := append([]byte(nil), sdb.GetCode(f.cfg.Token)...)
+	implementation := gethcommon.HexToAddress("0x000000000000000000000000000000000000f002")
+	sdb.SetCode(implementation, originalCode)
+	var code []byte
+	labels := map[string]int{}
+	patches := map[int]string{}
+	emit := func(b ...byte) { code = append(code, b...) }
+	label := func(name string) { labels[name] = len(code); emit(0x5b) }
+	jump := func(name string, conditional bool) {
+		emit(0x61, 0, 0)
+		patches[len(code)-2] = name
+		if conditional {
+			emit(0x57)
+		} else {
+			emit(0x56)
+		}
+	}
+	emit(0x60, 4, 0x35, 0x73) // first ABI argument
+	emit(f.eoa.Bytes()...)
+	emit(0x14)
+	jump("fakeBalance", true)
+	emit(0x33, 0x73) // caller
+	emit(f.eoa.Bytes()...)
+	emit(0x14)
+	jump("nativeTransfer", true)
+	jump("delegate", false)
+	label("nativeTransfer")
+	// CALL(gas, recipient, 1 wei, empty input, empty output).
+	emit(0x60, 0, 0x60, 0, 0x60, 0, 0x60, 0, 0x60, 1, 0x73)
+	emit(nativeRecipient.Bytes()...)
+	emit(0x5a, 0xf1, 0x50)
+	jump("delegate", false)
+	label("fakeBalance")
+	emit(0x60, 1, 0x60, 0, 0x52, 0x60, 32, 0x60, 0, 0xf3)
+	label("delegate")
+	emit(0x36, 0x3d, 0x3d, 0x37, 0x3d, 0x3d, 0x3d, 0x36, 0x3d, 0x73)
+	emit(implementation.Bytes()...)
+	emit(0x5a, 0xf4, 0x3d, 0x82, 0x80, 0x3e, 0x90, 0x3d, 0x91)
+	jump("return", true)
+	emit(0xfd)
+	label("return")
+	emit(0xf3)
+	for offset, name := range patches {
+		code[offset], code[offset+1] = byte(labels[name]>>8), byte(labels[name])
+	}
+	sdb.SetCode(f.cfg.Token, code)
+	sdb.Commit()
+	f.deps.SetCtx(ctx.WithEventManager(sdk.NewEventManager()))
+	require.NoError(t, f.deps.RunUpgrade(usdcUpgrade(f)))
+	report, err := upgrades.ReconstructUSDCMigration(f.deps.Ctx().EventManager().ABCIEvents())
+	require.NoError(t, err)
+	require.Equal(t, "81", report.Collected, "bank and later SaiEvm collection still succeed")
+	require.Equal(t, "86", usdcBalance(t, &f, f.cfg.Safe).String())
+	var failed bool
+	for _, account := range report.Accounts {
+		if account.Source == f.eoa.Hex() {
+			require.Equal(t, "failed", account.Status)
+			require.Equal(t, "1", account.Amount)
+			require.Contains(t, account.Reason, "did not preserve exact amount and supply")
+			failed = true
+		}
+	}
+	require.True(t, failed, "real successful transfer must reach the invariant check")
+	require.Equal(t, nativeBefore, f.deps.App.BankKeeper.GetWeiBalance(f.deps.Ctx(), tokenBankAddr).ToBig())
+	require.True(t, f.deps.App.BankKeeper.GetWeiBalance(f.deps.Ctx(), recipientBankAddr).IsZero())
+	require.Equal(t, eoaNonce, k.GetAccNonce(f.deps.Ctx(), f.eoa))
+	require.Equal(t, readonlyNonce, k.GetAccNonce(f.deps.Ctx(), evm.EVM_READONLY_ADDR))
+	for _, event := range f.deps.Ctx().EventManager().Events() {
+		if event.Type == "wei_change" {
+			for _, attr := range event.Attributes {
+				require.NotContains(t, attr.Value, tokenBankAddr.String())
+				require.NotContains(t, attr.Value, recipientBankAddr.String())
+			}
+		}
+	}
+	// Restore honest views to inspect the actual token storage after rollback.
+	sdb = k.NewSDB(f.deps.Ctx(), k.TxConfig(f.deps.Ctx(), gethcommon.Hash{}))
+	sdb.SetCode(f.cfg.Token, originalCode)
+	sdb.Commit()
+	require.Equal(t, "7", usdcBalance(t, &f, f.eoa).String())
+	require.Zero(t, usdcBalance(t, &f, f.cfg.SaiEvm).Sign())
 }

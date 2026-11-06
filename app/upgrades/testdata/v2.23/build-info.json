@@ -1,6 +1,6 @@
 {
-  "source_revision": "c244372a204a8e2f89fd510e14860226f5863b62",
-  "built_at_utc": "2026-11-05T23:56:53.733155+00:00",
+  "source_revision": "5cfe5f54f6ef694962d8472ee72fb116f2186a3a",
+  "built_at_utc": "2026-11-06T01:48:07.733527+00:00",
   "host": "homebox",
   "architecture": "x86_64",
   "rustc": "rustc 1.86.0 (05f9846f8 2025-03-31)",
@@ -12,9 +12,9 @@
     "--mvp-features"
   ],
   "cargo_lock_sha256": "0086ca761e021e11843491d6b97dc716ac28fcfc2297be8f02822940ae2f79fc",
-  "wasm_sha256": "0a18618d6d1dcf9ef0cf4a92252abf879b96a22066b1e7e57e2efd1c958204c8",
-  "wasm_bytes": 181407,
-  "gzip_sha256": "2f1a486f49d7de50f3fe3ea484aaa9b86c11b6a3716f4c868043a6562b4497fe",
-  "gzip_bytes": 67096,
+  "wasm_sha256": "24844da2ec089cc7a3be54ce2acf3f039d3c900d86068d3e6862a163fe4b2c2e",
+  "wasm_bytes": 180681,
+  "gzip_sha256": "45fdd52e586561b0b9aedcaead580a965cb78e3504c676a4fa51effc99069f83",
+  "gzip_bytes": 66841,
   "status": "development artifact; requires Keeper tests before deployment"
 }
