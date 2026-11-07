@@ -10,7 +10,9 @@ description: >-
 
 # Nibiru Ecosystem Update #3 - May 2025
 
-> *[Update #2](./nibiru-eco-update-02.md) < [Nibiru Advancement Notes (NANs)](./index.md) > [NAN 001](./nan-001.md)*
+> *[Update #2](./nibiru-eco-update-02.md) <
+> [Nibiru Advancement Notes (NANs)](./index.md) >
+> [NAN 001][nan-001]{target="_self"}*
 
 <img src="./img/25-05-ecosystem-update-3.png" style="border-radius: 16px;">
 
@@ -515,3 +517,5 @@ project.
 Nibiru reserves the right to amend, modify, or update this Update or any of the
 information herein at any time without prior notice. It is the responsibility of
 readers to stay informed of any changes.
+
+[nan-001]: https://nibiru.fi/blog/posts/25-09-19-nan-001-genesis
