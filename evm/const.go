@@ -51,6 +51,9 @@ const (
 	CtxKeyZeroGasMeta              contextKey = "zero_gas_meta"
 	CtxKeyEvmEventTruncationMark   contextKey = "evm_event_truncation_mark"
 	CtxKeyVMSenderGuard            contextKey = "evm_vm_sender_guard"
+	// CtxKeyLegacyBalanceAliases preserves v2.23.0 token resolution for Wasm
+	// contract queries, whose results and gas can affect consensus execution.
+	CtxKeyLegacyBalanceAliases contextKey = "legacy_balance_aliases"
 )
 
 // GetZeroGasMeta returns the ZeroGasMeta stored under CtxKeyZeroGasMeta, or nil if not set or type assertion fails.

@@ -51,7 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is a consensus-compatible patch for v2.23.0. It changes read-only queries,
 registry metadata, and documentation. It retains the `v2.23.0` upgrade handler;
-no new governance upgrade or state migration is required.
+no new governance upgrade or state migration is required. Wasm Stargate balance
+queries retain v2.23.0 alias results and gas, including the original `USDC`
+meaning and literal `USDC.e` denom behavior.
 
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 

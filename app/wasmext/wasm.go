@@ -26,11 +26,7 @@ func NibiruWasmOptions(
 	msgHandlerArgs MsgHandlerArgs,
 ) []wasmkeeper.Option {
 	wasmQueryOption := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
-		Stargate: wasmkeeper.AcceptListStargateQuerier(
-			WasmAcceptedStargateQueries(),
-			grpcQueryRouter,
-			appCodec,
-		),
+		Stargate: WasmStargateQuerier(grpcQueryRouter, appCodec),
 	})
 
 	wasmMsgHandlerOption := wasmkeeper.WithMessageHandler(WasmMessageHandler(msgHandlerArgs))

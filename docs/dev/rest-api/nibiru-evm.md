@@ -19,7 +19,8 @@ On v2.23.1 nodes, case-insensitive `USDC` selects Sai USDC
 (`0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190`), while `USDC.e` selects legacy
 Stargate USDC (`0x0829F361A05D993d5CEb035cA6DF3446b060970b`). On v2.23.0 nodes,
 use explicit addresses because `USDC` still selects the legacy token. These
-aliases refer to mainnet contracts. See [token addresses and CLI examples](../evm/token-contracts.md#query-usdc-balances).
+aliases refer to mainnet contracts. Wasm contract Stargate queries preserve
+v2.23.0 behavior; this external-query correction does not change contract execution. See [token addresses and CLI examples](../evm/token-contracts.md#query-usdc-balances).
 
 
 ##### Parameters

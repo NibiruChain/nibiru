@@ -34,3 +34,7 @@ using older nodes must supply the explicit address; those nodes still resolve
 `USDC` to the legacy token. The patched node query handler resolves both aliases
 as described above. Use explicit deployed addresses or bank denoms on networks
 other than mainnet.
+
+Wasm contract Stargate queries retain v2.23.0 behavior for consensus
+compatibility: `USDC` selects legacy USDC and `USDC.e` remains a literal bank
+denom. Contracts should use explicit token addresses or bank denoms.
