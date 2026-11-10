@@ -22,7 +22,7 @@ coordinated chain upgrade because the same handler serves Wasm contract queries.
 Existing nodes still resolve `USDC` to the legacy token. Use explicit addresses
 until activation. This native query change is separate from the CLI-only patch maintained on
 `release/v2.23`. These aliases refer to mainnet contracts.
-See [token addresses and CLI examples](../evm/token-contracts.md#query-usdc-balances).
+See the [token contract reference](../evm/token-contracts.md).
 
 
 ##### Parameters
