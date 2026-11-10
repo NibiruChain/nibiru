@@ -43,20 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## v2.23.1
-
-- Resolve `USDC` and `USDC.e` aliases locally in the CLI to Sai USDC and legacy
-  Stargate USDC respectively, then send explicit token addresses to the node.
-  This also works against v2.23.0 nodes and preserves the CLI response fields.
-- Add Sai USDC to the official ERC20 and bank token registries and distinguish
-  legacy USDC.e in token documentation.
-
-This is a CLI, registry, and documentation patch on `release/v2.23`. Node query
-handlers, Wasm Stargate queries, precompiles, transaction execution, and the
-`v2.23.0` upgrade handler retain their existing behavior. In particular, direct
-node or contract queries using the literal `USDC` alias still select legacy
-Stargate USDC. A node alias change belongs to a separate coordinated upgrade.
-
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 
 - Public release: November 6, 2026.

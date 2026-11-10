@@ -17,6 +17,23 @@ patches from `release/v2.23`, independently of coordinated chain releases.
 
 ## Unreleased
 
+### CLI
+
+- Resolve case-insensitive `USDC` to Sai USDC and `USDC.e` to legacy Stargate
+  USDC locally before sending explicit token addresses to the node. Existing
+  command arguments and JSON fields stay the same, but the CLI alias `USDC`
+  now selects Sai USDC. Explicit identifiers retain their meaning.
+  [PR #2908](https://github.com/NibiruChain/nibiru/pull/2908).
+- Keep node and Wasm Stargate semantics unchanged: direct native `USDC` queries
+  still select legacy USDC. The native alias change is separate coordinated
+  upgrade work in [PR #2909](https://github.com/NibiruChain/nibiru/pull/2909).
+
+### Documentation
+
+- Document the compatible `release/v2.23` line and distinguish Sai USDC from
+  legacy USDC.e in balance examples and wallet token listings.
+  [PR #2908](https://github.com/NibiruChain/nibiru/pull/2908).
+
 ### Token Registry
 
 - Add Sai USDC at `0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190` and its
