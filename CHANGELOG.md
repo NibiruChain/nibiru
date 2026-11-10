@@ -40,6 +40,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### State-Machine Breaking Changes
+
+- Change `/eth.evm.v1.Query/Balance` so the mainnet alias `USDC` selects Sai
+  USDC and `USDC.e` selects legacy Stargate USDC. This changes balances visible
+  to Wasm contracts through Stargate during transaction execution and can
+  change transaction results and gas. Activate only in a coordinated chain
+  upgrade. Keep this out of the `release/v2.23` compatible patch line.
+
+
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 
 - Public release: November 6, 2026.
