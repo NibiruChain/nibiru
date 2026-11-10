@@ -108,9 +108,14 @@ func CmdQueryBalance() *cobra.Command {
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query token balances in a multi-VM context.
 
+USDC resolves to Sai USDC on mainnet; USDC.e selects legacy Stargate USDC.
+These aliases are case-insensitive and are resolved by the CLI before querying,
+including against older nodes. On other networks, use an explicit token address
+or bank denom. A zero balance describes only the selected token.
+
 Examples:
-  # USDC on Nibiru mainnet
-  addr="0xYourAddr" token="0x0829F361A05D993d5CEb035cA6DF3446b060970b"
+  # Sai USDC on Nibiru mainnet (explicit address also works)
+  addr="0xYourAddr" token="USDC"
   %s query %s balance "$addr" "$token"
 
   # NIBI via bank denom
@@ -134,7 +139,8 @@ Examples:
 			}
 
 			evmQuery := evm.NewQueryClient(clientCtx)
-			tokenInput := args[1]
+			// Resolve locally so v2.23.0 nodes receive the intended explicit token.
+			tokenInput := evm.ResolveUSDCAlias(args[1])
 
 			req := &evm.QueryBalanceRequest{Address: args[0], Token: tokenInput}
 			addrBech32, err := req.Validate()

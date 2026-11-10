@@ -36,8 +36,15 @@ const boxesMain = [
 
 const boxesStable = [
   {
+    id: 6,
+    title: "USDC - Sai USDC",
+    href: "https://sai.fun",
+    icon: "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png",
+    address: "0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190"
+  },
+  {
     id: 3,
-    title: "USDC.e - USDC (Stargate)",
+    title: "USDC.e - Legacy USDC (LayerZero Stargate)",
     href: "https://nibiru.fi/ecosystem/apps/layerzero-stargate",
     icon: "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png",
     // text: "Optional text describing the element to go here.",

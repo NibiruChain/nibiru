@@ -40,6 +40,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v2.23.1
+
+- Fix the `USDC` balance-query alias to select Sai USDC after the v2.23 migration.
+  Add `USDC.e` for legacy Stargate USDC. The CLI resolves both aliases before
+  querying, including against v2.23.0 nodes. Explicit addresses and bank denoms
+  retain their behavior, and response fields remain unchanged.
+- Add Sai USDC to the official ERC20 and bank token registries and distinguish
+  legacy USDC.e in token documentation.
+
+This is a consensus-compatible patch for v2.23.0. It changes read-only queries,
+registry metadata, and documentation. It retains the `v2.23.0` upgrade handler;
+no new governance upgrade or state migration is required.
+
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 
 - Public release: November 6, 2026.
