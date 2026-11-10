@@ -64,3 +64,30 @@ func (s *Suite) TestErc20Images() {
 		s.NoErrorf(err, "Local image file does not exist for token %s at path: %s", token.Symbol, localImgPath)
 	}
 }
+
+func (s *Suite) TestUSDCDistinction() {
+	// SetupSuite runs the generator. Verify its output as well as the embedded input.
+	erc20s, err := tokenregistry.LoadERC20s()
+	s.Require().NoError(err)
+	bankCoins, err := tokenregistry.LoadBankCoins()
+	s.Require().NoError(err)
+	for _, tokens := range [][]tokenregistry.TokenOfficial{erc20s, bankCoins} {
+		seen := map[string]bool{}
+		found := map[string]string{}
+		for _, token := range tokens {
+			s.False(seen[token.ContractAddr], "duplicate token %s", token.ContractAddr)
+			seen[token.ContractAddr] = true
+			switch token.ContractAddr {
+			case "0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190", "erc20/0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190":
+				s.Equal("USDC", token.Symbol)
+				s.Equal("Sai USDC", token.DisplayName)
+				found["sai"] = token.ContractAddr
+			case "0x0829F361A05D993d5CEb035cA6DF3446b060970b", "erc20/0x0829F361A05D993d5CEb035cA6DF3446b060970b":
+				s.Equal("USDC.e", token.Symbol)
+				s.Equal("Legacy USDC (LayerZero Stargate)", token.DisplayName)
+				found["legacy"] = token.ContractAddr
+			}
+		}
+		s.Len(found, 2)
+	}
+}

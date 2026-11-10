@@ -26,8 +26,18 @@
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/001_stnibi-evm.png"
   },
   {
+    "contractAddr": "0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190",
+    "displayName": "Sai USDC",
+    "symbol": "USDC",
+    "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png",
+    "priceInfo": {
+      "source": "bybit",
+      "priceId": "USDCUSDT"
+    }
+  },
+  {
     "contractAddr": "0x0829F361A05D993d5CEb035cA6DF3446b060970b",
-    "displayName": "USDC (Stargate)",
+    "displayName": "Legacy USDC (LayerZero Stargate)",
     "symbol": "USDC.e",
     "logoSrc": "https://raw.githubusercontent.com/NibiruChain/nibiru/main/token-registry/img/002_usdc.png"
   },
