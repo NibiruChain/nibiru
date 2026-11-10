@@ -19,6 +19,9 @@ import (
 // when a corrected external query would select a different asset.
 func (s *Suite) TestStargateUSDCCompatibility() {
 	deps := evmtest.NewTestDeps()
+	// EVM calldata gas depends on zero bytes in the queried address. Pin it
+	// rather than using the randomly generated test sender for gas goldens.
+	eoaAddr := sdk.AccAddress(gethcommon.HexToAddress("0x1111111111111111111111111111111111111111").Bytes())
 	wasmAddr := sdk.MustAccAddressFromBech32("nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m")
 	for _, token := range []struct {
 		address, symbol string
@@ -40,12 +43,12 @@ func (s *Suite) TestStargateUSDCCompatibility() {
 		if token.address != "" {
 			s.Require().NoError(deps.EvmKeeper.FunTokens.SafeInsert(deps.Ctx(), gethcommon.HexToAddress(token.address), denom, false))
 		}
-		for _, addr := range []sdk.AccAddress{deps.Sender.NibiruAddr, wasmAddr} {
+		for _, addr := range []sdk.AccAddress{eoaAddr, wasmAddr} {
 			s.Require().NoError(testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), addr, sdk.NewCoins(sdk.NewInt64Coin(denom, token.amount))))
 		}
 	}
 	query := wasmext.WasmStargateQuerier(deps.App.GRPCQueryRouter(), deps.App.AppCodec())
-	for _, addr := range []sdk.AccAddress{deps.Sender.NibiruAddr, wasmAddr} {
+	for _, addr := range []sdk.AccAddress{eoaAddr, wasmAddr} {
 		// Gas values are pinned from the same fixture run against the unmodified
 		// v2.23.0 Keeper.Balance implementation, not the patched resolver.
 		for _, tc := range []struct {
