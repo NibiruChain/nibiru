@@ -218,18 +218,6 @@ func (k Keeper) Balance(
 // resolveBalanceToken maps convenience token aliases to canonical token
 // identifiers accepted by the rest of the Balance resolver.
 func (k Keeper) resolveBalanceToken(ctx sdk.Context, token string) string {
-	if legacy, _ := ctx.Value(evm.CtxKeyLegacyBalanceAliases).(bool); legacy {
-		// Preserve every v2.23.0 alias decision for contract execution. In
-		// particular, USDC.e remains a literal denom rather than a new alias.
-		switch {
-		case strings.EqualFold(token, "WNIBI"):
-			return k.GetParams(ctx).CanonicalWnibi.Hex()
-		case strings.EqualFold(token, "USDC"):
-			return evm.MainnetLegacyUSDC
-		default:
-			return token
-		}
-	}
 	switch {
 	case strings.EqualFold(token, "WNIBI"):
 		return k.GetParams(ctx).CanonicalWnibi.Hex()

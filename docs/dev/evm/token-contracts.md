@@ -27,14 +27,13 @@ The response reports Bank and ERC20 holdings separately when available. A zero
 balance applies only to the selected token. Use `nibiru q bank balances "$ADDR"`
 to inspect all bank holdings.
 
-Starting with v2.23.1, the case-insensitive alias `USDC` selects Sai USDC and
-`USDC.e` selects legacy Stargate USDC. The CLI sends the explicit address, so
-these aliases also work against v2.23.0 nodes. Direct gRPC and REST clients
-using older nodes must supply the explicit address; those nodes still resolve
-`USDC` to the legacy token. The patched node query handler resolves both aliases
-as described above. Use explicit deployed addresses or bank denoms on networks
-other than mainnet.
+The unreleased CLI resolves case-insensitive `USDC` to Sai USDC and `USDC.e`
+to legacy Stargate USDC, sending explicit addresses even to v2.23.0 nodes.
+Use explicit deployed addresses or bank denoms on networks other than mainnet.
 
-Wasm contract Stargate queries retain v2.23.0 behavior for consensus
-compatibility: `USDC` selects legacy USDC and `USDC.e` remains a literal bank
-denom. Contracts should use explicit token addresses or bank denoms.
+The corresponding node alias change is state-machine breaking because Wasm
+contracts can call this handler through Stargate during transaction execution.
+It requires a coordinated chain upgrade. After activation, contract and external
+queries use the same aliases. Before activation, direct gRPC and REST requests
+to existing nodes still resolve `USDC` to the legacy token; use explicit
+addresses to select either asset without relying on aliases.

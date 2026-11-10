@@ -1,10 +1,6 @@
 package wasmext
 
 import (
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
-	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
-	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
-
 	"github.com/NibiruChain/nibiru/v2/evm"
 
 	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
@@ -146,15 +142,5 @@ func WasmAcceptedStargateQueries() wasmkeeper.AcceptedStargateQueries {
 		"/nibiru.devgas.v1.Query/FeeShare":              new(devgas.QueryFeeShareResponse),
 		"/nibiru.devgas.v1.Query/Params":                new(devgas.QueryParamsResponse),
 		"/nibiru.devgas.v1.Query/FeeSharesByWithdrawer": new(devgas.QueryFeeSharesByWithdrawerResponse),
-	}
-}
-
-// WasmStargateQuerier preserves the v2.23.0 balance alias behavior for contracts.
-// External queries may adopt corrected aliases independently, but contract query
-// results and gas must stay identical across consensus-compatible patch nodes.
-func WasmStargateQuerier(router wasmkeeper.GRPCQueryRouter, appCodec codec.Codec) func(sdk.Context, *wvm.StargateQuery) ([]byte, error) {
-	query := wasmkeeper.AcceptListStargateQuerier(WasmAcceptedStargateQueries(), router, appCodec)
-	return func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error) {
-		return query(ctx.WithValue(evm.CtxKeyLegacyBalanceAliases, true), request)
 	}
 }

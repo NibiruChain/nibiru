@@ -1,26 +1,22 @@
 package wasmext_test
 
 import (
-	"strings"
-
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/NibiruChain/nibiru/v2/app/wasmext"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
-	storetypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/wasmvm/wvm"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
+	wasmkeeper "github.com/NibiruChain/nibiru/v2/x/wasm/keeper"
 )
 
-// Contract-originated Stargate queries retain v2.23.0 responses and gas even
-// when a corrected external query would select a different asset.
-func (s *Suite) TestStargateUSDCCompatibility() {
+// Changing these aliases changes contract-observable results. Contract and
+// external queries must use one definition, activated in a coordinated release.
+func (s *Suite) TestStargateUSDCResolution() {
 	deps := evmtest.NewTestDeps()
-	// EVM calldata gas depends on zero bytes in the queried address. Pin it
-	// rather than using the randomly generated test sender for gas goldens.
 	eoaAddr := sdk.AccAddress(gethcommon.HexToAddress("0x1111111111111111111111111111111111111111").Bytes())
 	wasmAddr := sdk.MustAccAddressFromBech32("nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m")
 	for _, token := range []struct {
@@ -29,7 +25,7 @@ func (s *Suite) TestStargateUSDCCompatibility() {
 	}{
 		{evm.MainnetSaiUSDC, "USDC", 13_680_317795},
 		{evm.MainnetLegacyUSDC, "USDC.e", 2_000001},
-		// USDC.e was a literal bank denom before the patch, not an alias.
+		// A literal denom must not shadow the explicitly supported USDC.e alias.
 		{"", "USDC.e", 3_000002},
 	} {
 		denom := "erc20/" + token.address
@@ -47,24 +43,19 @@ func (s *Suite) TestStargateUSDCCompatibility() {
 			s.Require().NoError(testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), addr, sdk.NewCoins(sdk.NewInt64Coin(denom, token.amount))))
 		}
 	}
-	query := wasmext.WasmStargateQuerier(deps.App.GRPCQueryRouter(), deps.App.AppCodec())
+	query := wasmkeeper.AcceptListStargateQuerier(wasmext.WasmAcceptedStargateQueries(), deps.App.GRPCQueryRouter(), deps.App.AppCodec())
 	for _, addr := range []sdk.AccAddress{eoaAddr, wasmAddr} {
-		// Gas values are pinned from the same fixture run against the unmodified
-		// v2.23.0 Keeper.Balance implementation, not the patched resolver.
-		for _, tc := range []struct {
-			token, denom, amount string
-			eoaGas, wasmGas      uint64
-		}{
-			{"USDC", "erc20/" + evm.MainnetLegacyUSDC, "2000001", 104840, 7995},
-			{"uSdC", "erc20/" + evm.MainnetLegacyUSDC, "2000001", 104840, 7995},
-			{"USDC.e", "USDC.e", "3000002", 5666, 5798},
-			{evm.MainnetSaiUSDC, "erc20/" + evm.MainnetSaiUSDC, "13680317795", 104828, 7983},
-			{evm.MainnetLegacyUSDC, "erc20/" + evm.MainnetLegacyUSDC, "2000001", 104840, 7995},
-			{"erc20/" + evm.MainnetSaiUSDC, "erc20/" + evm.MainnetSaiUSDC, "13680317795", 104972, 8127},
-			{"erc20/" + evm.MainnetLegacyUSDC, "erc20/" + evm.MainnetLegacyUSDC, "2000001", 104984, 8139},
+		for _, tc := range []struct{ token, denom, amount string }{
+			{"USDC", "erc20/" + evm.MainnetSaiUSDC, "13680317795"},
+			{"uSdC", "erc20/" + evm.MainnetSaiUSDC, "13680317795"},
+			{"USDC.e", "erc20/" + evm.MainnetLegacyUSDC, "2000001"},
+			{evm.MainnetSaiUSDC, "erc20/" + evm.MainnetSaiUSDC, "13680317795"},
+			{evm.MainnetLegacyUSDC, "erc20/" + evm.MainnetLegacyUSDC, "2000001"},
+			{"erc20/" + evm.MainnetSaiUSDC, "erc20/" + evm.MainnetSaiUSDC, "13680317795"},
+			{"erc20/" + evm.MainnetLegacyUSDC, "erc20/" + evm.MainnetLegacyUSDC, "2000001"},
 		} {
 			s.Run(addr.String()+"/"+tc.token, func() {
-				ctx := deps.Ctx().WithGasMeter(storetypes.NewInfiniteGasMeter())
+				ctx := deps.Ctx()
 				req := &evm.QueryBalanceRequest{Address: addr.String(), Token: tc.token}
 				data, err := req.Marshal()
 				s.Require().NoError(err)
@@ -75,19 +66,9 @@ func (s *Suite) TestStargateUSDCCompatibility() {
 				s.Require().NotNil(resp.Bank)
 				s.Equal(tc.denom, resp.Bank.CoinDenom)
 				s.Equal(tc.amount, resp.Bank.BalanceBase)
-				wantGas := tc.eoaGas
-				if len(addr) == 32 {
-					wantGas = tc.wasmGas
-				}
-				s.Equal(wantGas, ctx.GasMeter().GasConsumed(), "contract query gas must match v2.23.0")
-				// The outer context is unchanged; a subsequent external query uses Sai.
-				if strings.EqualFold(tc.token, "USDC") {
-					external, err := deps.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx()), req)
-					s.Require().NoError(err)
-					s.Require().NotNil(external.Bank)
-					// Kept separate from contract assertions to expose marker leakage.
-					s.Equal("erc20/"+evm.MainnetSaiUSDC, external.Bank.CoinDenom)
-				}
+				external, err := deps.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx()), req)
+				s.Require().NoError(err)
+				s.Equal(external, &resp, "contract and external queries must agree")
 			})
 		}
 	}
