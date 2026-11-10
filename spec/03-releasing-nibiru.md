@@ -46,6 +46,27 @@ go run ./contrib/scripts/upgrade-handler-check.go v2.23.1
 It must select the existing `v2.23.0` handler. Do not add a new upgrade handler
 or schedule a governance upgrade for a compatible patch.
 
+## Record Compatible Tooling Changes
+
+Use root [CHANGELOG-TOOLING.md](../CHANGELOG-TOOLING.md) for compatible CLI,
+developer-tool, off-chain registry, and documentation changes. Add entries to
+its Unreleased section in the implementing PR, including a PR link and the
+user-visible effect. Keep state-machine changes in root CHANGELOG.md under
+Unreleased for the next coordinated release. Historical entries stay in place.
+
+Before publishing a compatible version, promote only entries present in the
+reviewed release-line commit into a matching version section in the tooling
+changelog. Use that section as the patch release description. A generated Git
+commit list is navigation, not a statement of compatibility or shipped scope.
+
+Review CLI compatibility separately from consensus compatibility. Changes to
+argument behavior, alias meanings, or JSON output need explicit notes for
+users and scripts even when validator execution is unchanged. Prefer additive
+commands or opt-in output changes when extending the CLI.
+
+Carry compatible changelog entries forward with the code. Add each entry once;
+do not copy unrelated upcoming chain changes into patch release notes.
+
 ## Create a source release
 
 Prepare and review the release commit on the intended branch, including any
