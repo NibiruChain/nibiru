@@ -33,12 +33,24 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+Compatible tooling, CLI, registry, and documentation updates are tracked in
+[CHANGELOG-TOOLING.md](CHANGELOG-TOOLING.md).
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### State-Machine Breaking Changes
+
+- Change `/eth.evm.v1.Query/Balance` so the mainnet alias `USDC` selects Sai
+  USDC and `USDC.e` selects legacy Stargate USDC. This changes balances visible
+  to Wasm contracts through Stargate during transaction execution and can
+  change transaction results and gas. Activate only in a coordinated chain
+  upgrade. Keep this out of the `release/v2.23` compatible patch line.
+
 
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 
