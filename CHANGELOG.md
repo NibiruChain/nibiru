@@ -40,21 +40,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### State-Machine Breaking Changes
+## v2.23.1
 
-- Change `/eth.evm.v1.Query/Balance` token aliases so `USDC` selects Sai USDC
-  and `USDC.e` selects legacy LayerZero Stargate USDC. This changes results
-  observable by Wasm contracts through Stargate during transaction execution.
-  Activate through a coordinated chain upgrade; do not release as a v2.23.x
-  compatible patch. Contract and external queries use the same alias rules.
-
-### Improvements
-
-- Resolve USDC aliases in the CLI before sending explicit token addresses, so
-  CLI selection also works against older nodes. Explicit addresses, bank
-  denoms, and response fields retain their existing behavior.
+- Resolve `USDC` and `USDC.e` aliases locally in the CLI to Sai USDC and legacy
+  Stargate USDC respectively, then send explicit token addresses to the node.
+  This also works against v2.23.0 nodes and preserves the CLI response fields.
 - Add Sai USDC to the official ERC20 and bank token registries and distinguish
   legacy USDC.e in token documentation.
+
+This is a CLI, registry, and documentation patch on `release/v2.23`. Node query
+handlers, Wasm Stargate queries, precompiles, transaction execution, and the
+`v2.23.0` upgrade handler retain their existing behavior. In particular, direct
+node or contract queries using the literal `USDC` alias still select legacy
+Stargate USDC. A node alias change belongs to a separate coordinated upgrade.
 
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals
 

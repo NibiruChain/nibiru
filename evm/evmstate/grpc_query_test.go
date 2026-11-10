@@ -949,7 +949,7 @@ func (s *Suite) TestQueryBalance() {
 				fundBank(deps, deps.Sender.NibiruAddr, "uusdc", 7_000_000)
 				s.Require().NoError(deps.EvmKeeper.FunTokens.SafeInsert(
 					deps.Ctx(),
-					gethcommon.HexToAddress(evm.MainnetSaiUSDC),
+					gethcommon.HexToAddress("0x0829F361A05D993d5CEb035cA6DF3446b060970b"),
 					"uusdc",
 					false,
 				))
@@ -1645,51 +1645,5 @@ func (s *Suite) TestQueryFunTokenMapping() {
 			s.Assert().NoError(err)
 			s.EqualValues(wantResp, gotResp)
 		})
-	}
-}
-
-// Both mappings coexist after v2.23. A USDC query must never read legacy custody.
-func (s *Suite) TestQueryBalanceUSDCAliases() {
-	deps := evmtest.NewTestDeps()
-	wasmAddr := sdk.MustAccAddressFromBech32("nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m")
-	tokens := []struct {
-		address, symbol string
-		amount          int64
-	}{
-		{evm.MainnetSaiUSDC, "USDC", 13_680_317795},
-		{evm.MainnetLegacyUSDC, "USDC.e", 2_000001},
-	}
-	for _, token := range tokens {
-		denom := "erc20/" + token.address
-		deps.App.BankKeeper.SetDenomMetaData(deps.Ctx(), banktypes.Metadata{
-			DenomUnits: []*banktypes.DenomUnit{{Denom: denom, Exponent: 0}, {Denom: token.symbol, Exponent: 6}},
-			Base:       denom, Display: token.symbol, Name: token.symbol, Symbol: token.symbol,
-		})
-		s.Require().NoError(deps.EvmKeeper.FunTokens.SafeInsert(deps.Ctx(), gethcommon.HexToAddress(token.address), denom, false))
-		for _, addr := range []sdk.AccAddress{deps.Sender.NibiruAddr, wasmAddr} {
-			s.Require().NoError(testapp.FundAccount(deps.App.BankKeeper, deps.Ctx(), addr, sdk.NewCoins(sdk.NewInt64Coin(denom, token.amount))))
-		}
-	}
-	for _, addr := range []sdk.AccAddress{deps.Sender.NibiruAddr, wasmAddr} {
-		for _, token := range tokens {
-			for _, input := range []string{token.symbol, strings.ToLower(token.symbol), strings.ToUpper(token.symbol), token.address, "erc20/" + token.address} {
-				s.Run(addr.String()+"/"+input, func() {
-					resp, err := deps.EvmKeeper.Balance(sdk.WrapSDKContext(deps.Ctx()), &evm.QueryBalanceRequest{Address: addr.String(), Token: input})
-					s.Require().NoError(err)
-					s.Require().NotNil(resp.Bank)
-					s.Equal("erc20/"+token.address, resp.Bank.CoinDenom)
-					s.Equal(fmt.Sprint(token.amount), resp.Bank.BalanceBase)
-					s.Equal(uint32(6), resp.Bank.Decimals)
-					if token.symbol == "USDC" {
-						s.Equal("13680.317795", resp.Bank.BalanceHuman)
-					} else {
-						s.Equal("2.000001", resp.Bank.BalanceHuman)
-					}
-					if len(addr) == appconst.ADDR_LEN_WASM_CONTRACT {
-						s.Nil(resp.Erc20)
-					}
-				})
-			}
-		}
 	}
 }

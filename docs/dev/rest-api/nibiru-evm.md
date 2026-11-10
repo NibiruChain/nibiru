@@ -15,15 +15,6 @@ Balance queries the native EVM balance for a single account. When `token` is
 provided, the response also includes Bank and/or ERC20 balance details for that
 token when available.
 
-The unreleased node change makes case-insensitive `USDC` select Sai USDC
-(`0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190`) and `USDC.e` select legacy
-Stargate USDC (`0x0829F361A05D993d5CEb035cA6DF3446b060970b`). It requires a
-coordinated chain upgrade because the same handler serves Wasm contract queries.
-Existing nodes still resolve `USDC` to the legacy token. Use explicit addresses
-until activation. These aliases refer to mainnet contracts.
-See [token addresses and CLI examples](../evm/token-contracts.md#query-usdc-balances).
-
-
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
