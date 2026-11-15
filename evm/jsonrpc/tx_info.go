@@ -3,6 +3,7 @@ package jsonrpc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -29,13 +30,13 @@ import (
 func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
 	if err != nil {
-		rpcTx, pendingErr := b.getTransactionByHashPending(txHash)
-		if pendingErr != nil {
-			return nil, fmt.Errorf(
-				"no confirmed (pending) or unconfirmed tx found: %s: %w", err, pendingErr,
-			)
+		if !errors.Is(err, eth.ErrTxNotFound) {
+			return nil, err
 		}
-		return rpcTx, nil
+		return b.getTransactionByHashPending(txHash)
+	}
+	if res == nil {
+		return b.getTransactionByHashPending(txHash)
 	}
 
 	block, err := b.TendermintBlockByNumber(rpc.BlockNumber(res.Height))
@@ -125,7 +126,7 @@ func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthT
 		}
 	}
 
-	return nil, fmt.Errorf("no pending tx found with hash %s", txHashHex)
+	return nil, nil
 }
 
 // TransactionReceipt represents the results of a transaction. TransactionReceipt
@@ -421,7 +422,7 @@ func (b *Backend) queryTendermintTxIndexer(query string, txGetter func(*rpc.Pars
 		return nil, err
 	}
 	if len(resTxs.Txs) == 0 {
-		return nil, pkgerrors.New("ethereum tx not found")
+		return nil, eth.ErrTxNotFound
 	}
 	txResult := resTxs.Txs[0]
 	isValidEnough, reason := rpc.TxIsValidEnough(&txResult.TxResult)

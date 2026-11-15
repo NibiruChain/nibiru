@@ -150,7 +150,7 @@ func (indexer *EVMTxIndexer) GetByTxHash(hash common.Hash) (*eth.TxResult, error
 		return nil, sdkioerrors.Wrapf(err, "GetByTxHash %s", hash.Hex())
 	}
 	if len(bz) == 0 {
-		return nil, fmt.Errorf("tx not found, hash: %s", hash.Hex())
+		return nil, fmt.Errorf("%w, hash: %s", eth.ErrTxNotFound, hash.Hex())
 	}
 	var txKey eth.TxResult
 	if err := indexer.clientCtx.Codec.Unmarshal(bz, &txKey); err != nil {
