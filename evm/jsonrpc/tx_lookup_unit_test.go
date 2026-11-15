@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	bftclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
+	cmtrpcclient "github.com/NibiruChain/nibiru/v2/bft/rpc/client"
 	coretypes "github.com/NibiruChain/nibiru/v2/bft/rpc/core/types"
 	"github.com/NibiruChain/nibiru/v2/eth"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
@@ -26,7 +26,7 @@ func (i lookupTestIndexer) GetByTxHash(common.Hash) (*eth.TxResult, error) {
 
 type lookupTestClient struct {
 	client.TendermintRPC
-	bftclient.MempoolClient
+	cmtrpcclient.MempoolClient
 	err error
 }
 
