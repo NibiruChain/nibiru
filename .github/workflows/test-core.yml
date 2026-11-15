@@ -111,6 +111,7 @@ jobs:
           # skip-build-cache: true
 
   changes-nibiru-go:
+    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
     runs-on: ubuntu-latest
     outputs:
       nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}

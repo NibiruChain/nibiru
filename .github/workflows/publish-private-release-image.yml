@@ -55,6 +55,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.repository == 'NibiruChain/nibiru'
     name: Verify artifacts and publish image
     runs-on: ubuntu-latest
 
