@@ -22,7 +22,7 @@ jobs:
       # add the same issue ("Content already exists in this project").
       - uses: actions/add-to-project@3c26b75af2be2eccb5201a85556bdd31d26c18dc
         with:
-          project-url: https://github.com/orgs/${{ github.repository_owner }}/projects/8
+          project-url: https://github.com/orgs/SaiDotFun/projects/1
           github-token: ${{ secrets.NIBIRU_PM }}
 
   label-triage:
