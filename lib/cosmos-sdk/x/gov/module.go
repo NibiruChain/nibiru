@@ -6,28 +6,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
-	modulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/depinject"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/baseapp"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	codectypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
-	store "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/store/types"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/module"
 	simtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/simulation"
-	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	govclient "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/client/cli"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/keeper"
@@ -35,7 +27,6 @@ import (
 	govtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types"
 	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
-	paramtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/params/types"
 )
 
 const ConsensusVersion = 4
@@ -155,112 +146,6 @@ func (am AppModule) IsOnePerModuleType() {}
 
 // IsAppModule implements the appmodule.AppModule interface.
 func (am AppModule) IsAppModule() {}
-
-func init() {
-	appmodule.Register(
-		&modulev1.Module{},
-		appmodule.Provide(ProvideModule, ProvideKeyTable),
-		appmodule.Invoke(InvokeAddRoutes, InvokeSetHooks))
-}
-
-type GovInputs struct {
-	depinject.In
-
-	Config           *modulev1.Module
-	Cdc              codec.Codec
-	Key              *store.KVStoreKey
-	ModuleKey        depinject.OwnModuleKey
-	MsgServiceRouter *baseapp.MsgServiceRouter
-
-	AccountKeeper govtypes.AccountKeeper
-	BankKeeper    govtypes.BankKeeper
-	StakingKeeper govtypes.StakingKeeper
-
-	// LegacySubspace is used solely for migration of x/params managed parameters
-	LegacySubspace govtypes.ParamSubspace `optional:"true"`
-}
-
-type GovOutputs struct {
-	depinject.Out
-
-	Module       appmodule.AppModule
-	Keeper       *keeper.Keeper
-	HandlerRoute v1beta1.HandlerRoute
-}
-
-func ProvideModule(in GovInputs) GovOutputs {
-	kConfig := govtypes.DefaultConfig()
-	if in.Config.MaxMetadataLen != 0 {
-		kConfig.MaxMetadataLen = in.Config.MaxMetadataLen
-	}
-
-	// default to governance authority if not provided
-	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
-	if in.Config.Authority != "" {
-		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
-	}
-
-	k := keeper.NewKeeper(
-		in.Cdc,
-		in.Key,
-		in.AccountKeeper,
-		in.BankKeeper,
-		in.StakingKeeper,
-		in.MsgServiceRouter,
-		kConfig,
-		authority.String(),
-	)
-	m := NewAppModule(in.Cdc, k, in.AccountKeeper, in.BankKeeper, in.LegacySubspace)
-	hr := v1beta1.HandlerRoute{Handler: v1beta1.ProposalHandler, RouteKey: govtypes.RouterKey}
-
-	return GovOutputs{Module: m, Keeper: k, HandlerRoute: hr}
-}
-
-func ProvideKeyTable() paramtypes.KeyTable {
-	return v1.ParamKeyTable() //nolint:staticcheck
-}
-
-func InvokeAddRoutes(keeper *keeper.Keeper, routes []v1beta1.HandlerRoute) {
-	if keeper == nil || routes == nil {
-		return
-	}
-
-	// Default route order is a lexical sort by RouteKey.
-	// Explicit ordering can be added to the module config if required.
-	slices.SortFunc(routes, func(x, y v1beta1.HandlerRoute) bool {
-		return x.RouteKey < y.RouteKey
-	})
-
-	router := v1beta1.NewRouter()
-	for _, r := range routes {
-		router.AddRoute(r.RouteKey, r.Handler)
-	}
-	keeper.SetLegacyRouter(router)
-}
-
-func InvokeSetHooks(keeper *keeper.Keeper, govHooks map[string]govtypes.GovHooksWrapper) error {
-	if keeper == nil || govHooks == nil {
-		return nil
-	}
-
-	// Default ordering is lexical by module name.
-	// Explicit ordering can be added to the module config if required.
-	modNames := maps.Keys(govHooks)
-	order := modNames
-	sort.Strings(order)
-
-	var multiHooks govtypes.MultiGovHooks
-	for _, modName := range order {
-		hook, ok := govHooks[modName]
-		if !ok {
-			return fmt.Errorf("can't find staking hooks for module %s", modName)
-		}
-		multiHooks = append(multiHooks, hook)
-	}
-
-	keeper.SetHooks(multiHooks)
-	return nil
-}
 
 // Name returns the gov module's name.
 func (AppModule) Name() string {

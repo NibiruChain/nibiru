@@ -38,7 +38,7 @@ func (sup *SoftwareUpgradeProposal) ProposalType() string { return ProposalTypeS
 
 // ValidateBasic validates the proposal
 func (sup *SoftwareUpgradeProposal) ValidateBasic() error {
-	if err := sup.Plan.ValidateBasic(); err != nil {
+	if err := sup.Plan.ValidateScheduleRequest(); err != nil {
 		return err
 	}
 	return gov.ValidateAbstract(sup)

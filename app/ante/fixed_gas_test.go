@@ -15,11 +15,13 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	bank "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 
 	"github.com/NibiruChain/nibiru/v2/app/ante"
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	devgastypes "github.com/NibiruChain/nibiru/v2/x/devgas/v1/types"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testapp"
 	"github.com/NibiruChain/nibiru/v2/x/nutil/testutil"
 	oracletypes "github.com/NibiruChain/nibiru/v2/x/oracle/types"
@@ -325,6 +327,30 @@ func (s *Suite) TestZeroGasActors() {
 		return sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, x))
 	}
 
+	s.T().Log("both contracts are registered with devgas")
+	withdrawerWithGasFees := evmtest.NewEthPrivAcc().NibiruAddr
+	withdrawerZeroGas := evmtest.NewEthPrivAcc().NibiruAddr
+	for _, reg := range []struct{ contract, withdrawer sdk.AccAddress }{
+		{counterContractWithGasFees, withdrawerWithGasFees},
+		{counterContractZeroGas, withdrawerZeroGas},
+	} {
+		contract, withdrawer := reg.contract, reg.withdrawer
+		deps.App.DevGasKeeper.SetFeeShare(deps.Ctx(), devgastypes.FeeShare{
+			ContractAddress:   contract.String(),
+			DeployerAddress:   deps.Sender.NibiruAddr.String(),
+			WithdrawerAddress: withdrawer.String(),
+		})
+	}
+	devgasParams := deps.App.DevGasKeeper.GetParams(deps.Ctx())
+	s.Require().True(devgasParams.EnableFeeShare)
+	feeCollector := deps.App.AccountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
+	s.Require().NoError(testapp.FundModuleAccount(
+		deps.App.BankKeeper, deps.Ctx(), authtypes.FeeCollectorName, unibi(1_000_000),
+	))
+	unibiBalance := func(addr sdk.AccAddress) sdkmath.Int {
+		return deps.App.BankKeeper.GetBalance(deps.Ctx(), addr, appconst.DENOM_UNIBI).Amount
+	}
+
 	s.T().Log("tx has normal gas behavior if outside zero gas actors")
 	{
 		sender := deps.Sender
@@ -383,6 +409,8 @@ func (s *Suite) TestZeroGasActors() {
 			s.Greaterf(r.GasUsed, int64(100_000), `gasUsed="%d", resp: %#v`, r.GasUsed, r)
 			s.EqualValuesf(250_000, r.GasWanted, `gasWanted="%d", resp: %#v`, r.GasWanted, r)
 		}
+		s.True(unibiBalance(withdrawerWithGasFees).IsPositive(),
+			"a fee-paying tx pays the devgas share")
 	}
 
 	s.T().Log("zero gas actors work as intended")
@@ -408,6 +436,9 @@ func (s *Suite) TestZeroGasActors() {
 		}...)
 		s.Require().NoError(err)
 		txBuilder.SetGasLimit(50_000)
+		// A declared fee is never deducted from a zero-gas actor, so it must
+		// not produce a devgas payout either.
+		txBuilder.SetFeeAmount(unibi(500))
 
 		privs := []cryptotypes.PrivKey{sender.PrivKey}
 		accSender := deps.App.AccountKeeper.GetAccount(
@@ -441,6 +472,7 @@ func (s *Suite) TestZeroGasActors() {
 		s.Require().NoError(err)
 
 		balBefore := deps.App.BankKeeper.GetWeiBalance(deps.Ctx(), sender.NibiruAddr)
+		feeCollectorBefore := unibiBalance(feeCollector)
 
 		txBz, err := txCfg.TxEncoder()(blockTx)
 		s.Require().NoError(err)
@@ -458,6 +490,10 @@ func (s *Suite) TestZeroGasActors() {
 
 		balAfter := deps.App.BankKeeper.GetWeiBalance(deps.Ctx(), sender.NibiruAddr)
 		s.Equal(balAfter, balBefore, "expect zero gas charged")
+		s.True(unibiBalance(withdrawerZeroGas).IsZero(),
+			"a zero-gas actor tx pays no devgas share")
+		s.Equal(feeCollectorBefore.String(), unibiBalance(feeCollector).String(),
+			"the fee collector is unchanged by a zero-gas actor tx")
 	}
 
 	deps.App.EndBlock(abci.RequestEndBlock{Height: deps.Ctx().BlockHeight()})

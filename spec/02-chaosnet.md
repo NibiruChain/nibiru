@@ -33,7 +33,8 @@ From the repository root, use these commands:
 | `just chaos up-multival` | Starts four validators on one chain and preserves existing named volumes. |
 | `just chaos determinism` | Runs the app hash agreement check on a fresh `multival` network. |
 | `just chaos determinism-selftest` | Self-test: plants a non-deterministic `EndBlock` and passes only if the check catches it. |
-| `just chaos determinism-all` | Runs `determinism-selftest`, then `determinism`. Stops if the self-test fails. |
+| `just chaos determinism-selftest-one` | Self-test: runs only `nibiru-val-2` on the planted-bug image and passes only if the check names `val-2` alone. |
+| `just chaos determinism-all` | Runs both self-tests, then `determinism`. Stops if a self-test fails. |
 | `just chaos build` | Rebuilds Chaosnet images without cache and pulls base images. |
 | `just chaos down` | Stops all profiles and preserves named volumes. |
 | `just chaos destroy` | Stops all profiles and removes named volumes after confirmation. |
@@ -104,34 +105,48 @@ or a Wasm call that reads wall-clock time. On mainnet these show up as
 The script:
 
 1. Builds the image and starts the `multival` profile from a fresh volume.
-2. Waits for height 3, then sends load to every node for `LOAD_SECONDS`
-   (default 120), so different proposers build blocks with different
-   transaction orders:
+2. Waits for height 3, then runs `contrib/scripts/multival-load.sh setup`
+   in a one-off container. It stores
+   `evm/precompile/test/hello_world_counter.wasm` with `nibid tx wasm
+   store` and instantiates one counter per validator, retrying through each
+   node in turn. This happens before any validator is taken down.
+3. Sends load to every node for `LOAD_SECONDS` (default 120), so different
+   proposers build blocks with different transaction orders:
    - EVM: `contrib/scripts/determinism evm-load` signs contract deploys,
      contract calls, and value transfers and sends them to each node's
      JSON-RPC with `eth_sendRawTransaction`.
-   - Bank and Wasm: `contrib/scripts/multival-load.sh` runs in a one-off
-     container and uses `nibid tx bank send`, `nibid tx wasm store`,
-     `instantiate`, and `execute` against each node. The contract is
-     `evm/precompile/test/hello_world_counter.wasm`.
-3. Every 10 seconds of the load, kills one validator with `SIGKILL` and
+   - Bank and Wasm: `multival-load.sh load` uses `nibid tx bank send` and
+     `nibid tx wasm execute` against each node.
+4. Every 10 seconds of the load, kills one validator with `SIGKILL` and
    starts it again, or restarts it, rotating through the four. Nodes replay
    blocks from disk on startup.
-4. Waits for every node to reach the last height plus `EXTRA_HEIGHTS`
+   `PERTURB=false` turns this off.
+5. Waits for every node to reach the last height plus `EXTRA_HEIGHTS`
    (default 10). `determinism compare` then reads `/block` and
    `/block_results` for every height from every node and compares
    `block_id.hash`, `header.app_hash`, `header.last_results_hash`, and each
-   transaction's `code` and `gas_used`.
-5. Removes the network, unless `KEEP_NETWORK=true`.
+   transaction's `code` and `gas_used`. A header carries the app hash after
+   the previous height, so compare also waits for one more block and
+   compares its app hash, which covers the last height.
+6. Removes the network, unless `KEEP_NETWORK=true`.
 
 It exits non-zero when:
 
 - nodes disagree on any compared field; it prints the first height and
   field;
-- a node's height does not move for 60 seconds before the target. It
-  prints each node's height and app hash from `/abci_info`, the first
-  height where app hashes differ, and the last 100 log lines of each
-  stopped node.
+- a node's height does not move for `STALL_SECONDS` (default 60) before
+  the target. It prints `stopped: <names>`, each node's height and app hash
+  from `/abci_info`, the first height where app hashes differ, and the last
+  100 log lines of each stopped node;
+- fewer than `MIN_OK_TXS` transactions have code 0 on the compared
+  heights;
+- the load did not run as required: the network never reached height 3,
+  Wasm setup failed, a node accepted no EVM transactions, or the bank or
+  Wasm load had no acceptances. It prints
+  `load did not run as required` with the reasons.
+
+A disagreement or a stopped node is reported first, so a self-test that
+halts the chain before the load starts still fails on the app hash.
 
 A single diverging validator stops and the other three continue, so the
 report compares its app hash with the next block's header on a healthy
@@ -146,6 +161,10 @@ target height and compare about 90 heights. Building the image from scratch adds
 | --- | --- | --- |
 | `LOAD_SECONDS` | `120` | Load and perturbation time. |
 | `EXTRA_HEIGHTS` | `10` | Heights past the end of load to wait for. |
+| `MIN_OK_TXS` | `LOAD_SECONDS` | Successful transactions required on the compared heights. |
+| `PERTURB` | `true` | `false` keeps every validator up. |
+| `STALL_SECONDS` | `60` | How long a node's height may stay the same before it counts as stopped. |
+| `MULTIVAL_IMAGE_VAL2` | `MULTIVAL_IMAGE` | Already built image for `nibiru-val-2` only. |
 | `MULTIVAL_IMAGE` | `nibiru-multival:local` | Image tag. |
 | `MULTIVAL_BUILD_TAGS` | none | Extra Go build tags for `nibid`. |
 | `KEEP_NETWORK` | `false` | Leave the network running after the check. |
@@ -159,14 +178,25 @@ with the test-only build tag `nibiru_fault_injection`. With that tag,
 commits a different app hash after height 1. The recipe passes only if the
 check fails and names the first height where app hashes differ. An
 unrelated failure, such as a crash or a build error, does not count as a
-pass. Never ship a binary built with that tag.
+pass. The planted write does nothing unless the chain ID starts with
+`nibiru-localnet-`. Still, never ship a binary built with that tag.
 
-The self-test is a regression test for the detector. `just chaos
-determinism-all` runs it first and stops if it fails, because a clean
-`determinism` run means nothing if the check cannot see a planted bug. It
-then runs `determinism`. The nightly workflow
+`just chaos determinism-selftest-one` covers the case that matters most on
+a live chain: one validator diverges and the rest continue. It runs only
+`nibiru-val-2` on the fault-injection image, with perturbation off, since
+taking down a healthy node while val-2 is out leaves 2 of 4 validators.
+It passes only if the check fails, names the first height where app
+hashes differ, and prints `stopped: val-2`.
+
+The self-tests are regression tests for the detector. `just chaos
+determinism-all` runs both first and stops if either fails, because a
+clean `determinism` run means nothing if the check cannot see a planted
+bug. It then runs `determinism`. The nightly workflow
 `.github/workflows/test-determinism.yml` runs `determinism-all` at 05:30
-UTC, on manual dispatch, and on pull requests that change the check.
+UTC, on manual dispatch, and on pull requests that change the check. When
+a nightly run fails, job `determinism-notify` comments on the open issue
+titled `ci(chaosnet): Nightly determinism run failed` with label `Z-ci`, or
+opens it.
 
 ## IBC walkthrough
 

@@ -11,7 +11,6 @@ import (
 	evidencemodulev1 "cosmossdk.io/api/cosmos/evidence/module/v1"
 	feegrantmodulev1 "cosmossdk.io/api/cosmos/feegrant/module/v1"
 	genutilmodulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
-	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
 	paramsmodulev1 "cosmossdk.io/api/cosmos/params/module/v1"
 	slashingmodulev1 "cosmossdk.io/api/cosmos/slashing/module/v1"
 	stakingmodulev1 "cosmossdk.io/api/cosmos/staking/module/v1"
@@ -25,6 +24,8 @@ import (
 
 // Config should never need to be instantiated manually and is solely used for ModuleOption.
 type Config struct {
+	// ModuleConfigs includes nil entries for explicitly wired modules whose
+	// lifecycle positions are needed but whose construction is not injected.
 	ModuleConfigs      map[string]*appv1alpha1.ModuleConfig
 	BeginBlockersOrder []string
 	EndBlockersOrder   []string
@@ -210,12 +211,11 @@ func VestingModule() ModuleOption {
 	}
 }
 
+// GovModule includes governance in lifecycle ordering without asking depinject
+// to construct it. Tests register it through [RegisterGovModule] before Load.
 func GovModule() ModuleOption {
 	return func(config *Config) {
-		config.ModuleConfigs["gov"] = &appv1alpha1.ModuleConfig{
-			Name:   "gov",
-			Config: appconfig.WrapAny(&govmodulev1.Module{}),
-		}
+		config.ModuleConfigs["gov"] = nil
 	}
 }
 
@@ -301,7 +301,11 @@ func NewAppConfig(opts ...ModuleOption) depinject.Config {
 	}}
 
 	for _, m := range cfg.ModuleConfigs {
-		modules = append(modules, m)
+		// A nil configuration reserves lifecycle ordering for a module that
+		// the test wires explicitly before loading the application.
+		if m != nil {
+			modules = append(modules, m)
+		}
 	}
 
 	return appconfig.Compose(&appv1alpha1.Config{Modules: modules})

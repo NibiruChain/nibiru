@@ -1,10 +1,10 @@
 ---
-title: "NibiruBFT: Validator Clustering, A Novel Approach to Consensus Scaling"
+title: "Nibiru BFT: Validator Clustering, A Novel Approach to Consensus Scaling"
 description: >-
   Nibiru Research is exploring methods to enhance the scalability and decentralization of consensus mechanisms. One promising direction involves modifying the CometBFT consensus algorithm to reduce communication overhead. Specifically, we are investigating a multi-layered consensus system that structures validator nodes into distinct "validator clusters".
 ---
 
-# NibiruBFT: Validator Clustering
+# Nibiru BFT: Validator Clustering
 
 {{ $frontmatter.description }}
 
@@ -16,7 +16,7 @@ To contextualize this approach, it's useful to review CometBFT. The Cosmos SDK f
 
 <figure>
   <img src="./nibirubft-validator-clusters-cometbft-lifecycle.png" alt="CometBFT
-    Transaction Lifecycle - Nibiru, NibiruBFT" />
+    Transaction Lifecycle - Nibiru, Nibiru BFT" />
   <figcaption>[Figure] CometBFT: The architectural flow of ABCI message handling in CometBFT, showing how transactions move from the Mempool through CheckTx validation, while the Consensus Logic, led by a Proposer, manages block creation. The Application Logic processes transactions via two ABCI interfaces: one for individual transaction results and another for block-level operations (BeginBlock, DeliverTx, EndBlock, and Commit), ensuring a systematic approach to state management and consensus.</figcaption>
 </figure>
 
@@ -24,7 +24,7 @@ CometBFT, the successor to Tendermint, is widely used by IBC blockchains built w
 
 <figure>
 <img src="./nibirubft-validator-clusters-cometbft-polka.png" 
-    alt="NibiruBFT, Nibiru CometBFT Polka - Validator Clusters for Consensus Scaling" />
+    alt="Nibiru BFT, Nibiru CometBFT Polka - Validator Clusters for Consensus Scaling" />
   <figcaption>[Figure] Tendermint consensus process: showing how a new block height initiates a round of proposals, followed by prevoting and precommitting phases. The paths in blue represent successful block validation flows, while red paths indicate scenarios where consensus wasn't reached and a new round is needed. The critical "+2/3" thresholds are clearly marked at decision points, showing where supermajority agreement is required to proceed with block commitment. The polka dancers in the corner playfully reference the algorithm's "polka" mechanism for achieving consensus.</figcaption>
 </figure>
 
@@ -68,13 +68,13 @@ Validator clustering addresses the $n^2$ communication problem by splitting vali
 
 <figure>
   <img src="./validator-clusters-cometbft-overhead.png" 
-    alt="CometBFT Communication Overhead - Nibiru, NibiruBFT" />
+    alt="CometBFT Communication Overhead - Nibiru, Nibiru BFT" />
   <figcaption>[Figure] Traditional CometBFT consensus introduces significant communication overhead, with complexity scaling quadratically with number of validators.</figcaption>
 </figure>
 
 <figure>
 <img src="./validator-clusters-clustering.png" 
-  alt="NibiruBFT: Validator Clustering for efficient communication | Nibiru" />
+  alt="Nibiru BFT: Validator Clustering for efficient communication | Nibiru" />
   <figcaption>[Figure] Validator clustering transforms the traditional all-to-all validator communication pattern into a hierarchical structure with group leaders, dramatically reducing network overhead while preserving byzantine fault tolerance.</figcaption>
 </figure>
 
@@ -94,7 +94,7 @@ Several optimizations can enhance this approach:
 
 <figure>
   <img src="./validator-clusters-geoclustering.png" alt="Secondary Geoclustering Optimization" />
-  <figcaption>[Figure] A possible “optimistic” optimization (extending the idea that once ⅔ stake weight has approved the block, the block is finalized). By clustering validators accommodating to network topology, NibiruBFT can decrease the lower bound on latency in the best case.</figcaption>
+  <figcaption>[Figure] A possible “optimistic” optimization (extending the idea that once ⅔ stake weight has approved the block, the block is finalized). By clustering validators accommodating to network topology, Nibiru BFT can decrease the lower bound on latency in the best case.</figcaption>
 </figure>
 
 3. **Slow Clustering**: Clustering of consistently slow validators (with a summed stake <1/3) allows performant clusters to reach inter-cluster consensus faster, without being held back by the slow cluster.

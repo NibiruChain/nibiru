@@ -17,6 +17,10 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  # Incremental state only grows the cached dependency builds in CI.
+  CARGO_INCREMENTAL: "0"
+
 jobs:
   # changes-wasmvm (job): Detects changes that should run Wasm VM FFI jobs.
   changes-wasmvm:
@@ -104,20 +108,14 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        id: rust-cache-wasmvm
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
+          workspaces: lib/wasmvm/libwasmvm -> target
+          shared-key: nibiru-wasmvm-rust-base-tests
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Rust sanity checks
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -147,20 +145,14 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        id: rust-cache-wasmvm
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
+          workspaces: lib/wasmvm/libwasmvm -> target
+          shared-key: nibiru-wasmvm-rust-lint
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Clippy
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
@@ -261,20 +253,14 @@ jobs:
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}
-        id: rust-cache-wasmvm
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            lib/wasmvm/libwasmvm/target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-${{ hashFiles('lib/wasmvm/libwasmvm/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmvm-
+          workspaces: lib/wasmvm/libwasmvm -> target
+          shared-key: nibiru-wasmvm-go-ffi-tests
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build Rust shared library
         if: ${{ needs.changes-wasmvm.outputs['do-run'] == 'true' }}

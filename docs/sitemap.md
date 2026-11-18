@@ -93,7 +93,7 @@ Use this sitemap to find your way around the Nibiru website.
   - [Execution Engine](./concepts/arch/execution/index.md)
     - [Nibiru Adaptive Execution](./concepts/arch/execution/adaptive-execution.md)
     - [Parallel Optimistic Execution](./concepts/arch/execution/parallel-optimistic.md)
-  - [NibiruBFT Consensus](./concepts/arch/nibiru-bft/index.md)
+  - [Nibiru BFT Consensus](./concepts/arch/nibiru-bft/index.md)
     - [BLS Signatures](./concepts/arch/nibiru-bft/bls-signatures.md)
     - [Validator Clusters](./concepts/arch/nibiru-bft/validator-clusters.md)
     - [QUIC](./concepts/arch/nibiru-bft/quic.md)

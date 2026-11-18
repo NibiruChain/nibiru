@@ -6,10 +6,14 @@
 #      nibiru_fault_injection tag and passes only if the check reports the
 #      first height where app hashes differ. This is a regression test for
 #      the detector.
-#   2. determinism runs the real check under EVM, Wasm, and bank load while
-#      validators get killed and restarted. It only runs if step 1 passed.
+#   2. determinism-selftest-one runs only nibiru-val-2 on that image and
+#      passes only if the check names val-2 alone.
+#   3. determinism runs the real check under EVM, Wasm, and bank load while
+#      validators get killed and restarted. It only runs if steps 1 and 2
+#      passed.
 #
-# Runs nightly, on demand, and on pull requests that change the check.
+# Runs nightly, on demand, and on pull requests that change the check. A
+# failed nightly run opens or comments on one tracking issue.
 #
 # Compose builds both images with the runner's local BuildKit, with no
 # Actions cache. The second build reuses the Go module layer and the Go
@@ -30,6 +34,7 @@ on:
       - "contrib/scripts/multival-load.sh"
       - "evm/evmstate/fault_injection.go"
       - "evm/evmstate/fault_injection_off.go"
+      - "evm/evmstate/fault_injection_test.go"
       - "evm/evmstate/hooks.go"
       - "just-chaos.just"
   schedule:
@@ -95,3 +100,29 @@ jobs:
           path: ${{ runner.temp }}/determinism/
           if-no-files-found: ignore
           retention-days: 14
+
+  # Open or update one tracking issue when the nightly run fails, so a red
+  # run does not wait for someone to open the Actions tab.
+  determinism-notify:
+    needs: determinism-all
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: "Open or update the nightly determinism failure issue"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "ci(chaosnet): Nightly determinism run failed"
+        shell: bash
+        run: |
+          body="Nightly \`just chaos determinism-all\` failed on ${GITHUB_SHA}: ${RUN_URL}"
+          number="$(gh issue list --state open --label Z-ci \
+            --search "in:title \"$TITLE\"" --json number --jq '.[0].number')"
+          if [[ -n "$number" ]]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$TITLE" --label Z-ci --body "$body"
+          fi

@@ -18,6 +18,8 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  # Incremental state only grows the cached dependency builds in CI.
+  CARGO_INCREMENTAL: "0"
 
 jobs:
   # changes-rust (job): Selects Rust checks for pull requests. Main, scheduled,
@@ -64,6 +66,8 @@ jobs:
               - "wasm-contracts/**"
               - "x/consensus/x_consensus.wasm.gz"
               - "x/consensus/wasm.go"
+              - "x/upgrade/x_upgrade.wasm.gz"
+              - "x/upgrade/wasm.go"
               - "Cargo.toml"
               - "Cargo.lock"
               - "just-rs.just"
@@ -137,8 +141,8 @@ jobs:
 
   # wasm-contracts (job): Builds the wasm-contracts/ contracts in release mode
   # when contract code changes, so every pull request that touches a contract
-  # produces downloadable AMD64 builds, and checks that the x-consensus build
-  # embedded in nibid matches a fresh build of its source.
+  # produces downloadable AMD64 builds, and checks that embedded chain-contract builds
+  # match fresh builds of their Rust source.
   wasm-contracts:
     needs: changes-rust
     if: ${{ needs.changes-rust.outputs['run-contracts'] == 'true' }}
@@ -148,13 +152,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.95.0
       - uses: taiki-e/install-action@just
-      - uses: actions/cache@v6
+      - name: Cache Rust dependency builds
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/registry/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-${{ runner.arch }}-wasm-contracts-${{ hashFiles('Cargo.lock') }}
+          shared-key: nibiru-wasm-contracts
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build contracts in release mode
         run: |
           just rs wasm-all release
@@ -165,7 +168,7 @@ jobs:
           name: wasm-contracts-release
           path: wasm-contracts/artifacts/*.wasm
           if-no-files-found: error
-      - name: Check the embedded x-consensus build
+      - name: Check embedded Chain contract builds
         run: just rs wasm-embed-check
 
   # rust-test (job): Runs the legacy root Cargo workspace test suite.
@@ -190,19 +193,13 @@ jobs:
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-
+          shared-key: nibiru-rust-test
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Rust tests
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -230,19 +227,13 @@ jobs:
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-rust-
+          shared-key: nibiru-rust-build
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build Rust workspace
         if: ${{ needs.changes-rust.outputs['run-workspace'] == 'true' }}
@@ -271,19 +262,14 @@ jobs:
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
         uses: taiki-e/install-action@just
 
-      - name: Cache Cargo
+      - name: Cache Rust dependency builds
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            lib/wasmer/target/
-          key: ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmer-${{ hashFiles('lib/wasmer/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-rust195-cargo-wasmer-
+          workspaces: lib/wasmer -> target
+          shared-key: nibiru-wasmer
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Wasmer tests
         if: ${{ needs.changes-rust.outputs['run-wasmer'] == 'true' }}
@@ -306,13 +292,12 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.95.0
       - uses: taiki-e/install-action@just
-      - uses: actions/cache@v6
+      - name: Cache Rust dependency builds
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/registry/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-${{ runner.arch }}-optimizer-${{ hashFiles('Cargo.lock') }}
+          shared-key: nibiru-optimizer-smoke-${{ runner.arch }}
+          cache-bin: "false"
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Checkout pinned upstream counter fixture
         uses: actions/checkout@v7
         with:
