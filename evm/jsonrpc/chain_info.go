@@ -55,8 +55,10 @@ func (b *Backend) CurrentHeader() (*gethcore.Header, error) {
 	return b.HeaderByNumber(rpc.EthLatestBlockNumber)
 }
 
-// PendingTransactions returns the transactions that are in the transaction pool
-// and have a from address that is one of the accounts this node manages.
+// PendingTransactions decodes the transactions returned by the CometBFT
+// unconfirmed-tx query. It includes Cosmos and EVM messages without filtering
+// sender ownership. The upstream query applies its default result limit; this
+// method does not produce a complete or paginated view of a large mempool.
 func (b *Backend) PendingTransactions() ([]*sdk.Tx, error) {
 	mc, ok := b.clientCtx.Client.(cmtrpcclient.MempoolClient)
 	if !ok {

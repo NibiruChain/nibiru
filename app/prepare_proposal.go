@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"container/heap"
+	"errors"
 	"math"
 	"sort"
 
@@ -73,19 +74,89 @@ func (h *proposalHeap) Pop() any {
 	return value
 }
 
+// priorityLanesMaxBytesDivisor sets the byte cap shared by the oracle and
+// zero-gas lanes to 1/4 of RequestPrepareProposal.MaxTxBytes. Price writes are
+// small, so a quarter of the block leaves ample room for every price write
+// and routine keeper action while guaranteeing the EVM and default lanes at
+// least 3/4 of the block, even if an allowlisted key floods the mempool with
+// zero-fee transactions. The cap is proposer-local and not a consensus rule.
+const priorityLanesMaxBytesDivisor = 4
+
 // NewEVMPrepareProposalHandler returns Nibiru's EVM-aware proposal builder.
 //
 // The handler snapshots [evm.Mempool] via [evm.Mempool.Snapshot] and selects
 // each sender's complete state nonce chain (contiguous live slots from the
 // committed state nonce) through [executableProposalChains], prioritizes
 // executable sender heads with [proposalHeap], and returns original outer bytes
-// from [evm.MempoolTx.TxBytes]. It then appends verified non-EVM candidates from
-// RequestPrepareProposal.Txs in their CometBFT-provided relative order. EVM
-// transactions present in req.Txs are ignored so proposal construction does not
-// rebuild the EVM index from Comet candidates. A recovered panic yields an empty
-// proposal rather than an unfiltered EVM candidate set. Node-local mempool
-// membership affects only this node's candidate selection; ProcessProposal and
-// delivery validate from proposal bytes and application state alone.
+// from [evm.MempoolTx.TxBytes].
+//
+// The proposal is built in [proposalLane] order, as assigned by
+// [classifyProposalTx]:
+//
+//  1. Oracle lane: zero-gas actor transactions (x/sudo ZeroGasActors) that
+//     call the Sai oracle contract, signed by their sender alone
+//     ([isOracleLaneTx]). Any oracle execute qualifies: price writes,
+//     expiration updates, and permission or admin calls.
+//  2. Zero-gas lane: other zero-gas actor transactions, such as keeper calls
+//     and oracle calls with a co-signer or a distinct fee payer.
+//  3. EVM lane: the [proposalHeap] selection above.
+//  4. Default lane: all other non-EVM transactions.
+//
+// The Sai oracle address is read once per proposal from committed state,
+// through the x-oracle adapter named by the EVM params Wasm plugins
+// ([resolveOracleLaneRule]). When the plugin is missing, the adapter is in
+// fixture mode, or the query fails, the oracle lane falls back to price
+// writes matched by message key ([isOraclePriceWriteMsg]).
+//
+// Lanes 1, 2, and 4 come from RequestPrepareProposal.Txs and keep their
+// CometBFT-provided relative order. EVM transactions present in req.Txs are
+// ignored so proposal construction does not rebuild the EVM index from Comet
+// candidates.
+//
+// Putting oracle calls first means that, in a block that contains a price
+// write, every later transaction, including keeper actions and trades
+// submitted as EVM transactions, executes against that write rather than the
+// previous block's price. This holds only when all of the following are true:
+//
+//   - The block contains a price write at all.
+//   - CometBFT reaped the write into req.Txs. Reaping is FIFO under the block
+//     byte limit, and EVM transactions also occupy the CometBFT mempool, so
+//     under a large backlog the write may be absent while the EVM lane still
+//     fills from the app mempool.
+//   - The proposer runs this handler. ProcessProposal does not check lane
+//     order, so another proposer may order the block differently.
+//
+// Closing the reap gap and enforcing lane order in ProcessProposal are scope
+// for the lane-enforcement follow-up; this handler is proposer-local.
+//
+// A signer's non-EVM transactions are never reordered across lanes. Earlier
+// candidates are promoted to the lane of a later candidate sharing a signer,
+// so a fast-lane transaction keeps its lane (see [splitNonEVMProposalTxs]).
+// Promotion is computed over all candidates before selection, so a promoted
+// transaction keeps its lane even when the transaction that promoted it is
+// skipped; the block stays valid. This does not track the EVM mempool, so if one account has an EVM transaction at nonce N and a zero-gas
+// Cosmos transaction at sequence N+1, the Cosmos transaction is verified first,
+// fails its sequence check, and waits for a later block. Zero-gas actor keys do
+// not send EVM transactions in practice, so this case is accepted.
+//
+// Every lane shares one byte and gas budget, filled in lane order; a candidate
+// that does not fit is skipped and stays in the CometBFT mempool. In addition,
+// lanes 1 and 2 together may use at most 1/[priorityLanesMaxBytesDivisor] of
+// RequestPrepareProposal.MaxTxBytes, filled oracle lane first. The cap bounds
+// what a compromised or runaway zero-gas actor key, which pays no fees, can
+// take from the EVM and default lanes.
+//
+// Gas is charged at each transaction's declared limit, because the default
+// ProcessProposal sums declared gas against max_gas. Zero-gas actor
+// transactions execute on a fixed zero gas meter but may declare a large
+// limit, so with a finite max_gas, lanes 1 and 2 can use the gas budget before
+// any EVM transaction is considered. A per-lane gas cap is left for the
+// lane-enforcement follow-up. With max_gas = -1 the hazard does not apply.
+//
+// A recovered panic yields an empty proposal rather than an unfiltered EVM
+// candidate set. Node-local mempool membership affects only this node's
+// candidate selection; ProcessProposal and delivery validate from proposal
+// bytes and application state alone.
 func NewEVMPrepareProposalHandler(
 	app *NibiruApp,
 	verifier prepareProposalTxVerifier,
@@ -112,6 +183,48 @@ func NewEVMPrepareProposalHandler(
 
 		selected := make([][]byte, 0)
 		var usedBytes, usedGas uint64
+		// selectNonEVM charges declared gas, not executed gas, to match
+		// ProcessProposal; see the max_gas note on this handler.
+		// It reports whether the candidate was selected.
+		selectNonEVM := func(candidate nonEVMProposalTx) bool {
+			if !proposalCapacityAllows(usedBytes, proposalTxSize(candidate.txBytes), maxBytes) ||
+				!proposalCapacityAllows(usedGas, candidate.gasWanted, maxGas) {
+				return false
+			}
+			if err := verifier.PrepareProposalVerifyTxBytes(candidate.txBytes); err != nil {
+				return false
+			}
+			selected = append(selected, candidate.txBytes)
+			usedBytes += proposalTxSize(candidate.txBytes)
+			usedGas += candidate.gasWanted
+			return true
+		}
+
+		oracle, err := resolveOracleLaneRule(ctx, app.EvmKeeper, app.WasmKeeper)
+		if err != nil && !errors.Is(err, ErrOracleAdapterNotConfigured) {
+			ctx.Logger().Error(
+				"oracle lane falls back to price writes by message key", "err", err)
+		}
+		lanes := splitNonEVMProposalTxs(
+			app.txConfig.TxDecoder(), req.Txs, app.SudoKeeper.GetZeroGasActors(ctx),
+			oracle,
+		)
+		// Oracle and zero-gas lanes share the priority byte cap.
+		priorityMaxBytes := maxBytes / priorityLanesMaxBytesDivisor
+		var priorityBytes uint64
+		for _, lane := range []proposalLane{proposalLaneOracle, proposalLaneZeroGas} {
+			for _, candidate := range lanes[lane] {
+				size := proposalTxSize(candidate.txBytes)
+				if !proposalCapacityAllows(priorityBytes, size, priorityMaxBytes) {
+					continue
+				}
+				if selectNonEVM(candidate) {
+					priorityBytes += size
+				}
+			}
+		}
+
+		// EVM lane: executable sender heads from the app EVM mempool.
 		chains := executableProposalChains(ctx, app.EvmKeeper, app.EvmMempool.Snapshot())
 		queue := proposalHeap(chains)
 		heap.Init(&queue)
@@ -139,25 +252,8 @@ func NewEVMPrepareProposalHandler(
 			}
 		}
 
-		for _, txBytes := range req.Txs {
-			tx, err := app.txConfig.TxDecoder()(txBytes)
-			if err != nil || evm.IsEthTx(tx) {
-				continue
-			}
-			gasWanted := uint64(0)
-			if gasTx, ok := tx.(interface{ GetGas() uint64 }); ok {
-				gasWanted = gasTx.GetGas()
-			}
-			if !proposalCapacityAllows(usedBytes, proposalTxSize(txBytes), maxBytes) ||
-				!proposalCapacityAllows(usedGas, gasWanted, maxGas) {
-				continue
-			}
-			if err := verifier.PrepareProposalVerifyTxBytes(txBytes); err != nil {
-				continue
-			}
-			selected = append(selected, txBytes)
-			usedBytes += proposalTxSize(txBytes)
-			usedGas += gasWanted
+		for _, candidate := range lanes[proposalLaneDefault] {
+			_ = selectNonEVM(candidate)
 		}
 
 		return abci.ResponsePrepareProposal{Txs: selected}

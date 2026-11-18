@@ -129,6 +129,8 @@ jobs:
               - "app/**/*.go"
               - "eth/**/*.go"
               - "evm/**/*.go"
+              # Solidity inputs and generated ABI/bytecode affect embedded Go packages.
+              - "evm/embeds/**"
               - "x/**/*.go"
               - "proto/**/*.proto"
               - "x/**/*.proto"

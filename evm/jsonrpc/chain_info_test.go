@@ -1,14 +1,21 @@
 package jsonrpc_test
 
 import (
+	"context"
+	"fmt"
 	"math/big"
+	"time"
 
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethmath "github.com/ethereum/go-ethereum/common/math"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/evm"
 	"github.com/NibiruChain/nibiru/v2/evm/evmtest"
+	"github.com/NibiruChain/nibiru/v2/evm/rpc"
+	"github.com/NibiruChain/nibiru/v2/x/nutil/localnet"
 )
 
 func (s *BackendSuite) TestChainID() {
@@ -32,22 +39,55 @@ func (s *BackendSuite) TestCurrentHeader() {
 		s.SuccessfulTxTransfer().BlockNumberRpc.Int64())
 }
 
-func (s *BackendSuite) TestPendingTransactions() {
-	// Create pending tx: don't wait for next block
-	randomEthAddr := evmtest.NewEthPrivAcc().EthAddr
-	txHash := s.SendNibiViaEthTransfer(randomEthAddr, big.NewInt(123), false)
-	txs, err := s.cli.EvmRpc.Eth.GetPendingTransactions()
+// TestPendingTransactionLifecycle checks the public HTTP RPC after a real
+// transfer. Receipt availability, rather than a fixed block increment, marks
+// confirmation. The pending query may briefly lag that signal, so absence is
+// checked with a bounded poll and transaction-specific diagnostics. A fast block
+// can confirm before the first query; the controlled RPC snapshot test covers
+// the genuinely unconfirmed phase without relying on that scheduling window.
+func (s *BackendSuite) TestPendingTransactionLifecycle() {
+	testMutex.Lock()
+	defer testMutex.Unlock()
+
+	rpcClient, err := gethrpc.DialHTTP(localnet.LocalnetEVMURI)
 	s.Require().NoError(err)
-	s.Require().NotNil(txs)
-	s.Require().NotNil(txHash)
-	s.Require().Greater(len(txs), 0)
-	txFound := false
-	for _, tx := range txs {
-		if tx.Hash == txHash {
-			txFound = true
+	defer rpcClient.Close()
+
+	txHash := s.SendNibiViaEthTransfer(evmtest.NewEthPrivAcc().EthAddr, big.NewInt(123), false)
+	observedPending := false
+	const lifecycleTimeout = 30 * time.Second
+	lifecycleCtx, cancelLifecycle := context.WithTimeout(context.Background(), lifecycleTimeout)
+	defer cancelLifecycle()
+	s.Require().EventuallyWithT(func(c *assert.CollectT) {
+		ctx, cancel := context.WithTimeout(lifecycleCtx, 2*time.Second)
+		defer cancel()
+
+		receipt, receiptErr := s.cli.EvmRpcClient.TransactionReceipt(ctx, txHash)
+		var pending []*rpc.EthTxJsonRPC
+		pendingErr := rpcClient.CallContext(ctx, &pending, "eth_getPendingTransactions")
+		height, heightErr := s.cli.EvmRpcClient.BlockNumber(ctx)
+		hashes := make([]gethcommon.Hash, 0, len(pending))
+		for _, tx := range pending {
+			if tx != nil {
+				hashes = append(hashes, tx.Hash)
+				observedPending = observedPending || tx.Hash == txHash
+			}
 		}
-	}
-	s.Require().True(txFound, "pending tx not found")
+		diagnostic := fmt.Sprintf("tx=%s block_height=%d pending_count=%d receipt_present=%t receipt_error=%v pending_error=%v height_error=%v", txHash, height, len(pending), receipt != nil, receiptErr, pendingErr, heightErr)
+		assert.NoError(c, receiptErr, diagnostic)
+		assert.NoError(c, pendingErr, diagnostic)
+		assert.NoError(c, heightErr, diagnostic)
+		if !assert.NotNil(c, receipt, diagnostic) {
+			return
+		}
+		assert.Equal(c, txHash, receipt.TxHash, diagnostic)
+		assert.Equal(c, uint64(1), receipt.Status, diagnostic)
+		if assert.NotNil(c, receipt.BlockNumber, diagnostic) {
+			assert.Positive(c, receipt.BlockNumber.Sign(), diagnostic)
+		}
+		assert.NotContains(c, hashes, txHash, diagnostic)
+	}, lifecycleTimeout, 100*time.Millisecond)
+	s.T().Logf("confirmed tx %s is absent from pending RPC; observed_pending_before_confirmation=%t", txHash, observedPending)
 }
 
 func (s *BackendSuite) TestFeeHistory() {

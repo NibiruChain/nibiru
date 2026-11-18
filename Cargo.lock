@@ -1417,7 +1417,7 @@ dependencies = [
 
 [[package]]
 name = "easy-addr"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "cosmwasm-std",
  "proc-macro2",
@@ -2278,7 +2278,7 @@ dependencies = [
 
 [[package]]
 name = "nibiru-ownable"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2293,7 +2293,7 @@ dependencies = [
 
 [[package]]
 name = "nibiru-ownable-derive"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2306,12 +2306,13 @@ dependencies = [
 
 [[package]]
 name = "nibiru-std"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "anyhow",
  "bech32 0.9.1",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-storage-plus",
  "hex",
  "prost 0.12.6",
  "prost-types",
@@ -3820,6 +3821,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
+name = "usdc-holder-set"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "nibiru-std",
+]
+
+[[package]]
 name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4491,6 +4502,21 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "easy-addr",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "x-upgrade"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "easy-addr",
+ "nibiru-std",
  "schemars",
  "serde",
  "serde_json",

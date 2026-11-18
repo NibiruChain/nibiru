@@ -304,7 +304,7 @@ func (vm *VM) Sudo(
 		return nil, gasReport.UsedInternally, err
 	}
 	if resp.Err != "" {
-		return nil, gasReport.UsedInternally, fmt.Errorf("%s", resp.Err)
+		return nil, gasReport.UsedInternally, &wvm.ContractError{Message: resp.Err}
 	}
 	return resp.Ok, gasReport.UsedInternally, nil
 }

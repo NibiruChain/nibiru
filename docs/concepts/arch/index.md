@@ -25,9 +25,9 @@ This piece of the architecture includes the [Nibiru EVM](../../evm/) and
 [Wasm](../wasm/) execution
 environments for smart contracts and other [custom "modules"](#modules-nibiru).  
 
-## NibiruBFT Consensus Engine
+## Nibiru BFT Consensus Engine
 
-Nibiru uses [NibiruBFT, an evolution on CometBFT](./nibiru-bft/index.md), as its
+Nibiru uses [Nibiru BFT, an evolution on CometBFT](./nibiru-bft/index.md), as its
 consensus algorithm. In blockchain networks, the consensus engine is responsible
 for block building, the gossip of blocks on the peer-to-peer (P2P) network, and
 management of consensus for new blocks to be added to the chain. 
