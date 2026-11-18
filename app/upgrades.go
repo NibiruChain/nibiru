@@ -46,13 +46,18 @@ func (app *NibiruApp) setupUpgrades() {
 
 func (app *NibiruApp) setUpgradeHandlers() {
 	for _, u := range Upgrades {
-		app.UpgradeKeeper.SetUpgradeHandler(u.UpgradeName,
-			u.Handler.Handler(
-				app.ModuleManager,
-				app.Configurator(),
-				&app.PublicKeepers,
-			),
+		handler := u.Handler.Handler(
+			app.ModuleManager,
+			app.Configurator(),
+			&app.PublicKeepers,
 		)
+		app.UpgradeKeeper.SetUpgradeHandler(u.UpgradeName, handler)
+		if u.UpgradeName == upgrades.Upgrade2_23_0.UpgradeName {
+			// Testnet has already completed v2.22.0. The downgrade check
+			// must recognize that historical name. Both names use this one
+			// implementation; mainnet upgrades directly from v2.21 to v2.23.
+			app.UpgradeKeeper.SetUpgradeHandler("v2.22.0", handler)
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/crypto/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/runtime"
@@ -106,8 +107,18 @@ type suite struct {
 	App           *runtime.App
 }
 
+// createTestSuite wires governance explicitly while the SDK test runtime
+// supplies its account, bank, staking, and codec dependencies. Registering the
+// module before Load preserves its lifecycle ordering and genesis behavior.
 func createTestSuite(t *testing.T) suite {
 	res := suite{}
+	var cdc codec.Codec
+	startup := simtestutil.DefaultStartUpConfig()
+	startup.InitApp = func(app *runtime.App) error {
+		var err error
+		res.GovKeeper, err = configurator.RegisterGovModule(app, cdc, res.AccountKeeper, res.BankKeeper, res.StakingKeeper)
+		return err
+	}
 
 	app, err := simtestutil.SetupWithConfiguration(
 		configurator.NewAppConfig(
@@ -118,8 +129,8 @@ func createTestSuite(t *testing.T) suite {
 			configurator.GovModule(),
 			configurator.ConsensusModule(),
 		),
-		simtestutil.DefaultStartUpConfig(),
-		&res.AccountKeeper, &res.BankKeeper, &res.GovKeeper, &res.StakingKeeper,
+		startup,
+		&res.AccountKeeper, &res.BankKeeper, &res.StakingKeeper, &cdc,
 	)
 	require.NoError(t, err)
 

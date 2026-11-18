@@ -39,10 +39,6 @@ import (
 // Compile-time interface assertion
 var _ evm.QueryServer = &Keeper{}
 
-// mainnetUSDCAddr is the ERC20 contract address for Stargate USDC on Nibiru
-// mainnet. QueryBalanceRequest token input "USDC" resolves to this address.
-const mainnetUSDCAddr = "0x0829F361A05D993d5CEb035cA6DF3446b060970b"
-
 // EthAccount: Implements the gRPC query for "/eth.evm.v1.Query/EthAccount".
 // EthAccount retrieves the account  and balance details for an account with the
 // given address.
@@ -225,10 +221,8 @@ func (k Keeper) resolveBalanceToken(ctx sdk.Context, token string) string {
 	switch {
 	case strings.EqualFold(token, "WNIBI"):
 		return k.GetParams(ctx).CanonicalWnibi.Hex()
-	case strings.EqualFold(token, "USDC"):
-		return mainnetUSDCAddr
 	default:
-		return token
+		return evm.ResolveUSDCAlias(token)
 	}
 }
 

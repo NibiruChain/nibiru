@@ -55,7 +55,7 @@ Prepared By: [The Nibiru Team](https://nibiru.fi/team)
   - [PARE (Pipeline-Aware Reordered Execution)](#pare-pipeline-aware-reordered-execution)
   - [MEV Block Lanes](#mev-block-lanes)
   - [Block SDK](#block-sdk)
-  - [NibiruBFT Validator Groupings](#nibirubft-validator-groupings)
+  - [Nibiru BFT Validator Groupings](#nibiru-bft-validator-groupings)
   - [Validator Set Size](#validator-set-size)
   - [Boneh–Lynn–Shacham (BLS) Signatures](#boneh-lynn-shacham-bls-signatures)
   - [Quantum Resistant Cryptography (QRC)](#quantum-resistant-cryptography-qrc)
@@ -290,7 +290,7 @@ MEV Lanes in Nibiru’s Block SDK isolate MEV-related transactions to a single l
 
 By dividing transactions into dedicated “lanes” (e.g., “fast” vs. “default”), Block SDK and Mempool Lanes ensure that time-sensitive tasks don’t contend with routine or speculative transactions. Each lane has separate resource allocations and gas markets, mitigating bidding wars and unpredictable fee spikes. This architecture allows for more predictable ordering, improved user experience, and better handling of congestion while also highlighting new considerations around cross-lane MEV risks.
 
-### NibiruBFT Validator Groupings
+### Nibiru BFT Validator Groupings
 
 **Mitigating n^2 messaging overhead to scale validator sets.**
 
