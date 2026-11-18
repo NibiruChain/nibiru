@@ -25,17 +25,39 @@ import (
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by
-// Ethereum transaction hash. If the transaction is not found or has been
-// discarded from a pruning node, this resolves to nil.
+// Ethereum transaction hash, for JSON-RPC method eth_getTransactionByHash.
+//
+// The lookup checks the confirmed index, then the mempool:
+//
+//	confirmed index              mempool          result
+//	found                        not checked      confirmed tx
+//	[eth.ErrTxNotFound] or nil   found            pending tx
+//	[eth.ErrTxNotFound] or nil   not found        nil, nil
+//	[eth.ErrTxNotFound] or nil   query error      error
+//	any other error              not checked      error
+//
+// A transaction can be in neither place for a moment, after it leaves the
+// mempool and before its block is indexed. A hash that was pruned or never
+// broadcast also misses both. Ethereum JSON-RPC answers an unknown hash with
+// null, and clients that poll after a broadcast retry on null but stop on an
+// error, so a miss in both places returns nil without an error.
+//
+// Only [eth.ErrTxNotFound] counts as a miss. Any other index error means the
+// index could not answer. Null would then tell the client that a transaction,
+// possibly already confirmed, does not exist, so the lookup returns the error.
 func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	res, err := b.GetTxByEthHash(txHash)
 	if err != nil {
 		if !errors.Is(err, eth.ErrTxNotFound) {
+			// The index failed, so a miss would be a guess.
 			return nil, err
 		}
+		// Not indexed yet: the transaction may still be pending.
 		return b.getTransactionByHashPending(txHash)
 	}
 	if res == nil {
+		// Defensive: an [eth.EVMTxIndexer] written to the older "nil if not
+		// found" contract reports a miss this way.
 		return b.getTransactionByHashPending(txHash)
 	}
 
@@ -96,7 +118,9 @@ func (b *Backend) GetTransactionByHash(txHash gethcommon.Hash) (*rpc.EthTxJsonRP
 	return rpcTx, nil
 }
 
-// getTransactionByHashPending find pending tx from mempool
+// getTransactionByHashPending finds a pending transaction in the mempool. It
+// returns nil without an error when the mempool does not have the hash, and an
+// error only when the mempool query fails.
 func (b *Backend) getTransactionByHashPending(txHash gethcommon.Hash) (*rpc.EthTxJsonRPC, error) {
 	txHashHex := txHash.Hex()
 	// try to find tx in mempool
