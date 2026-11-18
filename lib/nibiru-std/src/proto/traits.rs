@@ -193,6 +193,17 @@ where
     /// Fully qualified gRPC service path used for routing.
     /// Ex.: "/cosmos.bank.v1beta1.Query/SupplyOf"
     fn path(&self) -> String {
+        // Nibiru's sudo RPC names retain Query, unlike the Cosmos convention.
+        // The message name alone is not enough to infer those service methods.
+        match (Self::PACKAGE, Self::NAME) {
+            ("nibiru.sudo.v1", "QuerySudoersRequest") => {
+                return crate::sudo::QUERY_SUDOERS_PATH.into();
+            }
+            ("nibiru.sudo.v1", "QueryZeroGasActorsRequest") => {
+                return crate::sudo::QUERY_ZERO_GAS_ACTORS_PATH.into();
+            }
+            _ => {}
+        }
         let service_name = format!(
             "Query/{}",
             Self::NAME

@@ -14,6 +14,15 @@ type ContractResult struct {
 	Err string    `json:"error,omitempty"`
 }
 
+// ContractError is an explicit error returned by contract code. It excludes
+// engine, host, and storage errors so callers can handle a deterministic
+// contract rejection without treating a node-local fault as consensus state.
+type ContractError struct {
+	Message string
+}
+
+func (e *ContractError) Error() string { return e.Message }
+
 // Response defines the return value on a successful instantiate/execute/migrate.
 // This is the counterpart of [Response](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta1/packages/std/src/results/response.rs#L73-L88)
 type Response struct {

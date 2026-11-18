@@ -72,7 +72,7 @@ security and predictability in smart contract execution.
 
 Nibiru implements the Ethereum protocol to offer compatibility and
 interoperability with existing Ethereum-based applications. Nibiru maps to a
-different [consensus engine](../concepts/arch/index.md#nibirubft-consensus-engine) yet leverages an
+different [consensus engine](../concepts/arch/index.md#nibiru-bft-consensus-engine) yet leverages an
 execution environment that is equivalent in capabilities to Ethereum's.
 
 ## Is Nibiru EVM a separate chain, layer 2, or rollup running in tandem with the base layer?

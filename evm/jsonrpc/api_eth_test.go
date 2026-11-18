@@ -226,15 +226,34 @@ func (s *NodeSuite) Test_BlockNumber() {
 	)
 }
 
-// Test_BlockByNumber EVM method: eth_getBlockByNumber
+// Test_BlockByNumber checks eth_getBlockByNumber against a recent chain height.
+// Block data available through Ethereum RPC can lag the reported CometBFT
+// height, so the test also accepts either of the two preceding heights. These
+// bounded lookups do not wait for the original height to become available.
+// Required assertions stop lookup failures before block fields are inspected.
 func (s *NodeSuite) Test_BlockByNumber() {
 	networkBlockNumber, err := s.cli.LatestHeight()
-	s.NoError(err)
+	s.Require().NoError(err)
 
-	ethBlock, err := s.ethAPI.GetBlockByNumber(rpc.NewBlockNumber(big.NewInt(networkBlockNumber)), true)
-	s.NoError(err)
-	s.NotNil(ethBlock)
-	s.Equal(networkBlockNumber, int64(ethBlock["number"].(hexutil.Uint64)))
+	const maxBlockLag = int64(2)
+	var ethBlock map[string]any
+	var queriedBlockNumber int64
+	for blockLag := int64(0); blockLag <= maxBlockLag; blockLag++ {
+		queriedBlockNumber = networkBlockNumber - blockLag
+		ethBlock, err = s.ethAPI.GetBlockByNumber(
+			rpc.NewBlockNumber(big.NewInt(queriedBlockNumber)),
+			true,
+		)
+		if err == nil {
+			break
+		}
+	}
+
+	s.Require().NoError(err, "no block available at height %d or the previous %d heights", networkBlockNumber, maxBlockLag)
+	s.Require().NotNil(ethBlock, "eth_getBlockByNumber returned no block at height %d", queriedBlockNumber)
+	blockNumber, ok := ethBlock["number"].(hexutil.Uint64)
+	s.Require().True(ok, "block number has type %T, want hexutil.Uint64", ethBlock["number"])
+	s.Equal(queriedBlockNumber, int64(blockNumber))
 }
 
 // Test_BalanceAt EVM method: eth_getBalance

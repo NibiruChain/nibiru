@@ -9,24 +9,24 @@ description: >-
   truth, despite the presence of faulty nodes.
 ---
 
-# Consensus Engine (NibiruBFT)
+# Consensus Engine (Nibiru BFT)
 
 {{ $frontmatter.description }}
 
-## [NibiruBFT](./arch/nibiru-bft/index.md)
+## [Nibiru BFT](./arch/nibiru-bft/index.md)
 
 This page serves as a brief introduction to consensus and only briefly introduces
-[NibiruBFT, Nibiru's consensus mechanism](./arch/nibiru-bft/index.md).
-NibiruBFT was created by Nibiru's research team as part of the Nibiru Lagrange
-Point roadmap. We recommend checking out the full documentation on NibiruBFT if
+[Nibiru BFT, Nibiru's consensus mechanism](./arch/nibiru-bft/index.md).
+Nibiru BFT was created by Nibiru's research team as part of the Nibiru Lagrange
+Point roadmap. We recommend checking out the full documentation on Nibiru BFT if
 you like diving deep into the details.
 
-NibiruBFT relies on a set of validator node operators that are responsible for
+Nibiru BFT relies on a set of validator node operators that are responsible for
 committing new blocks to the chain. Each validator does so by broadcasting votes
 that contain cryptographic signatures corresponding to the validator's private
 key. 
 
-Key aspects of NibiruBFT:
+Key aspects of Nibiru BFT:
 - **Instant finality**:
   Once a block is proposed and validated, it is committed to the blockchain and
   immediately considered final. Users can be confident their transactions are
@@ -35,7 +35,7 @@ Key aspects of NibiruBFT:
   Ethereum). This increases security for users.
 
 - **State machine replication**: 
-  NibiruBFT is an extension building from Tendermint, which can can be used to
+  Nibiru BFT is an extension building from Tendermint, which can can be used to
 build arbitrary applications through the Application Blockchain Interface (ABCI).
 This means it's not just for cryptocurrencies, but any distributed application.
 
@@ -55,7 +55,7 @@ This means it's not just for cryptocurrencies, but any distributed application.
   block is rotated among validators based on their stake and the number of
   times they've already proposed a block.
 
-- NibiruBFT is an evolution on CometBFT, inheriting security guarantees from the
+- Nibiru BFT is an evolution on CometBFT, inheriting security guarantees from the
   battle-tested Tendermint Core consensus algorithm. 
 
 ## Consensus Mechanisms

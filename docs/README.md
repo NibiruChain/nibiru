@@ -31,7 +31,7 @@ const boxesMain = [
   },
 ]
 const boxesEnd = [
-  { id: 1, title: "NibiruBFT: Consenus Engine", href: "/docs/dev/",
+  { id: 1, title: "Nibiru BFT: Consenus Engine", href: "/docs/dev/",
     text: `Instant finality, consistent security, and Byzantine Fault Tolerant state machine replication.`},
   { id: 2, title: "Frequently Asked Questions (FAQ)", href: "/docs/learn/faq/",
     text: `Kickstart your journey as a user of Nibiru. Learn how to create wallets, stake NIBI, participate in campaigns, or use the Nibiru web application.` },

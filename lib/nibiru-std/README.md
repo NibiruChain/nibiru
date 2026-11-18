@@ -60,3 +60,24 @@ The module is ported from the private `transactions` module of
 Confio GmbH, licensed under the
 [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 The module documentation lists the changes from the original.
+
+## Sudo Types and Root Queries
+
+The sudo types are generated from this checkout's `proto/nibiru/sudo/v1`
+definitions. State field `roles` uses protobuf tag 3; tag 2 and the former
+`contracts` field are reserved. The generated serde implementations accept
+omitted default values and additional JSON fields from the native Wasm query
+allowlist. Function `sudo::query_sudo_root` uses these types and the native
+service path. Empty roots and query failures grant no authority.
+
+Regenerate these types and run the Rust import cleanup with:
+
+```sh
+just rs proto-gen --path proto/nibiru/sudo/v1
+cargo test --locked -p nibiru-std
+```
+
+Command `just rs proto-gen` accepts Buf input filters and uses the pinned
+plugin in `proto/buf.gen.rs.yaml`. It uses in-tree protos, copies generated
+packages only after successful generation, then runs command `proto_clean`.
+It does not fetch the former external Cosmos SDK or modify Go dependencies.

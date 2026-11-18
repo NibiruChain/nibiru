@@ -16,7 +16,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/posthandler"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
-	feegrantkeeper "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/feegrant/keeper"
 )
 
 func init() {
@@ -31,9 +30,9 @@ type TxInputs struct {
 	Config              *txconfigv1.Config
 	ProtoCodecMarshaler codec.ProtoCodecMarshaler
 
-	AccountKeeper  ante.AccountKeeper    `optional:"true"`
-	BankKeeper     authtypes.BankKeeper  `optional:"true"`
-	FeeGrantKeeper feegrantkeeper.Keeper `optional:"true"`
+	AccountKeeper  ante.AccountKeeper   `optional:"true"`
+	BankKeeper     authtypes.BankKeeper `optional:"true"`
+	FeeGrantKeeper ante.FeegrantKeeper  `optional:"true"`
 }
 
 type TxOutputs struct {

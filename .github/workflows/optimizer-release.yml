@@ -54,13 +54,13 @@ jobs:
         if: github.event_name == 'push'
         run: just rs optimizer-release validate-tag --tag "$GITHUB_REF_NAME"
       - name: Cache optimizer distribution build
-        uses: actions/cache@v6
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          path: |
-            ~/.cargo/registry/
-            ~/.cargo/git/db/
-            target/optimizer-dist/
-          key: optimizer-dist-v1-${{ runner.os }}-${{ runner.arch }}-${{ matrix.runner }}-rust1.95.0-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'contrib/scripts/optimizer-release.py') }}
+          workspaces: ". -> target/optimizer-dist"
+          shared-key: nibiru-optimizer-release-${{ matrix.target }}
+          cache-bin: "false"
+          # Tag and dispatch runs are the only runs, so each one saves.
+          save-if: "true"
       - name: Build, package, and smoke test native optimizer
         run: just rs optimizer-release package --target "${{ matrix.target }}" --output-dir dist/optimizer
       - name: Upload native archive and checksum

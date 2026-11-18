@@ -320,6 +320,8 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v3
         with:
+          prerelease: ${{ contains(needs.version.outputs.value, '-') }}
+          make_latest: ${{ contains(needs.version.outputs.value, '-') && 'false' || 'true' }}
           body: ${{ steps.changes.outputs.changes }}
           files: |
             dist/**/*.tar.gz
