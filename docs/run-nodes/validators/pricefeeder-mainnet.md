@@ -79,8 +79,6 @@ description: >-
 
 As a validator, if you'd like another account to post prices on your behalf (i.e. you don't want your validator mnemonic sending txs), you can delegate pricefeeder responsibilities to another nibi address.
 
-```bash
-nibid tx oracle set-feeder <nibi address> --from validator
-```
+The `nibid` binary has no `tx oracle` command. Broadcast a `MsgDelegateFeedConsent` message (type URL `/nibiru.oracle.v1.MsgDelegateFeedConsent`) from the validator's account with a Nibiru SDK. Set `operator` to the validator operator address (`nibivaloper...`) and `delegate` to the pricefeeder address.
 
 Now that address can start sending votes on behalf of your validator. Just make sure that the FEEDER_MNEMONIC corresponds to the delegated address and the VALIDATOR_ADDRESS is set.

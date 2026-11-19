@@ -14,15 +14,19 @@ description: >-
 
 | `nibid tx bank` | Description |
 | :--- | :--- |
-| [send](#nibid-tx-bank-send) | Send funds from one account to another.
+| [send](#nibid-tx-bank-send) | Send funds from one account to another |
+| multi-send | Send funds from one account to two or more accounts |
 
 #### Queries
 
 | `nibid query bank` | Description |
 | :--- | :--- |
+| balance | Query a single account balance by address and denom |
 | [balances](#nibid-query-bank-balances) | Query for account balances by address |
+| spendable-balances | Query for account spendable balances by address |
+| send-enabled | Query for send enabled entries |
 | [total](#nibid-query-bank-total) | Query the total supply of coins of the chain |
-| [denom-metadata](#nibid-query-denom-metadata) | Query the client metadata for coin denominations | 
+| denom-metadata | Query the client metadata for coin denominations |
 
 ---
 
@@ -61,7 +65,7 @@ nibid query bank total [flags]
 
 | Name, shorthand |  Description |
 | :---            |  :---        |
-| --help, -h | Help for coin-type |
+| --help, -h | Help for total |
 | --denom | The specific balance denomination to query for |
 
 ### nibid tx bank send

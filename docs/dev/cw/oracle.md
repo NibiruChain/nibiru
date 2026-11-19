@@ -6,19 +6,19 @@ order: 7
 
 ## Introduction
 
-This guide provides a step-by-step approach to querying exchange rate data from the Nibiru oracle module using both the Nibiru CLI (`nibid`) and Rust-based CosmWasm smart contracts.
+This guide provides a step-by-step approach to querying exchange rate data from the Nibiru oracle module using both gRPC and Rust-based CosmWasm smart contracts.
 
 ---
 
-## Querying Oracle Data via Nibiru CLI
+## Querying Oracle Data via gRPC
 
 ### 1. Query Exchange Rates
 
-To retrieve the latest exchange rates, run the following command:
+To retrieve the latest exchange rates:
 
-```bash
-nibid q oracle exchange-rates | jq
-```
+The `nibid` binary has no `query oracle` command. Call method `ExchangeRates`
+of gRPC service `nibiru.oracle.v1.Query` on a node's gRPC endpoint with a
+client such as `grpcurl`.
 
 #### Sample Response
 
@@ -38,9 +38,7 @@ nibid q oracle exchange-rates | jq
 
 To get the list of active oracle pairs:
 
-```bash
-nibid q oracle actives
-```
+Call method `Actives` of gRPC service `nibiru.oracle.v1.Query` the same way.
 
 #### Sample Response
 

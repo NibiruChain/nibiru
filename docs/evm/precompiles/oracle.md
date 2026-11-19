@@ -106,11 +106,7 @@ interface ChainLinkAggregatorV3Interface {
 
 ## Fetching Active Oracle Pairs
 
-The Nibiru Oracle supports multiple asset pairs, which can be queried dynamically. The currently active markets can be retrieved using the Nibiru CLI with the following command:
-
-```bash
-nibid query oracle actives | jq
-```
+The Nibiru Oracle supports multiple asset pairs, which can be queried dynamically. The currently active markets are available from method `Actives` of gRPC service `nibiru.oracle.v1.Query`. The `nibid` binary has no `query oracle` command.
 
 ### Example Response
 
