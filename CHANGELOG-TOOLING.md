@@ -51,7 +51,7 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   `ud cw3`, need no change.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local
   testnet".
-  PR link: TBD (placeholder, replace before merge).
+  [PR #2929](https://github.com/SaiDotFun/nibiru/pull/2929).
 
 ### Token Registry
 
