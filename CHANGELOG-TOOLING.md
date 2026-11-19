@@ -17,6 +17,39 @@ patches from `release/v2.23`, independently of coordinated chain releases.
 
 ## Unreleased
 
+### CLI
+
+- Group `nibid --help` into Everyday Commands (`tx`, `query`, `keys`,
+  `config`, `status`, `localnet`, `debug`), Run a Node (`node`), and Other
+  Commands. Group the subcommands of `nibid tx` and `nibid query` into
+  everyday modules, offline signing (`tx` only), and the rest. No command
+  moves. The root description now reads "Nibiru CLI: send transactions, query
+  the chain, and run a node."
+- Add parent command `nibid node` with `start`, `init`, `export`, `genesis`,
+  `prune`, `rollback`, `tendermint`, `testnet`, and `evm-tx-index`. Every
+  previous top-level form, such as `nibid start` and
+  `nibid tendermint show-node-id`, keeps its arguments and behavior as a
+  hidden alias and prints no deprecation warning. Hidden commands drop out of
+  `nibid --help` only.
+- Add alias `comet` for `tendermint`, both at `nibid node comet` and at the
+  hidden top-level `nibid comet`. `nibid comet` failed before this change.
+- Replace the SDK `debug` registration with `nibid debug <input>`, which
+  detects the input kind and prints JSON with a `detected` field. Add
+  subcommands `debug tx`, `debug msg`, `debug abci-query` (JSON-RPC bodies and
+  batches, any gRPC path, nested Simulate and BroadcastTx transactions), and
+  `debug stargate`. The SDK subcommands `debug addr`, `debug pubkey`,
+  `debug pubkey-raw`, `debug raw-bytes`, and `debug prefixes` keep their
+  output.
+- Move `build-stargate-wasm` to `debug stargate`. The top-level
+  `build-stargate-wasm` stays as a hidden alias with byte-identical output.
+  Hidden command `base64-decode` also stays, with identical output for valid
+  input. With no argument, it returns a usage error instead of panicking.
+  Command `base64-decode` is not removed, so scripts that call it, such as
+  `ud cw3`, need no change.
+- Reword the `testnet` description from "simapp testnet" to "multi-node local
+  testnet".
+  PR link: TBD (placeholder, replace before merge).
+
 ### Token Registry
 
 - Add Sai USDC at `0x357c97796aA8e2A6b5A64b1Fc19d5baB9668E190` and its

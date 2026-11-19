@@ -196,6 +196,22 @@ Stop any running localnet before running the script. It resets local chain data
 under `$HOME/.nibid` before starting the node. Open another terminal to query the
 local chain or send transactions.
 
+## Command Groups
+
+Run `nibid --help` to list the command groups:
+
+- Everyday Commands: `tx`, `query`, `keys`, `config`, `status`, `localnet`,
+  and `debug`.
+- Run a Node: `node`, which holds `start`, `init`, `export`, `genesis`,
+  `prune`, `rollback`, `tendermint` (alias `comet`), `testnet`, and
+  `evm-tx-index`.
+- Other Commands: `help` and `version`.
+
+The old top-level node commands, such as `nibid start` and
+`nibid tendermint show-node-id`, keep working and print no warning. They no
+longer appear in `nibid --help`. Cosmovisor, Docker images, and systemd units
+that call `nibid start` need no change.
+
 ## Docker Engine
 
 Some repository workflows use Docker containers. Follow the

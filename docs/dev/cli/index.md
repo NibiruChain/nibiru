@@ -20,6 +20,43 @@ The native CLI command is `nibid`. Bun and npm installs expose it as `nibiru`,
 which forwards all arguments to the native binary. For those installs, replace
 `nibid` with `nibiru` in the examples below and in the linked guides.
 
+## Command Groups
+
+`nibid --help` lists everyday commands first: `tx`, `query`, `keys`,
+`config`, `status`, `localnet`, and `debug`. Commands that run a node live
+under `nibid node`, for example `nibid node start` and
+`nibid node genesis validate-genesis`. The previous top-level forms, such as
+`nibid start`, keep working as hidden aliases.
+
+`nibid tx --help` and `nibid query --help` list the everyday modules first
+(`bank`, `wasm`, `evm`, `staking`, `gov`, `distribution`, `tokenfactory`,
+`ibc-transfer`). `nibid tx --help` then lists the offline signing commands.
+
+## Decode Encoded Data
+
+`nibid debug <input>` detects what the input is and prints JSON with a
+`detected` field. It reads stdin when the argument is `-`, or when no argument
+is given and stdin is piped. It works offline and accepts:
+
+| Input                                                 | Detected as        |
+| ----------------------------------------------------- | ------------------ |
+| JSON-RPC body or batch (`abci_query`, `broadcast_tx_*`) | `abci-query`     |
+| JSON with `type_url` and `value`, or a `stargate` wrapper | `any`          |
+| Base64 or hex transaction                             | `tx`               |
+| Bech32 (`nibi1...`) or `0x` address                   | `address`          |
+| Bech32 pubkey, proto-JSON pubkey, raw 33-byte key     | `pubkey`           |
+| `[10 21 13 255]`                                      | `raw-bytes`        |
+| Other valid protobuf                                  | `unknown-protobuf` |
+
+A 32-byte value fits several kinds (transaction hash, Wasm contract address,
+raw key). The output lists the candidates. Pass `--as <kind>` to choose one.
+
+Explicit subcommands decode one kind: `debug tx`, `debug msg`,
+`debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,
+`debug pubkey-raw`, `debug raw-bytes`, and `debug prefixes`. Command
+`debug stargate` replaces `build-stargate-wasm`, which stays as a hidden alias
+with identical output.
+
 ## Working directory
 
 The CLI stores configuration, blockchain data, and local keyring files under
