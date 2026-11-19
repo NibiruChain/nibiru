@@ -20,46 +20,41 @@ var Upgrade2_24_0 = Upgrade{UpgradeName: "v2.24.0", Handler: Handler_v2_24{}}
 //
 // The upgrade keeps the x/devgas store key. Deleting the store is a later
 // upgrade.
-type Handler_v2_24 struct{}
+type Handler_v2_24 struct {
+	// ClearDevgas replaces the x/devgas cleanup in tests. Nil selects keeper
+	// method ClearFeeShareState.
+	ClearDevgas func(ctx sdk.Context) (deleted int, err error)
+}
 
 var _ HandlerImpl = Handler_v2_24{}
 
-// Handler returns migration errors because the binary requires the migrated
-// schema. The x/devgas cleanup is not required for the chain to run, so its
-// failure is reported with an upgrade_failure event and does not halt the
-// upgrade.
+// Handler fails the upgrade when the migrations or the x/devgas cleanup
+// return an error, and it recovers no panic.
+//
+// The cleanup writes state, so every node must reach the same result. The
+// handler has no cleanup error it can identify as one that every node would
+// hit identically: the only error ClearFeeShareState returns is a failed
+// delete of a key it just listed, which a consistent store cannot produce.
+// Any failure may therefore be local to one node, such as a database read
+// error. Continuing past it would leave that node with fee shares that other
+// nodes deleted, and a different app hash. Returning the error, or letting
+// the panic propagate, aborts the block so the node halts at the upgrade
+// height. A failure that all nodes share halts them all the same way.
 func (h Handler_v2_24) Handler(mm *module.Manager, cfg module.Configurator, nibiru *keepers.PublicKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		versions, err := mm.RunMigrations(ctx, cfg, fromVM)
 		if err != nil {
 			return nil, err
 		}
-		deleted, err := clearDevgasStateV224(ctx, nibiru)
+		clearDevgas := nibiru.DevGasKeeper.ClearFeeShareState
+		if h.ClearDevgas != nil {
+			clearDevgas = h.ClearDevgas
+		}
+		deleted, err := clearDevgas(ctx)
 		if err != nil {
-			ctx.Logger().Error("v2.24.0 upgrade failure", "err", err)
-			ctx.EventManager().EmitEvent(NewEventUpgradeFailure("v2.24.0", err))
-			return versions, nil
+			return nil, fmt.Errorf("clear x/devgas state: %w", err)
 		}
 		ctx.Logger().Info("v2.24.0 cleared x/devgas state", "fee_shares_deleted", deleted)
 		return versions, nil
 	}
-}
-
-// clearDevgasStateV224 deletes the registered fee shares and disables fee
-// sharing on a cached context. It commits only when the whole cleanup
-// succeeds, so a failure leaves the x/devgas store as it was.
-func clearDevgasStateV224(ctx sdk.Context, nibiru *keepers.PublicKeepers) (deleted int, err error) {
-	defer func() {
-		if value := recover(); value != nil {
-			deleted = 0
-			err = fmt.Errorf("clear x/devgas state: panic: %v", value)
-		}
-	}()
-	cached, commit := ctx.CacheContext()
-	deleted, err = nibiru.DevGasKeeper.ClearFeeShareState(cached)
-	if err != nil {
-		return 0, fmt.Errorf("clear x/devgas state: %w", err)
-	}
-	commit()
-	return deleted, nil
 }

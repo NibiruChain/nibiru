@@ -1,6 +1,7 @@
 package upgrades_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -47,10 +48,6 @@ func TestUpgrade2_24_0ClearsDevgasState(t *testing.T) {
 	require.NoError(t, deps.RunUpgrade(upgrades.Upgrade2_24_0))
 	ctx = deps.Ctx()
 
-	for _, ev := range ctx.EventManager().Events() {
-		require.NotEqual(t, "upgrade_failure", ev.Type)
-	}
-
 	for _, contract := range contracts {
 		require.False(t, k.IsFeeShareRegistered(ctx, contract))
 	}
@@ -82,4 +79,45 @@ func TestUpgrade2_24_0Registered(t *testing.T) {
 	require.Empty(t, upgrades.Upgrade2_24_0.StoreUpgrades.Added)
 	require.Empty(t, upgrades.Upgrade2_24_0.StoreUpgrades.Renamed)
 	require.Empty(t, upgrades.Upgrade2_24_0.StoreUpgrades.Deleted)
+}
+
+// TestUpgrade2_24_0CleanupFailureFailsUpgrade checks that a failed x/devgas
+// cleanup fails the upgrade and that the handler recovers no panic. Either
+// outcome makes x/upgrade abort the block, so a node with a local store
+// failure halts and does not continue with state that other nodes deleted.
+func TestUpgrade2_24_0CleanupFailureFailsUpgrade(t *testing.T) {
+	seed := func(deps *evmtest.TestDeps) devgastypes.FeeShare {
+		feeShare := devgastypes.FeeShare{
+			ContractAddress:   testutil.NewAccAddress().String(),
+			DeployerAddress:   testutil.NewAccAddress().String(),
+			WithdrawerAddress: testutil.NewAccAddress().String(),
+		}
+		deps.App.DevGasKeeper.SetFeeShare(deps.Ctx(), feeShare)
+		return feeShare
+	}
+
+	t.Run("a returned error fails the upgrade", func(t *testing.T) {
+		deps := evmtest.NewTestDeps()
+		seed(&deps)
+		errCleanup := errors.New("store read failed")
+		upgrade := upgrades.Upgrade2_24_0
+		upgrade.Handler = upgrades.Handler_v2_24{
+			ClearDevgas: func(sdk.Context) (int, error) { return 0, errCleanup },
+		}
+		err := deps.RunUpgrade(upgrade)
+		require.ErrorIs(t, err, errCleanup)
+		require.ErrorContains(t, err, "clear x/devgas state")
+	})
+
+	t.Run("a panic propagates", func(t *testing.T) {
+		deps := evmtest.NewTestDeps()
+		seed(&deps)
+		upgrade := upgrades.Upgrade2_24_0
+		upgrade.Handler = upgrades.Handler_v2_24{
+			ClearDevgas: func(sdk.Context) (int, error) { panic("iavl: database error") },
+		}
+		require.PanicsWithValue(t, "iavl: database error", func() {
+			_ = deps.RunUpgrade(upgrade)
+		})
+	})
 }
