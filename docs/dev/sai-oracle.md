@@ -186,7 +186,8 @@ Wasm, through the adapter:
 ```bash
 nibiru q wasm contract-state smart \
   nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r \
-  '{"legacy_exchange_rate":{"symbol":"ubtc:uusd"}}'
+  '{"legacy_exchange_rate":{"symbol":"ubtc:uusd"}}' \
+  --node https://rpc.nibiru.fi:443 --output json
 ```
 
 ```json
@@ -198,7 +199,8 @@ Wasm, from the Sai oracle directly, by token index:
 ```bash
 nibiru q wasm contract-state smart \
   nibi1xfwyfwtdame6645lgcs4xvf4u0hpsuvxrcelfwtztu0pv7n4l6hqw5a8gj \
-  '{"get_price":{"index":3}}'
+  '{"get_price":{"index":3}}' \
+  --node https://rpc.nibiru.fi:443 --output json
 ```
 
 ```json
@@ -210,7 +212,8 @@ All adapter prices at once:
 ```bash
 nibiru q wasm contract-state smart \
   nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r \
-  '{"legacy_exchange_rates":{}}'
+  '{"legacy_exchange_rates":{}}' \
+  --node https://rpc.nibiru.fi:443 --output json
 ```
 
 ```json
