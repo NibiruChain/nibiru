@@ -347,6 +347,36 @@ go_bin_dir() {
   printf '%s' "$dir"
 }
 
+# resolve_path: Print the path with symbolic links followed.
+resolve_path() {
+  readlink -f "$1" 2>/dev/null || realpath "$1" 2>/dev/null || printf '%s' "$1"
+}
+
+# warn_if_shadowed: Warn, without failing, when nibiru or nibid on PATH is a
+# different file than the one just installed. Colors are named ANSI: yellow for
+# the warning, cyan for commands, plain paths. They apply only on a terminal.
+warn_if_shadowed() {
+  local bin_dir="$1" bin_path="$2"
+  local yellow="" cyan="" reset=""
+  if [[ -t 2 && -z "${NO_COLOR:-}" ]]; then
+    yellow=$'\033[33m' cyan=$'\033[36m' reset=$'\033[0m'
+  fi
+
+  local installed name found
+  installed="$(resolve_path "$bin_path")"
+  for name in nibiru nibid; do
+    found="$(command -v "$name" || true)"
+    if [[ -z "$found" || "$(resolve_path "$found")" == "$installed" ]]; then
+      continue
+    fi
+    printf '%s[build-nibiru] WARNING: %s on PATH is %s, not the build just installed at %s.%s\n' \
+      "$yellow" "$name" "$found" "$bin_dir/$name" "$reset" >&2
+    printf '  Fix it by putting %s earlier on PATH, or run the build by full path:\n' \
+      "$bin_dir" >&2
+    printf '    %s%s version --long%s\n' "$cyan" "$bin_dir/$name" "$reset" >&2
+  done
+}
+
 # link_nibid: Point ${1}/nibid at nibiru, replacing a previous nibid file or
 # link. The link is relative, so the directory can move.
 link_nibid() {
@@ -423,12 +453,11 @@ main() {
   fi
 
   if [[ "$JUST_BUILD" != true ]]; then
-    local on_path
-    on_path="$(command -v nibiru || true)"
-    if [[ -n "$on_path" && "$on_path" != "$bin_path" ]]; then
-      log_info "WARNING: nibiru on PATH is $on_path, not $bin_path." \
-        "Run $bin_path, or put ${bin_dir} first on PATH."
-    fi
+    command -v nibid >/dev/null 2>&1 || {
+      log_error "nibid was installed, but it is not present in PATH"
+      exit 1
+    }
+    warn_if_shadowed "$bin_dir" "$bin_path"
   fi
 }
 

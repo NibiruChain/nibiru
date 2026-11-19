@@ -184,6 +184,15 @@ export PATH="$(go env GOPATH)/bin:$PATH"
 Save this line in your shell configuration and reload it.
 :::
 
+## Which `nibiru` Am I Running?
+
+Several installs can put a `nibiru` command on your `PATH`, for example a Bun
+or npm launcher and a source build. Run `nibiru version --long` to see which
+file runs. The last lines print `running from:` for the running binary and
+`also on PATH:` for other `nibiru` or `nibid` files, and mark the one your shell
+runs when you type the name. Add `-o json` to read the same data from field
+`binary_paths`.
+
 ## Local development
 
 Print and run the embedded single-node localnet script:

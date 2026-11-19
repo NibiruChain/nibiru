@@ -72,6 +72,14 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   `nibid --help` says `nibid`; any other process name prints `nibiru`. The
   default home `~/.nibid`, the keyring service name, and the `version` output
   do not change with the invoked name.
+- Add path details to `nibiru version --long`. Text output keeps the YAML body
+  and appends `running from:` and `also on PATH:` lines. JSON output (`-o json`)
+  appends field `binary_paths` after the existing fields. Plain `version`
+  output is unchanged. The report marks the `nibiru` or `nibid` file the shell
+  runs first when it is not the running binary. A `nibid` symlink to the
+  running file is not reported as a conflict.
+- Warn at the end of `just install` when `nibiru` or `nibid` on `PATH` is a
+  different file than the one installed. The install still succeeds.
 - Match both `nibid` and `nibiru` in process checks (`pgrep -x`) in the
   `justfile`, `x/nutil/local_blockchain.go`, and the core test workflow.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local
