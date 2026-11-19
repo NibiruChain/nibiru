@@ -40,8 +40,19 @@ the precompile at `0x0801` for the EVM. Both read the same prices.
   Compare in seconds: `block.timestamp - updatedAt` for `chainLinkLatestRoundData`,
   and `block.timestamp - blockTimeMs / 1000` for `queryExchangeRate`. A time of
   `0` or `null` means no update time is known, so treat the price as stale.
-- Other pairs fail. The precompile returns `unsupported legacy symbol: usdt` for
-  `uusdt:uusd`.
+- Pair input is matched loosely. The table lists the supported USD inputs. On
+  2026-11-19 the live adapter also behaved as follows:
+  - It lowercases the input, and a bare symbol such as `btc` or `BTC` works.
+  - With a `:`, it uses only the part before it, minus a leading `u`, as the
+    asset. It ignores the quote. `ubtc:uusd`, `ubtc:ueur`, and `ubtc:foo` all
+    return the BTC/USD price.
+  - Unknown assets fail. `uusdt:uusd` and `xyz:uusd` return `unsupported legacy
+    symbol`, and so does `ubtc` with a `u` and no `:`.
+  - The quote is never checked, so a EUR pair returns a USD price. If a user
+    can supply the pair, validate the quote yourself before you call.
+
+  The adapter is a Wasm contract, embedded as `x/oracle/x_oracle.wasm`. These
+  rules come from calling it, not from source in this repository.
 - Sai's own markets use more token indexes than the table above (for example
   `stnibi` is 2). See the
   [Sai developer documentation](https://sai.fun/docs/dev/) for the full list.
