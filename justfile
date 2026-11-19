@@ -311,11 +311,11 @@ test-sim-after-import:
       -Period=5 \
       -timeout 30m
 
-# Run Go tests without cached test results
 # Tests the PATH checks of build-nibiru.sh against temp dirs
 test-build-path:
     contrib/scripts/build-nibiru-path-test.sh
 
+# Run Go tests without cached test results
 test:
     #!/usr/bin/env bash
     set -euo pipefail
