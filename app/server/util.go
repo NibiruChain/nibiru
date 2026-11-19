@@ -25,9 +25,22 @@ func AddCommands(
 	appExport types.AppExporter,
 	addStartFlags types.ModuleInitFlags,
 ) {
+	rootCmd.AddCommand(NodeCommands(opts, appExport, addStartFlags)...)
+	rootCmd.AddCommand(version.NewVersionCommand())
+}
+
+// NodeCommands builds a fresh set of the commands for operating a node:
+// start, tendermint (alias comet), export, and rollback. Each call returns new
+// command objects, so the set can be attached to more than one parent.
+func NodeCommands(
+	opts StartOptions,
+	appExport types.AppExporter,
+	addStartFlags types.ModuleInitFlags,
+) []*cobra.Command {
 	tendermintCmd := &cobra.Command{
-		Use:   "tendermint",
-		Short: "Tendermint subcommands",
+		Use:     "tendermint",
+		Aliases: []string{"comet"},
+		Short:   "CometBFT consensus subcommands",
 	}
 
 	tendermintCmd.AddCommand(
@@ -35,24 +48,20 @@ func AddCommands(
 		sdkserver.ShowValidatorCmd(),
 		sdkserver.ShowAddressCmd(),
 		sdkserver.VersionCmd(),
-		tmcmd.ResetAllCmd,
-		tmcmd.ResetStateCmd,
+		tmcmd.NewResetAllCmd(),
+		tmcmd.NewResetStateCmd(),
 		sdkserver.BootstrapStateCmd(opts.AppCreator),
 	)
 
 	startCmd := StartCmd(opts)
 	addStartFlags(startCmd)
 
-	rootCmd.AddCommand(
+	return []*cobra.Command{
 		startCmd,
 		tendermintCmd,
 		sdkserver.ExportCmd(appExport, opts.DefaultNodeHome),
-		version.NewVersionCommand(),
 		sdkserver.NewRollbackCmd(opts.AppCreator, opts.DefaultNodeHome),
-
-		// custom tx indexer command
-		// NewIndexTxCmd(), TODO: check indexer tx command
-	)
+	}
 }
 
 func ConnectTmWS(tmRPCAddr, tmEndpoint string, logger tmlog.Logger) *rpcclient.WSClient {

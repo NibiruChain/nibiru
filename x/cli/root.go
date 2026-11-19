@@ -19,6 +19,7 @@ import (
 	sdkserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
@@ -115,41 +116,25 @@ Args:
 	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
-	a := appCreator{}
-
 	rootCmd.AddCommand(
-		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		GetBuildWasmMsg(),
 		DecodeBase64Cmd(app.DefaultNodeHome),
 		LocalnetCmd(),
 		cmtcli.NewCompletionCmd(rootCmd, true),
-		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		nibidcmd.ConfigCmd(),
-		pruning.Cmd(a.newApp, app.DefaultNodeHome),
-	)
+		version.NewVersionCommand(),
 
-	server.AddCommands(
-		rootCmd,
-		server.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
-		a.appExport,
-		addModuleInitFlags,
-	)
-
-	// add keybase, auxiliary RPC, query, and tx child commands
-	rootCmd.AddCommand(
+		// add keybase, auxiliary RPC, query, and tx child commands
 		rpc.StatusCommand(),
-		genesisCommand(
-			encodingConfig,
-			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
-		),
 		nibidcmd.QueryCmd(),
 		nibidcmd.TxCmd(),
 		keysCommand(app.DefaultNodeHome),
-
-		// EVM Tx Indexer force catch up command
-		server.NewEVMTxIndexCmd(),
 	)
+
+	addNodeCommands(rootCmd, func() []*cobra.Command {
+		return newNodeCommands(encodingConfig)
+	})
 
 	assignCommandGroups(rootCmd)
 
@@ -158,6 +143,30 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	// rootCmd.AddCommand(
 	//	server.RosettaCommand(
 	//		encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+}
+
+// newNodeCommands builds a fresh copy of every command for operating a node.
+// Each call returns new command objects because a cobra command has one
+// parent: the set is attached under `nibid node` and, hidden, at the top level.
+func newNodeCommands(encodingConfig app.EncodingConfig) []*cobra.Command {
+	a := appCreator{}
+
+	cmds := server.NodeCommands(
+		server.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
+		a.appExport,
+		addModuleInitFlags,
+	)
+	return append(cmds,
+		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
+		genesisCommand(
+			encodingConfig,
+			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
+		),
+		// EVM Tx Indexer force catch up command
+		server.NewEVMTxIndexCmd(),
+	)
 }
 
 // Implements the servertypes.ModuleInitFlags interface
@@ -230,12 +239,6 @@ var everydayCommands = []string{
 	"tx", "query", "keys", "config", "status", "localnet", "debug",
 }
 
-// nodeCommands are the root commands for operating a node.
-var nodeCommands = []string{
-	"start", "init", "export", "genesis", "prune", "rollback", "tendermint",
-	"testnet", "evm-tx-index",
-}
-
 // assignCommandGroups organizes the root help into "Everyday", "Run a Node",
 // and "Other" sections. It only sets help metadata; command behavior is
 // unchanged.
@@ -252,13 +255,14 @@ func assignCommandGroups(rootCmd *cobra.Command) {
 	for _, name := range everydayCommands {
 		groupOf[name] = groupEveryday
 	}
-	for _, name := range nodeCommands {
-		groupOf[name] = groupNode
-	}
+	groupOf[nodeCmdName] = groupNode
 	for _, c := range rootCmd.Commands() {
+		if c.Hidden {
+			continue
+		}
 		if id, ok := groupOf[c.Name()]; ok {
 			c.GroupID = id
-		} else if !c.Hidden {
+		} else {
 			c.GroupID = groupOther
 		}
 	}
