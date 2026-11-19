@@ -1,6 +1,7 @@
 package debugcmd_test
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"os"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/app"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
+	authtypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
+	govv1beta1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 	wasmtypes "github.com/NibiruChain/nibiru/v2/x/wasm/types"
 
 	"github.com/NibiruChain/nibiru/v2/x/cli/debugcmd"
@@ -213,4 +216,82 @@ func TestDecodeAnyRequiresDecoder(t *testing.T) {
 	env, _ := testEnv()
 	_, err := debugcmd.Decode(env, []byte(`{"type_url":"/a.B","value":"AA=="}`), debugcmd.Options{})
 	require.Error(t, err)
+}
+
+// Explicit schema flags select the decoder before any heuristic runs.
+func TestDecodeExplicitTypeURLBeatsAddressHeuristics(t *testing.T) {
+	env, _ := testEnv()
+	typeURL := "/cosmos.gov.v1beta1.TextProposal"
+
+	// Encoded sizes of 20 and 32 (address and tx-hash sized), 33, and 36 bytes.
+	// The title field takes 7 bytes and the description tag and length 2.
+	for _, size := range []int{20, 32, 33, 36} {
+		desc := strings.Repeat("d", size-9)
+		msg := &govv1beta1.TextProposal{Title: "Title", Description: desc}
+		bz, err := proto.Marshal(msg)
+		require.NoError(t, err)
+		require.Len(t, bz, size)
+		for _, enc := range []string{
+			hex.EncodeToString(bz), base64.StdEncoding.EncodeToString(bz),
+		} {
+			res, err := debugcmd.Decode(env, []byte(enc),
+				debugcmd.Options{TypeURL: typeURL})
+			require.NoError(t, err, "%d bytes", len(bz))
+			require.Equal(t, debugcmd.KindAny, res.Detected, "%d bytes", len(bz))
+			require.Contains(t, toJSON(t, res), desc)
+		}
+	}
+
+	// Without the flag, the 20-byte payload is still read as an address.
+	bz, err := proto.Marshal(&govv1beta1.TextProposal{
+		Title: "Title", Description: "Description"})
+	require.NoError(t, err)
+	require.Len(t, bz, 20)
+	res, err := debugcmd.Decode(env, []byte(hex.EncodeToString(bz)),
+		debugcmd.Options{})
+	require.NoError(t, err)
+	require.Equal(t, debugcmd.KindAddress, res.Detected)
+}
+
+func TestDecodeExplicitPathDecodesABCIQuery(t *testing.T) {
+	env, _ := testEnv()
+	bz, err := proto.Marshal(&authtypes.QueryAccountRequest{Address: contract})
+	require.NoError(t, err)
+
+	path := "/cosmos.auth.v1beta1.Query/Account"
+	res, err := debugcmd.Decode(env, []byte(hex.EncodeToString(bz)),
+		debugcmd.Options{Path: path})
+	require.NoError(t, err)
+	require.Equal(t, debugcmd.KindABCIQuery, res.Detected)
+	abci, ok := res.Data.(debugcmd.ABCIResult)
+	require.True(t, ok)
+	require.Equal(t, "cosmos.auth.v1beta1.QueryAccountRequest", abci.Type)
+	require.Contains(t, string(abci.Message), contract)
+
+	// Without the flag, the same bytes are only unknown protobuf.
+	res, err = debugcmd.Decode(env, []byte(hex.EncodeToString(bz)),
+		debugcmd.Options{})
+	require.NoError(t, err)
+	require.Equal(t, debugcmd.KindUnknownProtobuf, res.Detected)
+}
+
+func TestDecodeExplicitSchemaFailureNamesSchema(t *testing.T) {
+	env, _ := testEnv()
+	typeURL := "/cosmos.gov.v1beta1.TextProposal"
+	// 20 bytes that do not parse as a TextProposal.
+	bad := strings.Repeat("ff", 20)
+
+	_, err := debugcmd.Decode(env, []byte(bad),
+		debugcmd.Options{TypeURL: typeURL})
+	require.ErrorContains(t, err, typeURL)
+
+	_, err = debugcmd.Decode(env, []byte("not hex or base64!"),
+		debugcmd.Options{TypeURL: typeURL})
+	require.ErrorContains(t, err, typeURL)
+
+	path := "/cosmos.auth.v1beta1.Query/Account"
+	_, err = debugcmd.Decode(env, []byte(bad), debugcmd.Options{Path: path})
+	require.ErrorContains(t, err, "QueryAccountRequest")
+	_, err = debugcmd.Decode(env, []byte("zz!"), debugcmd.Options{Path: path})
+	require.ErrorContains(t, err, path)
 }

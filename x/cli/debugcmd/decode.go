@@ -59,6 +59,9 @@ type Options struct {
 // Decode classifies input (unless opts.As is set) and decodes it.
 func Decode(env Env, input []byte, opts Options) (Result, error) {
 	in := bytes.TrimSpace(input)
+	if res, err, ok := decodeExplicitSchema(env, in, opts); ok {
+		return res, err
+	}
 	c := Classify(in)
 	kind := c.Kind
 	if opts.As != "" {
@@ -113,6 +116,57 @@ func Decode(env Env, input []byte, opts Options) (Result, error) {
 	}
 	return Result{Detected: KindUnknown, Hint: "input is not recognized"},
 		fmt.Errorf("could not classify input")
+}
+
+// decodeExplicitSchema decodes input under a schema the caller named, before
+// any heuristic runs: --type-url selects a message type, and --path selects a
+// gRPC method for abci-query data. A failure is an error that names the
+// schema, never a fall-through to guessing. It reports ok=false when no
+// explicit schema applies. A JSON-RPC body keeps its own path and data, and an
+// explicit --as other than protobuf (for --type-url) or abci-query (for
+// --path) keeps the kind the caller chose.
+func decodeExplicitSchema(
+	env Env, in []byte, opts Options,
+) (res Result, err error, ok bool) {
+	switch {
+	case opts.TypeURL != "" && (opts.As == "" || opts.As == KindProtobuf):
+		bz, berr := binaryInput(in)
+		if berr != nil {
+			return Result{Detected: KindAny}, fmt.Errorf(
+				"decode as %s: %w", opts.TypeURL, berr), true
+		}
+		out, derr := DecodeMsg(env, opts.TypeURL, bz)
+		if derr != nil {
+			return Result{Detected: KindAny}, fmt.Errorf(
+				"decode as %s: %w", opts.TypeURL, derr), true
+		}
+		return Result{Detected: KindAny, Data: out}, nil, true
+	case opts.Path != "" && (opts.As == "" || opts.As == KindABCIQuery):
+		if len(in) > 0 && (in[0] == '{' || in[0] == '[') {
+			return Result{}, nil, false
+		}
+		bz, berr := binaryInput(in)
+		if berr != nil {
+			return Result{Detected: KindABCIQuery}, fmt.Errorf(
+				"decode as %s: %w", opts.Path, berr), true
+		}
+		out, derr := DecodeABCIRequest(env, opts.Path, bz, opts.Response)
+		return Result{Detected: KindABCIQuery, Data: out}, derr, true
+	}
+	return Result{}, nil, false
+}
+
+// binaryInput reads hex (with optional 0x) or base64 protobuf bytes.
+func binaryInput(in []byte) ([]byte, error) {
+	s := strings.TrimSpace(string(in))
+	if bz, err := hex.DecodeString(strings.TrimPrefix(s, "0x")); err == nil {
+		return bz, nil
+	}
+	bz, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, errors.New("input is neither hex nor base64")
+	}
+	return bz, nil
 }
 
 // reclassifyAs prepares a payload when --as forces a kind on an input that
