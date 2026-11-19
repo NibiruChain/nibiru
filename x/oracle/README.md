@@ -1,6 +1,6 @@
 # Oracle
 
-> **Deprecated as of v2.12.** Native oracle voting, feeder duties, slashing, and messages are disabled, and the upgrade cleared the module's exchange-rate state. The sections below describe the retired design. Prices now come from the Sai oracle. The EVM precompile at `0x0801` reads it through the `x-oracle` Wasm adapter. See [docs/evm/precompiles/oracle.md](../../docs/evm/precompiles/oracle.md) and the [Sai developer documentation](https://sai.fun/docs/dev/).
+> **Deprecated as of v2.12.** Native oracle voting, feeder duties, slashing, and messages are disabled, and the upgrade cleared the module's exchange-rate state. The sections below describe the retired design. Prices now come from the Sai oracle. The EVM precompile at `0x0801` reads it through the `x-oracle` Wasm adapter. See [docs/dev/sai-oracle.md](../../docs/dev/sai-oracle.md) and the [Sai developer documentation](https://sai.fun/docs/dev/).
 
 The Oracle module provides the Nibiru blockchain with an up-to-date and accurate price feed of exchange rates of trading pairs.
 

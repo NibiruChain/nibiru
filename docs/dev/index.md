@@ -34,8 +34,9 @@ Essential SDKs and tools for building applications on Nibiru.
 
 ## Oracle Solutions
 
-1. [Nibiru Oracle (EVM) - Usage Guide](./evm/oracle.md): Technical guide for using the Nibiru Oracle precompile in EVM smart contracts, including ChainLink-like price feeds.
-2. [Integrating with Oracles on Nibiru](./tools/oracle/index.md): Overview of available oracle solutions on Nibiru, including the native oracle and Band Protocol integration.
+1. [Sai Oracle Data and How to Read It](./sai-oracle.md): Supported pairs, units, and examples for reading Sai oracle prices from EVM contracts, CosmWasm contracts, a terminal, or an AI agent.
+1. [Chainlink-like Feeds (EVM)](./evm/oracle.md): Deployed Chainlink-style feed contracts that wrap the oracle precompile.
+2. [Integrating with Oracles on Nibiru](./tools/oracle/index.md): Overview of available oracle solutions on Nibiru, including the Sai oracle and Band Protocol integration.
 
 ## Block Explorers
 

@@ -14,8 +14,7 @@ them into module calls. Nibiru moved away from that pattern because the module
 protobuf definitions are already the shared API used by wallets, the command
 line, clients, and contract code.
 
-For implementation examples, see the [Nibiru Rust SDK](./rust-sdk.md), the
-[oracle Stargate query guide](./oracle.md), and the
+For implementation examples, see the [Nibiru Rust SDK](./rust-sdk.md) and the
 [token factory contract guide](./tf.md).
 
 ## How the integration patterns differ
@@ -90,9 +89,6 @@ Use crate `nibiru-std` for generated protobuf types and convenience traits:
 The [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts/nibi-stargate)
 shows how a contract can construct token factory module messages. The
 [token factory guide](./tf.md) walks through deploying and using that contract.
-The [oracle guide](./oracle.md) shows a Stargate query that constructs protobuf
-request type `QueryExchangeRateRequest` and converts it with trait
-`NibiruStargateQuery`.
 
 ## Historical reference: custom binding implementation pieces
 
@@ -226,7 +222,6 @@ bindings:
 ## References
 
 - [Nibiru Rust SDK](./rust-sdk.md)
-- [Querying oracle data](./oracle.md)
 - [Creating fungible tokens guide](./tf.md)
 - [`nibi-stargate` contract](https://github.com/NibiruChain/nibiru/tree/main/wasm-contracts/nibi-stargate)
 - [`app/wasmext` package](https://github.com/NibiruChain/nibiru/tree/master/app/wasmext)
