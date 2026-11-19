@@ -352,28 +352,61 @@ resolve_path() {
   readlink -f "$1" 2>/dev/null || realpath "$1" 2>/dev/null || printf '%s' "$1"
 }
 
-# warn_if_shadowed: Warn, without failing, when nibiru or nibid on PATH is a
-# different file than the one just installed. Colors are named ANSI: yellow for
-# the warning, cyan for commands, plain paths. They apply only on a terminal.
-warn_if_shadowed() {
-  local bin_dir="$1" bin_path="$2"
+# path_copies: Print every executable named $1 on PATH, one per line, in PATH
+# order. Duplicates that resolve to the same file print once.
+path_copies() {
+  local p seen=$'\n' real
+  while IFS= read -r p; do
+    real="$(resolve_path "$p")"
+    [[ "$seen" == *$'\n'"$real"$'\n'* ]] && continue
+    seen+="$real"$'\n'
+    printf '%s\n' "$p"
+  done < <(type -ap -- "$1" 2>/dev/null || true)
+}
+
+# check_path_name: Report how one name resolves on PATH relative to the file
+# just installed ($2 is the installed path, $3 is its directory). Prints
+# machine-readable marker lines to stdout:
+#   nibiru-path-shadowed name=<n> runs=<path> installed=<path>
+#   nibiru-path-ok name=<n> runs=<path> other=<path>
+# and the human-readable warning to stderr. A copy that resolves to the
+# installed file, such as the nibid symlink, is never "another copy".
+check_path_name() {
+  local name="$1" installed="$2" bin_dir="$3"
   local yellow="" cyan="" reset=""
   if [[ -t 2 && -z "${NO_COLOR:-}" ]]; then
     yellow=$'\033[33m' cyan=$'\033[36m' reset=$'\033[0m'
   fi
 
-  local installed name found
-  installed="$(resolve_path "$bin_path")"
-  for name in nibiru nibid; do
-    found="$(command -v "$name" || true)"
-    if [[ -z "$found" || "$(resolve_path "$found")" == "$installed" ]]; then
-      continue
-    fi
+  local want runs
+  want="$(resolve_path "$installed")"
+  runs="$(command -v "$name" || true)"
+  [[ -z "$runs" ]] && return 0
+
+  if [[ "$(resolve_path "$runs")" != "$want" ]]; then
+    printf 'nibiru-path-shadowed name=%s runs=%s installed=%s\n' \
+      "$name" "$runs" "$installed"
     printf '%s[build-nibiru] WARNING: %s on PATH is %s, not the build just installed at %s.%s\n' \
-      "$yellow" "$name" "$found" "$bin_dir/$name" "$reset" >&2
+      "$yellow" "$name" "$runs" "$installed" "$reset" >&2
     printf '  Fix it by putting %s earlier on PATH, or run the build by full path:\n' \
       "$bin_dir" >&2
-    printf '    %s%s version --long%s\n' "$cyan" "$bin_dir/$name" "$reset" >&2
+    printf '    %s%s version --long%s\n' "$cyan" "$installed" "$reset" >&2
+    return 0
+  fi
+
+  local other
+  while IFS= read -r other; do
+    [[ "$(resolve_path "$other")" == "$want" ]] && continue
+    printf 'nibiru-path-ok name=%s runs=%s other=%s\n' "$name" "$runs" "$other"
+    break
+  done < <(path_copies "$name")
+}
+
+# warn_if_shadowed: Check nibiru and nibid on PATH. Never fails the install.
+warn_if_shadowed() {
+  local bin_dir="$1" name
+  for name in nibiru nibid; do
+    check_path_name "$name" "$bin_dir/$name" "$bin_dir"
   done
 }
 
@@ -457,7 +490,7 @@ main() {
       log_error "nibid was installed, but it is not present in PATH"
       exit 1
     }
-    warn_if_shadowed "$bin_dir" "$bin_path"
+    warn_if_shadowed "$bin_dir"
   fi
 }
 

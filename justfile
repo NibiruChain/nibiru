@@ -312,11 +312,16 @@ test-sim-after-import:
       -timeout 30m
 
 # Run Go tests without cached test results
+# Tests the PATH checks of build-nibiru.sh against temp dirs
+test-build-path:
+    contrib/scripts/build-nibiru-path-test.sh
+
 test:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Running: just test"
     just localnet-check
+    just test-build-path
     GO_TEST_PKGS="$(just _go-test-pkgs)"
     echo "RUN: go test -count=1 \$GO_TEST_PKGS"
     go test -count=1 $GO_TEST_PKGS
