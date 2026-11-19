@@ -12,9 +12,8 @@ import (
 // deployer and withdrawer index entries, and sets module param
 // `enable_fee_share` to false. It returns the number of fee shares deleted.
 //
-// The function is the state cleanup for the x/devgas shutdown. Call it from
-// the upgrade handler of the release that ships the shutdown. No upgrade
-// handler calls it yet.
+// The function is the state cleanup for the x/devgas shutdown. The v2.24.0
+// upgrade handler calls it.
 //
 // The function keeps the module params and the store key, so genesis export
 // and the read-only queries still work after it runs. Running it again
