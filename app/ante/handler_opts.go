@@ -14,18 +14,14 @@ import (
 
 	"github.com/NibiruChain/nibiru/v2/evm"
 	evmstate "github.com/NibiruChain/nibiru/v2/evm/evmstate"
-	devgasante "github.com/NibiruChain/nibiru/v2/x/devgas/v1/ante"
-	devgaskeeper "github.com/NibiruChain/nibiru/v2/x/devgas/v1/keeper"
 )
 
 type AnteHandlerOptions struct {
 	sdkante.HandlerOptions
-	IBCKeeper        *ibckeeper.Keeper
-	DevGasKeeper     *devgaskeeper.Keeper
-	DevGasBankKeeper devgasante.BankKeeper
-	EvmKeeper        *evmstate.Keeper
-	EvmMempool       *evm.Mempool
-	AccountKeeper    authkeeper.AccountKeeper
+	IBCKeeper     *ibckeeper.Keeper
+	EvmKeeper     *evmstate.Keeper
+	EvmMempool    *evm.Mempool
+	AccountKeeper authkeeper.AccountKeeper
 
 	TxCounterStoreKey types.StoreKey
 	WasmConfig        *wasmtypes.WasmConfig
@@ -42,9 +38,6 @@ func (opts *AnteHandlerOptions) ValidateAndClean() error {
 	opts.SigGasConsumer = NibiruSigVerificationGasConsumer
 	if opts.WasmConfig == nil {
 		return AnteHandlerError("wasm config")
-	}
-	if opts.DevGasKeeper == nil {
-		return AnteHandlerError("devgas keeper")
 	}
 	if opts.IBCKeeper == nil {
 		return AnteHandlerError("ibc keeper")
