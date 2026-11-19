@@ -60,6 +60,20 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   input. With no argument, it returns a usage error instead of panicking.
   Command `base64-decode` is not removed, so scripts that call it, such as
   `ud cw3`, need no change.
+- Install the Nibiru binary as `nibiru`, with `nibid` kept as a compatible
+  name. `just install` writes `nibiru` to the Go bin directory and a `nibid`
+  symlink beside it. `just build` writes `build/nibiru` and a `build/nibid`
+  symlink. The container images install `/usr/local/bin/nibiru` with a
+  `nibid` symlink, and their entrypoint is `nibiru`. Release archive names and
+  contents are unchanged: each archive holds a regular file named `nibid`.
+  Existing `nibid` commands, cosmovisor layouts, and service files keep
+  working.
+- Print the invoked name in help. `nibiru --help` says `nibiru` and
+  `nibid --help` says `nibid`; any other process name prints `nibiru`. The
+  default home `~/.nibid`, the keyring service name, and the `version` output
+  do not change with the invoked name.
+- Match both `nibid` and `nibiru` in process checks (`pgrep -x`) in the
+  `justfile`, `x/nutil/local_blockchain.go`, and the core test workflow.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local
   testnet".
   [PR #2929](https://github.com/SaiDotFun/nibiru/pull/2929).

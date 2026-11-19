@@ -102,6 +102,9 @@ sudo install -m 755 nibid /usr/local/bin/nibid
 
 ## Option 4: Build from source
 
+A source build writes the binary `nibiru` and a `nibid` symlink that points to
+it. Both names run the same program.
+
 ### Install build tools
 
 Install Git, a C compiler, and [just](https://github.com/casey/just#installation).
@@ -134,7 +137,7 @@ Use a Go version that satisfies the selected release's `go.mod` requirement.
 
 ### Compile the source code
 
-Clone the repository, select the release, and install `nibid`:
+Clone the repository, select the release, and install `nibiru` and the `nibid` symlink:
 
 ```bash
 git clone https://github.com/NibiruChain/nibiru
@@ -157,6 +160,10 @@ For the Bash installer, manual download, or source build, use:
 nibid version
 nibid --help
 ```
+
+A source build also installs `nibiru`. If a Bun or npm install of `nibiru` comes
+first on your `PATH`, that command runs the released binary. Run
+`$(go env GOPATH)/bin/nibiru` to use your build.
 
 If your shell cannot find the command, check the installation's bin directory:
 

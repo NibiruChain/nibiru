@@ -16,9 +16,11 @@ description: >
 1. [Nibiru CLI - How to Install the Nibiru CLI](./nibid-binary.md)
 2. [Nibiru CLI - Creating Fungible Tokens](./tf.md)
 
-The native CLI command is `nibid`. Bun and npm installs expose it as `nibiru`,
-which forwards all arguments to the native binary. For those installs, replace
-`nibid` with `nibiru` in the examples below and in the linked guides.
+The native binary is named `nibiru`, and `nibid` stays as a compatible name
+(a symlink in source builds and container images). Both names run the same
+program, and help prints the name you invoked. Bun and npm installs expose
+`nibiru`, which forwards all arguments to the native binary. The examples in
+these guides use `nibid`; replace it with `nibiru` as you prefer.
 
 ## Command List
 
