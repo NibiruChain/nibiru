@@ -18,7 +18,7 @@ import (
 func GetQueryCmd() *cobra.Command {
 	feesQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
+		Short:                      "Read-only queries for the retired devgas module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,

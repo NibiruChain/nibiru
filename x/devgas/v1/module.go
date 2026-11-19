@@ -89,9 +89,10 @@ func (b AppModuleBasic) RegisterGRPCGatewayRoutes(
 	}
 }
 
-// GetTxCmd returns the root tx command for the fees module.
+// GetTxCmd returns nil: the module's transaction messages are disabled, so
+// there are no `tx devgas` commands.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.NewTxCmd()
+	return nil
 }
 
 // GetQueryCmd returns the fees module's root query command.
