@@ -20,7 +20,7 @@ description: >-
 | --- | --- | --- |
 | Wasm.sol | Enables the invocation of Wasm VM contracts  | 0x00...802 |
 | FunToken.sol | Makes it possible to send ERC20 tokens as bank coins to a Nibiru bech32 address using the "FunToken" mapping between the ERC20 and bank coin. | 0x00...800 |
-| [Oracle.sol](./oracle.md) | Implements the exchange rate query from Nibiru's Oracle Module. This makes low-latency price data accessible from smart contracts. | 0x00...801 |
+| [Oracle.sol](../../dev/sai-oracle.md) | Returns Sai oracle prices to EVM contracts through the `x-oracle` Wasm adapter. | 0x00...801 |
 
 
 ## Wasm Precompile
