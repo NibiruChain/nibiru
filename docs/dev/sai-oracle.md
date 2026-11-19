@@ -26,9 +26,20 @@ the precompile at `0x0801` for the EVM. Both read the same prices.
 - Prices are in USD.
 - The adapter and precompile return prices with 18 decimals. The Sai oracle
   contract returns a decimal string.
-- Every response carries the oracle's last update time in Unix seconds. On
-  2026-11-19, each query ran within 30 seconds of the reported update time.
-  Check the update time before you trust a price.
+- Every response carries the oracle's last update time. The unit and the value
+  for a missing time differ by interface:
+
+  | Interface | Field | Unit | Missing time |
+  | --- | --- | --- | --- |
+  | Precompile `queryExchangeRate` | `blockTimeMs` | Milliseconds | `0` |
+  | Precompile `chainLinkLatestRoundData` | `startedAt`, `updatedAt` | Seconds | `0` |
+  | Adapter `legacy_exchange_rate(s)` | `update_time_seconds` | Seconds | `null` |
+  | Adapter `get_price` and Sai oracle `get_price` | `last_update_time` | Seconds | `null` |
+
+  On 2026-11-19, each query ran within 30 seconds of the reported update time.
+  Compare in seconds: `block.timestamp - updatedAt` for `chainLinkLatestRoundData`,
+  and `block.timestamp - blockTimeMs / 1000` for `queryExchangeRate`. A time of
+  `0` or `null` means no update time is known, so treat the price as stale.
 - Other pairs fail. The precompile returns `unsupported legacy symbol: usdt` for
   `uusdt:uusd`.
 - Sai's own markets use more token indexes than the table above (for example
