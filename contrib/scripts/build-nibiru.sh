@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
-# build-nibiru.sh - Build or install the nibid binary.
+# build-nibiru.sh - Build or install the nibiru binary.
+#
+# The binary is named nibiru. A symlink named nibid sits beside it, because
+# cosmovisor layouts, service files, and CI call nibid.
 #
 # Optional environment variables (inherited when set):
 #   VERSION   Release version string (default: latest git tag, or branch-commit)
@@ -79,13 +82,15 @@ show_help() {
   cat <<EOF
 Usage: $SCRIPT_NAME [OPTIONS]
 
-Build or install the nibid binary.
+Build or install the nibiru binary and its nibid symlink.
 
 With no arguments, this script prints help and exits. Use --run to execute.
 
 Options:
-  --run         Build and install nibid to the Go binary directory.
-  --just-build  Build nibid to ./build/nibid instead of installing (requires --run).
+  --run         Build and install nibiru, plus a nibid symlink, to the Go binary
+                directory.
+  --just-build  Build ./build/nibiru and a ./build/nibid symlink instead of
+                installing (requires --run).
   -h, --help    Show this help message and exit.
 
 Environment:
@@ -273,7 +278,7 @@ run_go_compile() {
   local just_build="${10}"
   local static_pie="${11}"
 
-  local cgo_ldflags ldflags go_build_mode install_dir
+  local cgo_ldflags ldflags go_build_mode out_dir
   go_build_mode=""
 
   cgo_ldflags="-L${tempdir}/wasmvm/${wasmvm_version}/lib/${os_name}_${arch_name}/"
@@ -305,14 +310,12 @@ run_go_compile() {
   fi
 
   if [[ "$just_build" == true ]]; then
-    log_info "compiling nibid to ${builddir}/"
+    out_dir="$builddir"
+    log_info "compiling nibiru to ${out_dir}/ (with a nibid symlink)"
   else
-    install_dir="$(go env GOBIN)"
-    if [[ -z "$install_dir" ]]; then
-      install_dir="$(go env GOPATH)/bin"
-    fi
-    mkdir -p "$install_dir"
-    log_info "installing nibid to ${install_dir}/nibid"
+    out_dir="$(go_bin_dir)"
+    mkdir -p "$out_dir"
+    log_info "installing nibiru to ${out_dir}/nibiru (with a nibid symlink)"
   fi
 
   (
@@ -321,26 +324,34 @@ run_go_compile() {
     export CGO_ENABLED=1
     export CGO_LDFLAGS="$cgo_ldflags"
 
-    if [[ "$just_build" == true ]]; then
-      go build \
-        -mod=readonly \
-        -trimpath \
-        ${go_build_mode:+"$go_build_mode"} \
-        -tags "$build_tags" \
-        -ldflags "$ldflags" \
-        -o "${builddir}/nibid" \
-        ./x/cli
-    else
-      go build \
-        -mod=readonly \
-        -trimpath \
-        ${go_build_mode:+"$go_build_mode"} \
-        -tags "$build_tags" \
-        -ldflags "$ldflags" \
-        -o "${install_dir}/nibid" \
-        ./x/cli
-    fi
+    go build \
+      -mod=readonly \
+      -trimpath \
+      ${go_build_mode:+"$go_build_mode"} \
+      -tags "$build_tags" \
+      -ldflags "$ldflags" \
+      -o "${out_dir}/nibiru" \
+      ./x/cli
   )
+
+  link_nibid "$out_dir"
+}
+
+# go_bin_dir: Directory where `go install` places binaries.
+go_bin_dir() {
+  local dir
+  dir="$(go env GOBIN)"
+  if [[ -z "$dir" ]]; then
+    dir="$(go env GOPATH)/bin"
+  fi
+  printf '%s' "$dir"
+}
+
+# link_nibid: Point ${1}/nibid at nibiru, replacing a previous nibid file or
+# link. The link is relative, so the directory can move.
+link_nibid() {
+  local dir="$1"
+  ln -sfn nibiru "${dir}/nibid"
 }
 
 main() {
@@ -391,28 +402,32 @@ main() {
   run_go_compile "$builddir" "$tempdir" "$os_name" "$arch_name" \
     "$version" "$commit" "$build_tags" "$tags_csv" "$wasmvm_version" "$JUST_BUILD" "$static_pie"
 
+  local bin_dir bin_path
   if [[ "$JUST_BUILD" == true ]]; then
-    if [[ ! -x "${builddir}/nibid" ]]; then
-      log_error "expected binary not found: ${builddir}/nibid"
-      exit 1
-    fi
-
-    log_success "built ${builddir}/nibid"
-    "${builddir}/nibid" version
-    if [[ "$static_pie" == true ]]; then
-      "$SCRIPT_DIR/nibid-elf-test.sh" --bin "${builddir}/nibid"
-    fi
+    bin_dir="$builddir"
   else
-    local nibid_path
-    nibid_path="$(command -v nibid)" || {
-      log_error "nibid was installed, but it is not present in PATH"
-      exit 1
-    }
+    bin_dir="$(go_bin_dir)"
+  fi
+  bin_path="${bin_dir}/nibiru"
 
-    log_success "installed $nibid_path"
-    "$nibid_path" version
-    if [[ "$static_pie" == true ]]; then
-      "$SCRIPT_DIR/nibid-elf-test.sh" --bin "$nibid_path"
+  if [[ ! -x "$bin_path" || ! -L "${bin_dir}/nibid" ]]; then
+    log_error "expected binary and nibid symlink not found in ${bin_dir}"
+    exit 1
+  fi
+
+  log_success "built ${bin_path} (nibid -> nibiru)"
+  # Run the checks on the real file.
+  "$bin_path" version
+  if [[ "$static_pie" == true ]]; then
+    "$SCRIPT_DIR/nibid-elf-test.sh" --bin "$bin_path"
+  fi
+
+  if [[ "$JUST_BUILD" != true ]]; then
+    local on_path
+    on_path="$(command -v nibiru || true)"
+    if [[ -n "$on_path" && "$on_path" != "$bin_path" ]]; then
+      log_info "WARNING: nibiru on PATH is $on_path, not $bin_path." \
+        "Run $bin_path, or put ${bin_dir} first on PATH."
     fi
   fi
 }
