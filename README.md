@@ -109,7 +109,6 @@ Ref: [github.com/casey/just](https://github.com/casey/just)
 For a complete local development environment with multiple services, use our Docker Compose setup that includes:
 
 - **Multiple validator nodes**: Two independent Nibiru Chain nodes for testing multi-node scenarios
-- **Pricefeeder services**: Automated price oracle data feeds
 - **IBC relayer**: Cross-chain communication testing with Hermes relayer
 - **Heart Monitor**: Blockchain indexing and GraphQL API for monitoring
 
