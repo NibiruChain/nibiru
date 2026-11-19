@@ -112,6 +112,7 @@ func NewRootCmdNamed(name string) (*cobra.Command, app.EncodingConfig) {
 	initRootCmd(rootCmd, encodingConfig)
 	nutilflags.AddHelpVerboseToRoot(rootCmd)
 	setRootUsage(rootCmd)
+	followInvokedName(rootCmd, name)
 
 	return rootCmd, encodingConfig
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -125,4 +126,31 @@ func rootRows(root *cobra.Command) []*cobra.Command {
 		rows = append(rows, byName[name])
 	}
 	return rows
+}
+
+// invocationRe matches a command example such as `nibid q tx`, `$ nibid tx`,
+// `| nibid debug`, or `"nibid start"`: the name sits at the start of a line or
+// after whitespace or a quote, and a subcommand follows. Prose that names the
+// binary, and the ~/.nibid directory, do not match.
+var invocationRe = regexp.MustCompile(`(?m)(^|[\s"'])nibid ([a-z])`)
+
+// followInvokedName rewrites command examples in the help text of every
+// command under root, so they print the invoked name instead of the literal
+// "nibid" the sources are written with.
+func followInvokedName(root *cobra.Command, name string) {
+	if name == "nibid" {
+		return
+	}
+	sub := func(s string) string {
+		return invocationRe.ReplaceAllString(s, "${1}"+name+" ${2}")
+	}
+	var walk func(c *cobra.Command)
+	walk = func(c *cobra.Command) {
+		c.Use, c.Short = sub(c.Use), sub(c.Short)
+		c.Long, c.Example = sub(c.Long), sub(c.Example)
+		for _, child := range c.Commands() {
+			walk(child)
+		}
+	}
+	walk(root)
 }
