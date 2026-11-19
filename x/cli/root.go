@@ -61,7 +61,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 
 	rootCmd := &cobra.Command{
 		Use:     "nibid",
-		Short:   "Nibiru blockchain node CLI",
+		Short:   "Nibiru CLI: send transactions, query the chain, and run a node.",
 		Aliases: []string{"nibiru"},
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SetOut(cmd.OutOrStdout())
@@ -151,6 +151,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		server.NewEVMTxIndexCmd(),
 	)
 
+	assignCommandGroups(rootCmd)
+
 	// TODO add rosettaj
 	// add rosetta
 	// rootCmd.AddCommand(
@@ -214,4 +216,50 @@ func (a appCreator) appExport(
 	}
 
 	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// Help group IDs for the root command.
+const (
+	groupEveryday = "everyday"
+	groupNode     = "node"
+	groupOther    = "other"
+)
+
+// everydayCommands are the root commands people use daily, in help order.
+var everydayCommands = []string{
+	"tx", "query", "keys", "config", "status", "localnet", "debug",
+}
+
+// nodeCommands are the root commands for operating a node.
+var nodeCommands = []string{
+	"start", "init", "export", "genesis", "prune", "rollback", "tendermint",
+	"testnet", "evm-tx-index",
+}
+
+// assignCommandGroups organizes the root help into "Everyday", "Run a Node",
+// and "Other" sections. It only sets help metadata; command behavior is
+// unchanged.
+func assignCommandGroups(rootCmd *cobra.Command) {
+	rootCmd.AddGroup(
+		&cobra.Group{ID: groupEveryday, Title: "Everyday Commands:"},
+		&cobra.Group{ID: groupNode, Title: "Run a Node:"},
+		&cobra.Group{ID: groupOther, Title: "Other Commands:"},
+	)
+	rootCmd.SetHelpCommandGroupID(groupOther)
+	rootCmd.SetCompletionCommandGroupID(groupOther)
+
+	groupOf := map[string]string{}
+	for _, name := range everydayCommands {
+		groupOf[name] = groupEveryday
+	}
+	for _, name := range nodeCommands {
+		groupOf[name] = groupNode
+	}
+	for _, c := range rootCmd.Commands() {
+		if id, ok := groupOf[c.Name()]; ok {
+			c.GroupID = id
+		} else if !c.Hidden {
+			c.GroupID = groupOther
+		}
+	}
 }
