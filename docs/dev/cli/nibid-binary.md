@@ -47,8 +47,10 @@ so the package manager installs the binary for your platform.
 
 The launcher requires [Node.js](https://nodejs.org/en/download) on your `PATH`,
 including when you install with Bun. It exposes the command `nibiru`, which runs
-the native `nibid` binary and forwards all arguments. Replace `nibid` with
-`nibiru` when following the other CLI guides.
+the native `nibid` binary of a released version and forwards all arguments.
+Replace `nibid` with `nibiru` when following the other CLI guides. The `nibid`
+binary itself doesn't answer to the name `nibiru`, so release archives and
+source builds use `nibid`.
 
 ## Option 2: Use the Bash installer
 
