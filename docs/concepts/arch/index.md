@@ -51,14 +51,14 @@ the state transitions (transactions) it contains.
 | --- | --- | --- |
 | [EVM](../../evm/index.md) |   ✔️ | Implements Nibiru EVM, which manages an Ethereum Virtual Machine (EVM) state database and enables the execution of Ethereum smart contracts. Nibiru EVM is an extension of "[geth](https://github.com/ethereum/go-ethereum)" along with "web3" and "eth" JSON-RPC methods. |
 | [Wasm][code-x-wasm] |  ✔️ |  Handles Wasm smart contracts.  This is the interface with the Wasm VM. |
-| [Dev Gas][code-x-devgas] |  ✔️  |  Implements a Smart contract gas royalties mechanism allowing builders to capture the value they create. |
+| [Dev Gas][code-x-devgas] |  ✖️  |  Retired. Shared contract execution fees with smart contract developers. |
 | [Epochs][code-x-epochs] |  ✔️ | Often in the SDK, we would like to run certain code every so often. The purpose of `epochs` module is to allow other modules to set that they would like to be signaled at regular intervals. So another module can specify it wants to execute code once a week, starting at UTC-time = x. `epochs` creates a generalized epoch interface to other modules so that they can easily be signaled upon such events. |
 | [Oracle][code-x-oracle] |  ✔️  |  Handles the decentralized oracle module. |
 | [Common][code-x-common]    |  ✔️ | Holds helper and utility functions to be utilized by other `x/` cosmos-sdk modules. |
 | [Common/testutil][code-x-testutil] |  ✔️ | Helper functions for unit and integration tests. |
 
 [code-x-common]: https://github.com/NibiruChain/nibiru/tree/v1.1.0/x/common
-[code-x-devgas]: ./devgas
+[code-x-devgas]: ./advanced/devgas.md
 [code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/v1.1.0/x/epochs
 [code-x-testutil]: https://github.com/NibiruChain/nibiru/tree/v1.1.0/x/common/testutil
 [code-x-wasm]: ./wasm/

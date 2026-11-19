@@ -58,14 +58,12 @@ These sections of the codebase extend or augment core runtime behavior.
 
 | Module | Description |
 | --- | --- |
-| [Devgas][code-x-devgas]       | The `devgas` module of Nibiru shares contract execution fees with smart contract developers. This aims to increase the adoption of Nibiru by offering CosmWasm smart contract developers a direct source of income based on usage. |
 | [Epochs][code-x-epochs]       | The `epochs` module allows other modules to set hooks to be called to execute code automatically on a period basis. For example, "once a week, starting at UTC-time = x". `epochs` creates a generalized epoch interface.                |
 | [Inflation][code-x-inflation] | Implements the [tokenomics](https://nibiru.fi/docs/learn/tokenomics.html) for Nibiru.                                                                                                                                                    |
 | [Oracle][code-x-oracle]       | Nibiru accurately prices assets using a native, system of decentralized oracles, and communicates with other Cosmos layer-1 chains using the Inter-Blockchain Communication (IBC) protocol. Nibi-Oracle handles the voting process for validators that act as oracles by updating data feeds.  |
 | [Sudo][code-x-sudo]           | Provides an on-chain "root" and a set of whitelisted contracts with elevated permissions. Includes management of Zero Gas Actors for fee-less CosmWasm executions against approved contracts. |
 
 [code-x-nutil]: https://github.com/NibiruChain/nibiru/tree/main/x/nutil
-[code-x-devgas]: https://nibiru.fi/docs/dev/x/nibiru-chain/devgas.html
 [code-x-epochs]: https://github.com/NibiruChain/nibiru/tree/main/x/epochs
 [code-x-inflation]: https://github.com/NibiruChain/nibiru/tree/main/x/inflation
 [code-x-oracle]: https://github.com/NibiruChain/nibiru/tree/main/x/oracle

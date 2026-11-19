@@ -113,7 +113,6 @@ Transaction commands use the following global flags:
 
 | Subcommand                            | Description                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------ |
-| [devgas](../../concepts/arch/advanced/devgas.md#cli) | Devgas subcommands for smart contract usage.                       |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |
 | [keys](../../concepts/arch/advanced/keys.md#cli)     | Keys subcommands for managing local tendermint keystore.           |
 
