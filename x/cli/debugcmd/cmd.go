@@ -160,12 +160,10 @@ func readInput(cmd *cobra.Command, args []string) ([]byte, error) {
 }
 
 func printJSON(cmd *cobra.Command, v any) error {
-	bz, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintln(cmd.OutOrStdout(), string(bz))
-	return err
+	enc := json.NewEncoder(cmd.OutOrStdout())
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
 }
 
 // decodeBinaryArg reads base64 (default) or hex protobuf bytes.
