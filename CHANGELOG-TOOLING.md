@@ -79,7 +79,13 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   runs first when it is not the running binary. A `nibid` symlink to the
   running file is not reported as a conflict.
 - Warn at the end of `just install` when `nibiru` or `nibid` on `PATH` is a
-  different file than the one installed. The install still succeeds.
+  different file than the one installed. The install still succeeds. The
+  warning starts with a plain marker line, `nibiru-path-shadowed name=<name>
+  runs=<path> installed=<path>`, one per name. When the installed build wins
+  and another copy exists, the script prints `nibiru-path-ok name=<name>
+  runs=<path> other=<path>` instead.
+- Print `nibiru` instead of `nibid` in the command examples of help text when
+  the binary runs as `nibiru`.
 - Match both `nibid` and `nibiru` in process checks (`pgrep -x`) in the
   `justfile`, `x/nutil/local_blockchain.go`, and the core test workflow.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local

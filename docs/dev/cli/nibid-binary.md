@@ -193,6 +193,44 @@ file runs. The last lines print `running from:` for the running binary and
 runs when you type the name. Add `-o json` to read the same data from field
 `binary_paths`.
 
+### Rules for Agents and Scripts
+
+- Plain `nibiru` may be a packaged release, such as a Bun or npm launcher that
+  comes first on `PATH`. It is not proof that you run your source build.
+- Call a source build by full path: `"$(go env GOPATH)/bin/nibiru"`. If you set
+  `GOBIN`, use `"$(go env GOBIN)/nibiru"` instead.
+- Before a step that depends on the version, run `nibiru version --long -o json`
+  and read field `binary_paths`. Field `running_from` is the file that runs.
+  For each entry of `commands`, `first_is_running` is `false` when another file
+  with that name wins on `PATH`.
+
+```bash
+~/go/bin/nibiru version --long -o json | jq '.binary_paths.commands[0] | {name, first_is_running}'
+```
+
+```json
+{
+  "name": "nibiru",
+  "first_is_running": false
+}
+```
+
+The script `contrib/scripts/build-nibiru.sh` (run by `just install`) prints
+one marker line per name when it finishes. Each line is plain text with
+`key=value` fields, so a script can match it:
+
+- `nibiru-path-shadowed name=<nibiru|nibid> runs=<path> installed=<path>`: the
+  name resolves to another file on `PATH`. Field `runs` is that file and
+  `installed` is the build just written. Call `installed` by full path or put
+  its directory first on `PATH`.
+- `nibiru-path-ok name=<nibiru|nibid> runs=<path> other=<path>`: the installed
+  build wins, and a different file with the same name also sits on `PATH`.
+  Field `other` is that file.
+
+The installer prints no marker when only one copy exists, and it exits `0` in
+every case. The `nibid` symlink that points to the installed file never counts
+as another copy.
+
 ## Local development
 
 Print and run the embedded single-node localnet script:
