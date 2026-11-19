@@ -31,13 +31,6 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 	// Register FeeShares
 	var feeShares []devgastypes.FeeShare
 	for _, contractAddress := range contractAddressList {
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		msg := &devgastypes.MsgRegisterFeeShare{
-			ContractAddress:   contractAddress,
-			DeployerAddress:   sender.String(),
-			WithdrawerAddress: withdrawer.String(),
-		}
-
 		feeShare := devgastypes.FeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
@@ -45,9 +38,7 @@ func (s *KeeperTestSuite) TestQueryFeeShares() {
 		}
 
 		feeShares = append(feeShares, feeShare)
-
-		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
-		s.Require().NoError(err)
+		s.app.DevGasKeeper.SetFeeShare(s.ctx, feeShare)
 	}
 
 	s.Run("from deployer", func() {
@@ -80,25 +71,17 @@ func (s *KeeperTestSuite) TestFeeShare() {
 	_, _, withdrawer := testdata.KeyTestPubAddr()
 
 	contractAddress := s.InstantiateContract(sender.String(), "")
-	goCtx := sdk.WrapSDKContext(s.ctx)
-	msg := &devgastypes.MsgRegisterFeeShare{
-		ContractAddress:   contractAddress,
-		DeployerAddress:   sender.String(),
-		WithdrawerAddress: withdrawer.String(),
-	}
-
 	feeShare := devgastypes.FeeShare{
 		ContractAddress:   contractAddress,
 		DeployerAddress:   sender.String(),
 		WithdrawerAddress: withdrawer.String(),
 	}
-	_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
-	s.Require().NoError(err)
+	s.app.DevGasKeeper.SetFeeShare(s.ctx, feeShare)
 
 	req := &devgastypes.QueryFeeShareRequest{
 		ContractAddress: contractAddress,
 	}
-	goCtx = sdk.WrapSDKContext(s.ctx)
+	goCtx := sdk.WrapSDKContext(s.ctx)
 	resp, err := s.queryClient.FeeShare(goCtx, req)
 	s.Require().NoError(err)
 	s.Require().Equal(resp.Feeshare, feeShare)
@@ -119,17 +102,12 @@ func (s *KeeperTestSuite) TestFeeSharesByWithdrawer() {
 		index++
 	}
 
-	// RegsisFeeShare
 	for _, contractAddress := range contractAddressList {
-		goCtx := sdk.WrapSDKContext(s.ctx)
-		msg := &devgastypes.MsgRegisterFeeShare{
+		s.app.DevGasKeeper.SetFeeShare(s.ctx, devgastypes.FeeShare{
 			ContractAddress:   contractAddress,
 			DeployerAddress:   sender.String(),
 			WithdrawerAddress: withdrawer.String(),
-		}
-
-		_, err := s.devgasMsgServer.RegisterFeeShare(goCtx, msg)
-		s.Require().NoError(err)
+		})
 	}
 
 	s.Run("Total", func() {
