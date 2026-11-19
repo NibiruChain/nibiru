@@ -4,7 +4,7 @@ list:
     #!/usr/bin/env bash
     just -l
 
-# Locally install the `nibid` binary and build if needed.
+# Locally install the `nibiru` binary, plus a `nibid` symlink, and build if needed.
 install:
     go mod tidy
     contrib/scripts/build-nibiru.sh --run
@@ -18,7 +18,7 @@ install-clean:
 install-covtool:
     go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
 
-# Build the `nibid` binary.
+# Build `build/nibiru` and a `build/nibid` symlink.
 build:
     contrib/scripts/build-nibiru.sh --run --just-build
 
@@ -188,7 +188,7 @@ test-localnet:
     just install
     just localnet --no-build &
     sleep 8
-    kill $(pgrep -x nibid) # Stops network running as background process.
+    kill $(pgrep -x 'nibid|nibiru') # Stops network running as background process.
     set +x
     log_success "Spun up localnet"
 
@@ -202,7 +202,7 @@ test-chaosnet:
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop:
-    kill $(pgrep -x nibid) || true
+    kill $(pgrep -x 'nibid|nibiru') || true
 
 passkey-demo:
     #!/usr/bin/env bash
@@ -364,7 +364,7 @@ test-unit:
 localnet-check:
     #!/usr/bin/env bash
     set -euo pipefail
-    if pgrep -x nibid >/dev/null; then
+    if pgrep -x 'nibid|nibiru' >/dev/null; then
       echo "✅ Localnet (nibid) is running. Tests with live chain can run"
     else
       echo "ERROR: not running nibid process. Start localnet before running Go tests." >&2
