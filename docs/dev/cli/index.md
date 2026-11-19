@@ -20,15 +20,20 @@ The native CLI command is `nibid`. Bun and npm installs expose it as `nibiru`,
 which forwards all arguments to the native binary. For those installs, replace
 `nibid` with `nibiru` in the examples below and in the linked guides.
 
-## Command Groups
+## Command List
 
-`nibid --help` lists everyday commands first: `tx`, `query`, `keys`,
-`config`, `status`, `localnet`, and `debug`. Commands that run a node live
-under `nibid node`, for example `nibid node start` and
+`nibid --help` prints copy-pasteable examples, then one list in a fixed order:
+`tx`, `q` (alias `query`), `keys`, `config`, `status`, `debug`, `localnet`,
+`node`, `help`, and `version`. Commands that run a node live under
+`nibid node`, for example `nibid node start` and
 `nibid node genesis validate-genesis`. The previous top-level forms, such as
 `nibid start`, keep working as hidden aliases.
 
-`nibid tx --help` and `nibid query --help` list the everyday modules first
+Help hides the log and trace flags (`--log_format`, `--log_level`,
+`--log_no_color`, `--trace`) by default. They still work when passed. Add
+`--help-verbose` to any command to list them.
+
+`nibid tx --help` and `nibid q --help` list the everyday modules first
 (`bank`, `wasm`, `evm`, `staking`, `gov`, `distribution`, `tokenfactory`,
 `ibc-transfer`). `nibid tx --help` then lists the offline signing commands.
 

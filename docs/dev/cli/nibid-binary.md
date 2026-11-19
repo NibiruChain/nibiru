@@ -196,16 +196,15 @@ Stop any running localnet before running the script. It resets local chain data
 under `$HOME/.nibid` before starting the node. Open another terminal to query the
 local chain or send transactions.
 
-## Command Groups
+## Command List
 
-Run `nibid --help` to list the command groups:
+Run `nibid --help` to list the commands: `tx`, `q` (alias `query`), `keys`,
+`config`, `status`, `debug`, `localnet`, `node`, `help`, and `version`.
+Command `node` holds `start`, `init`, `export`, `genesis`, `prune`,
+`rollback`, `bft` (alias `tendermint`), `testnet`, and `evm-tx-index`.
 
-- Everyday Commands: `tx`, `query`, `keys`, `config`, `status`, `localnet`,
-  and `debug`.
-- Run a Node: `node`, which holds `start`, `init`, `export`, `genesis`,
-  `prune`, `rollback`, `bft` (alias `tendermint`), `testnet`, and
-  `evm-tx-index`.
-- Other Commands: `help` and `version`.
+Add `--help-verbose` to any command to list the log and trace flags that help
+hides by default.
 
 The old top-level node commands, such as `nibid start` and
 `nibid tendermint show-node-id`, keep working and print no warning. They no

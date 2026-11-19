@@ -37,7 +37,9 @@ func TestRootCmdConfig(t *testing.T) {
 		home,
 	})
 
-	require.Contains(t, rootCmd.Aliases, "nibiru")
+	// `nibiru` is the npm launcher of this binary. A cobra alias on the root
+	// command does nothing, so the root has none.
+	require.Empty(t, rootCmd.Aliases)
 
 	require.NoError(t, svrcmd.Execute(rootCmd, "", app.DefaultNodeHome))
 	require.Equal(t, "direct\n", output.String())

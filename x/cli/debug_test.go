@@ -40,7 +40,7 @@ func runRootBoth(
 	if stdin != "" {
 		rootCmd.SetIn(strings.NewReader(stdin))
 	}
-	rootCmd.SetArgs(append(args, "--home", t.TempDir()))
+	rootCmd.SetArgs(append([]string{"--home", t.TempDir()}, args...))
 	err = svrcmd.Execute(rootCmd, "", app.DefaultNodeHome)
 	return out.String(), errBuf.String(), err
 }

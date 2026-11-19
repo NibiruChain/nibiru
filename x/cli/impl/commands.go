@@ -14,9 +14,13 @@ import (
 // QueryCmd returns the root `nibid query` command with all app module queries.
 func QueryCmd() *cobra.Command {
 	rootQueryCmd := &cobra.Command{
-		Use:                        "query",
-		Aliases:                    []string{"q"},
-		Short:                      "Querying subcommands",
+		Use:     "q",
+		Aliases: []string{"query"},
+		Short:   "Query the chain",
+		Example: `  nibid q bank balances <address>
+  nibid q tx <hash>
+  nibid q wasm contract-state smart <contract> '<json>'
+  nibid q account <address>`,
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -40,8 +44,12 @@ func QueryCmd() *cobra.Command {
 // TxCmd returns the root `nibid tx` command with all app module transactions.
 func TxCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                        "tx",
-		Short:                      "Transactions subcommands",
+		Use:   "tx",
+		Short: "Send transactions",
+		Example: `  nibid tx bank send <from-key> <to-address> 1000000unibi
+  nibid tx wasm execute <contract> '<json>' --from <key>
+  nibid tx sign unsigned.json --from <key>
+  nibid tx broadcast signed.json`,
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,

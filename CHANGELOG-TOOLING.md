@@ -19,12 +19,23 @@ patches from `release/v2.23`, independently of coordinated chain releases.
 
 ### CLI
 
-- Group `nibid --help` into Everyday Commands (`tx`, `query`, `keys`,
-  `config`, `status`, `localnet`, `debug`), Run a Node (`node`), and Other
-  Commands. Group the subcommands of `nibid tx` and `nibid query` into
-  everyday modules, offline signing (`tx` only), and the rest. No command
-  moves. The root description now reads "Nibiru CLI: send transactions, query
-  the chain, and run a node."
+- Rewrite the `nibid --help` output. It lists examples, then one `Commands`
+  section in a fixed order (`tx`, `q`, `keys`, `config`, `status`, `debug`,
+  `localnet`, `node`, `help`, `version`), then the flags. The generic usage
+  block and the `Aliases: nibid, nibiru` line are gone, and the root command
+  has no alias (the `nibiru` command is the npm launcher). Subcommand help
+  keeps its usage lines. Group the subcommands of `nibid tx` and `nibid q`
+  into everyday modules, offline signing (`tx` only), and the rest. No command
+  moves. The root description is "Nibiru CLI: send transactions, query the
+  chain, and run a node."
+- Make `q` the listed name of the query command, with `query` as its alias.
+  Both spellings work everywhere, so `nibid query bank balances` is
+  unchanged.
+- Hide the flags `--log_format`, `--log_level`, `--log_no_color`, and
+  `--trace` from help by default, so they stop repeating under every
+  subcommand. Add flag `--help-verbose` on every command to list them. The
+  flags parse exactly as before, so service files and cosmovisor setups that
+  pass `--log_level` need no change. Flags `-h` and `--home` stay visible.
 - Add parent command `nibid node` with `start`, `init`, `export`, `genesis`,
   `prune`, `rollback`, `bft`, `testnet`, and `evm-tx-index`. Every
   previous top-level form, such as `nibid start` and

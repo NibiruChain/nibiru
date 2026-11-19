@@ -126,8 +126,7 @@ func TestNodeHelp(t *testing.T) {
 	require.NoError(t, rootCmd.Execute())
 
 	help := out.String()
-	require.Contains(t, help, "Everyday Commands:")
-	require.Contains(t, help, "Run a Node:")
+	require.Contains(t, help, "Commands:")
 	lines := map[string]bool{}
 	for _, line := range strings.Split(help, "\n") {
 		fields := strings.Fields(line)
@@ -148,7 +147,7 @@ func TestNodeHelp(t *testing.T) {
 		require.False(t, lines[name], "%s must not be listed:\n%s", name, help)
 	}
 	// Visible at top level, unchanged.
-	for _, name := range []string{"version", "status", "config", "keys", "localnet", "tx", "query"} {
+	for _, name := range []string{"version", "status", "config", "keys", "localnet", "tx", "q"} {
 		require.True(t, lines[name], "%s must be listed:\n%s", name, help)
 	}
 }

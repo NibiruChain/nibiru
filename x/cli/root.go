@@ -7,6 +7,7 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
@@ -30,6 +31,7 @@ import (
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
 	"github.com/NibiruChain/nibiru/v2/x/cli/debugcmd"
 	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
+	nutilflags "github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
@@ -61,10 +63,13 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:     "nibid",
-		Short:   "Nibiru CLI: send transactions, query the chain, and run a node.",
-		Aliases: []string{"nibiru"},
+		Use:   "nibid",
+		Short: "Nibiru CLI: send transactions, query the chain, and run a node.",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// --help-verbose prints help for any command instead of running it.
+			if show, _ := cmd.Flags().GetBool(nutilflags.FlagHelpVerbose); show {
+				return pflag.ErrHelp
+			}
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
@@ -99,6 +104,8 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+	nutilflags.AddHelpVerboseToRoot(rootCmd)
+	setRootUsage(rootCmd)
 
 	return rootCmd, encodingConfig
 }
@@ -136,7 +143,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		return newNodeCommands(encodingConfig)
 	})
 
-	assignCommandGroups(rootCmd)
+	setRootRowShorts(rootCmd)
 
 	// TODO add rosettaj
 	// add rosetta
@@ -225,45 +232,4 @@ func (a appCreator) appExport(
 	}
 
 	return nibiruApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
-}
-
-// Help group IDs for the root command.
-const (
-	groupEveryday = "everyday"
-	groupNode     = "node"
-	groupOther    = "other"
-)
-
-// everydayCommands are the root commands people use daily, in help order.
-var everydayCommands = []string{
-	"tx", "query", "keys", "config", "status", "localnet", "debug",
-}
-
-// assignCommandGroups organizes the root help into "Everyday", "Run a Node",
-// and "Other" sections. It only sets help metadata; command behavior is
-// unchanged.
-func assignCommandGroups(rootCmd *cobra.Command) {
-	rootCmd.AddGroup(
-		&cobra.Group{ID: groupEveryday, Title: "Everyday Commands:"},
-		&cobra.Group{ID: groupNode, Title: "Run a Node:"},
-		&cobra.Group{ID: groupOther, Title: "Other Commands:"},
-	)
-	rootCmd.SetHelpCommandGroupID(groupOther)
-	rootCmd.SetCompletionCommandGroupID(groupOther)
-
-	groupOf := map[string]string{}
-	for _, name := range everydayCommands {
-		groupOf[name] = groupEveryday
-	}
-	groupOf[nodeCmdName] = groupNode
-	for _, c := range rootCmd.Commands() {
-		if c.Hidden {
-			continue
-		}
-		if id, ok := groupOf[c.Name()]; ok {
-			c.GroupID = id
-		} else {
-			c.GroupID = groupOther
-		}
-	}
 }
