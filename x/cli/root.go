@@ -38,6 +38,12 @@ import (
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
+	return NewRootCmdNamed(InvokedName(os.Args[0]))
+}
+
+// NewRootCmdNamed is NewRootCmd with an explicit command name, which help and
+// usage text print. Use InvokedName to derive it from the process name.
+func NewRootCmdNamed(name string) (*cobra.Command, app.EncodingConfig) {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	tmpAppDir, err := os.MkdirTemp("", "nibid-*")
 	if err != nil {
@@ -63,7 +69,7 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:   "nibid",
+		Use:   name,
 		Short: "Nibiru CLI: send transactions, query the chain, and run a node.",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// --help-verbose prints help for any command instead of running it.

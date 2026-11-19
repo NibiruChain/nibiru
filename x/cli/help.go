@@ -2,14 +2,30 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-// RootHelpFooter is the last line of the root help.
-const RootHelpFooter = `Run "nibid <command> --help" for details, and add --help-verbose to see every flag.`
+// InvokedName returns the command name that help prints, from the process's
+// argv[0]. Only the two names of the binary are honored; anything else (a
+// renamed copy, a Go test binary) prints nibiru.
+func InvokedName(arg0 string) string {
+	switch name := strings.TrimSuffix(filepath.Base(arg0), ".exe"); name {
+	case "nibid", "nibiru":
+		return name
+	}
+	return "nibiru"
+}
+
+// RootHelpFooter is the last line of the root help for the given command name.
+func RootHelpFooter(name string) string {
+	return fmt.Sprintf(
+		`Run "%s <command> --help" for details, and add --help-verbose to see every flag.`,
+		name)
+}
 
 // renderRootUsage builds the usage text of the root command: the command
 // list, the flags, and a closing hint. It replaces the generic
@@ -36,7 +52,7 @@ func renderRootUsage(root *cobra.Command) string {
 
 	fmt.Fprintf(&b, "\nFlags:\n%s\n",
 		strings.TrimRight(root.LocalFlags().FlagUsages(), " \n"))
-	fmt.Fprintf(&b, "\n%s\n", RootHelpFooter)
+	fmt.Fprintf(&b, "\n%s\n", RootHelpFooter(root.Name()))
 	return b.String()
 }
 

@@ -1,12 +1,14 @@
 package main_test
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/NibiruChain/nibiru/v2/app"
 	nibid "github.com/NibiruChain/nibiru/v2/x/cli"
 )
 
@@ -20,7 +22,7 @@ func TestRootHelpShape(t *testing.T) {
 
 	require.NotContains(t, out, "Aliases:")
 	require.NotContains(t, out, "Usage:\n  nibid [command]")
-	require.Contains(t, out, nibid.RootHelpFooter)
+	require.Contains(t, out, nibid.RootHelpFooter("nibiru"))
 
 	// Only these section headings appear.
 	headings := regexp.MustCompile(`(?m)^[A-Z][A-Za-z ]*:$`).FindAllString(out, -1)
@@ -98,4 +100,50 @@ func TestHiddenGlobalFlagsStillParse(t *testing.T) {
 		"--log_level", "debug", "--log_format", "json", "--log_no_color",
 		"--trace")
 	require.NoError(t, err, out)
+}
+
+func TestInvokedName(t *testing.T) {
+	for arg0, want := range map[string]string{
+		"nibid":                 "nibid",
+		"/home/u/go/bin/nibid":  "nibid",
+		"nibiru":                "nibiru",
+		"/usr/local/bin/nibiru": "nibiru",
+		"./build/nibiru":        "nibiru",
+		"nibiru.exe":            "nibiru",
+		"main.test":             "nibiru",
+		"my-copy":               "nibiru",
+		"":                      "nibiru",
+	} {
+		require.Equal(t, want, nibid.InvokedName(arg0), arg0)
+	}
+}
+
+// Help prints the invoked name in the usage line of every command, the flag
+// descriptions, and the closing hint. The default home stays ~/.nibid.
+func TestHelpPrintsInvokedName(t *testing.T) {
+	for _, name := range []string{"nibiru", "nibid"} {
+		t.Run(name, func(t *testing.T) {
+			other := map[string]string{"nibiru": "nibid", "nibid": "nibiru"}[name]
+			rootCmd, _ := nibid.NewRootCmdNamed(name)
+			out := new(bytes.Buffer)
+			rootCmd.SetOut(out)
+			rootCmd.SetArgs([]string{"--help"})
+			require.NoError(t, rootCmd.Execute())
+			help := out.String()
+
+			require.Contains(t, help, "help for "+name)
+			require.Contains(t, help, nibid.RootHelpFooter(name))
+			require.NotContains(t, help, `"`+other+" <command>")
+			// On-disk defaults do not follow the invoked name.
+			require.True(t, strings.HasSuffix(app.DefaultNodeHome, "/.nibid"))
+
+			rootCmd, _ = nibid.NewRootCmdNamed(name)
+			out.Reset()
+			rootCmd.SetOut(out)
+			rootCmd.SetArgs([]string{"keys", "list", "--help"})
+			require.NoError(t, rootCmd.Execute())
+			require.Contains(t, out.String(), name+" keys list")
+			require.NotContains(t, out.String(), other+" keys list")
+		})
+	}
 }

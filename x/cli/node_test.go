@@ -243,9 +243,9 @@ func TestLegacyNodeInvocations(t *testing.T) {
 			require.Equal(t, cmd.Name(), moved.Name(), withNode)
 			// `node` names the consensus group `bft`.
 			want := strings.Replace(
-				cmd.CommandPath()[len("nibid "):], "tendermint", "bft", 1)
+				strings.TrimPrefix(cmd.CommandPath(), rootCmd.Name()+" "), "tendermint", "bft", 1)
 			require.Equal(t, want,
-				strings.TrimPrefix(moved.CommandPath(), "nibid node "), withNode)
+				strings.TrimPrefix(moved.CommandPath(), rootCmd.Name()+" node "), withNode)
 		})
 	}
 }
