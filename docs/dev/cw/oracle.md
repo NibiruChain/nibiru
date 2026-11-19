@@ -2,126 +2,82 @@
 order: 7
 ---
 
-# Querying Oracle Data
+# Querying Prices From CosmWasm
 
-## Introduction
+Native module `x/oracle` is deprecated as of v2.12. Its messages are disabled,
+validators no longer vote on prices, and the upgrade cleared its stored exchange
+rates. A Stargate query to `nibiru.oracle.v1.Query` doesn't return current
+prices.
 
-This guide provides a step-by-step approach to querying exchange rate data from the Nibiru oracle module using both gRPC and Rust-based CosmWasm smart contracts.
+Prices come from the Sai oracle. Wasm contracts read them through the `x-oracle`
+adapter contract, which the EVM oracle precompile also uses. For the Sai oracle
+contract itself and current integration guides, see the
+[Sai developer documentation](https://sai.fun/docs/dev/).
 
----
+## Adapter Address
 
-## Querying Oracle Data via gRPC
+The v2.15 upgrade configured the adapter at the same deterministic address on
+mainnet and testnet:
 
-### 1. Query Exchange Rates
-
-To retrieve the latest exchange rates:
-
-The `nibid` binary has no `query oracle` command. Call method `ExchangeRates`
-of gRPC service `nibiru.oracle.v1.Query` on a node's gRPC endpoint with a
-client such as `grpcurl`.
-
-#### Sample Response
-
-```json
-{
-  "exchange_rates": [
-    { "pair": "uatom:uusd", "exchange_rate": "4.932000000000000000" },
-    { "pair": "ubtc:uusd", "exchange_rate": "96897.000000000000000000" },
-    { "pair": "ueth:uusd", "exchange_rate": "2674.400000000000000000" },
-    { "pair": "uusdc:uusd", "exchange_rate": "1.000100000000000000" },
-    { "pair": "uusdt:uusd", "exchange_rate": "0.999900000000000000" }
-  ]
-}
+```text
+nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r
 ```
 
-### 2. Query Active Pairs
+Query EVM params and check that plugin `x-oracle` points at this address before
+relying on it.
 
-To get the list of active oracle pairs:
+## Adapter Queries
 
-Call method `Actives` of gRPC service `nibiru.oracle.v1.Query` the same way.
+| Query | Returns |
+| --- | --- |
+| `{"legacy_exchange_rate":{"symbol":"ubtc:uusd"}}` | `symbol`, `token_index`, `price_18`, `price_decimal`, `decimals`, `update_time_seconds` |
+| `{"legacy_exchange_rates":{}}` | `rates`, a list of the same objects |
+| `{"get_price":{"index":0}}` | `price`, `last_oracle_address`, `last_update_time` for a Sai token index |
+| `{"config":{}}` | `mode` and `legacy_mappings` |
 
-#### Sample Response
+Supported legacy symbols are `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`,
+`unibi:uusd`, and `uusdc:uusd`. Check `update_time_seconds` before using a
+price.
 
-```json
-{"actives":["uatom:uusd","ubtc:uusd","ueth:uusd","uusdc:uusd","uusdt:uusd"]}
+From the CLI:
+
+```bash
+nibid query wasm contract-state smart \
+  nibi1jc6cvkzj73mz685kfdydhugnx4evhn6mupngvhpmw5sapr98mp2sdshh3r \
+  '{"legacy_exchange_rate":{"symbol":"unibi:uusd"}}'
 ```
 
----
-
-## Querying Oracle Data in Rust (CosmWasm Contracts)
-
-### Smart Contract Query Implementation
-
-The following Rust contract implements a query function to fetch exchange rate data using Nibiru's Stargate query mechanism.
-
-### Query Function
+From a CosmWasm contract:
 
 ```rust
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    use QueryMsg::*;
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Deps, StdResult};
 
-    match msg {
-        GetPrice { pair } => to_json_binary(&query::get_price(deps, pair)?),
-    }
-}
-```
-
-### Query Module
-
-```rust
-mod query {
-    use super::*;
-    use nibiru_std::proto::{nibiru::oracle::QueryExchangeRateRequest, NibiruStargateQuery};
-    use crate::msgs::{GetCountResp, GetPriceResp};
-
-    pub fn get_price(deps: Deps, pair: String) -> StdResult<GetPriceResp> {
-        let query_request = QueryExchangeRateRequest { pair: pair.clone() };
-        let query = query_request.into_stargate_query()?;
-        let response: GetPriceResp = deps.querier.query(&query)?;
-        Ok(response)
-    }
-}
-```
-
-### Query Message Definitions
-
-```rust
-use cosmwasm_schema::{cw_serde, QueryResponses};
-cw_ownable::cw_ownable_query;
-
-#[cw_ownable_query]
 #[cw_serde]
-#[derive(QueryResponses)]
-pub enum QueryMsg {
-    #[returns(GetPriceResp)]
-    GetPrice { pair: String },
+enum AdapterQuery {
+    LegacyExchangeRate { symbol: String },
 }
 
 #[cw_serde]
-pub struct GetPriceResp {
-    pub exchange_rate: String,
+struct LegacyExchangeRateResp {
+    symbol: String,
+    token_index: u16,
+    price_18: String,
+    price_decimal: String,
+    decimals: u8,
+    update_time_seconds: Option<u64>,
+}
+
+pub fn price(deps: Deps, adapter: &str, symbol: &str) -> StdResult<LegacyExchangeRateResp> {
+    deps.querier.query_wasm_smart(
+        adapter,
+        &AdapterQuery::LegacyExchangeRate { symbol: symbol.to_string() },
+    )
 }
 ```
-
----
-
-## Understanding the `nibiru_std` Cargo Package
-
-The `nibiru_std` crate is a utility library for interacting with the Nibiru blockchain in CosmWasm smart contracts. It provides essential types and helper functions to facilitate queries and transactions. In the context of querying oracle data, we use:
-
-- **`nibiru_std::proto`**: Contains protocol buffer definitions for interacting with Nibiru modules.
-- **`nibiru::oracle::QueryExchangeRateRequest`**: Represents a request to query exchange rates from the oracle module.
-- **`NibiruStargateQuery`**: A trait used for converting messages into Stargate-compatible queries, allowing CosmWasm contracts to interact with the Nibiru chain’s modules.
-
-By leveraging these utilities, smart contracts can efficiently fetch real-time exchange rate data from the blockchain without implementing complex serialization logic.
-
----
 
 ## Related Documentation
 
-For further exploration of Nibiru smart contracts and integrations, refer to:
-
 - [Nibiru Wasm Integration Guide](./cw-manage.md)
-- [Nibiru CLI](../cli/index.md)
-
-These resources provide more in-depth explanations and examples on interacting with Nibiru's blockchain using both CLI and smart contracts.
+- [Oracle Precompile (EVM)](../../evm/precompiles/oracle.md)
+- [Sai developer documentation](https://sai.fun/docs/dev/)

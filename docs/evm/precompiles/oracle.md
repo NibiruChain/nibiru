@@ -3,8 +3,8 @@ order: 5
 footer:
   newsletter: false
 description: >-
-  In the Nibiru codebase, IOracle.sol
-  precompile provides the contract interface used to interact with Nibiru's Oracle Mechanism.
+  The IOracle precompile at address 0x0801 returns Sai oracle prices to EVM
+  contracts that call the legacy Chainlink-like interface.
 ---
 
 # Understanding the Oracle Precompile
@@ -19,6 +19,21 @@ visit the ["Nibiru Oracle (EVM)" page in the developer docs](../../dev/evm/oracl
 how to **use the oracles** with TypeScript or Solidity.
 :::
 
+## Where the Prices Come From
+
+The precompile is read-only. It does not read native `x/oracle` module state,
+which is deprecated and disabled. Each call queries the Wasm adapter configured
+under plugin name `x-oracle` in the EVM params field `wasm_plugins`. The adapter
+reads the Sai oracle contract.
+
+```text
+EVM call to 0x0801 -> EVM params plugin "x-oracle" -> x-oracle Wasm adapter -> Sai oracle contract
+```
+
+The precompile supports these pairs: `ubtc:uusd`, `ueth:uusd`, `uatom:uusd`,
+`unibi:uusd`, and `uusdc:uusd`. Other pairs, including `uusdt:uusd`, return an
+error. Prices have 18 decimals.
+
 ## Methods of the Oracle Precompile
 
 The precompile is accessible at a fixed address, and it provides two
@@ -32,7 +47,7 @@ IOracle constant NIBIRU_ORACLE = IOracle(ORACLE_PRECOMPILE_ADDRESS);
 
 ### 1. `NIBIRU_ORACLE.queryExchangeRate`
 
-This function returns the latest exchange rate for a given asset pair.
+This function returns the latest Sai oracle price for a given asset pair.
 
 #### Parameters
 
@@ -40,9 +55,9 @@ This function returns the latest exchange rate for a given asset pair.
 
 #### Returns
 
-- `price (uint256)`: The exchange rate for the given pair.
-- `blockTimeMs (uint64)`: The timestamp (in milliseconds) when the price was last updated.
-- `blockHeight (uint64)`: The block height when the price was last updated.
+- `price (uint256)`: The price for the given pair, with 18 decimals.
+- `blockTimeMs (uint64)`: The time in milliseconds when the Sai oracle last updated the price.
+- `blockHeight (uint64)`: The block height of the query, not of the price update.
 
 #### Example Usage
 
@@ -56,7 +71,7 @@ function getPrice(string memory pair) public view returns (uint256 price) {
 
 ### 2. `NIBIRU_ORACLE.chainLinkLatestRoundData`
 
-Fetches the latest price data from ChainLink for a given asset pair.
+Returns the latest price for a given asset pair in the Chainlink `latestRoundData` shape.
 
 #### Parameters
 
@@ -64,11 +79,11 @@ Fetches the latest price data from ChainLink for a given asset pair.
 
 #### Returns
 
-- `roundId (uint80)`: The ID of the price round.
-- `answer (int256)`: The latest price of the asset pair.
-- `startedAt (uint256)`: Timestamp when the round started.
-- `updatedAt (uint256)`: Timestamp when the price was last updated.
-- `answeredInRound (uint80)`: The round in which the answer was computed.
+- `roundId (uint80)`: The block height of the query.
+- `answer (int256)`: The latest price of the asset pair, with 18 decimals.
+- `startedAt (uint256)`: The Sai oracle update time in seconds.
+- `updatedAt (uint256)`: The same Sai oracle update time in seconds. Check it for staleness.
+- `answeredInRound (uint80)`: A constant placeholder. Don't rely on it.
 
 #### Example Usage
 
@@ -77,53 +92,6 @@ function getChainLinkPrice(string memory pair) public view returns (int256 price
     (,price,,,) = NIBIRU_ORACLE.chainLinkLatestRoundData(pair);
 }
 ```
-
-## ChainLink Interface
-
-The Oracle Precompile integrates with ChainLink's AggregatorV3Interface, allowing access to decentralized price feeds.
-
-```solidity
-interface ChainLinkAggregatorV3Interface {
-    function decimals() external view returns (uint8);
-    function description() external view returns (string memory);
-    function version() external view returns (uint256);
-    function getRoundData(uint80 _roundId) external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
-    function latestRoundData() external view returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
-}
-```
-
-## Fetching Active Oracle Pairs
-
-The Nibiru Oracle supports multiple asset pairs, which can be queried dynamically. The currently active markets are available from method `Actives` of gRPC service `nibiru.oracle.v1.Query`. The `nibid` binary has no `query oracle` command.
-
-### Example Response
-
-```json
-{
-  "actives": [
-    "uatom:uusd",
-    "ubtc:uusd",
-    "ueth:uusd",
-    "unibi:uusd",
-    "uusdc:uusd",
-    "uusdt:uusd"
-  ]
-}
-```
-
-Any of these asset pairs can be used as input to the `queryExchangeRate` function of the Oracle Precompile. If the pair is valid, the function returns the exchange rate; otherwise, it returns an error.
 
 ## Full Contract Example
 
