@@ -26,13 +26,16 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   moves. The root description now reads "Nibiru CLI: send transactions, query
   the chain, and run a node."
 - Add parent command `nibid node` with `start`, `init`, `export`, `genesis`,
-  `prune`, `rollback`, `tendermint`, `testnet`, and `evm-tx-index`. Every
+  `prune`, `rollback`, `bft`, `testnet`, and `evm-tx-index`. Every
   previous top-level form, such as `nibid start` and
   `nibid tendermint show-node-id`, keeps its arguments and behavior as a
   hidden alias and prints no deprecation warning. Hidden commands drop out of
   `nibid --help` only.
-- Add alias `comet` for `tendermint`, both at `nibid node comet` and at the
-  hidden top-level `nibid comet`. `nibid comet` failed before this change.
+- Name the consensus command group `nibid node bft` (Nibiru BFT). `tendermint`
+  is its alias under `node`. The hidden top-level command keeps the name
+  `tendermint`, with `bft` as an alias, so `nibid tendermint show-node-id` and
+  `nibid --home H tendermint show-node-id` work unchanged. The `tendermint`
+  description is "Nibiru BFT consensus commands".
 - Replace the SDK `debug` registration with `nibid debug <input>`, which
   detects the input kind and prints JSON with a `detected` field. Add
   subcommands `debug tx`, `debug msg`, `debug abci-query` (JSON-RPC bodies and

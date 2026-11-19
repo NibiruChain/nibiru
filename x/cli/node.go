@@ -24,16 +24,30 @@ func addNodeCommands(rootCmd *cobra.Command, newCmds func() []*cobra.Command) {
 		Use:   nodeCmdName,
 		Short: "Start, initialize, and maintain a node",
 		Long: `Commands for running a Nibiru node: start, init, export, genesis,
-prune, rollback, tendermint (alias: comet), testnet, and evm-tx-index.
+prune, rollback, bft (alias: tendermint), testnet, and evm-tx-index.
 
 The old top-level forms, such as "nibid start", still work.`,
 		RunE: client.ValidateCmd,
 	}
 	nodeCmd.AddCommand(newCmds()...)
+	renameConsensusCmd(nodeCmd)
 
 	for _, legacy := range newCmds() {
 		legacy.Hidden = true
 		rootCmd.AddCommand(legacy)
 	}
 	rootCmd.AddCommand(nodeCmd)
+}
+
+// renameConsensusCmd makes `bft` the canonical name of the consensus command
+// group under `nibid node`, with `tendermint` as its alias. The hidden
+// top-level copy keeps the name `tendermint` so legacy invocations such as
+// `nibid --home H tendermint show-node-id` resolve unchanged.
+func renameConsensusCmd(nodeCmd *cobra.Command) {
+	for _, c := range nodeCmd.Commands() {
+		if c.Name() == "tendermint" {
+			c.Use = "bft"
+			c.Aliases = []string{"tendermint"}
+		}
+	}
 }

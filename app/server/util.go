@@ -30,7 +30,7 @@ func AddCommands(
 }
 
 // NodeCommands builds a fresh set of the commands for operating a node:
-// start, tendermint (alias comet), export, and rollback. Each call returns new
+// start, tendermint (alias bft), export, and rollback. Each call returns new
 // command objects, so the set can be attached to more than one parent.
 func NodeCommands(
 	opts StartOptions,
@@ -39,8 +39,8 @@ func NodeCommands(
 ) []*cobra.Command {
 	tendermintCmd := &cobra.Command{
 		Use:     "tendermint",
-		Aliases: []string{"comet"},
-		Short:   "CometBFT consensus subcommands",
+		Aliases: []string{"bft"},
+		Short:   "Nibiru BFT consensus commands",
 	}
 
 	tendermintCmd.AddCommand(

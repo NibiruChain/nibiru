@@ -203,7 +203,7 @@ Run `nibid --help` to list the command groups:
 - Everyday Commands: `tx`, `query`, `keys`, `config`, `status`, `localnet`,
   and `debug`.
 - Run a Node: `node`, which holds `start`, `init`, `export`, `genesis`,
-  `prune`, `rollback`, `tendermint` (alias `comet`), `testnet`, and
+  `prune`, `rollback`, `bft` (alias `tendermint`), `testnet`, and
   `evm-tx-index`.
 - Other Commands: `help` and `version`.
 

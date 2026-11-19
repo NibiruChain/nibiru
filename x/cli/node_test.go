@@ -43,9 +43,16 @@ func subcommandNames(c *cobra.Command) []string {
 func walkPair(t *testing.T, path string, legacy, moved *cobra.Command) {
 	t.Helper()
 	require.NotSame(t, legacy, moved, path)
-	require.Equal(t, legacy.Use, moved.Use, path)
+	if legacy.Use == "tendermint" && legacy.Parent().Parent() == nil {
+		// The consensus group is `bft` under `node`, with alias `tendermint`.
+		require.Equal(t, "bft", moved.Use, path)
+		require.Equal(t, []string{"tendermint"}, moved.Aliases)
+		require.Equal(t, []string{"bft"}, legacy.Aliases)
+	} else {
+		require.Equal(t, legacy.Use, moved.Use, path)
+		require.Equal(t, legacy.Aliases, moved.Aliases, path)
+	}
 	require.Equal(t, legacy.Short, moved.Short, path)
-	require.Equal(t, legacy.Aliases, moved.Aliases, path)
 	require.Equal(t, flagNames(legacy), flagNames(moved), path)
 	require.Equal(t, subcommandNames(legacy), subcommandNames(moved), path)
 	for _, sub := range legacy.Commands() {
@@ -83,15 +90,31 @@ func TestNodeCommandTree(t *testing.T) {
 		})
 	}
 
-	// `comet` aliases `tendermint` in both places.
+	// `bft` and `tendermint` reach the same subcommands under `node`.
+	bft, _, err := rootCmd.Find([]string{"node", "bft"})
+	require.NoError(t, err)
+	require.Equal(t, "bft", bft.Name())
 	for _, path := range [][]string{
-		{"comet", "show-node-id"},
-		{"node", "comet", "show-node-id"},
+		{"node", "bft", "show-node-id"},
 		{"node", "tendermint", "show-node-id"},
+		{"tendermint", "show-node-id"},
+		{"bft", "show-node-id"},
 	} {
 		c, _, err := rootCmd.Find(path)
 		require.NoError(t, err, path)
-		require.Equal(t, "show-node-id", c.Name())
+		require.Equal(t, "show-node-id", c.Name(), path)
+	}
+	tm, _, err := rootCmd.Find([]string{"node", "tendermint"})
+	require.NoError(t, err)
+	require.Same(t, bft, tm)
+
+	// `comet` is not a name for the consensus commands.
+	for _, path := range [][]string{{"comet"}, {"node", "comet"}} {
+		c, _, err := rootCmd.Find(path)
+		if err == nil {
+			require.NotEqual(t, "show-node-id", c.Name())
+			require.True(t, c == rootCmd || c == nodeCmd, path)
+		}
 	}
 }
 
@@ -113,6 +136,14 @@ func TestNodeHelp(t *testing.T) {
 		}
 	}
 	require.True(t, lines["node"], help)
+
+	nodeOut := new(bytes.Buffer)
+	nodeRoot, _ := nibid.NewRootCmd()
+	nodeRoot.SetOut(nodeOut)
+	nodeRoot.SetArgs([]string{"node", "--help"})
+	require.NoError(t, nodeRoot.Execute())
+	require.Regexp(t, `(?m)^  bft\s+Nibiru BFT consensus commands`, nodeOut.String())
+	require.NotRegexp(t, `(?m)^  tendermint\s`, nodeOut.String())
 	for _, name := range nodeCommandNames {
 		require.False(t, lines[name], "%s must not be listed:\n%s", name, help)
 	}
@@ -211,7 +242,10 @@ func TestLegacyNodeInvocations(t *testing.T) {
 			}
 			moved := parseLegacy(t, rootCmd, withNode)
 			require.Equal(t, cmd.Name(), moved.Name(), withNode)
-			require.Equal(t, cmd.CommandPath()[len("nibid "):],
+			// `node` names the consensus group `bft`.
+			want := strings.Replace(
+				cmd.CommandPath()[len("nibid "):], "tendermint", "bft", 1)
+			require.Equal(t, want,
 				strings.TrimPrefix(moved.CommandPath(), "nibid node "), withNode)
 		})
 	}
