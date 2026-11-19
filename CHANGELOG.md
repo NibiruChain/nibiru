@@ -56,9 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   handler no longer pays a fee share, so the full fee stays in the fee
   collector, and it no longer reads `x/devgas` state, which lowers the gas
   used by every fee-paying non-EVM transaction. The message types, store, genesis, and
-  queries remain. Keeper method `ClearFeeShareState` deletes the registered
-  fee shares and sets module param `enable_fee_share` to false, and no
-  upgrade handler calls it yet. Activate only in a coordinated chain upgrade.
+  queries remain. The `v2.24.0` upgrade handler deletes the registered fee
+  shares and sets module param `enable_fee_share` to false. It keeps the
+  `devgas` store key. Activate only in a coordinated chain upgrade.
   Keep this out of the `release/v2.23` compatible patch line.
   [PR #2930](https://github.com/SaiDotFun/nibiru/pull/2930)
 

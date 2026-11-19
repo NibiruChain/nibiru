@@ -9,8 +9,7 @@ fee, so there is nothing to share.
   `ErrDevgasDeprecated`.
 - The ante handler pays no fee share. Fees stay in the fee collector.
 - The gRPC queries and `nibid query devgas` still read the module's store.
-- Keeper method `ClearFeeShareState` deletes the registered fee shares and
-  sets module param `enable_fee_share` to false. A chain upgrade handler has
-  to call it.
+- The `v2.24.0` upgrade handler deletes the registered fee shares and sets
+  module param `enable_fee_share` to false. The store key stays.
 
 The protobuf types stay registered so that historical transactions decode.
