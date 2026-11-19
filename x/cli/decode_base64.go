@@ -157,6 +157,12 @@ func DecodeBase64StargateMsgs(
 	return newSgMsgs, nil
 }
 
+// DecodeBase64Any adapts DecodeBase64StargateMsgs to the decoder `nibid debug`
+// shares with the legacy `base64-decode` command.
+func DecodeBase64Any(jsonBz []byte, clientCtx client.Context) (any, error) {
+	return DecodeBase64StargateMsgs(jsonBz, clientCtx)
+}
+
 // DecodeBase64Cmd creates a Cobra command used to decode base64-encoded protobuf
 // messages from a JSON input. This function enables users to input arbitrary
 // JSON strings and parse the contents of base-64 encoded protobuf.Any messages.
@@ -165,7 +171,12 @@ func DecodeBase64Cmd(defaultNodeHome string) *cobra.Command {
 		Use:   "base64-decode",
 		Short: "Decode a base64-encoded protobuf message",
 		Long: `Decode a base64-encoded protobuf message from JSON input.
-The input should be a JSON object with 'type_url' and 'value' fields.`,
+The input should be a JSON object with 'type_url' and 'value' fields.
+
+Hidden legacy name kept for scripts (ud cw3 calls it); prefer
+'nibid debug msg' or 'nibid debug <input>'.`,
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 

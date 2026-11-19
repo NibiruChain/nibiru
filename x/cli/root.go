@@ -12,7 +12,6 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/debug"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/pruning"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/rpc"
@@ -29,6 +28,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/cli/debugcmd"
 	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
@@ -121,7 +121,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 		DecodeBase64Cmd(app.DefaultNodeHome),
 		LocalnetCmd(),
 		cmtcli.NewCompletionCmd(rootCmd, true),
-		debug.Cmd(),
+		debugcmd.Cmd(DecodeBase64Any),
 		nibidcmd.ConfigCmd(),
 		version.NewVersionCommand(),
 

@@ -85,7 +85,8 @@ func TestNodeCommandTree(t *testing.T) {
 
 	// `comet` aliases `tendermint` in both places.
 	for _, path := range [][]string{
-		{"comet", "show-node-id"}, {"node", "comet", "show-node-id"},
+		{"comet", "show-node-id"},
+		{"node", "comet", "show-node-id"},
 		{"node", "tendermint", "show-node-id"},
 	} {
 		c, _, err := rootCmd.Find(path)
@@ -219,8 +220,12 @@ func TestLegacyNodeInvocations(t *testing.T) {
 func TestVisibleTopLevelUnchanged(t *testing.T) {
 	rootCmd, _ := nibid.NewRootCmd()
 	for _, args := range [][]string{
-		{"version"}, {"version", "--long", "--output", "json"}, {"status"},
-		{"config", "query-mode"}, {"keys", "list"}, {"localnet", "--script", "x"},
+		{"version"},
+		{"version", "--long", "--output", "json"},
+		{"status"},
+		{"config", "query-mode"},
+		{"keys", "list"},
+		{"localnet", "--script", "x"},
 	} {
 		cmd, _, err := rootCmd.Find(args)
 		require.NoError(t, err, args)
