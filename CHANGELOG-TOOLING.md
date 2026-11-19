@@ -19,7 +19,7 @@ patches from `release/v2.23`, independently of coordinated chain releases.
 
 ### CLI
 
-- Rewrite the `nibid --help` output. It lists examples, then one `Commands`
+- Rewrite the `nibid --help` output. It lists one `Commands`
   section in a fixed order (`tx`, `q`, `keys`, `config`, `status`, `debug`,
   `localnet`, `node`, `help`, `version`), then the flags. The generic usage
   block and the `Aliases: nibid, nibiru` line are gone, and the root command

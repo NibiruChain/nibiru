@@ -8,50 +8,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RootExample is one copy-pasteable line in the root help.
-type RootExample struct {
-	Label   string
-	Command string
-}
-
-// RootExamples are the commands shown in `nibid --help`. A test resolves each
-// command path against the real command tree, so a rename breaks the build
-// instead of the help text.
-var RootExamples = []RootExample{
-	{"Check a balance", "nibid q bank balances <address>"},
-	{"Send tokens", "nibid tx bank send <from-key> <to-address> 1000000unibi"},
-	{"Look up a transaction", "nibid q tx <hash>"},
-	{"Call a contract", "nibid tx wasm execute <contract> '<json>' --from <key>"},
-	{"Query a contract", "nibid q wasm contract-state smart <contract> '<json>'"},
-	{"Decode anything", "nibid debug <tx, payload, address, or pubkey>"},
-	{"List keys", "nibid keys list"},
-	{"Choose a network", "nibid config node <rpc-url>"},
-	{"Start a local chain", "nibid localnet --script | bash"},
-}
-
+// RootHelpFooter is the last line of the root help.
 const RootHelpFooter = `Run "nibid <command> --help" for details, and add --help-verbose to see every flag.`
 
-// renderRootUsage builds the usage text of the root command: examples, the
-// command groups, the flags, and a closing hint. It replaces the generic
+// renderRootUsage builds the usage text of the root command: the command
+// list, the flags, and a closing hint. It replaces the generic
 // "Usage: nibid [command]" block. Subcommands keep cobra's usage template.
 func renderRootUsage(root *cobra.Command) string {
 	var b strings.Builder
-
-	b.WriteString("Examples:\n")
-	labelWidth := 0
-	for _, ex := range RootExamples {
-		labelWidth = max(labelWidth, len(ex.Label))
-	}
-	for _, ex := range RootExamples {
-		fmt.Fprintf(&b, "  %-*s  %s\n", labelWidth, ex.Label, ex.Command)
-	}
 
 	rows := rootRows(root)
 	namePad := 0
 	for _, c := range rows {
 		namePad = max(namePad, len(c.Name()))
 	}
-	b.WriteString("\nCommands:\n")
+	b.WriteString("Commands:\n")
 	for _, c := range rows {
 		desc := c.Short
 		if short, ok := rootRowShorts[c.Name()]; ok {

@@ -22,7 +22,7 @@ which forwards all arguments to the native binary. For those installs, replace
 
 ## Command List
 
-`nibid --help` prints copy-pasteable examples, then one list in a fixed order:
+`nibid --help` prints one command list in a fixed order:
 `tx`, `q` (alias `query`), `keys`, `config`, `status`, `debug`, `localnet`,
 `node`, `help`, and `version`. Commands that run a node live under
 `nibid node`, for example `nibid node start` and

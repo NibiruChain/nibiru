@@ -27,10 +27,6 @@ func addNodeCommands(rootCmd *cobra.Command, newCmds func() []*cobra.Command) {
 prune, rollback, bft (alias: tendermint), testnet, and evm-tx-index.
 
 The old top-level forms, such as "nibid start", still work.`,
-		Example: `  nibid node init <moniker> --chain-id <chain-id>
-  nibid node start
-  nibid node bft show-node-id
-  nibid node genesis validate-genesis`,
 		RunE: client.ValidateCmd,
 	}
 	nodeCmd.AddCommand(newCmds()...)
