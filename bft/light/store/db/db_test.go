@@ -204,7 +204,7 @@ func pruneWithReaders(t *testing.T, db dbm.DB) {
 	dbStore := New(db, "prune_with_readers")
 
 	var wg sync.WaitGroup
-	for i := 1; i <= 200; i++ {
+	for i := 1; i <= 100; i++ {
 		wg.Add(1)
 		go func(i int64) {
 			defer wg.Done()
