@@ -12,26 +12,29 @@ description: >-
 
 #### Transactions
 
-| `nibid tx bank` | Description |
+| `nibiru tx bank` | Description |
 | :--- | :--- |
-| [send](#nibid-tx-bank-send) | Send funds from one account to another.
+| [send](#nibiru-tx-bank-send) | Send funds from one account to another |
+| multi-send | Send funds from one account to two or more accounts |
 
 #### Queries
 
-| `nibid query bank` | Description |
+| `nibiru q bank` | Description |
 | :--- | :--- |
-| [balances](#nibid-query-bank-balances) | Query for account balances by address |
-| [total](#nibid-query-bank-total) | Query the total supply of coins of the chain |
-| [denom-metadata](#nibid-query-denom-metadata) | Query the client metadata for coin denominations | 
+| balance | Query a single account balance by address and denom |
+| [balances](#nibiru-q-bank-balances) | Query for account balances by address |
+| spendable-balances | Query for account spendable balances by address |
+| send-enabled | Query for send enabled entries |
+| [total](#nibiru-q-bank-total) | Query the total supply of coins of the chain |
+| denom-metadata | Query the client metadata for coin denominations |
 
 ---
 
-### nibid query bank balances 
-
+### nibiru q bank balances
 Query the total balance of an account or of a specific denomination.
 
 ```bash
-nibid query bank balances [address] [flags]
+nibiru q bank balances [address] [flags]
 ```
 
 **Args:**
@@ -49,27 +52,26 @@ nibid query bank balances [address] [flags]
 | --count-total |  Count total number of records in all balances to query for |
 | --height  | Use a specific block height to query state at (this can error if the node is pruning state) |
 
-### nibid query bank total
-
+### nibiru q bank total
 Query total supply of coins that are held by accounts in the chain.
 
 ```text
-nibid query bank total [flags]
+nibiru q bank total [flags]
 ```
 
 **Flags:**
 
 | Name, shorthand |  Description |
 | :---            |  :---        |
-| --help, -h | Help for coin-type |
+| --help, -h | Help for total |
 | --denom | The specific balance denomination to query for |
 
-### nibid tx bank send
+### nibiru tx bank send
 
 Sending tokens to another address, this command includes `generate`, `sign` and `broadcast` steps.
 
 ```text
-nibid tx bank send [from_key_or_address] [to_address] [amount] [flags]
+nibiru tx bank send [from_key_or_address] [to_address] [amount] [flags]
 ```
 
 **Flags:**

@@ -29,8 +29,6 @@ import (
 
 // Client and Server should work over tcp or unix sockets
 const (
-	tcpAddr = "tcp://127.0.0.1:47768"
-
 	unixSocket = "/tmp/rpc_test.sock"
 	unixAddr   = "unix://" + unixSocket
 
@@ -38,6 +36,10 @@ const (
 
 	testVal = "acbd"
 )
+
+// tcpAddr is the address of the TCP test server. setup() listens on a free
+// port and sets it before any client uses it.
+var tcpAddr string
 
 var ctx = context.Background()
 
@@ -138,10 +140,11 @@ func setup() {
 	wm.SetLogger(tcpLogger)
 	mux.HandleFunc(websocketEndpoint, wm.WebsocketHandler)
 	config := server.DefaultConfig()
-	listener1, err := server.Listen(tcpAddr, config)
+	listener1, err := server.Listen("tcp://127.0.0.1:0", config)
 	if err != nil {
 		panic(err)
 	}
+	tcpAddr = "tcp://" + listener1.Addr().String()
 	go func() {
 		if err := server.Serve(listener1, mux, tcpLogger, config); err != nil {
 			panic(err)

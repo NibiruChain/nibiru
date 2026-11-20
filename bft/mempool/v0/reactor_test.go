@@ -87,12 +87,36 @@ func TestReactorConcurrency(t *testing.T) {
 
 	const numTxs = 5
 
+	// Concurrent updates can temporarily reject submissions while a previous
+	// recheck is still running. Retry backpressure without dropping transactions
+	// or treating other CheckTx errors as successful submissions.
+	submitTxs := func(mp *CListMempool) types.Txs {
+		t.Helper()
+		txs := make(types.Txs, numTxs)
+		for i := range txs {
+			txs[i] = kvstore.NewRandomTx(20)
+			deadline := time.Now().Add(10 * time.Second)
+			for {
+				err := mp.CheckTx(txs[i], nil, mempool.TxInfo{SenderID: mempool.UnknownPeerID})
+				if err == nil {
+					break
+				}
+				var full mempool.ErrMempoolIsFull
+				if !errors.As(err, &full) || time.Now().After(deadline) {
+					t.Fatalf("CheckTx failed for transaction %d: %v (rechecking=%t recheckFull=%t)", i, err, mp.isRechecking.Load(), mp.recheckFull.Load())
+				}
+				time.Sleep(time.Millisecond)
+			}
+		}
+		return txs
+	}
+
 	for i := 0; i < 1000; i++ {
 		wg.Add(2)
 
 		// 1. submit a bunch of txs
 		// 2. update the whole mempool
-		txs := checkTxs(t, reactors[0].mempool, numTxs, mempool.UnknownPeerID)
+		txs := submitTxs(reactors[0].mempool)
 		go func() {
 			defer wg.Done()
 
@@ -109,7 +133,7 @@ func TestReactorConcurrency(t *testing.T) {
 
 		// 1. submit a bunch of txs
 		// 2. update none
-		_ = checkTxs(t, reactors[1].mempool, numTxs, mempool.UnknownPeerID)
+		_ = submitTxs(reactors[1].mempool)
 		go func() {
 			defer wg.Done()
 
