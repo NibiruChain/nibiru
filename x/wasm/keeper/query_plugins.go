@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	abci "github.com/NibiruChain/nibiru/v2/bft/abci/types"
 
@@ -323,7 +324,8 @@ func RejectStargateQuerier() func(ctx sdk.Context, request *wvm.StargateQuery) (
 	}
 }
 
-// AcceptedStargateQueries define accepted Stargate queries as a map with path as key and response type as value.
+// AcceptedStargateQueries maps each allowed Stargate query path to a pointer
+// that specifies its protobuf response type.
 // For example:
 // acceptList["/cosmos.auth.v1beta1.Query/Account"]= &authtypes.QueryAccountResponse{}
 type AcceptedStargateQueries map[string]codec.ProtoMarshaler
@@ -336,9 +338,9 @@ type AcceptedStargateQueries map[string]codec.ProtoMarshaler
 //
 // This queries can be set via WithQueryPlugins option in the wasm keeper constructor:
 // WithQueryPlugins(&QueryPlugins{Stargate: AcceptListStargateQuerier(acceptList, queryRouter, codec)})
-func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter GRPCQueryRouter, codec codec.Codec) func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error) {
+func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter GRPCQueryRouter, cdc codec.Codec) func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error) {
 	return func(ctx sdk.Context, request *wvm.StargateQuery) ([]byte, error) {
-		protoResponse, accepted := acceptList[request.Path]
+		responsePrototype, accepted := acceptList[request.Path]
 		if !accepted {
 			return nil, wvm.UnsupportedRequest{Kind: fmt.Sprintf("'%s' path is not allowed from the contract", request.Path)}
 		}
@@ -356,7 +358,8 @@ func AcceptListStargateQuerier(acceptList AcceptedStargateQueries, queryRouter G
 			return nil, err
 		}
 
-		return ConvertProtoToJSONMarshal(codec, protoResponse, res.Value)
+		protoResponse := reflect.New(reflect.TypeOf(responsePrototype).Elem()).Interface().(codec.ProtoMarshaler)
+		return ConvertProtoToJSONMarshal(cdc, protoResponse, res.Value)
 	}
 }
 

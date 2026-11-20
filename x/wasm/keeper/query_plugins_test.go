@@ -723,6 +723,41 @@ func TestAcceptListStargateQuerier(t *testing.T) {
 	}
 }
 
+type stargateResponseRecorder struct {
+	codec.Codec
+	responses []codec.ProtoMarshaler
+}
+
+func (c *stargateResponseRecorder) Unmarshal(bz []byte, response codec.ProtoMarshaler) error {
+	c.responses = append(c.responses, response)
+	return c.Codec.Unmarshal(bz, response)
+}
+
+func TestAcceptListStargateQuerierOwnsEachResponse(t *testing.T) {
+	app, ctx := testapp.NewNibiruTestAppAndContext()
+	cdc := &stargateResponseRecorder{Codec: app.AppCodec()}
+	const path = "/cosmos.bank.v1beta1.Query/Params"
+	prototype := &banktypes.QueryParamsResponse{}
+	query := keeper.AcceptListStargateQuerier(
+		keeper.AcceptedStargateQueries{path: prototype}, app.GRPCQueryRouter(), cdc,
+	)
+	params := app.BankKeeper.GetParams(ctx)
+	want := cdc.MustMarshalJSON(&banktypes.QueryParamsResponse{Params: params})
+
+	for range 2 {
+		got, err := query(ctx, &wvm.StargateQuery{Path: path})
+		require.NoError(t, err)
+		require.Equal(t, want, got)
+	}
+
+	require.Len(t, cdc.responses, 2)
+	require.IsType(t, prototype, cdc.responses[0])
+	require.IsType(t, prototype, cdc.responses[1])
+	require.NotSame(t, prototype, cdc.responses[0])
+	require.NotSame(t, prototype, cdc.responses[1])
+	require.NotSame(t, cdc.responses[0], cdc.responses[1])
+}
+
 func TestDistributionQuerier(t *testing.T) {
 	t.Skip("not implemented")
 	ctx := sdk.Context{}
