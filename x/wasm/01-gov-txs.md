@@ -52,12 +52,12 @@ Example to submit a parameter change gov proposal:
 
 - First create a draft proposal using the interactive CLI
 ```sh
-wasmd tx gov draft-proposal
+nibid tx gov draft-proposal
 ```
 
 - Submit the proposal
 ```sh
-wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=testing -b block
+nibid tx gov submit-proposal <proposal-json-file> --from validator --chain-id=testing
 ```
 #### Content examples
 * Disable wasm code uploads
@@ -171,8 +171,8 @@ wasmd tx gov submit-proposal <proposal-json-file> --from validator --chain-id=te
 
 ## CLI
 
-```shell script
-  wasmd tx wasm submit-proposal [command]
+```shell
+nibid tx wasm submit-proposal [command]
 
 Available Commands:
   add-code-upload-params-addresses    Submit an add code upload params addresses proposal to add addresses to code upload config params
@@ -184,12 +184,12 @@ Available Commands:
   pin-codes                           Submit a pin code proposal for pinning a code to cache
   remove-code-upload-params-addresses Submit a remove code upload params addresses proposal to remove addresses from code upload config params
   set-contract-admin                  Submit a new admin for a contract proposal
-  store-instantiate                   Submit and instantiate a wasm contract proposal
+  store-instantiate                   Submit a store and instantiate wasm contract proposal
+  store-migrate                       Submit a store and migrate wasm contract proposal
   sudo-contract                       Submit a sudo wasm contract proposal (to call privileged commands)
   unpin-codes                         Submit a unpin code proposal for unpinning a code to cache
   update-instantiate-config           Submit an update instantiate config proposal.
   wasm-store                          Submit a wasm binary proposal
-...
 ```
 
 

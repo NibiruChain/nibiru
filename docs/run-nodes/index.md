@@ -15,7 +15,6 @@ All of nodes that make up Nibiru run the [same code/binary (Nibiru)](https://git
 | --- | --- |
 | [Run a Full Node (Mainnet)](./full-nodes/full-node-mainnet.md) | Guide to running a Nibiru mainnet full node: hardware requirements, installation options, sync and upgrade workflows, chain initialization, and memory optimization. |
 | [Become a Validator (Mainnet)](./validators/validator-mainnet.md) | Instructions for running a validator node for Nibiru Mainnet. |
-| [Set up a Price Feeder (Mainnet)](./validators/pricefeeder-mainnet.md) | Instructions for validators to set up a Mainnet price feeder. |
 
 
 ## Node Types
@@ -35,7 +34,6 @@ All Nibiru nodes run the same binary, but the role comes from how you configure 
 | Section | Synopsis |
 | --- | --- |
 | [Binary Upgrades](./validators/upgrades.md) | Chain upgrade procedures: how validators swap binaries at upgrade block heights. |
-| [Set up a Price Feeder (Testnet)](./validators/pricefeeder-testnet.md) | Instructions for validators to set up a Testnet price feeder. |
 | [Reset a Validator Node (Testnet)](./validators/node-reset.md) | Instructions for validators to rebuild in the case of a Testnet chain reset. |
 
 ### Reference

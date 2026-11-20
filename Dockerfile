@@ -4,7 +4,11 @@
 # 
 # Example: docker build --target release .  
 # 
-# - build-base    : Build nibid from source using Go
+# - build-base    : Build nibiru (and its nibid symlink) from source using Go
+#
+# The stages that build or fetch the binary name it /root/nibid, the name
+# release archives use. The runtime images install it as /usr/local/bin/nibiru
+# with a nibid symlink beside it.
 # - build-external: Pull precompiled binary from dist/. Used by release workflow
 #   (release.yml) with build-args: src=external to create official binaries for
 #   different hardware (dist/arm64, dist/amd64).
@@ -64,7 +68,8 @@ RUN apk --no-cache add \
   curl \
   jq
 
-COPY --from=build-source /root/nibid /usr/local/bin/nibid
+COPY --from=build-source /root/nibid /usr/local/bin/nibiru
+RUN ln -s nibiru /usr/local/bin/nibid
 COPY ./contrib/scripts/chaosnet.sh ./
 
 ARG MNEMONIC
@@ -81,7 +86,7 @@ RUN chmod +x ./chaosnet.sh && \
     LCD_PORT=${LCD_PORT} \
     ./chaosnet.sh
 
-ENTRYPOINT ["nibid"]
+ENTRYPOINT ["nibiru"]
 CMD ["start"]
 
 # ----- Stage "release": Creates IMAGE
@@ -89,7 +94,8 @@ FROM alpine:latest AS release
 
 WORKDIR /root
 RUN apk --no-cache add ca-certificates
-COPY --from=build-source /root/nibid /usr/local/bin/nibid
+COPY --from=build-source /root/nibid /usr/local/bin/nibiru
+RUN ln -s nibiru /usr/local/bin/nibid
 
-ENTRYPOINT ["nibid"]
+ENTRYPOINT ["nibiru"]
 CMD ["start"]

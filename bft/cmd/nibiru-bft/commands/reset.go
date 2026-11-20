@@ -11,35 +11,45 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/privval"
 )
 
-// ResetAllCmd removes the database of this CometBFT core
-// instance.
-var ResetAllCmd = &cobra.Command{
-	Use:     "unsafe-reset-all",
-	Aliases: []string{"unsafe_reset_all"},
-	Short:   "(unsafe) Remove all the data and WAL, reset this node's validator to genesis state",
-	RunE:    resetAllCmd,
+// NewResetAllCmd builds a command that removes the database of this CometBFT
+// core instance. Each call returns a new command, so it can be attached to
+// more than one parent.
+func NewResetAllCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "unsafe-reset-all",
+		Aliases: []string{"unsafe_reset_all"},
+		Short:   "(unsafe) Remove all the data and WAL, reset this node's validator to genesis state",
+		RunE:    resetAllCmd,
+	}
+	cmd.Flags().BoolVar(&keepAddrBook, "keep-addr-book", false, "keep the address book intact")
+	return cmd
+}
+
+// NewResetStateCmd builds a command that removes the database of the
+// specified CometBFT core instance. Each call returns a new command.
+func NewResetStateCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:     "reset-state",
+		Aliases: []string{"reset_state"},
+		Short:   "Remove all the data and WAL",
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			config, err = ParseConfig(cmd)
+			if err != nil {
+				return err
+			}
+
+			return resetState(config.DBDir(), logger)
+		},
+	}
 }
 
 var keepAddrBook bool
 
+// ResetAllCmd removes the database of this CometBFT core instance.
+var ResetAllCmd = NewResetAllCmd()
+
 // ResetStateCmd removes the database of the specified CometBFT core instance.
-var ResetStateCmd = &cobra.Command{
-	Use:     "reset-state",
-	Aliases: []string{"reset_state"},
-	Short:   "Remove all the data and WAL",
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		config, err = ParseConfig(cmd)
-		if err != nil {
-			return err
-		}
-
-		return resetState(config.DBDir(), logger)
-	},
-}
-
-func init() {
-	ResetAllCmd.Flags().BoolVar(&keepAddrBook, "keep-addr-book", false, "keep the address book intact")
-}
+var ResetStateCmd = NewResetStateCmd()
 
 // ResetPrivValidatorCmd resets the private validator files.
 var ResetPrivValidatorCmd = &cobra.Command{

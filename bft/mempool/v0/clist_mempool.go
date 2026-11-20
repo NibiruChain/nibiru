@@ -43,12 +43,13 @@ type CListMempool struct {
 	txs          *clist.CList // concurrent linked-list of good txs
 	proxyAppConn proxy.AppConnMempool
 
-	// Track whether we're rechecking txs.
-	// These are not protected by a mutex and are expected to be mutated in
-	// serial (ie. by abci responses which are called in serial).
-	recheckCursor *clist.CElement // next expected response
-	recheckEnd    *clist.CElement // re-checking stops here
-	recheckState  atomic.Int32    // recheckStateEnum: idle, active, or full
+	// The callback updates the cursor serially. The mutex coordinates status
+	// transitions between the callback and concurrent calls to Lock.
+	recheckStateMtx sync.Mutex
+	recheckCursor   *clist.CElement // next expected response
+	recheckEnd      *clist.CElement // re-checking stops here
+	isRechecking    atomic.Bool     // true iff the rechecking process has begun and is not yet finished
+	recheckFull     atomic.Bool     // whether rechecking TXs cannot be completed before a new block is decided
 
 	// Map for quick access to txs to record sender in CheckTx.
 	// txsMap: txKey -> CElement
@@ -131,47 +132,17 @@ func WithMetrics(metrics *mempool.Metrics) CListMempoolOption {
 	return func(mem *CListMempool) { mem.metrics = metrics }
 }
 
-// recheckStateEnum represents the state of the mempool rechecking process.
-// Ported from cometbft/cometbft#5837.
-type recheckStateEnum int32
-
-// Valid transitions: idle->active (recheckTxs), active->full (Lock),
-// active->idle and full->idle (rechecking finished). full->active is not a
-// valid transition: once a block arrives during rechecking, the state stays
-// full until rechecking completes.
-const (
-	recheckStateIdle   recheckStateEnum = 0 // not rechecking
-	recheckStateActive recheckStateEnum = 1 // rechecking in progress
-	recheckStateFull   recheckStateEnum = 2 // rechecking was in progress when a new block arrived
-)
-
-// setRecheckFull moves the recheck state from active to full with a
-// compare-and-swap, so it is safe to call outside updateMtx. If rechecking
-// has already finished (idle), the state is left unchanged. It returns true
-// iff the state changed.
-func (mem *CListMempool) setRecheckFull() bool {
-	return mem.recheckState.CompareAndSwap(
-		int32(recheckStateActive), int32(recheckStateFull))
-}
-
-// setRecheckDone registers that rechecking has finished.
-func (mem *CListMempool) setRecheckDone() {
-	mem.recheckCursor = nil
-	mem.recheckState.Store(int32(recheckStateIdle))
-}
-
-// recheckConsideredFull returns true iff the mempool should be considered
-// full because rechecking could not finish before a new block was decided.
-func (mem *CListMempool) recheckConsideredFull() bool {
-	return recheckStateEnum(mem.recheckState.Load()) == recheckStateFull
-}
-
 // Safe for concurrent use by multiple goroutines.
 func (mem *CListMempool) Lock() {
-	// Prepare for Update by marking an in-progress recheck as full.
-	if mem.setRecheckFull() {
-		mem.logger.Debug("rechecking did not finish before a new block")
+	// Prepare for Update by setting recheckFull. Serialize with recheck completion
+	// so a completed recheck cannot leave recheckFull set.
+	mem.recheckStateMtx.Lock()
+	rechecking := mem.isRechecking.Load()
+	recheckFull := mem.recheckFull.Swap(rechecking)
+	if rechecking != recheckFull {
+		mem.logger.Debug("the state of recheckFull has flipped")
 	}
+	mem.recheckStateMtx.Unlock()
 
 	mem.updateMtx.Lock()
 }
@@ -392,7 +363,7 @@ func (mem *CListMempool) RemoveTxByKey(txKey types.TxKey) error {
 func (mem *CListMempool) isFull(txSize int) error {
 	memSize := mem.Size()
 	txsBytes := mem.SizeBytes()
-	recheckFull := mem.recheckConsideredFull()
+	recheckFull := mem.recheckFull.Load()
 
 	if memSize >= mem.config.Size || int64(txSize)+txsBytes > mem.config.MaxTxsBytes || recheckFull {
 		return mempool.ErrMempoolIsFull{
@@ -513,7 +484,8 @@ func (mem *CListMempool) resCbRecheck(req *abci.Request, res *abci.Response) {
 				// we reached the end of the recheckTx list without finding a tx
 				// matching the one we received from the ABCI application.
 				// Return without processing any tx.
-				mem.setRecheckDone()
+				mem.recheckCursor = nil
+				mem.finishRecheck()
 				return
 			}
 
@@ -535,7 +507,8 @@ func (mem *CListMempool) resCbRecheck(req *abci.Request, res *abci.Response) {
 			mem.removeTx(tx, mem.recheckCursor, !mem.config.KeepInvalidTxsInCache)
 		}
 		if mem.recheckCursor == mem.recheckEnd {
-			mem.setRecheckDone()
+			mem.recheckCursor = nil
+			mem.finishRecheck()
 		} else {
 			mem.recheckCursor = mem.recheckCursor.Next()
 		}
@@ -694,6 +667,14 @@ func (mem *CListMempool) Update(
 	return nil
 }
 
+// finishRecheck clears both flags atomically with respect to Lock.
+func (mem *CListMempool) finishRecheck() {
+	mem.recheckStateMtx.Lock()
+	defer mem.recheckStateMtx.Unlock()
+	mem.isRechecking.Store(false)
+	mem.recheckFull.Store(false)
+}
+
 func (mem *CListMempool) recheckTxs() {
 	if mem.Size() == 0 {
 		panic("recheckTxs is called, but the mempool is empty")
@@ -701,7 +682,9 @@ func (mem *CListMempool) recheckTxs() {
 
 	mem.recheckCursor = mem.txs.Front()
 	mem.recheckEnd = mem.txs.Back()
-	mem.recheckState.Store(int32(recheckStateActive))
+	mem.recheckStateMtx.Lock()
+	mem.isRechecking.Store(true)
+	mem.recheckStateMtx.Unlock()
 
 	// Push txs to proxyAppConn
 	// NOTE: globalCb may be called concurrently.

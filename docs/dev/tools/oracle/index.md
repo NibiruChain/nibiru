@@ -12,24 +12,9 @@ description: >
 
 {{ $frontmatter.description }}
 
-## [Nibiru Oracle (EVM) - Usage Guide](../../evm/oracle.md)
+## Sai Oracle
 
-The native Nibiru Oracle provides exchange rate data and ChainLink-like oracle smart contracts through a precompile, allowing developers to query real-time price information directly on-chain.
-
-See: [ChainLink Aggregator Feeds - Nibiru Mainnet](../../evm/oracle.md#chainlink-like-feeds-nibiru-mainnet)
-
-*All oracle contracts listed here are deployed with 8 decimals*. 
-
-| Token | Name | Address |
-| --- | --- | --- |
-| **ETH** | Ethereum   | [0x63b8426F71C3eDbF15A55EeA4915625892Ea9A4c](https://nibiscan.io/address/0x63b8426F71C3eDbF15A55EeA4915625892Ea9A4c/contract/6900/code) |
-| **NIBI** | Nibiru   | [0xb15F7a4b9AD2db05D91f06df9eA7D56EBe8e6B27](https://nibiscan.io/address/0xb15F7a4b9AD2db05D91f06df9eA7D56EBe8e6B27/contract/6900/code) |
-| **stNIBI** | [Liquid Staked NIBI](https://nibiru.fi/ecosystem/apps/liquid-staked-nibiru-stnibi)    | [0x2889206C6eDAfD5de621B5EA3999B449879edC70](https://nibiscan.io/address/0x2889206C6eDAfD5de621B5EA3999B449879edC70/contract/6900/code) |
-| **BTC** | Bitcoin   | [0xc8FD30cA96B6D120Fc7646108E11c13E8bb128Eb](https://nibiscan.io/address/0xc8FD30cA96B6D120Fc7646108E11c13E8bb128Eb/contract/6900/code) |
-| **USDC** | Circle   | [0xBecDA6de445178B3D45aa710F5fB09F72E3e1340](https://nibiscan.io/address/0xBecDA6de445178B3D45aa710F5fB09F72E3e1340/contract/6900/code) |
-| **USDT** | Tether   | [0x86C6814Aa44fA22f7B9e0FCEC6F9de6012F322f8](https://nibiscan.io/address/0x86C6814Aa44fA22f7B9e0FCEC6F9de6012F322f8/contract/6900/code) |
-| **uBTC** | uBTC from B Squared Network    | [0x1BCA696B83D6d6D67398f20C530aAC8033B53dF2](https://nibiscan.io/address/0x1BCA696B83D6d6D67398f20C530aAC8033B53dF2/contract/6900/code) |
-| **sUSDa** | Yield-bearing USDa (Avalon Labs) | [0x4B13Cb07F975aEe89448258babb482378ddA4C32](https://nibiscan.io/address/0x4B13Cb07F975aEe89448258babb482378ddA4C32/contract/6900/code) |
+Nibiru's price data comes from the Sai oracle. [Sai Oracle Data and How to Read It](../../sai-oracle.md) covers reads from EVM contracts, CosmWasm contracts, a terminal, and AI agents. Deployed Chainlink-style feed contracts are on the [Chainlink-like Feeds (EVM)](../../evm/oracle.md) page.
 
 ## Band Protocol Oracle
 
@@ -50,7 +35,8 @@ Band Protocol provides decentralized price feeds for various assets, offering hi
 
 1. Oracle Integration Guides
 
-   - [Nibiru Oracle (EVM) - Usage Guide](../../evm/oracle.md)
+   - [Sai Oracle Data and How to Read It](../../sai-oracle.md)
+   - [Chainlink-like Feeds (EVM)](../../evm/oracle.md)
    - [Using the Band Protocol Oracle on Nibiru](./band-oracle.md)
 
 2. Concept Docs on the Nibiru Oracle

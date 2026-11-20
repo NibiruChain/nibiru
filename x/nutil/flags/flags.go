@@ -54,25 +54,18 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	})
 
 	// Show the hidden flags when --help-verbose or -v is given.
-	flagNameHelpVerbose := "help-verbose"
 	cmd.PersistentFlags().BoolP(
-		flagNameHelpVerbose, "v", false,
+		FlagHelpVerbose, "v", false,
 		"Show all flags common to each command",
 	)
 	origHelpFn := cmd.HelpFunc()
 	cmd.SetHelpFunc(func(c *cobra.Command, args []string) {
-		if show, _ := c.Flags().GetBool(flagNameHelpVerbose); show {
-			for _, flagName := range txFlagNames {
-				if f := c.Flags().Lookup(flagName); f != nil {
-					f.Hidden = false
-				}
-			}
-		}
+		ApplyHelpVerbosity(c, txFlagNames)
 		origHelpFn(c, args)
 	})
 	origArgs := cmd.Args
 	cmd.Args = func(c *cobra.Command, args []string) error {
-		if show, _ := c.Flags().GetBool(flagNameHelpVerbose); show {
+		if show, _ := c.Flags().GetBool(FlagHelpVerbose); show {
 			return pflag.ErrHelp
 		}
 		if origArgs == nil {
@@ -82,6 +75,59 @@ func AddTxFlagsToCmd(cmd *cobra.Command) {
 	}
 
 	cmdFlagsSet.AddFlagSet(txFs)
+}
+
+// FlagHelpVerbose is the flag that reveals flags hidden from help by default.
+const FlagHelpVerbose = "help-verbose"
+
+// GlobalHiddenFlagNames are the root persistent flags hidden from help unless
+// --help-verbose is set. They keep working when passed. Flag --home and -h
+// stay visible.
+var GlobalHiddenFlagNames = []string{
+	"log_format", "log_level", "log_no_color", "trace",
+}
+
+// ApplyHelpVerbosity hides or reveals flags in the help output of cmd. With
+// --help-verbose set, it reveals the flags named in extra and
+// GlobalHiddenFlagNames. Without it, it hides GlobalHiddenFlagNames. Hidden
+// flags still parse. Every help function that renders flags calls this one,
+// so the reveal logic lives in one place.
+func ApplyHelpVerbosity(cmd *cobra.Command, extra []string) {
+	_ = cmd.InheritedFlags() // merges the persistent flags of every parent
+	show, _ := cmd.Flags().GetBool(FlagHelpVerbose)
+	for _, name := range GlobalHiddenFlagNames {
+		if f := cmd.Flags().Lookup(name); f != nil {
+			f.Hidden = !show
+		}
+	}
+	if show {
+		for _, name := range extra {
+			if f := cmd.Flags().Lookup(name); f != nil {
+				f.Hidden = false
+			}
+		}
+	}
+}
+
+// AddHelpVerboseToRoot adds persistent flag --help-verbose to the root command
+// (no shorthand, because -v is taken by some subcommands). With it, any
+// command prints its help instead of running, and the help lists every flag.
+// The root persistent flags are added later by svrcmd.Execute, so the hiding
+// happens when help renders, not here.
+func AddHelpVerboseToRoot(root *cobra.Command) {
+	root.PersistentFlags().Bool(
+		FlagHelpVerbose, false, "Show every flag in help output")
+
+	origHelp := root.HelpFunc()
+	root.SetHelpFunc(func(c *cobra.Command, args []string) {
+		ApplyHelpVerbosity(c, nil)
+		origHelp(c, args)
+	})
+	origUsage := root.UsageFunc()
+	root.SetUsageFunc(func(c *cobra.Command) error {
+		ApplyHelpVerbosity(c, nil)
+		return origUsage(c)
+	})
 }
 
 // AddKeyringFlags sets common keyring flags
