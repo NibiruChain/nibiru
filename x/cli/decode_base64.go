@@ -178,6 +178,7 @@ Hidden legacy name kept for scripts (ud cw3 calls it); prefer
 		Hidden: true,
 		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			outMessage, err := DecodeBase64StargateMsgs([]byte(args[0]), clientCtx)

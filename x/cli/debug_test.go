@@ -159,3 +159,45 @@ func TestDebugAsAddrAndAlias(t *testing.T) {
 	require.Contains(t, out, "abci-query, addr, pubkey")
 	require.NotContains(t, out, "--as address")
 }
+
+// A failed decode writes nothing to stdout and puts the error on stderr, in
+// every debug path. Success still prints.
+func TestDebugFailureWritesNothingToStdout(t *testing.T) {
+	batch := `[{"jsonrpc":"2.0","id":1,"method":"abci_query","params":` +
+		`{"path":"/cosmos.auth.v1beta1.Query/Account","data":"zz"}}]`
+	for name, tc := range map[string]struct {
+		stdin string
+		args  []string
+	}{
+		"type-url bad input": {args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "zzzz"}},
+		"type-url bad bytes": {args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", strings.Repeat("ff", 20)}},
+		"path bad bytes": {args: []string{"debug", "--path",
+			"/cosmos.auth.v1beta1.Query/Account", strings.Repeat("ff", 20)}},
+		"stdin type-url": {stdin: "zzzz", args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "-"}},
+		"as tx":                     {args: []string{"debug", "--as", "tx", "0a03616263"}},
+		"unclassified":              {args: []string{"debug", "hello world"}},
+		"jsonrpc batch entry fails": {args: []string{"debug", batch}},
+		"msg bad type-url": {args: []string{"debug", "msg", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "zzzz"}},
+		"abci-query bad data": {args: []string{"debug", "abci-query", "--path",
+			"/cosmos.auth.v1beta1.Query/Account", "--data", strings.Repeat("ff", 20)}},
+		"abci-query bad body": {args: []string{"debug", "abci-query", batch[:10]}},
+		"tx bad input":        {args: []string{"debug", "tx", "zzzz"}},
+		"base64-decode bad":   {args: []string{"base64-decode", `{"type_url":"/x.Y","value":"AA=="}`}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stdout, stderr, err := runRootBoth(t, tc.stdin, tc.args...)
+			require.Error(t, err)
+			require.Empty(t, stdout)
+			require.NotEmpty(t, stderr+err.Error())
+		})
+	}
+
+	// A success still prints.
+	stdout, _, err := runRootBoth(t, "", "debug", strings.Repeat("cd", 20))
+	require.NoError(t, err)
+	require.Contains(t, stdout, `"detected": "addr"`)
+}

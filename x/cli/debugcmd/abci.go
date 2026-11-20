@@ -159,6 +159,7 @@ func DecodeJSONRPC(env Env, body []byte) (any, error) {
 
 	entries := make([]RPCEntry, 0, len(reqs))
 	var firstErr error
+	var errs []error
 	for _, r := range reqs {
 		e := RPCEntry{ID: r.ID, Method: r.Method}
 		var err error
@@ -186,7 +187,10 @@ func DecodeJSONRPC(env Env, body []byte) (any, error) {
 		}
 		if err != nil {
 			e.Error = err.Error()
-			if firstErr == nil {
+			if batch {
+				errs = append(errs, fmt.Errorf("entry %d (%s): %w",
+					len(entries), r.Method, err))
+			} else {
 				firstErr = errors.New(e.Error)
 			}
 		}
@@ -195,5 +199,5 @@ func DecodeJSONRPC(env Env, body []byte) (any, error) {
 	if !batch {
 		return entries[0], firstErr
 	}
-	return entries, firstErr
+	return entries, errors.Join(errs...)
 }

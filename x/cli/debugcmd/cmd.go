@@ -82,10 +82,11 @@ reported. Use --as to choose one.`,
 			}
 			res, derr := Decode(EnvFromContext(clientCtx, decodeAny), in, opts)
 			cmd.SilenceUsage = true
-			if perr := printJSON(cmd, res); perr != nil {
-				return perr
+			if derr != nil {
+				// Print nothing on stdout unless decoding succeeded.
+				return derr
 			}
-			return derr
+			return printJSON(cmd, res)
 		},
 	}
 	cmd.Flags().String(flagAs, "", "Treat the input as this kind (tx, any, "+
@@ -187,6 +188,7 @@ func txCmd() *cobra.Command {
 		Short: "Decode a transaction (same output as `tx decode`)",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			in, err := readInput(cmd, args)
 			if err != nil {
@@ -215,6 +217,7 @@ With --type-url, the input is the base64 or hex protobuf bytes of one message
 of that type.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			env := EnvFromContext(clientCtx, decodeAny)
 			in, err := readInput(cmd, args)
@@ -280,12 +283,10 @@ decode the data as the method's response.`,
 				return err
 			}
 			out, derr := DecodeJSONRPC(env, in)
-			if out != nil {
-				if err := printJSON(cmd, out); err != nil {
-					return err
-				}
+			if derr != nil {
+				return derr
 			}
-			return derr
+			return printJSON(cmd, out)
 		},
 	}
 	cmd.Flags().String(flagPath, "", "gRPC query path, e.g. /cosmos.auth.v1beta1.Query/Account")
