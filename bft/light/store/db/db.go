@@ -197,18 +197,30 @@ func (s *dbs) LightBlockBefore(height int64) (*types.LightBlock, error) {
 	if err != nil {
 		panic(err)
 	}
-	defer itr.Close()
 
+	// Find the height first, then close the iterator before calling
+	// LightBlock. A MemDB iterator holds the database read lock until it is
+	// closed, and LightBlock takes it again through Get. A queued writer
+	// between the two acquisitions would deadlock the second one.
+	found := int64(-1)
 	for itr.Valid() {
 		key := itr.Key()
 		_, existingHeight, ok := parseLbKey(key)
 		if ok {
-			return s.LightBlock(existingHeight)
+			found = existingHeight
+			break
 		}
 		itr.Next()
 	}
-	if err = itr.Error(); err != nil {
+	itrErr := itr.Error()
+	if err = itr.Close(); err != nil {
 		return nil, err
+	}
+	if found >= 0 {
+		return s.LightBlock(found)
+	}
+	if itrErr != nil {
+		return nil, itrErr
 	}
 
 	return nil, store.ErrLightBlockNotFound
@@ -237,7 +249,19 @@ func (s *dbs) Prune(size uint16) error {
 	if err != nil {
 		return err
 	}
-	defer itr.Close()
+	// Close the iterator exactly once. Some backends (Pebble) pool iterators
+	// on Close and forbid a second call, which could close another reader's
+	// live iterator. closeItr runs on every path and is a no-op after the
+	// first call.
+	itrClosed := false
+	closeItr := func() error {
+		if itrClosed {
+			return nil
+		}
+		itrClosed = true
+		return itr.Close()
+	}
+	defer closeItr() //nolint:errcheck // error paths return their own error
 
 	b := s.db.NewBatch()
 	defer b.Close()
@@ -256,6 +280,14 @@ func (s *dbs) Prune(size uint16) error {
 		pruned++
 	}
 	if err = itr.Error(); err != nil {
+		return err
+	}
+
+	// Release the iterator before writing. A MemDB iterator holds the
+	// database read lock until it is closed or exhausted, and the batch write
+	// needs the write lock. Writing first deadlocks Prune against itself once
+	// more than the iterator's channel buffer of keys remain unread.
+	if err = closeItr(); err != nil {
 		return err
 	}
 
