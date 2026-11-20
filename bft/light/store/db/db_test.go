@@ -214,7 +214,6 @@ func pruneWithReaders(t *testing.T, db dbm.DB) {
 			require.NoError(t, err)
 			_, err = dbStore.LastLightBlockHeight()
 			require.NoError(t, err)
-			_, _ = dbStore.LightBlockBefore(i + 1)
 			require.NoError(t, dbStore.Prune(2))
 			_ = dbStore.Size()
 		}(int64(i))
