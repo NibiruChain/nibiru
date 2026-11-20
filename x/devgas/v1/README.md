@@ -8,7 +8,7 @@ fee, so there is nothing to share.
   `MsgCancelFeeShare`, and `MsgUpdateParams` fail with error
   `ErrDevgasDeprecated`.
 - The ante handler pays no fee share. Fees stay in the fee collector.
-- The gRPC queries and `nibid query devgas` still read the module's store.
+- The gRPC queries and `nibiru q devgas` still read the module's store.
 - The `v2.24.0` upgrade handler deletes the registered fee shares and sets
   module param `enable_fee_share` to false. The store key stays.
 

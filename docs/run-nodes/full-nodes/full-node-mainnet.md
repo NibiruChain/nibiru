@@ -359,7 +359,7 @@ See the [validator docs](../validators/index.md) on how to participate as a vali
 Ex: query an account's balance
 
 ```bash
-nibid query bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
+nibid q bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
 ```
 
 For the full list of `nibid` commands, see:

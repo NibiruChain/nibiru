@@ -4,7 +4,7 @@ order: 6
 
 # Creating Fungible Tokens Guide
 
-The `nibi-stargate` smart contract exemplifies the creation and management of fungible tokens on the Nibiru Chain. This guide presents steps for engaging with the smart contract, encompassing environment setup, contract deployment, transaction broadcasting, and message type comprehension.
+The `nibi-stargate` smart contract exemplifies the creation and management of fungible tokens on Nibiru. This guide presents steps for engaging with the smart contract, encompassing environment setup, contract deployment, transaction broadcasting, and message type comprehension.
 
 ## Clone the Nibiru repository
 

@@ -2,7 +2,7 @@
 order: 0
 description: >
   CosmWasm enables secure, efficient smart contract development for Nibiru by compiling Rust
-  contracts to WebAssembly. Contracts run securely on the Nibiru Chain, offering developers a
+  contracts to WebAssembly. Contracts run securely on Nibiru, offering developers a
   reliable platform.
 ---
 
@@ -27,4 +27,4 @@ environment for their execution.
 - Secure Environment: CosmWasm contracts run in a secure and isolated environment, ensuring that they cannot interfere with the underlying blockchain's operation
 - Efficient Execution: Being compiled to Wasm, CosmWasm contracts offer efficient execution, making them suitable for various use cases, including tokenization and DeFi applications.
 - Rust Programming Language: Contracts are developed in Rust, a language known for its safety features and performance, ensuring reliable and robust smart contract development.
-- Compatible with Nibiru Chain: CosmWasm contracts can be deployed and executed on the Nibiru Chain, providing developers with a platform to build and deploy their contracts.
+- Compatible with Nibiru: CosmWasm contracts can be deployed and executed on Nibiru, providing developers with a platform to build and deploy their contracts.

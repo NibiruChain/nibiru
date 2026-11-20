@@ -2,7 +2,7 @@
 title: "Wasm | Quickstart"
 order: 2
 description: >
-  Set up your development environment to interact with CosmWasm smart contracts on the Nibiru Chain. Learn to install Rust, set up the Wasm compiler, optimize contracts, and install the Nibiru CLI. Connect to the Nibiru testnet for deployment and testing.
+  Set up your development environment to interact with CosmWasm smart contracts on Nibiru. Learn to install Rust, set up the Wasm compiler, optimize contracts, and install the Nibiru CLI. Connect to the Nibiru testnet for deployment and testing.
 ---
 
 # Quickstart (Wasm)

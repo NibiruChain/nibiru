@@ -9,10 +9,10 @@ order: 7
 
 {{ $frontmatter.description }}
 
-Any NIBI holder, whether bonded or unbonded, can submit proposals with the `nibid` CLI. There are two submission paths:
+Any NIBI holder, whether bonded or unbonded, can submit proposals with the `nibiru` CLI. There are two submission paths:
 
-- `nibid tx gov submit-proposal <proposal-json-file>` submits a proposal that carries one or more messages, a deposit, and metadata, all defined in a JSON file.
-- `nibid tx gov submit-legacy-proposal [type]` submits a legacy proposal. Pass a `--proposal` JSON file, or set `--title`, `--description`, `--type`, and `--deposit` directly.
+- `nibiru tx gov submit-proposal <proposal-json-file>` submits a proposal that carries one or more messages, a deposit, and metadata, all defined in a JSON file.
+- `nibiru tx gov submit-legacy-proposal [type]` submits a legacy proposal. Pass a `--proposal` JSON file, or set `--title`, `--description`, `--type`, and `--deposit` directly.
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -22,7 +22,7 @@ Any NIBI holder, whether bonded or unbonded, can submit proposals with the `nibi
 
 ## Proposal Types
 
-The legacy subcommands of `nibid tx gov submit-legacy-proposal` are:
+The legacy subcommands of `nibiru tx gov submit-legacy-proposal` are:
 
 | Proposal Type             | Description |
 | ------------------------- | ----------- |
@@ -39,10 +39,10 @@ Other actions, such as spending community pool funds, are messages inside a
 
 ```bash
 # parameters
-nibid tx gov submit-proposal [proposal-json-file] [flags]
+nibiru tx gov submit-proposal [proposal-json-file] [flags]
 
 # example
-nibid tx gov submit-proposal /path/to/proposal.json --from validator
+nibiru tx gov submit-proposal /path/to/proposal.json --from validator
 ```
 
 The file sets the deposit with the `deposit` field. For example:
@@ -70,8 +70,8 @@ One can use the following command to query for proposals:
 
 ```bash
 # parameters
-nibid query gov proposal [proposal-id]
+nibiru q gov proposal [proposal-id]
 
 # example
-nibid query gov proposal 1
+nibiru q gov proposal 1
 ```

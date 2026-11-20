@@ -741,7 +741,7 @@ A user can query and interact with the `gov` module using the CLI.
 The `query` commands allow users to query `gov` state.
 
 ```bash
-nibid query gov --help
+nibiru q gov --help
 ```
 
 ##### deposit
@@ -749,13 +749,13 @@ nibid query gov --help
 The `deposit` command allows users to query a deposit for a given proposal from a given depositor.
 
 ```bash
-nibid query gov deposit [proposal-id] [depositer-addr] [flags]
+nibiru q gov deposit [proposal-id] [depositer-addr] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov deposit 1 cosmos1..
+nibiru q gov deposit 1 cosmos1..
 ```
 
 Example Output:
@@ -773,13 +773,13 @@ proposal_id: "1"
 The `deposits` command allows users to query all deposits for a given proposal.
 
 ```bash
-nibid query gov deposits [proposal-id] [flags]
+nibiru q gov deposits [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov deposits 1
+nibiru q gov deposits 1
 ```
 
 Example Output:
@@ -801,13 +801,13 @@ pagination:
 The `param` command allows users to query a given parameter for the `gov` module.
 
 ```bash
-nibid query gov param [param-type] [flags]
+nibiru q gov param [param-type] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov param voting
+nibiru q gov param voting
 ```
 
 Example Output:
@@ -821,13 +821,13 @@ voting_period: "172800000000000"
 The `params` command allows users to query all parameters for the `gov` module.
 
 ```bash
-nibid query gov params [flags]
+nibiru q gov params [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov params
+nibiru q gov params
 ```
 
 Example Output:
@@ -851,13 +851,13 @@ voting_params:
 The `proposal` command allows users to query a given proposal.
 
 ```bash
-nibid query gov proposal [proposal-id] [flags]
+nibiru q gov proposal [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposal 1
+nibiru q gov proposal 1
 ```
 
 Example Output:
@@ -892,13 +892,13 @@ voting_start_time: null
 The `proposals` command allows users to query all proposals with optional filters.
 
 ```bash
-nibid query gov proposals [flags]
+nibiru q gov proposals [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposals
+nibiru q gov proposals
 ```
 
 Example Output:
@@ -959,13 +959,13 @@ proposals:
 The `proposer` command allows users to query the proposer for a given proposal.
 
 ```bash
-nibid query gov proposer [proposal-id] [flags]
+nibiru q gov proposer [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposer 1
+nibiru q gov proposer 1
 ```
 
 Example Output:
@@ -980,13 +980,13 @@ proposer: cosmos1..
 The `tally` command allows users to query the tally of a given proposal vote.
 
 ```bash
-nibid query gov tally [proposal-id] [flags]
+nibiru q gov tally [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov tally 1
+nibiru q gov tally 1
 ```
 
 Example Output:
@@ -1003,13 +1003,13 @@ no_with_veto: "0"
 The `vote` command allows users to query a vote for a given proposal.
 
 ```bash
-nibid query gov vote [proposal-id] [voter-addr] [flags]
+nibiru q gov vote [proposal-id] [voter-addr] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov vote 1 cosmos1..
+nibiru q gov vote 1 cosmos1..
 ```
 
 Example Output:
@@ -1028,13 +1028,13 @@ voter: cosmos1..
 The `votes` command allows users to query all votes for a given proposal.
 
 ```bash
-nibid query gov votes [proposal-id] [flags]
+nibiru q gov votes [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov votes 1
+nibiru q gov votes 1
 ```
 
 Example Output:
@@ -1057,7 +1057,7 @@ votes:
 The `tx` commands allow users to interact with the `gov` module.
 
 ```bash
-nibid tx gov --help
+nibiru tx gov --help
 ```
 
 ##### deposit
@@ -1065,13 +1065,13 @@ nibid tx gov --help
 The `deposit` command allows users to deposit tokens for a given proposal.
 
 ```bash
-nibid tx gov deposit [proposal-id] [deposit] [flags]
+nibiru tx gov deposit [proposal-id] [deposit] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov deposit 1 10000000stake --from nibi1..
+nibiru tx gov deposit 1 10000000stake --from nibi1..
 ```
 
 ##### draft-proposal
@@ -1081,7 +1081,7 @@ The command returns a `draft_proposal.json`, to be used by `submit-proposal` aft
 The `draft_metadata.json` is meant to be uploaded to [IPFS](#metadata).
 
 ```bash
-nibid tx gov draft-proposal
+nibiru tx gov draft-proposal
 ```
 
 ##### submit-proposal
@@ -1090,13 +1090,13 @@ The `submit-proposal` command allows users to submit a governance proposal along
 Messages, metadata and deposit are defined in a JSON file.
 
 ```bash
-nibid tx gov submit-proposal [path-to-proposal-json] [flags]
+nibiru tx gov submit-proposal [path-to-proposal-json] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov submit-proposal /path/to/proposal.json --from nibi1..
+nibiru tx gov submit-proposal /path/to/proposal.json --from nibi1..
 ```
 
 where `proposal.json` contains:
@@ -1127,29 +1127,29 @@ By default the metadata, summary and title are both limited by 255 characters, t
 The `submit-legacy-proposal` command allows users to submit a governance legacy proposal along with an initial deposit.
 
 ```bash
-nibid tx gov submit-legacy-proposal [command] [flags]
+nibiru tx gov submit-legacy-proposal [command] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov submit-legacy-proposal --title="Test Proposal" --description="testing" --type="Text" --deposit="100000000stake" --from nibi1..
+nibiru tx gov submit-legacy-proposal --title="Test Proposal" --description="testing" --type="Text" --deposit="100000000stake" --from nibi1..
 ```
 
 Example (`cancel-software-upgrade`):
 
 ```bash
-nibid tx gov submit-legacy-proposal cancel-software-upgrade --title="Test Proposal" --description="testing" --deposit="100000000stake" --from nibi1..
+nibiru tx gov submit-legacy-proposal cancel-software-upgrade --title="Test Proposal" --description="testing" --deposit="100000000stake" --from nibi1..
 ```
 
 To spend community pool funds, submit a `MsgCommunityPoolSpend` message with
-`nibid tx gov submit-proposal`. The binary has no `community-pool-spend`
+`nibiru tx gov submit-proposal`. The binary has no `community-pool-spend`
 legacy subcommand.
 
 Example (`param-change`):
 
 ```bash
-nibid tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
+nibiru tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
 ```
 
 ```json
@@ -1170,7 +1170,7 @@ nibid tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
 Example (`software-upgrade`):
 
 ```bash
-nibid tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" --description="testing, testing, 1, 2, 3" --upgrade-height 1000000 --from nibi1..
+nibiru tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" --description="testing, testing, 1, 2, 3" --upgrade-height 1000000 --from nibi1..
 ```
 
 ##### vote
@@ -1178,13 +1178,13 @@ nibid tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" 
 The `vote` command allows users to submit a vote for a given governance proposal.
 
 ```bash
-nibid tx gov vote [command] [flags]
+nibiru tx gov vote [command] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov vote 1 yes --from nibi1..
+nibiru tx gov vote 1 yes --from nibi1..
 ```
 
 ##### weighted-vote
@@ -1192,13 +1192,13 @@ nibid tx gov vote 1 yes --from nibi1..
 The `weighted-vote` command allows users to submit a weighted vote for a given governance proposal.
 
 ```bash
-nibid tx gov weighted-vote [proposal-id] [weighted-options] [flags]
+nibiru tx gov weighted-vote [proposal-id] [weighted-options] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov weighted-vote 1 yes=0.5,no=0.5 --from nibi1..
+nibiru tx gov weighted-vote 1 yes=0.5,no=0.5 --from nibi1..
 ```
 
 ### gRPC
