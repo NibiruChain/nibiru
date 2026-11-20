@@ -22,7 +22,8 @@ other pages.
 
 | Related Pages | Description |
 | --- | --- |
-| [Nibiru Oracle (EVM) - Usage Guide](../../dev/evm/oracle.md) | Details on the ChainLink-like feeds deployed on Nibiru and how to use the oracles with TypeScript apps. |
+| [Sai Oracle Data and How to Read It](../../dev/sai-oracle.md) | Supported pairs, units, and examples for reading Sai oracle prices. |
+| [Chainlink-like Feeds (EVM)](../../dev/evm/oracle.md) | Deployed Chainlink-style feed contracts that wrap the oracle precompile. |
 | [Integrating with Oracles on Nibiru](../../dev/tools/oracle/index.md) | A guide for developers integrating oracle solutions with Nibiru. |
 
 ## Background: Nibiru Oracle Module

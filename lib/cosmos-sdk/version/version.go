@@ -61,6 +61,9 @@ type Info struct {
 	GoVersion        string     `json:"go" yaml:"go"`
 	BuildDeps        []buildDep `json:"build_deps" yaml:"build_deps"`
 	CosmosSdkVersion string     `json:"cosmos_sdk_version" yaml:"cosmos_sdk_version"`
+	// BinaryPaths is set only by `version --long --output json`. It comes last
+	// so the earlier fields keep their order.
+	BinaryPaths *PathReport `json:"binary_paths,omitempty" yaml:"binary_paths,omitempty"`
 }
 
 func NewInfo() Info {

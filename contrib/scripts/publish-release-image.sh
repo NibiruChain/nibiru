@@ -2,8 +2,8 @@
 # Build a multi-architecture GHCR image from binaries attached to a public release.
 set -Eeuo pipefail
 
-repo="NibiruChain/nibiru"
-image="ghcr.io/nibiruchain/nibiru"
+repo="${GITHUB_REPOSITORY:-}"
+image=""
 release_tag=""
 version=""
 push=false
@@ -30,8 +30,9 @@ Options:
   --push                Publish <image>:<version> to GHCR after verification.
   --smoke-test          Build both Linux images and run the host-native image
                          locally without pushing.
-  --repo <owner/repo>   GitHub release repository. Default: NibiruChain/nibiru
-  --image <image>       Container image. Default: ghcr.io/nibiruchain/nibiru
+  --repo <owner/repo>   GitHub release repository. Default: GITHUB_REPOSITORY,
+                         or the canonical repository for this checkout.
+  --image <image>       Container image. Default: ghcr.io/<lowercase repo>
   --dry-run             Print the planned operation and exit.
   -h, --help            Show this help.
 
@@ -109,6 +110,15 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ -z "$repo" ]]; then
+  require_command gh
+  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  repo="$(cd "$script_dir" && gh repo view --json nameWithOwner --jq .nameWithOwner)" || fail "cannot identify repository; pass --repo"
+fi
+if [[ -z "$image" ]]; then
+  image="ghcr.io/$(printf '%s' "$repo" | tr '[:upper:]' '[:lower:]')"
+fi
 
 [[ -n "$release_tag" ]] || fail "--release-tag is required"
 [[ -n "$version" ]] || fail "--version is required"

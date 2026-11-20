@@ -4,7 +4,7 @@ list:
     #!/usr/bin/env bash
     just -l
 
-# Locally install the `nibid` binary and build if needed.
+# Locally install the `nibiru` binary, plus a `nibid` symlink, and build if needed.
 install:
     go mod tidy
     contrib/scripts/build-nibiru.sh --run
@@ -18,7 +18,7 @@ install-clean:
 install-covtool:
     go install github.com/Unique-Divine/jiyuu/gocovmerge@v0.0.2
 
-# Build the `nibid` binary.
+# Build `build/nibiru` and a `build/nibid` symlink.
 build:
     contrib/scripts/build-nibiru.sh --run --just-build
 
@@ -188,7 +188,7 @@ test-localnet:
     just install
     just localnet --no-build &
     sleep 8
-    kill $(pgrep -x nibid) # Stops network running as background process.
+    kill $(pgrep -x 'nibid|nibiru') # Stops network running as background process.
     set +x
     log_success "Spun up localnet"
 
@@ -202,7 +202,7 @@ test-chaosnet:
 
 # Stops any `nibid` processes, even if they're running in the background.
 stop:
-    kill $(pgrep -x nibid) || true
+    kill $(pgrep -x 'nibid|nibiru') || true
 
 passkey-demo:
     #!/usr/bin/env bash
@@ -238,7 +238,7 @@ release-image-verify release_tag version:
 release-image-smoke release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --smoke-test
 
-# Publish a verified public release as ghcr.io/nibiruchain/nibiru:<version>.
+# Publish a verified public release as ghcr.io/<lowercase owner/repo>:<version>.
 [confirm]
 release-image-publish release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --push
@@ -311,12 +311,17 @@ test-sim-after-import:
       -Period=5 \
       -timeout 30m
 
+# Tests the PATH checks of build-nibiru.sh against temp dirs
+test-build-path:
+    contrib/scripts/build-nibiru-path-test.sh
+
 # Run Go tests without cached test results
 test:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "Running: just test"
     just localnet-check
+    just test-build-path
     GO_TEST_PKGS="$(just _go-test-pkgs)"
     echo "RUN: go test -count=1 \$GO_TEST_PKGS"
     go test -count=1 $GO_TEST_PKGS
@@ -364,7 +369,7 @@ test-unit:
 localnet-check:
     #!/usr/bin/env bash
     set -euo pipefail
-    if pgrep -x nibid >/dev/null; then
+    if pgrep -x 'nibid|nibiru' >/dev/null; then
       echo "✅ Localnet (nibid) is running. Tests with live chain can run"
     else
       echo "ERROR: not running nibid process. Start localnet before running Go tests." >&2

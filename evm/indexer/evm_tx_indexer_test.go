@@ -172,6 +172,9 @@ func TestEVMTxIndexer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db := dbm.NewMemDB()
 			idxer := indexer.NewEVMTxIndexer(db, tmlog.NewNopLogger(), clientCtx)
+			missing, err := idxer.GetByTxHash(txHash)
+			require.Nil(t, missing)
+			require.ErrorIs(t, err, eth.ErrTxNotFound)
 
 			err = idxer.IndexBlock(tc.block, tc.blockResult)
 			require.NoError(t, err)

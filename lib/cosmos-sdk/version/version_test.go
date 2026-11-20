@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 
@@ -62,5 +64,33 @@ func Test_runVersionCmd(t *testing.T) {
 	stringInfo, err := json.Marshal(info)
 	require.NoError(t, err)
 	require.NoError(t, cmd.Execute())
-	assert.Equal(t, string(stringInfo)+"\n", mockOut.String())
+
+	// The JSON form keeps every existing field and order, and appends the
+	// path report as the last field.
+	out := strings.TrimSuffix(mockOut.String(), "\n")
+	body, pathsJSON, found := strings.Cut(out, `,"binary_paths":`)
+	require.True(t, found, out)
+	require.Equal(t, string(stringInfo), body+"}")
+	var paths version.PathReport
+	require.NoError(t, json.Unmarshal([]byte(strings.TrimSuffix(pathsJSON, "}")), &paths))
+	require.NotEmpty(t, paths.RunningFrom)
+	require.Equal(t, "nibiru", paths.Names[0].Name)
+	require.Equal(t, "nibid", paths.Names[1].Name)
+	require.Contains(t, mockOut.String(), `"cosmos_sdk_version":"","binary_paths":{`)
+	mockOut.Reset()
+
+	// Text output is one YAML document that holds the same report as the
+	// JSON form under binary_paths. Strict parsing rejects duplicate keys.
+	cmd.SetArgs([]string{"--long=true", fmt.Sprintf("--%s=text", cmtcli.OutputFlag)})
+	require.NoError(t, cmd.Execute())
+	text := mockOut.String()
+	require.NotContains(t, text, "also on PATH")
+	require.NotContains(t, text, "\nrunning from: ")
+	// Drop the stderr hint, which the mock writer shares with stdout.
+	doc, _, _ := strings.Cut(text, "note: ")
+	var parsed map[string]any
+	require.NoError(t, yaml.UnmarshalStrict([]byte(doc), &parsed), doc)
+	bp, ok := parsed["binary_paths"].(map[string]any)
+	require.True(t, ok, doc)
+	require.NotEmpty(t, bp["running_from"])
 }

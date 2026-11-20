@@ -7,18 +7,19 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	cmtcli "github.com/NibiruChain/nibiru/v2/bft/libs/cli"
 	"github.com/NibiruChain/nibiru/v2/bft/libs/log"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/debug"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/flags"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/pruning"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client/rpc"
 	sdkserver "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server"
 	servertypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/server/types"
 	simtestutil "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/sims"
+	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/auth/types"
 	banktypes "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/bank/types"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/crisis"
@@ -28,13 +29,21 @@ import (
 	"github.com/NibiruChain/nibiru/v2/app/appconst"
 	"github.com/NibiruChain/nibiru/v2/app/server"
 	srvconfig "github.com/NibiruChain/nibiru/v2/app/server/config"
+	"github.com/NibiruChain/nibiru/v2/x/cli/debugcmd"
 	nibidcmd "github.com/NibiruChain/nibiru/v2/x/cli/impl"
+	nutilflags "github.com/NibiruChain/nibiru/v2/x/nutil/flags"
 	"github.com/NibiruChain/nibiru/v2/x/sudo/cli"
 )
 
 // NewRootCmd creates a new root command for nibid. It is called once in the
 // main function.
 func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
+	return NewRootCmdNamed(InvokedName(os.Args[0]))
+}
+
+// NewRootCmdNamed is NewRootCmd with an explicit command name, which help and
+// usage text print. Use InvokedName to derive it from the process name.
+func NewRootCmdNamed(name string) (*cobra.Command, app.EncodingConfig) {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
 	tmpAppDir, err := os.MkdirTemp("", "nibid-*")
 	if err != nil {
@@ -60,10 +69,13 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 		WithViper("") // In simapp, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
-		Use:     "nibid",
-		Short:   "Nibiru blockchain node CLI",
-		Aliases: []string{"nibiru"},
+		Use:   name,
+		Short: "Nibiru CLI: send transactions, query the chain, and run a node.",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// --help-verbose prints help for any command instead of running it.
+			if show, _ := cmd.Flags().GetBool(nutilflags.FlagHelpVerbose); show {
+				return pflag.ErrHelp
+			}
 			cmd.SetOut(cmd.OutOrStdout())
 			cmd.SetErr(cmd.ErrOrStderr())
 
@@ -98,6 +110,9 @@ func NewRootCmd() (*cobra.Command, app.EncodingConfig) {
 	}
 
 	initRootCmd(rootCmd, encodingConfig)
+	nutilflags.AddHelpVerboseToRoot(rootCmd)
+	setRootUsage(rootCmd)
+	followInvokedName(rootCmd, name)
 
 	return rootCmd, encodingConfig
 }
@@ -115,47 +130,57 @@ Args:
 	  amino implementations.
 */
 func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
-	a := appCreator{}
-
 	rootCmd.AddCommand(
-		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		GetBuildWasmMsg(),
 		DecodeBase64Cmd(app.DefaultNodeHome),
 		LocalnetCmd(),
 		cmtcli.NewCompletionCmd(rootCmd, true),
-		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
-		debug.Cmd(),
+		debugcmd.Cmd(DecodeBase64Any),
 		nibidcmd.ConfigCmd(),
-		pruning.Cmd(a.newApp, app.DefaultNodeHome),
-	)
+		version.NewVersionCommand(),
 
-	server.AddCommands(
-		rootCmd,
-		server.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
-		a.appExport,
-		addModuleInitFlags,
-	)
-
-	// add keybase, auxiliary RPC, query, and tx child commands
-	rootCmd.AddCommand(
+		// add keybase, auxiliary RPC, query, and tx child commands
 		rpc.StatusCommand(),
-		genesisCommand(
-			encodingConfig,
-			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
-		),
 		nibidcmd.QueryCmd(),
 		nibidcmd.TxCmd(),
 		keysCommand(app.DefaultNodeHome),
-
-		// EVM Tx Indexer force catch up command
-		server.NewEVMTxIndexCmd(),
 	)
+
+	addNodeCommands(rootCmd, func() []*cobra.Command {
+		return newNodeCommands(encodingConfig)
+	})
+
+	setRootRowShorts(rootCmd)
 
 	// TODO add rosettaj
 	// add rosetta
 	// rootCmd.AddCommand(
 	//	server.RosettaCommand(
 	//		encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+}
+
+// newNodeCommands builds a fresh copy of every command for operating a node.
+// Each call returns new command objects because a cobra command has one
+// parent: the set is attached under `nibid node` and, hidden, at the top level.
+func newNodeCommands(encodingConfig app.EncodingConfig) []*cobra.Command {
+	a := appCreator{}
+
+	cmds := server.NodeCommands(
+		server.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
+		a.appExport,
+		addModuleInitFlags,
+	)
+	return append(cmds,
+		InitCmd(app.ModuleBasics, app.DefaultNodeHome),
+		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
+		genesisCommand(
+			encodingConfig,
+			cli.AddSudoRootAccountCmd(app.DefaultNodeHome),
+		),
+		// EVM Tx Indexer force catch up command
+		server.NewEVMTxIndexCmd(),
+	)
 }
 
 // Implements the servertypes.ModuleInitFlags interface

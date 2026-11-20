@@ -15,7 +15,7 @@
 # 2. In Actions, run this workflow from main and enter the published release
 #    tag exactly, for example v2.20.0-rc.1. The workflow derives image tag
 #    2.20.0-rc.1, verifies the attached Linux files, and publishes
-#    ghcr.io/nibiruchain/nibiru:2.20.0-rc.1.
+#    ghcr.io/<lowercase owner/repo>:2.20.0-rc.1.
 #
 #    Before dispatching, a developer can run command `just release-image-verify
 #    v<semver> <semver>`. It downloads the release assets, checks the Linux
@@ -55,6 +55,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.repository == 'SaiDotFun/nibiru'
     name: Verify artifacts and publish image
     runs-on: ubuntu-latest
 

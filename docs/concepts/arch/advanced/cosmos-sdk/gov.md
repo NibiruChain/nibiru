@@ -1,10 +1,8 @@
 ---
 sidebar_position: 1
 description: >-
-  Technical specification for Nibiru Chain's governance module, `x/gov`. The
-  module enables an on-chain governance system on the Nibiru network. In this
-  system, holders of the native staking token of the chain can vote on proposals on
-  a 1 token 1 vote basis.
+  The governance module, `x/gov`, manages on-chain proposals and voting on
+  Nibiru. Voting power is proportional to bonded NIBI.
 ---
 
 # `x/gov`
@@ -13,16 +11,13 @@ description: >-
 
 ## Abstract
 
-Governance activities include:
-
-* **Proposal submission:** Users can submit proposals with a deposit. Once the
-  minimum deposit is reached, the proposal enters voting period.
-* **Vote:** Participants can vote on proposals that reached MinDeposit
-* **Inheritance and penalties:** Delegators inherit their validator's vote if
-  they don't vote themselves.
-* **Claiming deposit:** Users that deposited on proposals can recover their
-  deposits if the proposal was accepted or rejected. If the proposal was vetoed,
-  or never entered voting period, the deposit is burned.
+- **Proposal submission.** The initial deposit minimum is configurable and
+  defaults to zero. Voting opens when total deposits reach the voting minimum.
+- **Voting.** Eligible participants can vote during the voting period.
+- **Vote inheritance.** Delegators who do not vote inherit their validator's vote.
+- **Deposits.** Governance parameters determine whether the module burns
+  deposits when a proposal expires before voting, misses quorum, or is vetoed.
+  Otherwise, the module refunds the deposits.
 
 ## Contents
 
@@ -65,11 +60,9 @@ staking token of the chain.
 
 The governance process is divided in a few steps that are outlined below:
 
-* **Proposal submission:** Proposal is submitted to the blockchain with a
-  deposit.
-* **Vote:** Once deposit reaches a certain value (`MinDeposit`), proposal is
-  confirmed and vote opens. Bonded Atom holders can then send `TxGovVote`
-  transactions to vote on the proposal.
+* **Proposal submission.** The submitter provides any required initial deposit.
+* **Vote.** Voting opens once total deposits reach `MinDeposit`. Participants
+  with bonded NIBI can then send a `MsgVote` to vote on the proposal.
 * **Execution** After a period of time, the votes are tallied and depending
   on the result, the messages in the proposal will be executed.
 
@@ -92,37 +85,29 @@ and have a respective path to execute on but do not perform a full validity chec
 
 ### Concepts: Deposit
 
-To prevent spam, proposals must be submitted with a deposit in the coins defined by
-the `MinDeposit` param.
+The `MinInitialDepositRatio` parameter sets the portion of `MinDeposit` the
+submitter must provide up front. A ratio of zero allows submission without a
+deposit.
 
-When a proposal is submitted, it has to be accompanied with a deposit that must be
-strictly positive, but can be inferior to `MinDeposit`. The submitter doesn't need
-to pay for the entire deposit on their own. The newly created proposal is stored in
-an *inactive proposal queue* and stays there until its deposit passes the `MinDeposit`.
-Other token holders can increase the proposal's deposit by sending a `Deposit`
-transaction. If a proposal doesn't pass the `MinDeposit` before the deposit end time
-(the time when deposits are no longer accepted), the proposal will be destroyed: the
-proposal will be removed from state and the deposit will be burned (see x/gov `EndBlocker`).
-When a proposal deposit passes the `MinDeposit` threshold (even during the proposal
-submission) before the deposit end time, the proposal will be moved into the
-*active proposal queue* and the voting period will begin.
+Other accounts can add to the total with a `MsgDeposit`. The proposal stays in
+the inactive queue until total deposits reach `MinDeposit` or the deposit
+period expires. Reaching the threshold opens voting. If the deposit period
+expires first, the module removes the proposal.
 
-The deposit is kept in escrow and held by the governance `ModuleAccount` until the
-proposal is finalized (passed or rejected).
+The governance module account holds deposits in escrow until the proposal
+expires or voting ends.
 
 #### Deposit refund and burn
 
-When a proposal is finalized, the coins from the deposit are either refunded or burned
-according to the final tally of the proposal:
+The module burns deposits when the applicable governance parameter is enabled:
 
-* If the proposal is approved or rejected but *not* vetoed, each deposit will be
-  automatically refunded to its respective depositor (transferred from the governance
-  `ModuleAccount`).
-* When the proposal is vetoed with greater than 1/3, deposits will be burned from the
-  governance `ModuleAccount` and the proposal information along with its deposit
-  information will be removed from state.
-* All refunded or burned deposits are removed from the state. Events are issued when
-  burning or refunding a deposit.
+| Proposal outcome | Burn parameter |
+| --- | --- |
+| The deposit period expires before voting opens | `BurnProposalDepositPrevote` |
+| The vote falls short of quorum | `BurnVoteQuorum` |
+| The vote meets quorum and exceeds the veto threshold | `BurnVoteVeto` |
+
+Otherwise, the module refunds each deposit to the account that made it.
 
 ### Concepts: Vote
 
@@ -741,7 +726,7 @@ A user can query and interact with the `gov` module using the CLI.
 The `query` commands allow users to query `gov` state.
 
 ```bash
-nibid query gov --help
+nibiru q gov --help
 ```
 
 ##### deposit
@@ -749,13 +734,13 @@ nibid query gov --help
 The `deposit` command allows users to query a deposit for a given proposal from a given depositor.
 
 ```bash
-nibid query gov deposit [proposal-id] [depositer-addr] [flags]
+nibiru q gov deposit [proposal-id] [depositer-addr] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov deposit 1 cosmos1..
+nibiru q gov deposit 1 cosmos1..
 ```
 
 Example Output:
@@ -773,13 +758,13 @@ proposal_id: "1"
 The `deposits` command allows users to query all deposits for a given proposal.
 
 ```bash
-nibid query gov deposits [proposal-id] [flags]
+nibiru q gov deposits [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov deposits 1
+nibiru q gov deposits 1
 ```
 
 Example Output:
@@ -801,13 +786,13 @@ pagination:
 The `param` command allows users to query a given parameter for the `gov` module.
 
 ```bash
-nibid query gov param [param-type] [flags]
+nibiru q gov param [param-type] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov param voting
+nibiru q gov param voting
 ```
 
 Example Output:
@@ -821,13 +806,13 @@ voting_period: "172800000000000"
 The `params` command allows users to query all parameters for the `gov` module.
 
 ```bash
-nibid query gov params [flags]
+nibiru q gov params [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov params
+nibiru q gov params
 ```
 
 Example Output:
@@ -851,13 +836,13 @@ voting_params:
 The `proposal` command allows users to query a given proposal.
 
 ```bash
-nibid query gov proposal [proposal-id] [flags]
+nibiru q gov proposal [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposal 1
+nibiru q gov proposal 1
 ```
 
 Example Output:
@@ -892,13 +877,13 @@ voting_start_time: null
 The `proposals` command allows users to query all proposals with optional filters.
 
 ```bash
-nibid query gov proposals [flags]
+nibiru q gov proposals [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposals
+nibiru q gov proposals
 ```
 
 Example Output:
@@ -959,13 +944,13 @@ proposals:
 The `proposer` command allows users to query the proposer for a given proposal.
 
 ```bash
-nibid query gov proposer [proposal-id] [flags]
+nibiru q gov proposer [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov proposer 1
+nibiru q gov proposer 1
 ```
 
 Example Output:
@@ -980,13 +965,13 @@ proposer: cosmos1..
 The `tally` command allows users to query the tally of a given proposal vote.
 
 ```bash
-nibid query gov tally [proposal-id] [flags]
+nibiru q gov tally [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov tally 1
+nibiru q gov tally 1
 ```
 
 Example Output:
@@ -1003,13 +988,13 @@ no_with_veto: "0"
 The `vote` command allows users to query a vote for a given proposal.
 
 ```bash
-nibid query gov vote [proposal-id] [voter-addr] [flags]
+nibiru q gov vote [proposal-id] [voter-addr] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov vote 1 cosmos1..
+nibiru q gov vote 1 cosmos1..
 ```
 
 Example Output:
@@ -1028,13 +1013,13 @@ voter: cosmos1..
 The `votes` command allows users to query all votes for a given proposal.
 
 ```bash
-nibid query gov votes [proposal-id] [flags]
+nibiru q gov votes [proposal-id] [flags]
 ```
 
 Example:
 
 ```bash
-nibid query gov votes 1
+nibiru q gov votes 1
 ```
 
 Example Output:
@@ -1057,7 +1042,7 @@ votes:
 The `tx` commands allow users to interact with the `gov` module.
 
 ```bash
-nibid tx gov --help
+nibiru tx gov --help
 ```
 
 ##### deposit
@@ -1065,13 +1050,13 @@ nibid tx gov --help
 The `deposit` command allows users to deposit tokens for a given proposal.
 
 ```bash
-nibid tx gov deposit [proposal-id] [deposit] [flags]
+nibiru tx gov deposit [proposal-id] [deposit] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov deposit 1 10000000stake --from nibi1..
+nibiru tx gov deposit 1 10000000stake --from nibi1..
 ```
 
 ##### draft-proposal
@@ -1081,7 +1066,7 @@ The command returns a `draft_proposal.json`, to be used by `submit-proposal` aft
 The `draft_metadata.json` is meant to be uploaded to [IPFS](#metadata).
 
 ```bash
-nibid tx gov draft-proposal
+nibiru tx gov draft-proposal
 ```
 
 ##### submit-proposal
@@ -1090,13 +1075,13 @@ The `submit-proposal` command allows users to submit a governance proposal along
 Messages, metadata and deposit are defined in a JSON file.
 
 ```bash
-nibid tx gov submit-proposal [path-to-proposal-json] [flags]
+nibiru tx gov submit-proposal [path-to-proposal-json] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov submit-proposal /path/to/proposal.json --from nibi1..
+nibiru tx gov submit-proposal /path/to/proposal.json --from nibi1..
 ```
 
 where `proposal.json` contains:
@@ -1127,41 +1112,29 @@ By default the metadata, summary and title are both limited by 255 characters, t
 The `submit-legacy-proposal` command allows users to submit a governance legacy proposal along with an initial deposit.
 
 ```bash
-nibid tx gov submit-legacy-proposal [command] [flags]
+nibiru tx gov submit-legacy-proposal [command] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov submit-legacy-proposal --title="Test Proposal" --description="testing" --type="Text" --deposit="100000000stake" --from nibi1..
+nibiru tx gov submit-legacy-proposal --title="Test Proposal" --description="testing" --type="Text" --deposit="100000000stake" --from nibi1..
 ```
 
 Example (`cancel-software-upgrade`):
 
 ```bash
-nibid tx gov submit-legacy-proposal cancel-software-upgrade --title="Test Proposal" --description="testing" --deposit="100000000stake" --from nibi1..
+nibiru tx gov submit-legacy-proposal cancel-software-upgrade --title="Test Proposal" --description="testing" --deposit="100000000stake" --from nibi1..
 ```
 
-Example (`community-pool-spend`):
-
-```bash
-nibid tx gov submit-legacy-proposal community-pool-spend proposal.json --from nibi1..
-```
-
-```json
-{
-  "title": "Test Proposal",
-  "description": "testing, 1, 2, 3",
-  "recipient": "cosmos1..",
-  "amount": "10000000stake",
-  "deposit": "10000000stake"
-}
-```
+To spend community pool funds, submit a `MsgCommunityPoolSpend` message with
+`nibiru tx gov submit-proposal`. The binary has no `community-pool-spend`
+legacy subcommand.
 
 Example (`param-change`):
 
 ```bash
-nibid tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
+nibiru tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
 ```
 
 ```json
@@ -1182,7 +1155,7 @@ nibid tx gov submit-legacy-proposal param-change proposal.json --from nibi1..
 Example (`software-upgrade`):
 
 ```bash
-nibid tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" --description="testing, testing, 1, 2, 3" --upgrade-height 1000000 --from nibi1..
+nibiru tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" --description="testing, testing, 1, 2, 3" --upgrade-height 1000000 --from nibi1..
 ```
 
 ##### vote
@@ -1190,13 +1163,13 @@ nibid tx gov submit-legacy-proposal software-upgrade v2 --title="Test Proposal" 
 The `vote` command allows users to submit a vote for a given governance proposal.
 
 ```bash
-nibid tx gov vote [command] [flags]
+nibiru tx gov vote [command] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov vote 1 yes --from nibi1..
+nibiru tx gov vote 1 yes --from nibi1..
 ```
 
 ##### weighted-vote
@@ -1204,13 +1177,13 @@ nibid tx gov vote 1 yes --from nibi1..
 The `weighted-vote` command allows users to submit a weighted vote for a given governance proposal.
 
 ```bash
-nibid tx gov weighted-vote [proposal-id] [weighted-options] [flags]
+nibiru tx gov weighted-vote [proposal-id] [weighted-options] [flags]
 ```
 
 Example:
 
 ```bash
-nibid tx gov weighted-vote 1 yes=0.5,no=0.5 --from nibi1..
+nibiru tx gov weighted-vote 1 yes=0.5,no=0.5 --from nibi1..
 ```
 
 ### gRPC

@@ -13,10 +13,10 @@ const localBlockchainStatusURL = "http://localhost:26657/status"
 // EnsureLocalBlockchain verifies that a local nibid process is running and
 // serving a healthy CometBFT status endpoint.
 func EnsureLocalBlockchain() error {
-	cmd := exec.Command("pgrep", "-x", "nibid")
+	cmd := exec.Command("pgrep", "-x", "nibid|nibiru")
 	out, err := cmd.CombinedOutput()
 	if err != nil || len(out) == 0 {
-		return fmt.Errorf(`failed to run "pgrep -x nibid" and parse PID; local network is not online: %w`, err)
+		return fmt.Errorf(`failed to run "pgrep -x nibid|nibiru" and parse PID; local network is not online: %w`, err)
 	}
 
 	client := http.Client{Timeout: 2 * time.Second}
