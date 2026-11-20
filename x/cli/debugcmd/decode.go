@@ -505,6 +505,10 @@ func DescribePubkey(env Env, in []byte, c Classification) (PubkeyInfo, error) {
 	}
 	switch len(c.Payload) {
 	case secp256k1.PubKeySize:
+		if !validSecp256k1(c.Payload) {
+			return PubkeyInfo{}, errors.New(
+				"33 bytes are not a valid secp256k1 public key (not a point on the curve)")
+		}
 		eth := describeKey(&ethsecp256k1.PubKey{Key: c.Payload})
 		eth.Alternatives = []PubkeyInfo{
 			describeKey(&secp256k1.PubKey{Key: c.Payload}),
@@ -613,12 +617,13 @@ func dualBytes(in []byte) (hb, bb []byte, ok bool) {
 }
 
 // kindFits reports whether n bytes can be a value of kind.
-func kindFits(kind Kind, n int) bool {
+func kindFits(kind Kind, bz []byte) bool {
+	n := len(bz)
 	switch kind {
 	case KindAddr:
 		return n == 20 || n == 32
 	case KindPubkey:
-		return n == 32 || n == 33
+		return n == 32 || (n == 33 && validSecp256k1(bz))
 	case KindTxHash:
 		return n == 32
 	}
@@ -645,7 +650,7 @@ func decodeAsBothEncodings(env Env, in []byte, opts Options) (Result, error, boo
 		name string
 		bz   []byte
 	}{{"hex", hb}, {"base64", bb}} {
-		if !kindFits(opts.As, len(e.bz)) {
+		if !kindFits(opts.As, e.bz) {
 			continue
 		}
 		c := Classification{Kind: opts.As, Payload: e.bz, Encoding: e.name}

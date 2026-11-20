@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"regexp"
 	"strings"
 
@@ -113,6 +114,17 @@ func Classify(input []byte) Classification {
 	return Classification{Kind: KindUnknown}
 }
 
+// validSecp256k1 reports whether bz parses as a secp256k1 public key (a
+// compressed 33-byte point on the curve). Ed25519 keys are 32 bytes, and the
+// length is all that can be checked cheaply for them.
+func validSecp256k1(bz []byte) bool {
+	if len(bz) != 33 {
+		return false
+	}
+	_, err := btcec.ParsePubKey(bz)
+	return err == nil
+}
+
 func classifyBytes(bz []byte, encoding string) Classification {
 	c := Classification{Payload: bz, Encoding: encoding}
 	switch len(bz) {
@@ -122,7 +134,13 @@ func classifyBytes(bz []byte, encoding string) Classification {
 		c.Kind = KindAmbiguous
 		c.Candidates = []Kind{KindTxHash, KindAddr, KindPubkey}
 	case 33:
-		c.Kind = KindPubkey
+		// A compressed key must be a point on the curve. Other 33-byte
+		// values read as generic protobuf.
+		if validSecp256k1(bz) {
+			c.Kind = KindPubkey
+		} else {
+			c.Kind = KindProtobuf
+		}
 	default:
 		c.Kind = KindProtobuf
 	}

@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	acct     = "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
-	contract = "nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m"
+	// validKeyHex is a compressed secp256k1 public key on the curve.
+	validKeyHex = "02eaeba00ee3bdf3ddd4069d9a63af58cdab252c22a577d17fcc83ea92db0360c9"
+	acct        = "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
+	contract    = "nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m"
 )
 
 func TestClassify(t *testing.T) {
 	hex32 := strings.Repeat("ab", 32)
 	hex20 := strings.Repeat("cd", 20)
-	hex33 := "02" + strings.Repeat("11", 32)
+	hex33 := validKeyHex
 	b64pb := base64.StdEncoding.EncodeToString([]byte{0x0a, 0x03, 'a', 'b', 'c'})
 
 	for _, tc := range []struct {

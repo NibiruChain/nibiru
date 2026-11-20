@@ -94,6 +94,8 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   `"detected": "ambiguous"` with a `readings` object: `contract_addr`,
   `ed25519_pubkey`, and `tx_hash` for 32 bytes, and one `hex` and `base64`
   reading for a string valid as both. `--as <kind>` still gives one answer.
+- Accept a 33-byte value as a public key in `nibiru debug` only when it is a
+  valid secp256k1 point, in `--as pubkey`, automatic detection, and readings.
 - Apply `nibiru debug --as <kind>` to both encodings of a string that is valid
   as hex and base64, so every reading of the automatic output is selectable.
   One match is the answer, two give `ambiguous` with `hex` and `base64`

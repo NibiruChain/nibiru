@@ -65,6 +65,9 @@ with every reading, computed offline, in a fixed key order:
   named `hex` and `base64`. Each holds the result of decoding those bytes, or
   an `error` field when they do not decode.
 
+A 33-byte value counts as a public key only when it is a valid secp256k1 point.
+For a 32-byte ed25519 key, the command can check only the length.
+
 Pass `--as <kind>` to get a single answer. For a string that is valid as both
 hex and base64, `--as` tries both encodings and uses the one that decodes as
 that kind. If both decode, the output is `ambiguous` with one reading per

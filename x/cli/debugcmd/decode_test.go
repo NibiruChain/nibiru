@@ -201,7 +201,7 @@ func TestDecodePubkeyAndRawBytes(t *testing.T) {
 
 	// Raw 33 bytes: Nibiru's eth_secp256k1 first, with the Cosmos key as an
 	// alternative.
-	res, err = debugcmd.Decode(env, []byte("02"+strings.Repeat("11", 32)), debugcmd.Options{})
+	res, err = debugcmd.Decode(env, []byte(validKeyHex), debugcmd.Options{})
 	require.NoError(t, err)
 	info := res.Data.(debugcmd.PubkeyInfo)
 	require.Equal(t, "eth_secp256k1", info.Type)
@@ -382,7 +382,7 @@ func TestAddrKeyNames(t *testing.T) {
 	require.Contains(t, out, `"eth_addr":"0x`)
 	require.NotContains(t, out, `"evm"`)
 
-	res, err = debugcmd.Decode(env, []byte("02"+strings.Repeat("11", 32)), debugcmd.Options{})
+	res, err = debugcmd.Decode(env, []byte(validKeyHex), debugcmd.Options{})
 	require.NoError(t, err)
 	out = toJSON(t, res)
 	require.Contains(t, out, `"addr":{`)
@@ -444,4 +444,46 @@ func mustB64(t *testing.T, s string) []byte {
 	bz, err := base64.StdEncoding.DecodeString(s)
 	require.NoError(t, err)
 	return bz
+}
+
+// A 33-byte candidate counts as a public key only when it is a point on the
+// curve. Ed25519 keys are 32 bytes and only the length can be checked.
+func TestDecodePubkeyValidatesCurvePoint(t *testing.T) {
+	env, _ := testEnv()
+	zeros := strings.Repeat("A", 44) // 33 zero bytes as base64, 22 as hex
+
+	_, err := debugcmd.Decode(env, []byte(zeros),
+		debugcmd.Options{As: debugcmd.KindPubkey})
+	require.ErrorContains(t, err, "pubkey")
+
+	// The same bytes in hex fail too.
+	_, err = debugcmd.Decode(env, []byte(strings.Repeat("00", 33)),
+		debugcmd.Options{As: debugcmd.KindPubkey})
+	require.Error(t, err)
+
+	// A valid key works in hex and in base64.
+	raw, err := hex.DecodeString(validKeyHex)
+	require.NoError(t, err)
+	for _, in := range []string{validKeyHex, base64.StdEncoding.EncodeToString(raw)} {
+		res, err := debugcmd.Decode(env, []byte(in),
+			debugcmd.Options{As: debugcmd.KindPubkey})
+		require.NoError(t, err, in)
+		require.Equal(t, debugcmd.KindPubkey, res.Detected)
+		require.Equal(t, validKeyHex, res.Data.(debugcmd.PubkeyInfo).Hex)
+	}
+
+	// The automatic path never shows an invalid point as a pubkey, in a
+	// single answer or in the readings of an ambiguous input.
+	for _, in := range []string{zeros, strings.Repeat("00", 33), "02" + strings.Repeat("11", 32)} {
+		res, _ := debugcmd.Decode(env, []byte(in), debugcmd.Options{})
+		require.NotEqual(t, debugcmd.KindPubkey, res.Detected, in)
+		require.NotContains(t, toJSON(t, res), `"detected":"pubkey"`, in)
+	}
+	require.False(t, strings.Contains(toJSON(t, mustDecode(t, env, zeros)), "eth_secp256k1"))
+}
+
+func mustDecode(t *testing.T, env debugcmd.Env, in string) debugcmd.Result {
+	t.Helper()
+	res, _ := debugcmd.Decode(env, []byte(in), debugcmd.Options{})
+	return res
 }
