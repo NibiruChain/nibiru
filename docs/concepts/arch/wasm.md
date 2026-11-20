@@ -1,7 +1,9 @@
 ---
 order: 2
 description: >-
-  The wasm module of Nibiru allows for executing CosmWasm smart contracts, enabling developers to build decentralized applications (dApps) with transaction messages for contract deployment, execution, and parameter updates. It emits events for transaction indexing, aiding contract interaction tracking and platform adoption.
+  Nibiru's Wasm module runs CosmWasm smart contracts. Use transaction messages
+  to deploy contracts, call them, and update module parameters. The module emits
+  events that indexers can use to track contract activity.
 ---
 
 # Module: Wasm
@@ -20,17 +22,18 @@ Reference:
 
 ## Events
 
-A number of events are returned to allow transaction messages (TxMsgs) from smart
-contracts to be indexed.
+Indexers can use Wasm events to track smart contract transactions.
 
 The module for each event is "wasm", and `code_id` is only present when
 instantiating a contract so that users can subscribe to new contract instances.
 The `code_id` is omitted during invocation (`wasm.Execute`). These events are
 emitted any time a contract returns non-empty event attributes.
 
-There is also an "action" field that is added automatically and has a value of either `store-code`, `instantiate` or `execute` depending on which message was sent:
+The `action` field identifies whether the message stores code, instantiates a
+contract, or executes a contract. Its value is `store-code`, `instantiate`, or
+`execute`, respectively.
 
-Ex: Instantiate Event
+The following event records a contract instantiation.
 
 ```json
 {
