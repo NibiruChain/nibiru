@@ -295,3 +295,77 @@ func TestDecodeExplicitSchemaFailureNamesSchema(t *testing.T) {
 	_, err = debugcmd.Decode(env, []byte("zz!"), debugcmd.Options{Path: path})
 	require.ErrorContains(t, err, path)
 }
+
+// An ambiguous input shows every reading, in a fixed key order.
+func TestDecodeAmbiguousShowsReadings(t *testing.T) {
+	env, _ := testEnv()
+	hash := strings.Repeat("ab", 32)
+
+	t.Run("32 bytes", func(t *testing.T) {
+		res, err := debugcmd.Decode(env, []byte(hash), debugcmd.Options{})
+		require.NoError(t, err)
+		require.Equal(t, debugcmd.KindAmbiguous, res.Detected)
+		names := []string{}
+		for _, r := range res.Readings {
+			names = append(names, r.Name)
+		}
+		require.Equal(t,
+			[]string{"contract_addr", "ed25519_pubkey", "tx_hash"}, names)
+
+		out := toJSON(t, res)
+		// Stable key order in the encoded JSON.
+		require.Less(t, strings.Index(out, `"contract_addr"`),
+			strings.Index(out, `"ed25519_pubkey"`))
+		require.Less(t, strings.Index(out, `"ed25519_pubkey"`),
+			strings.Index(out, `"tx_hash"`))
+		require.Contains(t, out, `"query":"nibiru query tx `+strings.ToUpper(hash))
+		require.Contains(t, out, `"cons"`)
+		require.Contains(t, out, "nibi1")
+		again, err := debugcmd.Decode(env, []byte(hash), debugcmd.Options{})
+		require.NoError(t, err)
+		require.Equal(t, out, toJSON(t, again))
+	})
+
+	t.Run("--as picks one answer", func(t *testing.T) {
+		res, err := debugcmd.Decode(env, []byte(hash),
+			debugcmd.Options{As: debugcmd.KindTxHash})
+		require.NoError(t, err)
+		require.Empty(t, res.Readings)
+		require.Equal(t, debugcmd.KindTxHash, res.Detected)
+	})
+
+	t.Run("valid as hex and base64", func(t *testing.T) {
+		for _, in := range []string{"deadbeef", "0a026162"} {
+			res, err := debugcmd.Decode(env, []byte(in), debugcmd.Options{})
+			require.NoError(t, err, in)
+			require.Equal(t, debugcmd.KindAmbiguous, res.Detected, in)
+			require.Len(t, res.Readings, 2, in)
+			require.Equal(t, "hex", res.Readings[0].Name)
+			require.Equal(t, "base64", res.Readings[1].Name)
+		}
+		// The hex reading of "0a026162" is protobuf; the base64 one is not.
+		res, _ := debugcmd.Decode(env, []byte("0a026162"), debugcmd.Options{})
+		hexRes := res.Readings[0].Value.(debugcmd.Result)
+		require.Equal(t, debugcmd.KindUnknownProtobuf, hexRes.Detected)
+		require.NotEmpty(t, res.Readings[1].Value.(debugcmd.Result).Error)
+
+		// "deadbeef": both readings fail, and each reports why.
+		res, _ = debugcmd.Decode(env, []byte("deadbeef"), debugcmd.Options{})
+		for _, r := range res.Readings {
+			require.NotEmpty(t, r.Value.(debugcmd.Result).Error, r.Name)
+		}
+	})
+
+	t.Run("single readings stay single", func(t *testing.T) {
+		for in, kind := range map[string]debugcmd.Kind{
+			strings.Repeat("cd", 20):        debugcmd.KindAddress, // 20 bytes
+			"0x" + strings.Repeat("cd", 20): debugcmd.KindAddress,
+			"0a03616263":                    debugcmd.KindUnknownProtobuf, // not base64
+		} {
+			res, err := debugcmd.Decode(env, []byte(in), debugcmd.Options{})
+			require.NoError(t, err, in)
+			require.Equal(t, kind, res.Detected, in)
+			require.Empty(t, res.Readings, in)
+		}
+	})
+}

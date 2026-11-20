@@ -55,8 +55,17 @@ is given and stdin is piped. It works offline and accepts:
 | `[10 21 13 255]`                                      | `raw-bytes`        |
 | Other valid protobuf                                  | `unknown-protobuf` |
 
-A 32-byte value fits several kinds (transaction hash, Wasm contract address,
-raw key). The output lists the candidates. Pass `--as <kind>` to choose one.
+An ambiguous input prints `"detected": "ambiguous"` and a `readings` object
+with every reading, computed offline, in a fixed key order:
+
+- A 32-byte value has `contract_addr` (Wasm contract address), `ed25519_pubkey`
+  (the key and its derived addresses, including the consensus form), and
+  `tx_hash` (uppercase hash and the `nibiru query tx` command to look it up).
+- A string that is valid as both hex and base64 has one reading per encoding,
+  named `hex` and `base64`. Each holds the result of decoding those bytes, or
+  an `error` field when they do not decode.
+
+Pass `--as <kind>` to get a single answer.
 
 Explicit subcommands decode one kind: `debug tx`, `debug msg`,
 `debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,

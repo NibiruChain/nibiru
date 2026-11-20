@@ -90,6 +90,13 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   the binary runs as `nibiru`.
 - Match both `nibid` and `nibiru` in process checks (`pgrep -x`) in the
   `justfile`, `x/nutil/local_blockchain.go`, and the core test workflow.
+- Make `nibiru debug` show every reading of an ambiguous input. It prints
+  `"detected": "ambiguous"` with a `readings` object: `contract_addr`,
+  `ed25519_pubkey`, and `tx_hash` for 32 bytes, and one `hex` and `base64`
+  reading for a string valid as both. `--as <kind>` still gives one answer.
+- Check both `nibid` and `nibiru` node processes, for the target home only,
+  in the `localnet` script before it resets chain data. The script waits for
+  them to exit and aborts if one stays alive.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local
   testnet".
   [PR #2929](https://github.com/SaiDotFun/nibiru/pull/2929).
