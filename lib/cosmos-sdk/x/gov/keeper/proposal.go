@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
 	sdk "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types"
@@ -162,6 +163,22 @@ func (keeper Keeper) SetProposal(ctx sdk.Context, proposal v1.Proposal) {
 	}
 
 	store.Set(types.ProposalKey(proposal.Id), bz)
+}
+
+// FailVotingProposal closes an expired voting period when its stored proposal
+// cannot be decoded. It keeps any recovered tally and refunds all deposits.
+// The queue entry supplies endTime when the proposal's fields are unreadable.
+func (keeper Keeper) FailVotingProposal(ctx sdk.Context, proposal v1.Proposal, endTime time.Time) {
+	proposal.Status = v1.StatusFailed
+	proposal.Messages = nil
+	if proposal.FinalTallyResult == nil {
+		tally := v1.EmptyTallyResult()
+		proposal.FinalTallyResult = &tally
+	}
+	keeper.SetProposal(ctx, proposal)
+	keeper.RefundAndDeleteDeposits(ctx, proposal.Id)
+	keeper.deleteVotes(ctx, proposal.Id)
+	keeper.RemoveFromActiveProposalQueue(ctx, proposal.Id, endTime)
 }
 
 // DeleteProposal deletes a proposal from store.

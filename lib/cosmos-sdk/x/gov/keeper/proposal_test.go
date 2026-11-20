@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/testutil/testdata"
@@ -15,6 +16,54 @@ import (
 	v1 "github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1"
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
+
+func TestFailVotingProposal(t *testing.T) {
+	recoveredTally := v1.NewTallyResult(sdkmath.OneInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt())
+	for _, tc := range []struct {
+		name      string
+		tally     *v1.TallyResult
+		wantTally v1.TallyResult
+	}{
+		{name: "missing tally", wantTally: v1.EmptyTallyResult()},
+		{name: "recovered tally", tally: &recoveredTally, wantTally: recoveredTally},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			govKeeper, _, _, _, _, ctx := setupGovKeeper(t)
+			voter := sdk.AccAddress("voter_______________")
+			endTime := ctx.BlockTime()
+			proposal, err := v1.NewProposal(TestProposal, 1, endTime.Add(-time.Hour), endTime, "", "title", "summary", voter)
+			require.NoError(t, err)
+			proposal.Status = v1.StatusVotingPeriod
+			proposal.FinalTallyResult = tc.tally
+			govKeeper.SetProposal(ctx, proposal)
+			govKeeper.InsertActiveProposalQueue(ctx, proposal.Id, endTime)
+
+			options := v1.NewNonSplitVoteOption(v1.OptionYes)
+			govKeeper.SetVote(ctx, v1.NewVote(proposal.Id, voter, options, ""))
+			govKeeper.SetVote(ctx, v1.NewVote(proposal.Id, sdk.AccAddress("other_voter_________"), options, ""))
+			otherVote := v1.NewVote(proposal.Id+1, voter, options, "")
+			govKeeper.SetVote(ctx, otherVote)
+			require.Len(t, govKeeper.GetVotes(ctx, proposal.Id), 2)
+
+			govKeeper.FailVotingProposal(ctx, proposal, endTime)
+
+			got, found := govKeeper.GetProposal(ctx, proposal.Id)
+			require.True(t, found)
+			require.Equal(t, v1.StatusFailed, got.Status)
+			require.Empty(t, got.Messages)
+			require.Empty(t, govKeeper.GetVotes(ctx, proposal.Id))
+			require.Equal(t, v1.Votes{&otherVote}, govKeeper.GetAllVotes(ctx))
+
+			queue := govKeeper.ActiveProposalQueueIterator(ctx, endTime)
+			defer queue.Close()
+			require.False(t, queue.Valid())
+
+			res, err := govKeeper.TallyResult(sdk.WrapSDKContext(ctx), &v1.QueryTallyResultRequest{ProposalId: proposal.Id})
+			require.NoError(t, err)
+			require.Equal(t, &tc.wantTally, res.Tally)
+		})
+	}
+}
 
 func (suite *KeeperTestSuite) TestGetSetProposal() {
 	tp := TestProposal

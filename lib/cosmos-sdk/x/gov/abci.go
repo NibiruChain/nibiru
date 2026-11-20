@@ -201,11 +201,9 @@ func collectUndecodableProposals(
 	return out
 }
 
-// failUndecodableProposal fails a queued proposal that x/gov can't process.
-// It marks the proposal failed, clears its messages, refunds and deletes its
-// deposits, and removes it from its queue. An inactive proposal is then
-// deleted, as when it misses the minimum deposit. Gov hooks are not called,
-// since they may load the proposal. Ported from cosmos/cosmos-sdk#17873.
+// failUndecodableProposal refunds deposits and removes the queue entry. It
+// deletes inactive proposals and retains failed records for active proposals.
+// It skips gov hooks because they may load the proposal.
 func failUndecodableProposal(
 	ctx sdk.Context,
 	keeper *keeper.Keeper,
@@ -213,17 +211,15 @@ func failUndecodableProposal(
 	active bool,
 ) {
 	proposal := p.proposal
-	proposal.Status = v1.StatusFailed
-	proposal.Messages = nil // clear out the messages that fail to decode
-
-	keeper.SetProposal(ctx, proposal)
-	keeper.RefundAndDeleteDeposits(ctx, proposal.Id)
-
 	eventType := types.EventTypeInactiveProposal
 	if active {
 		eventType = types.EventTypeActiveProposal
-		keeper.RemoveFromActiveProposalQueue(ctx, proposal.Id, p.endTime)
+		keeper.FailVotingProposal(ctx, proposal, p.endTime)
 	} else {
+		proposal.Status = v1.StatusFailed
+		proposal.Messages = nil
+		keeper.SetProposal(ctx, proposal)
+		keeper.RefundAndDeleteDeposits(ctx, proposal.Id)
 		keeper.RemoveFromInactiveProposalQueue(ctx, proposal.Id, p.endTime)
 		keeper.DeleteProposal(ctx, proposal.Id)
 	}
