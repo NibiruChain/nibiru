@@ -248,6 +248,10 @@ func (bcR *Reactor) respondToPeer(msg *bcproto.BlockRequest,
 // FilterMsgBytes implements p2p.MsgBytesFilter and rejects messages from
 // unexpected peers before unmarshalling the request.
 func (bcR *Reactor) FilterMsgBytes(chID byte, src p2p.Peer, msgBytes []byte) error {
+	return bcR.filterMsgBytesAt(chID, src, msgBytes, time.Now())
+}
+
+func (bcR *Reactor) filterMsgBytesAt(chID byte, src p2p.Peer, msgBytes []byte, now time.Time) error {
 	// do not check invalid messages, will fail unmarshalling
 	if chID != BlocksyncChannel || len(msgBytes) == 0 {
 		return nil
@@ -279,17 +283,19 @@ func (bcR *Reactor) FilterMsgBytes(chID byte, src p2p.Peer, msgBytes []byte) err
 
 	height := stub.BlockResponse.GetBlock().GetHeader().GetHeight()
 	retired, pending := bcR.pool.responseRequestStatus(src.ID(), height)
-	if retired {
-		// A second peer can reply after we applied the requested block.
-		pending = sentRequestsFor(src).contains(height, time.Now())
-	}
-	if !pending {
+	if !retired && !pending {
 		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
 	}
 
 	// validate the commit count in the response
 	if err := validateMaxVotes(stub.BlockResponse); err != nil {
 		return fmt.Errorf("validating max votes in BlockResponse from peer %s: %w", src.ID(), err)
+	}
+
+	// A requester can retire before delivery, even if it was live here.
+	admitted := sentRequestsFor(src).admit(height, now)
+	if retired && !admitted {
+		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
 	}
 
 	return nil
@@ -312,6 +318,12 @@ func validateMaxVotes(br *bcproto.SigCountBlockResponse) error {
 
 // Receive implements Reactor by handling 4 types of messages (look below).
 func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
+	bcR.receiveEnvelopeAt(e, time.Now())
+}
+
+func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
+	requests := sentRequestsFor(e.Src)
+	admittedHeight := requests.takeAdmission()
 	if err := ValidateMsg(e.Message); err != nil {
 		bcR.Logger.Error("Peer sent us invalid msg", "peer", e.Src, "msg", e.Message, "err", err)
 		bcR.Switch.StopPeerForError(e.Src, err)
@@ -329,7 +341,7 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 			bcR.Logger.Error("Block content is invalid", "err", err)
 			return
 		}
-		requested := sentRequestsFor(e.Src).take(bi.Height, time.Now())
+		requested := admittedHeight == bi.Height || requests.take(bi.Height, now)
 		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requested)
 	case *bcproto.StatusRequest:
 		// Send peer our state.
@@ -344,7 +356,7 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 		// Got a peer status. Unverified.
 		bcR.pool.SetPeerRange(e.Src.ID(), msg.Base, msg.Height)
 	case *bcproto.NoBlockResponse:
-		sentRequestsFor(e.Src).take(msg.Height, time.Now())
+		requests.take(msg.Height, now)
 		bcR.Logger.Debug("Peer does not have requested block", "peer", e.Src, "height", msg.Height)
 		bcR.pool.RedoRequestFrom(msg.Height, e.Src.ID())
 	default:

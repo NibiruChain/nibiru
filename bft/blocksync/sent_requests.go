@@ -16,8 +16,9 @@ const (
 // sentBlockRequests belongs to one peer connection. It holds successfully
 // queued requests awaiting a reply, even after the pool retires a requester.
 type sentBlockRequests struct {
-	mtx       cmtsync.Mutex
-	expiresAt map[int64]time.Time
+	mtx            cmtsync.Mutex
+	expiresAt      map[int64]time.Time
+	admittedHeight int64 // The peer receive loop delivers one message at a time.
 }
 
 func sentRequestsFor(peer p2p.Peer) *sentBlockRequests {
@@ -61,23 +62,41 @@ func (requests *sentBlockRequests) remember(height int64, now time.Time) {
 			oldestHeight, oldestExpiry = sentHeight, expiry
 		}
 	}
-	if len(requests.expiresAt) >= maxPendingRequestsPerPeer {
+	limit := maxPendingRequestsPerPeer
+	if requests.admittedHeight != 0 {
+		limit--
+	}
+	if len(requests.expiresAt) >= limit {
 		delete(requests.expiresAt, oldestHeight)
 	}
 	requests.expiresAt[height] = now.Add(sentBlockRequestTTL)
 }
 
-func (requests *sentBlockRequests) contains(height int64, now time.Time) bool {
+// admit moves a timely request out of the expiring history until delivery.
+func (requests *sentBlockRequests) admit(height int64, now time.Time) bool {
 	if requests == nil {
 		return false
 	}
 	requests.mtx.Lock()
 	defer requests.mtx.Unlock()
-	if now.Before(requests.expiresAt[height]) {
-		return true
-	}
+	expiry := requests.expiresAt[height]
 	delete(requests.expiresAt, height)
-	return false
+	if !now.Before(expiry) {
+		return false
+	}
+	requests.admittedHeight = height
+	return true
+}
+
+func (requests *sentBlockRequests) takeAdmission() int64 {
+	if requests == nil {
+		return 0
+	}
+	requests.mtx.Lock()
+	defer requests.mtx.Unlock()
+	height := requests.admittedHeight
+	requests.admittedHeight = 0
+	return height
 }
 
 func (requests *sentBlockRequests) take(height int64, now time.Time) bool {
@@ -97,5 +116,6 @@ func (requests *sentBlockRequests) clear() {
 	}
 	requests.mtx.Lock()
 	defer requests.mtx.Unlock()
+	// A reply admitted before the handoff can still be in delivery.
 	requests.expiresAt = nil
 }

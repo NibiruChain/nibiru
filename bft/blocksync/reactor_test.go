@@ -541,6 +541,7 @@ func mockPeer(id p2p.ID) *p2pmocks.Peer {
 
 func mockBlockRequestPeer(id p2p.ID, queued bool) *p2pmocks.Peer {
 	peer := mockPeer(id)
+	peer.On("String").Return(string(id)).Maybe()
 	var requests any
 	peer.On("Set", sentBlockRequestsKey, mock.Anything).Run(func(args mock.Arguments) {
 		requests = args.Get(1)
@@ -582,19 +583,32 @@ func TestFilterAllowsOnlyRequestedLateReplyDuringSync(t *testing.T) {
 	r.pool.PopRequest(block.Time)
 	seedRequester(r, block.Height+1, other.ID())
 	require.True(t, r.pool.IsRunning())
-	require.NoError(t, r.FilterMsgBytes(BlocksyncChannel, delayed, wireReply))
+	expiry := sentRequestsFor(delayed).expiresAt[block.Height]
+	require.NoError(t, r.filterMsgBytesAt(BlocksyncChannel, delayed, wireReply, expiry.Add(-time.Nanosecond)))
 	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, failed, wireReply), "unsolicited")
 	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, other, wireReply), "unsolicited")
 	reconnected := r.InitPeer(mockBlockRequestPeer(delayed.ID(), true))
 	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, reconnected, wireReply), "unsolicited")
 
-	r.ReceiveEnvelope(p2p.Envelope{ChannelID: BlocksyncChannel, Src: delayed, Message: reply})
+	envelope := p2p.Envelope{ChannelID: BlocksyncChannel, Src: delayed, Message: reply}
+	r.receiveEnvelopeAt(envelope, expiry)
 	r.pool.mtx.Lock()
 	pending := r.pool.peers[delayed.ID()].numPending
 	r.pool.mtx.Unlock()
 	require.Zero(t, pending, "the delayed reply satisfies the peer's request")
 	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, delayed, wireReply), "unsolicited")
 
+	// A second delivery must not release the slot for a different request.
+	require.True(t, sentRequestsFor(delayed).send(delayed, block.Height+2))
+	r.pool.mtx.Lock()
+	r.pool.peers[delayed.ID()].incrPending()
+	r.pool.mtx.Unlock()
+	r.receiveEnvelopeAt(envelope, expiry)
+	r.pool.mtx.Lock()
+	pending = r.pool.peers[delayed.ID()].numPending
+	r.pool.mtx.Unlock()
+	require.Equal(t, int32(1), pending)
+	r.RemovePeer(delayed, nil)
 	r.RemovePeer(other, nil)
 	require.Nil(t, sentRequestsFor(other))
 }
@@ -603,8 +617,11 @@ func TestSentBlockRequestExpiresAtRetryInterval(t *testing.T) {
 	var requests sentBlockRequests
 	now := time.Now()
 	requests.remember(1, now)
-	require.True(t, requests.contains(1, now.Add(sentBlockRequestTTL-time.Nanosecond)))
-	require.False(t, requests.contains(1, now.Add(sentBlockRequestTTL)))
+	requests.remember(2, now)
+	require.True(t, requests.admit(1, now.Add(sentBlockRequestTTL-time.Nanosecond)))
+	require.False(t, requests.admit(2, now.Add(sentBlockRequestTTL)))
+	require.EqualValues(t, 1, requests.takeAdmission())
+	require.Zero(t, requests.takeAdmission())
 	require.Empty(t, requests.expiresAt)
 }
 
@@ -799,7 +816,9 @@ func TestFilterMsgBytes(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			r := tc.setup(t)
-			err := r.FilterMsgBytes(tc.chID, mockPeer(tc.peer), tc.bytesFn(t))
+			peer := mockPeer(tc.peer)
+			peer.On("Get", sentBlockRequestsKey).Return(nil).Maybe()
+			err := r.FilterMsgBytes(tc.chID, peer, tc.bytesFn(t))
 			if tc.expectErr == "" {
 				require.NoError(t, err)
 				return
