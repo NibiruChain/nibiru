@@ -7,9 +7,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"regexp"
 	"strings"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/types/bech32"
 )
