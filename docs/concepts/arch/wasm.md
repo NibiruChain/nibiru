@@ -25,42 +25,29 @@ Reference:
 Indexers can use Wasm events to track [TxMsgs](../tx-msgs.md) for smart contract
 operations.
 
-The module for each event is "wasm", and `code_id` is only present when
-instantiating a contract so that users can subscribe to new contract instances.
-The `code_id` is omitted during invocation (`wasm.Execute`). These events are
-emitted any time a contract returns non-empty event attributes.
+The SDK emits a `message` event whose `action` attribute is the TxMsg's
+Protobuf type URL. To find transactions that submit a `MsgInstantiateContract`,
+filter for `message.action='/cosmwasm.wasm.v1.MsgInstantiateContract'`.
 
-The `action` field identifies whether the TxMsg stores code, instantiates a
-contract, or executes a contract. Its value is `store-code`, `instantiate`, or
-`execute`, respectively.
-
-The following event records a contract instantiation.
+The Wasm module emits a separate `instantiate` event for each new contract
+instance. Filter by `instantiate.code_id` to find instances of specific code.
+Read the `_contract_address` attribute to get the new contract's address.
 
 ```json
 {
-    "Type": "message",
-    "Attr": [
-        {
-            "key": "module",
-            "value": "wasm"
-        },
-        {
-            "key": "action",
-            "value": "instantiate"
-        },
-        {
-            "key": "signer",
-            "value": "nibi1vx8knpllrj7n963p9ttd80w47kpacrhuts497x"
-        },
-        {
-            "key": "code_id",
-            "value": "1"
-        },
-        {
-            "key": "_contract_address",
-            "value": "nibi14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr"
-        }
-    ]
+  "type": "instantiate",
+  "attributes": [
+    {
+      "key": "_contract_address",
+      "value": "nibi14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s4hmalr",
+      "index": true
+    },
+    {
+      "key": "code_id",
+      "value": "1",
+      "index": true
+    }
+  ]
 }
 ```
 
