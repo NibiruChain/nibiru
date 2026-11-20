@@ -14,9 +14,9 @@ import (
 // QueryCmd returns the root `nibid query` command with all app module queries.
 func QueryCmd() *cobra.Command {
 	rootQueryCmd := &cobra.Command{
-		Use:                        "query",
-		Aliases:                    []string{"q"},
-		Short:                      "Querying subcommands",
+		Use:                        "q",
+		Aliases:                    []string{"query"},
+		Short:                      "Query the chain",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -41,7 +41,7 @@ func QueryCmd() *cobra.Command {
 func TxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
-		Short:                      "Transactions subcommands",
+		Short:                      "Send transactions",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,

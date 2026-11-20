@@ -42,6 +42,45 @@ type Result struct {
 	Candidates []Kind `json:"candidates,omitempty"`
 	Hint       string `json:"hint,omitempty"`
 	Data       any    `json:"data,omitempty"`
+	// Readings holds every plausible interpretation of an ambiguous input, in
+	// a fixed order.
+	Readings Readings `json:"readings,omitempty"`
+	// Error is set on a reading that failed to decode.
+	Error string `json:"error,omitempty"`
+}
+
+// Reading is one named interpretation of an ambiguous input.
+type Reading struct {
+	Name  string
+	Value any
+}
+
+// Readings is an ordered set of readings. It marshals to a JSON object whose
+// keys keep the slice order, so output is deterministic.
+type Readings []Reading
+
+// MarshalJSON writes the readings as an object in slice order.
+func (r Readings) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteByte('{')
+	for i, rd := range r {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		k, err := json.Marshal(rd.Name)
+		if err != nil {
+			return nil, err
+		}
+		v, err := json.Marshal(rd.Value)
+		if err != nil {
+			return nil, err
+		}
+		b.Write(k)
+		b.WriteByte(':')
+		b.Write(v)
+	}
+	b.WriteByte('}')
+	return b.Bytes(), nil
 }
 
 // Options carries the flags that steer decoding.
@@ -59,15 +98,29 @@ type Options struct {
 // Decode classifies input (unless opts.As is set) and decodes it.
 func Decode(env Env, input []byte, opts Options) (Result, error) {
 	in := bytes.TrimSpace(input)
+	if res, err, ok := decodeExplicitSchema(env, in, opts); ok {
+		return res, err
+	}
 	c := Classify(in)
 	kind := c.Kind
 	if opts.As != "" {
+		if res, err, ok := decodeAsBothEncodings(env, in, opts); ok {
+			return res, err
+		}
 		kind = opts.As
 		if c.Payload == nil {
 			c = reclassifyAs(in, kind)
 		}
+	} else if res, ok := decodeBothEncodings(env, in); ok {
+		return res, nil
 	}
+	return decodeKind(env, in, c, kind, opts)
+}
 
+// decodeKind decodes a classified input as kind.
+func decodeKind(
+	env Env, in []byte, c Classification, kind Kind, opts Options,
+) (Result, error) {
 	switch kind {
 	case KindAmbiguous:
 		return Result{
@@ -76,7 +129,8 @@ func Decode(env Env, input []byte, opts Options) (Result, error) {
 			Hint: fmt.Sprintf(
 				"%d bytes fit several kinds; pass --as <kind> to choose",
 				len(c.Payload)),
-			Data: map[string]any{"hex": hex.EncodeToString(c.Payload)},
+			Data:     map[string]any{"hex": hex.EncodeToString(c.Payload)},
+			Readings: readings32(c.Payload),
 		}, nil
 	case KindABCIQuery:
 		if c.Encoding == "json" {
@@ -99,9 +153,9 @@ func Decode(env Env, input []byte, opts Options) (Result, error) {
 			Data:     map[string]any{"hash": strings.ToUpper(hex.EncodeToString(c.Payload))},
 			Hint:     "query it with: nibid query tx <hash>",
 		}, nil
-	case KindAddress:
-		out, err := DescribeAddress(c)
-		return Result{Detected: KindAddress, Data: out}, err
+	case KindAddr:
+		out, err := DescribeAddr(c)
+		return Result{Detected: KindAddr, Data: out}, err
 	case KindPubkey:
 		out, err := DescribePubkey(env, in, c)
 		return Result{Detected: KindPubkey, Data: out}, err
@@ -113,6 +167,57 @@ func Decode(env Env, input []byte, opts Options) (Result, error) {
 	}
 	return Result{Detected: KindUnknown, Hint: "input is not recognized"},
 		fmt.Errorf("could not classify input")
+}
+
+// decodeExplicitSchema decodes input under a schema the caller named, before
+// any heuristic runs: --type-url selects a message type, and --path selects a
+// gRPC method for abci-query data. A failure is an error that names the
+// schema, never a fall-through to guessing. It reports ok=false when no
+// explicit schema applies. A JSON-RPC body keeps its own path and data, and an
+// explicit --as other than protobuf (for --type-url) or abci-query (for
+// --path) keeps the kind the caller chose.
+func decodeExplicitSchema(
+	env Env, in []byte, opts Options,
+) (res Result, err error, ok bool) {
+	switch {
+	case opts.TypeURL != "" && (opts.As == "" || opts.As == KindProtobuf):
+		bz, berr := binaryInput(in)
+		if berr != nil {
+			return Result{Detected: KindAny}, fmt.Errorf(
+				"decode as %s: %w", opts.TypeURL, berr), true
+		}
+		out, derr := DecodeMsg(env, opts.TypeURL, bz)
+		if derr != nil {
+			return Result{Detected: KindAny}, fmt.Errorf(
+				"decode as %s: %w", opts.TypeURL, derr), true
+		}
+		return Result{Detected: KindAny, Data: out}, nil, true
+	case opts.Path != "" && (opts.As == "" || opts.As == KindABCIQuery):
+		if len(in) > 0 && (in[0] == '{' || in[0] == '[') {
+			return Result{}, nil, false
+		}
+		bz, berr := binaryInput(in)
+		if berr != nil {
+			return Result{Detected: KindABCIQuery}, fmt.Errorf(
+				"decode as %s: %w", opts.Path, berr), true
+		}
+		out, derr := DecodeABCIRequest(env, opts.Path, bz, opts.Response)
+		return Result{Detected: KindABCIQuery, Data: out}, derr, true
+	}
+	return Result{}, nil, false
+}
+
+// binaryInput reads hex (with optional 0x) or base64 protobuf bytes.
+func binaryInput(in []byte) ([]byte, error) {
+	s := strings.TrimSpace(string(in))
+	if bz, err := hex.DecodeString(strings.TrimPrefix(s, "0x")); err == nil {
+		return bz, nil
+	}
+	bz, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, errors.New("input is neither hex nor base64")
+	}
+	return bz, nil
 }
 
 // reclassifyAs prepares a payload when --as forces a kind on an input that
@@ -314,21 +419,21 @@ func RawBytesToHex(s string) (string, error) {
 	return strings.ToUpper(hex.EncodeToString(bz)), nil
 }
 
-// AddressInfo is the offline description of an address.
-type AddressInfo struct {
-	Role   string            `json:"role"`
-	Length int               `json:"length"`
-	Hex    string            `json:"hex"`
-	EVM    string            `json:"evm,omitempty"`
-	Bech32 map[string]string `json:"bech32"`
+// AddrInfo is the offline description of an address.
+type AddrInfo struct {
+	Role    string            `json:"role"`
+	Length  int               `json:"length"`
+	Hex     string            `json:"hex"`
+	EthAddr string            `json:"eth_addr,omitempty"`
+	Bech32  map[string]string `json:"bech32"`
 }
 
-// DescribeAddress lists every form of an address: hex, the EVM 0x form, and
+// DescribeAddr lists every form of an address: hex, the EVM 0x form, and
 // the account, validator, and consensus bech32 forms. 20 bytes reads as an
 // account and 32 bytes as a Wasm contract.
-func DescribeAddress(c Classification) (AddressInfo, error) {
+func DescribeAddr(c Classification) (AddrInfo, error) {
 	bz := c.Payload
-	info := AddressInfo{
+	info := AddrInfo{
 		Length: len(bz),
 		Hex:    hex.EncodeToString(bz),
 		Bech32: map[string]string{},
@@ -336,7 +441,7 @@ func DescribeAddress(c Classification) (AddressInfo, error) {
 	switch len(bz) {
 	case 20:
 		info.Role = "account"
-		info.EVM = gethcommon.BytesToAddress(bz).Hex()
+		info.EthAddr = gethcommon.BytesToAddress(bz).Hex()
 	case 32:
 		info.Role = "wasm-contract"
 	default:
@@ -353,9 +458,9 @@ func DescribeAddress(c Classification) (AddressInfo, error) {
 
 // PubkeyInfo is the offline description of a public key.
 type PubkeyInfo struct {
-	Type    string            `json:"type"`
-	Hex     string            `json:"hex"`
-	Address map[string]string `json:"address"`
+	Type string            `json:"type"`
+	Hex  string            `json:"hex"`
+	Addr map[string]string `json:"addr"`
 	// Alternatives lists other key types the same bytes could be.
 	Alternatives []PubkeyInfo `json:"alternatives,omitempty"`
 }
@@ -365,14 +470,14 @@ func describeKey(pk cryptotypes.PubKey) PubkeyInfo {
 	info := PubkeyInfo{
 		Type: pk.Type(),
 		Hex:  hex.EncodeToString(pk.Bytes()),
-		Address: map[string]string{
+		Addr: map[string]string{
 			"hex": hex.EncodeToString(addr),
 			"acc": sdk.AccAddress(addr).String(),
 			"val": sdk.ValAddress(addr).String(),
 		},
 	}
 	if len(addr) == 20 && pk.Type() == ethsecp256k1.KeyType {
-		info.Address["evm"] = gethcommon.BytesToAddress(addr).Hex()
+		info.Addr["eth_addr"] = gethcommon.BytesToAddress(addr).Hex()
 	}
 	return info
 }
@@ -400,6 +505,10 @@ func DescribePubkey(env Env, in []byte, c Classification) (PubkeyInfo, error) {
 	}
 	switch len(c.Payload) {
 	case secp256k1.PubKeySize:
+		if !validSecp256k1(c.Payload) {
+			return PubkeyInfo{}, errors.New(
+				"33 bytes are not a valid secp256k1 public key (not a point on the curve)")
+		}
 		eth := describeKey(&ethsecp256k1.PubKey{Key: c.Payload})
 		eth.Alternatives = []PubkeyInfo{
 			describeKey(&secp256k1.PubKey{Key: c.Payload}),
@@ -410,4 +519,159 @@ func DescribePubkey(env Env, in []byte, c Classification) (PubkeyInfo, error) {
 	}
 	return PubkeyInfo{}, fmt.Errorf(
 		"expected a 32 or 33 byte key, got %d bytes", len(c.Payload))
+}
+
+// readings32 lists every reading of 32 bytes: a Wasm contract address, an
+// ed25519 public key, and a transaction hash. All are computed offline.
+func readings32(bz []byte) Readings {
+	contract, _ := DescribeAddr(Classification{Payload: bz})
+	key := describeKey(&ed25519.PubKey{Key: bz})
+	key.Addr["cons"] = sdk.ConsAddress(consBytes(bz)).String()
+	hash := strings.ToUpper(hex.EncodeToString(bz))
+	return Readings{
+		{Name: "contract_addr", Value: contract},
+		{Name: "ed25519_pubkey", Value: key},
+		{Name: "tx_hash", Value: map[string]any{
+			"hash":  hash,
+			"query": "nibiru query tx " + hash,
+		}},
+	}
+}
+
+// bothEncodings returns the hex and base64 readings of in when it is valid as
+// both and only the hex reading is a generic-length payload (not a 20, 32, or
+// 33 byte value, which keep their meaning, and not a transaction).
+func bothEncodings(
+	env Env, in []byte,
+) (hexC, b64C Classification, ok bool) {
+	s := string(in)
+	if !hexRe.MatchString(s) || strings.HasPrefix(s, "0x") {
+		return hexC, b64C, false
+	}
+	hb, err := hex.DecodeString(s)
+	if err != nil {
+		return hexC, b64C, false
+	}
+	bb, err := base64.StdEncoding.DecodeString(s)
+	if err != nil || len(bb) == 0 {
+		return hexC, b64C, false
+	}
+	hexC, b64C = classifyBytes(hb, "hex"), classifyBytes(bb, "base64")
+	if hexC.Kind != KindProtobuf {
+		return hexC, b64C, false
+	}
+	if _, err := DecodeTx(env, hb); err == nil {
+		return hexC, b64C, false
+	}
+	if _, ok := probeWrapper(env, hb); ok {
+		return hexC, b64C, false
+	}
+	return hexC, b64C, true
+}
+
+// decodeBothEncodings handles a string that is valid as both hex and base64:
+// it returns one reading per encoding. A reading that does not decode shows
+// its error.
+func decodeBothEncodings(env Env, in []byte) (Result, bool) {
+	hexC, b64C, ok := bothEncodings(env, in)
+	if !ok {
+		return Result{}, false
+	}
+	var rs Readings
+	for _, rc := range []Classification{hexC, b64C} {
+		res, err := decodeKind(env, in, rc, rc.Kind, Options{})
+		if err != nil {
+			res.Error = err.Error()
+		}
+		rs = append(rs, Reading{Name: rc.Encoding, Value: res})
+	}
+	return Result{
+		Detected: KindAmbiguous,
+		Hint: "the input is valid as hex and as base64; " +
+			"each reading is shown",
+		Readings: rs,
+	}, true
+}
+
+// consBytes is the 20-byte address of an ed25519 key.
+func consBytes(pub []byte) []byte {
+	return (&ed25519.PubKey{Key: pub}).Address()
+}
+
+// dualBytes returns the hex and base64 decodings of in when it is valid as
+// both. A 0x prefix means hex only.
+func dualBytes(in []byte) (hb, bb []byte, ok bool) {
+	s := string(in)
+	if !hexRe.MatchString(s) || strings.HasPrefix(s, "0x") {
+		return nil, nil, false
+	}
+	hb, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, nil, false
+	}
+	bb, err = base64.StdEncoding.DecodeString(s)
+	if err != nil || len(bb) == 0 {
+		return nil, nil, false
+	}
+	return hb, bb, true
+}
+
+// kindFits reports whether n bytes can be a value of kind.
+func kindFits(kind Kind, bz []byte) bool {
+	n := len(bz)
+	switch kind {
+	case KindAddr:
+		return n == 20 || n == 32
+	case KindPubkey:
+		return n == 32 || (n == 33 && validSecp256k1(bz))
+	case KindTxHash:
+		return n == 32
+	}
+	return true
+}
+
+// decodeAsBothEncodings applies an explicit --as kind to a string that is
+// valid as both hex and base64. It tries each encoding and keeps the ones
+// that decode as that kind. One match is the answer. Two matches are an
+// ambiguous result with a hex and a base64 reading. No match is an error that
+// names the kind.
+func decodeAsBothEncodings(env Env, in []byte, opts Options) (Result, error, bool) {
+	switch opts.As {
+	case KindAny, KindAmbiguous, KindUnknown, KindUnknownProtobuf:
+		return Result{}, nil, false
+	}
+	hb, bb, ok := dualBytes(in)
+	if !ok {
+		return Result{}, nil, false
+	}
+	var rs Readings
+	var last Result
+	for _, e := range []struct {
+		name string
+		bz   []byte
+	}{{"hex", hb}, {"base64", bb}} {
+		if !kindFits(opts.As, e.bz) {
+			continue
+		}
+		c := Classification{Kind: opts.As, Payload: e.bz, Encoding: e.name}
+		res, err := decodeKind(env, in, c, opts.As, opts)
+		if err != nil {
+			continue
+		}
+		rs = append(rs, Reading{Name: e.name, Value: res})
+		last = res
+	}
+	switch len(rs) {
+	case 0:
+		return Result{Detected: KindUnknown}, fmt.Errorf(
+			"input does not decode as %s, read as hex or as base64", opts.As), true
+	case 1:
+		return last, nil, true
+	}
+	return Result{
+		Detected: KindAmbiguous,
+		Hint: fmt.Sprintf("the input is valid as hex and as base64, and both "+
+			"decode as %s; each reading is shown", opts.As),
+		Readings: rs,
+	}, nil, true
 }

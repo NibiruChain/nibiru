@@ -11,7 +11,7 @@ description: >
 
 ## Related Oracle Pages
 
-1. [Nibiru Oracle (EVM) - Usage Guide](../../dev/evm/oracle.md)
+1. [Sai Oracle Data and How to Read It](../../dev/sai-oracle.md)
 1. [Integrating with Oracles on Nibiru](../../dev/tools/oracle/index.md)
 1. [Using the Band Protocol Oracle on Nibiru](../../dev/tools/oracle/band-oracle.md)
 

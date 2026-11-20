@@ -13,14 +13,16 @@ import (
 )
 
 const (
-	acct     = "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
-	contract = "nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m"
+	// validKeyHex is a compressed secp256k1 public key on the curve.
+	validKeyHex = "02eaeba00ee3bdf3ddd4069d9a63af58cdab252c22a577d17fcc83ea92db0360c9"
+	acct        = "nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v"
+	contract    = "nibi1udqqx30cw8nwjxtl4l28ym9hhrp933zlq8dqxfjzcdhvl8y24zcqpzmh8m"
 )
 
 func TestClassify(t *testing.T) {
 	hex32 := strings.Repeat("ab", 32)
 	hex20 := strings.Repeat("cd", 20)
-	hex33 := "02" + strings.Repeat("11", 32)
+	hex33 := validKeyHex
 	b64pb := base64.StdEncoding.EncodeToString([]byte{0x0a, 0x03, 'a', 'b', 'c'})
 
 	for _, tc := range []struct {
@@ -37,19 +39,19 @@ func TestClassify(t *testing.T) {
 		{"any nested", `{"x":{"type_url":"/a.B","value":"AA=="}}`, debugcmd.KindAny, nil, "json"},
 		{"stargate wrapper", `{"stargate":{"type_url":"/a.B","value":"AA=="}}`, debugcmd.KindAny, nil, "json"},
 		{"pubkey json", `{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AurroA7jvfPd1AadmmOvWM2rJSwipXfRf8yD6pLbA2DJ"}`, debugcmd.KindPubkey, nil, "json"},
-		{"bech32 account", acct, debugcmd.KindAddress, nil, "bech32"},
-		{"bech32 contract", contract, debugcmd.KindAddress, nil, "bech32"},
+		{"bech32 account", acct, debugcmd.KindAddr, nil, "bech32"},
+		{"bech32 contract", contract, debugcmd.KindAddr, nil, "bech32"},
 		{"bech32 bad checksum", acct[:len(acct)-1] + "q", debugcmd.KindUnknown, nil, ""},
-		{"evm address", "0x" + hex20, debugcmd.KindAddress, nil, "evm"},
-		{"hex 20 bytes", hex20, debugcmd.KindAddress, nil, "hex"},
+		{"evm address", "0x" + hex20, debugcmd.KindAddr, nil, "evm"},
+		{"hex 20 bytes", hex20, debugcmd.KindAddr, nil, "hex"},
 		{
 			"hex 32 bytes ambiguous", hex32, debugcmd.KindAmbiguous,
-			[]debugcmd.Kind{debugcmd.KindTxHash, debugcmd.KindAddress, debugcmd.KindPubkey},
+			[]debugcmd.Kind{debugcmd.KindTxHash, debugcmd.KindAddr, debugcmd.KindPubkey},
 			"hex",
 		},
 		{
 			"0x 32 bytes ambiguous", "0x" + hex32, debugcmd.KindAmbiguous,
-			[]debugcmd.Kind{debugcmd.KindTxHash, debugcmd.KindAddress, debugcmd.KindPubkey},
+			[]debugcmd.Kind{debugcmd.KindTxHash, debugcmd.KindAddr, debugcmd.KindPubkey},
 			"hex",
 		},
 		{"hex 33 byte key", hex33, debugcmd.KindPubkey, nil, "hex"},
@@ -57,7 +59,7 @@ func TestClassify(t *testing.T) {
 		{"base64 protobuf", b64pb, debugcmd.KindProtobuf, nil, "base64"},
 		{"raw bytes", "[10 21 13 255]", debugcmd.KindRawBytes, nil, "list"},
 		{"raw bytes commas", "[1, 2, 3]", debugcmd.KindRawBytes, nil, "list"},
-		{"padded whitespace", "  " + acct + "\n", debugcmd.KindAddress, nil, "bech32"},
+		{"padded whitespace", "  " + acct + "\n", debugcmd.KindAddr, nil, "bech32"},
 		{"empty", "", debugcmd.KindUnknown, nil, ""},
 		{"prose", "hello world", debugcmd.KindUnknown, nil, ""},
 		{"invalid json", `{"a":`, debugcmd.KindUnknown, nil, ""},

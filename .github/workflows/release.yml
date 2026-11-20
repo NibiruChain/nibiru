@@ -79,7 +79,9 @@ jobs:
 
       - name: Compress binary
         run: |
-          tar czf "${{ env.FINAL_NAME }}.tar.gz" -C build nibid
+          # build/nibid is a symlink to build/nibiru. -h stores the file under
+          # the published name nibid, so the archive layout is unchanged.
+          tar czhf "${{ env.FINAL_NAME }}.tar.gz" -C build nibid
 
       - name: Verify Linux static PIE
         if: env.OS == 'linux'

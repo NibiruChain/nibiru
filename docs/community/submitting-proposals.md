@@ -9,76 +9,62 @@ order: 7
 
 {{ $frontmatter.description }}
 
-Any NIBI holder, whether bonded or unbonded, can submit proposals by sending a `TxGovProposal` transaction. This is possible using the `nibid` CLI. Each proposal type corresponds to a subcommand of `nibid tx gov submit-proposal`.
+Any NIBI holder, whether bonded or unbonded, can submit proposals with the `nibid` CLI. There are two submission paths:
+
+- `nibid tx gov submit-proposal <proposal-json-file>` submits a proposal that carries one or more messages, a deposit, and metadata, all defined in a JSON file.
+- `nibid tx gov submit-legacy-proposal [type]` submits a legacy proposal. Pass a `--proposal` JSON file, or set `--title`, `--description`, `--type`, and `--deposit` directly.
 
 ## Table of Contents <!-- omit in toc -->
 
 - [Proposal Types](#proposal-types)
-  - [Whitelisting an oracle address with `add-oracle`](#whitelisting-an-oracle-address-with-add-oracle)
-  - [Create a virtual pool](#create-a-virtual-pool)
-- [Querying a proposal](#querying-a-proposal)
+  - [Submitting a Proposal With Messages](#submitting-a-proposal-with-messages)
+- [Querying a Proposal](#querying-a-proposal)
 
 ## Proposal Types
 
-| Proposal Type             | Description                                                                                                                                                                                                                                                          |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `add-oracle`              | Whitelists an account as a price feed, enabling it send `post-price` messages.                                                                                                                                                                                       |
-| `cancel-software-upgrade` | Cancels a software upgrade.                                                                                                                                                                                                                                          |
-| `community-pool-spend`    | Details a proposal for use of community funds, together with how many coins are proposed to be spent, and to which recipient account.                                                                                                                                |
-| `create-pool`             | Creates a new Nibi-Perps trading pair by initializing a virtual AMM pool.                                                                                                                                                                                            |
-| `ibc-upgrade`             | Updates the IBC client state in-place. An `upgraded_client_state.json` can be client-breaking.                                                                                                                                                                       |
-| `param-change`            | Change module parameters.                                                                                                                                                                                                                                            |
-| `software-upgrade`        | Upgrade the protocol code.                                                                                                                                                                                                                                           |
+The legacy subcommands of `nibid tx gov submit-legacy-proposal` are:
+
+| Proposal Type             | Description |
+| ------------------------- | ----------- |
+| `cancel-software-upgrade` | Cancels a software upgrade. |
+| `ibc-upgrade`             | Updates the IBC client state in-place. An `upgraded_client_state.json` can be client-breaking. |
+| `param-change`            | Change module parameters. |
+| `software-upgrade`        | Upgrade the protocol code. |
 | `update-client`           | Substitutes the current IBC client for a new one. This proposal is useful for updating the light client in the case of misbehavior. See [ADR-026 of IBC-Go](https://ibc.cosmos.network/main/architecture/adr-026-ibc-client-recovery-mechanisms.html) for more info. |
 
-### Whitelisting an oracle address with `add-oracle`
+Other actions, such as spending community pool funds, are messages inside a
+`submit-proposal` file.
+
+### Submitting a Proposal With Messages
 
 ```bash
 # parameters
-nibid tx gov submit-proposal add-oracle [proposal-file] --deposit [deposit] [flags]
+nibid tx gov submit-proposal [proposal-json-file] [flags]
 
 # example
-nibid tx gov submit-proposal add-oracle /path/to/proposal.json --deposit 1000unibi --from validator
+nibid tx gov submit-proposal /path/to/proposal.json --from validator
 ```
 
-An JSON file the `add-oracle` proposal:
+The file sets the deposit with the `deposit` field. For example:
 
 ```json
 {
- "title": "add Delphi oracle",
- "description": "Whitelists Delphi to post prices for BTC",
- "oracles": ["nibi1zaavvzxez0elundtn32qnk9lkm8kmcsz44g7xl"],
- "pairs": ["ubtc:unusd"]
+  "messages": [
+    {
+      "@type": "/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
+      "authority": "<gov-module-account-address>",
+      "recipient": "nibi1...",
+      "amount": [{ "denom": "unibi", "amount": "1000000" }]
+    }
+  ],
+  "metadata": "",
+  "deposit": "1000unibi",
+  "title": "Spend From the Community Pool",
+  "summary": "Fund a grant."
 }
 ```
 
-### Create a virtual pool
-
-```bash
-# parameters
-nibid tx gov submit-proposal create-pool proposalFile --deposit deposit [flags]
-
-# example
-nibid tx gov submit-proposal create-pool /path/to/proposal.json --deposit 1000unibi --from validator
-```
-
-Here's an example of a valid JSON file for the `create-pool` proposal.
-
-```json
-{
-    "title": "Create vpool for BTC:NUSD",
-    "description": "We want to allow leveraged BTC perp trading.",
-    "pair": "ubtc:unusd",
-    "quote_asset_reserve": "1000000",
-    "base_asset_reserve": "1000000",
-    "trade_limit_ratio": "0.1",
-    "fluctuation_limit_ratio": "0.01",
-    "max_oracle_spread_ratio": "0.1",
-    "maintenance_margin_ratio": "0.0625"
-}
-```
-
-## Querying a proposal
+## Querying a Proposal
 
 One can use the following command to query for proposals:
 

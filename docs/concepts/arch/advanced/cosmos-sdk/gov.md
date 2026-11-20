@@ -1142,21 +1142,9 @@ Example (`cancel-software-upgrade`):
 nibid tx gov submit-legacy-proposal cancel-software-upgrade --title="Test Proposal" --description="testing" --deposit="100000000stake" --from nibi1..
 ```
 
-Example (`community-pool-spend`):
-
-```bash
-nibid tx gov submit-legacy-proposal community-pool-spend proposal.json --from nibi1..
-```
-
-```json
-{
-  "title": "Test Proposal",
-  "description": "testing, 1, 2, 3",
-  "recipient": "cosmos1..",
-  "amount": "10000000stake",
-  "deposit": "10000000stake"
-}
-```
+To spend community pool funds, submit a `MsgCommunityPoolSpend` message with
+`nibid tx gov submit-proposal`. The binary has no `community-pool-spend`
+legacy subcommand.
 
 Example (`param-change`):
 

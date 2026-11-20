@@ -40,7 +40,7 @@ func runRootBoth(
 	if stdin != "" {
 		rootCmd.SetIn(strings.NewReader(stdin))
 	}
-	rootCmd.SetArgs(append(args, "--home", t.TempDir()))
+	rootCmd.SetArgs(append([]string{"--home", t.TempDir()}, args...))
 	err = svrcmd.Execute(rootCmd, "", app.DefaultNodeHome)
 	return out.String(), errBuf.String(), err
 }
@@ -68,7 +68,7 @@ func TestDebugStargateRejectsBadInput(t *testing.T) {
 func TestDebugAddressSmartAndExplicit(t *testing.T) {
 	out, err := runRoot(t, "", "debug", testAcct)
 	require.NoError(t, err)
-	require.Contains(t, out, `"detected": "address"`)
+	require.Contains(t, out, `"detected": "addr"`)
 	require.Contains(t, out, `"role": "account"`)
 
 	// The explicit SDK subcommand keeps its plain-text format.
@@ -81,7 +81,7 @@ func TestDebugReadsStdin(t *testing.T) {
 	for _, args := range [][]string{{"debug", "-"}} {
 		out, err := runRoot(t, testAcct+"\n", args...)
 		require.NoError(t, err)
-		require.Contains(t, out, `"detected": "address"`)
+		require.Contains(t, out, `"detected": "addr"`)
 	}
 }
 
@@ -142,4 +142,62 @@ func TestBase64DecodeOutputPinned(t *testing.T) {
 	out, err := runRoot(t, "", "debug", "msg", undelegateWrapped)
 	require.NoError(t, err)
 	require.Equal(t, undelegateDecoded, out)
+}
+
+// --as accepts addr, and address as an undocumented alias.
+func TestDebugAsAddrAndAlias(t *testing.T) {
+	in := strings.Repeat("ab", 32)
+	for _, as := range []string{"addr", "address"} {
+		out, err := runRoot(t, "", "debug", "--as", as, in)
+		require.NoError(t, err, as)
+		require.Contains(t, out, `"detected": "addr"`, as)
+		require.Contains(t, out, `"role": "wasm-contract"`, as)
+	}
+	// The help names addr, not address, as the kind.
+	out, err := runRoot(t, "", "debug", "--help")
+	require.NoError(t, err)
+	require.Contains(t, out, "abci-query, addr, pubkey")
+	require.NotContains(t, out, "--as address")
+}
+
+// A failed decode writes nothing to stdout and puts the error on stderr, in
+// every debug path. Success still prints.
+func TestDebugFailureWritesNothingToStdout(t *testing.T) {
+	batch := `[{"jsonrpc":"2.0","id":1,"method":"abci_query","params":` +
+		`{"path":"/cosmos.auth.v1beta1.Query/Account","data":"zz"}}]`
+	for name, tc := range map[string]struct {
+		stdin string
+		args  []string
+	}{
+		"type-url bad input": {args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "zzzz"}},
+		"type-url bad bytes": {args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", strings.Repeat("ff", 20)}},
+		"path bad bytes": {args: []string{"debug", "--path",
+			"/cosmos.auth.v1beta1.Query/Account", strings.Repeat("ff", 20)}},
+		"stdin type-url": {stdin: "zzzz", args: []string{"debug", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "-"}},
+		"as tx":                     {args: []string{"debug", "--as", "tx", "0a03616263"}},
+		"unclassified":              {args: []string{"debug", "hello world"}},
+		"jsonrpc batch entry fails": {args: []string{"debug", batch}},
+		"msg bad type-url": {args: []string{"debug", "msg", "--type-url",
+			"/cosmos.bank.v1beta1.MsgSend", "zzzz"}},
+		"abci-query bad data": {args: []string{"debug", "abci-query", "--path",
+			"/cosmos.auth.v1beta1.Query/Account", "--data", strings.Repeat("ff", 20)}},
+		"abci-query bad body": {args: []string{"debug", "abci-query", batch[:10]}},
+		"tx bad input":        {args: []string{"debug", "tx", "zzzz"}},
+		"base64-decode bad":   {args: []string{"base64-decode", `{"type_url":"/x.Y","value":"AA=="}`}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stdout, stderr, err := runRootBoth(t, tc.stdin, tc.args...)
+			require.Error(t, err)
+			require.Empty(t, stdout)
+			require.NotEmpty(t, stderr+err.Error())
+		})
+	}
+
+	// A success still prints.
+	stdout, _, err := runRootBoth(t, "", "debug", strings.Repeat("cd", 20))
+	require.NoError(t, err)
+	require.Contains(t, stdout, `"detected": "addr"`)
 }

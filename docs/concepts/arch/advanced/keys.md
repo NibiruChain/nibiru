@@ -12,13 +12,17 @@ description: >-
 
 | Command: `nibid keys`  | Description |
 | :--- | :--- |
-| [add](#nibid-keys-add) | Add an Gncrypted private key (either newly generated or recovered), encrypt it, and save to disk |
-| [delete](#nibid-keys-delete) | Delete the given key |
+| [add](#nibid-keys-add) | Add an encrypted private key (either newly generated or recovered), encrypt it, and save to disk |
+| [delete](#nibid-keys-delete) | Delete the given keys |
 | [export](#nibid-keys-export) | Export private keys |
 | [import](#nibid-keys-import) | Import private keys into the local keystore |
+| import-hex | Import a hex-encoded private key into the local keystore |
 | [list](#nibid-keys-list) | List all keys |
+| list-key-types | List all key types |
+| migrate | Migrate keys from amino to proto serialization format |
 | [mnemonic](#nibid-keys-mnemonic) | Compute the bip39 mnemonic for some input entropy |
 | [parse](#nibid-keys-parse) | Parse address from hex to bech32 and vice versa |
+| rename | Rename an existing key |
 | [show](#nibid-keys-show) | Retrieve key information by name or address |
 
 ---
@@ -35,10 +39,10 @@ nibid keys add <key-name> [flags]
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --multisig |  | Construct and store a multisig public key |  |
+| --multisig |  | Comma-separated key names to combine into a legacy multisig public key |  |
 | --multisig-threshold | 1 | K out of N required signatures |  |
 | --nosort | false | Keys passed to --multisig are taken in the order they're supplied |  |
-| --pubkey |  | Parse a public key in bech32 format and save it to disk |  |
+| --pubkey |  | Parse a public key in JSON format and save the key info to disk |  |
 | --interactive | false | Interactively prompt user for BIP39 passphrase and mnemonic |  |
 | --ledger | false | Store a local reference to a private key on a Ledger device |  |
 | --recover | false | Provide seed phrase to recover existing key instead of creating |  |
@@ -48,7 +52,7 @@ nibid keys add <key-name> [flags]
 | --coin-type | 118 | coin type number for HD derivation |  |
 | --account | 0 | Account number for HD derivation |  |
 | --index | 0 | Address index number for HD derivation |  |
-| --algo | secp256k | Key signing algorithm to generate keys for |  |
+| --key-type | secp256k1 | Key signing algorithm to generate keys for |  |
 
 #### Create a new key
 
@@ -109,14 +113,14 @@ How to use multisig key to sign and broadcast a transaction, please refer to mul
 Delete a local key by the given name.
 
 ```text
-nibid keys delete <key-name> [flags]
+nibid keys delete <name>... [flags]
 ```
 
 **Flags:**
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --force, -f | false | Remove the key unconditionally without asking for the passphrase |  |
+| --force, -f | false | Remove the key unconditionally without asking for the passphrase (deprecated) |  |
 | --yes, -y | false | Skip confirmation prompt when deleting offline or ledger key references |  |
 
 #### Delete a local key <a id="delete-a-local-key"></a>
@@ -132,8 +136,15 @@ nibid keys delete MyKey
 Export the keystore of a key to stdout:
 
 ```text
-nibid keys export <key-name> [flags]
+nibid keys export <name> [flags]
 ```
+
+**Flags:**
+
+| Name, shorthand | Default | Description | Required |
+| :--- | :--- | :--- | :--- |
+| --unarmored-hex | false | Export the unarmored hex private key. Requires `--unsafe` |  |
+| --unsafe | false | Enable unsafe operations. Required by `--unarmored-hex` |  |
 
 #### Export keystore <a id="export-keystore"></a>
 
@@ -167,7 +178,7 @@ List all the keys from the local keystore that have been stored by this key mana
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --list-name |  | List names only |  |
+| --list-names, -n | false | List names only |  |
 
 #### List all keys <a id="list-all-keys"></a>
 
@@ -251,7 +262,7 @@ bytes: 313EDF382E938D41E787B3C6366719009640C6F1
 Get details of a local key.
 
 ```text
-nibid keys show <key-name> [flags]
+nibid keys show [name_or_address [name_or_address...]] [flags]
 ```
 
 **Flags:**
@@ -286,7 +297,7 @@ The following infos will be shown:
 
 #### [\#](https://www.irisnet.org/docs/cli-client/keys.html#get-validator-operator-address)Get validator operator address <a id="get-validator-operator-address"></a>
 
-If an address has been bonded to be a validator operator \(which the address you used to create a validator\), then you can use `--bech val` to get the operator's address prefixed by `iva` and the pubkey prefixed by `ivp`:
+If an address has been bonded to be a validator operator \(which the address you used to create a validator\), then you can use `--bech val` to get the operator's address prefixed by `nibivaloper` and the pubkey prefixed by `nibivaloperpub`:
 
 ```text
 nibid keys show MyKey --bech val
@@ -297,8 +308,8 @@ Example Output:
 ```text
 - name: Mykey
   type: local
-  address: iva1tulwx2hwz4dv8te6cflhda64dn0984hakwgk4f
-  pubkey: ivp1addwnpepq24rufap6u0sysqcpgsfzqhw3x8nfkhqhtmpgqt0369rlyqcg0vkgd8e6zy
+  address: nibivaloper1...
+  pubkey: nibivaloperpub1...
   mnemonic: ""
   threshold: 0
   pubkeys: []

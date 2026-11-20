@@ -16,19 +16,26 @@ description: >
 1. [Nibiru CLI - How to Install the Nibiru CLI](./nibid-binary.md)
 2. [Nibiru CLI - Creating Fungible Tokens](./tf.md)
 
-The native CLI command is `nibid`. Bun and npm installs expose it as `nibiru`,
-which forwards all arguments to the native binary. For those installs, replace
-`nibid` with `nibiru` in the examples below and in the linked guides.
+The native binary is named `nibiru`, and `nibid` stays as a compatible name
+(a symlink in source builds and container images). Both names run the same
+program, and help prints the name you invoked. Bun and npm installs expose
+`nibiru`, which forwards all arguments to the native binary. The examples in
+these guides use `nibid`; replace it with `nibiru` as you prefer.
 
-## Command Groups
+## Command List
 
-`nibid --help` lists everyday commands first: `tx`, `query`, `keys`,
-`config`, `status`, `localnet`, and `debug`. Commands that run a node live
-under `nibid node`, for example `nibid node start` and
-`nibid node genesis validate-genesis`. The previous top-level forms, such as
-`nibid start`, keep working as hidden aliases.
+`nibid --help` prints one command list in a fixed order:
+`tx`, `q` (alias `query`), `keys`, `config`, `status`, `debug`, `localnet`,
+`node`, `help`, and `version`. Commands that run a node live under
+`nibid node`, for example `nibid node start` and
+`nibid node genesis validate-genesis`. The top-level forms, such as
+`nibid start`, and the `nibid` name still run.
 
-`nibid tx --help` and `nibid query --help` list the everyday modules first
+Help hides the log and trace flags (`--log_format`, `--log_level`,
+`--log_no_color`, `--trace`) by default. They still work when passed. Add
+`--help-verbose` to any command to list them.
+
+`nibid tx --help` and `nibid q --help` list the everyday modules first
 (`bank`, `wasm`, `evm`, `staking`, `gov`, `distribution`, `tokenfactory`,
 `ibc-transfer`). `nibid tx --help` then lists the offline signing commands.
 
@@ -43,13 +50,30 @@ is given and stdin is piped. It works offline and accepts:
 | JSON-RPC body or batch (`abci_query`, `broadcast_tx_*`) | `abci-query`     |
 | JSON with `type_url` and `value`, or a `stargate` wrapper | `any`          |
 | Base64 or hex transaction                             | `tx`               |
-| Bech32 (`nibi1...`) or `0x` address                   | `address`          |
+| Bech32 (`nibi1...`) or `0x` address                   | `addr`             |
 | Bech32 pubkey, proto-JSON pubkey, raw 33-byte key     | `pubkey`           |
 | `[10 21 13 255]`                                      | `raw-bytes`        |
 | Other valid protobuf                                  | `unknown-protobuf` |
 
-A 32-byte value fits several kinds (transaction hash, Wasm contract address,
-raw key). The output lists the candidates. Pass `--as <kind>` to choose one.
+An ambiguous input prints `"detected": "ambiguous"` and a `readings` object
+with every reading, computed offline, in a fixed key order:
+
+- A 32-byte value has `contract_addr` (Wasm contract address), `ed25519_pubkey`
+  (the key and its derived addresses, including the consensus form), and
+  `tx_hash` (uppercase hash and the `nibiru query tx` command to look it up).
+- A string that is valid as both hex and base64 has one reading per encoding,
+  named `hex` and `base64`. Each holds the result of decoding those bytes, or
+  an `error` field when they do not decode.
+
+A 33-byte value counts as a public key only when it is a valid secp256k1 point.
+For a 32-byte ed25519 key, the command can check only the length.
+
+Pass `--as <kind>` to get a single answer. For a string that is valid as both
+hex and base64, `--as` tries both encodings and uses the one that decodes as
+that kind. If both decode, the output is `ambiguous` with one reading per
+encoding. If neither does, the command fails with an error that names the kind.
+The kind for addresses is `addr`. In address output, the EVM form is field
+`eth_addr`, and a public key lists its derived addresses under `addr`.
 
 Explicit subcommands decode one kind: `debug tx`, `debug msg`,
 `debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,
@@ -57,64 +81,73 @@ Explicit subcommands decode one kind: `debug tx`, `debug msg`,
 `debug stargate` replaces `build-stargate-wasm`, which stays as a hidden alias
 with identical output.
 
-## Working directory
+## Working Directory
 
 The CLI stores configuration, blockchain data, and local keyring files under
 `$HOME/.nibid` by default. Use the `--home` flag to select another directory.
 
-## Connect to a full node
+## Connect to a Full Node
 
 By default, `nibid` connects to the RPC endpoint at `tcp://localhost:26657`.
 Use the `--node` flag to connect to a full node on another machine.
 
-## Global flags
+## Global Flags
 
-### Query commands
+### Query Commands
 
-Query commands use the following global flags:
+Query commands accept these flags. Run `nibid query <module> <command> --help`
+for the flags of a specific command.
 
-| Name, shorthand | Type   | Default value | Description                          |
-| --------------- | ------ | ------------- | ------------------------------------ |
-| --chain-id      | string |               | Network chain ID                     |
-| --home          | string | $HOME/.nibid  | Directory for config and data        |
-| --trace         | string |               | Print out full stack trace on errors |
-| --log\_format   | string | plain         | Log format: json or plain            |
+| Name, shorthand | Type   | Default value         | Description                                              |
+| --------------- | ------ | --------------------- | -------------------------------------------------------- |
+| --chain-id      | string |                       | Network chain ID                                         |
+| --node          | string | tcp://localhost:26657 | RPC endpoint for the full node                           |
+| --grpc-addr     | string |                       | gRPC endpoint to use for this chain                      |
+| --grpc-insecure | bool   | false                 | Allow gRPC over insecure channels                        |
+| --height        | int    |                       | Query state at a specific height (the node may have pruned it) |
+| --output, -o    | string | text                  | Output format: text or json                              |
 
-### Transaction commands
+Global flags `--home`, `--log_format`, `--log_level`, `--log_no_color`, and
+`--trace` apply to every command. `--trace` is a boolean.
 
-Transaction commands use the following global flags:
+### Transaction Commands
 
-| Name, shorthand   | Type   | Default               | Description
-| ----------------- | ------ | --------------------- | -------------------------------------------------------------------------------------------------------------- |
-| --account-number  | int    | 0                     | `AccountNumber` to sign the tx
-| --broadcast-mode  | string | sync                  | Broadcast mode: sync, async, or block |
-| --dry-run         | bool   | false                 | Simulate the transaction without broadcasting it |
-| --fees            | string |                       | Fees to pay along with transaction
-| --from            | string |                       | Name of private key with which to sign
-| --gas             | string | 200000                | Gas limit per transaction; use "simulate" to estimate it |
-| --gas-adjustment  | float  | 1                     | Multiplier applied to the simulated gas estimate |
-| --gas-prices      | string |                       | Gas prices in decimal format to determine the transaction fee                                                  |
-| --generate-only   | bool   | false                 | Write an unsigned transaction to standard output |
-| --help, -h        | string |                       | Print help message
-| --keyring-backend | string | os                    | Select keyring's backend
-| --ledger          | bool   | false                 | Use a connected Ledger device
-| --memo            | string |                       | Memo to send along with transaction
-| --node            | string | tcp://localhost:26657 | RPC endpoint for the full node |
-| --offline         | string |                       | Run without connecting to a node |
-| --sequence        | int    | 0                     | Sequence number to sign the tx
-| --sign-mode       | string |                       | Signing mode: direct or amino-json |
-| --trust-node      | bool   | true                  | Don't verify proofs for responses
-| --yes             | bool   | true                  | Skip the transaction confirmation prompt |
-| --chain-id        | string |                       | Network chain ID |
-| --home            | string | $HOME/.nibid          | Directory for config and data
-| --trace           | string |                       | Print out full stack trace on errors
+Transaction commands accept these flags. Run `nibid tx <module> <command> -v --help`
+to print all of them.
 
-### Module commands
+| Name, shorthand       | Type   | Default               | Description |
+| --------------------- | ------ | --------------------- | ----------- |
+| --account-number, -a  | uint   | 0                     | Account number of the signing account (offline mode only) |
+| --broadcast-mode, -b  | string | sync                  | Broadcast mode: sync or async |
+| --chain-id            | string |                       | Network chain ID |
+| --dry-run             | bool   | false                 | Simulate the transaction without broadcasting it |
+| --fee-granter         | string |                       | Account that grants the fees for the transaction |
+| --fee-payer           | string |                       | Account that pays the fees instead of the signer |
+| --fees                | string |                       | Fees to pay along with the transaction, for example `10unibi` |
+| --from                | string |                       | Name or address of the private key that signs |
+| --gas                 | string | 200000                | Gas limit per transaction; use `auto` to estimate it |
+| --gas-adjustment      | float  | 1.05                  | Multiplier applied to the simulated gas estimate |
+| --gas-prices          | string | 0.025unibi when `--fees` is omitted | Gas prices in decimal format, for example `0.1unibi` |
+| --generate-only       | bool   | false                 | Write an unsigned transaction to standard output |
+| --help, -h            | bool   | false                 | Print help message |
+| --keyring-backend     | string | os                    | Keyring backend: os, file, kwallet, pass, test, or memory |
+| --keyring-dir         | string | `--home` directory    | Directory of the client keyring |
+| --ledger              | bool   | false                 | Use a connected Ledger device |
+| --node                | string | tcp://localhost:26657 | RPC endpoint for the full node |
+| --note                | string |                       | Note to add to the transaction (previously `--memo`) |
+| --offline             | bool   | false                 | Run without connecting to a node |
+| --output, -o          | string | json                  | Output format: text or json |
+| --sequence, -s        | uint   | 0                     | Sequence number of the signing account (offline mode only) |
+| --sign-mode           | string |                       | Signing mode: direct, amino-json, or direct-aux |
+| --timeout-height      | uint   | 0                     | Block height after which the transaction can't be committed |
+| --yes, -y             | bool   | false                 | Skip the transaction confirmation prompt |
+
+### Module Commands
 
 | Subcommand                            | Description                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------ |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |
-| [keys](../../concepts/arch/advanced/keys.md#cli)     | Keys subcommands for managing local tendermint keystore.           |
+| [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Create, import, export, and list keys in the local keyring.        |
 
 <!-- | [evm](../arch/advanced/evm.md#cli)     | Ethereum Virtual Machine (EVM) Nibiru CLI commands  | -->
 <!-- | [wasm](../arch/advanced/wasm.md#cli)     | Wasm subcommands for enabling CosmWasm smart contracts execution.  | -->
