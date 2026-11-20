@@ -94,6 +94,11 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   `"detected": "ambiguous"` with a `readings` object: `contract_addr`,
   `ed25519_pubkey`, and `tx_hash` for 32 bytes, and one `hex` and `base64`
   reading for a string valid as both. `--as <kind>` still gives one answer.
+- Name addresses `addr` in `nibiru debug` output: kind `addr` (in `detected`,
+  `candidates`, and `--as addr`; `--as address` stays as an undocumented
+  alias), field `eth_addr` instead of `evm`, and field `addr` instead of
+  `address` in public key output. These commands are new in this PR, so no
+  released output changes.
 - Check both `nibid` and `nibiru` node processes, for the target home only,
   in the `localnet` script before it resets chain data. The script waits for
   them to exit and aborts if one stays alive.

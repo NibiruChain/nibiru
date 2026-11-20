@@ -50,7 +50,7 @@ is given and stdin is piped. It works offline and accepts:
 | JSON-RPC body or batch (`abci_query`, `broadcast_tx_*`) | `abci-query`     |
 | JSON with `type_url` and `value`, or a `stargate` wrapper | `any`          |
 | Base64 or hex transaction                             | `tx`               |
-| Bech32 (`nibi1...`) or `0x` address                   | `address`          |
+| Bech32 (`nibi1...`) or `0x` address                   | `addr`             |
 | Bech32 pubkey, proto-JSON pubkey, raw 33-byte key     | `pubkey`           |
 | `[10 21 13 255]`                                      | `raw-bytes`        |
 | Other valid protobuf                                  | `unknown-protobuf` |
@@ -65,7 +65,10 @@ with every reading, computed offline, in a fixed key order:
   named `hex` and `base64`. Each holds the result of decoding those bytes, or
   an `error` field when they do not decode.
 
-Pass `--as <kind>` to get a single answer.
+Pass `--as <kind>` to get a single answer. The kind for addresses is `addr`;
+`--as address` still works as an undocumented alias. In address output, the EVM
+form is field `eth_addr`, and a public key lists its derived addresses under
+`addr`.
 
 Explicit subcommands decode one kind: `debug tx`, `debug msg`,
 `debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,

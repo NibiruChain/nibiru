@@ -57,7 +57,7 @@ Recognized inputs:
   JSON with type_url and value, or a stargate wrapper   any
   base64 or hex transaction                             tx
   base64 or hex SimulateRequest / BroadcastTxRequest    abci-query
-  bech32 address (nibi1...), 0x EVM address, hex        address
+  bech32 address (nibi1...), 0x EVM address, hex        addr
   bech32 pubkey, proto-JSON pubkey, raw key bytes       pubkey
   [10 21 13 255]                                        raw-bytes
   other valid protobuf                                  unknown-protobuf
@@ -68,7 +68,7 @@ reported. Use --as to choose one.`,
 		Example: `  nibid debug nibi1ah8gqrtjllhc5ld4rxgl4uglvwl93ag0sh6e6v
   nibid debug 0xAb...
   pbpaste | nibid debug
-  nibid debug --as address 0x<64 hex chars>`,
+  nibid debug --as addr 0x<64 hex chars>`,
 		Args: cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -89,7 +89,7 @@ reported. Use --as to choose one.`,
 		},
 	}
 	cmd.Flags().String(flagAs, "", "Treat the input as this kind (tx, any, "+
-		"abci-query, address, pubkey, raw-bytes, protobuf, tx-hash)")
+		"abci-query, addr, pubkey, raw-bytes, protobuf, tx-hash)")
 	cmd.Flags().String(flagTypeURL, "",
 		"Decode protobuf input as this message type, e.g. /cosmos.bank.v1beta1.MsgSend")
 	cmd.Flags().String(flagPath, "",
@@ -118,7 +118,9 @@ func optionsFromFlags(cmd *cobra.Command) (Options, error) {
 	case "":
 	case "msg", "any":
 		opts.As = KindAny
-	case "tx", "tx-hash", "address", "pubkey", "raw-bytes", "protobuf",
+	case "addr", "address": // "address" is an undocumented alias
+		opts.As = KindAddr
+	case "tx", "tx-hash", "pubkey", "raw-bytes", "protobuf",
 		"abci-query":
 		opts.As = Kind(strings.ToLower(as))
 	default:

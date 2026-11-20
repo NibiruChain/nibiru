@@ -150,27 +150,27 @@ func TestDecodeAddresses(t *testing.T) {
 
 	res, err := debugcmd.Decode(env, []byte(acct), debugcmd.Options{})
 	require.NoError(t, err)
-	info, ok := res.Data.(debugcmd.AddressInfo)
+	info, ok := res.Data.(debugcmd.AddrInfo)
 	require.True(t, ok)
 	require.Equal(t, "account", info.Role)
 	require.Equal(t, acct, info.Bech32["acc"])
 	require.Len(t, info.Hex, 40)
-	require.True(t, strings.HasPrefix(info.EVM, "0x"))
+	require.True(t, strings.HasPrefix(info.EthAddr, "0x"))
 
 	// EVM form round-trips to the same bech32 account.
-	res, err = debugcmd.Decode(env, []byte(info.EVM), debugcmd.Options{})
+	res, err = debugcmd.Decode(env, []byte(info.EthAddr), debugcmd.Options{})
 	require.NoError(t, err)
-	require.Equal(t, acct, res.Data.(debugcmd.AddressInfo).Bech32["acc"])
+	require.Equal(t, acct, res.Data.(debugcmd.AddrInfo).Bech32["acc"])
 
 	// Raw hex of the same 20 bytes too.
 	res, err = debugcmd.Decode(env, []byte(info.Hex), debugcmd.Options{})
 	require.NoError(t, err)
-	require.Equal(t, acct, res.Data.(debugcmd.AddressInfo).Bech32["acc"])
+	require.Equal(t, acct, res.Data.(debugcmd.AddrInfo).Bech32["acc"])
 
 	// 32 bytes read as a Wasm contract.
 	res, err = debugcmd.Decode(env, []byte(contract), debugcmd.Options{})
 	require.NoError(t, err)
-	require.Equal(t, "wasm-contract", res.Data.(debugcmd.AddressInfo).Role)
+	require.Equal(t, "wasm-contract", res.Data.(debugcmd.AddrInfo).Role)
 }
 
 func TestDecodeAmbiguous32Bytes(t *testing.T) {
@@ -185,9 +185,9 @@ func TestDecodeAmbiguous32Bytes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, debugcmd.KindTxHash, res.Detected)
 
-	res, err = debugcmd.Decode(env, []byte(in), debugcmd.Options{As: debugcmd.KindAddress})
+	res, err = debugcmd.Decode(env, []byte(in), debugcmd.Options{As: debugcmd.KindAddr})
 	require.NoError(t, err)
-	require.Equal(t, "wasm-contract", res.Data.(debugcmd.AddressInfo).Role)
+	require.Equal(t, "wasm-contract", res.Data.(debugcmd.AddrInfo).Role)
 }
 
 func TestDecodePubkeyAndRawBytes(t *testing.T) {
@@ -250,7 +250,7 @@ func TestDecodeExplicitTypeURLBeatsAddressHeuristics(t *testing.T) {
 	res, err := debugcmd.Decode(env, []byte(hex.EncodeToString(bz)),
 		debugcmd.Options{})
 	require.NoError(t, err)
-	require.Equal(t, debugcmd.KindAddress, res.Detected)
+	require.Equal(t, debugcmd.KindAddr, res.Detected)
 }
 
 func TestDecodeExplicitPathDecodesABCIQuery(t *testing.T) {
@@ -358,8 +358,8 @@ func TestDecodeAmbiguousShowsReadings(t *testing.T) {
 
 	t.Run("single readings stay single", func(t *testing.T) {
 		for in, kind := range map[string]debugcmd.Kind{
-			strings.Repeat("cd", 20):        debugcmd.KindAddress, // 20 bytes
-			"0x" + strings.Repeat("cd", 20): debugcmd.KindAddress,
+			strings.Repeat("cd", 20):        debugcmd.KindAddr, // 20 bytes
+			"0x" + strings.Repeat("cd", 20): debugcmd.KindAddr,
 			"0a03616263":                    debugcmd.KindUnknownProtobuf, // not base64
 		} {
 			res, err := debugcmd.Decode(env, []byte(in), debugcmd.Options{})
@@ -368,4 +368,23 @@ func TestDecodeAmbiguousShowsReadings(t *testing.T) {
 			require.Empty(t, res.Readings, in)
 		}
 	})
+}
+
+// The addr kind and key names show in the JSON output.
+func TestAddrKeyNames(t *testing.T) {
+	env, _ := testEnv()
+	require.Equal(t, "addr", string(debugcmd.KindAddr))
+
+	res, err := debugcmd.Decode(env, []byte(acct), debugcmd.Options{})
+	require.NoError(t, err)
+	out := toJSON(t, res)
+	require.Contains(t, out, `"detected":"addr"`)
+	require.Contains(t, out, `"eth_addr":"0x`)
+	require.NotContains(t, out, `"evm"`)
+
+	res, err = debugcmd.Decode(env, []byte("02"+strings.Repeat("11", 32)), debugcmd.Options{})
+	require.NoError(t, err)
+	out = toJSON(t, res)
+	require.Contains(t, out, `"addr":{`)
+	require.NotContains(t, out, `"address"`)
 }

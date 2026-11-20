@@ -150,9 +150,9 @@ func decodeKind(
 			Data:     map[string]any{"hash": strings.ToUpper(hex.EncodeToString(c.Payload))},
 			Hint:     "query it with: nibid query tx <hash>",
 		}, nil
-	case KindAddress:
-		out, err := DescribeAddress(c)
-		return Result{Detected: KindAddress, Data: out}, err
+	case KindAddr:
+		out, err := DescribeAddr(c)
+		return Result{Detected: KindAddr, Data: out}, err
 	case KindPubkey:
 		out, err := DescribePubkey(env, in, c)
 		return Result{Detected: KindPubkey, Data: out}, err
@@ -416,21 +416,21 @@ func RawBytesToHex(s string) (string, error) {
 	return strings.ToUpper(hex.EncodeToString(bz)), nil
 }
 
-// AddressInfo is the offline description of an address.
-type AddressInfo struct {
-	Role   string            `json:"role"`
-	Length int               `json:"length"`
-	Hex    string            `json:"hex"`
-	EVM    string            `json:"evm,omitempty"`
-	Bech32 map[string]string `json:"bech32"`
+// AddrInfo is the offline description of an address.
+type AddrInfo struct {
+	Role    string            `json:"role"`
+	Length  int               `json:"length"`
+	Hex     string            `json:"hex"`
+	EthAddr string            `json:"eth_addr,omitempty"`
+	Bech32  map[string]string `json:"bech32"`
 }
 
-// DescribeAddress lists every form of an address: hex, the EVM 0x form, and
+// DescribeAddr lists every form of an address: hex, the EVM 0x form, and
 // the account, validator, and consensus bech32 forms. 20 bytes reads as an
 // account and 32 bytes as a Wasm contract.
-func DescribeAddress(c Classification) (AddressInfo, error) {
+func DescribeAddr(c Classification) (AddrInfo, error) {
 	bz := c.Payload
-	info := AddressInfo{
+	info := AddrInfo{
 		Length: len(bz),
 		Hex:    hex.EncodeToString(bz),
 		Bech32: map[string]string{},
@@ -438,7 +438,7 @@ func DescribeAddress(c Classification) (AddressInfo, error) {
 	switch len(bz) {
 	case 20:
 		info.Role = "account"
-		info.EVM = gethcommon.BytesToAddress(bz).Hex()
+		info.EthAddr = gethcommon.BytesToAddress(bz).Hex()
 	case 32:
 		info.Role = "wasm-contract"
 	default:
@@ -455,9 +455,9 @@ func DescribeAddress(c Classification) (AddressInfo, error) {
 
 // PubkeyInfo is the offline description of a public key.
 type PubkeyInfo struct {
-	Type    string            `json:"type"`
-	Hex     string            `json:"hex"`
-	Address map[string]string `json:"address"`
+	Type string            `json:"type"`
+	Hex  string            `json:"hex"`
+	Addr map[string]string `json:"addr"`
 	// Alternatives lists other key types the same bytes could be.
 	Alternatives []PubkeyInfo `json:"alternatives,omitempty"`
 }
@@ -467,14 +467,14 @@ func describeKey(pk cryptotypes.PubKey) PubkeyInfo {
 	info := PubkeyInfo{
 		Type: pk.Type(),
 		Hex:  hex.EncodeToString(pk.Bytes()),
-		Address: map[string]string{
+		Addr: map[string]string{
 			"hex": hex.EncodeToString(addr),
 			"acc": sdk.AccAddress(addr).String(),
 			"val": sdk.ValAddress(addr).String(),
 		},
 	}
 	if len(addr) == 20 && pk.Type() == ethsecp256k1.KeyType {
-		info.Address["evm"] = gethcommon.BytesToAddress(addr).Hex()
+		info.Addr["eth_addr"] = gethcommon.BytesToAddress(addr).Hex()
 	}
 	return info
 }
@@ -517,9 +517,9 @@ func DescribePubkey(env Env, in []byte, c Classification) (PubkeyInfo, error) {
 // readings32 lists every reading of 32 bytes: a Wasm contract address, an
 // ed25519 public key, and a transaction hash. All are computed offline.
 func readings32(bz []byte) Readings {
-	contract, _ := DescribeAddress(Classification{Payload: bz})
+	contract, _ := DescribeAddr(Classification{Payload: bz})
 	key := describeKey(&ed25519.PubKey{Key: bz})
-	key.Address["cons"] = sdk.ConsAddress(consBytes(bz)).String()
+	key.Addr["cons"] = sdk.ConsAddress(consBytes(bz)).String()
 	hash := strings.ToUpper(hex.EncodeToString(bz))
 	return Readings{
 		{Name: "contract_addr", Value: contract},

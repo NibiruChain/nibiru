@@ -26,8 +26,8 @@ const (
 	KindTx Kind = "tx"
 	// KindTxHash is a 32-byte transaction hash.
 	KindTxHash Kind = "tx-hash"
-	// KindAddress is a bech32, 0x EVM, or raw-hex account or contract address.
-	KindAddress Kind = "address"
+	// KindAddr is a bech32, 0x EVM, or raw-hex account or contract address.
+	KindAddr Kind = "addr"
 	// KindPubkey is a proto-JSON pubkey, bech32 pubkey, or raw key bytes.
 	KindPubkey Kind = "pubkey"
 	// KindRawBytes is a byte list such as [10 21 13 255].
@@ -85,7 +85,7 @@ func Classify(input []byte) Classification {
 
 	if bech32Re.MatchString(s) {
 		if hrp, bz, err := bech32.DecodeAndConvert(s); err == nil {
-			kind := KindAddress
+			kind := KindAddr
 			if strings.Contains(hrp, "pub") {
 				kind = KindPubkey
 			}
@@ -100,7 +100,7 @@ func Classify(input []byte) Classification {
 		if err == nil {
 			if strings.HasPrefix(s, "0x") && len(bz) == 20 {
 				return Classification{
-					Kind: KindAddress, Payload: bz, Encoding: "evm",
+					Kind: KindAddr, Payload: bz, Encoding: "evm",
 				}
 			}
 			return classifyBytes(bz, "hex")
@@ -117,10 +117,10 @@ func classifyBytes(bz []byte, encoding string) Classification {
 	c := Classification{Payload: bz, Encoding: encoding}
 	switch len(bz) {
 	case 20:
-		c.Kind = KindAddress
+		c.Kind = KindAddr
 	case 32:
 		c.Kind = KindAmbiguous
-		c.Candidates = []Kind{KindTxHash, KindAddress, KindPubkey}
+		c.Candidates = []Kind{KindTxHash, KindAddr, KindPubkey}
 	case 33:
 		c.Kind = KindPubkey
 	default:

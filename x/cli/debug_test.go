@@ -68,7 +68,7 @@ func TestDebugStargateRejectsBadInput(t *testing.T) {
 func TestDebugAddressSmartAndExplicit(t *testing.T) {
 	out, err := runRoot(t, "", "debug", testAcct)
 	require.NoError(t, err)
-	require.Contains(t, out, `"detected": "address"`)
+	require.Contains(t, out, `"detected": "addr"`)
 	require.Contains(t, out, `"role": "account"`)
 
 	// The explicit SDK subcommand keeps its plain-text format.
@@ -81,7 +81,7 @@ func TestDebugReadsStdin(t *testing.T) {
 	for _, args := range [][]string{{"debug", "-"}} {
 		out, err := runRoot(t, testAcct+"\n", args...)
 		require.NoError(t, err)
-		require.Contains(t, out, `"detected": "address"`)
+		require.Contains(t, out, `"detected": "addr"`)
 	}
 }
 
@@ -142,4 +142,20 @@ func TestBase64DecodeOutputPinned(t *testing.T) {
 	out, err := runRoot(t, "", "debug", "msg", undelegateWrapped)
 	require.NoError(t, err)
 	require.Equal(t, undelegateDecoded, out)
+}
+
+// --as accepts addr, and address as an undocumented alias.
+func TestDebugAsAddrAndAlias(t *testing.T) {
+	in := strings.Repeat("ab", 32)
+	for _, as := range []string{"addr", "address"} {
+		out, err := runRoot(t, "", "debug", "--as", as, in)
+		require.NoError(t, err, as)
+		require.Contains(t, out, `"detected": "addr"`, as)
+		require.Contains(t, out, `"role": "wasm-contract"`, as)
+	}
+	// The help names addr, not address, as the kind.
+	out, err := runRoot(t, "", "debug", "--help")
+	require.NoError(t, err)
+	require.Contains(t, out, "abci-query, addr, pubkey")
+	require.NotContains(t, out, "--as address")
 }
