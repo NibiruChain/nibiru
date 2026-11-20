@@ -37,7 +37,7 @@ require (
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/ledger-cosmos-go v1.0.0
 	github.com/cosmos/rosetta-sdk-go v0.10.0
-	github.com/creachadair/taskgroup v0.13.0
+	github.com/creachadair/taskgroup v0.14.4
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
 	github.com/distribution/reference v0.6.0
