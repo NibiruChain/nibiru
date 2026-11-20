@@ -1,10 +1,8 @@
 ---
 sidebar_position: 1
 description: >-
-  Technical specification for Nibiru's governance module, `x/gov`. The
-  module enables an on-chain governance system on the Nibiru network. In this
-  system, holders of the native staking token of the chain can vote on proposals on
-  a 1 token 1 vote basis.
+  The governance module, `x/gov`, manages on-chain proposals and voting on
+  Nibiru. Voting power is proportional to bonded NIBI.
 ---
 
 # `x/gov`
@@ -13,16 +11,13 @@ description: >-
 
 ## Abstract
 
-Governance activities include:
-
-* **Proposal submission:** Users can submit proposals with a deposit. Once the
-  minimum deposit is reached, the proposal enters voting period.
-* **Vote:** Participants can vote on proposals that reached MinDeposit
-* **Inheritance and penalties:** Delegators inherit their validator's vote if
-  they don't vote themselves.
-* **Claiming deposit:** Users that deposited on proposals can recover their
-  deposits if the proposal was accepted or rejected. If the proposal was vetoed,
-  or never entered voting period, the deposit is burned.
+- **Proposal submission.** Users submit proposals with a deposit. Voting opens
+  when the proposal reaches the minimum deposit.
+- **Voting.** Eligible participants can vote during the voting period.
+- **Vote inheritance.** Delegators who do not vote inherit their validator's vote.
+- **Deposits.** Depositors get their tokens back if a proposal passes or is
+  rejected without a veto. The module burns deposits if the proposal is vetoed
+  or never reaches the voting period.
 
 ## Contents
 
