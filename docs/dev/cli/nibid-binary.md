@@ -190,10 +190,28 @@ Save this line in your shell configuration and reload it.
 
 Several installs can put a `nibiru` command on your `PATH`, for example a Bun
 or npm launcher and a source build. Run `nibiru version --long` to see which
-file runs. The last lines print `running from:` for the running binary and
-`also on PATH:` for other `nibiru` or `nibid` files, and mark the one your shell
-runs when you type the name. Add `-o json` to read the same data from field
-`binary_paths`.
+file runs. Both the text (YAML) and the JSON (`-o json`) output hold one field,
+`binary_paths`, with the same structure. In YAML it sorts first, because the
+fields sort by name. Field `running_from` is the running file. Each entry of
+`commands` lists every `matches` file on `PATH` in order, marks the running one
+with `is_running`, and sets `first_is_running` to `false` when another file wins
+the name. When that happens, the command also prints a one-line note to stderr.
+
+```yaml
+binary_paths:
+  commands:
+  - first_is_running: false
+    matches:
+    - is_running: false
+      path: /home/me/.bun/bin/nibiru
+      resolved: /home/me/node_modules/@nibiruchain/nibiru/bin/nibiru.js
+    - is_running: true
+      path: /home/me/go/bin/nibiru
+      resolved: /home/me/go/bin/nibiru
+    name: nibiru
+  running_from: /home/me/go/bin/nibiru
+build_deps: ...
+```
 
 ### Rules for Agents and Scripts
 

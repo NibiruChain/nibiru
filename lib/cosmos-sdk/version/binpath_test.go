@@ -1,11 +1,14 @@
 package version_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/yaml"
 
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/version"
 )
@@ -163,4 +166,52 @@ func TestReportPaths(t *testing.T) {
 		r := version.ReportPaths(running, pathOf(goBin, goBin, ""), names, probe)
 		require.Len(t, find(t, r, "nibiru").Matches, 1)
 	})
+}
+
+// The long text output is one YAML document, even with several other copies
+// on PATH and a path that holds ": ".
+func TestRenderLongParsesAsYAMLAndJSON(t *testing.T) {
+	root := t.TempDir()
+	running := writeBin(t, filepath.Join(root, "gobin"), "nibiru", true)
+	dirs := []string{
+		filepath.Join(root, "bun: bin"),
+		filepath.Join(root, "old"),
+		filepath.Join(root, "usr"),
+		filepath.Join(root, "gobin"),
+	}
+	for _, d := range dirs[:3] {
+		writeBin(t, d, "nibiru", true)
+		writeBin(t, d, "nibid", true)
+	}
+	report := version.ReportPaths(running, pathOf(dirs...),
+		[]string{"nibiru", "nibid"}, version.OSPathProbe())
+	require.False(t, report.AllFirstRunning())
+
+	info := version.NewInfo()
+	for _, output := range []string{"text", "json"} {
+		bz, err := version.RenderLong(info, &report, output)
+		require.NoError(t, err)
+
+		var got map[string]any
+		if output == "json" {
+			require.NoError(t, json.Unmarshal(bz, &got))
+		} else {
+			// Strict mode rejects duplicate keys.
+			require.NoError(t, yaml.UnmarshalStrict(bz, &got), string(bz))
+			require.Equal(t, 1, strings.Count(string(bz), "binary_paths:"))
+			require.NotContains(t, string(bz), "also on PATH")
+		}
+		bp, ok := got["binary_paths"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, report.RunningFrom, bp["running_from"])
+		require.Len(t, bp["commands"], 2)
+		require.Equal(t, info.Version, got["version"])
+	}
+
+	// Existing fields keep their order in JSON, with binary_paths last.
+	bz, err := version.RenderLong(info, &report, "json")
+	require.NoError(t, err)
+	require.Greater(t, strings.Index(string(bz), `"binary_paths"`),
+		strings.Index(string(bz), `"version"`))
+	require.True(t, strings.HasSuffix(strings.TrimSuffix(string(bz), "}"), "}"))
 }

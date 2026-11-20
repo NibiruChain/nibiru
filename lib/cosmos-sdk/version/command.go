@@ -27,33 +27,18 @@ func NewVersionCommand() *cobra.Command {
 				return nil
 			}
 
-			var (
-				bz  []byte
-				err error
-			)
-
 			output, _ := cmd.Flags().GetString(cmtcli.OutputFlag)
-			switch strings.ToLower(output) {
-			case "json":
-				// The path report is added after the existing fields.
-				verInfo.BinaryPaths = report
-				bz, err = json.Marshal(verInfo)
-
-			default:
-				bz, err = yaml.Marshal(&verInfo)
-			}
-
+			bz, err := RenderLong(verInfo, report, output)
 			if err != nil {
 				return err
 			}
-
 			text := string(bz)
-			if report != nil && strings.ToLower(output) != "json" {
-				// Text output keeps the YAML body as is and appends the path
-				// report as plain lines.
-				text += "\n" + report.String() + "\n"
-			}
 			cmd.Println(text)
+			if report != nil && strings.ToLower(output) != "json" && !report.AllFirstRunning() {
+				// A short hint for people. Scripts read binary_paths.
+				cmd.PrintErrln("note: another nibiru or nibid comes first " +
+					"on PATH; see binary_paths in this output")
+			}
 			return nil
 		},
 	}
@@ -62,6 +47,20 @@ func NewVersionCommand() *cobra.Command {
 	cmd.Flags().StringP(cmtcli.OutputFlag, "o", "text", "Output format (text|json)")
 
 	return cmd
+}
+
+// RenderLong renders the long version output. The path report is one field,
+// binary_paths, in both formats, so the whole text output parses as YAML and
+// the JSON output parses as JSON. Existing fields keep their order, and
+// binary_paths comes last in JSON.
+func RenderLong(
+	info Info, report *PathReport, output string,
+) ([]byte, error) {
+	info.BinaryPaths = report
+	if strings.ToLower(output) == "json" {
+		return json.Marshal(info)
+	}
+	return yaml.Marshal(&info)
 }
 
 // currentPathReport reports where the running binary lives and which other

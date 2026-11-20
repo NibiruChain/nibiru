@@ -72,10 +72,12 @@ patches from `release/v2.23`, independently of coordinated chain releases.
   `nibid --help` says `nibid`; any other process name prints `nibiru`. The
   default home `~/.nibid`, the keyring service name, and the `version` output
   do not change with the invoked name.
-- Add path details to `nibiru version --long`. Text output keeps the YAML body
-  and appends `running from:` and `also on PATH:` lines. JSON output (`-o json`)
-  appends field `binary_paths` after the existing fields. Plain `version`
-  output is unchanged. The report marks the `nibiru` or `nibid` file the shell
+- Add path details to `nibiru version --long`. Both text and JSON output
+  (`-o json`) add one field, `binary_paths`, with the same structure, so the
+  text output stays one valid YAML document. In JSON it comes after the
+  existing fields. Plain `version` output is unchanged. When another file wins
+  the name, a one-line note goes to stderr. The report marks the `nibiru` or
+  `nibid` file the shell
   runs first when it is not the running binary. A `nibid` symlink to the
   running file is not reported as a conflict.
 - Warn at the end of `just install` when `nibiru` or `nibid` on `PATH` is a

@@ -100,6 +100,16 @@ func ReportPaths(
 	return report
 }
 
+// AllFirstRunning is true when no name is shadowed by another file on PATH.
+func (r PathReport) AllFirstRunning() bool {
+	for _, np := range r.Names {
+		if !np.FirstIsRunning {
+			return false
+		}
+	}
+	return true
+}
+
 // Lines renders the report as plain text. Matches that are the running binary
 // are omitted, so a clean install prints one line.
 func (r PathReport) Lines() []string {

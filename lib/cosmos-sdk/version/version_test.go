@@ -79,11 +79,18 @@ func Test_runVersionCmd(t *testing.T) {
 	require.Contains(t, mockOut.String(), `"cosmos_sdk_version":"","binary_paths":{`)
 	mockOut.Reset()
 
-	// Text output: the YAML body is unchanged and the path report follows.
+	// Text output is one YAML document that holds the same report as the
+	// JSON form under binary_paths. Strict parsing rejects duplicate keys.
 	cmd.SetArgs([]string{"--long=true", fmt.Sprintf("--%s=text", cmtcli.OutputFlag)})
 	require.NoError(t, cmd.Execute())
-	yamlBody, err := yaml.Marshal(&info)
-	require.NoError(t, err)
-	require.True(t, strings.HasPrefix(mockOut.String(), string(yamlBody)))
-	require.Contains(t, mockOut.String(), "\nrunning from: ")
+	text := mockOut.String()
+	require.NotContains(t, text, "also on PATH")
+	require.NotContains(t, text, "\nrunning from: ")
+	// Drop the stderr hint, which the mock writer shares with stdout.
+	doc, _, _ := strings.Cut(text, "note: ")
+	var parsed map[string]any
+	require.NoError(t, yaml.UnmarshalStrict([]byte(doc), &parsed), doc)
+	bp, ok := parsed["binary_paths"].(map[string]any)
+	require.True(t, ok, doc)
+	require.NotEmpty(t, bp["running_from"])
 }
