@@ -175,11 +175,53 @@ fi
 echo_info "Successfully finished localnet script setup."
 # ------------------------------------------------------------------------
 
-# Stop nibid if it is already running
-if pgrep -x "$(basename "$BINARY")" >/dev/null; then
-  echo_error "Terminating $(basename "$BINARY")..."
-  killall "$(basename "$BINARY")"
-fi
+# Stop any node that uses $CHAIN_DIR before the reset. The binary runs under
+# two names, nibid and nibiru, so check both.
+# BEGIN stop_running_nodes
+# running_node_pids: Print the PIDs of running nibid or nibiru nodes
+# (`start` or `node start`) whose home is $CHAIN_DIR. A node without a --home
+# flag uses the default home, $HOME/.nibid.
+running_node_pids() {
+  local want="${CHAIN_DIR%/}" pid rest home i name
+  local -a w
+  while read -r pid rest; do
+    [[ -n "$pid" && "$pid" != "$$" ]] || continue
+    read -ra w <<<"$rest"
+    [[ ${#w[@]} -gt 0 ]] || continue
+    name="${w[0]##*/}"
+    [[ "$name" == nibid || "$name" == nibiru ]] || continue
+    [[ " ${w[*]:1} " == *" start "* ]] || continue
+    home="$HOME/.nibid"
+    for ((i = 1; i < ${#w[@]}; i++)); do
+      case "${w[i]}" in
+      --home) home="${w[i + 1]:-}" ;;
+      --home=*) home="${w[i]#--home=}" ;;
+      esac
+    done
+    [[ "${home%/}" == "$want" ]] && printf '%s\n' "$pid"
+  done < <(ps -eo pid=,args= 2>/dev/null || true)
+  return 0
+}
+
+# stop_running_nodes: Terminate those nodes, wait up to 10 seconds for them to
+# exit, and abort if any is still alive, so the reset never runs under a node.
+stop_running_nodes() {
+  local pids pid tries=0
+  pids="$(running_node_pids)"
+  [[ -n "$pids" ]] || return 0
+  echo_error "Terminating running node(s) that use $CHAIN_DIR: $(echo $pids)"
+  for pid in $pids; do kill -TERM "$pid" 2>/dev/null || true; done
+  while ((tries < 20)); do
+    pids="$(running_node_pids)"
+    [[ -n "$pids" ]] || return 0
+    sleep 0.5
+    tries=$((tries + 1))
+  done
+  echo_error "Node(s) still running after 10 seconds: $(echo $pids). Aborting."
+  exit 1
+}
+# END stop_running_nodes
+stop_running_nodes
 
 # Remove previous data, preserving keyring and config files
 echo_info "Removing previous chain data from $CHAIN_DIR..."
