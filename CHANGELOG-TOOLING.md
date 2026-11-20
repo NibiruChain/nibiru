@@ -111,6 +111,10 @@ patches from `release/v2.23`, independently of coordinated chain releases.
 - Reword the `testnet` description from "simapp testnet" to "multi-node local
   testnet".
   [PR #2929](https://github.com/SaiDotFun/nibiru/pull/2929).
+- Remove `nibiru tx devgas register`, `update`, and `cancel`. The chain
+  rejects their messages as part of the `x/devgas` shutdown. The read-only
+  `nibiru q devgas` commands stay.
+  [PR #2930](https://github.com/SaiDotFun/nibiru/pull/2930).
 
 ### Token Registry
 

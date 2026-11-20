@@ -50,6 +50,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to Wasm contracts through Stargate during transaction execution and can
   change transaction results and gas. Activate only in a coordinated chain
   upgrade. Keep this out of the `release/v2.23` compatible patch line.
+- Shut down module `x/devgas`. Transaction messages `MsgRegisterFeeShare`,
+  `MsgUpdateFeeShare`, `MsgCancelFeeShare`, and `MsgUpdateParams` of
+  `nibiru.devgas.v1` fail with error `ErrDevgasDeprecated`. The non-EVM ante
+  handler no longer pays a fee share, so the full fee stays in the fee
+  collector, and it no longer reads `x/devgas` state, which lowers the gas
+  used by every fee-paying non-EVM transaction. The message types, store, genesis, and
+  queries remain. The `v2.24.0` upgrade handler deletes the registered fee
+  shares and sets module param `enable_fee_share` to false. It keeps the
+  `devgas` store key. Activate only in a coordinated chain upgrade.
+  Keep this out of the `release/v2.23` compatible patch line.
+  [PR #2930](https://github.com/SaiDotFun/nibiru/pull/2930)
 
 
 ## v2.23.0: Nibiru BFT, Subsecond Block Pacing, and Oracle-First Proposals

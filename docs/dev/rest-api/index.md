@@ -9,7 +9,7 @@ The following reference documentation covers all available REST endpoints for Ni
 | REST Service | Summary |
 | --- | --- |
 | [nibiru/evm](./nibiru-evm.md) | EVM-compatible execution layer queries: account balances, contract bytecode, transaction receipts, and gas fees |
-| [nibiru/devgas](./nibiru-devgas.md) | Developer fee sharing: query registered contracts and fee distribution arrangements for smart contract developers |
+| [nibiru/devgas](./nibiru-devgas.md) | Retired developer fee sharing module: read-only queries for the fee shares left in state |
 | [nibiru/tokenfactory](./nibiru-tokenfactory.md) | Custom token creation and management: query token metadata, admin permissions, and creator-specific denominations |
 | [nibiru/sudo](./nibiru-sudo.md) | Administrative permissions: query authorized sudo accounts for privileged blockchain operations |
 | [nibiru/epochs](./nibiru-epochs.md) | Time-based triggers: query current epoch information and epoch-based module scheduling |

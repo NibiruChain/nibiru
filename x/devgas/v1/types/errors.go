@@ -12,4 +12,5 @@ var (
 	ErrFeeShareContractNotRegistered = sdkioerrors.Register(ModuleName, 4, "no feeshare registered for contract")
 	ErrFeeSharePayment               = sdkioerrors.Register(ModuleName, 5, "feeshare payment error")
 	ErrFeeShareInvalidWithdrawer     = sdkioerrors.Register(ModuleName, 6, "invalid withdrawer address")
+	ErrDevgasDeprecated              = sdkioerrors.Register(ModuleName, 7, "module x/devgas is deprecated as of v2.24; transaction messages are disabled")
 )

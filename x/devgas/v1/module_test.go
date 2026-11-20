@@ -35,7 +35,7 @@ func (s *GenesisTestSuite) TestAppModule() {
 		s.NoError(err)
 
 		s.T().Log("CLI commands")
-		s.NotNil(appModule.GetTxCmd())
+		s.Nil(appModule.GetTxCmd())
 		s.NotNil(appModule.GetQueryCmd())
 		s.NotEmpty(appModule.QuerierRoute())
 	})

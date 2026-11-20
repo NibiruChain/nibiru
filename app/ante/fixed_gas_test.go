@@ -327,7 +327,7 @@ func (s *Suite) TestZeroGasActors() {
 		return sdk.NewCoins(sdk.NewInt64Coin(appconst.DENOM_UNIBI, x))
 	}
 
-	s.T().Log("both contracts are registered with devgas")
+	s.T().Log("both contracts have a fee share left over from x/devgas")
 	withdrawerWithGasFees := evmtest.NewEthPrivAcc().NibiruAddr
 	withdrawerZeroGas := evmtest.NewEthPrivAcc().NibiruAddr
 	for _, reg := range []struct{ contract, withdrawer sdk.AccAddress }{
@@ -398,6 +398,7 @@ func (s *Suite) TestZeroGasActors() {
 		s.Require().NoError(err)
 
 		s.T().Logf("blockHeader: %+v\n", blockHeader)
+		feeCollectorBeforeFeeTx := unibiBalance(feeCollector)
 		baseapp.SetChainID(blockHeader.GetChainID())(deps.App.BaseApp)
 		txBz, err := txCfg.TxEncoder()(blockTx)
 		s.Require().NoError(err)
@@ -409,8 +410,13 @@ func (s *Suite) TestZeroGasActors() {
 			s.Greaterf(r.GasUsed, int64(100_000), `gasUsed="%d", resp: %#v`, r.GasUsed, r)
 			s.EqualValuesf(250_000, r.GasWanted, `gasWanted="%d", resp: %#v`, r.GasWanted, r)
 		}
-		s.True(unibiBalance(withdrawerWithGasFees).IsPositive(),
-			"a fee-paying tx pays the devgas share")
+		s.True(unibiBalance(withdrawerWithGasFees).IsZero(),
+			"a registered fee share receives no payout")
+		s.Equal(
+			feeCollectorBeforeFeeTx.Add(sdkmath.NewInt(500)).String(),
+			unibiBalance(feeCollector).String(),
+			"the fee collector keeps the whole fee",
+		)
 	}
 
 	s.T().Log("zero gas actors work as intended")
@@ -436,8 +442,7 @@ func (s *Suite) TestZeroGasActors() {
 		}...)
 		s.Require().NoError(err)
 		txBuilder.SetGasLimit(50_000)
-		// A declared fee is never deducted from a zero-gas actor, so it must
-		// not produce a devgas payout either.
+		// A declared fee is never deducted from a zero-gas actor.
 		txBuilder.SetFeeAmount(unibi(500))
 
 		privs := []cryptotypes.PrivKey{sender.PrivKey}
@@ -491,7 +496,7 @@ func (s *Suite) TestZeroGasActors() {
 		balAfter := deps.App.BankKeeper.GetWeiBalance(deps.Ctx(), sender.NibiruAddr)
 		s.Equal(balAfter, balBefore, "expect zero gas charged")
 		s.True(unibiBalance(withdrawerZeroGas).IsZero(),
-			"a zero-gas actor tx pays no devgas share")
+			"a registered fee share receives no payout")
 		s.Equal(feeCollectorBefore.String(), unibiBalance(feeCollector).String(),
 			"the fee collector is unchanged by a zero-gas actor tx")
 	}

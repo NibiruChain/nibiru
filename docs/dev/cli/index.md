@@ -146,7 +146,6 @@ to print all of them.
 
 | Subcommand                            | Description                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------ |
-| [devgas](../../concepts/arch/advanced/devgas.md#command-line-interface) | Devgas subcommands for smart contract usage.                       |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |
 | [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Create, import, export, and list keys in the local keyring.        |
 

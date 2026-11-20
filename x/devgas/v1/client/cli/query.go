@@ -18,7 +18,7 @@ import (
 func GetQueryCmd() *cobra.Command {
 	feesQueryCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
+		Short:                      "Read-only queries for the retired devgas module",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
@@ -42,7 +42,7 @@ func GetCmdQueryFeeShares() *cobra.Command {
 		Short: "Query dev gas contracts registered with a deployer",
 		Long:  "Query dev gas contracts registered with a deployer",
 		Args:  cobra.ExactArgs(1),
-		Example: fmt.Sprintf("%s query %s deployer-contracts <deployer-address>",
+		Example: fmt.Sprintf("%s q %s contracts <deployer-address>",
 			version.AppName, types.ModuleName,
 		),
 
@@ -83,7 +83,7 @@ func GetCmdQueryFeeShare() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		Short:   "Query a registered contract for fee distribution by its bech32 address",
 		Long:    "Query a registered contract for fee distribution by its bech32 address",
-		Example: fmt.Sprintf("%s query feeshare contract <contract-address>", version.AppName),
+		Example: fmt.Sprintf("%s q devgas contract <contract-address>", version.AppName),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -149,7 +149,7 @@ func GetCmdQueryFeeSharesByWithdrawer() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		Short:   "Query all contracts that have been registered for feeshare distribution with a given withdrawer address",
 		Long:    "Query all contracts that have been registered for feeshare distribution with a given withdrawer address",
-		Example: fmt.Sprintf("%s query feeshare withdrawer-contracts <withdrawer-address>", version.AppName),
+		Example: fmt.Sprintf("%s q devgas withdrawer-contracts <withdrawer-address>", version.AppName),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
