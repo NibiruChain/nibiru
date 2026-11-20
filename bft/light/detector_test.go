@@ -28,6 +28,28 @@ func TestCompareNewLightBlockWithWitness_OneResult(t *testing.T) {
 		map[int64]*types.SignedHeader{1: h1},
 		map[int64]*types.ValidatorSet{1: vals},
 	)
+	// Use a separately signed local history for the same-height comparison.
+	differentHeaderWitness := mockp.New(genMockNode(chainID, l2.Height, len(keys), 0, bTime))
+	differentBlock, err := differentHeaderWitness.LightBlock(t.Context(), l2.Height)
+	require.NoError(t, err)
+
+	// The same signed block can be checked with the previous round's priorities.
+	differentPrioritiesWitness := mockp.New(chainID,
+		map[int64]*types.SignedHeader{l2.Height: l2.SignedHeader},
+		map[int64]*types.ValidatorSet{l2.Height: vals},
+	)
+	priorityBlock, err := differentPrioritiesWitness.LightBlock(t.Context(), l2.Height)
+	require.NoError(t, err)
+
+	for _, block := range []*types.LightBlock{l2, differentBlock, priorityBlock} {
+		require.NoError(t, block.ValidatorSet.VerifyCommit(chainID, block.Commit.BlockID, block.Height, block.Commit))
+	}
+	require.NotEqual(t, l2.Hash(), differentBlock.Hash())
+	require.Equal(t, l2.Hash(), priorityBlock.Hash())
+	primaryPriorities := l2.ValidatorSet.ProposerPriorityHash()
+	witnessPriorities := priorityBlock.ValidatorSet.ProposerPriorityHash()
+	require.NotEqual(t, primaryPriorities, witnessPriorities)
+
 	for _, tc := range []struct {
 		name    string
 		witness provider.Provider
@@ -36,6 +58,16 @@ func TestCompareNewLightBlockWithWitness_OneResult(t *testing.T) {
 		{name: "matching block", witness: fullNode},
 		{name: "witness one height behind", witness: laggingWitness, wantErr: provider.ErrNoResponse},
 		{name: "unavailable witness", witness: deadNode, wantErr: provider.ErrNoResponse},
+		{
+			name:    "different header",
+			witness: differentHeaderWitness,
+			wantErr: light.ErrConflictingHeaders{Block: differentBlock},
+		},
+		{
+			name:    "different proposer priorities",
+			witness: differentPrioritiesWitness,
+			wantErr: light.ErrProposerPrioritiesDiverge{WitnessHash: witnessPriorities, PrimaryHash: primaryPriorities},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			results := make(chan error)
@@ -49,7 +81,7 @@ func TestCompareNewLightBlockWithWitness_OneResult(t *testing.T) {
 				received = append(received, result)
 			}
 			require.Len(t, received, 1)
-			require.ErrorIs(t, received[0], tc.wantErr)
+			require.Equal(t, tc.wantErr, received[0])
 		})
 	}
 }
