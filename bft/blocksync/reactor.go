@@ -192,6 +192,12 @@ func (bcR *Reactor) GetChannels() []*p2p.ChannelDescriptor {
 	}
 }
 
+// InitPeer initializes the request history for this connection.
+func (bcR *Reactor) InitPeer(peer p2p.Peer) p2p.Peer {
+	peer.Set(sentBlockRequestsKey, &sentBlockRequests{})
+	return peer
+}
+
 // AddPeer implements Reactor by sending our state to peer.
 func (bcR *Reactor) AddPeer(peer p2p.Peer) {
 	peer.SendEnvelope(p2p.Envelope{
@@ -209,6 +215,7 @@ func (bcR *Reactor) AddPeer(peer p2p.Peer) {
 
 // RemovePeer implements Reactor by removing peer from the pool.
 func (bcR *Reactor) RemovePeer(peer p2p.Peer, reason interface{}) {
+	peer.Set(sentBlockRequestsKey, nil)
 	bcR.pool.RemovePeer(peer.ID())
 }
 
@@ -270,8 +277,13 @@ func (bcR *Reactor) FilterMsgBytes(chID byte, src p2p.Peer, msgBytes []byte) err
 		return validateMaxVotes(stub.BlockResponse)
 	}
 
-	// ensure we have an outstanding request to this peer
-	if !bcR.pool.HasPendingRequestFrom(src.ID()) {
+	height := stub.BlockResponse.GetBlock().GetHeader().GetHeight()
+	retired, pending := bcR.pool.responseRequestStatus(src.ID(), height)
+	if retired {
+		// A second peer can reply after we applied the requested block.
+		pending = sentRequestsFor(src).contains(height, time.Now())
+	}
+	if !pending {
 		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
 	}
 
@@ -317,7 +329,8 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 			bcR.Logger.Error("Block content is invalid", "err", err)
 			return
 		}
-		bcR.pool.AddBlock(e.Src.ID(), bi, msg.Block.Size())
+		requested := sentRequestsFor(e.Src).take(bi.Height, time.Now())
+		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requested)
 	case *bcproto.StatusRequest:
 		// Send peer our state.
 		e.Src.TrySendEnvelope(p2p.Envelope{
@@ -331,6 +344,7 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 		// Got a peer status. Unverified.
 		bcR.pool.SetPeerRange(e.Src.ID(), msg.Base, msg.Height)
 	case *bcproto.NoBlockResponse:
+		sentRequestsFor(e.Src).take(msg.Height, time.Now())
 		bcR.Logger.Debug("Peer does not have requested block", "peer", e.Src, "height", msg.Height)
 		bcR.pool.RedoRequestFrom(msg.Height, e.Src.ID())
 	default:
@@ -371,6 +385,11 @@ func (bcR *Reactor) poolRoutine(stateSynced bool) {
 	didProcessCh := make(chan struct{}, 1)
 
 	go func() {
+		defer func() {
+			for _, peer := range bcR.Switch.Peers().List() {
+				sentRequestsFor(peer).clear()
+			}
+		}()
 		for {
 			select {
 			case <-bcR.Quit():
@@ -382,10 +401,7 @@ func (bcR *Reactor) poolRoutine(stateSynced bool) {
 				if peer == nil {
 					continue
 				}
-				queued := peer.TrySendEnvelope(p2p.Envelope{
-					ChannelID: BlocksyncChannel,
-					Message:   &bcproto.BlockRequest{Height: request.Height},
-				})
+				queued := sentRequestsFor(peer).send(peer, request.Height)
 				if !queued {
 					bcR.Logger.Debug("Send queue is full, drop block request", "peer", peer.ID(), "height", request.Height)
 				}

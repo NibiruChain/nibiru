@@ -208,6 +208,21 @@ func (pool *BlockPool) GetStatus() (height int64, numPending int32, lenRequester
 func (pool *BlockPool) HasPendingRequestFrom(peerID p2p.ID) bool {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
+	return pool.hasPendingRequestFrom(peerID)
+}
+
+// responseRequestStatus identifies replies below the pool's next height.
+// For other heights it preserves the live requester check.
+func (pool *BlockPool) responseRequestStatus(peerID p2p.ID, height int64) (retired, pending bool) {
+	pool.mtx.Lock()
+	defer pool.mtx.Unlock()
+	if height > 0 && height < pool.height {
+		return true, false
+	}
+	return false, pool.hasPendingRequestFrom(peerID)
+}
+
+func (pool *BlockPool) hasPendingRequestFrom(peerID p2p.ID) bool {
 	for _, r := range pool.requesters {
 		if r.didRequestFrom(peerID) {
 			return true
@@ -331,6 +346,10 @@ func (pool *BlockPool) RedoRequest(height int64) p2p.ID {
 // do not add the block and return an error.
 // TODO: ensure that blocks come in order for each peer.
 func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int) {
+	pool.addBlock(peerID, block, blockSize, false)
+}
+
+func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int, requested bool) {
 	pool.mtx.Lock()
 	var sendErr error
 	defer func() {
@@ -353,6 +372,12 @@ func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int
 			return
 		}
 
+		// The requester's winning reply already updated the pool's pending
+		// count. Release only the delayed peer's remaining request slot.
+		if peer := pool.peers[peerID]; requested && peer != nil && peer.numPending > 0 {
+			peer.decrPending(blockSize)
+			return
+		}
 		err := fmt.Errorf("got an already committed block #%d (possibly from the slow peer %s)", block.Height, peerID)
 		pool.Logger.Error("failed to add block", "peer", peerID, "err", err)
 		return

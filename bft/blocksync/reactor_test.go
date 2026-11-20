@@ -539,6 +539,75 @@ func mockPeer(id p2p.ID) *p2pmocks.Peer {
 	return p
 }
 
+func mockBlockRequestPeer(id p2p.ID, queued bool) *p2pmocks.Peer {
+	peer := mockPeer(id)
+	var requests any
+	peer.On("Set", sentBlockRequestsKey, mock.Anything).Run(func(args mock.Arguments) {
+		requests = args.Get(1)
+	})
+	peer.On("Get", sentBlockRequestsKey).Return(func(string) any { return requests })
+	peer.On("TrySendEnvelope", mock.Anything).Return(queued)
+	return peer
+}
+
+func TestFilterAllowsOnlyRequestedLateReplyDuringSync(t *testing.T) {
+	config = cfg.ResetTestRoot("blocksync_late_reply")
+	t.Cleanup(func() { require.NoError(t, os.RemoveAll(config.RootDir)) })
+	genDoc, privVals := genesisDocWithValsPowers([]int64{30})
+	source := newReactor(t, log.TestingLogger(), genDoc, privVals, 3)
+	t.Cleanup(func() { require.NoError(t, source.app.Stop()) })
+	block := source.reactor.store.LoadBlock(1)
+	require.NotNil(t, block)
+	wireBlock, err := block.ToProto()
+	require.NoError(t, err)
+	reply := &bcproto.BlockResponse{Block: wireBlock}
+	wireReply, err := proto.Marshal(reply.Wrap())
+	require.NoError(t, err)
+
+	r := newFilterReactor(t)
+	r.Logger = log.TestingLogger()
+	delayed := r.InitPeer(mockBlockRequestPeer("delayed", true))
+	failed := r.InitPeer(mockBlockRequestPeer("failed", false))
+	other := r.InitPeer(mockBlockRequestPeer("other", true))
+	require.True(t, sentRequestsFor(delayed).send(delayed, block.Height))
+	require.False(t, sentRequestsFor(failed).send(failed, block.Height))
+	require.True(t, sentRequestsFor(other).send(other, block.Height+1))
+
+	// The first peer's copy was applied while the second peer's reply was in flight.
+	r.pool.SetPeerRange(delayed.ID(), 1, 3)
+	r.pool.mtx.Lock()
+	r.pool.peers[delayed.ID()].incrPending()
+	r.pool.mtx.Unlock()
+	seedRequester(r, block.Height, "first")
+	r.pool.PopRequest(block.Time)
+	seedRequester(r, block.Height+1, other.ID())
+	require.True(t, r.pool.IsRunning())
+	require.NoError(t, r.FilterMsgBytes(BlocksyncChannel, delayed, wireReply))
+	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, failed, wireReply), "unsolicited")
+	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, other, wireReply), "unsolicited")
+	reconnected := r.InitPeer(mockBlockRequestPeer(delayed.ID(), true))
+	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, reconnected, wireReply), "unsolicited")
+
+	r.ReceiveEnvelope(p2p.Envelope{ChannelID: BlocksyncChannel, Src: delayed, Message: reply})
+	r.pool.mtx.Lock()
+	pending := r.pool.peers[delayed.ID()].numPending
+	r.pool.mtx.Unlock()
+	require.Zero(t, pending, "the delayed reply satisfies the peer's request")
+	require.ErrorContains(t, r.FilterMsgBytes(BlocksyncChannel, delayed, wireReply), "unsolicited")
+
+	r.RemovePeer(other, nil)
+	require.Nil(t, sentRequestsFor(other))
+}
+
+func TestSentBlockRequestExpiresAtRetryInterval(t *testing.T) {
+	var requests sentBlockRequests
+	now := time.Now()
+	requests.remember(1, now)
+	require.True(t, requests.contains(1, now.Add(sentBlockRequestTTL-time.Nanosecond)))
+	require.False(t, requests.contains(1, now.Add(sentBlockRequestTTL)))
+	require.Empty(t, requests.expiresAt)
+}
+
 func TestFilterMsgBytes(t *testing.T) {
 	wireBytesFor := func(t *testing.T, m *bcproto.Message) []byte {
 		t.Helper()
