@@ -12,7 +12,7 @@ on:
 
 jobs:
   test-sim-nondeterminism:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -26,7 +26,7 @@ jobs:
           just test-sim-nondeterminism
 
   test-sim-default-genesis-fast:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -40,7 +40,7 @@ jobs:
           just test-sim-default-genesis-fast
 
   test-sim-import-export:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -54,7 +54,7 @@ jobs:
           just test-sim-import-export
 
   test-sim-after-import:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

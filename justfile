@@ -238,7 +238,7 @@ release-image-verify release_tag version:
 release-image-smoke release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --smoke-test
 
-# Publish a verified public release as ghcr.io/nibiruchain/nibiru:<version>.
+# Publish a verified public release as ghcr.io/<lowercase owner/repo>:<version>.
 [confirm]
 release-image-publish release_tag version:
     contrib/scripts/publish-release-image.sh --release-tag '{{release_tag}}' --version '{{version}}' --push
