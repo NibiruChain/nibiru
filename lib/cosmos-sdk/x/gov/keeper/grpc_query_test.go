@@ -361,6 +361,55 @@ func (suite *KeeperTestSuite) TestLegacyGRPCQueryProposals() {
 	}
 }
 
+func (suite *KeeperTestSuite) TestLegacyGRPCQueriesWithContentlessFailedProposal() {
+	suite.reset()
+	ctx := suite.ctx
+	start := ctx.BlockTime().UTC()
+	end := start.Add(time.Hour)
+	failed, err := v1.NewProposal(nil, 1, start, end, "", "Failed proposal", "summary", suite.addrs[0])
+	suite.Require().NoError(err)
+	failed.Status = v1.StatusFailed
+	failed.VotingStartTime = &start
+	failed.VotingEndTime = &end
+	failed.TotalDeposit = sdk.NewCoins(sdk.NewInt64Coin("stake", 10))
+	tally := v1.NewTallyResult(sdkmath.OneInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt(), sdkmath.ZeroInt())
+	failed.FinalTallyResult = &tally
+	suite.govKeeper.SetProposal(ctx, failed)
+
+	content := v1beta1.NewTextProposal("Ordinary proposal", "description")
+	msg, err := v1.NewLegacyContent(content, govAcct.String())
+	suite.Require().NoError(err)
+	ordinary, err := v1.NewProposal([]sdk.Msg{msg}, 2, start, end, "", "Ordinary proposal", "summary", suite.addrs[0])
+	suite.Require().NoError(err)
+	suite.govKeeper.SetProposal(ctx, ordinary)
+
+	queryCtx := gocontext.Background()
+	res, err := suite.legacyQueryClient.Proposal(queryCtx, &v1beta1.QueryProposalRequest{ProposalId: failed.Id})
+	suite.Require().NoError(err)
+	suite.Equal(failed.Id, res.Proposal.ProposalId)
+	suite.Equal(v1beta1.StatusFailed, res.Proposal.Status)
+	suite.Equal(sdk.Coins(failed.TotalDeposit), res.Proposal.TotalDeposit)
+	suite.True(end.Equal(res.Proposal.VotingEndTime))
+	suite.Equal(sdkmath.OneInt(), res.Proposal.FinalTallyResult.Yes)
+	suite.Nil(res.Proposal.Content)
+	suite.Nil(res.Proposal.GetContent())
+	suite.Empty(res.Proposal.GetTitle())
+
+	page, err := suite.legacyQueryClient.Proposals(queryCtx, &v1beta1.QueryProposalsRequest{
+		Pagination: &query.PageRequest{Limit: 2, CountTotal: true},
+	})
+	suite.Require().NoError(err)
+	suite.Require().Len(page.Proposals, 2)
+	suite.Require().NotNil(page.Pagination)
+	suite.Equal(uint64(2), page.Pagination.Total)
+	suite.Equal(res.Proposal, page.Proposals[0])
+	suite.Equal(ordinary.Id, page.Proposals[1].ProposalId)
+	suite.Require().NoError(page.Proposals[1].UnpackInterfaces(suite.cdc))
+	suite.Equal(content.GetTitle(), page.Proposals[1].GetTitle())
+	_, err = suite.cdc.MarshalJSON(page)
+	suite.NoError(err)
+}
+
 func (suite *KeeperTestSuite) TestGRPCQueryVote() {
 	ctx, queryClient, addrs := suite.ctx, suite.queryClient, suite.addrs
 

@@ -92,14 +92,23 @@ func TestConvertToLegacyProposalContent(t *testing.T) {
 	require.Truef(t, ok, "expected *MsgSoftwareUpgrade, got %T", legacyP.Content.GetCachedValue())
 	require.Equal(t, &msg, tp)
 
-	// more than one message is not supported
+	// Failed proposals with multiple messages still require the v1 API.
+	proposal.Status = v1.StatusFailed
 	proposal.Messages, err = tx.SetMsgs([]sdk.Msg{&msg, &msg})
 	require.NoError(t, err)
 	_, err = v3.ConvertToLegacyProposal(proposal)
 	require.ErrorIs(t, sdkerrors.ErrInvalidType, err)
 
-	// zero messages is not supported
+	// A failed proposal without messages still requires a valid tally.
 	proposal.Messages = nil
+	invalidTally := tallyResult
+	invalidTally.YesCount = ""
+	proposal.FinalTallyResult = &invalidTally
+	_, err = v3.ConvertToLegacyProposal(proposal)
+	require.Error(t, err)
+
+	proposal.FinalTallyResult = &tallyResult
+	proposal.Status = v1.StatusDepositPeriod
 	_, err = v3.ConvertToLegacyProposal(proposal)
 	require.ErrorIs(t, sdkerrors.ErrInvalidType, err)
 }
