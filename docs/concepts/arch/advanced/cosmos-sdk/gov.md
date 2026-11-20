@@ -11,13 +11,13 @@ description: >-
 
 ## Abstract
 
-- **Proposal submission.** Users submit proposals with a deposit. Voting opens
-  when the proposal reaches the minimum deposit.
+- **Proposal submission.** The initial deposit minimum is configurable and
+  defaults to zero. Voting opens when total deposits reach the voting minimum.
 - **Voting.** Eligible participants can vote during the voting period.
 - **Vote inheritance.** Delegators who do not vote inherit their validator's vote.
-- **Deposits.** Depositors get their tokens back if a proposal passes or is
-  rejected without a veto. The module burns deposits if the proposal is vetoed
-  or never reaches the voting period.
+- **Deposits.** Governance parameters determine whether the module burns
+  deposits when a proposal expires before voting, misses quorum, or is vetoed.
+  Otherwise, the module refunds the deposits.
 
 ## Contents
 
@@ -60,11 +60,9 @@ staking token of the chain.
 
 The governance process is divided in a few steps that are outlined below:
 
-* **Proposal submission:** Proposal is submitted to the blockchain with a
-  deposit.
-* **Vote:** Once deposit reaches a certain value (`MinDeposit`), proposal is
-  confirmed and vote opens. Bonded Atom holders can then send `TxGovVote`
-  transactions to vote on the proposal.
+* **Proposal submission.** The submitter provides any required initial deposit.
+* **Vote.** Voting opens once total deposits reach `MinDeposit`. Participants
+  with bonded NIBI can then send a `MsgVote` to vote on the proposal.
 * **Execution** After a period of time, the votes are tallied and depending
   on the result, the messages in the proposal will be executed.
 
@@ -87,37 +85,29 @@ and have a respective path to execute on but do not perform a full validity chec
 
 ### Concepts: Deposit
 
-To prevent spam, proposals must be submitted with a deposit in the coins defined by
-the `MinDeposit` param.
+The `MinInitialDepositRatio` parameter sets the portion of `MinDeposit` the
+submitter must provide up front. A ratio of zero allows submission without a
+deposit.
 
-When a proposal is submitted, it has to be accompanied with a deposit that must be
-strictly positive, but can be inferior to `MinDeposit`. The submitter doesn't need
-to pay for the entire deposit on their own. The newly created proposal is stored in
-an *inactive proposal queue* and stays there until its deposit passes the `MinDeposit`.
-Other token holders can increase the proposal's deposit by sending a `Deposit`
-transaction. If a proposal doesn't pass the `MinDeposit` before the deposit end time
-(the time when deposits are no longer accepted), the proposal will be destroyed: the
-proposal will be removed from state and the deposit will be burned (see x/gov `EndBlocker`).
-When a proposal deposit passes the `MinDeposit` threshold (even during the proposal
-submission) before the deposit end time, the proposal will be moved into the
-*active proposal queue* and the voting period will begin.
+Other accounts can add to the total with a `MsgDeposit`. The proposal stays in
+the inactive queue until total deposits reach `MinDeposit` or the deposit
+period expires. Reaching the threshold opens voting. If the deposit period
+expires first, the module removes the proposal.
 
-The deposit is kept in escrow and held by the governance `ModuleAccount` until the
-proposal is finalized (passed or rejected).
+The governance module account holds deposits in escrow until the proposal
+expires or voting ends.
 
 #### Deposit refund and burn
 
-When a proposal is finalized, the coins from the deposit are either refunded or burned
-according to the final tally of the proposal:
+The module burns deposits when the applicable governance parameter is enabled:
 
-* If the proposal is approved or rejected but *not* vetoed, each deposit will be
-  automatically refunded to its respective depositor (transferred from the governance
-  `ModuleAccount`).
-* When the proposal is vetoed with greater than 1/3, deposits will be burned from the
-  governance `ModuleAccount` and the proposal information along with its deposit
-  information will be removed from state.
-* All refunded or burned deposits are removed from the state. Events are issued when
-  burning or refunding a deposit.
+| Proposal outcome | Burn parameter |
+| --- | --- |
+| The deposit period expires before voting opens | `BurnProposalDepositPrevote` |
+| The vote falls short of quorum | `BurnVoteQuorum` |
+| The vote meets quorum and exceeds the veto threshold | `BurnVoteVeto` |
+
+Otherwise, the module refunds each deposit to the account that made it.
 
 ### Concepts: Vote
 
