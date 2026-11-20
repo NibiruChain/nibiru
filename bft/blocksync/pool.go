@@ -82,7 +82,7 @@ type BlockPool struct {
 	peers         map[p2p.ID]*bpPeer
 	bannedPeers   map[p2p.ID]time.Time
 	sortedPeers   []*bpPeer // sorted by curRate, highest first
-	maxPeerHeight int64     // the biggest reported height
+	maxPeerHeight int64     // the highest height reachable across peer ranges
 
 	// atomic
 	numPending int32 // number of requests pending assignment or block response
@@ -227,20 +227,14 @@ func (pool *BlockPool) IsCaughtUp() bool {
 		return false
 	}
 
-	// Some conditions to determine if we're caught up.
-	// Ensures we've either received a block or waited some amount of time,
-	// and that we're synced to the highest known height.
-	// Note we use maxPeerHeight - 1 because to sync block H requires block H+1
-	// to verify the LastCommit.
-	receivedBlockOrTimedOut := pool.height > 0 || time.Since(pool.startTime) > 5*time.Second
-	ourChainIsLongestAmongPeers := pool.maxPeerHeight == 0 || pool.height >= (pool.maxPeerHeight-1)
-	isCaughtUp := receivedBlockOrTimedOut && ourChainIsLongestAmongPeers
-	if isCaughtUp {
+	// pool.height is the next block to apply. At the request ceiling, no
+	// successor is available to verify that block's commit.
+	sinceStart := time.Since(pool.startTime)
+	if (pool.height > 0 || sinceStart > 5*time.Second) && pool.height >= pool.maxPeerHeight {
 		return true
 	}
 
 	// Fallback to sync tracker in case peers stall or throttle block delivery.
-	sinceStart := time.Since(pool.startTime)
 	if sinceStart >= peerConnWait {
 		if pool.height > pool.startHeight {
 			return pool.syncTracker.IsCaughtUp()
@@ -268,8 +262,8 @@ func (pool *BlockPool) PeekTwoBlocks() (first *types.Block, second *types.Block)
 	return
 }
 
-// PopRequest removes the requester at pool.height and increments pool.height.
-func (pool *BlockPool) PopRequest() {
+// PopRequest removes the requester and advances the pool after applying a block.
+func (pool *BlockPool) PopRequest(appliedBlockTime time.Time) {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
@@ -277,20 +271,14 @@ func (pool *BlockPool) PopRequest() {
 	if r == nil {
 		panic(fmt.Sprintf("Expected requester to pop, got nothing at height %v", pool.height))
 	}
-	// The block can be reset by a redo between PeekTwoBlocks and PopRequest,
-	// so do not assume it is still set.
-	block := r.getBlock()
-
 	if err := r.Stop(); err != nil {
 		pool.Logger.Error("Error stopping requester", "err", err)
 	}
 	delete(pool.requesters, pool.height)
 	pool.height++
-	if block != nil {
-		pool.syncTracker.RecordBlock(block.Time)
-	}
+	pool.syncTracker.RecordBlock(appliedBlockTime)
 
-	// Re-evaluate maxPeerHeight: peers whose pruned base was just beyond the previous pool.height may now be able to contribute
+	// The next height can now reach a peer range that was previously disjoint.
 	pool.updateMaxPeerHeight()
 
 	// Notify the next minBlocksForSingleRequest requesters about new height, so
@@ -390,7 +378,7 @@ func (pool *BlockPool) Height() int64 {
 	return pool.height
 }
 
-// MaxPeerHeight returns the highest reported height.
+// MaxPeerHeight returns the highest height reachable across peer ranges.
 func (pool *BlockPool) MaxPeerHeight() int64 {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
@@ -472,29 +460,34 @@ func (pool *BlockPool) removePeer(peerID p2p.ID) {
 			}
 		}
 
-		// Find a new peer with the biggest height and update maxPeerHeight if the
-		// peer's height was the biggest.
-		if peer.height == pool.maxPeerHeight {
-			pool.updateMaxPeerHeight()
-		}
+		// Even a peer below the ceiling can connect two otherwise disjoint ranges.
+		pool.updateMaxPeerHeight()
 	}
 }
 
-// updateMaxPeerHeight sets maxPeerHeight to the highest height among peers.
+// updateMaxPeerHeight extends the request ceiling across contiguous peer ranges
+// starting at pool.height. The caller holds pool.mtx.
 func (pool *BlockPool) updateMaxPeerHeight() {
-	var max int64
+	var ceiling int64
+	var ahead []*bpPeer
 	for _, peer := range pool.peers {
-		if pool.height > 0 && peer.base > pool.height {
-			// Keeps a faulty peer from inflating maxPeerHeight with a
-			// base/height pair no peer can actually serve, which would
-			// stall IsCaughtUp forever.
-			continue
-		}
-		if peer.height > max {
-			max = peer.height
+		if peer.base <= pool.height {
+			ceiling = max(ceiling, peer.height)
+		} else {
+			ahead = append(ahead, peer)
 		}
 	}
-	pool.maxPeerHeight = max
+	if ceiling >= pool.height {
+		sort.Slice(ahead, func(i, j int) bool { return ahead[i].base < ahead[j].base })
+		for _, peer := range ahead {
+			// base is positive here. Subtract to avoid overflowing at the ceiling.
+			if peer.base-1 > ceiling {
+				break
+			}
+			ceiling = max(ceiling, peer.height)
+		}
+	}
+	pool.maxPeerHeight = ceiling
 }
 
 // IsPeerBanned returns true if the peer is banned.

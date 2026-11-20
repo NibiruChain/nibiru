@@ -470,25 +470,11 @@ FOR_LOOP:
 				continue FOR_LOOP
 			}
 
-			// Validate the block before we persist it.
-			//
-			// For the first block synced, we must fully verify first.LastCommit
-			// since it was not verified as a prior second.LastCommit.
-			//
-			// For subsequent blocks, first.LastCommit was already fully verified
-			// in the previous iteration (as second.LastCommit), so we skip the
-			// redundant VerifyCommit() inside ValidateBlock.
-			blockValidator := bcR.blockExec.ValidateBlockSkipLastCommit
-			if blocksSynced == 0 {
-				blockValidator = bcR.blockExec.ValidateBlock
-			}
-
-			if err = blockValidator(state, first); err != nil {
+			// Verify the current block against state before persisting it.
+			if err = bcR.blockExec.ValidateBlock(state, first); err != nil {
 				bcR.handleValidationFailure(first, second, err)
 				continue FOR_LOOP
 			}
-
-			bcR.pool.PopRequest()
 
 			// TODO: batch saves so we dont persist to disk every block
 			bcR.store.SaveBlock(first, firstParts, second.LastCommit)
@@ -500,6 +486,7 @@ FOR_LOOP:
 				// TODO This is bad, are we zombie?
 				panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
 			}
+			bcR.pool.PopRequest(first.Time)
 			blocksSynced++
 
 			if blocksSynced%100 == 0 {

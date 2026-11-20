@@ -137,7 +137,7 @@ func TestBlockPoolBasic(t *testing.T) {
 			}
 			first, second := pool.PeekTwoBlocks()
 			if first != nil && second != nil {
-				pool.PopRequest()
+				pool.PopRequest(first.Time)
 			} else {
 				time.Sleep(1 * time.Second)
 			}
@@ -200,7 +200,7 @@ func TestBlockPoolTimeout(t *testing.T) {
 			}
 			first, second := pool.PeekTwoBlocks()
 			if first != nil && second != nil {
-				pool.PopRequest()
+				pool.PopRequest(first.Time)
 			} else {
 				time.Sleep(1 * time.Second)
 			}
@@ -386,7 +386,7 @@ func TestBlockPoolMaliciousNode(t *testing.T) {
 					// Second block is fake
 					pool.RemovePeerAndRedoAllPeerRequests(second.Height)
 				} else {
-					pool.PopRequest()
+					pool.PopRequest(first.Time)
 				}
 			}
 		}
@@ -502,7 +502,7 @@ func TestBlockPoolMaliciousNodeMaxInt64(t *testing.T) {
 						// Second block is fake
 						pool.RemovePeerAndRedoAllPeerRequests(second.Height)
 					} else {
-						pool.PopRequest()
+						pool.PopRequest(first.Time)
 					}
 				}
 			}
@@ -562,43 +562,53 @@ func TestBlockPoolBansPeerWithBaseGreaterThanHeight(t *testing.T) {
 	require.EqualValues(t, 0, pool.MaxPeerHeight(), "banned peer must not raise maxPeerHeight")
 }
 
-// TestBlockPoolMaxPeerHeightRefreshesOnPopRequest covers:
-//  1. A peer whose base is ahead of pool.height must not contribute to maxPeerHeight
-//  2. When pool.height advances past a pruned peer's base, maxPeerHeight is re-evaluated.
-func TestBlockPoolMaxPeerHeightRefreshesOnPopRequest(t *testing.T) {
-	requestsCh := make(chan BlockRequest, 10)
-	errorsCh := make(chan peerError, 10)
+func TestBlockPoolFollowsAdjacentPeerRanges(t *testing.T) {
+	pool := NewBlockPool(10, nil, nil, time.Second)
+	pool.startTime = time.Now()
 
-	pool := NewBlockPool(10, requestsCh, errorsCh, 1*time.Second)
-	pool.SetLogger(log.TestingLogger())
+	pool.SetPeerRange("old", 1, 10)
+	pool.SetPeerRange("recent", 12, 20)
+	require.EqualValues(t, 10, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp(), "a gap leaves no successor for block 10")
 
-	// Peer A's range covers pool.height, so it contributes to maxPeerHeight.
-	pool.SetPeerRange(p2p.ID("A"), 1, 20)
-	// Peer B is pruned ahead of pool.height and must be excluded until the
-	// pool advances past its base.
-	pool.SetPeerRange(p2p.ID("B"), 15, 100)
-	require.EqualValues(t, 20, pool.MaxPeerHeight(),
-		"peer B is pruned ahead of pool.height and must not contribute yet")
+	pool.SetPeerRange("bridge", 11, 11)
+	require.EqualValues(t, 20, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp())
 
-	// Advance pool.height from 10 to 15 via PopRequest. Install a dummy
-	// requester at each height so PopRequest has something to pop; the
-	// requester is never started, so Stop() is a logged no-op.
-	for h := int64(10); h < 15; h++ {
-		pool.mtx.Lock()
-		r := newBPRequester(pool, h)
-		pool.requesters[h] = r
-		r.setBlock(
-			&types.Block{Header: types.Header{Height: h, Time: time.Now()}},
-			r.peerID,
-		)
-		pool.mtx.Unlock()
-		pool.PopRequest()
-	}
+	pool.RemovePeer("bridge")
+	require.EqualValues(t, 10, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp())
 
-	// pool.height is now 15, so B (base=15) becomes eligible and must lift
-	// maxPeerHeight to its advertised height without B re-sending status.
-	require.EqualValues(t, 100, pool.MaxPeerHeight(),
-		"peer B must contribute to maxPeerHeight once pool.height reaches its base")
+	pool.SetPeerRange("successor", 11, 11)
+	pool.RemovePeer("recent")
+	require.EqualValues(t, 11, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp(), "block 10 still has a successor")
+
+	pool.requesters[10] = newBPRequester(pool, 10)
+	pool.PopRequest(time.Now())
+	require.True(t, pool.IsCaughtUp(), "block 11 has no successor")
+}
+
+func TestBlockPoolRecordsAppliedBlockAfterRequesterRetry(t *testing.T) {
+	pool := NewBlockPool(10, nil, nil, time.Second)
+	requester := newBPRequester(pool, 10)
+	requester.peerID = "old"
+	pool.requesters[10] = requester
+
+	appliedTime := time.Now().Add(-time.Minute)
+	block := &types.Block{Header: types.Header{Height: 10, Time: appliedTime}}
+	require.True(t, requester.setBlock(block, "old"))
+	first, _ := pool.PeekTwoBlocks()
+	require.Same(t, block, first)
+
+	// A retry clears the requester's candidate while the reactor holds the block.
+	require.True(t, requester.reset("old"))
+	require.Nil(t, requester.getBlock())
+	pool.PopRequest(first.Time)
+
+	require.EqualValues(t, 11, pool.Height())
+	require.Equal(t, appliedTime, pool.syncTracker.lastBlockHeaderTime)
+	require.False(t, pool.syncTracker.lastBlockWallTime.IsZero())
 }
 
 // TestPeerOnTimeoutDoesNotDeadlockOnSendError is a regression test for
@@ -804,7 +814,7 @@ func TestBlockPoolTwoInflatedHeightPeersStaggered(t *testing.T) {
 			r.peerID,
 		)
 		pool.mtx.Unlock()
-		pool.PopRequest()
+		pool.PopRequest(time.Now())
 	}
 
 	require.EqualValues(t, honestHeight+1, pool.Height(),
