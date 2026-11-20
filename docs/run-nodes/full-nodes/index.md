@@ -25,7 +25,7 @@ transaction and query timing, and PromQL examples.
 
 ## Available Networks
 
-On Nibiru Chain, the term "network" encompasses a collective system of
+On Nibiru, the term "network" encompasses a collective system of
 [interconnected nodes](../../learn/faq/nodes-faq.md). These nodes, which are
 essentially individual computers or servers, collaboratively maintain and
 validate the blockchain's ongoing operations.
@@ -107,7 +107,7 @@ data.
 
 - [Nibiru Explorer | NodesGuru](https://nibiru.explorers.guru/)
 - [Nibiru Explorer | NodeStake](https://explorer.nodestake.top/nibiru)
-- [Nibiru Explorer | Nibiru Chain Team](https://explorer.nibiru.fi/).
+- [Nibiru Explorer | Nibiru Team](https://explorer.nibiru.fi/).
 
 <!-- ## Blockchain Parameters -->
 <!---->
@@ -264,7 +264,7 @@ See the [validator docs](../validators/index.md) on how to participate as a vali
 Ex: query an account's balance
 
 ```bash
-nibid query bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
+nibid q bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
 ```
 
 For the full list of `nibid` commands, see:

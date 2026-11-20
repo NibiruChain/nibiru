@@ -36,15 +36,16 @@ just install
 ```
 
 The command verifies Go modules, downloads build dependencies when absent, and
-installs binary `nibid` into `GOBIN` or `$(go env GOPATH)/bin`.
+installs binary `nibiru` and a `nibid` symlink into `GOBIN` or
+`$(go env GOPATH)/bin`. Both names run the same program.
 
 Confirm that the installed binary is available:
 
 ```bash
-nibid version
+nibiru version
 ```
 
-If the shell cannot find `nibid`, add the Go binary directory to `PATH`:
+If the shell cannot find `nibiru`, add the Go binary directory to `PATH`:
 
 ```bash
 export PATH="$PATH:$(go env GOPATH)/bin"
@@ -56,10 +57,11 @@ Use command `just build` when the repository-local artifact is enough:
 
 ```bash
 just build
-./build/nibid version
+./build/nibiru version
 ```
 
-The command writes the binary to file `build/nibid`.
+The command writes the binary to file `build/nibiru` and a `build/nibid` symlink
+beside it.
 
 ## Build a tagged revision
 

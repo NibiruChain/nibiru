@@ -44,6 +44,7 @@ type pendingSnapshotClient struct {
 	err         error
 	paramsErr   error
 	paramsCalls *atomic.Int32
+	txSearchErr error
 }
 
 // UnconfirmedTxs returns the controlled snapshot or the injected transport error.
@@ -52,6 +53,14 @@ func (c *pendingSnapshotClient) UnconfirmedTxs(context.Context, *int) (*tmrpctyp
 		return nil, c.err
 	}
 	return &tmrpctypes.ResultUnconfirmedTxs{Txs: c.txs, Count: len(c.txs), Total: len(c.txs)}, nil
+}
+
+// TxSearch supplies an empty confirmed index or an injected failure.
+func (c *pendingSnapshotClient) TxSearch(context.Context, string, bool, *int, *int, string) (*tmrpctypes.ResultTxSearch, error) {
+	if c.txSearchErr != nil {
+		return nil, c.txSearchErr
+	}
+	return &tmrpctypes.ResultTxSearch{}, nil
 }
 
 // ABCIQueryWithOptions records unnecessary params queries and can make that
@@ -184,4 +193,44 @@ func TestPendingTransactionsRPCEmptyAndErrors(t *testing.T) {
 			require.JSONEq(t, "[]", string(pending), "empty mempool must serialize as an empty array")
 		})
 	}
+}
+
+// TestTransactionByHashPendingAndFallback exercises the real JSON-RPC response
+// when the confirmed index misses and a signed transaction is still pending.
+func TestTransactionByHashPendingAndFallback(t *testing.T) {
+	enc := app.MakeEncodingConfig()
+	sender := evmtest.NewEthPrivAcc()
+	recipient := gethcommon.HexToAddress("0x1234")
+	chainID := big.NewInt(appconst.ETH_CHAIN_ID_DEFAULT)
+	msg := evm.NewTx(&evm.EvmTxArgs{ChainID: chainID, Nonce: 0, To: &recipient, GasLimit: 21_000, GasPrice: big.NewInt(1), Amount: big.NewInt(123)})
+	msg.From = sender.EthAddr.Hex()
+	require.NoError(t, msg.Sign(gethcore.LatestSignerForChainID(chainID), sender.KeyringSigner))
+	builder := enc.TxConfig.NewTxBuilder()
+	require.NoError(t, builder.SetMsgs(msg))
+	bz, err := enc.TxConfig.TxEncoder()(builder.GetTx())
+	require.NoError(t, err)
+	hash := msg.AsTransaction().Hash()
+
+	t.Run("pending transaction", func(t *testing.T) {
+		rpcClient := pendingRPCFixture(t, &pendingSnapshotClient{txs: cmttypes.Txs{bz}}, enc)
+		var result map[string]json.RawMessage
+		require.NoError(t, rpcClient.Call(&result, "eth_getTransactionByHash", hash))
+		var gotHash gethcommon.Hash
+		require.NoError(t, json.Unmarshal(result["hash"], &gotHash))
+		require.Equal(t, hash, gotHash)
+		for _, field := range []string{"blockHash", "blockNumber", "transactionIndex"} {
+			require.JSONEq(t, "null", string(result[field]), field)
+		}
+	})
+	t.Run("absent transaction", func(t *testing.T) {
+		rpcClient := pendingRPCFixture(t, &pendingSnapshotClient{}, enc)
+		var result json.RawMessage
+		require.NoError(t, rpcClient.Call(&result, "eth_getTransactionByHash", hash))
+		require.JSONEq(t, "null", string(result))
+	})
+	t.Run("confirmed index unavailable", func(t *testing.T) {
+		rpcClient := pendingRPCFixture(t, &pendingSnapshotClient{txSearchErr: errors.New("index unavailable")}, enc)
+		var result json.RawMessage
+		require.ErrorContains(t, rpcClient.Call(&result, "eth_getTransactionByHash", hash), "index unavailable")
+	})
 }

@@ -6,7 +6,7 @@ footer:
 
 # Creating Fungible Tokens (Nibiru CLI)
 
-The TokenFactory (tf) module on Nibiru Chain enables any account to create a new token with a specific format that includes the creator's address and a subdenomination. This method enables token creation without requiring permission and prevents problems related to name conflicts.
+The TokenFactory (tf) module on Nibiru enables any account to create a new token with a specific format that includes the creator's address and a subdenomination. This method enables token creation without requiring permission and prevents problems related to name conflicts.
 
 ::: tip
 See ["Nibid Setup"](./nibid-binary.md) for instructions on installing `nibid`.

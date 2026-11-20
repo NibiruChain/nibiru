@@ -198,7 +198,7 @@ TXHASH_EXECUTE="$(nibid tx wasm execute $CONTRACT_ADDRESS \
 ```
 
 ```bash
-nibid q tz $TXHASH_EXECUTE | jq
+nibid q tx $TXHASH_EXECUTE | jq
 ```
 
 ## Related Pages

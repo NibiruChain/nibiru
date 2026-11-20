@@ -1,0 +1,156 @@
+package main
+
+import (
+	"fmt"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+
+	"github.com/spf13/cobra"
+)
+
+// InvokedName returns the command name that help prints, from the process's
+// argv[0]. Only the two names of the binary are honored; anything else (a
+// renamed copy, a Go test binary) prints nibiru.
+func InvokedName(arg0 string) string {
+	switch name := strings.TrimSuffix(filepath.Base(arg0), ".exe"); name {
+	case "nibid", "nibiru":
+		return name
+	}
+	return "nibiru"
+}
+
+// RootHelpFooter is the last line of the root help for the given command name.
+func RootHelpFooter(name string) string {
+	return fmt.Sprintf(
+		`Run "%s <command> --help" for details, and add --help-verbose to see every flag.`,
+		name)
+}
+
+// renderRootUsage builds the usage text of the root command: the command
+// list, the flags, and a closing hint. It replaces the generic
+// "Usage: nibid [command]" block. Subcommands keep cobra's usage template.
+func renderRootUsage(root *cobra.Command) string {
+	var b strings.Builder
+
+	rows := rootRows(root)
+	namePad := 0
+	for _, c := range rows {
+		namePad = max(namePad, len(c.Name()))
+	}
+	b.WriteString("Commands:\n")
+	for _, c := range rows {
+		desc := c.Short
+		if short, ok := rootRowShorts[c.Name()]; ok {
+			desc = short
+		}
+		if len(c.Aliases) > 0 {
+			desc += " (alias: " + strings.Join(c.Aliases, ", ") + ")"
+		}
+		fmt.Fprintf(&b, "  %-*s  %s\n", namePad, c.Name(), desc)
+	}
+
+	fmt.Fprintf(&b, "\nFlags:\n%s\n",
+		strings.TrimRight(root.LocalFlags().FlagUsages(), " \n"))
+	fmt.Fprintf(&b, "\n%s\n", RootHelpFooter(root.Name()))
+	return b.String()
+}
+
+// setRootUsage swaps the usage of the root command only. Subcommands inherit
+// the usage function, so it hands them to the previous one.
+func setRootUsage(root *cobra.Command) {
+	prev := root.UsageFunc()
+	root.SetUsageFunc(func(c *cobra.Command) error {
+		if c.HasParent() {
+			return prev(c)
+		}
+		_, err := fmt.Fprint(c.OutOrStderr(), renderRootUsage(c))
+		return err
+	})
+}
+
+// rootRowOrder is the order of the command list in `nibid --help`: daily
+// commands first, then node operation, then help and version.
+var rootRowOrder = []string{
+	"tx", "q", "keys", "config", "status", "debug", "localnet", "node",
+	"help", "version",
+}
+
+// rootRowShorts say what a person does with each root command.
+var rootRowShorts = map[string]string{
+	"tx":       "Send transactions",
+	"q":        "Query the chain",
+	"keys":     "Manage keys",
+	"config":   "Set the network and CLI defaults",
+	"status":   "Show a node's status",
+	"debug":    "Decode and convert anything: txs, payloads, addresses, keys",
+	"localnet": "Run a local single-node chain",
+	"node":     "Run and maintain a node (start, init, genesis, bft, and more)",
+	"help":     "Show help for any command",
+	"version":  "Print the binary version",
+}
+
+// setRootRowShorts sets the descriptions shown in the root command list.
+func setRootRowShorts(root *cobra.Command) {
+	for _, c := range root.Commands() {
+		if short, ok := rootRowShorts[c.Name()]; ok {
+			c.Short = short
+		}
+	}
+}
+
+// rootRows returns the visible root commands in rootRowOrder. Hidden legacy
+// commands never appear. Any visible command missing from the order follows
+// at the end, so a new command is listed instead of lost.
+func rootRows(root *cobra.Command) []*cobra.Command {
+	byName := map[string]*cobra.Command{}
+	for _, c := range root.Commands() {
+		if c.IsAvailableCommand() || c.Name() == "help" {
+			byName[c.Name()] = c
+		}
+	}
+	var rows []*cobra.Command
+	for _, name := range rootRowOrder {
+		if c, ok := byName[name]; ok {
+			rows = append(rows, c)
+			delete(byName, name)
+		}
+	}
+	rest := []string{}
+	for name := range byName {
+		rest = append(rest, name)
+	}
+	sort.Strings(rest)
+	for _, name := range rest {
+		rows = append(rows, byName[name])
+	}
+	return rows
+}
+
+// invocationRe matches a command example such as `nibid q tx`, `$ nibid tx`,
+// `| nibid debug`, or `"nibid start"`: the name sits at the start of a line or
+// after whitespace or a quote, and a subcommand follows. Prose that names the
+// binary, and the ~/.nibid directory, do not match.
+var invocationRe = regexp.MustCompile(`(?m)(^|[\s"'])nibid ([a-z])`)
+
+// followInvokedName rewrites command examples in the help text of every
+// command under root, so they print the invoked name instead of the literal
+// "nibid" the sources are written with.
+func followInvokedName(root *cobra.Command, name string) {
+	if name == "nibid" {
+		return
+	}
+	sub := func(s string) string {
+		return invocationRe.ReplaceAllString(s, "${1}"+name+" ${2}")
+	}
+	var walk func(c *cobra.Command)
+	walk = func(c *cobra.Command) {
+		c.Use, c.Short = sub(c.Use), sub(c.Short)
+		c.Long, c.Example = sub(c.Long), sub(c.Example)
+		for _, child := range c.Commands() {
+			walk(child)
+		}
+	}
+	walk(root)
+}

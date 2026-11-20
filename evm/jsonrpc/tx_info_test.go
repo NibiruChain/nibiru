@@ -35,7 +35,7 @@ func (s *BackendSuite) TestGetTransactionByHash() {
 		s.Run(tc.name, func() {
 			txResponse, err := s.cli.EvmRpc.Eth.GetTransactionByHash(tc.txHash)
 			if !tc.wantTxFound {
-				s.Require().Error(err)
+				s.Require().NoError(err)
 				s.Require().Nil(txResponse)
 				return
 			}

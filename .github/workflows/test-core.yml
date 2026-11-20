@@ -111,6 +111,7 @@ jobs:
           # skip-build-cache: true
 
   changes-nibiru-go:
+    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
     runs-on: ubuntu-latest
     outputs:
       nibiru-go: ${{ steps.check_nibiru_go.outputs.nibiru-go }}
@@ -313,7 +314,7 @@ jobs:
           just localnet --no-build &
           pid_localnet=$!
           sleep 8
-          nibid_pid="$(pgrep -x nibid)"
+          nibid_pid="$(pgrep -x 'nibid|nibiru')"
           kill "$nibid_pid"
           wait "$pid_localnet" || true
 
@@ -379,7 +380,7 @@ jobs:
           # check after 10s so startup failures fail this step instead of surfacing
           # later as test connection errors.
           sleep 10
-          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x 'nibid|nibiru' >/dev/null; then
             echo "localnet failed to stay running during startup"
             cat log-localnet.txt
             exit 1
@@ -483,7 +484,7 @@ jobs:
           # check after 10s so startup failures fail this step instead of surfacing
           # later as test connection errors.
           sleep 10
-          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x nibid >/dev/null; then
+          if ! kill -0 "$pid_localnet" 2>/dev/null || ! pgrep -x 'nibid|nibiru' >/dev/null; then
             echo "localnet failed to stay running during startup"
             cat log-localnet.txt
             exit 1

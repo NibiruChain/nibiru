@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	cmtnet "github.com/NibiruChain/nibiru/v2/bft/libs/net"
 	cmtos "github.com/NibiruChain/nibiru/v2/bft/libs/os"
 )
 
@@ -612,7 +613,25 @@ func ResetTestRootWithChainID(testName string, chainID string) *Config {
 	cmtos.MustWriteFile(privStateFilePath, []byte(testPrivValidatorState), 0644)
 
 	config := TestConfig().SetRoot(rootDir)
+	useFreeListenAddrs(config)
 	return config
+}
+
+// useFreeListenAddrs replaces the fixed listen ports of TestConfig with ports
+// the OS reports as free. The fixed ports (36656 to 36658) sit inside the Linux
+// ephemeral range, so parallel test binaries, or outbound connections from
+// earlier tests, can already hold them. Each test root gets its own ports.
+func useFreeListenAddrs(config *Config) {
+	addr := func() string {
+		port, err := cmtnet.GetFreePort()
+		if err != nil {
+			panic(err)
+		}
+		return fmt.Sprintf("tcp://127.0.0.1:%d", port)
+	}
+	config.P2P.ListenAddress = addr()
+	config.RPC.ListenAddress = addr()
+	config.RPC.GRPCListenAddress = addr()
 }
 
 var testGenesisFmt = `{

@@ -10,35 +10,39 @@ description: >-
 
 ## Available Commands
 
-| Command: `nibid keys`  | Description |
+| Command: `nibiru keys`  | Description |
 | :--- | :--- |
-| [add](#nibid-keys-add) | Add an Gncrypted private key (either newly generated or recovered), encrypt it, and save to disk |
-| [delete](#nibid-keys-delete) | Delete the given key |
-| [export](#nibid-keys-export) | Export private keys |
-| [import](#nibid-keys-import) | Import private keys into the local keystore |
-| [list](#nibid-keys-list) | List all keys |
-| [mnemonic](#nibid-keys-mnemonic) | Compute the bip39 mnemonic for some input entropy |
-| [parse](#nibid-keys-parse) | Parse address from hex to bech32 and vice versa |
-| [show](#nibid-keys-show) | Retrieve key information by name or address |
+| [add](#nibiru-keys-add) | Add an encrypted private key (either newly generated or recovered), encrypt it, and save to disk |
+| [delete](#nibiru-keys-delete) | Delete the given keys |
+| [export](#nibiru-keys-export) | Export private keys |
+| [import](#nibiru-keys-import) | Import private keys into the local keystore |
+| import-hex | Import a hex-encoded private key into the local keystore |
+| [list](#nibiru-keys-list) | List all keys |
+| list-key-types | List all key types |
+| migrate | Migrate keys from amino to proto serialization format |
+| [mnemonic](#nibiru-keys-mnemonic) | Compute the bip39 mnemonic for some input entropy |
+| [parse](#nibiru-keys-parse) | Parse address from hex to bech32 and vice versa |
+| rename | Rename an existing key |
+| [show](#nibiru-keys-show) | Retrieve key information by name or address |
 
 ---
 
-### nibid keys add
+### nibiru keys add
 
 Derive a new private key and encrypt to disk.
 
 ```text
-nibid keys add <key-name> [flags]
+nibiru keys add <key-name> [flags]
 ```
 
 **Flags:**
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --multisig |  | Construct and store a multisig public key |  |
+| --multisig |  | Comma-separated key names to combine into a legacy multisig public key |  |
 | --multisig-threshold | 1 | K out of N required signatures |  |
 | --nosort | false | Keys passed to --multisig are taken in the order they're supplied |  |
-| --pubkey |  | Parse a public key in bech32 format and save it to disk |  |
+| --pubkey |  | Parse a public key in JSON format and save the key info to disk |  |
 | --interactive | false | Interactively prompt user for BIP39 passphrase and mnemonic |  |
 | --ledger | false | Store a local reference to a private key on a Ledger device |  |
 | --recover | false | Provide seed phrase to recover existing key instead of creating |  |
@@ -48,14 +52,14 @@ nibid keys add <key-name> [flags]
 | --coin-type | 118 | coin type number for HD derivation |  |
 | --account | 0 | Account number for HD derivation |  |
 | --index | 0 | Address index number for HD derivation |  |
-| --algo | secp256k | Key signing algorithm to generate keys for |  |
+| --key-type | secp256k1 | Key signing algorithm to generate keys for |  |
 
 #### Create a new key
 
 The following example will create a key in the local keystore named `MyKey` :
 
 ```text
-nibid keys add MyKey
+nibiru keys add MyKey
 ```
 
 Enter and repeat the password, at least 8 characters, then you will get a new key.
@@ -73,7 +77,7 @@ If you forget your password or lose your key, or you would like to use your key 
 The following example will recover a key with the seed phrase and store it in the local keystore with the name `MyKey`:
 
 ```text
-nibid keys add MyKey --recover
+nibiru keys add MyKey --recover
 ```
 
 You'll be asked to enter and repeat the new password for your key, and enter the seed phrase. Then you get your key back.
@@ -89,7 +93,7 @@ Enter your recovery seed phrase:
 The following example creates a multisig key with 3 sub-keys, and specify the minimum number of signatures as 2. The transaction could be broadcast only when the number of signatures is greater than or equal to 2.
 
 ```text
-nibid keys add <multisig-keyname> --multisig-threshold=2 --multisig=<signer-keyname-1>,<signer-keyname-2>,<signer-keyname-3>
+nibiru keys add <multisig-keyname> --multisig-threshold=2 --multisig=<signer-keyname-1>,<signer-keyname-2>,<signer-keyname-3>
 ```
 
 ::: tip
@@ -99,24 +103,24 @@ nibid keys add <multisig-keyname> --multisig-threshold=2 --multisig=<signer-keyn
 
 If you don't have all the permission of sub-keys, you can ask for the `pubkey`'s to create the offline keys first, then you will be able to create the multisig key.
 
-Offline key can be created by `nibid keys add --pubkey`.
+Offline key can be created by `nibiru keys add --pubkey`.
 :::
 
 How to use multisig key to sign and broadcast a transaction, please refer to multisign.
 
-### nibid keys delete <a id="iris-keys-delete"></a>
+### nibiru keys delete <a id="iris-keys-delete"></a>
 
 Delete a local key by the given name.
 
 ```text
-nibid keys delete <key-name> [flags]
+nibiru keys delete <name>... [flags]
 ```
 
 **Flags:**
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --force, -f | false | Remove the key unconditionally without asking for the passphrase |  |
+| --force, -f | false | Remove the key unconditionally without asking for the passphrase (deprecated) |  |
 | --yes, -y | false | Skip confirmation prompt when deleting offline or ledger key references |  |
 
 #### Delete a local key <a id="delete-a-local-key"></a>
@@ -124,31 +128,38 @@ nibid keys delete <key-name> [flags]
 The following example will delete the key named `MyKey` from the local keystore:
 
 ```text
-nibid keys delete MyKey
+nibiru keys delete MyKey
 ```
 
-### nibid keys export <a id="iris-keys-export"></a>
+### nibiru keys export <a id="iris-keys-export"></a>
 
 Export the keystore of a key to stdout:
 
 ```text
-nibid keys export <key-name> [flags]
+nibiru keys export <name> [flags]
 ```
+
+**Flags:**
+
+| Name, shorthand | Default | Description | Required |
+| :--- | :--- | :--- | :--- |
+| --unarmored-hex | false | Export the unarmored hex private key. Requires `--unsafe` |  |
+| --unsafe | false | Enable unsafe operations. Required by `--unarmored-hex` |  |
 
 #### Export keystore <a id="export-keystore"></a>
 
 The following example will export the key named `MyKey` to stdout:
 
 ```text
-nibid keys export Mykey
+nibiru keys export Mykey
 ```
 
-### nibid keys import <a id="iris-keys-import"></a>
+### nibiru keys import <a id="iris-keys-import"></a>
 
 Import a ASCII armored private key into the local keybase.
 
 ```text
-nibid keys import <name> <keyfile> [flags]
+nibiru keys import <name> <keyfile> [flags]
 ```
 
 #### Import a ASCII armored private key <a id="import-a-ascii-armored-private-key"></a>
@@ -156,10 +167,10 @@ nibid keys import <name> <keyfile> [flags]
 The following example will import the private keys from `key-to-import.json` and store it in the local keystore with the name `MyKey`
 
 ```text
-nibid keys import MyKey key-to-import.json [flags]
+nibiru keys import MyKey key-to-import.json [flags]
 ```
 
-### nibid keys list <a id="iris-keys-list"></a>
+### nibiru keys list <a id="iris-keys-list"></a>
 
 List all the keys from the local keystore that have been stored by this key manager, along with their associated name, type, address and pubkey.
 
@@ -167,22 +178,22 @@ List all the keys from the local keystore that have been stored by this key mana
 
 | Name, shorthand | Default | Description | Required |
 | :--- | :--- | :--- | :--- |
-| --list-name |  | List names only |  |
+| --list-names, -n | false | List names only |  |
 
 #### List all keys <a id="list-all-keys"></a>
 
-The following example will list all keys in the local keystore managed by the nibid key manager:
+The following example will list all keys in the local keystore managed by the nibiru key manager:
 
 ```text
-nibid keys list
+nibiru keys list
 ```
 
-### nibid keys mnemonic <a id="iris-keys-mnemonic"></a>
+### nibiru keys mnemonic <a id="iris-keys-mnemonic"></a>
 
 Create a `bip39` mnemonic, sometimes called a seed phrase, by reading from the system entropy. To pass your own entropy, use `unsafe-entropy` mode.
 
 ```text
-nibid keys mnemonic [flags]
+nibiru keys mnemonic [flags]
 ```
 
 **Flags:**
@@ -196,7 +207,7 @@ nibid keys mnemonic [flags]
 The following example will create a new `bip39` seed phrase:
 
 ```text
-nibid keys mnemonic
+nibiru keys mnemonic
 ```
 
 You'll get a `bip39` mnemonic with 24 words, e.g.:
@@ -205,12 +216,12 @@ You'll get a `bip39` mnemonic with 24 words, e.g.:
 saddle lunch prefer aspect domain woman relief swarm exist behind cliff shadow meadow joke tower inherit upon tragic glow air march envelope joke estate
 ```
 
-### nibid keys parse <a id="iris-keys-parse"></a>
+### nibiru keys parse <a id="iris-keys-parse"></a>
 
 Convert and print to stdout key addresses and fingerprints from hexadecimal into `bech32` nibi prefixed format and vice versa.
 
 ```text
-nibid keys parse <hex-or-bech32-address> [flags]
+nibiru keys parse <hex-or-bech32-address> [flags]
 ```
 
 #### Convert and print to stdout key addresses from hex fingerprint <a id="convert-and-print-to-stdout-key-addresses-and-fingerprints"></a>
@@ -218,7 +229,7 @@ nibid keys parse <hex-or-bech32-address> [flags]
 The following example will convert a given hex fingerprint to a range of bep32 human readable address formats:
 
 ```text
-nibid keys parse 313EDF382E938D41E787B3C6366719009640C6F1
+nibiru keys parse 313EDF382E938D41E787B3C6366719009640C6F1
 ```
 
 Returns:
@@ -236,7 +247,7 @@ formats:
 Convert and print to stdout hex fingerprint from bep32 address:
 
 ```text
-nibid keys parse nibi1xyld7wpwjwx5reu8k0rrveceqztyp3h3z25gdr
+nibiru keys parse nibi1xyld7wpwjwx5reu8k0rrveceqztyp3h3z25gdr
 ```
 
 Returns:
@@ -246,12 +257,12 @@ human: nibi
 bytes: 313EDF382E938D41E787B3C6366719009640C6F1
 ```
 
-### nibid keys show <a id="iris-keys-show"></a>
+### nibiru keys show <a id="iris-keys-show"></a>
 
 Get details of a local key.
 
 ```text
-nibid keys show <key-name> [flags]
+nibiru keys show [name_or_address [name_or_address...]] [flags]
 ```
 
 **Flags:**
@@ -269,7 +280,7 @@ nibid keys show <key-name> [flags]
 The following example will return the details for the key named `MyKey` :
 
 ```text
-nibid keys show MyKey
+nibiru keys show MyKey
 ```
 
 The following infos will be shown:
@@ -286,10 +297,10 @@ The following infos will be shown:
 
 #### [\#](https://www.irisnet.org/docs/cli-client/keys.html#get-validator-operator-address)Get validator operator address <a id="get-validator-operator-address"></a>
 
-If an address has been bonded to be a validator operator \(which the address you used to create a validator\), then you can use `--bech val` to get the operator's address prefixed by `iva` and the pubkey prefixed by `ivp`:
+If an address has been bonded to be a validator operator \(which the address you used to create a validator\), then you can use `--bech val` to get the operator's address prefixed by `nibivaloper` and the pubkey prefixed by `nibivaloperpub`:
 
 ```text
-nibid keys show MyKey --bech val
+nibiru keys show MyKey --bech val
 ```
 
 Example Output:
@@ -297,8 +308,8 @@ Example Output:
 ```text
 - name: Mykey
   type: local
-  address: iva1tulwx2hwz4dv8te6cflhda64dn0984hakwgk4f
-  pubkey: ivp1addwnpepq24rufap6u0sysqcpgsfzqhw3x8nfkhqhtmpgqt0369rlyqcg0vkgd8e6zy
+  address: nibivaloper1...
+  pubkey: nibivaloperpub1...
   mnemonic: ""
   threshold: 0
   pubkeys: []
