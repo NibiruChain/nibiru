@@ -648,11 +648,69 @@ func TestLateBlockReplyDoesNotSettleReplacementConnection(t *testing.T) {
 	t.Cleanup(func() { r.RemovePeer(newPeer, nil) })
 	require.True(t, sentRequestsFor(newPeer).send(newPeer, 2))
 
-	r.pool.addBlock(peerID, block, 123, oldRequests)
+	r.pool.addBlock(peerID, block, 123, oldRequests, true)
 	r.pool.mtx.Lock()
 	pending := replacement.numPending
 	r.pool.mtx.Unlock()
 	require.EqualValues(t, 1, pending, "the replacement's request is still pending")
+}
+
+func TestActiveBlockReplySettlesOnlyItsConnection(t *testing.T) {
+	r := newFilterReactor(t)
+	r.Logger = log.TestingLogger()
+	const peerID p2p.ID = "reconnecting"
+	oldPeer := r.InitPeer(mockBlockRequestPeer(peerID, true))
+	newPeer := r.InitPeer(mockBlockRequestPeer(peerID, true))
+	register := func(peer p2p.Peer) {
+		r.ReceiveEnvelope(p2p.Envelope{
+			ChannelID: BlocksyncChannel, Src: peer,
+			Message: &bcproto.StatusResponse{Base: 1, Height: 3},
+		})
+	}
+	register(oldPeer)
+	oldRequests := sentRequestsFor(oldPeer)
+	require.NotNil(t, r.pool.pickIncrAvailablePeer(1, ""))
+	require.True(t, oldRequests.send(oldPeer, 1))
+	require.True(t, oldRequests.admit(1, time.Now()))
+	require.EqualValues(t, 1, oldRequests.takeAdmission())
+
+	r.RemovePeer(oldPeer, nil)
+	register(newPeer)
+	t.Cleanup(func() { r.RemovePeer(newPeer, nil) })
+	replacement := r.pool.pickIncrAvailablePeer(1, "")
+	require.NotNil(t, replacement)
+	require.Same(t, replacement, r.pool.pickIncrAvailablePeer(2, ""))
+	newRequests := sentRequestsFor(newPeer)
+	require.True(t, newRequests.send(newPeer, 1))
+	require.True(t, newRequests.send(newPeer, 2))
+	seedRequester(r, 1, peerID)
+	r.pool.numPending = 1
+
+	assertPending := func(peerSlots, blocks int32) {
+		t.Helper()
+		r.pool.mtx.Lock()
+		peerPending := replacement.numPending
+		r.pool.mtx.Unlock()
+		_, blockPending, _ := r.pool.GetStatus()
+		require.Equal(t, peerSlots, peerPending)
+		require.Equal(t, blocks, blockPending)
+	}
+	block := &types.Block{Header: types.Header{Height: 1}}
+	r.pool.addBlock(peerID, block, 123, oldRequests, true)
+	assertPending(2, 1)
+	first, _ := r.pool.PeekTwoBlocks()
+	require.Nil(t, first)
+
+	require.True(t, newRequests.take(1, time.Now()))
+	r.pool.addBlock(peerID, block, 123, newRequests, true)
+	assertPending(1, 0)
+	first, _ = r.pool.PeekTwoBlocks()
+	require.Same(t, block, first)
+
+	requested := newRequests.take(1, time.Now())
+	require.False(t, requested)
+	r.pool.addBlock(peerID, block, 123, newRequests, requested)
+	assertPending(1, 0)
 }
 
 func TestSentBlockRequestExpiresAtRetryInterval(t *testing.T) {

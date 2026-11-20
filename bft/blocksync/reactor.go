@@ -43,8 +43,9 @@ type consensusReactor interface {
 }
 
 type peerError struct {
-	err    error
-	peerID p2p.ID
+	err        error
+	peerID     p2p.ID
+	connection *sentBlockRequests
 }
 
 func (e peerError) Error() string {
@@ -215,8 +216,11 @@ func (bcR *Reactor) AddPeer(peer p2p.Peer) {
 
 // RemovePeer implements Reactor by removing peer from the pool.
 func (bcR *Reactor) RemovePeer(peer p2p.Peer, reason interface{}) {
+	requests := sentRequestsFor(peer)
 	peer.Set(sentBlockRequestsKey, nil)
-	bcR.pool.RemovePeer(peer.ID())
+	if requests != nil {
+		bcR.pool.removePeerConnection(peer.ID(), requests)
+	}
 }
 
 // respondToPeer loads a block and sends it to the requesting peer,
@@ -341,11 +345,11 @@ func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
 			bcR.Logger.Error("Block content is invalid", "err", err)
 			return
 		}
-		var requestedBy *sentBlockRequests
-		if admittedHeight == bi.Height || requests.take(bi.Height, now) {
-			requestedBy = requests
+		if requests == nil {
+			return
 		}
-		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requestedBy)
+		requested := admittedHeight == bi.Height || requests.take(bi.Height, now)
+		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requests, requested)
 	case *bcproto.StatusRequest:
 		// Send peer our state.
 		e.Src.TrySendEnvelope(p2p.Envelope{
@@ -361,7 +365,9 @@ func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
 	case *bcproto.NoBlockResponse:
 		requests.take(msg.Height, now)
 		bcR.Logger.Debug("Peer does not have requested block", "peer", e.Src, "height", msg.Height)
-		bcR.pool.RedoRequestFrom(msg.Height, e.Src.ID())
+		if requests != nil {
+			bcR.pool.redoRequestFrom(msg.Height, e.Src.ID(), requests)
+		}
 	default:
 		bcR.Logger.Error(fmt.Sprintf("Unknown message type %v", reflect.TypeOf(msg)))
 	}
@@ -416,13 +422,17 @@ func (bcR *Reactor) poolRoutine(stateSynced bool) {
 				if peer == nil {
 					continue
 				}
-				queued := sentRequestsFor(peer).send(peer, request.Height)
+				requests := sentRequestsFor(peer)
+				if requests == nil || requests != request.connection {
+					continue
+				}
+				queued := requests.send(peer, request.Height)
 				if !queued {
 					bcR.Logger.Debug("Send queue is full, drop block request", "peer", peer.ID(), "height", request.Height)
 				}
 			case err := <-bcR.errorsCh:
 				peer := bcR.Switch.Peers().Get(err.peerID)
-				if peer != nil {
+				if peer != nil && err.connection == sentRequestsFor(peer) {
 					bcR.Switch.StopPeerForError(peer, err)
 				}
 

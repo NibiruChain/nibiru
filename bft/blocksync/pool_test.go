@@ -597,7 +597,9 @@ func TestBlockPoolRecordsAppliedBlockAfterRequesterRetry(t *testing.T) {
 
 	appliedTime := time.Now().Add(-time.Minute)
 	block := &types.Block{Header: types.Header{Height: 10, Time: appliedTime}}
-	require.True(t, requester.setBlock(block, "old"))
+	matched, stored := requester.setBlock(block, "old")
+	require.True(t, matched)
+	require.True(t, stored)
 	first, _ := pool.PeekTwoBlocks()
 	require.Same(t, block, first)
 

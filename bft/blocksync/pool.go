@@ -158,7 +158,7 @@ func (pool *BlockPool) makeRequestersRoutine() {
 
 func (pool *BlockPool) removeTimedoutPeers() {
 	pool.mtx.Lock()
-	var timedOut []p2p.ID
+	var timedOut []*bpPeer
 	for _, peer := range pool.peers {
 		if !peer.didTimeout && peer.numPending > 0 {
 			curRate := peer.recvMonitor.Status().CurRate
@@ -169,7 +169,7 @@ func (pool *BlockPool) removeTimedoutPeers() {
 					"curRate", fmt.Sprintf("%d KB/s", curRate/1024),
 					"minRate", fmt.Sprintf("%d KB/s", minRecvRate/1024))
 				peer.didTimeout = true
-				timedOut = append(timedOut, peer.id)
+				timedOut = append(timedOut, peer)
 			}
 
 			peer.curRate = curRate
@@ -189,8 +189,8 @@ func (pool *BlockPool) removeTimedoutPeers() {
 	pool.sortPeers()
 	pool.mtx.Unlock()
 
-	for _, peerID := range timedOut {
-		pool.sendError(errors.New("peer is not sending us data fast enough"), peerID)
+	for _, peer := range timedOut {
+		pool.sendError(errors.New("peer is not sending us data fast enough"), peer.id, peer.connection)
 	}
 }
 
@@ -321,9 +321,16 @@ func (pool *BlockPool) RemovePeerAndRedoAllPeerRequests(height int64) p2p.ID {
 // RedoRequestFrom retries the request at the given height. It does not remove the
 // peer.
 func (pool *BlockPool) RedoRequestFrom(height int64, peerID p2p.ID) {
+	pool.redoRequestFrom(height, peerID, nil)
+}
+
+func (pool *BlockPool) redoRequestFrom(height int64, peerID p2p.ID, source *sentBlockRequests) {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
+	if peer := pool.peers[peerID]; source != nil && (peer == nil || peer.connection != source) {
+		return
+	}
 	if requester, ok := pool.requesters[height]; ok { // If we requested this block
 		if requester.didRequestFrom(peerID) { // From this specific peer
 			requester.redo(peerID)
@@ -346,18 +353,23 @@ func (pool *BlockPool) RedoRequest(height int64) p2p.ID {
 // do not add the block and return an error.
 // TODO: ensure that blocks come in order for each peer.
 func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int) {
-	pool.addBlock(peerID, block, blockSize, nil)
+	pool.addBlock(peerID, block, blockSize, nil, true)
 }
 
-func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int, requestedBy *sentBlockRequests) {
+func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int, source *sentBlockRequests, requested bool) {
 	pool.mtx.Lock()
 	var sendErr error
 	defer func() {
 		pool.mtx.Unlock()
 		if sendErr != nil {
-			pool.sendError(sendErr, peerID)
+			pool.sendError(sendErr, peerID, source)
 		}
 	}()
+
+	peer := pool.peers[peerID]
+	if (peer != nil && peer.connection != source) || (peer == nil && source != nil) {
+		return
+	}
 
 	requester := pool.requesters[block.Height]
 	if requester == nil {
@@ -374,7 +386,7 @@ func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int
 
 		// The requester's winning reply already updated the pool's pending
 		// count. Release a slot only on the connection that made the request.
-		if peer := pool.peers[peerID]; requestedBy != nil && peer != nil && peer.connection == requestedBy && peer.numPending > 0 {
+		if source != nil && requested && peer.numPending > 0 {
 			peer.decrPending(blockSize)
 			return
 		}
@@ -383,15 +395,17 @@ func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int
 		return
 	}
 
-	if !requester.setBlock(block, peerID) {
+	matched, stored := requester.setBlock(block, peerID)
+	if !matched {
 		sendErr = fmt.Errorf("requested block #%d from %v, not %s", block.Height, requester.requestedFrom(), peerID)
 		pool.Logger.Error("failed to add block", "peer", peerID, "err", sendErr)
 		return
 	}
 
-	atomic.AddInt32(&pool.numPending, -1)
-	peer := pool.peers[peerID]
-	if peer != nil {
+	if stored {
+		atomic.AddInt32(&pool.numPending, -1)
+	}
+	if requested && peer != nil && peer.numPending > 0 {
 		peer.decrPending(blockSize)
 	}
 }
@@ -472,9 +486,16 @@ func (pool *BlockPool) setPeerRange(peerID p2p.ID, base, height int64, source p2
 // RemovePeer removes the peer with peerID from the pool. If there's no peer
 // with peerID, function is a no-op.
 func (pool *BlockPool) RemovePeer(peerID p2p.ID) {
+	pool.removePeerConnection(peerID, nil)
+}
+
+func (pool *BlockPool) removePeerConnection(peerID p2p.ID, source *sentBlockRequests) {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
 
+	if peer := pool.peers[peerID]; source != nil && (peer == nil || peer.connection != source) {
+		return
+	}
 	pool.removePeer(peerID)
 }
 
@@ -596,18 +617,18 @@ func (pool *BlockPool) makeNextRequester(nextHeight int64) {
 	}
 }
 
-func (pool *BlockPool) sendRequest(height int64, peerID p2p.ID) {
+func (pool *BlockPool) sendRequest(height int64, peer *bpPeer) {
 	if !pool.IsRunning() {
 		return
 	}
-	pool.requestsCh <- BlockRequest{height, peerID}
+	pool.requestsCh <- BlockRequest{Height: height, PeerID: peer.id, connection: peer.connection}
 }
 
-func (pool *BlockPool) sendError(err error, peerID p2p.ID) {
+func (pool *BlockPool) sendError(err error, peerID p2p.ID, connection *sentBlockRequests) {
 	if !pool.IsRunning() {
 		return
 	}
-	pool.errorsCh <- peerError{err, peerID}
+	pool.errorsCh <- peerError{err: err, peerID: peerID, connection: connection}
 }
 
 // for debugging purposes
@@ -702,7 +723,7 @@ func (peer *bpPeer) onTimeout() {
 	peer.pool.mtx.Unlock()
 
 	err := errors.New("peer did not send us anything")
-	peer.pool.sendError(err, peer.id)
+	peer.pool.sendError(err, peer.id, peer.connection)
 	peer.logger.Error("SendTimeout", "reason", err, "timeout", peerTimeout)
 }
 
@@ -762,16 +783,16 @@ func (bpr *bpRequester) OnStart() error {
 	return nil
 }
 
-// Returns true if the peer(s) match and block doesn't already exist.
-func (bpr *bpRequester) setBlock(block *types.Block, peerID p2p.ID) bool {
+// setBlock reports whether the sender matches and whether it stored a new block.
+func (bpr *bpRequester) setBlock(block *types.Block, peerID p2p.ID) (matched, stored bool) {
 	bpr.mtx.Lock()
 	if bpr.peerID != peerID && bpr.secondPeerID != peerID {
 		bpr.mtx.Unlock()
-		return false
+		return false, false
 	}
 	if bpr.block != nil {
 		bpr.mtx.Unlock()
-		return true // getting a block from both peers is not an error
+		return true, false // getting a block from both peers is not an error
 	}
 
 	bpr.block = block
@@ -782,7 +803,7 @@ func (bpr *bpRequester) setBlock(block *types.Block, peerID p2p.ID) bool {
 	case bpr.gotBlockCh <- struct{}{}:
 	default:
 	}
-	return true
+	return true, true
 }
 
 func (bpr *bpRequester) getBlock() *types.Block {
@@ -876,7 +897,7 @@ PICK_PEER_LOOP:
 	bpr.peerID = peer.id
 	bpr.mtx.Unlock()
 
-	bpr.pool.sendRequest(bpr.height, peer.id)
+	bpr.pool.sendRequest(bpr.height, peer)
 }
 
 // Picks a second peer and sends a request to it. If the second peer is already
@@ -896,7 +917,7 @@ func (bpr *bpRequester) pickSecondPeerAndSendRequest() (picked bool) {
 		bpr.secondPeerID = secondPeer.id
 		bpr.mtx.Unlock()
 
-		bpr.pool.sendRequest(bpr.height, secondPeer.id)
+		bpr.pool.sendRequest(bpr.height, secondPeer)
 		return true
 	}
 
@@ -1034,4 +1055,6 @@ OUTER_LOOP:
 type BlockRequest struct {
 	Height int64
 	PeerID p2p.ID
+
+	connection *sentBlockRequests
 }
