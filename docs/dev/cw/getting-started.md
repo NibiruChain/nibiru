@@ -43,7 +43,7 @@ docker run --rm -v "$(pwd)":/code \
 ## Installing Nibiru CLI
 
 For smart contract management, you have the option to use [`niibjs`](../tools/kickstart.md)
-or the [`nibiru`](../cli/index.md). For this guide, we will be utilizing `nibiru`.
+or the [`nibid`](../cli/index.md). For this guide, we will be utilizing `nibid`.
 
 For installation, you can use the `curl` command below. For other installations methode please
 refer to [Nibiru Binary Installation Guide](../cli/nibid-binary.md).
@@ -63,10 +63,10 @@ by running the following:
 
 ```bash
 RPC_URL="https://rpc.testnet-2.nibiru.fi:443"
-nibiru config node $RPC_URL
-nibiru config chain-id nibiru-testnet-2
-nibiru config broadcast-mode sync
-nibiru config # Prints your new config to verify correctness
+nibid config node $RPC_URL
+nibid config chain-id nibiru-testnet-2
+nibid config broadcast-mode sync
+nibid config # Prints your new config to verify correctness
 ```
 
 ## Related Pages

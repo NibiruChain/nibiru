@@ -161,7 +161,7 @@ nibid version
 
     ```bash
     NETWORK=cataclysm-1
-    nibid node init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
+    nibid init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -243,7 +243,7 @@ nibid version
     Option 3: Without a daemon
 
     ```bash
-    nibid node start
+    nibid start
     ```
 
 ---
@@ -271,7 +271,7 @@ nothing` in the `$HOME/.nibid/config/app.toml` file.
 
     ```bash
     NETWORK=cataclysm-1
-    nibid node init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
+    nibid init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -345,7 +345,7 @@ nothing` in the `$HOME/.nibid/config/app.toml` file.
     Option 3: Without a daemon
 
     ```bash
-    nibid node start
+    nibid start
     ```
 
 ## Next Steps

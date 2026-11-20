@@ -44,7 +44,7 @@ Any participant in the network can become a validator by sending a `create-valid
   - Must not exceed the validator's `commission-max-change-rate`, which is the maximum percentage point change rate **per day**. In other words, a validator can only change its commission once per day and within `commission-max-change-rate` bounds.
 - **`min-self-delegation`**: Minimum amount of NIBI the validator requires to have bonded at all time. If the validator's self-delegated stake falls below this limit, their validator gets jailed and kicked out of the active validator set.
 - **`details`**: The validator description. More information is given on this in the next section.
-- **`pubkey`**: A validator's Nibiru BFT pubkey is associated with a private key used to sign "prevotes" and "precommits". It is prefixed with `nibivalconspub` and found by executing `nibid node bft show-validator`.
+- **`pubkey`**: A validator's Nibiru BFT pubkey is associated with a private key used to sign "prevotes" and "precommits". It is prefixed with `nibivalconspub` and found by executing `nibid tendermint show-validator`.
 - **`moniker`**: A (not necessarily unique) name for the validator.
 
 After a validator is created, NIBI holders can delegate NIBI to the validator, effectively adding stake to the validator's pool. The total stake of an address is the combination of NIBI bonded by delegators and NIBI self-bonded by the validator.
@@ -61,7 +61,7 @@ nibid tx staking create-validator \
 --commission-rate "0.1" \
 --min-self-delegation "1" \
 --details "put your validator description there" \
---pubkey=$(nibid node bft show-validator) \
+--pubkey=$(nibid tendermint show-validator) \
 --moniker <your_moniker> \
 --chain-id $NETWORK \
 --gas-prices 0.025unibi \
@@ -105,7 +105,7 @@ nibid tx slashing unjail \
 Your validator is active if the following command returns anything:
 
 ```bash
-nibid q tendermint-validator-set | grep "$(nibid node bft show-address)"
+nibid q tendermint-validator-set | grep "$(nibid tendermint show-address)"
 ```
 
 You should now see your validator in one of Nibiru explorers. You are looking for the `bech32` encoded `address` in the `~/.nibid/config/priv_validator.json` file.

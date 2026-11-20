@@ -25,7 +25,7 @@ transaction and query timing, and PromQL examples.
 
 ## Available Networks
 
-On Nibiru Chain, the term "network" encompasses a collective system of
+On Nibiru, the term "network" encompasses a collective system of
 [interconnected nodes](../../learn/faq/nodes-faq.md). These nodes, which are
 essentially individual computers or servers, collaboratively maintain and
 validate the blockchain's ongoing operations.
@@ -107,7 +107,7 @@ data.
 
 - [Nibiru Explorer | NodesGuru](https://nibiru.explorers.guru/)
 - [Nibiru Explorer | NodeStake](https://explorer.nodestake.top/nibiru)
-- [Nibiru Explorer | Nibiru Chain Team](https://explorer.nibiru.fi/).
+- [Nibiru Explorer | Nibiru Team](https://explorer.nibiru.fi/).
 
 <!-- ## Blockchain Parameters -->
 <!---->
@@ -161,7 +161,7 @@ nibid version
 1. Init the chain
 
     ```bash
-    nibid node init <moniker-name> --chain-id=nibiru-testnet-2 --home $HOME/.nibid
+    nibid init <moniker-name> --chain-id=nibiru-testnet-2 --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -240,7 +240,7 @@ nibid version
     Option 3: Without a daemon
 
     ```bash
-    nibid node start
+    nibid start
     ```
 
 7. Request tokens from the [Nibiru Testnet web faucet](https://app.nibiru.fi/faucet) if required.

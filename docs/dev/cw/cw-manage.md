@@ -55,7 +55,7 @@ Next step for bringing your contract to live is storing it onto the chain:
 ```bash
 FROM=<your-wallet-address>
 
-nibiru tx wasm store artifacts/<contract-name>.wasm \
+nibid tx wasm store artifacts/<contract-name>.wasm \
     --from $FROM \
     --gas auto \
     --gas-adjustment 1.5 \
@@ -68,7 +68,7 @@ This will return a transaction json result, we need to keep track of the transac
 ```bash
 FROM=<your-wallet-address>
 
-TXHASH="$(nibiru tx wasm store artifacts/contract.wasm \
+TXHASH="$(nibid tx wasm store artifacts/contract.wasm \
     --from $FROM \
     --gas auto \
     --gas-adjustment 1.5 \
@@ -82,7 +82,7 @@ contract's `code id` and store it in `$CODE_ID`.
 Query the transaction hash:
 
 ```bash
-nibiru q tx $TXHASH > txhash.json
+nibid q tx $TXHASH > txhash.json
 ```
 
 Save the `CODE_ID` for later usage:
@@ -94,7 +94,7 @@ CODE_ID="$(cat txhash.json | jq -r '.logs[0].events[1].attributes[1].value')"
 To check which wallet is currently setup, run
 
 ```bash
-nibiru keys show -a wallet
+nibid keys show -a wallet
 ```
 
 ## Instantiate
@@ -110,7 +110,7 @@ Now that we gave the `$FROM` address, the contract `$CODE_ID` and the instantiat
 We can instantiate by running:
 
 ```bash
-nibiru tx wasm instantiate $CODE_ID \
+nibid tx wasm instantiate $CODE_ID \
   "$(cat instantiate_args.json)" \
   --admin "$FROM" \
   --label <contract-label> \
@@ -124,7 +124,7 @@ nibiru tx wasm instantiate $CODE_ID \
 Let's now obtain the contract address:
 
 ```bash
-TXHASH_INIT="$(nibiru tx wasm instantiate $CODE_ID \
+TXHASH_INIT="$(nibid tx wasm instantiate $CODE_ID \
     "$(cat instantiate_args.json)" \
     --admin "$FROM" \
     --label <contract-label> \
@@ -138,7 +138,7 @@ TXHASH_INIT="$(nibiru tx wasm instantiate $CODE_ID \
 Query the transaction:
 
 ```bash
-nibiru q tx $TXHASH_INIT > txhash.init.json
+nibid q tx $TXHASH_INIT > txhash.init.json
 ```
 
 Save the contract address:
@@ -152,7 +152,7 @@ CONTRACT_ADDRESS="$(cat txhash.init.json | jq -r '.logs[0].events[1].attributes[
 In order to query your contract, you can run the following:
 
 ```bash
-nibiru q wasm contract-state smart $CONTRACT_ADDRESS '<query-message>'
+nibid query wasm contract-state smart $CONTRACT_ADDRESS '<query-message>'
 ```
 
 You can also use a local file liek in the example below:
@@ -162,7 +162,7 @@ echo '{"some_query": {}}' | jq . | tee query_args.json
 ```
 
 ```bash
-nibiru q wasm contract-state smart $CONTRACT_ADDRESS "$(cat ./query_args.json) | jq
+nibid query wasm contract-state smart $CONTRACT_ADDRESS "$(cat ./query_args.json) | jq
 ```
 
 ## Execute
@@ -175,7 +175,7 @@ echo '{"some_exec": {}}' | jq . | tee exec_args.json
 ```
 
 ```bash
-nibiru tx wasm execute $CONTRACT_ADDRESS \                                                   ✘ INT
+nibid tx wasm execute $CONTRACT_ADDRESS \                                                   ✘ INT
   "$(cat ./exec_args.json)" \
   --from $FROM \
   --gas auto \
@@ -188,7 +188,7 @@ You will need to approve the transaction and spend the required gas.
 After running the transaction, you can utilize the transaction hash to view any events and any attributes for the contract.
 
 ```bash
-TXHASH_EXECUTE="$(nibiru tx wasm execute $CONTRACT_ADDRESS \ 
+TXHASH_EXECUTE="$(nibid tx wasm execute $CONTRACT_ADDRESS \ 
       "$(cat ./exec_args.json)" \
       --from $FROM \
       --gas auto \
@@ -198,7 +198,7 @@ TXHASH_EXECUTE="$(nibiru tx wasm execute $CONTRACT_ADDRESS \
 ```
 
 ```bash
-nibiru q tx $TXHASH_EXECUTE | jq
+nibid q tx $TXHASH_EXECUTE | jq
 ```
 
 ## Related Pages

@@ -5,7 +5,7 @@ description: >-
   in digital art, collectibles, and gaming. To deploy an NFT contract
   on Nibiru Chain, developers can customize the CW721-based contract
   found in the cw-nfts repository to adhere to the CW721 standard,
-  then use the nibiru CLI for deployment.
+  then use the nibid CLI for deployment.
 ---
 # 🖼️ NFTs
 
@@ -33,7 +33,7 @@ On Nibiru Chain, developers can deploy NFT contracts following the `CW721` stand
 This standard defines a set of interfaces and methods that enable the creation,
 transfer, and management of NFTs on the blockchain. Developers can customize the
 `CW721-based` contract from the cw-nfts repository to suit their specific requirements
-and deploy it using the nibiru CLI. Once deployed, these NFTs can be bought, sold, and
+and deploy it using the nibid CLI. Once deployed, these NFTs can be bought, sold, and
 traded on the Nibiru Chain, leveraging the security and transparency of blockchain technology.
 
 In order to create your very own NFT contract on Nibiru, you must first set your
@@ -85,7 +85,7 @@ Interacting with the contract similar to how you manage any [CosmWasm contract](
 ```bash
 ACCOUNT=<your-wallet-address>
 
-TXHASH="$(nibiru tx wasm store artifacts/cw721_base.wasm \
+TXHASH="$(nibid tx wasm store artifacts/cw721_base.wasm \
     --from $ACCOUNT \
     --gas auto \
     --gas-adjustment 1.5 \
@@ -95,7 +95,7 @@ TXHASH="$(nibiru tx wasm store artifacts/cw721_base.wasm \
 
 ```bash
 # Query the transaction hash:
-nibiru q tx $TXHASH > txhash.json
+nibid q tx $TXHASH > txhash.json
 
 # Save the CODE_ID for later usage:
 CODE_ID="$(cat txhash.json | jq -r '.logs[0].events[1].attributes[1].value')"
@@ -111,7 +111,7 @@ echo "{\"name\":\"$COLLECTION_NAME\", \"symbol\":\"$SYMBOL\"}" | jq . | tee inst
 ```
 
 ```bash
-TXHASH_INIT="$(nibiru tx wasm instantiate $CODE_ID \
+TXHASH_INIT="$(nibid tx wasm instantiate $CODE_ID \
     "$(cat instantiate_args.json)" \
     --admin "$ACCOUNT" \
     --label CALICO_NFTS \
@@ -124,7 +124,7 @@ TXHASH_INIT="$(nibiru tx wasm instantiate $CODE_ID \
 
 ```bash
 # Query the transaction
-nibiru q tx $TXHASH_INIT > txhash.init.json
+nibid q tx $TXHASH_INIT > txhash.init.json
 
 # Save the contract address
 CONTRACT_ADDRESS="$(cat txhash.init.json | jq -r '.logs[0].events[1].attributes[0].value')"

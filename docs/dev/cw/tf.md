@@ -26,16 +26,16 @@ The `nibi-stargate` contract is located at `wasm-contracts/nibi-stargate/`.
 
 ## Setting Environment Variables
 
-Ensure the `nibiru` command-line interface is installed before interacting with the nibi-stargate smart contract. Refer to the `nibiru` installation [guide](../cli/nibid-binary.md).
+Ensure the `nibid` command-line interface is installed before interacting with the nibi-stargate smart contract. Refer to the `nibid` installation [guide](../cli/nibid-binary.md).
 
 The following environment variables are utilized in this guide:
 
 - `KEYNAME`: The keyring name or wallet address for the account responsible for broadcasting transactions. It defaults to "validator" in local Nibiru instances.
-- `tx alias`: This alias facilitates reading transaction responses. It extracts the transaction hash using jq, waits for 3 seconds to ensure transaction processing, queries transaction details using nibiru q tx, and appends structured information to out.json.
+- `tx alias`: This alias facilitates reading transaction responses. It extracts the transaction hash using jq, waits for 3 seconds to ensure transaction processing, queries transaction details using nibid q tx, and appends structured information to out.json.
 
 ```bash
 KEYNAME="validator" # wallet address
-alias tx="jq -rcs '.[0].txhash' | { read txhash; sleep 3; nibiru q tx \$txhash | jq '{txhash, height, code, logs, tx, gas_wanted, gas_used}' >> out.json}"
+alias tx="jq -rcs '.[0].txhash' | { read txhash; sleep 3; nibid q tx \$txhash | jq '{txhash, height, code, logs, tx, gas_wanted, gas_used}' >> out.json}"
 ```
 
 ## Deploying the Smart Contract
@@ -43,7 +43,7 @@ alias tx="jq -rcs '.[0].txhash' | { read txhash; sleep 3; nibiru q tx \$txhash |
 To deploy the smart contract, you need a reference to its stored bytecode on the blockchain. If the bytecode is not yet stored, deploy or store it:
 
 ```bash
-nibiru tx wasm store ./artifacts/nibi_stargate.wasm \
+nibid tx wasm store ./artifacts/nibi_stargate.wasm \
     --from $KEYNAME \
     --gas auto \
     --gas-adjustment 1.5 \
@@ -54,7 +54,7 @@ nibiru tx wasm store ./artifacts/nibi_stargate.wasm \
 This will return the transaction hash (tx-hash) with which we will query against to identify the `CODE ID`:
 
 ```bash
-nibiru q tx <tx-hash> | jq -r '.logs[0].events[1].attributes[1].value'
+nibid q tx <tx-hash> | jq -r '.logs[0].events[1].attributes[1].value'
 ```
 
 Then, instantiate the contract using the stored `CODE ID` and it will return with the transaction hash which we will use to the new contract address.
@@ -63,7 +63,7 @@ Note: The `InstantiateMsg` for this smart contract is empty `({})`.
 ```bash
 CODE_ID=<CODE ID>
 
-nibiru tx wasm instantiate $CODE_ID {} \
+nibid tx wasm instantiate $CODE_ID {} \
     --admin "$KEYNAME" \
     --label "fungible tokens" \
     --from "$KEYNAME" \
@@ -76,7 +76,7 @@ nibiru tx wasm instantiate $CODE_ID {} \
 Using the transaction hash (tx-hash),
 
 ```bash
-nibiru q tx <tx-hash> | jq -r '.logs[0].events[1].attributes[0].value'
+nibid q tx <tx-hash> | jq -r '.logs[0].events[1].attributes[0].value'
 ```
 
 ### Broadcasting Transactions
@@ -138,7 +138,7 @@ Using the known Contract Address and the example broadcast messages above, you c
 ```bash
 CONTRACT_ADDRESS=<contract-address>
 
-nibiru tx wasm execute $CONTRACT_ADDRESS \
+nibid tx wasm execute $CONTRACT_ADDRESS \
     "$(cat broadcast_msg.json)" \
     --from $FROM \
     --gas auto \
