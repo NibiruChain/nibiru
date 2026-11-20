@@ -1,7 +1,7 @@
 ---
 order: 2
 description: >-
-  The wasm module of Nibiru Chain allows for executing CosmWasm smart contracts, enabling developers to build decentralized applications (dApps) with transaction messages for contract deployment, execution, and parameter updates. It emits events for transaction indexing, aiding contract interaction tracking and platform adoption.
+  The wasm module of Nibiru allows for executing CosmWasm smart contracts, enabling developers to build decentralized applications (dApps) with transaction messages for contract deployment, execution, and parameter updates. It emits events for transaction indexing, aiding contract interaction tracking and platform adoption.
 ---
 
 # Module: Wasm
