@@ -259,6 +259,15 @@ func (s *dbs) Prune(size uint16) error {
 		return err
 	}
 
+	// Release the iterator before writing. A MemDB iterator holds the
+	// database read lock until it is closed or exhausted, and the batch write
+	// needs the write lock. Writing first deadlocks Prune against itself once
+	// more than the iterator's channel buffer of keys remain unread.
+	// Close is idempotent, so the deferred Close above stays safe.
+	if err = itr.Close(); err != nil {
+		return err
+	}
+
 	err = b.WriteSync()
 	if err != nil {
 		return err
