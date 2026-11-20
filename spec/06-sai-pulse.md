@@ -185,7 +185,7 @@ Prepare a CW3 proposal containing these ordered actions:
    action `edit_wasm_block_hooks_contract`, and `contracts: ["<Pulse address>"]`.
 2. Execute `{"resume":{}}` against Pulse with no funds.
 
-Build the first action with `nibiru build-stargate-wasm` and the chain's protobuf
+Build the first action with `nibiru debug stargate` and the chain's protobuf
 codec. Simulate both actions together through the existing CW3 proposal tools
 before submission. Registration is root-only, so a direct upload signer cannot
 perform it. Preserve the reviewed proposal and subsequent vote/execute receipts.

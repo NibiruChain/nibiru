@@ -97,7 +97,7 @@ self-documenting.
 
 ```bash
 just            # list all available commands
-just build      # build the nibid binary
+just build      # build the nibiru binary
 just localnet   # run a local network
 just test-e2e   # run EVM end-to-end tests
 ```
@@ -126,7 +126,7 @@ just localnet # to run a local instance of Nibiru as a live network
 
 For source-build instructions, see [Building Nibiru from source](./spec/01-building-nibiru-from-source.md).
 
-Usage instructions for the `nibid` CLI are available at [nibiru.fi/docs/dev/cli](https://nibiru.fi/docs/dev/cli) and the [Nibiru Module Reference](https://nibiru.fi/docs/concepts/arch/#modules-%E2%80%94-nibiru).
+Usage instructions for the `nibiru` CLI are available at [nibiru.fi/docs/dev/cli](https://nibiru.fi/docs/dev/cli) and the [Nibiru Module Reference](https://nibiru.fi/docs/concepts/arch/#modules-%E2%80%94-nibiru).
 
 <details>
 <summary>[Recommended minimum specs to run a full node]</summary>
