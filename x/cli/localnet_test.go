@@ -95,19 +95,23 @@ func TestLocalnetScriptStopsNodesUnderBothNames(t *testing.T) {
 	require.NoError(t, os.MkdirAll(other, 0o755))
 
 	same := map[string]fakeNode{
-		"nibiru start --home":       spawnFake(t, dir, root, "nibiru", "start", "--home", home),
-		"nibid node start --home=/": spawnFake(t, dir, root, "nibid", "node", "start", "--home="+home+"/"),
-		"dot suffix":                spawnFake(t, dir, root, "nibid", "start", "--home", home+"/."),
-		"symlink":                   spawnFake(t, dir, root, "nibiru", "start", "--home="+link),
-		"relative":                  spawnFake(t, dir, root, "nibiru", "start", "--home", "./my home/../my home"),
-		"home before command":       spawnFake(t, dir, root, "nibid", "--home", home, "start"),
-		"flags after start":         spawnFake(t, dir, root, "nibiru", "start", "--pruning", "nothing", "--home", home),
+		"nibiru start --home":          spawnFake(t, dir, root, "nibiru", "start", "--home", home),
+		"nibid node start --home=/":    spawnFake(t, dir, root, "nibid", "node", "start", "--home="+home+"/"),
+		"dot suffix":                   spawnFake(t, dir, root, "nibid", "start", "--home", home+"/."),
+		"symlink":                      spawnFake(t, dir, root, "nibiru", "start", "--home="+link),
+		"relative":                     spawnFake(t, dir, root, "nibiru", "start", "--home", "./my home/../my home"),
+		"home before command":          spawnFake(t, dir, root, "nibid", "--home", home, "start"),
+		"flags after start":            spawnFake(t, dir, root, "nibiru", "start", "--pruning", "nothing", "--home", home),
+		"flags between node and start": spawnFake(t, dir, root, "nibiru", "node", "--home", home, "start"),
+		"flags at every level":         spawnFake(t, dir, root, "nibid", "--log_level", "debug", "node", "--home="+home, "--trace", "start", "--pruning", "nothing"),
+		"unknown flag before start":    spawnFake(t, dir, root, "nibid", "--future-flag", "x", "start", "--home", home),
 	}
 	untouched := map[string]fakeNode{
-		"other home":       spawnFake(t, dir, root, "nibiru", "start", "--home", other),
-		"query":            spawnFake(t, dir, root, "nibid", "q", "bank", "--home", home),
-		"start as an arg":  spawnFake(t, dir, root, "nibid", "keys", "add", "start", "--home", home),
-		"start in a value": spawnFake(t, dir, root, "nibid", "q", "wasm", "--node", "start", "--home", home),
+		"other home":                spawnFake(t, dir, root, "nibiru", "start", "--home", other),
+		"query":                     spawnFake(t, dir, root, "nibid", "q", "bank", "--home", home),
+		"start as an arg":           spawnFake(t, dir, root, "nibid", "keys", "add", "start", "--home", home),
+		"keys add start, any flags": spawnFake(t, dir, root, "nibiru", "--home", home, "keys", "add", "start"),
+		"start in a value":          spawnFake(t, dir, root, "nibid", "q", "wasm", "--node", "start", "--home", home),
 	}
 	time.Sleep(400 * time.Millisecond)
 
@@ -160,4 +164,51 @@ func TestLocalnetScriptDefaultHomeAndUnsafe(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, string(co), "could not be determined")
 	require.False(t, bad.exited())
+}
+
+// A process that holds a file open under <home>/data is a live user of the
+// home, whatever its name or arguments.
+func TestLocalnetScriptStopsAnyProcessHoldingTheData(t *testing.T) {
+	if _, err := os.Stat("/proc/self"); err != nil {
+		t.Skip("no /proc")
+	}
+	root := t.TempDir()
+	home := filepath.Join(root, "home")
+	require.NoError(t, os.MkdirAll(filepath.Join(home, "data"), 0o755))
+	lock := filepath.Join(home, "data", "LOCK")
+	require.NoError(t, os.WriteFile(lock, nil, 0o644))
+	elsewhere := filepath.Join(root, "other", "data", "LOCK")
+	require.NoError(t, os.MkdirAll(filepath.Dir(elsewhere), 0o755))
+	require.NoError(t, os.WriteFile(elsewhere, nil, 0o644))
+	// A link to the home must resolve to the same data directory.
+	link := filepath.Join(root, "link")
+	require.NoError(t, os.Symlink(home, link))
+
+	// holder runs bash, named neither nibid nor nibiru, with the file open on
+	// fd 3 and no child that would inherit it. It waits on a stdin pipe.
+	holder := func(path string) fakeNode {
+		cmd := exec.Command("bash", "-c", `exec 3<"$1"; read -r _`, "holder", path)
+		stdin, err := cmd.StdinPipe()
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = stdin.Close() })
+		require.NoError(t, cmd.Start())
+		f := fakeNode{cmd: cmd, done: make(chan struct{})}
+		go func() { _ = cmd.Wait(); close(f.done) }()
+		t.Cleanup(func() { _ = cmd.Process.Kill() })
+		return f
+	}
+	hold := holder(lock)
+	away := holder(elsewhere)
+	time.Sleep(400 * time.Millisecond)
+
+	for _, chain := range []string{home, link} {
+		out, err := runStopScript(t, chain, "running_node_pids")
+		require.NoError(t, err, out)
+		require.Equal(t, []string{hold.pid()}, strings.Fields(out), chain)
+	}
+
+	out, err := runStopScript(t, link, "stop_running_nodes")
+	require.NoError(t, err, out)
+	require.Eventually(t, hold.exited, 5*time.Second, 50*time.Millisecond)
+	require.False(t, away.exited(), "a holder on another home must keep running")
 }

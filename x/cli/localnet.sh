@@ -195,29 +195,58 @@ canon_path() {
   fi
 }
 
+# argv_is_node: Succeed when the arguments ($@, starting with the binary name)
+# are a nibid or nibiru node command: the first command word is `start`, or it
+# is `node` and the next command word is `start`. A command word is a token
+# that is not a flag and not the value of a flag. Flags may sit between the
+# words. --flag=value is one token. The known value flags take the next token;
+# the known boolean flags and short flags do not. When a long flag is unknown,
+# the script cannot tell whether it takes a value, so it also accepts `start`
+# as a command word after it. That can stop a node that is about to be wiped,
+# but never misses a live one.
+argv_is_node() {
+  local -a w=("$@")
+  local name="${w[0]##*/}" i=1 n=${#w[@]} unsure=false first="" word
+  [[ "$name" == nibid || "$name" == nibiru ]] || return 1
+  while ((i < n)); do
+    word="${w[i]}"
+    case "$word" in
+    --) ;;
+    --home | --log_level | --log_format) i=$((i + 1)) ;;
+    --*=* | --trace | --log_no_color | --help-verbose | --help) ;;
+    --*) unsure=true ;;
+    -*) ;;
+    *)
+      if [[ -z "$first" ]]; then
+        first="$word"
+        [[ "$first" == start ]] && return 0
+        [[ "$first" == node ]] || break
+      else
+        [[ "$word" == start ]] && return 0
+        break
+      fi
+      ;;
+    esac
+    i=$((i + 1))
+  done
+  if $unsure; then
+    for word in "${w[@]:1}"; do
+      [[ "$word" == start ]] && return 0
+    done
+  fi
+  return 1
+}
+
 # check_node: Given a process ($1 pid, $2 working directory or empty, then its
-# arguments), print the PID when it is a nibid or nibiru node (`start` or
-# `node start` after the global flags) whose home is $CHAIN_DIR, or
-# `unsafe:PID` when it is such a node and its home cannot be determined.
-# A node without --home uses $HOME/.nibid.
+# arguments), print the PID when argv_is_node and its home is $CHAIN_DIR, or
+# `unsafe:PID` when it is a node and its home cannot be determined. The home
+# is the last --home anywhere in the arguments, else $HOME/.nibid.
 check_node() {
   local pid="$1" cwd="$2"
   shift 2
   local -a w=("$@")
-  local name="${w[0]##*/}" i=1 n=${#w[@]} home="" have_home=false
-  [[ "$name" == nibid || "$name" == nibiru ]] || return 0
-  # Skip the global flags before the command.
-  while ((i < n)) && [[ "${w[i]}" == -* ]]; do
-    case "${w[i]}" in
-    --home | --log_level | --log_format) i=$((i + 2)) ;;
-    *) i=$((i + 1)) ;;
-    esac
-  done
-  if [[ "${w[i]:-}" == node ]]; then
-    i=$((i + 1))
-  fi
-  [[ "${w[i]:-}" == start ]] || return 0
-  # --home may come before or after the command.
+  local n=${#w[@]} i home="" have_home=false got want
+  argv_is_node "${w[@]}" || return 0
   for ((i = 1; i < n; i++)); do
     case "${w[i]}" in
     --home)
@@ -233,7 +262,6 @@ check_node() {
   if ! $have_home; then
     home="$HOME/.nibid"
   fi
-  local got want
   if [[ -z "$home" ]] || ! got="$(canon_path "$home" "$cwd")"; then
     printf 'unsafe:%s\n' "$pid"
     return 0
@@ -243,31 +271,59 @@ check_node() {
   return 0
 }
 
-# running_node_pids: Print one line for each running node that uses
-# $CHAIN_DIR. It reads real argument boundaries from /proc/PID/cmdline where
-# that exists. Elsewhere (macOS), it splits the ps command line on spaces, and
-# a relative --home counts as undeterminable.
+# open_file_pids: Print the PIDs of processes that hold a file open under
+# $CHAIN_DIR/data, whatever their name or arguments. A running node holds its
+# database there. It uses /proc on Linux and lsof elsewhere, and prints
+# nothing when neither is available (the argument check still runs).
+open_file_pids() {
+  local want f
+  want="$(canon_path "$CHAIN_DIR" "")" || return 0
+  if [[ -d /proc/self ]]; then
+    { find /proc/[0-9]*/fd -maxdepth 1 \
+      \( -lname "$want/data" -o -lname "$want/data/*" \) 2>/dev/null || true; } |
+      while read -r f; do
+        f="${f#/proc/}"
+        f="${f%%/*}"
+        [[ "$f" != "$$" ]] && printf '%s\n' "$f"
+      done
+  elif command -v lsof >/dev/null 2>&1 && [[ -d "$want/data" ]]; then
+    lsof -t +D "$want/data" 2>/dev/null | while read -r f; do
+      [[ "$f" != "$$" ]] && printf '%s\n' "$f"
+    done
+  fi
+  return 0
+}
+
+# running_node_pids: Print one line for each process that uses $CHAIN_DIR,
+# without duplicates: a PID, or `unsafe:PID`. The first check is which
+# processes hold files under the home's data directory. The second check reads
+# real argument boundaries from /proc/PID/cmdline where that exists, and
+# splits the ps command line on spaces elsewhere (macOS, where a relative
+# --home counts as undeterminable). It catches a node that has not yet opened
+# its database.
 running_node_pids() {
   local pid rest f
   local -a w
-  if [[ -d /proc/self ]]; then
-    for f in /proc/[0-9]*; do
-      pid="${f#/proc/}"
-      [[ "$pid" != "$$" ]] || continue
-      # A process can exit between the listing and the read.
-      { mapfile -d '' -t w <"$f/cmdline"; } 2>/dev/null || continue
-      [[ ${#w[@]} -gt 0 ]] || continue
-      [[ "${w[0]##*/}" == nibid || "${w[0]##*/}" == nibiru ]] || continue
-      check_node "$pid" "$(readlink "$f/cwd" 2>/dev/null || true)" "${w[@]}"
-    done
-  else
-    while read -r pid rest; do
-      [[ -n "$pid" && "$pid" != "$$" ]] || continue
-      read -ra w <<<"$rest"
-      [[ ${#w[@]} -gt 0 ]] || continue
-      check_node "$pid" "" "${w[@]}"
-    done < <(ps -axo pid=,command= 2>/dev/null || true)
-  fi
+  {
+    open_file_pids
+    if [[ -d /proc/self ]]; then
+      for f in /proc/[0-9]*; do
+        pid="${f#/proc/}"
+        [[ "$pid" != "$$" ]] || continue
+        { mapfile -d '' -t w <"$f/cmdline"; } 2>/dev/null || continue
+        [[ ${#w[@]} -gt 0 ]] || continue
+        [[ "${w[0]##*/}" == nibid || "${w[0]##*/}" == nibiru ]] || continue
+        check_node "$pid" "$(readlink "$f/cwd" 2>/dev/null || true)" "${w[@]}"
+      done
+    else
+      while read -r pid rest; do
+        [[ -n "$pid" && "$pid" != "$$" ]] || continue
+        read -ra w <<<"$rest"
+        [[ ${#w[@]} -gt 0 ]] || continue
+        check_node "$pid" "" "${w[@]}"
+      done < <(ps -axo pid=,command= 2>/dev/null || true)
+    fi
+  } | sort -u
   return 0
 }
 
