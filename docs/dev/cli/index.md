@@ -16,11 +16,70 @@ description: >
 1. [Nibiru CLI - How to Install the Nibiru CLI](./nibid-binary.md)
 2. [Nibiru CLI - Creating Fungible Tokens](./tf.md)
 
-The native CLI binary is `nibid`. Release archives and source builds install
-only `nibid`. The `nibiru` command comes from the npm package
-`@nibiruchain/nibiru`, a Node launcher that runs a released `nibid` binary and
-forwards all arguments to it. If you installed with Bun or npm, replace `nibid`
-with `nibiru` in the examples below and in the linked guides.
+The native binary is named `nibiru`, and `nibid` stays as a compatible name
+(a symlink in source builds and container images). Both names run the same
+program, and help prints the name you invoked. Bun and npm installs expose
+`nibiru`, which forwards all arguments to the native binary. The examples in
+these guides use `nibid`; replace it with `nibiru` as you prefer.
+
+## Command List
+
+`nibid --help` prints one command list in a fixed order:
+`tx`, `q` (alias `query`), `keys`, `config`, `status`, `debug`, `localnet`,
+`node`, `help`, and `version`. Commands that run a node live under
+`nibid node`, for example `nibid node start` and
+`nibid node genesis validate-genesis`. The top-level forms, such as
+`nibid start`, and the `nibid` name still run.
+
+Help hides the log and trace flags (`--log_format`, `--log_level`,
+`--log_no_color`, `--trace`) by default. They still work when passed. Add
+`--help-verbose` to any command to list them.
+
+`nibid tx --help` and `nibid q --help` list the everyday modules first
+(`bank`, `wasm`, `evm`, `staking`, `gov`, `distribution`, `tokenfactory`,
+`ibc-transfer`). `nibid tx --help` then lists the offline signing commands.
+
+## Decode Encoded Data
+
+`nibid debug <input>` detects what the input is and prints JSON with a
+`detected` field. It reads stdin when the argument is `-`, or when no argument
+is given and stdin is piped. It works offline and accepts:
+
+| Input                                                 | Detected as        |
+| ----------------------------------------------------- | ------------------ |
+| JSON-RPC body or batch (`abci_query`, `broadcast_tx_*`) | `abci-query`     |
+| JSON with `type_url` and `value`, or a `stargate` wrapper | `any`          |
+| Base64 or hex transaction                             | `tx`               |
+| Bech32 (`nibi1...`) or `0x` address                   | `addr`             |
+| Bech32 pubkey, proto-JSON pubkey, raw 33-byte key     | `pubkey`           |
+| `[10 21 13 255]`                                      | `raw-bytes`        |
+| Other valid protobuf                                  | `unknown-protobuf` |
+
+An ambiguous input prints `"detected": "ambiguous"` and a `readings` object
+with every reading, computed offline, in a fixed key order:
+
+- A 32-byte value has `contract_addr` (Wasm contract address), `ed25519_pubkey`
+  (the key and its derived addresses, including the consensus form), and
+  `tx_hash` (uppercase hash and the `nibiru query tx` command to look it up).
+- A string that is valid as both hex and base64 has one reading per encoding,
+  named `hex` and `base64`. Each holds the result of decoding those bytes, or
+  an `error` field when they do not decode.
+
+A 33-byte value counts as a public key only when it is a valid secp256k1 point.
+For a 32-byte ed25519 key, the command can check only the length.
+
+Pass `--as <kind>` to get a single answer. For a string that is valid as both
+hex and base64, `--as` tries both encodings and uses the one that decodes as
+that kind. If both decode, the output is `ambiguous` with one reading per
+encoding. If neither does, the command fails with an error that names the kind.
+The kind for addresses is `addr`. In address output, the EVM form is field
+`eth_addr`, and a public key lists its derived addresses under `addr`.
+
+Explicit subcommands decode one kind: `debug tx`, `debug msg`,
+`debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,
+`debug pubkey-raw`, `debug raw-bytes`, and `debug prefixes`. Command
+`debug stargate` replaces `build-stargate-wasm`, which stays as a hidden alias
+with identical output.
 
 ## Working Directory
 
@@ -89,7 +148,7 @@ to print all of them.
 | ----------------------------------------- | ------------------------------------------------------------------ |
 | [devgas](../../concepts/arch/advanced/devgas.md#command-line-interface) | Devgas subcommands for smart contract usage.                       |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |
-| [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Keys subcommands for managing local tendermint keystore.           |
+| [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Create, import, export, and list keys in the local keyring.        |
 
 <!-- | [evm](../arch/advanced/evm.md#cli)     | Ethereum Virtual Machine (EVM) Nibiru CLI commands  | -->
 <!-- | [wasm](../arch/advanced/wasm.md#cli)     | Wasm subcommands for enabling CosmWasm smart contracts execution.  | -->

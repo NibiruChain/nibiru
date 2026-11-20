@@ -1,54 +1,14 @@
 package main
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/client"
-	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/codec/types"
+	"github.com/NibiruChain/nibiru/v2/x/cli/debugcmd"
 )
 
+// GetBuildWasmMsg returns the legacy top-level `build-stargate-wasm` command.
+// It is hidden and shares its implementation, and output, with
+// `nibid debug stargate`. Boku's msig-ops tooling still calls it.
 func GetBuildWasmMsg() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "build-stargate-wasm [message data]",
-		Short: "Build wasm Stargate message in Base64",
-		Long: `This message is used to build an sdk.Msg as a protobuf Any 
-	type for use as a Stargate message in a CosmWasm transaction.`,
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-
-			theMsg := args[0]
-
-			anyMsg := types.Any{}
-			err := clientCtx.Codec.UnmarshalJSON([]byte(theMsg), &anyMsg)
-			if err != nil {
-				return err
-			}
-
-			type stargateMessage struct {
-				TypeURL string `json:"type_url,omitempty"`
-				Value   string `json:"value,omitempty"`
-			}
-
-			js, err := json.Marshal(map[string]any{
-				"stargate": stargateMessage{
-					TypeURL: anyMsg.TypeUrl,
-					Value:   base64.StdEncoding.EncodeToString(anyMsg.Value),
-				},
-			})
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(string(js))
-
-			return nil
-		},
-	}
-
-	return cmd
+	return debugcmd.NewStargateCmd("build-stargate-wasm [message data]", true)
 }
