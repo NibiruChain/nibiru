@@ -47,10 +47,11 @@ so the package manager installs the binary for your platform.
 
 The launcher requires [Node.js](https://nodejs.org/en/download) on your `PATH`,
 including when you install with Bun. It exposes the command `nibiru`, which runs
-the native `nibid` binary of a released version and forwards all arguments.
-Replace `nibid` with `nibiru` when following the other CLI guides. The `nibid`
-binary itself doesn't answer to the name `nibiru`, so release archives and
-source builds use `nibid`.
+the native binary of a released version and forwards all arguments. The
+native binary runs under two names, `nibiru` and `nibid`, and help prints the
+name you used. Source builds and container images install `nibiru` with `nibid`
+as a symlink to it, and release archives hold `nibid`. Use `nibiru` or `nibid`
+in the other CLI guides, whichever your install provides.
 
 ## Option 2: Use the Bash installer
 
@@ -280,10 +281,9 @@ Command `node` holds `start`, `init`, `export`, `genesis`, `prune`,
 Add `--help-verbose` to any command to list the log and trace flags that help
 hides by default.
 
-The old top-level node commands, such as `nibid start` and
-`nibid tendermint show-node-id`, keep working and print no warning. They no
-longer appear in `nibid --help`. Cosmovisor, Docker images, and systemd units
-that call `nibid start` need no change.
+The top-level forms, such as `nibid start`, and the `nibid` name still run, so
+Cosmovisor, Docker images, and systemd units that call `nibid start` need no
+change.
 
 ## Docker Engine
 

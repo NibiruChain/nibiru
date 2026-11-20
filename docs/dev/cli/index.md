@@ -28,8 +28,8 @@ these guides use `nibid`; replace it with `nibiru` as you prefer.
 `tx`, `q` (alias `query`), `keys`, `config`, `status`, `debug`, `localnet`,
 `node`, `help`, and `version`. Commands that run a node live under
 `nibid node`, for example `nibid node start` and
-`nibid node genesis validate-genesis`. The previous top-level forms, such as
-`nibid start`, keep working as hidden aliases.
+`nibid node genesis validate-genesis`. The top-level forms, such as
+`nibid start`, and the `nibid` name still run.
 
 Help hides the log and trace flags (`--log_format`, `--log_level`,
 `--log_no_color`, `--trace`) by default. They still work when passed. Add
@@ -68,10 +68,9 @@ with every reading, computed offline, in a fixed key order:
 Pass `--as <kind>` to get a single answer. For a string that is valid as both
 hex and base64, `--as` tries both encodings and uses the one that decodes as
 that kind. If both decode, the output is `ambiguous` with one reading per
-encoding. If neither does, the command fails with an error that names the kind. The kind for addresses is `addr`;
-`--as address` still works as an undocumented alias. In address output, the EVM
-form is field `eth_addr`, and a public key lists its derived addresses under
-`addr`.
+encoding. If neither does, the command fails with an error that names the kind.
+The kind for addresses is `addr`. In address output, the EVM form is field
+`eth_addr`, and a public key lists its derived addresses under `addr`.
 
 Explicit subcommands decode one kind: `debug tx`, `debug msg`,
 `debug abci-query`, `debug stargate`, `debug addr`, `debug pubkey`,
@@ -146,7 +145,7 @@ to print all of them.
 | ----------------------------------------- | ------------------------------------------------------------------ |
 | [devgas](../../concepts/arch/advanced/devgas.md#command-line-interface) | Devgas subcommands for smart contract usage.                       |
 | [bank](../../concepts/arch/advanced/cosmos-sdk/bank.md#cli)     | Bank subcommands for managing assets.                              |
-| [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Keys subcommands for managing local tendermint keystore.           |
+| [keys](../../concepts/arch/advanced/keys.md#available-commands)     | Create, import, export, and list keys in the local keyring.        |
 
 <!-- | [evm](../arch/advanced/evm.md#cli)     | Ethereum Virtual Machine (EVM) Nibiru CLI commands  | -->
 <!-- | [wasm](../arch/advanced/wasm.md#cli)     | Wasm subcommands for enabling CosmWasm smart contracts execution.  | -->
