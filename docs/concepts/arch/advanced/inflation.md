@@ -46,14 +46,14 @@ since a small-order polynomial can be used to approximate almost any smooth, mon
 You can query these parameters on mainnet using the [Nibiru CLI](../../../dev/cli/index.md).
 ```bash
 # Mainnet CLI Config
-nibid config node https://rpc.nibiru.fi:443
-nibid config chain-id cataclysm-1
-nibid config broadcast-mode sync 
-nibid config
+nibiru config node https://rpc.nibiru.fi:443
+nibiru config chain-id cataclysm-1
+nibiru config broadcast-mode sync 
+nibiru config
 ```
 
 ```bash
-nibid query inflation params
+nibiru q inflation params
 ```
 
 ```js

@@ -3,7 +3,7 @@ order: 5
 description: >-
   NFTs, valued for their uniqueness, are digital assets commonly used
   in digital art, collectibles, and gaming. To deploy an NFT contract
-  on Nibiru Chain, developers can customize the CW721-based contract
+  on Nibiru, developers can customize the CW721-based contract
   found in the cw-nfts repository to adhere to the CW721 standard,
   then use the nibid CLI for deployment.
 ---
@@ -29,12 +29,12 @@ and provenance, ensuring that each token is verifiably scarce and authentic.
 
 ## Setting Up Your NFT Contract
 
-On Nibiru Chain, developers can deploy NFT contracts following the `CW721` standard.
+On Nibiru, developers can deploy NFT contracts following the `CW721` standard.
 This standard defines a set of interfaces and methods that enable the creation,
 transfer, and management of NFTs on the blockchain. Developers can customize the
 `CW721-based` contract from the cw-nfts repository to suit their specific requirements
 and deploy it using the nibid CLI. Once deployed, these NFTs can be bought, sold, and
-traded on the Nibiru Chain, leveraging the security and transparency of blockchain technology.
+traded on Nibiru, leveraging the security and transparency of blockchain technology.
 
 In order to create your very own NFT contract on Nibiru, you must first set your
 environemnt bu following the [Getting Started guide](./getting-started.md).
