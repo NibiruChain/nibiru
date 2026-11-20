@@ -25,7 +25,7 @@ jobs:
   # changes-rust (job): Selects Rust checks for pull requests. Main, scheduled,
   # and manually dispatched runs always execute the full legacy suite.
   changes-rust:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     outputs:
       run-workspace: ${{ steps.decision.outputs['run-workspace'] }}

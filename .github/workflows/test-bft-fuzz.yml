@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   fuzz:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     name: fuzz (${{ matrix.target }})
     runs-on: ubuntu-latest
     timeout-minutes: 30

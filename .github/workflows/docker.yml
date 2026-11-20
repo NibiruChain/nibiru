@@ -161,7 +161,7 @@ jobs:
         with:
           context: .
           target: chaosnet
-          push: ${{ github.repository == 'NibiruChain/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
+          push: ${{ github.repository == 'SaiDotFun/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
           platforms: ${{ matrix.build.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -170,7 +170,7 @@ jobs:
     name: Create multi-arch image
     needs:
       - build-chaosnet
-    if: ${{ github.repository == 'NibiruChain/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
+    if: ${{ github.repository == 'SaiDotFun/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
