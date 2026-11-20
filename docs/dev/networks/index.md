@@ -34,10 +34,10 @@ Nibiru CLI Config: Nibiru
 
 ```bash
 RPC_URL="https://rpc.nibiru.fi:443"
-nibid config node $RPC_URL
-nibid config chain-id cataclysm-1
-nibid config broadcast-mode sync
-nibid config # Prints your new config to verify correctness
+nibiru config node $RPC_URL
+nibiru config chain-id cataclysm-1
+nibiru config broadcast-mode sync
+nibiru config # Prints your new config to verify correctness
 ```
 
 ## Nibiru Testnet
@@ -68,10 +68,10 @@ Nibiru CLI Config: Nibiru Testnet
 
 ```bash
 RPC_URL="https://rpc.testnet-2.nibiru.fi:443"
-nibid config node $RPC_URL
-nibid config chain-id nibiru-testnet-2
-nibid config broadcast-mode sync
-nibid config # Prints your new config to verify correctness
+nibiru config node $RPC_URL
+nibiru config chain-id nibiru-testnet-2
+nibiru config broadcast-mode sync
+nibiru config # Prints your new config to verify correctness
 ```
 
 ## Localnet: Local Test Network
@@ -104,10 +104,10 @@ Nibiru CLI Config: Localnet
 
 ```bash
 RPC_URL="http://localhost:26657"
-nibid config node $RPC_URL
-nibid config chain-id nibiru-localnet-0
-nibid config broadcast-mode sync
-nibid config # Prints your new config to verify correctness
+nibiru config node $RPC_URL
+nibiru config chain-id nibiru-localnet-0
+nibiru config broadcast-mode sync
+nibiru config # Prints your new config to verify correctness
 ```
 
 ## EVM Network Configs

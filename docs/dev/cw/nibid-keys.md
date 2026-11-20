@@ -2,7 +2,7 @@
 order: 3
 description: >-
   To deploy a CosmWasm contract on Nibiru, set up a wallet with
-  nibid keys add wallet and acquire funds from the Nibiru Faucet
+  nibiru keys add wallet and acquire funds from the Nibiru Faucet
   using Keplr, Fox, or another supported IBC wallet. Remember to keep your mnemonic or private
   key secure.
 ---
@@ -16,13 +16,13 @@ First setup a wallet with the command below.
 
 ```bash
 # add wallets for testing
-nibid keys add wallet
+nibiru keys add wallet
 ```
 
 To check which wallet is currently setup, run
 
 ```bash
-nibid keys show -a wallet
+nibiru keys show -a wallet
 ```
 
 ## Faucet
@@ -34,7 +34,7 @@ Then you should be able to request funds. You are limited to once per day.
 In order to verify that your funds have been added to your account, you can query your balance by running:
 
 ```bash
-nibid query bank balances $(nibid keys show -a wallet)
+nibiru q bank balances $(nibiru keys show -a wallet)
 ```
 
 ## Related Pages
