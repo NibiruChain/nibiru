@@ -17,6 +17,43 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
+func TestCompareNewLightBlockWithWitness_OneResult(t *testing.T) {
+	c, err := light.NewClientFromTrustedStore(
+		chainID, trustPeriod, fullNode, []provider.Provider{fullNode},
+		dbs.New(dbm.NewMemDB(), chainID), light.MaxClockDrift(0), light.MaxBlockLag(0),
+	)
+	require.NoError(t, err)
+
+	laggingWitness := mockp.New(chainID,
+		map[int64]*types.SignedHeader{1: h1},
+		map[int64]*types.ValidatorSet{1: vals},
+	)
+	for _, tc := range []struct {
+		name    string
+		witness provider.Provider
+		wantErr error
+	}{
+		{name: "matching block", witness: fullNode},
+		{name: "witness one height behind", witness: laggingWitness, wantErr: provider.ErrNoResponse},
+		{name: "unavailable witness", witness: deadNode, wantErr: provider.ErrNoResponse},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			results := make(chan error)
+			go func() {
+				defer close(results)
+				light.CompareNewLightBlockWithWitness(c, t.Context(), results, l2, tc.witness, 0)
+			}()
+
+			var received []error
+			for result := range results {
+				received = append(received, result)
+			}
+			require.Len(t, received, 1)
+			require.ErrorIs(t, received[0], tc.wantErr)
+		})
+	}
+}
+
 func TestLightClientAttackEvidence_Lunatic(t *testing.T) {
 	// primary performs a lunatic attack
 	var (
