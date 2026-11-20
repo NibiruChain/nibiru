@@ -178,37 +178,110 @@ echo_info "Successfully finished localnet script setup."
 # Stop any node that uses $CHAIN_DIR before the reset. The binary runs under
 # two names, nibid and nibiru, so check both.
 # BEGIN stop_running_nodes
-# running_node_pids: Print the PIDs of running nibid or nibiru nodes
-# (`start` or `node start`) whose home is $CHAIN_DIR. A node without a --home
-# flag uses the default home, $HOME/.nibid.
-running_node_pids() {
-  local want="${CHAIN_DIR%/}" pid rest home i name
-  local -a w
-  while read -r pid rest; do
-    [[ -n "$pid" && "$pid" != "$$" ]] || continue
-    read -ra w <<<"$rest"
-    [[ ${#w[@]} -gt 0 ]] || continue
-    name="${w[0]##*/}"
-    [[ "$name" == nibid || "$name" == nibiru ]] || continue
-    [[ " ${w[*]:1} " == *" start "* ]] || continue
+# canon_path: Print the canonical path of $1 (symbolic links followed, no
+# trailing slash, `.` and `..` resolved). A relative path resolves against the
+# directory $2, the working directory of the process that holds it. It fails
+# when the path is relative and $2 is empty.
+canon_path() {
+  local p="$1" base="${2:-}"
+  if [[ "$p" != /* ]]; then
+    [[ -n "$base" ]] || return 1
+    p="$base/$p"
+  fi
+  if [[ -d "$p" ]]; then
+    (cd -P -- "$p" && pwd -P)
+  else
+    realpath -m -- "$p" 2>/dev/null || printf '%s\n' "${p%/}"
+  fi
+}
+
+# check_node: Given a process ($1 pid, $2 working directory or empty, then its
+# arguments), print the PID when it is a nibid or nibiru node (`start` or
+# `node start` after the global flags) whose home is $CHAIN_DIR, or
+# `unsafe:PID` when it is such a node and its home cannot be determined.
+# A node without --home uses $HOME/.nibid.
+check_node() {
+  local pid="$1" cwd="$2"
+  shift 2
+  local -a w=("$@")
+  local name="${w[0]##*/}" i=1 n=${#w[@]} home="" have_home=false
+  [[ "$name" == nibid || "$name" == nibiru ]] || return 0
+  # Skip the global flags before the command.
+  while ((i < n)) && [[ "${w[i]}" == -* ]]; do
+    case "${w[i]}" in
+    --home | --log_level | --log_format) i=$((i + 2)) ;;
+    *) i=$((i + 1)) ;;
+    esac
+  done
+  if [[ "${w[i]:-}" == node ]]; then
+    i=$((i + 1))
+  fi
+  [[ "${w[i]:-}" == start ]] || return 0
+  # --home may come before or after the command.
+  for ((i = 1; i < n; i++)); do
+    case "${w[i]}" in
+    --home)
+      have_home=true
+      home="${w[i + 1]:-}"
+      ;;
+    --home=*)
+      have_home=true
+      home="${w[i]#--home=}"
+      ;;
+    esac
+  done
+  if ! $have_home; then
     home="$HOME/.nibid"
-    for ((i = 1; i < ${#w[@]}; i++)); do
-      case "${w[i]}" in
-      --home) home="${w[i + 1]:-}" ;;
-      --home=*) home="${w[i]#--home=}" ;;
-      esac
+  fi
+  local got want
+  if [[ -z "$home" ]] || ! got="$(canon_path "$home" "$cwd")"; then
+    printf 'unsafe:%s\n' "$pid"
+    return 0
+  fi
+  want="$(canon_path "$CHAIN_DIR" "")"
+  [[ "$got" == "$want" ]] && printf '%s\n' "$pid"
+  return 0
+}
+
+# running_node_pids: Print one line for each running node that uses
+# $CHAIN_DIR. It reads real argument boundaries from /proc/PID/cmdline where
+# that exists. Elsewhere (macOS), it splits the ps command line on spaces, and
+# a relative --home counts as undeterminable.
+running_node_pids() {
+  local pid rest f
+  local -a w
+  if [[ -d /proc/self ]]; then
+    for f in /proc/[0-9]*; do
+      pid="${f#/proc/}"
+      [[ "$pid" != "$$" ]] || continue
+      # A process can exit between the listing and the read.
+      { mapfile -d '' -t w <"$f/cmdline"; } 2>/dev/null || continue
+      [[ ${#w[@]} -gt 0 ]] || continue
+      [[ "${w[0]##*/}" == nibid || "${w[0]##*/}" == nibiru ]] || continue
+      check_node "$pid" "$(readlink "$f/cwd" 2>/dev/null || true)" "${w[@]}"
     done
-    [[ "${home%/}" == "$want" ]] && printf '%s\n' "$pid"
-  done < <(ps -eo pid=,args= 2>/dev/null || true)
+  else
+    while read -r pid rest; do
+      [[ -n "$pid" && "$pid" != "$$" ]] || continue
+      read -ra w <<<"$rest"
+      [[ ${#w[@]} -gt 0 ]] || continue
+      check_node "$pid" "" "${w[@]}"
+    done < <(ps -axo pid=,command= 2>/dev/null || true)
+  fi
   return 0
 }
 
 # stop_running_nodes: Terminate those nodes, wait up to 10 seconds for them to
 # exit, and abort if any is still alive, so the reset never runs under a node.
 stop_running_nodes() {
-  local pids pid tries=0
-  pids="$(running_node_pids)"
-  [[ -n "$pids" ]] || return 0
+  local found pids pid tries=0
+  found="$(running_node_pids)"
+  [[ -n "$found" ]] || return 0
+  if [[ "$found" == *unsafe:* ]]; then
+    echo_error "A running node's home could not be determined: $(echo $found). Stop it, then run this script again. Aborting."
+    exit 1
+  fi
+  pids="$found"
   echo_error "Terminating running node(s) that use $CHAIN_DIR: $(echo $pids)"
   for pid in $pids; do kill -TERM "$pid" 2>/dev/null || true; done
   while ((tries < 20)); do

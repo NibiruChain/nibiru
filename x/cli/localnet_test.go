@@ -41,52 +41,123 @@ func (f fakeNode) exited() bool {
 	}
 }
 
-// The localnet script checks both binary names, only for nodes that use the
-// target home, and waits for them to exit before it resets.
-func TestLocalnetScriptStopsNodesUnderBothNames(t *testing.T) {
+// spawnFake runs bash under the name of the binary, so the process command
+// line reads `<dir>/<name> -s -- <fake args>`.
+func spawnFake(t *testing.T, dir, cwd, name string, fake ...string) fakeNode {
+	t.Helper()
 	bashPath, err := exec.LookPath("bash")
-	if err != nil {
+	require.NoError(t, err)
+	bin := filepath.Join(dir, name)
+	_ = os.Remove(bin)
+	require.NoError(t, os.Symlink(bashPath, bin))
+	// `bash -s` reads its script from stdin, so it waits on the open pipe and
+	// the fake arguments become positional parameters.
+	cmd := exec.Command(bin, append([]string{"-s", "--"}, fake...)...)
+	cmd.Dir = cwd
+	stdin, err := cmd.StdinPipe()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = stdin.Close() })
+	require.NoError(t, cmd.Start())
+	f := fakeNode{cmd: cmd, done: make(chan struct{})}
+	go func() { _ = cmd.Wait(); close(f.done) }()
+	t.Cleanup(func() { _ = cmd.Process.Kill() })
+	return f
+}
+
+func runStopScript(t *testing.T, home, call string) (string, error) {
+	t.Helper()
+	script := "set -Eeuo pipefail\necho_error() { echo \"$@\" >&2; }\n" +
+		"HOME=" + t.TempDir() + "\nCHAIN_DIR='" + home + "'\n" +
+		stopFunctions(t) + "\n" + call + "\n"
+	out, err := exec.Command("bash", "-c", script).CombinedOutput()
+	return string(out), err
+}
+
+// The localnet script checks both binary names, matches the real start
+// command, compares canonical homes, and waits for nodes to exit.
+func TestLocalnetScriptStopsNodesUnderBothNames(t *testing.T) {
+	if _, err := exec.LookPath("bash"); err != nil {
 		t.Skip("bash not found")
 	}
-	if _, err := exec.LookPath("ps"); err != nil {
-		t.Skip("ps not found")
+	if _, err := exec.LookPath("sleep"); err != nil {
+		t.Skip("sleep not found")
+	}
+	if _, err := os.Stat("/proc/self"); err != nil {
+		t.Skip("no /proc")
 	}
 	dir := t.TempDir()
+	root := t.TempDir()
+	home := filepath.Join(root, "my home") // a space in the path
+	require.NoError(t, os.MkdirAll(home, 0o755))
+	link := filepath.Join(root, "link")
+	require.NoError(t, os.Symlink(home, link))
+	other := filepath.Join(root, "other")
+	require.NoError(t, os.MkdirAll(other, 0o755))
 
-	// A fake node is bash run under the name of the binary, so ps shows
-	// `<dir>/nibiru -c ... x start --home H`. The trailing `:` keeps bash
-	// from replacing itself with sleep.
-	spawn := func(name string, fake ...string) fakeNode {
-		bin := filepath.Join(dir, name)
-		_ = os.Remove(bin)
-		require.NoError(t, os.Symlink(bashPath, bin))
-		cmd := exec.Command(bin,
-			append([]string{"-c", "sleep 60; :", "x"}, fake...)...)
-		require.NoError(t, cmd.Start())
-		f := fakeNode{cmd: cmd, done: make(chan struct{})}
-		go func() { _ = cmd.Wait(); close(f.done) }()
-		t.Cleanup(func() { _ = cmd.Process.Kill() })
-		return f
+	same := map[string]fakeNode{
+		"nibiru start --home":       spawnFake(t, dir, root, "nibiru", "start", "--home", home),
+		"nibid node start --home=/": spawnFake(t, dir, root, "nibid", "node", "start", "--home="+home+"/"),
+		"dot suffix":                spawnFake(t, dir, root, "nibid", "start", "--home", home+"/."),
+		"symlink":                   spawnFake(t, dir, root, "nibiru", "start", "--home="+link),
+		"relative":                  spawnFake(t, dir, root, "nibiru", "start", "--home", "./my home/../my home"),
+		"home before command":       spawnFake(t, dir, root, "nibid", "--home", home, "start"),
+		"flags after start":         spawnFake(t, dir, root, "nibiru", "start", "--pruning", "nothing", "--home", home),
 	}
-	home, other := t.TempDir(), t.TempDir()
-	nibiru := spawn("nibiru", "start", "--home", home)
-	nibid := spawn("nibid", "node", "start", "--home="+home+"/")
-	elsewhere := spawn("nibiru", "start", "--home", other)
-	query := spawn("nibid", "q", "bank", "--home", home)
+	untouched := map[string]fakeNode{
+		"other home":       spawnFake(t, dir, root, "nibiru", "start", "--home", other),
+		"query":            spawnFake(t, dir, root, "nibid", "q", "bank", "--home", home),
+		"start as an arg":  spawnFake(t, dir, root, "nibid", "keys", "add", "start", "--home", home),
+		"start in a value": spawnFake(t, dir, root, "nibid", "q", "wasm", "--node", "start", "--home", home),
+	}
+	time.Sleep(400 * time.Millisecond)
+
+	out, err := runStopScript(t, home, "running_node_pids")
+	require.NoError(t, err, out)
+	want := []string{}
+	for _, f := range same {
+		want = append(want, f.pid())
+	}
+	for name, f := range same {
+		require.Contains(t, strings.Fields(out), f.pid(), name)
+	}
+	require.ElementsMatch(t, want, strings.Fields(out))
+
+	out, err = runStopScript(t, home, "stop_running_nodes")
+	require.NoError(t, err, out)
+	for name, f := range same {
+		require.Eventually(t, f.exited, 5*time.Second, 50*time.Millisecond, name)
+	}
+	for name, f := range untouched {
+		require.False(t, f.exited(), name)
+	}
+}
+
+// The default home applies when a node has no --home flag, and a node whose
+// home cannot be determined aborts the script.
+func TestLocalnetScriptDefaultHomeAndUnsafe(t *testing.T) {
+	if _, err := os.Stat("/proc/self"); err != nil {
+		t.Skip("no /proc")
+	}
+	dir := t.TempDir()
+	// runStopScript sets HOME to a fresh temp dir; read it back to match.
+	script := func(call string) string {
+		return "set -Eeuo pipefail\necho_error() { echo \"$@\" >&2; }\n" +
+			"HOME='" + dir + "'\nCHAIN_DIR=\"$HOME/.nibid\"\n" +
+			stopFunctions(t) + "\n" + call + "\n"
+	}
+	def := spawnFake(t, dir, dir, "nibiru", "start")
 	time.Sleep(300 * time.Millisecond)
-
-	prelude := "set -Eeuo pipefail\necho_error() { echo \"$@\" >&2; }\n" +
-		"CHAIN_DIR=" + home + "\n" + stopFunctions(t)
-
-	out, err := exec.Command("bash", "-c", prelude+"running_node_pids\n").Output()
+	out, err := exec.Command("bash", "-c", script("running_node_pids")).Output()
 	require.NoError(t, err)
-	require.ElementsMatch(t, []string{nibiru.pid(), nibid.pid()},
-		strings.Fields(string(out)))
+	require.Equal(t, []string{def.pid()}, strings.Fields(string(out)))
 
-	o, err := exec.Command("bash", "-c", prelude+"stop_running_nodes\n").CombinedOutput()
-	require.NoError(t, err, string(o))
-	require.Eventually(t, func() bool { return nibiru.exited() && nibid.exited() },
-		5*time.Second, 50*time.Millisecond)
-	require.False(t, elsewhere.exited(), "node on another home must keep running")
-	require.False(t, query.exited(), "a query must keep running")
+	// A --home flag without a value cannot be resolved: abort, kill nothing.
+	_ = def.cmd.Process.Kill()
+	require.Eventually(t, def.exited, 5*time.Second, 50*time.Millisecond)
+	bad := spawnFake(t, dir, dir, "nibid", "start", "--home")
+	time.Sleep(300 * time.Millisecond)
+	co, err := exec.Command("bash", "-c", script("stop_running_nodes")).CombinedOutput()
+	require.Error(t, err)
+	require.Contains(t, string(co), "could not be determined")
+	require.False(t, bad.exited())
 }
