@@ -346,10 +346,10 @@ func (pool *BlockPool) RedoRequest(height int64) p2p.ID {
 // do not add the block and return an error.
 // TODO: ensure that blocks come in order for each peer.
 func (pool *BlockPool) AddBlock(peerID p2p.ID, block *types.Block, blockSize int) {
-	pool.addBlock(peerID, block, blockSize, false)
+	pool.addBlock(peerID, block, blockSize, nil)
 }
 
-func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int, requested bool) {
+func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int, requestedBy *sentBlockRequests) {
 	pool.mtx.Lock()
 	var sendErr error
 	defer func() {
@@ -373,8 +373,8 @@ func (pool *BlockPool) addBlock(peerID p2p.ID, block *types.Block, blockSize int
 		}
 
 		// The requester's winning reply already updated the pool's pending
-		// count. Release only the delayed peer's remaining request slot.
-		if peer := pool.peers[peerID]; requested && peer != nil && peer.numPending > 0 {
+		// count. Release a slot only on the connection that made the request.
+		if peer := pool.peers[peerID]; requestedBy != nil && peer != nil && peer.connection == requestedBy && peer.numPending > 0 {
 			peer.decrPending(blockSize)
 			return
 		}
@@ -412,8 +412,22 @@ func (pool *BlockPool) MaxPeerHeight() int64 {
 
 // SetPeerRange sets the peer's alleged blockchain base and height.
 func (pool *BlockPool) SetPeerRange(peerID p2p.ID, base int64, height int64) {
+	pool.setPeerRange(peerID, base, height, nil)
+}
+
+func (pool *BlockPool) setPeerRange(peerID p2p.ID, base, height int64, source p2p.Peer) {
 	pool.mtx.Lock()
 	defer pool.mtx.Unlock()
+
+	peer := pool.peers[peerID]
+	var connection *sentBlockRequests
+	if source != nil {
+		// RemovePeer clears the source's tracker before removing its pool entry.
+		connection = sentRequestsFor(source)
+		if connection == nil || (peer != nil && peer.connection != connection) {
+			return
+		}
+	}
 
 	// A peer whose own reported base exceeds its own height reports an impossible range, so it is treated as faulty.
 	if base > height {
@@ -425,7 +439,6 @@ func (pool *BlockPool) SetPeerRange(peerID p2p.ID, base int64, height int64) {
 		return
 	}
 
-	peer := pool.peers[peerID]
 	if peer != nil {
 		if base < peer.base || height < peer.height {
 			pool.Logger.Info("Peer is reporting height/base that is lower than what it previously reported",
@@ -445,6 +458,7 @@ func (pool *BlockPool) SetPeerRange(peerID p2p.ID, base int64, height int64) {
 			return
 		}
 		peer = newBPPeer(pool, peerID, base, height)
+		peer.connection = connection
 		peer.setLogger(pool.Logger.With("peer", peerID))
 		pool.peers[peerID] = peer
 		// no need to sort because curRate is 0 at start.
@@ -626,6 +640,7 @@ type bpPeer struct {
 	base        int64
 	pool        *BlockPool
 	id          p2p.ID
+	connection  *sentBlockRequests
 	recvMonitor *flow.Monitor
 
 	timeout *time.Timer

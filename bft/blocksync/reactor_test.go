@@ -575,7 +575,10 @@ func TestFilterAllowsOnlyRequestedLateReplyDuringSync(t *testing.T) {
 	require.True(t, sentRequestsFor(other).send(other, block.Height+1))
 
 	// The first peer's copy was applied while the second peer's reply was in flight.
-	r.pool.SetPeerRange(delayed.ID(), 1, 3)
+	r.ReceiveEnvelope(p2p.Envelope{
+		ChannelID: BlocksyncChannel, Src: delayed,
+		Message: &bcproto.StatusResponse{Base: 1, Height: 3},
+	})
 	r.pool.mtx.Lock()
 	r.pool.peers[delayed.ID()].incrPending()
 	r.pool.mtx.Unlock()
@@ -611,6 +614,45 @@ func TestFilterAllowsOnlyRequestedLateReplyDuringSync(t *testing.T) {
 	r.RemovePeer(delayed, nil)
 	r.RemovePeer(other, nil)
 	require.Nil(t, sentRequestsFor(other))
+}
+
+func TestLateBlockReplyDoesNotSettleReplacementConnection(t *testing.T) {
+	r := newFilterReactor(t)
+	r.Logger = log.TestingLogger()
+	const peerID p2p.ID = "reconnecting"
+	oldPeer := r.InitPeer(mockBlockRequestPeer(peerID, true))
+	newPeer := r.InitPeer(mockBlockRequestPeer(peerID, true))
+	addPeerRange := func(peer p2p.Peer) {
+		r.ReceiveEnvelope(p2p.Envelope{
+			ChannelID: BlocksyncChannel, Src: peer,
+			Message: &bcproto.StatusResponse{Base: 1, Height: 3},
+		})
+	}
+	addPeerRange(oldPeer)
+	require.NotNil(t, r.pool.pickIncrAvailablePeer(1, ""))
+	oldRequests := sentRequestsFor(oldPeer)
+	require.True(t, oldRequests.send(oldPeer, 1))
+
+	block := &types.Block{Header: types.Header{Height: 1, Time: time.Now()}}
+	seedRequester(r, block.Height, "first")
+	r.pool.PopRequest(block.Time)
+	require.True(t, oldRequests.admit(block.Height, time.Now()))
+	require.Equal(t, block.Height, oldRequests.takeAdmission())
+
+	// The connection closes after receive has taken the admission, while
+	// delivery is still in progress.
+	r.RemovePeer(oldPeer, nil)
+	addPeerRange(newPeer)
+	replacement := r.pool.pickIncrAvailablePeer(2, "")
+	require.NotNil(t, replacement)
+	t.Cleanup(func() { r.RemovePeer(newPeer, nil) })
+	require.True(t, sentRequestsFor(newPeer).send(newPeer, 2))
+
+	r.pool.addBlock(peerID, block, 123, oldRequests)
+	r.pool.mtx.Lock()
+	pending := replacement.numPending
+	r.pool.mtx.Unlock()
+	require.EqualValues(t, 1, pending, "the replacement's request is still pending")
 }
 
 func TestSentBlockRequestExpiresAtRetryInterval(t *testing.T) {

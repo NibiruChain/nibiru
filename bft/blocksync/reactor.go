@@ -341,8 +341,11 @@ func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
 			bcR.Logger.Error("Block content is invalid", "err", err)
 			return
 		}
-		requested := admittedHeight == bi.Height || requests.take(bi.Height, now)
-		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requested)
+		var requestedBy *sentBlockRequests
+		if admittedHeight == bi.Height || requests.take(bi.Height, now) {
+			requestedBy = requests
+		}
+		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requestedBy)
 	case *bcproto.StatusRequest:
 		// Send peer our state.
 		e.Src.TrySendEnvelope(p2p.Envelope{
@@ -354,7 +357,7 @@ func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
 		})
 	case *bcproto.StatusResponse:
 		// Got a peer status. Unverified.
-		bcR.pool.SetPeerRange(e.Src.ID(), msg.Base, msg.Height)
+		bcR.pool.setPeerRange(e.Src.ID(), msg.Base, msg.Height, e.Src)
 	case *bcproto.NoBlockResponse:
 		requests.take(msg.Height, now)
 		bcR.Logger.Debug("Peer does not have requested block", "peer", e.Src, "height", msg.Height)
