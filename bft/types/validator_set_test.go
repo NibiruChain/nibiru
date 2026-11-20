@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math"
 	"sort"
@@ -17,6 +18,7 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/crypto"
 	"github.com/NibiruChain/nibiru/v2/bft/crypto/ed25519"
 	cryptoenc "github.com/NibiruChain/nibiru/v2/bft/crypto/encoding"
+	"github.com/NibiruChain/nibiru/v2/bft/crypto/tmhash"
 	cmtmath "github.com/NibiruChain/nibiru/v2/bft/libs/math"
 	cmtrand "github.com/NibiruChain/nibiru/v2/bft/libs/rand"
 	cmtproto "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/types"
@@ -167,7 +169,11 @@ func TestValidatorSet_ProposerPriorityHash(t *testing.T) {
 	assert.Equal(t, []byte(nil), vset.ProposerPriorityHash())
 
 	vset = randValidatorSet(3)
-	assert.NotNil(t, vset.ProposerPriorityHash())
+	var priorities []byte
+	for _, val := range vset.Validators {
+		priorities = binary.AppendVarint(priorities, val.ProposerPriority)
+	}
+	assert.Equal(t, tmhash.Sum(priorities), vset.ProposerPriorityHash())
 
 	// Marshaling and unmarshalling do not affect ProposerPriorityHash
 	bz, err := vset.ToProto()
