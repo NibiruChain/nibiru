@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 description: >-
-  Technical specification for Nibiru Chain's governance module, `x/gov`. The
+  Technical specification for Nibiru's governance module, `x/gov`. The
   module enables an on-chain governance system on the Nibiru network. In this
   system, holders of the native staking token of the chain can vote on proposals on
   a 1 token 1 vote basis.
