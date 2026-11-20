@@ -215,7 +215,7 @@ jobs:
     needs:
       - version
       - build-binaries
-    if: ${{ github.repository == 'NibiruChain/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
+    if: ${{ github.repository == 'SaiDotFun/nibiru' && vars.PUBLISH_CONTAINERS == 'true' }}
     runs-on: ubuntu-latest
 
     steps:

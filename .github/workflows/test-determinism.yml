@@ -50,7 +50,7 @@ permissions:
 
 jobs:
   determinism-all:
-    if: github.event_name != 'schedule' || github.repository == 'NibiruChain/nibiru'
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
