@@ -194,3 +194,42 @@ func randLightBlock(height int64) *types.LightBlock {
 		ValidatorSet: vals,
 	}
 }
+
+// pruneWithReaders runs Prune concurrently with readers and writers on a
+// store backed by the given database. It guards the Prune iterator lifecycle:
+// the iterator must be released before the batch write (MemDB deadlock) and
+// closed exactly once (Pebble recycles closed iterators).
+func pruneWithReaders(t *testing.T, db dbm.DB) {
+	t.Helper()
+	dbStore := New(db, "prune_with_readers")
+
+	var wg sync.WaitGroup
+	for i := 1; i <= 200; i++ {
+		wg.Add(1)
+		go func(i int64) {
+			defer wg.Done()
+			require.NoError(t, dbStore.SaveLightBlock(randLightBlock(i)))
+			_, _ = dbStore.LightBlock(i)
+			_, err := dbStore.FirstLightBlockHeight()
+			require.NoError(t, err)
+			_, err = dbStore.LastLightBlockHeight()
+			require.NoError(t, err)
+			_, _ = dbStore.LightBlockBefore(i + 1)
+			require.NoError(t, dbStore.Prune(2))
+			_ = dbStore.Size()
+		}(int64(i))
+	}
+	wg.Wait()
+}
+
+// Goleveldb is the backend the light client command uses.
+func TestPrune_ConcurrentReaders_GoLevelDB(t *testing.T) {
+	db, err := dbm.NewGoLevelDB("prune_readers", t.TempDir())
+	require.NoError(t, err)
+	defer db.Close()
+	pruneWithReaders(t, db)
+}
+
+func TestPrune_ConcurrentReaders_MemDB(t *testing.T) {
+	pruneWithReaders(t, dbm.NewMemDB())
+}

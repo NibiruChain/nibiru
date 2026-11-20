@@ -237,7 +237,19 @@ func (s *dbs) Prune(size uint16) error {
 	if err != nil {
 		return err
 	}
-	defer itr.Close()
+	// Close the iterator exactly once. Some backends (Pebble) pool iterators
+	// on Close and forbid a second call, which could close another reader's
+	// live iterator. closeItr runs on every path and is a no-op after the
+	// first call.
+	itrClosed := false
+	closeItr := func() error {
+		if itrClosed {
+			return nil
+		}
+		itrClosed = true
+		return itr.Close()
+	}
+	defer closeItr() //nolint:errcheck // error paths return their own error
 
 	b := s.db.NewBatch()
 	defer b.Close()
@@ -263,8 +275,7 @@ func (s *dbs) Prune(size uint16) error {
 	// database read lock until it is closed or exhausted, and the batch write
 	// needs the write lock. Writing first deadlocks Prune against itself once
 	// more than the iterator's channel buffer of keys remain unread.
-	// Close is idempotent, so the deferred Close above stays safe.
-	if err = itr.Close(); err != nil {
+	if err = closeItr(); err != nil {
 		return err
 	}
 
