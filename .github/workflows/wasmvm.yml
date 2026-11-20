@@ -24,6 +24,7 @@ env:
 jobs:
   # changes-wasmvm (job): Detects changes that should run Wasm VM FFI jobs.
   changes-wasmvm:
+    if: github.event_name != 'schedule' || github.repository == 'SaiDotFun/nibiru'
     runs-on: ubuntu-latest
     outputs:
       has-changes-for-wasmvm: ${{ steps.filter.outputs.wasmvm }}
