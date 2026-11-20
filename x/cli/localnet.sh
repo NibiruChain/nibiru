@@ -294,18 +294,15 @@ open_file_pids() {
   return 0
 }
 
-# running_node_pids: Print one line for each process that uses $CHAIN_DIR,
-# without duplicates: a PID, or `unsafe:PID`. The first check is which
-# processes hold files under the home's data directory. The second check reads
-# real argument boundaries from /proc/PID/cmdline where that exists, and
-# splits the ps command line on spaces elsewhere (macOS, where a relative
-# --home counts as undeterminable). It catches a node that has not yet opened
-# its database.
+# running_node_pids: Print one line for each node process that uses
+# $CHAIN_DIR, identified by its arguments: a PID, or `unsafe:PID`. It reads
+# real argument boundaries from /proc/PID/cmdline where that exists, and splits
+# the ps command line on spaces elsewhere (macOS, where a relative --home
+# counts as undeterminable).
 running_node_pids() {
   local pid rest f
   local -a w
   {
-    open_file_pids
     if [[ -d /proc/self ]]; then
       for f in /proc/[0-9]*; do
         pid="${f#/proc/}"
@@ -327,27 +324,41 @@ running_node_pids() {
   return 0
 }
 
-# stop_running_nodes: Terminate those nodes, wait up to 10 seconds for them to
-# exit, and abort if any is still alive, so the reset never runs under a node.
+# stop_running_nodes: Stop the identified nodes (SIGTERM, wait up to 10
+# seconds, abort if one stays alive). Then scan for any other process that
+# holds a file under $CHAIN_DIR/data. Such a process is not killed: the script
+# names it and aborts, so the reset never runs under a live user of the home.
 stop_running_nodes() {
-  local found pids pid tries=0
+  local found pids pid tries=0 holders
   found="$(running_node_pids)"
-  [[ -n "$found" ]] || return 0
   if [[ "$found" == *unsafe:* ]]; then
     echo_error "A running node's home could not be determined: $(echo $found). Stop it, then run this script again. Aborting."
     exit 1
   fi
   pids="$found"
-  echo_error "Terminating running node(s) that use $CHAIN_DIR: $(echo $pids)"
-  for pid in $pids; do kill -TERM "$pid" 2>/dev/null || true; done
-  while ((tries < 20)); do
-    pids="$(running_node_pids)"
-    [[ -n "$pids" ]] || return 0
-    sleep 0.5
-    tries=$((tries + 1))
-  done
-  echo_error "Node(s) still running after 10 seconds: $(echo $pids). Aborting."
-  exit 1
+  if [[ -n "$pids" ]]; then
+    echo_error "Terminating running node(s) that use $CHAIN_DIR: $(echo $pids)"
+    for pid in $pids; do kill -TERM "$pid" 2>/dev/null || true; done
+    while true; do
+      pids="$(running_node_pids)"
+      [[ -n "$pids" ]] || break
+      if ((tries >= 20)); then
+        echo_error "Node(s) still running after 10 seconds: $(echo $pids). Aborting."
+        exit 1
+      fi
+      sleep 0.5
+      tries=$((tries + 1))
+    done
+  fi
+  holders="$(open_file_pids | sort -u)"
+  if [[ -n "$holders" ]]; then
+    echo_error "These processes hold files under $CHAIN_DIR/data, so the reset is not safe:"
+    for pid in $holders; do
+      echo_error "  $pid $(ps -o comm= -p "$pid" 2>/dev/null || true)"
+    done
+    echo_error "Stop them yourself, then run this script again. Nothing was deleted. Aborting."
+    exit 1
+  fi
 }
 # END stop_running_nodes
 stop_running_nodes

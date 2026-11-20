@@ -166,9 +166,11 @@ func TestLocalnetScriptDefaultHomeAndUnsafe(t *testing.T) {
 	require.False(t, bad.exited())
 }
 
-// A process that holds a file open under <home>/data is a live user of the
-// home, whatever its name or arguments.
-func TestLocalnetScriptStopsAnyProcessHoldingTheData(t *testing.T) {
+// A process that holds a file open under <home>/data and is not an identified
+// node blocks the reset: the script names it, exits non-zero, and kills and
+// deletes nothing. An identified node that holds the files is stopped as a
+// node, and the reset proceeds.
+func TestLocalnetScriptHoldersBlockButNodesStop(t *testing.T) {
 	if _, err := os.Stat("/proc/self"); err != nil {
 		t.Skip("no /proc")
 	}
@@ -184,10 +186,14 @@ func TestLocalnetScriptStopsAnyProcessHoldingTheData(t *testing.T) {
 	link := filepath.Join(root, "link")
 	require.NoError(t, os.Symlink(home, link))
 
-	// holder runs bash, named neither nibid nor nibiru, with the file open on
-	// fd 3 and no child that would inherit it. It waits on a stdin pipe.
-	holder := func(path string) fakeNode {
-		cmd := exec.Command("bash", "-c", `exec 3<"$1"; read -r _`, "holder", path)
+	// A holder runs bash with the file open on fd 3 and no child that would
+	// inherit it. It waits on a stdin pipe. name is the process name.
+	holder := func(name, path string) fakeNode {
+		bashPath, err := exec.LookPath("bash")
+		require.NoError(t, err)
+		bin := filepath.Join(t.TempDir(), name)
+		require.NoError(t, os.Symlink(bashPath, bin))
+		cmd := exec.Command(bin, "-c", `exec 3<"$1"; read -r _`, "x", path)
 		stdin, err := cmd.StdinPipe()
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = stdin.Close() })
@@ -197,18 +203,58 @@ func TestLocalnetScriptStopsAnyProcessHoldingTheData(t *testing.T) {
 		t.Cleanup(func() { _ = cmd.Process.Kill() })
 		return f
 	}
-	hold := holder(lock)
-	away := holder(elsewhere)
+	hold := holder("backup-tool", lock)
+	away := holder("backup-tool", elsewhere)
 	time.Sleep(400 * time.Millisecond)
 
+	// The scan sees the holder, through the symlink too.
 	for _, chain := range []string{home, link} {
-		out, err := runStopScript(t, chain, "running_node_pids")
+		out, err := runStopScript(t, chain, "open_file_pids")
 		require.NoError(t, err, out)
 		require.Equal(t, []string{hold.pid()}, strings.Fields(out), chain)
 	}
 
-	out, err := runStopScript(t, link, "stop_running_nodes")
-	require.NoError(t, err, out)
+	// The holder is not a node: the script aborts, names it, and kills nothing.
+	out, err := runStopScript(t, link, "stop_running_nodes; echo RESET")
+	require.Error(t, err)
+	require.Contains(t, out, hold.pid())
+	require.Contains(t, out, "backup-tool")
+	require.NotContains(t, out, "RESET")
+	require.False(t, hold.exited(), "a plain holder must not be killed")
+	require.False(t, away.exited())
+	_, statErr := os.Stat(lock)
+	require.NoError(t, statErr, "the data directory must stay")
+
+	// Once the holder is gone, the reset proceeds.
+	require.NoError(t, hold.cmd.Process.Kill())
 	require.Eventually(t, hold.exited, 5*time.Second, 50*time.Millisecond)
-	require.False(t, away.exited(), "a holder on another home must keep running")
+
+	// An identified node that holds the files is stopped as a node, and the
+	// script finishes. `bash -s` reads its script from stdin, so its command
+	// line reads `nibiru -s -- start --home H`.
+	bashPath, err := exec.LookPath("bash")
+	require.NoError(t, err)
+	bin := filepath.Join(t.TempDir(), "nibiru")
+	require.NoError(t, os.Symlink(bashPath, bin))
+	cmd := exec.Command(bin, "-s", "--", "start", "--home", home)
+	stdin, err := cmd.StdinPipe()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = stdin.Close() })
+	require.NoError(t, cmd.Start())
+	node := fakeNode{cmd: cmd, done: make(chan struct{})}
+	go func() { _ = cmd.Wait(); close(node.done) }()
+	t.Cleanup(func() { _ = cmd.Process.Kill() })
+	_, err = stdin.Write([]byte("exec 3<'" + lock + "'\nread -r _\n"))
+	require.NoError(t, err)
+	time.Sleep(400 * time.Millisecond)
+
+	out, err = runStopScript(t, home, "open_file_pids")
+	require.NoError(t, err, out)
+	require.Equal(t, []string{node.pid()}, strings.Fields(out))
+
+	out, err = runStopScript(t, home, "stop_running_nodes; echo RESET")
+	require.NoError(t, err, out)
+	require.Contains(t, out, "RESET")
+	require.True(t, node.exited())
+	require.False(t, away.exited())
 }
