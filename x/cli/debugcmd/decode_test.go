@@ -388,3 +388,60 @@ func TestAddrKeyNames(t *testing.T) {
 	require.Contains(t, out, `"addr":{`)
 	require.NotContains(t, out, `"address"`)
 }
+
+// An explicit --as kind tries both encodings of a string that is valid as hex
+// and as base64, and keeps the ones that decode as that kind.
+func TestDecodeAsTriesBothEncodings(t *testing.T) {
+	env, _ := testEnv()
+	b64Key := "A0" + strings.Repeat("A", 42) // 33 bytes as base64, 22 as hex
+	hex20 := strings.Repeat("cd", 20)        // 20 bytes as hex, 30 as base64
+	hex32 := strings.Repeat("ab", 32)        // 32 bytes as hex, 48 as base64
+
+	for _, tc := range []struct {
+		name    string
+		in      string
+		as      debugcmd.Kind
+		want    debugcmd.Kind
+		wantErr string
+		hexLen  int
+	}{
+		{"pubkey from base64", b64Key, debugcmd.KindPubkey, debugcmd.KindPubkey, "", 0},
+		{"addr from hex", hex20, debugcmd.KindAddr, debugcmd.KindAddr, "", 20},
+		{"addr 32 from hex", hex32, debugcmd.KindAddr, debugcmd.KindAddr, "", 32},
+		{"tx-hash from hex", hex32, debugcmd.KindTxHash, debugcmd.KindTxHash, "", 32},
+		{"pubkey from hex", hex32, debugcmd.KindPubkey, debugcmd.KindPubkey, "", 0},
+		{"raw-bytes needs a list", hex32, debugcmd.KindRawBytes, "", "raw-bytes", 0},
+		{"addr fits neither", "deadbeef", debugcmd.KindAddr, "", "addr", 0},
+		{"tx-hash fits neither", b64Key, debugcmd.KindTxHash, "", "tx-hash", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := debugcmd.Decode(env, []byte(tc.in),
+				debugcmd.Options{As: tc.as})
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, res.Detected)
+			require.Empty(t, res.Readings)
+			if tc.hexLen > 0 && tc.as == debugcmd.KindTxHash {
+				require.Contains(t, toJSON(t, res), strings.ToUpper(tc.in))
+			}
+		})
+	}
+
+	// The base64 key is selectable: its derived address is the base64 bytes'.
+	res, err := debugcmd.Decode(env, []byte(b64Key),
+		debugcmd.Options{As: debugcmd.KindPubkey})
+	require.NoError(t, err)
+	info := res.Data.(debugcmd.PubkeyInfo)
+	require.Equal(t, "eth_secp256k1", info.Type)
+	require.Equal(t, hex.EncodeToString(mustB64(t, b64Key)), info.Hex)
+}
+
+func mustB64(t *testing.T, s string) []byte {
+	t.Helper()
+	bz, err := base64.StdEncoding.DecodeString(s)
+	require.NoError(t, err)
+	return bz
+}

@@ -65,7 +65,10 @@ with every reading, computed offline, in a fixed key order:
   named `hex` and `base64`. Each holds the result of decoding those bytes, or
   an `error` field when they do not decode.
 
-Pass `--as <kind>` to get a single answer. The kind for addresses is `addr`;
+Pass `--as <kind>` to get a single answer. For a string that is valid as both
+hex and base64, `--as` tries both encodings and uses the one that decodes as
+that kind. If both decode, the output is `ambiguous` with one reading per
+encoding. If neither does, the command fails with an error that names the kind. The kind for addresses is `addr`;
 `--as address` still works as an undocumented alias. In address output, the EVM
 form is field `eth_addr`, and a public key lists its derived addresses under
 `addr`.

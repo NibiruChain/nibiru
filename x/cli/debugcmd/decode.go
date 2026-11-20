@@ -104,6 +104,9 @@ func Decode(env Env, input []byte, opts Options) (Result, error) {
 	c := Classify(in)
 	kind := c.Kind
 	if opts.As != "" {
+		if res, err, ok := decodeAsBothEncodings(env, in, opts); ok {
+			return res, err
+		}
 		kind = opts.As
 		if c.Payload == nil {
 			c = reclassifyAs(in, kind)
@@ -589,4 +592,81 @@ func decodeBothEncodings(env Env, in []byte) (Result, bool) {
 // consBytes is the 20-byte address of an ed25519 key.
 func consBytes(pub []byte) []byte {
 	return (&ed25519.PubKey{Key: pub}).Address()
+}
+
+// dualBytes returns the hex and base64 decodings of in when it is valid as
+// both. A 0x prefix means hex only.
+func dualBytes(in []byte) (hb, bb []byte, ok bool) {
+	s := string(in)
+	if !hexRe.MatchString(s) || strings.HasPrefix(s, "0x") {
+		return nil, nil, false
+	}
+	hb, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, nil, false
+	}
+	bb, err = base64.StdEncoding.DecodeString(s)
+	if err != nil || len(bb) == 0 {
+		return nil, nil, false
+	}
+	return hb, bb, true
+}
+
+// kindFits reports whether n bytes can be a value of kind.
+func kindFits(kind Kind, n int) bool {
+	switch kind {
+	case KindAddr:
+		return n == 20 || n == 32
+	case KindPubkey:
+		return n == 32 || n == 33
+	case KindTxHash:
+		return n == 32
+	}
+	return true
+}
+
+// decodeAsBothEncodings applies an explicit --as kind to a string that is
+// valid as both hex and base64. It tries each encoding and keeps the ones
+// that decode as that kind. One match is the answer. Two matches are an
+// ambiguous result with a hex and a base64 reading. No match is an error that
+// names the kind.
+func decodeAsBothEncodings(env Env, in []byte, opts Options) (Result, error, bool) {
+	switch opts.As {
+	case KindAny, KindAmbiguous, KindUnknown, KindUnknownProtobuf:
+		return Result{}, nil, false
+	}
+	hb, bb, ok := dualBytes(in)
+	if !ok {
+		return Result{}, nil, false
+	}
+	var rs Readings
+	var last Result
+	for _, e := range []struct {
+		name string
+		bz   []byte
+	}{{"hex", hb}, {"base64", bb}} {
+		if !kindFits(opts.As, len(e.bz)) {
+			continue
+		}
+		c := Classification{Kind: opts.As, Payload: e.bz, Encoding: e.name}
+		res, err := decodeKind(env, in, c, opts.As, opts)
+		if err != nil {
+			continue
+		}
+		rs = append(rs, Reading{Name: e.name, Value: res})
+		last = res
+	}
+	switch len(rs) {
+	case 0:
+		return Result{Detected: KindUnknown}, fmt.Errorf(
+			"input does not decode as %s, read as hex or as base64", opts.As), true
+	case 1:
+		return last, nil, true
+	}
+	return Result{
+		Detected: KindAmbiguous,
+		Hint: fmt.Sprintf("the input is valid as hex and as base64, and both "+
+			"decode as %s; each reading is shown", opts.As),
+		Readings: rs,
+	}, nil, true
 }
