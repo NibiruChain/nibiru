@@ -66,7 +66,7 @@ assigned withdrawal account receives a part of the transaction fees.
 ## Register a Contract Withdrawal Address
 
 ```bash
-nibid tx devgas register [contract_bech32] [withdraw_bech32] --from [key]
+nibiru tx devgas register [contract_bech32] [withdraw_bech32] --from [key]
 ```
 
 Registers the withdrawal address for the given contract.
@@ -112,7 +112,7 @@ This can be changed at any time so long as you are still the admin or creator
 of a contract with the command:
 
 ```bash
-nibid tx devgas update [contract] [new_withdraw_address]
+nibiru tx devgas update [contract] [new_withdraw_address]
 ```
 
 ### Update Exception
@@ -456,31 +456,30 @@ only fees specified here will be paid out to the withdrawal address.
 
 ### Command Line Interface
 
-Find below a list of `nibid` commands added with the  `x/devgas` module. You
-can obtain the full list by using the `nibid -h` command. A CLI command can
+Find below a list of `nibiru` commands added with the  `x/devgas` module. You
+can obtain the full list by using the `nibiru -h` command. A CLI command can
 look like this:
 
 ```bash
-nibid query feeshare params
+nibiru q devgas params
 ```
 
 ### CLI: Queries
 
 | Command            | Subcommand             | Description                              |
 | :----------------- | :--------------------- | :--------------------------------------- |
-| `query feeshare` | `params`               | Get devgas params                      |
-| `query feeshare` | `contract`             | Get the devgas for a given contract    |
-| `query feeshare` | `contracts`            | Get all feeshares                        |
-| `query feeshare` | `deployer-contracts`   | Get all feeshares of a given deployer    |
-| `query feeshare` | `withdrawer-contracts` | Get all feeshares of a given withdrawer  |
+| `query devgas` | `params`               | Get devgas params                      |
+| `query devgas` | `contract`             | Get the devgas for a given contract    |
+| `query devgas` | `contracts`            | Get all contracts registered by a given deployer |
+| `query devgas` | `withdrawer-contracts` | Get all feeshares of a given withdrawer  |
 
 ### CLI: Transactions
 
 | Command         | Subcommand | Description                                |
 | :-------------- | :--------- | :----------------------------------------- |
-| `tx feeshare` | `register` | Register a contract for receiving devgas |
-| `tx feeshare` | `update`   | Update the withdraw address for a contract |
-| `tx feeshare` | `cancel`   | Remove the devgas for a contract         |
+| `tx devgas` | `register` | Register a contract for receiving devgas |
+| `tx devgas` | `update`   | Update the withdraw address for a contract |
+| `tx devgas` | `cancel`   | Remove the devgas for a contract         |
 
 ## gRPC Queries
 

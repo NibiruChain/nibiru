@@ -6,6 +6,7 @@ import (
 	mrand "math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -127,6 +128,29 @@ func checkTxs(t *testing.T, mp mempool.Mempool, count int, peerID uint16) types.
 		}
 	}
 	return txs
+}
+
+// A recheck finishing concurrently with a new update must not leave the
+// admission guard set after the recheck has finished.
+func TestRecheckCompletionClearsFullDuringLock(t *testing.T) {
+	mp := &CListMempool{logger: log.NewNopLogger()}
+	for i := 0; i < 10000; i++ {
+		mp.isRechecking.Store(true)
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			mp.Lock()
+			mp.Unlock()
+		}()
+		go func() {
+			defer wg.Done()
+			mp.finishRecheck()
+		}()
+		wg.Wait()
+		require.False(t, mp.isRechecking.Load())
+		require.False(t, mp.recheckFull.Load(), "recheck guard stuck in iteration %d", i)
+	}
 }
 
 func TestReapMaxBytesMaxGas(t *testing.T) {

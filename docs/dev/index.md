@@ -30,12 +30,13 @@ Essential SDKs and tools for building applications on Nibiru.
 | [@nibiruchain/evm-core](./evm/npm-evm-core.md) | Core Nibiru EVM (Ethereum Virtual Machine) TypeScript library with functions to call Nibiru-specific precompiled contracts. |
 | [@nibiruchain/solidity](./evm/npm-solidity.md) | Nibiru EVM solidity contracts and ABIs for Nibiru-specific precompiles and core protocol functionality. |
 | [Nibiru Rust SDK](./cw/rust-sdk.md) | Nibiru Rust standard library that includes the `nibiru-std` crate, offering protobuf types and traits for [**Wasm (WebAssembly)** smart contracts](./cw/index.md) on Nibiru. Available on crates.io. |
-| [Nibiru Command-Line Interface (CLI)](./cli/index.md) | The **`nibid` binary is needed for running nodes** and sending IBC transfers without using a wallet extension. |
+| [Nibiru Command-Line Interface (CLI)](./cli/index.md) | The **`nibiru` binary is needed for running nodes** and sending IBC transfers without using a wallet extension. |
 
 ## Oracle Solutions
 
-1. [Nibiru Oracle (EVM) - Usage Guide](./evm/oracle.md): Technical guide for using the Nibiru Oracle precompile in EVM smart contracts, including ChainLink-like price feeds.
-2. [Integrating with Oracles on Nibiru](./tools/oracle/index.md): Overview of available oracle solutions on Nibiru, including the native oracle and Band Protocol integration.
+1. [Sai Oracle Data and How to Read It](./sai-oracle.md): Supported pairs, units, and examples for reading Sai oracle prices from EVM contracts, CosmWasm contracts, a terminal, or an AI agent.
+1. [Chainlink-like Feeds (EVM)](./evm/oracle.md): Deployed Chainlink-style feed contracts that wrap the oracle precompile.
+2. [Integrating with Oracles on Nibiru](./tools/oracle/index.md): Overview of available oracle solutions on Nibiru, including the Sai oracle and Band Protocol integration.
 
 ## Block Explorers
 
