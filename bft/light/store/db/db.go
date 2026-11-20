@@ -197,18 +197,30 @@ func (s *dbs) LightBlockBefore(height int64) (*types.LightBlock, error) {
 	if err != nil {
 		panic(err)
 	}
-	defer itr.Close()
 
+	// Find the height first, then close the iterator before calling
+	// LightBlock. A MemDB iterator holds the database read lock until it is
+	// closed, and LightBlock takes it again through Get. A queued writer
+	// between the two acquisitions would deadlock the second one.
+	found := int64(-1)
 	for itr.Valid() {
 		key := itr.Key()
 		_, existingHeight, ok := parseLbKey(key)
 		if ok {
-			return s.LightBlock(existingHeight)
+			found = existingHeight
+			break
 		}
 		itr.Next()
 	}
-	if err = itr.Error(); err != nil {
+	itrErr := itr.Error()
+	if err = itr.Close(); err != nil {
 		return nil, err
+	}
+	if found >= 0 {
+		return s.LightBlock(found)
+	}
+	if itrErr != nil {
+		return nil, itrErr
 	}
 
 	return nil, store.ErrLightBlockNotFound

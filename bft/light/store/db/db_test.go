@@ -232,3 +232,33 @@ func TestPrune_ConcurrentReaders_GoLevelDB(t *testing.T) {
 func TestPrune_ConcurrentReaders_MemDB(t *testing.T) {
 	pruneWithReaders(t, dbm.NewMemDB())
 }
+
+// LightBlockBefore must not call Get while its iterator holds the MemDB read
+// lock: with more keys than the iterator buffer (64) and a queued writer, the
+// second read lock never arrives.
+func TestLightBlockBefore_ConcurrentWriters_MemDB(t *testing.T) {
+	dbStore := New(dbm.NewMemDB(), "before_writers")
+	for i := int64(1); i <= 200; i++ {
+		require.NoError(t, dbStore.SaveLightBlock(randLightBlock(i)))
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				lb, err := dbStore.LightBlockBefore(200)
+				require.NoError(t, err)
+				require.NotNil(t, lb)
+			}
+		}()
+		go func(i int64) {
+			defer wg.Done()
+			for j := int64(0); j < 50; j++ {
+				require.NoError(t, dbStore.SaveLightBlock(randLightBlock(300+i*100+j)))
+			}
+		}(int64(i))
+	}
+	wg.Wait()
+}
