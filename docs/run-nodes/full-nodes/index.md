@@ -161,7 +161,7 @@ nibid version
 1. Init the chain
 
     ```bash
-    nibid init <moniker-name> --chain-id=nibiru-testnet-2 --home $HOME/.nibid
+    nibid node init <moniker-name> --chain-id=nibiru-testnet-2 --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -240,7 +240,7 @@ nibid version
     Option 3: Without a daemon
 
     ```bash
-    nibid start
+    nibid node start
     ```
 
 7. Request tokens from the [Nibiru Testnet web faucet](https://app.nibiru.fi/faucet) if required.
@@ -264,7 +264,7 @@ See the [validator docs](../validators/index.md) on how to participate as a vali
 Ex: query an account's balance
 
 ```bash
-nibid query bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
+nibid q bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
 ```
 
 For the full list of `nibid` commands, see:

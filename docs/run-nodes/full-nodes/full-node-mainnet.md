@@ -161,7 +161,7 @@ nibid version
 
     ```bash
     NETWORK=cataclysm-1
-    nibid init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
+    nibid node init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -243,7 +243,7 @@ nibid version
     Option 3: Without a daemon
 
     ```bash
-    nibid start
+    nibid node start
     ```
 
 ---
@@ -271,7 +271,7 @@ nothing` in the `$HOME/.nibid/config/app.toml` file.
 
     ```bash
     NETWORK=cataclysm-1
-    nibid init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
+    nibid node init <moniker-name> --chain-id=$NETWORK --home $HOME/.nibid
     ```
 
 2. Copy the genesis file to the `$HOME/.nibid/config` folder.
@@ -345,7 +345,7 @@ nothing` in the `$HOME/.nibid/config/app.toml` file.
     Option 3: Without a daemon
 
     ```bash
-    nibid start
+    nibid node start
     ```
 
 ## Next Steps
@@ -359,7 +359,7 @@ See the [validator docs](../validators/index.md) on how to participate as a vali
 Ex: query an account's balance
 
 ```bash
-nibid query bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
+nibid q bank balances nibi1gc6vpl9j0ty8tkt53787zps9ezc70kj88hluw4
 ```
 
 For the full list of `nibid` commands, see:

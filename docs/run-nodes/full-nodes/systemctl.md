@@ -91,7 +91,7 @@ curl -s https://get.nibiru.fi/@vX.Y.Z! | bash
     Type=exec
     User=<your_user>
     Group=<your_user_group>
-    ExecStart=/usr/local/bin/nibid start --home /home/<your_user>/.nibid
+    ExecStart=/usr/local/bin/nibid node start --home /home/<your_user>/.nibid
     Restart=on-failure
     ExecReload=/bin/kill -HUP $MAINPID
     KillSignal=SIGTERM

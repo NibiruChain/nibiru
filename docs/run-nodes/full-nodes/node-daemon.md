@@ -14,7 +14,7 @@ Running a node is different from running a Validator. In order to run a Validato
 
 ## What it Means to Start a Full-Node
 
-For the Nibiru Chain application, the `nibid start` command starts a full-node.
+For Nibiru, the `nibid node start` command starts a full-node.
 
 The full-node consists of two main parts:
 
