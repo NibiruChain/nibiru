@@ -244,11 +244,18 @@ func (pool *BlockPool) IsCaughtUp() bool {
 
 	// pool.height is the next block to apply. At the request ceiling, no
 	// successor is available to verify that block's commit.
-	// A zero ceiling leaves the handoff decision to the fallback below.
 	sinceStart := time.Since(pool.startTime)
-	if pool.maxPeerHeight > 0 && pool.height >= pool.maxPeerHeight &&
-		(pool.height > 0 || sinceStart > 5*time.Second) {
-		return true
+	if (pool.height > 0 || sinceStart > 5*time.Second) && pool.height >= pool.maxPeerHeight {
+		if pool.maxPeerHeight > 0 {
+			return true
+		}
+		// A fresh peer can report height zero. Fall through only if every
+		// peer's base is ahead of the next block.
+		for _, peer := range pool.peers {
+			if peer.base <= pool.height {
+				return true
+			}
+		}
 	}
 
 	// Fallback to sync tracker in case peers stall or throttle block delivery.

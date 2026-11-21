@@ -603,6 +603,15 @@ func TestBlockPoolWaitsForFallbackWithOnlyPrunedPeers(t *testing.T) {
 	require.True(t, pool.IsCaughtUp(), "the fallback timeout has elapsed")
 }
 
+func TestBlockPoolHandsOffAtGenesisWithHeightZeroPeer(t *testing.T) {
+	pool := NewBlockPool(1, nil, nil, time.Second)
+	pool.startTime = time.Now()
+
+	pool.SetPeerRange("genesis", 0, 0)
+	require.Zero(t, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp(), "a fresh network can hand off immediately")
+}
+
 func TestBlockPoolRecordsAppliedBlockAfterRequesterRetry(t *testing.T) {
 	pool := NewBlockPool(10, nil, nil, time.Second)
 	requester := newBPRequester(pool, 10)
