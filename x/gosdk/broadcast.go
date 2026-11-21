@@ -137,7 +137,10 @@ func (b BroadcasterGrpc) BroadcastTx(
 			TxBytes: txBytes,
 			Mode:    mode,
 		})
-	return respRaw.TxResponse, err
+	if err != nil {
+		return nil, err
+	}
+	return respRaw.TxResponse, nil
 }
 
 func (b BroadcasterGrpc) BroadcastTxSync(
