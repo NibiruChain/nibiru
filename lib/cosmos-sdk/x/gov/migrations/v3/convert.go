@@ -11,10 +11,9 @@ import (
 	"github.com/NibiruChain/nibiru/v2/lib/cosmos-sdk/x/gov/types/v1beta1"
 )
 
-// ConvertToLegacyProposal takes a new proposal and attempts to convert it to the
-// legacy proposal format. This conversion is best effort. New proposal types that
-// don't have a legacy message will return a "nil" content.
-// Returns error when the amount of messages in `proposal` is different than one.
+// ConvertToLegacyProposal projects one proposal message as legacy content.
+// A failed proposal with no messages retains its metadata and has no content.
+// All other proposals must have exactly one message.
 func ConvertToLegacyProposal(proposal v1.Proposal) (v1beta1.Proposal, error) {
 	var err error
 	legacyProposal := v1beta1.Proposal{
@@ -42,6 +41,10 @@ func ConvertToLegacyProposal(proposal v1.Proposal) (v1beta1.Proposal, error) {
 
 	if proposal.DepositEndTime != nil {
 		legacyProposal.DepositEndTime = *proposal.DepositEndTime
+	}
+
+	if proposal.Status == v1.StatusFailed && len(proposal.Messages) == 0 {
+		return legacyProposal, nil
 	}
 
 	msgs, err := proposal.GetMsgs()

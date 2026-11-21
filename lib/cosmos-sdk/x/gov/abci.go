@@ -18,6 +18,17 @@ func EndBlocker(ctx sdk.Context, keeper *keeper.Keeper) {
 
 	logger := keeper.Logger(ctx)
 
+	// fail queued proposals that can't be unmarshaled before the loops below
+	// load them, since GetProposal panics on them and would halt the chain.
+	// This can happen after an upgrade removes a message type that a queued
+	// proposal uses.
+	inactive := collectUndecodableProposals(ctx, keeper,
+		keeper.InactiveProposalQueueIterator(ctx, ctx.BlockHeader().Time),
+		types.SplitInactiveProposalQueueKey)
+	for _, p := range inactive {
+		failUndecodableProposal(ctx, keeper, p, false)
+	}
+
 	// delete dead proposals from store and returns theirs deposits.
 	// A proposal is dead when it's inactive and didn't get enough deposit on time to get into voting phase.
 	keeper.IterateInactiveProposalsQueue(ctx, ctx.BlockHeader().Time, func(proposal v1.Proposal) bool {
@@ -50,6 +61,13 @@ func EndBlocker(ctx sdk.Context, keeper *keeper.Keeper) {
 
 		return false
 	})
+
+	active := collectUndecodableProposals(ctx, keeper,
+		keeper.ActiveProposalQueueIterator(ctx, ctx.BlockHeader().Time),
+		types.SplitActiveProposalQueueKey)
+	for _, p := range active {
+		failUndecodableProposal(ctx, keeper, p, true)
+	}
 
 	// fetch active proposals whose voting periods have ended (are passed the block time)
 	keeper.IterateActiveProposalsQueue(ctx, ctx.BlockHeader().Time, func(proposal v1.Proposal) bool {
@@ -147,4 +165,78 @@ func safeExecuteHandler(ctx sdk.Context, msg sdk.Msg, handler baseapp.MsgService
 	}()
 	res, err = handler(ctx, msg)
 	return
+}
+
+// undecodableProposal is a queued proposal that x/gov can't unmarshal.
+type undecodableProposal struct {
+	proposal v1.Proposal
+	endTime  time.Time
+	err      error
+}
+
+// collectUndecodableProposals returns the proposals in a proposal queue
+// iterator that can't be unmarshaled. It reads the whole queue range before
+// the caller fails any of them, so the store isn't written while the iterator
+// is open.
+func collectUndecodableProposals(
+	ctx sdk.Context,
+	keeper *keeper.Keeper,
+	iterator sdk.Iterator,
+	splitKey func(key []byte) (proposalID uint64, endTime time.Time),
+) []undecodableProposal {
+	defer iterator.Close()
+
+	var out []undecodableProposal
+	for ; iterator.Valid(); iterator.Next() {
+		proposalID, endTime := splitKey(iterator.Key())
+		proposal, found, err := keeper.GetProposalE(ctx, proposalID)
+		if found && err != nil {
+			out = append(out, undecodableProposal{
+				proposal: proposal,
+				endTime:  endTime,
+				err:      err,
+			})
+		}
+	}
+	return out
+}
+
+// failUndecodableProposal refunds deposits and removes the queue entry. It
+// deletes inactive proposals and retains failed records for active proposals.
+// It skips gov hooks because they may load the proposal.
+func failUndecodableProposal(
+	ctx sdk.Context,
+	keeper *keeper.Keeper,
+	p undecodableProposal,
+	active bool,
+) {
+	proposal := p.proposal
+	eventType := types.EventTypeInactiveProposal
+	if active {
+		eventType = types.EventTypeActiveProposal
+		keeper.FailVotingProposal(ctx, proposal, p.endTime)
+	} else {
+		proposal.Status = v1.StatusFailed
+		proposal.Messages = nil
+		keeper.SetProposal(ctx, proposal)
+		keeper.RefundAndDeleteDeposits(ctx, proposal.Id)
+		keeper.RemoveFromInactiveProposalQueue(ctx, proposal.Id, p.endTime)
+		keeper.DeleteProposal(ctx, proposal.Id)
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			eventType,
+			sdk.NewAttribute(types.AttributeKeyProposalID, fmt.Sprintf("%d", proposal.Id)),
+			sdk.NewAttribute(types.AttributeKeyProposalResult, types.AttributeValueProposalFailed),
+		),
+	)
+
+	keeper.Logger(ctx).Info(
+		"proposal failed because it cannot be processed by gov",
+		"proposal", proposal.Id,
+		"active", active,
+		"title", proposal.Title,
+		"error", p.err.Error(),
+	)
 }

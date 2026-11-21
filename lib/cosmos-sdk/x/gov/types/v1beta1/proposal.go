@@ -48,8 +48,11 @@ func (p Proposal) String() string {
 	return string(out)
 }
 
-// GetContent returns the proposal Content
+// GetContent returns the proposal content if present and unpacked.
 func (p Proposal) GetContent() Content {
+	if p.Content == nil {
+		return nil
+	}
 	content, ok := p.Content.GetCachedValue().(Content)
 	if !ok {
 		return nil
