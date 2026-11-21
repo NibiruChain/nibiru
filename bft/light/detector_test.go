@@ -17,6 +17,75 @@ import (
 	"github.com/NibiruChain/nibiru/v2/bft/types"
 )
 
+func TestCompareNewLightBlockWithWitness_OneResult(t *testing.T) {
+	c, err := light.NewClientFromTrustedStore(
+		chainID, trustPeriod, fullNode, []provider.Provider{fullNode},
+		dbs.New(dbm.NewMemDB(), chainID), light.MaxClockDrift(0), light.MaxBlockLag(0),
+	)
+	require.NoError(t, err)
+
+	laggingWitness := mockp.New(chainID,
+		map[int64]*types.SignedHeader{1: h1},
+		map[int64]*types.ValidatorSet{1: vals},
+	)
+	// Use a separately signed local history for the same-height comparison.
+	differentHeaderWitness := mockp.New(genMockNode(chainID, l2.Height, len(keys), 0, bTime))
+	differentBlock, err := differentHeaderWitness.LightBlock(t.Context(), l2.Height)
+	require.NoError(t, err)
+
+	// The same signed block can be checked with the previous round's priorities.
+	differentPrioritiesWitness := mockp.New(chainID,
+		map[int64]*types.SignedHeader{l2.Height: l2.SignedHeader},
+		map[int64]*types.ValidatorSet{l2.Height: vals},
+	)
+	priorityBlock, err := differentPrioritiesWitness.LightBlock(t.Context(), l2.Height)
+	require.NoError(t, err)
+
+	for _, block := range []*types.LightBlock{l2, differentBlock, priorityBlock} {
+		require.NoError(t, block.ValidatorSet.VerifyCommit(chainID, block.Commit.BlockID, block.Height, block.Commit))
+	}
+	require.NotEqual(t, l2.Hash(), differentBlock.Hash())
+	require.Equal(t, l2.Hash(), priorityBlock.Hash())
+	primaryPriorities := l2.ValidatorSet.ProposerPriorityHash()
+	witnessPriorities := priorityBlock.ValidatorSet.ProposerPriorityHash()
+	require.NotEqual(t, primaryPriorities, witnessPriorities)
+
+	for _, tc := range []struct {
+		name    string
+		witness provider.Provider
+		wantErr error
+	}{
+		{name: "matching block", witness: fullNode},
+		{name: "witness one height behind", witness: laggingWitness, wantErr: provider.ErrNoResponse},
+		{name: "unavailable witness", witness: deadNode, wantErr: provider.ErrNoResponse},
+		{
+			name:    "different header",
+			witness: differentHeaderWitness,
+			wantErr: light.ErrConflictingHeaders{Block: differentBlock},
+		},
+		{
+			name:    "different proposer priorities",
+			witness: differentPrioritiesWitness,
+			wantErr: light.ErrProposerPrioritiesDiverge{WitnessHash: witnessPriorities, PrimaryHash: primaryPriorities},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			results := make(chan error)
+			go func() {
+				defer close(results)
+				light.CompareNewLightBlockWithWitness(c, t.Context(), results, l2, tc.witness, 0)
+			}()
+
+			var received []error
+			for result := range results {
+				received = append(received, result)
+			}
+			require.Len(t, received, 1)
+			require.Equal(t, tc.wantErr, received[0])
+		})
+	}
+}
+
 func TestLightClientAttackEvidence_Lunatic(t *testing.T) {
 	// primary performs a lunatic attack
 	var (
