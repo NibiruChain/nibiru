@@ -589,6 +589,20 @@ func TestBlockPoolFollowsAdjacentPeerRanges(t *testing.T) {
 	require.True(t, pool.IsCaughtUp(), "block 11 has no successor")
 }
 
+func TestBlockPoolWaitsForFallbackWithOnlyPrunedPeers(t *testing.T) {
+	const noBlockTimeout = time.Second
+	pool := NewBlockPool(10, nil, nil, noBlockTimeout)
+	pool.startTime = time.Now()
+
+	pool.SetPeerRange("pruned", 20, 30)
+	pool.SetPeerRange("recent", 25, 35)
+	require.Zero(t, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp(), "handoff must wait for the fallback")
+
+	pool.startTime = time.Now().Add(-(peerConnWait + noBlockTimeout))
+	require.True(t, pool.IsCaughtUp(), "the fallback timeout has elapsed")
+}
+
 func TestBlockPoolRecordsAppliedBlockAfterRequesterRetry(t *testing.T) {
 	pool := NewBlockPool(10, nil, nil, time.Second)
 	requester := newBPRequester(pool, 10)
