@@ -1,8 +1,10 @@
 package blocksync
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"sync/atomic"
 	"time"
 
 	"github.com/NibiruChain/nibiru/v2/bft/crypto"
@@ -28,6 +30,10 @@ const (
 	statusUpdateIntervalSeconds = 10
 	// check if we should switch to consensus reactor
 	switchToConsensusIntervalSeconds = 1
+
+	// defaultNoBlockTimeout is how long blocksync waits without syncing a
+	// block before it switches to consensus.
+	defaultNoBlockTimeout = 30 * time.Second
 )
 
 type consensusReactor interface {
@@ -37,13 +43,17 @@ type consensusReactor interface {
 }
 
 type peerError struct {
-	err    error
-	peerID p2p.ID
+	err        error
+	peerID     p2p.ID
+	connection *sentBlockRequests
 }
 
 func (e peerError) Error() string {
 	return fmt.Sprintf("error with peer %v: %s", e.peerID, e.err.Error())
 }
+
+// Reactor implements MsgBytesFilter
+var _ p2p.MsgBytesFilter = (*Reactor)(nil)
 
 // Reactor handles long-term catchup syncing.
 type Reactor struct {
@@ -55,7 +65,7 @@ type Reactor struct {
 	blockExec *sm.BlockExecutor
 	store     *store.BlockStore
 	pool      *BlockPool
-	blockSync bool
+	blockSync atomic.Bool // enabled at start or via SwitchToBlockSync
 	localAddr crypto.Address
 
 	requestsCh <-chan BlockRequest
@@ -91,18 +101,18 @@ func NewReactorWithOfflineStateSyncAndAddr(state sm.State, blockExec *sm.BlockEx
 	if startHeight == 1 {
 		startHeight = state.InitialHeight
 	}
-	pool := NewBlockPool(startHeight, requestsCh, errorsCh)
+	pool := NewBlockPool(startHeight, requestsCh, errorsCh, defaultNoBlockTimeout)
 
 	bcR := &Reactor{
 		initialState: state,
 		blockExec:    blockExec,
 		store:        store,
 		pool:         pool,
-		blockSync:    blockSync,
 		localAddr:    localAddr,
 		requestsCh:   requestsCh,
 		errorsCh:     errorsCh,
 	}
+	bcR.blockSync.Store(blockSync)
 	bcR.BaseReactor = *p2p.NewBaseReactor("Reactor", bcR)
 	return bcR
 }
@@ -128,7 +138,7 @@ func (bcR *Reactor) SetLogger(l log.Logger) {
 
 // OnStart implements service.Service.
 func (bcR *Reactor) OnStart() error {
-	if bcR.blockSync {
+	if bcR.blockSync.Load() {
 		err := bcR.pool.Start()
 		if err != nil {
 			return err
@@ -140,10 +150,18 @@ func (bcR *Reactor) OnStart() error {
 
 // SwitchToBlockSync is called by the state sync reactor when switching to block sync.
 func (bcR *Reactor) SwitchToBlockSync(state sm.State) error {
-	bcR.blockSync = true
+	bcR.blockSync.Store(true)
 	bcR.initialState = state
 
+	bcR.pool.mtx.Lock()
 	bcR.pool.height = state.LastBlockHeight + 1
+	// The pool starts at the state sync height, not at the height the reactor
+	// was built with. Otherwise IsCaughtUp sees pool.height > startHeight
+	// before any block is synced and lets the sync tracker end blocksync.
+	bcR.pool.startHeight = bcR.pool.height
+	bcR.pool.updateMaxPeerHeight()
+	bcR.pool.mtx.Unlock()
+
 	err := bcR.pool.Start()
 	if err != nil {
 		return err
@@ -154,7 +172,7 @@ func (bcR *Reactor) SwitchToBlockSync(state sm.State) error {
 
 // OnStop implements service.Service.
 func (bcR *Reactor) OnStop() {
-	if bcR.blockSync {
+	if bcR.blockSync.Load() {
 		if err := bcR.pool.Stop(); err != nil {
 			bcR.Logger.Error("Error stopping pool", "err", err)
 		}
@@ -175,6 +193,12 @@ func (bcR *Reactor) GetChannels() []*p2p.ChannelDescriptor {
 	}
 }
 
+// InitPeer initializes the request history for this connection.
+func (bcR *Reactor) InitPeer(peer p2p.Peer) p2p.Peer {
+	peer.Set(sentBlockRequestsKey, &sentBlockRequests{})
+	return peer
+}
+
 // AddPeer implements Reactor by sending our state to peer.
 func (bcR *Reactor) AddPeer(peer p2p.Peer) {
 	peer.SendEnvelope(p2p.Envelope{
@@ -192,7 +216,11 @@ func (bcR *Reactor) AddPeer(peer p2p.Peer) {
 
 // RemovePeer implements Reactor by removing peer from the pool.
 func (bcR *Reactor) RemovePeer(peer p2p.Peer, reason interface{}) {
-	bcR.pool.RemovePeer(peer.ID())
+	requests := sentRequestsFor(peer)
+	peer.Set(sentBlockRequestsKey, nil)
+	if requests != nil {
+		bcR.pool.removePeerConnection(peer.ID(), requests)
+	}
 }
 
 // respondToPeer loads a block and sends it to the requesting peer,
@@ -221,8 +249,85 @@ func (bcR *Reactor) respondToPeer(msg *bcproto.BlockRequest,
 	})
 }
 
+// FilterMsgBytes implements p2p.MsgBytesFilter and rejects messages from
+// unexpected peers before unmarshalling the request.
+func (bcR *Reactor) FilterMsgBytes(chID byte, src p2p.Peer, msgBytes []byte) error {
+	return bcR.filterMsgBytesAt(chID, src, msgBytes, time.Now())
+}
+
+func (bcR *Reactor) filterMsgBytesAt(chID byte, src p2p.Peer, msgBytes []byte, now time.Time) error {
+	// do not check invalid messages, will fail unmarshalling
+	if chID != BlocksyncChannel || len(msgBytes) == 0 {
+		return nil
+	}
+
+	// unmarshal into custom stub struct that will do no allocations so we can
+	// quickly and cheaply check the validity of BlockResponse message
+	var stub bcproto.SigCountMessage
+	if err := stub.Unmarshal(msgBytes); err != nil {
+		return fmt.Errorf("malformed blocksync message from peer %s: %w", src.ID(), err)
+	}
+	if stub.BlockResponse == nil {
+		// Not a BlockResponse oneof case, no extra validation to do in this
+		// case
+		return nil
+	}
+
+	// Never ran blocksync on this node — any BlockResponse is unsolicited.
+	if !bcR.blockSync.Load() {
+		return errors.New("unsolicited BlockResponse: blocksync not active")
+	}
+	// Pool has stopped (switched to consensus). Requests we sent before the
+	// transition are still in flight; the peers are honest and must not be
+	// disconnected for answering our own requests. Still enforce the sig-count
+	// guard below, since any connected peer can reach this path now.
+	if !bcR.pool.IsRunning() {
+		return validateMaxVotes(stub.BlockResponse)
+	}
+
+	height := stub.BlockResponse.GetBlock().GetHeader().GetHeight()
+	retired, pending := bcR.pool.responseRequestStatus(src.ID(), height)
+	if !retired && !pending {
+		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
+	}
+
+	// validate the commit count in the response
+	if err := validateMaxVotes(stub.BlockResponse); err != nil {
+		return fmt.Errorf("validating max votes in BlockResponse from peer %s: %w", src.ID(), err)
+	}
+
+	// A requester can retire before delivery, even if it was live here.
+	admitted := sentRequestsFor(src).admit(height, now)
+	if retired && !admitted {
+		return fmt.Errorf("unsolicited BlockResponse from peer %s", src.ID())
+	}
+
+	return nil
+}
+
+// validateMaxVotes validates that the number of commit signatures is less
+// than the MaxVotesCount, returns an error if not.
+func validateMaxVotes(br *bcproto.SigCountBlockResponse) error {
+	commitSigs := 0
+	if br != nil && br.Block != nil && br.Block.LastCommit != nil {
+		commitSigs = len(br.Block.LastCommit.Signatures)
+	}
+
+	if commitSigs > types.MaxVotesCount {
+		return fmt.Errorf("too many commit signatures: %d (max %d)", commitSigs, types.MaxVotesCount)
+	}
+
+	return nil
+}
+
 // Receive implements Reactor by handling 4 types of messages (look below).
 func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
+	bcR.receiveEnvelopeAt(e, time.Now())
+}
+
+func (bcR *Reactor) receiveEnvelopeAt(e p2p.Envelope, now time.Time) {
+	requests := sentRequestsFor(e.Src)
+	admittedHeight := requests.takeAdmission()
 	if err := ValidateMsg(e.Message); err != nil {
 		bcR.Logger.Error("Peer sent us invalid msg", "peer", e.Src, "msg", e.Message, "err", err)
 		bcR.Switch.StopPeerForError(e.Src, err)
@@ -240,7 +345,11 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 			bcR.Logger.Error("Block content is invalid", "err", err)
 			return
 		}
-		bcR.pool.AddBlock(e.Src.ID(), bi, msg.Block.Size())
+		if requests == nil {
+			return
+		}
+		requested := admittedHeight == bi.Height || requests.take(bi.Height, now)
+		bcR.pool.addBlock(e.Src.ID(), bi, msg.Block.Size(), requests, requested)
 	case *bcproto.StatusRequest:
 		// Send peer our state.
 		e.Src.TrySendEnvelope(p2p.Envelope{
@@ -252,10 +361,13 @@ func (bcR *Reactor) ReceiveEnvelope(e p2p.Envelope) {
 		})
 	case *bcproto.StatusResponse:
 		// Got a peer status. Unverified.
-		bcR.pool.SetPeerRange(e.Src.ID(), msg.Base, msg.Height)
+		bcR.pool.setPeerRange(e.Src.ID(), msg.Base, msg.Height, e.Src)
 	case *bcproto.NoBlockResponse:
+		requests.take(msg.Height, now)
 		bcR.Logger.Debug("Peer does not have requested block", "peer", e.Src, "height", msg.Height)
-		bcR.pool.RedoRequestFrom(msg.Height, e.Src.ID())
+		if requests != nil {
+			bcR.pool.redoRequestFrom(msg.Height, e.Src.ID(), requests)
+		}
 	default:
 		bcR.Logger.Error(fmt.Sprintf("Unknown message type %v", reflect.TypeOf(msg)))
 	}
@@ -294,6 +406,11 @@ func (bcR *Reactor) poolRoutine(stateSynced bool) {
 	didProcessCh := make(chan struct{}, 1)
 
 	go func() {
+		defer func() {
+			for _, peer := range bcR.Switch.Peers().List() {
+				sentRequestsFor(peer).clear()
+			}
+		}()
 		for {
 			select {
 			case <-bcR.Quit():
@@ -305,16 +422,17 @@ func (bcR *Reactor) poolRoutine(stateSynced bool) {
 				if peer == nil {
 					continue
 				}
-				queued := peer.TrySendEnvelope(p2p.Envelope{
-					ChannelID: BlocksyncChannel,
-					Message:   &bcproto.BlockRequest{Height: request.Height},
-				})
+				requests := sentRequestsFor(peer)
+				if requests == nil || requests != request.connection {
+					continue
+				}
+				queued := requests.send(peer, request.Height)
 				if !queued {
 					bcR.Logger.Debug("Send queue is full, drop block request", "peer", peer.ID(), "height", request.Height)
 				}
 			case err := <-bcR.errorsCh:
 				peer := bcR.Switch.Peers().Get(err.peerID)
-				if peer != nil {
+				if peer != nil && err.connection == sentRequestsFor(peer) {
 					bcR.Switch.StopPeerForError(peer, err)
 				}
 
@@ -385,38 +503,19 @@ FOR_LOOP:
 			}
 			firstPartSetHeader := firstParts.Header()
 			firstID := types.BlockID{Hash: first.Hash(), PartSetHeader: firstPartSetHeader}
-			// Finally, verify the first block using the second's commit
-			// NOTE: we can probably make this more efficient, but note that calling
-			// first.Hash() doesn't verify the tx contents, so MakePartSet() is
-			// currently necessary.
-			err = state.Validators.VerifyCommitLight(
-				chainID, firstID, first.Height, second.LastCommit)
-
-			if err == nil {
-				// validate the block before we persist it
-				err = bcR.blockExec.ValidateBlock(state, first)
-			}
-
+			// Fully verify second.LastCommit to ensure all signatures are valid.
+			// It is persisted below as the seen commit for first.
+			err = state.Validators.VerifyCommit(chainID, firstID, first.Height, second.LastCommit)
 			if err != nil {
-				bcR.Logger.Error("Error in validation", "err", err)
-				peerID := bcR.pool.RemovePeerAndRedoAllPeerRequests(first.Height)
-				peer := bcR.Switch.Peers().Get(peerID)
-				if peer != nil {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer, fmt.Errorf("Reactor validation error: %v", err))
-				}
-				peerID2 := bcR.pool.RemovePeerAndRedoAllPeerRequests(second.Height)
-				peer2 := bcR.Switch.Peers().Get(peerID2)
-				if peer2 != nil && peer2 != peer {
-					// NOTE: we've already removed the peer's request, but we
-					// still need to clean up the rest.
-					bcR.Switch.StopPeerForError(peer2, fmt.Errorf("Reactor validation error: %v", err))
-				}
+				bcR.handleValidationFailure(first, second, err)
 				continue FOR_LOOP
 			}
 
-			bcR.pool.PopRequest()
+			// Verify the current block against state before persisting it.
+			if err = bcR.blockExec.ValidateBlock(state, first); err != nil {
+				bcR.handleValidationFailure(first, second, err)
+				continue FOR_LOOP
+			}
 
 			// TODO: batch saves so we dont persist to disk every block
 			bcR.store.SaveBlock(first, firstParts, second.LastCommit)
@@ -428,6 +527,7 @@ FOR_LOOP:
 				// TODO This is bad, are we zombie?
 				panic(fmt.Sprintf("Failed to process committed block (%d:%X): %v", first.Height, first.Hash(), err))
 			}
+			bcR.pool.PopRequest(first.Time)
 			blocksSynced++
 
 			if blocksSynced%100 == 0 {
@@ -442,6 +542,30 @@ FOR_LOOP:
 		case <-bcR.Quit():
 			break FOR_LOOP
 		}
+	}
+}
+
+func (bcR *Reactor) handleValidationFailure(blockA, blockB *types.Block, err error) {
+	bcR.Logger.Error("Error in validation", "height", blockA.Height, "hash", blockA.Hash(), "err", err)
+
+	err = fmt.Errorf("Reactor validation error: %v", err)
+
+	idA := bcR.pool.RemovePeerAndRedoAllPeerRequests(blockA.Height)
+	if peerA := bcR.Switch.Peers().Get(idA); peerA != nil {
+		// NOTE: we've already removed the peer's request, but we
+		// still need to clean up the rest.
+		bcR.Switch.StopPeerForError(peerA, err)
+	}
+
+	idB := bcR.pool.RemovePeerAndRedoAllPeerRequests(blockB.Height)
+	if idA == idB {
+		return
+	}
+
+	if peerB := bcR.Switch.Peers().Get(idB); peerB != nil {
+		// NOTE: we've already removed the peer's request, but we
+		// still need to clean up the rest.
+		bcR.Switch.StopPeerForError(peerB, err)
 	}
 }
 

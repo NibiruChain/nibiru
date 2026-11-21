@@ -1,0 +1,33 @@
+syntax = "proto3";
+package tendermint.blocksync;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/NibiruChain/nibiru/v2/bft/proto/tendermint/blocksync";
+
+// SigCountMessage is a stripped down view of Message used by the blocksync
+// MsgBytesFilter for validation before unmarshalling the full BlockResponse
+// Message. It reads the block height and counts the last commit's signatures.
+message SigCountMessage {
+  SigCountBlockResponse block_response = 3;
+}
+
+message SigCountBlockResponse {
+  SigCountBlock block = 1;
+}
+
+message SigCountBlock {
+  SigCountHeader header = 1;
+  SigCountCommit last_commit = 4;
+}
+
+message SigCountHeader {
+  int64 height = 3;
+}
+
+message SigCountCommit {
+  repeated bytes signatures = 4 [
+    (gogoproto.customtype) = "NoSig",
+    (gogoproto.nullable) = false
+  ];
+}

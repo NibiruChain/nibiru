@@ -105,7 +105,7 @@ func TestBlockPoolBasic(t *testing.T) {
 		errorsCh   = make(chan peerError)
 		requestsCh = make(chan BlockRequest)
 	)
-	pool := NewBlockPool(start, requestsCh, errorsCh)
+	pool := NewBlockPool(start, requestsCh, errorsCh, 1*time.Second)
 	pool.SetLogger(log.TestingLogger())
 
 	err := pool.Start()
@@ -137,7 +137,7 @@ func TestBlockPoolBasic(t *testing.T) {
 			}
 			first, second := pool.PeekTwoBlocks()
 			if first != nil && second != nil {
-				pool.PopRequest()
+				pool.PopRequest(first.Time)
 			} else {
 				time.Sleep(1 * time.Second)
 			}
@@ -168,7 +168,7 @@ func TestBlockPoolTimeout(t *testing.T) {
 		requestsCh = make(chan BlockRequest)
 	)
 
-	pool := NewBlockPool(start, requestsCh, errorsCh)
+	pool := NewBlockPool(start, requestsCh, errorsCh, 1*time.Second)
 	pool.SetLogger(log.TestingLogger())
 	err := pool.Start()
 	if err != nil {
@@ -187,7 +187,8 @@ func TestBlockPoolTimeout(t *testing.T) {
 	// Introduce each peer.
 	go func() {
 		for _, peer := range peers {
-			pool.SetPeerRange(peer.id, peer.base, peer.height)
+			// Force uniform base so every peer contributes to maxPeerHeight at pool startup.
+			pool.SetPeerRange(peer.id, start, peer.height)
 		}
 	}()
 
@@ -199,7 +200,7 @@ func TestBlockPoolTimeout(t *testing.T) {
 			}
 			first, second := pool.PeekTwoBlocks()
 			if first != nil && second != nil {
-				pool.PopRequest()
+				pool.PopRequest(first.Time)
 			} else {
 				time.Sleep(1 * time.Second)
 			}
@@ -226,6 +227,53 @@ func TestBlockPoolTimeout(t *testing.T) {
 	}
 }
 
+func TestBPRequesterRedoPreservesBothPeers(t *testing.T) {
+	requester := newBPRequester(nil, 1)
+	requester.redo("peerA")
+	requester.redo("peerB")
+
+	// Exactly one coalesced wake-up signal.
+	require.Equal(t, 1, len(requester.redoCh))
+
+	requester.mtx.Lock()
+	events := requester.redoPeers
+	requester.mtx.Unlock()
+
+	peerSet := map[p2p.ID]struct{}{}
+	for _, ev := range events {
+		peerSet[ev.peerID] = struct{}{}
+	}
+	require.Contains(t, peerSet, p2p.ID("peerA"))
+	require.Contains(t, peerSet, p2p.ID("peerB"))
+}
+
+// Regression test: with the old chan p2p.ID capacity-1 design, if a redo signal
+// was already pending in the channel, a concurrent redo for the second peer would
+// be silently dropped. Verify that no redo event is ever lost.
+func TestBPRequesterRedoNeverDropsEvent(t *testing.T) {
+	requester := newBPRequester(nil, 1)
+
+	// Two redo calls for peerA fill the old capacity-2 channel, then peerB's
+	// redo would have been dropped with the previous implementation.
+	requester.redo("peerA")
+	requester.redo("peerA")
+	requester.redo("peerB")
+
+	// Still exactly one wake-up signal (coalesced).
+	require.Equal(t, 1, len(requester.redoCh))
+
+	requester.mtx.Lock()
+	events := requester.redoPeers
+	requester.mtx.Unlock()
+
+	counts := map[p2p.ID]int{}
+	for _, ev := range events {
+		counts[ev.peerID]++
+	}
+	require.Equal(t, 2, counts["peerA"])
+	require.Equal(t, 1, counts["peerB"], "peerB redo must not be dropped")
+}
+
 func TestBlockPoolRemovePeer(t *testing.T) {
 	peers := make(testPeers, 10)
 	for i := 0; i < 10; i++ {
@@ -236,7 +284,7 @@ func TestBlockPoolRemovePeer(t *testing.T) {
 	requestsCh := make(chan BlockRequest)
 	errorsCh := make(chan peerError)
 
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	pool.SetLogger(log.TestingLogger())
 	err := pool.Start()
 	require.NoError(t, err)
@@ -293,7 +341,7 @@ func TestBlockPoolMaliciousNode(t *testing.T) {
 	errorsCh := make(chan peerError)
 	requestsCh := make(chan BlockRequest)
 
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	pool.SetLogger(log.TestingLogger())
 
 	err := pool.Start()
@@ -338,7 +386,7 @@ func TestBlockPoolMaliciousNode(t *testing.T) {
 					// Second block is fake
 					pool.RemovePeerAndRedoAllPeerRequests(second.Height)
 				} else {
-					pool.PopRequest()
+					pool.PopRequest(first.Time)
 				}
 			}
 		}
@@ -396,7 +444,7 @@ func TestBlockPoolMaliciousNodeMaxInt64(t *testing.T) {
 	errorsCh := make(chan peerError, 3)
 	requestsCh := make(chan BlockRequest)
 
-	pool := NewBlockPool(1, requestsCh, errorsCh)
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
 	pool.SetLogger(log.TestingLogger())
 
 	err := pool.Start()
@@ -454,7 +502,7 @@ func TestBlockPoolMaliciousNodeMaxInt64(t *testing.T) {
 						// Second block is fake
 						pool.RemovePeerAndRedoAllPeerRequests(second.Height)
 					} else {
-						pool.PopRequest()
+						pool.PopRequest(first.Time)
 					}
 				}
 			}
@@ -496,4 +544,343 @@ func TestBlockPoolMaliciousNodeMaxInt64(t *testing.T) {
 			require.True(t, time.Since(startTime) < MaliciousTestMaximumLength, "Network ran too long, stopping test.")
 		}
 	}
+}
+
+// TestBlockPoolBansPeerWithBaseGreaterThanHeight verifies that a peer whose self-reported base
+// exceeds its own height (a structurally impossible state) is banned.
+func TestBlockPoolBansPeerWithBaseGreaterThanHeight(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 10)
+	errorsCh := make(chan peerError, 10)
+
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
+	pool.SetLogger(log.TestingLogger())
+
+	badID := p2p.ID("bad")
+	pool.SetPeerRange(badID, 500, 100)
+
+	require.True(t, pool.IsPeerBanned(badID), "peer reporting base > height must be banned")
+	require.EqualValues(t, 0, pool.MaxPeerHeight(), "banned peer must not raise maxPeerHeight")
+}
+
+func TestBlockPoolFollowsAdjacentPeerRanges(t *testing.T) {
+	pool := NewBlockPool(10, nil, nil, time.Second)
+	pool.startTime = time.Now()
+
+	pool.SetPeerRange("old", 1, 10)
+	pool.SetPeerRange("recent", 12, 20)
+	require.EqualValues(t, 10, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp(), "a gap leaves no successor for block 10")
+
+	pool.SetPeerRange("bridge", 11, 11)
+	require.EqualValues(t, 20, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp())
+
+	pool.RemovePeer("bridge")
+	require.EqualValues(t, 10, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp())
+
+	pool.SetPeerRange("successor", 11, 11)
+	pool.RemovePeer("recent")
+	require.EqualValues(t, 11, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp(), "block 10 still has a successor")
+
+	pool.requesters[10] = newBPRequester(pool, 10)
+	pool.PopRequest(time.Now())
+	require.True(t, pool.IsCaughtUp(), "block 11 has no successor")
+}
+
+func TestBlockPoolWaitsForFallbackWithOnlyPrunedPeers(t *testing.T) {
+	const noBlockTimeout = time.Second
+	pool := NewBlockPool(10, nil, nil, noBlockTimeout)
+	pool.startTime = time.Now()
+
+	pool.SetPeerRange("pruned", 20, 30)
+	pool.SetPeerRange("recent", 25, 35)
+	require.Zero(t, pool.MaxPeerHeight())
+	require.False(t, pool.IsCaughtUp(), "handoff must wait for the fallback")
+
+	pool.startTime = time.Now().Add(-(peerConnWait + noBlockTimeout))
+	require.True(t, pool.IsCaughtUp(), "the fallback timeout has elapsed")
+}
+
+func TestBlockPoolHandsOffAtGenesisWithHeightZeroPeer(t *testing.T) {
+	pool := NewBlockPool(1, nil, nil, time.Second)
+	pool.startTime = time.Now()
+
+	pool.SetPeerRange("genesis", 0, 0)
+	require.Zero(t, pool.MaxPeerHeight())
+	require.True(t, pool.IsCaughtUp(), "a fresh network can hand off immediately")
+}
+
+func TestBlockPoolRecordsAppliedBlockAfterRequesterRetry(t *testing.T) {
+	pool := NewBlockPool(10, nil, nil, time.Second)
+	requester := newBPRequester(pool, 10)
+	requester.peerID = "old"
+	pool.requesters[10] = requester
+
+	appliedTime := time.Now().Add(-time.Minute)
+	block := &types.Block{Header: types.Header{Height: 10, Time: appliedTime}}
+	matched, stored := requester.setBlock(block, "old")
+	require.True(t, matched)
+	require.True(t, stored)
+	first, _ := pool.PeekTwoBlocks()
+	require.Same(t, block, first)
+
+	// A retry clears the requester's candidate while the reactor holds the block.
+	require.True(t, requester.reset("old"))
+	require.Nil(t, requester.getBlock())
+	pool.PopRequest(first.Time)
+
+	require.EqualValues(t, 11, pool.Height())
+	require.Equal(t, appliedTime, pool.syncTracker.lastBlockHeaderTime)
+	require.False(t, pool.syncTracker.lastBlockWallTime.IsZero())
+}
+
+// TestPeerOnTimeoutDoesNotDeadlockOnSendError is a regression test for
+// bpPeer.onTimeout holding pool.mtx while calling sendError on an unbuffered
+// channel.
+func TestPeerOnTimeoutDoesNotDeadlockOnSendError(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 10)
+	errorsCh := make(chan peerError) // unbuffered: keeps onTimeout blocked in sendError
+
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
+	pool.SetLogger(log.TestingLogger())
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	pool.SetPeerRange("A", 1, 10)
+	pool.mtx.Lock()
+	peer := pool.peers["A"]
+	pool.mtx.Unlock()
+
+	go peer.onTimeout()
+	time.Sleep(50 * time.Millisecond)
+
+	heightDone := make(chan struct{})
+	go func() {
+		pool.Height()
+		close(heightDone)
+	}()
+
+	select {
+	case <-heightDone:
+		<-errorsCh
+	case <-time.After(500 * time.Millisecond):
+		<-errorsCh
+		<-heightDone
+		t.Fatal("deadlock: onTimeout held pool.mtx while blocked in sendError")
+	}
+}
+
+// TestAddBlockDoesNotDeadlockOnSendError is a regression test for AddBlock
+// holding pool.mtx while calling sendError on an unbuffered channel.
+func TestAddBlockDoesNotDeadlockOnSendError(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 10)
+	errorsCh := make(chan peerError) // unbuffered: keeps AddBlock blocked in sendError
+
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
+	pool.SetLogger(log.TestingLogger())
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	pool.mtx.Lock()
+	req := newBPRequester(pool, 1)
+	req.peerID = "A"
+	pool.requesters[1] = req
+	pool.mtx.Unlock()
+
+	block := &types.Block{Header: types.Header{Height: 1}, LastCommit: &types.Commit{}}
+
+	// "B" did not request the block; setBlock fails → sendError while holding pool.mtx.
+	go pool.AddBlock("B", block, 123)
+	time.Sleep(50 * time.Millisecond)
+
+	heightDone := make(chan struct{})
+	go func() {
+		pool.Height()
+		close(heightDone)
+	}()
+
+	select {
+	case <-heightDone:
+		<-errorsCh
+	case <-time.After(500 * time.Millisecond):
+		<-errorsCh
+		<-heightDone
+		t.Fatal("deadlock: AddBlock held pool.mtx while blocked in sendError")
+	}
+}
+
+func TestBlockPoolHasPendingRequestFrom(t *testing.T) {
+	requestsCh := make(chan BlockRequest, 10)
+	errorsCh := make(chan peerError, 10)
+
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
+	pool.SetLogger(log.TestingLogger())
+
+	const (
+		primary   = p2p.ID("primary")
+		secondary = p2p.ID("secondary")
+		stranger  = p2p.ID("stranger")
+	)
+
+	// check initial state
+	require.False(t, pool.HasPendingRequestFrom(primary))
+	require.False(t, pool.HasPendingRequestFrom(secondary))
+	require.False(t, pool.HasPendingRequestFrom(stranger))
+
+	// Install a requester for height 1 targeting `primary`. We set the
+	// fields directly so we don't have to spin up the request goroutine.
+	pool.mtx.Lock()
+	req1 := newBPRequester(pool, 1)
+	req1.peerID = primary
+	pool.requesters[1] = req1
+	pool.mtx.Unlock()
+
+	require.True(t, pool.HasPendingRequestFrom(primary), "requested peer should be reported as pending")
+	require.False(t, pool.HasPendingRequestFrom(stranger), "non-requested peer must not be reported as pending")
+
+	// A second requester at height 2 also covers the secondPeerID slot.
+	pool.mtx.Lock()
+	req2 := newBPRequester(pool, 2)
+	req2.peerID = primary
+	req2.secondPeerID = secondary
+	pool.requesters[2] = req2
+	pool.mtx.Unlock()
+
+	require.True(t, pool.HasPendingRequestFrom(secondary), "secondary peer slot should count as pending")
+
+	// Removing both requesters drops the pending state.
+	pool.mtx.Lock()
+	delete(pool.requesters, 1)
+	delete(pool.requesters, 2)
+	pool.mtx.Unlock()
+
+	require.False(t, pool.HasPendingRequestFrom(primary))
+	require.False(t, pool.HasPendingRequestFrom(secondary))
+}
+
+// TestBlockPoolTwoInflatedHeightPeersStaggered verifies that two faulty peers reporting
+// inflated heights and reconnecting after timeout cannot stall blocksync indefinitely.
+//
+// Stall scenario (affects the old maxPeerHeight-only IsCaughtUp):
+//   - Two faulty peers report Height=MaxInt64, staggered so at least one is always in the pool
+//   - maxPeerHeight stays at MaxInt64 forever → IsCaughtUp() never returns true
+//   - Node is permanently stuck in blocksync
+//
+// Defense (pure timeout-based IsCaughtUp):
+//   - After syncing past the honest peer's tip, no more blocks arrive
+//   - lastBlockTime stops updating → timeout fires → escape
+//   - The faulty peers' inflated height claims are irrelevant
+func TestBlockPoolTwoInflatedHeightPeersStaggered(t *testing.T) {
+	const honestHeight = int64(50)
+
+	errorsCh := make(chan peerError, 10)
+	requestsCh := make(chan BlockRequest, 100)
+
+	pool := NewBlockPool(1, requestsCh, errorsCh, 1*time.Second)
+	pool.SetLogger(log.TestingLogger())
+	require.NoError(t, pool.Start())
+	t.Cleanup(func() { _ = pool.Stop() })
+
+	// Set up honest peers at the real chain tip
+	pool.SetPeerRange(p2p.ID("good1"), 1, honestHeight)
+	pool.SetPeerRange(p2p.ID("good2"), 1, honestHeight)
+
+	// Two faulty peers report MaxInt64:
+	//   bad1  — added early, gets assigned to requesters, times out,
+	//           gets removed by removeTimedoutPeers, reconnects every 100ms
+	//   bad2  — added AFTER the requester creation burst (3.5s). The first
+	//           80 requesters (4 peers × 20) are created at 2ms intervals
+	//           after peerConnWait (3s), so by 3.5s all requesters are
+	//           already cycling through bad1 with 30s retryTimer. bad2
+	//           never gets assigned, never has incrPending called, and
+	//           silently keeps maxPeerHeight at MaxInt64 permanently.
+	const reconInterval = 100 * time.Millisecond
+	stopReconn := make(chan struct{})
+	defer close(stopReconn)
+
+	pool.SetPeerRange(p2p.ID("bad1"), 1, math.MaxInt64)
+	go func() {
+		for {
+			select {
+			case <-stopReconn:
+				return
+			case <-time.After(reconInterval):
+				pool.SetPeerRange(p2p.ID("bad1"), 1, math.MaxInt64)
+			}
+		}
+	}()
+	// bad2: silent guardian, added after requester burst
+	go func() {
+		select {
+		case <-stopReconn:
+			return
+		case <-time.After(3500 * time.Millisecond):
+		}
+		pool.SetPeerRange(p2p.ID("bad2"), 1, math.MaxInt64)
+		for {
+			select {
+			case <-stopReconn:
+				return
+			case <-time.After(reconInterval):
+				pool.SetPeerRange(p2p.ID("bad2"), 1, math.MaxInt64)
+			}
+		}
+	}()
+
+	// Simulate block sync up to the honest peer's tip
+	for h := int64(1); h <= honestHeight; h++ {
+		pool.mtx.Lock()
+		r := newBPRequester(pool, h)
+		pool.requesters[h] = r
+		r.setBlock(
+			&types.Block{Header: types.Header{Height: h, Time: time.Now()}},
+			r.peerID,
+		)
+		pool.mtx.Unlock()
+		pool.PopRequest(time.Now())
+	}
+
+	require.EqualValues(t, honestHeight+1, pool.Height(),
+		"pool height advanced past honest peers")
+
+	// Drain requestsCh: the faulty peers never respond to requests,
+	// forcing requesters to wait for the 30s retryTimer.
+	go func() {
+		for {
+			if !pool.IsRunning() {
+				return
+			}
+			select {
+			case <-requestsCh:
+			case <-pool.Quit():
+				return
+			}
+		}
+	}()
+
+	// Core assertion: IsCaughtUp() must eventually return true.
+	// With the original maxPeerHeight-only check, this assertion
+	// FAILS because pool.height (51) >= MaxInt64-1 is never true.
+	// With the timeout-based fix, IsCaughtUp() returns true after
+	// noBlockTimeout (1s in tests) elapses without any new blocks.
+	//
+	// This is a negative test: it fails against the original code
+	// and passes against the fixed code.
+	t.Logf("Waiting for IsCaughtUp() to return true (maxPeerHeight=%d, height=%d)",
+		pool.MaxPeerHeight(), pool.Height())
+	require.Eventually(t, func() bool {
+		return pool.IsCaughtUp()
+	}, 10*time.Second, 50*time.Millisecond,
+		"IsCaughtUp() never returned true — node would be permanently stuck in blocksync. "+
+			"This is EXPECTED for the original maxPeerHeight-only check (the stall). "+
+			"With the timeout-based fix, IsCaughtUp() returns true after noBlockTimeout.")
+
+	pool.mtx.Lock()
+	numPeers := len(pool.peers)
+	pool.mtx.Unlock()
+	t.Logf("IsCaughtUp() became true (height=%d, maxPeerHeight=%d, peers=%d) — "+
+		"node would escape blocksync despite the faulty peers",
+		pool.Height(), pool.MaxPeerHeight(), numPeers)
 }
